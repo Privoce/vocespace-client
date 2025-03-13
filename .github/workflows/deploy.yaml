@@ -1,0 +1,29 @@
+name: Deploy Static Page to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main  # 触发部署的分支，可以根据需要修改
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 检出代码
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      # 2. 设置部署目录（可选）
+      - name: Set up deployment directory
+        run: |
+          mkdir -p public
+          cp index.html public/
+
+      # 3. 部署到 GitHub Pages
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public  # 部署的目录，根据实际情况修改
+          publish_branch: gh-pages  # 部署的目标分支
