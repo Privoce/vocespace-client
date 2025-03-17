@@ -17,9 +17,9 @@ import {
   WidgetState,
 } from '@livekit/components-react';
 import { AudioRenderer } from './audio_renderer';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ConnectionState, Participant, Room, RoomEvent, Track } from 'livekit-client';
-import { Collapse, CollapseProps, message, Modal } from 'antd';
+import { useEffect, useRef, useState } from 'react';
+import { Participant, Room, RoomEvent, Track } from 'livekit-client';
+import { CollapseProps } from 'antd';
 import { Controls } from './controls';
 import { RoomList } from './panel/room_list';
 import { ParticipantItem } from './panel/participant';

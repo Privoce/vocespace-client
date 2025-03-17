@@ -9,6 +9,7 @@ import {
   useLocalParticipantPermissions,
   ChatToggle,
   ChatIcon,
+  useLocalParticipant,
 } from '@livekit/components-react';
 import styles from '@/styles/controls.module.scss';
 import { AudioToggle } from './controls/audio_toggle';
@@ -40,6 +41,7 @@ export function Controls({
     saveAudioInputDeviceId,
     saveVideoInputDeviceId,
   } = usePersistentUserChoices({ preventSave: !saveUserChoices });
+  const { localParticipant } = useLocalParticipant();
   const add_derivce_settings = use_add_user_device(userChoices.username);
   const video_track_ref = useRef<HTMLImageElement>(null);
   // [states] -----------------------------------------------------------------
@@ -142,7 +144,10 @@ export function Controls({
     use_stored_set(username, { device: data });
 
     // 发布事件
-    publisher(SubjectKey.Setting, data);
+    publisher(SubjectKey.Setting, {
+      data,
+      identity: localParticipant.identity,
+    });
     set_saved(save);
     if (save) {
       set_setting_visible(false);

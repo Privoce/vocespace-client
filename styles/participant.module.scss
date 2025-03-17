@@ -27,3 +27,20 @@
         }
     }
 }
+
+.status_wrap{
+    height: 100%;
+    width: fit-content;
+    display:inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    margin: 0 8px;
+}
+
+.status_item{
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}

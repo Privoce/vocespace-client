@@ -20,6 +20,7 @@ import React from 'react';
 import { PreJoin } from './pre_join/pre_join';
 import { VideoContainer } from './room/video_container';
 import { use_add_user_device } from '@/lib/hooks/store/user_choices';
+import { message } from 'antd';
 
 const CONN_DETAILS_ENDPOINT =
   process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ??
@@ -109,6 +110,7 @@ function VideoConferenceComponent(props: {
       videoCodec = undefined;
     }
     return {
+      
       videoCaptureDefaults: {
         deviceId: props.userChoices.videoDeviceId ?? undefined,
         resolution: props.options.hq ? VideoPresets.h2160 : VideoPresets.h720,
@@ -160,15 +162,24 @@ function VideoConferenceComponent(props: {
 
   const connectOptions = React.useMemo((): RoomConnectOptions => {
     return {
+      maxRetries: 5,
       autoSubscribe: true,
     };
   }, []);
 
   const router = useRouter();
+  const [messageApi, contextHolder] = message.useMessage();
+
   const handleOnLeave = React.useCallback(() => router.push('/'), [router]);
   const handleError = React.useCallback((error: Error) => {
-    console.error(error);
-    alert(`Encountered an unexpected error, check the console logs for details: ${error.message}`);
+    // console.error(error);
+    // alert(`Encountered an unexpected error, check the console logs for details: ${error.message}`);
+    // 处理连接错误
+    if (error.name === "ConnectionError"){
+      messageApi.error("Connection Error, please check your network connection and try again.");
+    }else{
+      console.error(error);
+    }
   }, []);
   const handleEncryptionError = React.useCallback((error: Error) => {
     console.error(error);
@@ -179,6 +190,7 @@ function VideoConferenceComponent(props: {
 
   return (
     <>
+      {contextHolder}    
       <LiveKitRoom
         connect={e2eeSetupComplete}
         room={room}

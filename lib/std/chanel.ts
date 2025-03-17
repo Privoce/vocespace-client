@@ -24,7 +24,7 @@ export const subject_map = new Map<SubjectKey, BehaviorSubject<any>>([
   [SubjectKey.VideoState, new BehaviorSubject<State>(State.Stop)],
   [SubjectKey.Screen, new BehaviorSubject<boolean>(false)],
   [SubjectKey.Focus, new BehaviorSubject<ScreenFocus>({})],
-  [SubjectKey.Setting, new BehaviorSubject<AddDeviceInfo | undefined>(undefined)],
+  [SubjectKey.Setting, new BehaviorSubject<{data: AddDeviceInfo, identity: String} | undefined>(undefined)],
   [SubjectKey.ScreenState, new BehaviorSubject<State>(State.Stop)],
 ]);
 

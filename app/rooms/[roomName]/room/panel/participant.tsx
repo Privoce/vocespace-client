@@ -35,6 +35,8 @@ import styles from '@/styles/participant.module.scss';
 import { use_add_user_device } from '@/lib/hooks/store/user_choices';
 import { AddDeviceInfo, State, useVideoBlur } from '@/lib/std/device';
 import { SvgResource } from '../../pre_join/resources';
+import { Badge, Dropdown, MenuProps } from 'antd';
+import { PresetStatusColorType } from 'antd/es/_util/colors';
 
 interface ParticipantItemProps extends HTMLAttributes<HTMLDivElement> {
   trackRef?: TrackReferenceOrPlaceholder;
@@ -124,16 +126,16 @@ export function ParticipantItem({
     }
   }, []);
 
-  const handleSettingChange = useCallback((device_info?: AddDeviceInfo) => {
+  const handleSettingChange = useCallback((param?: { data: AddDeviceInfo; identity: String }) => {
     console.log('接收到设置状态变化:');
-    if (device_info) {
-      if (device_info.video.blur != add_derivce_settings.video.blur) {
-        add_derivce_settings.video.blur = device_info.video.blur;
-        setVideoBlur(device_info.video.blur);
+    if (param && trackReference.participant.identity == param.identity) {
+      if (param.data.video.blur != add_derivce_settings.video.blur) {
+        add_derivce_settings.video.blur = param.data.video.blur;
+        setVideoBlur(param.data.video.blur);
       }
-      if (device_info.screen.blur != add_derivce_settings.screen.blur) {
-        add_derivce_settings.screen.blur = device_info.screen.blur;
-        setScreenBlur(device_info.screen.blur);
+      if (param.data.screen.blur != add_derivce_settings.screen.blur) {
+        add_derivce_settings.screen.blur = param.data.screen.blur;
+        setScreenBlur(param.data.screen.blur);
       }
     }
   }, []);
@@ -174,6 +176,42 @@ export function ParticipantItem({
   useEffect(() => {
     console.log('audio_enabled 状态实际变化为:', audio_enabled);
   }, [audio_enabled]);
+  // [status] ------------------------------------------------------------
+  const [my_status, set_my_status] = useState<PresetStatusColorType>('success');
+  const status_menu: MenuProps['items'] = [
+    {
+      key: 'success',
+      label: (
+        <div className={styles.status_item}>
+          <Badge status="success" text="online" />
+        </div>
+      ),
+    },
+    {
+      key: 'warning',
+      label: (
+        <div className={styles.status_item}>
+          <Badge status="warning" text="idle" />
+        </div>
+      ),
+    },
+    {
+      key: 'error',
+      label: (
+        <div className={styles.status_item}>
+          <Badge status="error" text="bussy, do not disturb" />
+        </div>
+      ),
+    },
+    {
+      key: 'default',
+      label: (
+        <div className={styles.status_item}>
+          <Badge status="default" color="#ddd" text="invisible" />
+        </div>
+      ),
+    },
+  ];
 
   return (
     <ParticipantTile {...htmlProps} className={styles.tile} ref={ref}>
@@ -222,6 +260,21 @@ export function ParticipantItem({
               <ParticipantName>&apos;s screen</ParticipantName>
             </>
           )}
+          <div className={styles.status_wrap}>
+            <Dropdown
+              placement="topLeft"
+              menu={{
+                items: status_menu,
+                onClick: (e) => set_my_status(e.key as PresetStatusColorType),
+              }}
+            >
+              {my_status == 'default' ? (
+                <Badge dot status={my_status} color="#ddd" />
+              ) : (
+                <Badge dot status={my_status} />
+              )}
+            </Dropdown>
+          </div>
         </div>
         <ConnectionQualityIndicator className="lk-participant-metadata-item" />
       </div>
@@ -382,28 +435,3 @@ async function enableScreenTrack(room: Room, enabled: boolean): Promise<State> {
     return State.Stop;
   }
 }
-
-// export const WaveBtn: (
-//   props: FocusToggleProps & React.RefAttributes<HTMLButtonElement>,
-// ) => React.ReactNode = /* @__PURE__ */ React.forwardRef<HTMLButtonElement, FocusToggleProps>(
-//   function FocusToggle({ trackRef, ...props }: FocusToggleProps, ref) {
-//     // const trackRefFromContext = useMaybeTrackRefContext();
-
-//     // const { mergedProps, inFocus } = useFocusToggle({
-//     //   trackRef: trackRef ?? trackRefFromContext,
-//     //   props,
-//     // });
-
-//     return (
-//       <LayoutContext.Consumer>
-//         {(layoutContext) =>
-//           layoutContext !== undefined && (
-//             <button ref={ref} >
-//               <SvgResource svgSize={16} type="wave"></SvgResource>
-//             </button>
-//           )
-//         }
-//       </LayoutContext.Consumer>
-//     );
-//   },
-// );

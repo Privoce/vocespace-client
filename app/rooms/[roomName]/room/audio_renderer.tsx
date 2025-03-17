@@ -11,11 +11,11 @@ import { useCallback, useEffect, useState } from 'react';
 export function AudioRenderer() {
   // [userinfos] ------------------------------------------------------------------------------
   const [device_settings, set_device_settings] = useState(use_add_user_device());
-  const handleSettingChange = useCallback((device_info?: AddDeviceInfo) => {
+  const handleSettingChange = useCallback((param?: {data: AddDeviceInfo, identity: String}) => {
     console.log('接收到设置状态变化:');
-    if (device_info) {
-      if (device_info.microphone.other != device_settings.microphone.other) {
-        set_device_settings(device_info);
+    if (param) {
+      if (param.data.microphone.other != device_settings.microphone.other) {
+        set_device_settings(param.data);
       }
     }
   }, []);
