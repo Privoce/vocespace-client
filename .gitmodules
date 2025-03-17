@@ -1,0 +1,3 @@
+[submodule "lib/live2d/render"]
+	path = lib/live2d/render
+	url = https://github.com/couchette/cumbismweb-render.git
