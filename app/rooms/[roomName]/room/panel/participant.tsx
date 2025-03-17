@@ -37,6 +37,8 @@ import { AddDeviceInfo, State, useVideoBlur } from '@/lib/std/device';
 import { SvgResource } from '../../pre_join/resources';
 import { Badge, Dropdown, MenuProps } from 'antd';
 import { PresetStatusColorType } from 'antd/es/_util/colors';
+import VirtualRoleCanvas from '../virtual_role/live2d';
+
 
 interface ParticipantItemProps extends HTMLAttributes<HTMLDivElement> {
   trackRef?: TrackReferenceOrPlaceholder;
@@ -238,7 +240,8 @@ export function ParticipantItem({
           ></VideoTrack>
         )}
       <div className="lk-participant-placeholder">
-        <ParticipantPlaceholder />
+        {/* <ParticipantPlaceholder /> */}
+        <VirtualRoleCanvas></VirtualRoleCanvas>
       </div>
       <div className="lk-participant-metadata">
         <div className="lk-participant-metadata-item">
