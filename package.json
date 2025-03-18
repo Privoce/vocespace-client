@@ -16,6 +16,8 @@
     "@mediapipe/camera_utils": "0.3.1675466862",
     "@mediapipe/holistic": "0.5.1675471629",
     "antd": "^5.24.2",
+    "face-api.js": "^0.22.2",
+    "live2d-motionsync": "^0.0.4",
     "livekit-client": "2.9.3",
     "livekit-server-sdk": "2.10.1",
     "next": "14.2.24",

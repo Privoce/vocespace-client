@@ -239,7 +239,8 @@ export function ParticipantItem({
             }}
           ></VideoTrack>
         )}
-      <div className="lk-participant-placeholder">
+        {/* className="lk-participant-placeholder" */}
+      <div style={{height: '100%', width: '100%'}}>
         {/* <ParticipantPlaceholder /> */}
         <VirtualRoleCanvas></VirtualRoleCanvas>
       </div>
