@@ -1,6 +1,10 @@
-import { Slider, Tabs, TabsProps } from 'antd';
+import { Card, List, message, Slider, Switch, Tabs, TabsProps } from 'antd';
 import { SvgResource, SvgType } from '../../pre_join/resources';
 import styles from '@/styles/controls.module.scss';
+import { useEffect, useRef, useState } from 'react';
+import * as faceapi from 'face-api.js';
+import { MessageInstance } from 'antd/es/message/interface';
+import { loadVideo } from '@/lib/std/device';
 
 export interface SettingsProps {
   microphone: {
@@ -21,6 +25,7 @@ export interface SettingsProps {
     set_blur: (e: number) => void;
   };
   save_changes: (e: boolean) => void;
+  messageApi: MessageInstance;
 }
 
 export function Settings({
@@ -33,6 +38,7 @@ export function Settings({
     set_blur,
   },
   save_changes,
+  messageApi,
 }: SettingsProps) {
   const items: TabsProps['items'] = [
     {
@@ -102,7 +108,7 @@ export function Settings({
     {
       key: 'virtual',
       label: <TabItem type="user" label="Virtual"></TabItem>,
-      children: <div></div>,
+      children: <VirtualSettings messageApi={messageApi}></VirtualSettings>,
     },
     {
       key: 'about_us',
@@ -117,7 +123,7 @@ export function Settings({
             flexWrap: 'wrap',
           }}
         >
-          <div style={{display: 'inline-flex', alignItems: 'center', gap: '16px'}}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '16px' }}>
             <SvgResource type="logo" svgSize={64}></SvgResource>
             <span style={{ fontSize: '32px', color: '#fff', fontWeight: '700' }}>VoceSpace</span>
           </div>
@@ -155,6 +161,242 @@ export function TabItem({ type, label }: { type: SvgType; label: string }) {
     <div style={tabStyles}>
       <SvgResource type={type} svgSize={14}></SvgResource>
       {label}
+    </div>
+  );
+}
+
+export function VirtualSettings({ messageApi }: { messageApi: MessageInstance }) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [trackingActive, setTrackingActive] = useState(false);
+  const [model_selected_index, set_model_selected_index] = useState(0);
+  const [bg_selected_index, set_bg_selected_index] = useState(0);
+  const [use, set_use] = useState(false);
+  const [detector_ready, set_detector_ready] = useState(false);
+
+  const modelDatas = [
+    {
+      name: 'Haru',
+      src: 'Haru.png',
+    },
+    {
+      name: 'Hiyori',
+      src: 'Hiyori.png',
+    },
+    {
+      name: 'Mao',
+      src: 'Mao.png',
+    },
+    {
+      name: 'Mark',
+      src: 'Mark.png',
+    },
+    {
+      name: 'Natori',
+      src: 'Natori.png',
+    },
+    {
+      name: 'Rice',
+      src: 'Rice.png',
+    },
+    {
+      name: 'Wanko',
+      src: 'Wanko.png',
+    },
+  ];
+
+  const bgDatas = [
+    {
+      name: 'Class Room',
+      src: 'v_bg1.png',
+    },
+    {
+      name: 'Waiting Space',
+      src: 'v_bg2.jpg',
+    },
+    {
+      name: 'Office',
+      src: 'v_bg3.jpg',
+    },
+    {
+      name: 'Leisure Space',
+      src: 'v_bg4.jpg',
+    },
+    {
+      name: 'Meeting Room',
+      src: 'v_bg5.jpg',
+    },
+  ];
+
+  const items: TabsProps['items'] = [
+    {
+      key: 'model',
+      label: <TabItem type="model" label="Model"></TabItem>,
+      children: (
+        <div>
+          <List
+            grid={{
+              gutter: 16,
+              column: 3,
+            }}
+            dataSource={modelDatas}
+            renderItem={(item, index) => (
+              <List.Item>
+                <div
+                  className={styles.virtual_model_box}
+                  onClick={() => {
+                    set_model_selected_index(index);
+                  }}
+                >
+                  {model_selected_index == index && <SelectedMask></SelectedMask>}
+                  <h4>{item.name}</h4>
+                  <img
+                    src={`${process.env.NEXT_PUBLIC_BASE_PATH}/images/models/${item.src}`}
+                    alt=""
+                  />
+                </div>
+              </List.Item>
+            )}
+          />
+        </div>
+      ),
+    },
+    {
+      key: 'background',
+      label: <TabItem type="bg" label="Background"></TabItem>,
+      children: (
+        <div>
+          <List
+            grid={{
+              gutter: 16,
+              column: 3,
+            }}
+            dataSource={bgDatas}
+            renderItem={(item, index) => (
+              <List.Item>
+                <div
+                  className={styles.virtual_model_box}
+                  onClick={() => set_bg_selected_index(index)}
+                >
+                  {bg_selected_index == index && <SelectedMask></SelectedMask>}
+                  <h4>{item.name}</h4>
+                  <img src={`${process.env.NEXT_PUBLIC_BASE_PATH}/images/bg/${item.src}`} alt="" />
+                </div>
+              </List.Item>
+            )}
+          />
+        </div>
+      ),
+    },
+  ];
+
+  // 单次检测人脸，主要用于测试
+  const detectFace = async (videoele: HTMLVideoElement) => {
+    if (!detector_ready) {
+      await new Promise<void>((resolve) => {
+        const checkDetector = () => {
+          if (detector_ready) {
+            resolve();
+          } else {
+            console.log('等待检测器...');
+            setTimeout(checkDetector, 2000);
+          }
+        };
+        checkDetector();
+      });
+    }
+    try {
+      const detection = await faceapi.detectSingleFace(
+        videoele,
+        new faceapi.TinyFaceDetectorOptions(),
+      );
+
+      if (detection) {
+        console.log('检测到人脸', detection);
+        const { x, y, width, height } = detection.box;
+        const centerX = x + width / 2;
+        const centerY = y + height / 2;
+        return { centerX, centerY };
+      }
+    } catch (e) {
+      console.error('Failed to detect face:', e);
+    }
+    return null;
+  };
+
+  useEffect(() => {
+    const loadFaceDetection = async () => {
+      try {
+        await faceapi.loadTinyFaceDetectorModel(
+          `${process.env.NEXT_PUBLIC_BASE_PATH}/models/tiny_face_detector_model-weights_manifest.json`,
+        );
+        set_detector_ready(true);
+      } catch (error) {
+        messageApi.error('failed to load face detection model');
+      }
+    };
+    loadFaceDetection();
+    loadVideo(videoRef);
+    return () => {
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [loadVideo]);
+
+  return (
+    <div className={styles.virtual_settings}>
+      <div className={styles.virtual_settings_header}>
+        <span>Use Virtual Model:</span>
+        <Switch value={use} onClick={() => set_use(!use)}></Switch>
+      </div>
+      <div className={styles.virtual_video_box}>
+        <div className={styles.virtual_video_box_preview}>
+          <img
+            className={styles.virtual_video_box_preview_model}
+            src={`${process.env.NEXT_PUBLIC_BASE_PATH}/images/models/${modelDatas[model_selected_index].src}`}
+            alt=""
+          />
+          <img
+            className={styles.virtual_video_box_preview_bg}
+            src={`${process.env.NEXT_PUBLIC_BASE_PATH}/images/bg/${bgDatas[bg_selected_index].src}`}
+            alt=""
+          />
+        </div>
+        <button
+          className={styles.virtual_video_box_test_btn}
+          onClick={async () => {
+            // 执行一次人脸检测测试
+            if (videoRef.current && videoRef.current.readyState >= 2) {
+              const pos = await detectFace(videoRef.current);
+              if (pos) {
+                messageApi.success('success to detect face');
+              }
+            } else {
+              messageApi.error('video element is not ready');
+            }
+          }}
+        >
+          detect face
+        </button>
+        <video
+          ref={videoRef}
+          style={{
+            border: trackingActive ? '2px solid #22CCEE' : '2px solid #efefef',
+          }}
+          playsInline
+          muted
+        />
+      </div>
+      <Tabs tabPosition="top" items={items} style={{ width: '100%', height: '100%' }} />
+    </div>
+  );
+}
+
+function SelectedMask() {
+  return (
+    <div className={styles.selected_mask}>
+      <SvgResource type="check" svgSize={24} color="#44de4f"></SvgResource>
     </div>
   );
 }

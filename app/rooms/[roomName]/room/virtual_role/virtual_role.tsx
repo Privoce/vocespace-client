@@ -283,6 +283,7 @@ const Live2DComponent = () => {
           view: canvasele,
           resizeTo: window,
           autoStart: true,
+          transparent: true,
         });
         appRef.current = app;
         
@@ -294,10 +295,15 @@ const Live2DComponent = () => {
           // 加载模型
           console.log('开始加载 Live2D 模型...');
           const model: any = await Live2DModel.from(
-            `${process.env.NEXT_PUBLIC_BASE_PATH}/live2d_resources/Mao/Mao.model3.json`,
+            // `${process.env.NEXT_PUBLIC_BASE_PATH}/live2d_resources/Mao/Mao.model3.json`,
+            `${process.env.NEXT_PUBLIC_BASE_PATH}/live2d_resources/Wanko/Wanko.model3.json`,
             { autoInteract: false },
           );
-          
+
+          const bg = await PIXI.Sprite.from(`${process.env.NEXT_PUBLIC_BASE_PATH}/images/bg/v_bg1.png`);
+          bg.width = app.screen.width;
+          bg.height = app.screen.height;
+          app.stage.addChildAt(bg, 0);
           // 保存模型引用
           modelRef.current = model;
           
@@ -324,6 +330,8 @@ const Live2DComponent = () => {
           });
           // 添加窗口大小调整监听
           const resizeHandler = () => {
+            bg.width = app.screen.width;
+            bg.height = app.screen.height;
             model.position.set(app.screen.width / 2, app.screen.height / 2);
           };
 
@@ -383,21 +391,22 @@ const Live2DComponent = () => {
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
       {isLoading && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            background: 'rgba(0, 0, 0, 0.6)',
-            color: 'white',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            zIndex: 10,
-          }}
-        >
-          虚拟角色加载中...
-        </div>
+        // <div
+        //   style={{
+        //     position: 'absolute',
+        //     top: '50%',
+        //     left: '50%',
+        //     transform: 'translate(-50%, -50%)',
+        //     background: 'rgba(0, 0, 0, 0.6)',
+        //     color: 'white',
+        //     padding: '10px 20px',
+        //     borderRadius: '8px',
+        //     zIndex: 10,
+        //   }}
+        // >
+        //   {/* 虚拟角色加载中... */}
+        // </div>
+        <div></div>
       )}
 
       {error && (

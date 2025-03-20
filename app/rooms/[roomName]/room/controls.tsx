@@ -245,7 +245,7 @@ export function Controls({
         placement="right"
         closable={false}
         onClose={close_setting}
-        width={'46%'}
+        width={'640px'}
         open={setting_visible}
         extra={setting_drawer_header({
           on_clicked: () => set_setting_visible(false),
@@ -253,6 +253,7 @@ export function Controls({
       >
         <div className={styles.setting_container}>
           <Settings
+            messageApi={messageApi}
             microphone={{
               audio: {
                 volume: volume,

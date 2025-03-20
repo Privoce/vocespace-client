@@ -63,6 +63,7 @@ export function ParticipantItem({
   // [states] -----------------------------------------------------------------
   const [audio_enabled, set_audio_enabled] = useState(userChoices.audioEnabled);
   const [video_enabled, set_video_enabled] = useState(userChoices.videoEnabled);
+  const [virtual, set_virtual] = useState(true);
   const [is_focus, set_is_focus] = useState(false);
   const isEncrypted = useIsEncrypted(trackRef?.participant);
   const add_derivce_settings = useMemo(() => {
@@ -223,15 +224,24 @@ export function ParticipantItem({
   return (
     <ParticipantTile {...htmlProps} className={styles.tile} ref={ref}>
       {isTrackReference(trackReference) &&
+      trackReference.source == Track.Source.Camera &&
+      video_enabled &&
+      !virtual && (
+        <VideoTrack
+          ref={video_track_ref}
+          trackRef={trackReference}
+          style={{
+            filter: `blur(${blurValue}px)`,
+          }}
+        ></VideoTrack>
+      )}
+      {isTrackReference(trackReference) &&
         trackReference.source == Track.Source.Camera &&
-        video_enabled && (
-          <VideoTrack
-            ref={video_track_ref}
-            trackRef={trackReference}
-            style={{
-              filter: `blur(${blurValue}px)`,
-            }}
-          ></VideoTrack>
+        video_enabled &&
+        virtual && (
+          <div style={{ height: '100%', width: '100%' }}>
+            <VirtualRoleCanvas></VirtualRoleCanvas>
+          </div>
         )}
       {isTrackReference(trackReference) &&
         trackReference.source == Track.Source.ScreenShare &&
@@ -244,10 +254,9 @@ export function ParticipantItem({
             }}
           ></VideoTrack>
         )}
-      {/* className="lk-participant-placeholder" style={{height: '100%', width: '100%'}} */}
+      {/* className="lk-participant-placeholder"  */}
       <div className="lk-participant-placeholder">
         <ParticipantPlaceholder />
-        {/* <VirtualRoleCanvas></VirtualRoleCanvas> */}
       </div>
       <div className="lk-participant-metadata">
         <div className="lk-participant-metadata-item">
