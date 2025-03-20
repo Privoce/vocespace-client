@@ -39,8 +39,17 @@
 }
 
 .status_item{
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 8px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    span{
+        margin-left: 8px;
+    }
+    div{
+        width: 100%;
+        height: fit-content;
+        margin-left: 24px;
+        font-size: 12px;
+    }
 }

@@ -34,11 +34,10 @@ import { publisher, SubjectKey, subscriber } from '@/lib/std/chanel';
 import styles from '@/styles/participant.module.scss';
 import { use_add_user_device } from '@/lib/hooks/store/user_choices';
 import { AddDeviceInfo, State, useVideoBlur } from '@/lib/std/device';
-import { SvgResource } from '../../pre_join/resources';
+import { SvgResource, SvgType } from '../../pre_join/resources';
 import { Badge, Dropdown, MenuProps } from 'antd';
 import { PresetStatusColorType } from 'antd/es/_util/colors';
 import VirtualRoleCanvas from '../virtual_role/live2d';
-
 
 interface ParticipantItemProps extends HTMLAttributes<HTMLDivElement> {
   trackRef?: TrackReferenceOrPlaceholder;
@@ -179,37 +178,43 @@ export function ParticipantItem({
     console.log('audio_enabled 状态实际变化为:', audio_enabled);
   }, [audio_enabled]);
   // [status] ------------------------------------------------------------
-  const [my_status, set_my_status] = useState<PresetStatusColorType>('success');
+  const [my_status, set_my_status] = useState<SvgType>('online_dot');
   const status_menu: MenuProps['items'] = [
     {
-      key: 'success',
+      key: 'online_dot',
       label: (
         <div className={styles.status_item}>
-          <Badge status="success" text="online" />
+          <SvgResource type="online_dot" svgSize={14}></SvgResource>
+          <span>Online</span>
         </div>
       ),
     },
     {
-      key: 'warning',
+      key: 'offline_dot',
       label: (
         <div className={styles.status_item}>
-          <Badge status="warning" text="idle" />
+          <SvgResource type="offline_dot" svgSize={14}></SvgResource>
+          <span>Idle</span>
         </div>
       ),
     },
     {
-      key: 'error',
+      key: 'busy_dot',
       label: (
         <div className={styles.status_item}>
-          <Badge status="error" text="bussy, do not disturb" />
+          <SvgResource type="busy_dot" svgSize={14}></SvgResource>
+          <span>Bussy, do not disturb</span>
+          <div>You will not receive any notifications.</div>
         </div>
       ),
     },
     {
-      key: 'default',
+      key: 'away_dot',
       label: (
         <div className={styles.status_item}>
-          <Badge status="default" color="#ddd" text="invisible" />
+          <SvgResource type="away_dot" svgSize={14}></SvgResource>
+          <span>Invisible</span>
+          <div>You will not appear online, but you can use all Vocespace features.</div>
         </div>
       ),
     },
@@ -239,10 +244,10 @@ export function ParticipantItem({
             }}
           ></VideoTrack>
         )}
-        {/* className="lk-participant-placeholder" */}
-      <div style={{height: '100%', width: '100%'}}>
-        {/* <ParticipantPlaceholder /> */}
-        <VirtualRoleCanvas></VirtualRoleCanvas>
+      {/* className="lk-participant-placeholder" style={{height: '100%', width: '100%'}} */}
+      <div className="lk-participant-placeholder">
+        <ParticipantPlaceholder />
+        {/* <VirtualRoleCanvas></VirtualRoleCanvas> */}
       </div>
       <div className="lk-participant-metadata">
         <div className="lk-participant-metadata-item">
@@ -269,14 +274,12 @@ export function ParticipantItem({
               placement="topLeft"
               menu={{
                 items: status_menu,
-                onClick: (e) => set_my_status(e.key as PresetStatusColorType),
+                onClick: (e) => set_my_status(e.key as SvgType),
               }}
             >
-              {my_status == 'default' ? (
-                <Badge dot status={my_status} color="#ddd" />
-              ) : (
-                <Badge dot status={my_status} />
-              )}
+              <div className={styles.status_item}>
+                <SvgResource type={my_status} svgSize={14}></SvgResource>
+              </div>
             </Dropdown>
           </div>
         </div>

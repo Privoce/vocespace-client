@@ -19,10 +19,11 @@ import { ConnectionState, Room, Track } from 'livekit-client';
 import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 import { publisher, subject_map, SubjectKey, subscriber } from '@/lib/std/chanel';
 import { SettingToggle } from './controls/setting_toggle';
-import { Button, Drawer, message, Modal, Slider } from 'antd';
+import { Button, Drawer, message, Modal, Slider, Tabs } from 'antd';
 import { SvgResource } from '../pre_join/resources';
 import { use_add_user_device, use_stored_set } from '@/lib/hooks/store/user_choices';
 import { AddDeviceInfo, State, useVideoBlur } from '@/lib/std/device';
+import { Settings } from './controls/settings';
 
 export function Controls({
   room,
@@ -239,62 +240,38 @@ export function Controls({
         </DisconnectButton>
       </div>
       <Drawer
-        style={{ backgroundColor: '#1e1e1e', padding: 0 }}
+        style={{ backgroundColor: '#1e1e1e', padding: 0, margin: 0 }}
         title="Settings"
         placement="right"
         closable={false}
         onClose={close_setting}
-        width={'40%'}
+        width={'46%'}
         open={setting_visible}
         extra={setting_drawer_header({
           on_clicked: () => set_setting_visible(false),
         })}
       >
         <div className={styles.setting_container}>
-          <div className={styles.setting_box}>
-            <div>Microphone volume:</div>
-            <Slider
-              defaultValue={volume}
-              className={styles.common_space}
-              onChange={(e) => {
-                set_volume(e);
-                save_changes(false);
-              }}
-            />
-          </div>
-
-          <div className={styles.setting_box}>
-            <span>Video Blur:</span>
-            <Slider
-              defaultValue={0.15}
-              className={`${styles.common_space} ${styles.slider}`}
-              value={video_blur}
-              min={0.0}
-              max={1.0}
-              step={0.05}
-              onChange={(e) => {
-                set_video_blur(e);
-                setVideoBlur(e);
-                save_changes(false);
-              }}
-            />
-          </div>
-          <div className={styles.setting_box}>
-            <span>Screen Blur:</span>
-            <Slider
-              defaultValue={0.15}
-              className={`${styles.common_space} ${styles.slider}`}
-              value={screen_blur}
-              min={0.0}
-              max={1.0}
-              step={0.05}
-              onChange={(e) => {
-                set_screen_blur(e);
-                setVideoBlur(e);
-                save_changes(false);
-              }}
-            />
-          </div>
+          <Settings
+            microphone={{
+              audio: {
+                volume: volume,
+                set_volume: set_volume,
+              },
+            }}
+            camera={{
+              video: {
+                blur: video_blur,
+                set_video_blur: set_video_blur,
+              },
+              screen: {
+                blur: screen_blur,
+                set_screen_blur: set_screen_blur,
+              },
+              set_blur: setVideoBlur,
+            }}
+            save_changes={save_changes}
+          ></Settings>
           <div className={styles.setting_container_footer}>
             <Button type="primary" onClick={() => save_changes(true)}>
               Save Changes
