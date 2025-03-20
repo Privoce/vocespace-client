@@ -1,0 +1,25 @@
+.virtual_role {
+  height: 100%;
+  width: 100%;
+  position: relative;
+  &_msgbox {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.6);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    z-index: 10;
+  }
+  video {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 160px;
+    height: 120px;
+    z-index: 20;
+    visibility: hidden;
+  }
+}

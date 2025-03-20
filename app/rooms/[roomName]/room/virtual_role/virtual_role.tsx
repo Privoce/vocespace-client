@@ -18,7 +18,9 @@ const Live2DComponent = () => {
   const [trackingActive, setTrackingActive] = useState(false);
   const [lastDetectionAt, setLastDetectionAt] = useState<number | null>(null);
   const [screenSize, setScreenSize] = useState({ width: 0, height: 0 });
-
+  const [lastPosition, setLastPosition] = useState<{x: number, y: number} | null>(null);
+  const smoothnessFactorRef = useRef(0.25); // 添加平滑过渡因子 (0-1之间，越小越平滑)
+  
   // 实现连续头部追踪的函数
   const startFaceTracking = (model: any, videoElement: HTMLVideoElement) => {
     // 如果已经有追踪在进行，先停止它
@@ -40,39 +42,64 @@ const Live2DComponent = () => {
 
       // 限制检测频率，减少资源占用
       const now = Date.now();
-      if (!lastDetectionAt || now - lastDetectionAt > 100) { // 每200ms检测一次
+      if (!lastDetectionAt || now - lastDetectionAt > 100) {
+        // 每100ms检测一次
         try {
           const detection = await faceapi.detectSingleFace(
             videoElement,
-            new faceapi.TinyFaceDetectorOptions()
-          );
+            new faceapi.TinyFaceDetectorOptions(),
+          )
+          .withFaceLandmarks();
 
           if (detection) {
-            const { x, y, width, height } = detection.box;
-            
-            // 计算脸部中心点
-            const centerX = x + width / 2;
-            const centerY = y + height / 2;
-            
-            // 归一化坐标 (-1 到 1 的范围)
-            const normalizedX = ((centerX / videoElement.videoWidth) * 2) - 1;
-            const normalizedY = ((centerY / videoElement.videoHeight) * 2) - 1;
-            
-            // // 将归一化坐标应用于模型
-            // console.log('检测到人脸, 归一化坐标:', { x: normalizedX, y: normalizedY });
-            // model.focus(normalizedX, -normalizedY); // Y轴需要反转
-            // console.log("检测到人脸，坐标:", centerX, centerY);
-            // model.focus(centerX, centerY);
+            setIsLoading(false);
+            const landmarks = detection.landmarks;
+            const leftEye = landmarks.getLeftEye();
+            const rightEye = landmarks.getRightEye();
+            const nose = landmarks.getNose();
+           // 计算眼睛中心点 (取左右眼和鼻尖三点加权平均)
+           const leftEyeCenter = {
+            x: leftEye.reduce((sum, point) => sum + point.x, 0) / leftEye.length,
+            y: leftEye.reduce((sum, point) => sum + point.y, 0) / leftEye.length
+          };
+          
+          const rightEyeCenter = {
+            x: rightEye.reduce((sum, point) => sum + point.x, 0) / rightEye.length,
+            y: rightEye.reduce((sum, point) => sum + point.y, 0) / rightEye.length
+          };
+          
+          const noseTip = nose[nose.length - 1];
+           
+          // 计算加权中心点 (眼睛位置权重较高)
+          const centerX = (leftEyeCenter.x * 0.35 + rightEyeCenter.x * 0.35 + noseTip.x * 0.3);
+          const centerY = (leftEyeCenter.y * 0.4 + rightEyeCenter.y * 0.4 + noseTip.y * 0.2);
 
+          // 归一化坐标 (-1 到 1 的范围)
+          const normalizedX = (centerX / videoElement.videoWidth) * 2 - 1;
+          const normalizedY = (centerY / videoElement.videoHeight) * 2 - 1;
 
-            // 将归一化坐标与ScreenSize结合转为真实坐标
-            const realX = normalizedX * screenSize.width / 2 + screenSize.width / 2;
-            const realY = -normalizedY * screenSize.height / 2 + screenSize.height / 2;
-            model.focus(realX, realY);
-            console.log("检测到人脸，坐标:", realX, realY);
-
+          // 将归一化坐标与ScreenSize结合转为真实坐标
+          let realX = (normalizedX * screenSize.width) / 2 + screenSize.width / 2;
+          let realY = (-normalizedY * screenSize.height) / 2 + screenSize.height / 2;
+          
+          // 添加平滑过渡
+          if (lastPosition) {
+            const smoothness = smoothnessFactorRef.current;
+            realX = lastPosition.x * (1 - smoothness) + realX * smoothness;
+            realY = lastPosition.y * (1 - smoothness) + realY * smoothness;
           }
           
+          // 保存当前位置用于下次平滑计算
+          setLastPosition({ x: realX, y: realY });
+
+           // 添加轻微的自然偏移来模拟人眼微动
+           const microMovementX = Math.sin(Date.now() / 2000) * 5;
+           const microMovementY = Math.cos(Date.now() / 2500) * 3;
+           
+           // 应用focus
+           model.focus(realX + microMovementX, realY + microMovementY);
+          }
+
           setLastDetectionAt(now);
         } catch (e) {
           console.error('人脸检测过程中出错:', e);
@@ -142,8 +169,12 @@ const Live2DComponent = () => {
         console.log('开始加载人脸检测模型...');
         await faceapi.loadTinyFaceDetectorModel(
           `${process.env.NEXT_PUBLIC_BASE_PATH}/models/tiny_face_detector_model-weights_manifest.json`,
+          
         );
-        console.log('人脸检测模型加载成功');
+        await faceapi.loadFaceLandmarkModel(
+          `${process.env.NEXT_PUBLIC_BASE_PATH}/models/face_landmark_68_model-weights_manifest.json`,
+        );
+
         setDetectorReady(true);
       } catch (error) {
         console.error('加载人脸检测模型失败:', error);
@@ -175,7 +206,7 @@ const Live2DComponent = () => {
 
       document.head.appendChild(script);
     };
-    
+
     const loadVideo = async () => {
       if (!videoRef.current) {
         console.error('视频元素不可用');
@@ -253,11 +284,11 @@ const Live2DComponent = () => {
         cancelAnimationFrame(trackingRef.current);
         trackingRef.current = null;
       }
-      
+
       // 停止视频流
       if (videoRef.current && videoRef.current.srcObject) {
         const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
       }
     };
   }, []);
@@ -277,7 +308,7 @@ const Live2DComponent = () => {
 
         Live2DModel.registerTicker(PIXI.Ticker);
         const canvasele = document.getElementById('virtual_role_canvas') as HTMLCanvasElement;
-        
+
         // 初始化 PIXI 应用
         const app = new PIXI.Application({
           view: canvasele,
@@ -286,7 +317,7 @@ const Live2DComponent = () => {
           transparent: true,
         });
         appRef.current = app;
-        
+
         let cleanup = () => {};
 
         setIsLoading(true);
@@ -295,24 +326,25 @@ const Live2DComponent = () => {
           // 加载模型
           console.log('开始加载 Live2D 模型...');
           const model: any = await Live2DModel.from(
-            // `${process.env.NEXT_PUBLIC_BASE_PATH}/live2d_resources/Mao/Mao.model3.json`,
-            `${process.env.NEXT_PUBLIC_BASE_PATH}/live2d_resources/Wanko/Wanko.model3.json`,
+            `${process.env.NEXT_PUBLIC_BASE_PATH}/live2d_resources/Mao/Mao.model3.json`,
             { autoInteract: false },
           );
 
-          const bg = await PIXI.Sprite.from(`${process.env.NEXT_PUBLIC_BASE_PATH}/images/bg/v_bg1.png`);
+          const bg = await PIXI.Sprite.from(
+            `${process.env.NEXT_PUBLIC_BASE_PATH}/images/bg/v_bg1.png`,
+          );
           bg.width = app.screen.width;
           bg.height = app.screen.height;
           app.stage.addChildAt(bg, 0);
           // 保存模型引用
           modelRef.current = model;
-          
+
           // 设置口型同步
           const motionSync = new MotionSync(model.internalModel);
           motionSync.loadMotionSyncFromUrl(
             `${process.env.NEXT_PUBLIC_BASE_PATH}/live2d_resources/Mao/sample_01.motion3.json`,
           );
-          
+
           // 获取音频流用于口型同步
           const mediaStream = await navigator.mediaDevices.getUserMedia({
             audio: true,
@@ -336,21 +368,21 @@ const Live2DComponent = () => {
           };
 
           window.addEventListener('resize', resizeHandler);
-          
+
           // 开始连续的头部追踪
           if (videoRef.current) {
             // 先进行一次单次检测测试
             const pos = await detectFace(videoRef.current);
             if (pos) {
-              console.log("初始人脸位置:", pos);
+              console.log('初始人脸位置:', pos);
               // 使用原始坐标测试
               model.focus(pos.centerX, pos.centerY);
             }
-            
+
             // 然后开始连续追踪
-            console.log("开始连续头部追踪");
+            console.log('开始连续头部追踪');
             const stopTracking = startFaceTracking(model, videoRef.current);
-            
+
             // 将停止追踪函数添加到清理函数中
             const originalCleanup = cleanup;
             cleanup = () => {
@@ -365,7 +397,7 @@ const Live2DComponent = () => {
             app.destroy(true);
             motionSync.reset();
             mediaStream.getTracks().forEach((track) => track.stop());
-            
+
             // 确保停止追踪
             if (trackingRef.current !== null) {
               cancelAnimationFrame(trackingRef.current);
@@ -387,26 +419,31 @@ const Live2DComponent = () => {
 
     return () => clearTimeout(timer);
   }, [scriptLoaded]);
+  // 新增自动追踪触发效果
+  useEffect(() => {
+    if (detectorReady && modelRef.current && videoRef.current && !trackingActive) {
+      startFaceTracking(modelRef.current, videoRef.current);
+    }
+  }, [detectorReady, modelRef.current, videoRef.current]);
 
   return (
     <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
       {isLoading && (
-        // <div
-        //   style={{
-        //     position: 'absolute',
-        //     top: '50%',
-        //     left: '50%',
-        //     transform: 'translate(-50%, -50%)',
-        //     background: 'rgba(0, 0, 0, 0.6)',
-        //     color: 'white',
-        //     padding: '10px 20px',
-        //     borderRadius: '8px',
-        //     zIndex: 10,
-        //   }}
-        // >
-        //   {/* 虚拟角色加载中... */}
-        // </div>
-        <div></div>
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            background: 'rgba(0, 0, 0, 0.6)',
+            color: 'white',
+            padding: '10px 20px',
+            borderRadius: '8px',
+            zIndex: 10,
+          }}
+        >
+          虚拟角色加载中...
+        </div>
       )}
 
       {error && (
@@ -428,12 +465,12 @@ const Live2DComponent = () => {
           {error}
         </div>
       )}
-      
+
       <canvas
         id="virtual_role_canvas"
         style={{ height: '100%', width: '100%', position: 'absolute' }}
       ></canvas>
-      
+
       <video
         ref={videoRef}
         style={{
@@ -448,16 +485,16 @@ const Live2DComponent = () => {
         playsInline
         muted
       />
-      
+
       {/* 添加控制按钮 */}
-      <div 
-        style={{ 
-          position: 'absolute', 
-          left: '10px', 
-          bottom: '10px', 
+      <div
+        style={{
+          position: 'absolute',
+          left: '10px',
+          bottom: '10px',
           zIndex: 30,
           display: 'flex',
-          gap: '8px'
+          gap: '8px',
         }}
       >
         <button
@@ -489,7 +526,7 @@ const Live2DComponent = () => {
         >
           {trackingActive ? '停止头部追踪' : '开始头部追踪'}
         </button>
-        
+
         <button
           style={{
             padding: '8px 12px',
@@ -503,12 +540,12 @@ const Live2DComponent = () => {
             // 执行一次人脸检测测试
             if (videoRef.current) {
               const pos = await detectFace(videoRef.current);
-              
+
               if (pos && modelRef.current) {
                 // 归一化坐标
-                const normalizedX = ((pos.centerX / videoRef.current.videoWidth) * 2) - 1;
-                const normalizedY = ((pos.centerY / videoRef.current.videoHeight) * 2) - 1;
-                
+                const normalizedX = (pos.centerX / videoRef.current.videoWidth) * 2 - 1;
+                const normalizedY = (pos.centerY / videoRef.current.videoHeight) * 2 - 1;
+
                 modelRef.current.focus(normalizedX, -normalizedY);
                 alert(`检测到人脸，坐标: (${normalizedX.toFixed(2)}, ${normalizedY.toFixed(2)})`);
               } else {
@@ -522,7 +559,7 @@ const Live2DComponent = () => {
           测试人脸检测
         </button>
       </div>
-      
+
       {/* 状态显示 */}
       <div
         style={{
