@@ -35,9 +35,10 @@ import styles from '@/styles/participant.module.scss';
 import { use_add_user_device } from '@/lib/hooks/store/user_choices';
 import { AddDeviceInfo, State, useVideoBlur } from '@/lib/std/device';
 import { SvgResource, SvgType } from '../../pre_join/resources';
-import { Badge, Dropdown, MenuProps } from 'antd';
+import { Badge, Dropdown, Input, MenuProps, Modal } from 'antd';
 import { PresetStatusColorType } from 'antd/es/_util/colors';
 import VirtualRoleCanvas from '../virtual_role/live2d';
+import { HookAPI } from 'antd/es/modal/useModal';
 
 interface ParticipantItemProps extends HTMLAttributes<HTMLDivElement> {
   trackRef?: TrackReferenceOrPlaceholder;
@@ -46,14 +47,16 @@ interface ParticipantItemProps extends HTMLAttributes<HTMLDivElement> {
 export function ParticipantItem({
   trackRef,
   ref,
+  open_settings,
   ...htmlProps
-}: ParticipantItemProps & RefAttributes<HTMLDivElement>) {
+}: ParticipantItemProps & RefAttributes<HTMLDivElement> & { open_settings: () => void }) {
   const {
     userChoices,
     saveAudioInputEnabled,
     saveVideoInputEnabled,
     saveAudioInputDeviceId,
     saveVideoInputDeviceId,
+    saveUsername,
   } = usePersistentUserChoices({ preventSave: false, preventLoad: false });
   const room = useMaybeRoomContext();
   // [refs] ------------------------------------------------------------------
@@ -180,6 +183,20 @@ export function ParticipantItem({
   }, [audio_enabled]);
   // [status] ------------------------------------------------------------
   const [my_status, set_my_status] = useState<SvgType>('online_dot');
+  const set_status_label = (): String => {
+    switch (my_status) {
+      case 'online_dot':
+        return 'Online';
+      case 'offline_dot':
+        return 'Idle';
+      case 'busy_dot':
+        return 'Bussy, do not disturb';
+      case 'away_dot':
+        return 'Invisible';
+      default:
+        return 'Online';
+    }
+  };
   const status_menu: MenuProps['items'] = [
     {
       key: 'online_dot',
@@ -221,20 +238,57 @@ export function ParticipantItem({
     },
   ];
 
+  const to_rename_user = () => {
+    open_settings();
+  };
+
+  const user_menu: MenuProps['items'] = [
+    {
+      key: 'user_info',
+      label: (
+        <div className={styles.user_info_wrap} onClick={to_rename_user}>
+          <div className={styles.user_info_wrap_name}>{trackReference.participant.name}</div>
+          <SvgResource type="modify" svgSize={14} color="#fff"></SvgResource>
+          {/* <div className={styles.user_info_wrap_identity}>{trackReference.participant.identity}</div> */}
+        </div>
+      ),
+    },
+    {
+      key: 'user_status',
+      label: (
+        <Dropdown
+          placement="topLeft"
+          menu={{
+            items: status_menu,
+            onClick: (e) => set_my_status(e.key as SvgType),
+          }}
+        >
+          <div className={styles.status_item_inline} style={{ width: '100%' }}>
+            <div className={styles.status_item_inline}>
+              <SvgResource type={my_status} svgSize={14}></SvgResource>
+              <div>{set_status_label()}</div>
+            </div>
+            <SvgResource type="right" svgSize={14} color="#fff"></SvgResource>
+          </div>
+        </Dropdown>
+      ),
+    },
+  ];
+
   return (
     <ParticipantTile {...htmlProps} className={styles.tile} ref={ref}>
       {isTrackReference(trackReference) &&
-      trackReference.source == Track.Source.Camera &&
-      video_enabled &&
-      !virtual && (
-        <VideoTrack
-          ref={video_track_ref}
-          trackRef={trackReference}
-          style={{
-            filter: `blur(${blurValue}px)`,
-          }}
-        ></VideoTrack>
-      )}
+        trackReference.source == Track.Source.Camera &&
+        video_enabled &&
+        !virtual && (
+          <VideoTrack
+            ref={video_track_ref}
+            trackRef={trackReference}
+            style={{
+              filter: `blur(${blurValue}px)`,
+            }}
+          ></VideoTrack>
+        )}
       {isTrackReference(trackReference) &&
         trackReference.source == Track.Source.Camera &&
         video_enabled &&
@@ -259,39 +313,41 @@ export function ParticipantItem({
         <ParticipantPlaceholder />
       </div>
       <div className="lk-participant-metadata">
-        <div className="lk-participant-metadata-item">
-          {trackReference.source === Track.Source.Camera ? (
-            <>
-              {isEncrypted && <LockLockedIcon style={{ marginRight: '0.25rem' }} />}
-              <TrackMutedIndicator
-                trackRef={{
-                  participant: trackReference.participant,
-                  source: Track.Source.Microphone,
-                }}
-                show={'muted'}
-              ></TrackMutedIndicator>
-              <ParticipantName />
-            </>
-          ) : (
-            <>
-              <ScreenShareIcon style={{ marginRight: '0.25rem' }} />
-              <ParticipantName>&apos;s screen</ParticipantName>
-            </>
-          )}
-          <div className={styles.status_wrap}>
-            <Dropdown
-              placement="topLeft"
-              menu={{
-                items: status_menu,
-                onClick: (e) => set_my_status(e.key as SvgType),
-              }}
-            >
+        <Dropdown
+          placement="topLeft"
+          trigger={['click']}
+          menu={{
+            items: user_menu,
+          }}
+          disabled={trackReference.participant.identity != room?.localParticipant.identity}
+        >
+          <div className="lk-participant-metadata-item">
+            {trackReference.source === Track.Source.Camera ? (
+              <>
+                {isEncrypted && <LockLockedIcon style={{ marginRight: '0.25rem' }} />}
+                <TrackMutedIndicator
+                  trackRef={{
+                    participant: trackReference.participant,
+                    source: Track.Source.Microphone,
+                  }}
+                  show={'muted'}
+                ></TrackMutedIndicator>
+                <ParticipantName />
+              </>
+            ) : (
+              <>
+                <ScreenShareIcon style={{ marginRight: '0.25rem' }} />
+                <ParticipantName>&apos;s screen</ParticipantName>
+              </>
+            )}
+            <div className={styles.status_wrap}>
               <div className={styles.status_item}>
                 <SvgResource type={my_status} svgSize={14}></SvgResource>
               </div>
-            </Dropdown>
+            </div>
           </div>
-        </div>
+        </Dropdown>
+
         <ConnectionQualityIndicator className="lk-participant-metadata-item" />
       </div>
       <LayoutContext.Consumer>

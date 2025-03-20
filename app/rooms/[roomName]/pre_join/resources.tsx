@@ -20,7 +20,9 @@ export type SvgType =
   | 'away_dot'
   | 'model'
   | 'bg'
-  | 'check';
+  | 'check'
+  | 'right'
+  | 'modify';
 
 export function SvgResource({
   type,
@@ -451,6 +453,48 @@ export function SvgResource({
             d="M890.88 179.2c30.72-28.16 76.8-30.72 107.52-2.56 30.72 28.16 33.28 74.24 7.68 107.52l-7.68 10.24L430.08 844.8c-28.16 28.16-71.68 30.72-102.4 5.12l-7.68-5.12L25.6 558.08c-30.72-28.16-33.28-76.8-7.68-107.52 28.16-33.28 74.24-35.84 107.52-10.24l7.68 5.12 240.64 232.96L890.88 179.2z m0 0"
             fill={color}
             p-id="3605"
+          ></path>
+        </svg>
+      );
+    case 'right':
+      return (
+        <svg
+          viewBox="0 0 1024 1024"
+          version="1.1"
+          xmlns="http://www.w3.org/2000/svg"
+          p-id="2897"
+          width={svgSize}
+          height={svgSize}
+        >
+          <path
+            d="M612.2752 512l-313.344 309.7088a58.0352 58.0352 0 0 0 0 82.752 59.6864 59.6864 0 0 0 83.7248 0l355.2-351.0912a58.0352 58.0352 0 0 0 0-82.7392l-355.2-351.104a59.6864 59.6864 0 0 0-83.712 0 58.0352 58.0352 0 0 0 0 82.7648L612.288 512z"
+            fill={color}
+            p-id="2898"
+          ></path>
+        </svg>
+      );
+    case 'modify':
+      return (
+        <svg
+          viewBox="0 0 1024 1024"
+          version="1.1"
+          xmlns="http://www.w3.org/2000/svg"
+          p-id="4831"
+          width={svgSize}
+          height={svgSize}
+        >
+          <path d="M989 984" p-id="4832"></path>
+          <path
+            d="M989 1006 35 1006c-17.673 0-32-14.327-32-32s14.327-32 32-32l954 0c17.673 0 32 14.327 32 32S1006.673 1006 989 1006z"
+            p-id="4833"
+            fill={color}
+          ></path>
+          <path d="M19 948 92 736 297 949Z" p-id="4834" fill={color}></path>
+          <path d="M150 665 352 874 796 431 592 226Z" p-id="4835" fill={color}></path>
+          <path
+            d="M659 148l202 202 58-60c0 0 22-32 15-57S801 97 787 83s-41-12-71 13S659 148 659 148z"
+            p-id="4836"
+            fill={color}
           ></path>
         </svg>
       );

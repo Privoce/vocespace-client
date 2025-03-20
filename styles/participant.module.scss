@@ -43,6 +43,12 @@
     align-items: center;
     justify-content: flex-start;
     flex-wrap: wrap;
+    &_inline{
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+    }
     span{
         margin-left: 8px;
     }
@@ -51,5 +57,21 @@
         height: fit-content;
         margin-left: 24px;
         font-size: 12px;
+    }
+}
+
+.user_info_wrap{
+    width: 200px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px;
+    &_name{
+        font-weight: 700;
+        font-size: 14px;
+    }
+    &_identity{
+        font-size: 14px;
+        font-weight: 500;
     }
 }

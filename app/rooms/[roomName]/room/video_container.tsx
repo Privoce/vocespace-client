@@ -20,7 +20,7 @@ import { AudioRenderer } from './audio_renderer';
 import { useEffect, useRef, useState } from 'react';
 import { Participant, Room, RoomEvent, Track } from 'livekit-client';
 import { CollapseProps } from 'antd';
-import { Controls } from './controls';
+import { Controls, ControlsExports } from './controls';
 import { RoomList } from './panel/room_list';
 import { ParticipantItem } from './panel/participant';
 import { UserItemProp } from '@/lib/std';
@@ -42,7 +42,9 @@ export function VideoContainer({
   });
   const lastAutoFocusedScreenShareTrack = useRef<TrackReferenceOrPlaceholder | null>(null);
   const room = useMaybeRoomContext();
+  // [refs] -------------------------------------------------------------------
   const participant_item_ref = useRef<HTMLDivElement>(null);
+  const control_ref = useRef<ControlsExports>(null);
   // [tracks] -------------------------------------------------------------------
   const tracks = useTracks(
     [
@@ -130,6 +132,13 @@ export function VideoContainer({
       children: <RoomList data={[]}></RoomList>,
     },
   ];
+
+  const open_settings = () => {
+    if (control_ref.current) {
+      control_ref.current.set_setting_visible(true);
+    }
+  };
+
   return (
     <div className="lk-video-conference" {...props}>
       {is_web && (
@@ -142,18 +151,25 @@ export function VideoContainer({
             {!focusTrack ? (
               <div className="lk-grid-layout-wrapper">
                 <GridLayout tracks={tracks}>
-                  <ParticipantItem ref={participant_item_ref}></ParticipantItem>
+                  <ParticipantItem
+                    ref={participant_item_ref}
+                    open_settings={open_settings}
+                  ></ParticipantItem>
                 </GridLayout>
               </div>
             ) : (
               <div className="lk-focus-layout-wrapper">
                 <FocusLayoutContainer>
                   <CarouselLayout tracks={carouselTracks}>
-                    <ParticipantItem ref={participant_item_ref}></ParticipantItem>
+                    <ParticipantItem
+                      ref={participant_item_ref}
+                      open_settings={open_settings}
+                    ></ParticipantItem>
                   </CarouselLayout>
                   {focusTrack && (
                     <FocusLayout trackRef={focusTrack}>
                       <ParticipantItem
+                        open_settings={open_settings}
                         ref={participant_item_ref}
                         style={{
                           height: '100%',
@@ -169,6 +185,7 @@ export function VideoContainer({
             )}
             {room && (
               <Controls
+                ref={control_ref}
                 room={room}
                 controls={{ chat: true, settings: !!SettingsComponent }}
               ></Controls>

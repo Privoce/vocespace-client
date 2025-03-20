@@ -1,4 +1,4 @@
-import { Card, List, message, Slider, Switch, Tabs, TabsProps } from 'antd';
+import { Card, Input, List, message, Slider, Switch, Tabs, TabsProps } from 'antd';
 import { SvgResource, SvgType } from '../../pre_join/resources';
 import styles from '@/styles/controls.module.scss';
 import { useEffect, useRef, useState } from 'react';
@@ -24,6 +24,10 @@ export interface SettingsProps {
     };
     set_blur: (e: number) => void;
   };
+  user: {
+    username: string;
+    save_username: (e: string) => void;
+  };
   save_changes: (e: boolean) => void;
   messageApi: MessageInstance;
 }
@@ -37,14 +41,27 @@ export function Settings({
     screen: { blur: screen_blur, set_screen_blur },
     set_blur,
   },
+  user,
   save_changes,
   messageApi,
 }: SettingsProps) {
+  const [username, set_username] = useState(user.username);
   const items: TabsProps['items'] = [
     {
       key: 'common',
       label: <TabItem type="setting" label="Common"></TabItem>,
-      children: <div></div>,
+      children: (
+        <div className={styles.setting_box}>
+          <div>username:</div>
+          <Input
+            className={styles.common_space}
+            value={username}
+            onChange={(e: any) => {
+              set_username(e.target.value);
+            }}
+          ></Input>
+        </div>
+      ),
     },
     {
       key: 'audio',
@@ -339,7 +356,7 @@ export function VirtualSettings({ messageApi }: { messageApi: MessageInstance })
     return () => {
       if (videoRef.current && videoRef.current.srcObject) {
         const stream = videoRef.current.srcObject as MediaStream;
-        stream.getTracks().forEach(track => track.stop());
+        stream.getTracks().forEach((track) => track.stop());
       }
     };
   }, [loadVideo]);
@@ -388,7 +405,12 @@ export function VirtualSettings({ messageApi }: { messageApi: MessageInstance })
           muted
         />
       </div>
-      <Tabs tabPosition="top" items={items} style={{ width: '100%', height: '100%' }} />
+      <Tabs
+        defaultActiveKey="common"
+        tabPosition="top"
+        items={items}
+        style={{ width: '100%', height: '100%' }}
+      />
     </div>
   );
 }
