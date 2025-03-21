@@ -66,7 +66,7 @@ export function ParticipantItem({
   // [states] -----------------------------------------------------------------
   const [audio_enabled, set_audio_enabled] = useState(userChoices.audioEnabled);
   const [video_enabled, set_video_enabled] = useState(userChoices.videoEnabled);
-  const [virtual, set_virtual] = useState(true);
+  const [virtual, set_virtual] = useState(false);
   const [is_focus, set_is_focus] = useState(false);
   const isEncrypted = useIsEncrypted(trackRef?.participant);
   const add_derivce_settings = useMemo(() => {
@@ -83,22 +83,7 @@ export function ParticipantItem({
 
   const [screen_enabled, set_screen_enabled] = useState(add_derivce_settings.screen.enabled);
   const trackReference = useEnsureTrackRef(trackRef);
-  const layoutContext = useMaybeLayoutContext();
-  const autoManageSubscription = useFeatureContext()?.autoSubscription;
-  const handleSubscribe = useCallback(
-    (subscribed: boolean) => {
-      if (
-        trackReference.source &&
-        !subscribed &&
-        layoutContext &&
-        layoutContext.pin.dispatch &&
-        isTrackReferencePinned(trackReference, layoutContext.pin.state)
-      ) {
-        layoutContext.pin.dispatch({ msg: 'clear_pin' });
-      }
-    },
-    [trackReference, layoutContext],
-  );
+
 
   // [toggle state] -----------------------------------------------------
   // - [audio] ----------------------------------------------------------
@@ -294,7 +279,15 @@ export function ParticipantItem({
         video_enabled &&
         virtual && (
           <div style={{ height: '100%', width: '100%' }}>
-            <VirtualRoleCanvas></VirtualRoleCanvas>
+            <VideoTrack
+              ref={video_track_ref}
+              trackRef={trackReference}
+              style={{
+                filter: `blur(${blurValue}px)`,
+                visibility: 'hidden',
+              }}
+            ></VideoTrack>
+            <VirtualRoleCanvas video_ele={video_track_ref}></VirtualRoleCanvas>
           </div>
         )}
       {isTrackReference(trackReference) &&

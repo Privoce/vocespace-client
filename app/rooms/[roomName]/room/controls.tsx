@@ -29,9 +29,13 @@ import { publisher, subject_map, SubjectKey, subscriber } from '@/lib/std/chanel
 import { SettingToggle } from './controls/setting_toggle';
 import { Button, Drawer, message, Modal, Slider, Tabs } from 'antd';
 import { SvgResource } from '../pre_join/resources';
-import { use_add_user_device, use_stored_set } from '@/lib/hooks/store/user_choices';
+import {
+  rename_user_and_store,
+  use_add_user_device,
+  use_stored_set,
+} from '@/lib/hooks/store/user_choices';
 import { AddDeviceInfo, State, useVideoBlur } from '@/lib/std/device';
-import { Settings } from './controls/settings';
+import { Settings, SettingsExports, TabKey } from './controls/settings';
 
 export interface ControlsExports {
   set_setting_visible: (visible: boolean) => void;
@@ -52,11 +56,12 @@ export const Controls = forwardRef<ControlsExports, ControlsProps>(
       saveVideoInputEnabled,
       saveAudioInputDeviceId,
       saveVideoInputDeviceId,
-      saveUsername
+      saveUsername,
     } = usePersistentUserChoices({ preventSave: !saveUserChoices });
     const { localParticipant } = useLocalParticipant();
     const add_derivce_settings = use_add_user_device(userChoices.username);
     const video_track_ref = useRef<HTMLImageElement>(null);
+    const settings_ref = useRef<SettingsExports>(null);
     // [states] -----------------------------------------------------------------
     const [messageApi, contextHolder] = message.useMessage();
     const [audio_enabled, set_audio_enabled] = useState(userChoices.audioEnabled);
@@ -141,19 +146,55 @@ export const Controls = forwardRef<ControlsExports, ControlsProps>(
     //   [saveAudioInputEnabled],
     // );
 
-    const save_changes = (save: boolean) => {
+    const save_changes = async (save: boolean, key: TabKey) => {
       let username = userChoices.username;
-      let data = Object.assign(add_derivce_settings, {
-        microphone: {
-          other: volume,
-        },
-        video: {
-          blur: video_blur,
-        },
-        screen: {
-          blur: screen_blur,
-        },
-      }) as AddDeviceInfo;
+      let data = add_derivce_settings;
+      switch (key) {
+        case 'common': {
+          const new_name = settings_ref.current?.username;
+          if (new_name) {
+            rename_user_and_store(username, new_name);
+            saveUsername(new_name);
+            // await localParticipant.setName(settings_ref.current?.username);
+            if (room) {
+              try {
+                await room.localParticipant?.setMetadata(JSON.stringify({ name: new_name }));
+                await room.localParticipant.setName(new_name);
+              } catch (error) {
+                messageApi.error('Failed to change name');
+              }
+            }
+          }
+          break;
+        }
+        case 'audio': {
+          data = Object.assign(add_derivce_settings, {
+            microphone: {
+              other: volume,
+            },
+          }) as AddDeviceInfo;
+
+          break;
+        }
+
+        case 'video': {
+          data = Object.assign(add_derivce_settings, {
+            video: {
+              blur: video_blur,
+            },
+            screen: {
+              blur: screen_blur,
+            },
+          }) as AddDeviceInfo;
+          break;
+        }
+        case 'virtual': {
+          break;
+        }
+        case 'about_us':
+          break;
+      }
+
       use_stored_set(username, { device: data });
 
       // 发布事件
@@ -275,6 +316,7 @@ export const Controls = forwardRef<ControlsExports, ControlsProps>(
         >
           <div className={styles.setting_container}>
             <Settings
+              ref={settings_ref}
               messageApi={messageApi}
               microphone={{
                 audio: {
@@ -295,12 +337,15 @@ export const Controls = forwardRef<ControlsExports, ControlsProps>(
               }}
               user={{
                 username: userChoices.username,
-                save_username: saveUsername
+                save_username: saveUsername,
               }}
               save_changes={save_changes}
             ></Settings>
             <div className={styles.setting_container_footer}>
-              <Button type="primary" onClick={() => save_changes(true)}>
+              <Button
+                type="primary"
+                onClick={() => save_changes(true, settings_ref.current?.key || 'about_us')}
+              >
                 Save Changes
               </Button>
             </div>

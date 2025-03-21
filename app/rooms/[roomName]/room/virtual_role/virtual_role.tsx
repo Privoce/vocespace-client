@@ -4,13 +4,18 @@ import React, { useEffect, useRef, useState } from 'react';
 import * as PIXI from 'pixi.js';
 import { MotionSync } from 'live2d-motionsync/stream';
 import * as faceapi from 'face-api.js';
+import styles from '@/styles/virtual_role.module.scss';
+import { VirtualRoleProps } from './live2d';
+import { use_add_user_virtual } from '@/lib/hooks/store/user_choices';
 
-const Live2DComponent = () => {
+const Live2DComponent = ({ video_ele: videoRef }: VirtualRoleProps) => {
+  const { role: model_role, bg: model_bg, enabled } = use_add_user_virtual();
+
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [scriptLoaded, setScriptLoaded] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  // const videoRef = useRef<HTMLVideoElement>(null);
   const [detectorReady, setDetectorReady] = useState(false);
   const modelRef = useRef<any>(null);
   const appRef = useRef<PIXI.Application | null>(null);
@@ -18,9 +23,9 @@ const Live2DComponent = () => {
   const [trackingActive, setTrackingActive] = useState(false);
   const [lastDetectionAt, setLastDetectionAt] = useState<number | null>(null);
   const [screenSize, setScreenSize] = useState({ width: 0, height: 0 });
-  const [lastPosition, setLastPosition] = useState<{x: number, y: number} | null>(null);
+  const [lastPosition, setLastPosition] = useState<{ x: number; y: number } | null>(null);
   const smoothnessFactorRef = useRef(0.25); // 添加平滑过渡因子 (0-1之间，越小越平滑)
-  
+
   // 实现连续头部追踪的函数
   const startFaceTracking = (model: any, videoElement: HTMLVideoElement) => {
     // 如果已经有追踪在进行，先停止它
@@ -45,11 +50,9 @@ const Live2DComponent = () => {
       if (!lastDetectionAt || now - lastDetectionAt > 100) {
         // 每100ms检测一次
         try {
-          const detection = await faceapi.detectSingleFace(
-            videoElement,
-            new faceapi.TinyFaceDetectorOptions(),
-          )
-          .withFaceLandmarks();
+          const detection = await faceapi
+            .detectSingleFace(videoElement, new faceapi.TinyFaceDetectorOptions())
+            .withFaceLandmarks();
 
           if (detection) {
             setIsLoading(false);
@@ -57,47 +60,47 @@ const Live2DComponent = () => {
             const leftEye = landmarks.getLeftEye();
             const rightEye = landmarks.getRightEye();
             const nose = landmarks.getNose();
-           // 计算眼睛中心点 (取左右眼和鼻尖三点加权平均)
-           const leftEyeCenter = {
-            x: leftEye.reduce((sum, point) => sum + point.x, 0) / leftEye.length,
-            y: leftEye.reduce((sum, point) => sum + point.y, 0) / leftEye.length
-          };
-          
-          const rightEyeCenter = {
-            x: rightEye.reduce((sum, point) => sum + point.x, 0) / rightEye.length,
-            y: rightEye.reduce((sum, point) => sum + point.y, 0) / rightEye.length
-          };
-          
-          const noseTip = nose[nose.length - 1];
-           
-          // 计算加权中心点 (眼睛位置权重较高)
-          const centerX = (leftEyeCenter.x * 0.35 + rightEyeCenter.x * 0.35 + noseTip.x * 0.3);
-          const centerY = (leftEyeCenter.y * 0.4 + rightEyeCenter.y * 0.4 + noseTip.y * 0.2);
+            // 计算眼睛中心点 (取左右眼和鼻尖三点加权平均)
+            const leftEyeCenter = {
+              x: leftEye.reduce((sum, point) => sum + point.x, 0) / leftEye.length,
+              y: leftEye.reduce((sum, point) => sum + point.y, 0) / leftEye.length,
+            };
 
-          // 归一化坐标 (-1 到 1 的范围)
-          const normalizedX = (centerX / videoElement.videoWidth) * 2 - 1;
-          const normalizedY = (centerY / videoElement.videoHeight) * 2 - 1;
+            const rightEyeCenter = {
+              x: rightEye.reduce((sum, point) => sum + point.x, 0) / rightEye.length,
+              y: rightEye.reduce((sum, point) => sum + point.y, 0) / rightEye.length,
+            };
 
-          // 将归一化坐标与ScreenSize结合转为真实坐标
-          let realX = (normalizedX * screenSize.width) / 2 + screenSize.width / 2;
-          let realY = (-normalizedY * screenSize.height) / 2 + screenSize.height / 2;
-          
-          // 添加平滑过渡
-          if (lastPosition) {
-            const smoothness = smoothnessFactorRef.current;
-            realX = lastPosition.x * (1 - smoothness) + realX * smoothness;
-            realY = lastPosition.y * (1 - smoothness) + realY * smoothness;
-          }
-          
-          // 保存当前位置用于下次平滑计算
-          setLastPosition({ x: realX, y: realY });
+            const noseTip = nose[nose.length - 1];
 
-           // 添加轻微的自然偏移来模拟人眼微动
-           const microMovementX = Math.sin(Date.now() / 2000) * 5;
-           const microMovementY = Math.cos(Date.now() / 2500) * 3;
-           
-           // 应用focus
-           model.focus(realX + microMovementX, realY + microMovementY);
+            // 计算加权中心点 (眼睛位置权重较高)
+            const centerX = leftEyeCenter.x * 0.35 + rightEyeCenter.x * 0.35 + noseTip.x * 0.3;
+            const centerY = leftEyeCenter.y * 0.4 + rightEyeCenter.y * 0.4 + noseTip.y * 0.2;
+
+            // 归一化坐标 (-1 到 1 的范围)
+            const normalizedX = (centerX / videoElement.videoWidth) * 2 - 1;
+            const normalizedY = (centerY / videoElement.videoHeight) * 2 - 1;
+
+            // 将归一化坐标与ScreenSize结合转为真实坐标
+            let realX = (normalizedX * screenSize.width) / 2 + screenSize.width / 2;
+            let realY = (-normalizedY * screenSize.height) / 2 + screenSize.height / 2;
+
+            // 添加平滑过渡
+            if (lastPosition) {
+              const smoothness = smoothnessFactorRef.current;
+              realX = lastPosition.x * (1 - smoothness) + realX * smoothness;
+              realY = lastPosition.y * (1 - smoothness) + realY * smoothness;
+            }
+
+            // 保存当前位置用于下次平滑计算
+            setLastPosition({ x: realX, y: realY });
+
+            // 添加轻微的自然偏移来模拟人眼微动
+            const microMovementX = Math.sin(Date.now() / 2000) * 5;
+            const microMovementY = Math.cos(Date.now() / 2500) * 3;
+
+            // 应用focus
+            model.focus(realX + microMovementX, realY + microMovementY);
           }
 
           setLastDetectionAt(now);
@@ -162,6 +165,7 @@ const Live2DComponent = () => {
 
   // 第一步：加载核心脚本
   useEffect(() => {
+    if (!enabled) return;
     // 在组件内部
     const loadFaceDetection = async () => {
       try {
@@ -169,7 +173,6 @@ const Live2DComponent = () => {
         console.log('开始加载人脸检测模型...');
         await faceapi.loadTinyFaceDetectorModel(
           `${process.env.NEXT_PUBLIC_BASE_PATH}/models/tiny_face_detector_model-weights_manifest.json`,
-          
         );
         await faceapi.loadFaceLandmarkModel(
           `${process.env.NEXT_PUBLIC_BASE_PATH}/models/face_landmark_68_model-weights_manifest.json`,
@@ -295,6 +298,7 @@ const Live2DComponent = () => {
 
   // 第二步：当核心脚本加载完成后，初始化 Live2D 模型
   useEffect(() => {
+    if (!enabled) return;
     if (!scriptLoaded || typeof window === 'undefined') return;
 
     // 将 PIXI 暴露到 window 上
@@ -326,12 +330,12 @@ const Live2DComponent = () => {
           // 加载模型
           console.log('开始加载 Live2D 模型...');
           const model: any = await Live2DModel.from(
-            `${process.env.NEXT_PUBLIC_BASE_PATH}/live2d_resources/Mao/Mao.model3.json`,
+            `${process.env.NEXT_PUBLIC_BASE_PATH}/live2d_resources/${model_role}/${model_role}.model3.json`,
             { autoInteract: false },
           );
 
           const bg = await PIXI.Sprite.from(
-            `${process.env.NEXT_PUBLIC_BASE_PATH}/images/bg/v_bg1.png`,
+            `${process.env.NEXT_PUBLIC_BASE_PATH}/images/bg/${model_bg}.png`,
           );
           bg.width = app.screen.width;
           bg.height = app.screen.height;
@@ -342,7 +346,7 @@ const Live2DComponent = () => {
           // 设置口型同步
           const motionSync = new MotionSync(model.internalModel);
           motionSync.loadMotionSyncFromUrl(
-            `${process.env.NEXT_PUBLIC_BASE_PATH}/live2d_resources/Mao/sample_01.motion3.json`,
+            `${process.env.NEXT_PUBLIC_BASE_PATH}/live2d_resources/${model_role}/sample_01.motion3.json`,
           );
 
           // 获取音频流用于口型同步
@@ -421,72 +425,23 @@ const Live2DComponent = () => {
   }, [scriptLoaded]);
   // 新增自动追踪触发效果
   useEffect(() => {
+    if (!enabled) return;
     if (detectorReady && modelRef.current && videoRef.current && !trackingActive) {
       startFaceTracking(modelRef.current, videoRef.current);
     }
   }, [detectorReady, modelRef.current, videoRef.current]);
 
   return (
-    <div ref={containerRef} style={{ width: '100%', height: '100%', position: 'relative' }}>
-      {isLoading && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            background: 'rgba(0, 0, 0, 0.6)',
-            color: 'white',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            zIndex: 10,
-          }}
-        >
-          虚拟角色加载中...
-        </div>
-      )}
-
-      {error && (
-        <div
-          style={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            background: 'rgba(220, 53, 69, 0.8)',
-            color: 'white',
-            padding: '10px 20px',
-            borderRadius: '8px',
-            maxWidth: '80%',
-            textAlign: 'center',
-            zIndex: 10,
-          }}
-        >
-          {error}
-        </div>
-      )}
-
+    <div ref={containerRef} className={styles.virtual_role}>
+      {isLoading && <div className={styles.virtual_role_msgbox}>虚拟角色加载中...</div>}
       <canvas
         id="virtual_role_canvas"
         style={{ height: '100%', width: '100%', position: 'absolute' }}
       ></canvas>
 
-      <video
-        ref={videoRef}
-        style={{
-          position: 'absolute',
-          right: 0,
-          bottom: 0,
-          width: '160px',
-          height: '120px',
-          border: trackingActive ? '2px solid green' : '2px solid red',
-          zIndex: 20,
-        }}
-        playsInline
-        muted
-      />
+      {/* <video ref={videoRef} className={styles.virtual_role_video} playsInline muted /> */}
 
-      {/* 添加控制按钮 */}
+      
       <div
         style={{
           position: 'absolute',
