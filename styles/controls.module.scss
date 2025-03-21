@@ -27,20 +27,15 @@
 
 .setting_container{
   display: flex;
-  align-items: center;
+  align-items: space-between;
   justify-content: flex-start;
-  position: relative;
-  flex-direction: column;
   flex-wrap: wrap;
   height: 100%;
+  box-sizing: border-box;
   margin: 0;
-  padding: 0 4px;
+  width: 100%;
   gap: 0px;
   &_footer{
-    position: absolute;
-    bottom: 0;
-    padding: 8px;
-    margin: 0;
     display: inline-flex;
     justify-content: flex-end;
     align-items: center;

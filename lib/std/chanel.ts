@@ -14,6 +14,7 @@ export enum SubjectKey {
   ScreenState = 'screen_state',
   Focus = 'focus',
   Setting = 'setting',
+  Virtual = 'virtual',
 }
 
 // 初始化所有主题
@@ -26,6 +27,7 @@ export const subject_map = new Map<SubjectKey, BehaviorSubject<any>>([
   [SubjectKey.Focus, new BehaviorSubject<ScreenFocus>({})],
   [SubjectKey.Setting, new BehaviorSubject<{data: AddDeviceInfo, identity: String} | undefined>(undefined)],
   [SubjectKey.ScreenState, new BehaviorSubject<State>(State.Stop)],
+  [SubjectKey.Virtual, new BehaviorSubject<boolean>(false)],
 ]);
 
 // 发布事件

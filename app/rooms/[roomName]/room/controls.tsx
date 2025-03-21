@@ -32,10 +32,13 @@ import { SvgResource } from '../pre_join/resources';
 import {
   rename_user_and_store,
   use_add_user_device,
+  use_stored_get,
   use_stored_set,
+  use_user_infos,
 } from '@/lib/hooks/store/user_choices';
 import { AddDeviceInfo, State, useVideoBlur } from '@/lib/std/device';
 import { Settings, SettingsExports, TabKey } from './controls/settings';
+import { ModelBg, ModelRole } from '@/lib/std/virtual';
 
 export interface ControlsExports {
   set_setting_visible: (visible: boolean) => void;
@@ -59,7 +62,9 @@ export const Controls = forwardRef<ControlsExports, ControlsProps>(
       saveUsername,
     } = usePersistentUserChoices({ preventSave: !saveUserChoices });
     const { localParticipant } = useLocalParticipant();
-    const add_derivce_settings = use_add_user_device(userChoices.username);
+    const { device: add_derivce_settings, virtual: virtual_settings } = use_user_infos(
+      localParticipant.name,
+    );
     const video_track_ref = useRef<HTMLImageElement>(null);
     const settings_ref = useRef<SettingsExports>(null);
     // [states] -----------------------------------------------------------------
@@ -74,6 +79,12 @@ export const Controls = forwardRef<ControlsExports, ControlsProps>(
     const [screen_bg_color, set_screen_bg_color] = useState(screen_enabled ? '#1E1E1E' : '#22CCEE');
     const [record, set_record] = useState(add_derivce_settings);
     const [saved, set_saved] = useState(false);
+    // - [setting states] ------------------------------------------------------
+    const [key, set_key] = useState<TabKey>('common');
+    const [virtual_enabled, set_virtual_enabled] = useState(false);
+    const [model_role, set_model_role] = useState<ModelRole>(ModelRole.Haru);
+    const [model_bg, set_model_bg] = useState<ModelBg>(ModelBg.ClassRoom);
+
     const visibleControls = { leave: true, ...controls };
     const localPermissions = useLocalParticipantPermissions();
 
@@ -148,7 +159,8 @@ export const Controls = forwardRef<ControlsExports, ControlsProps>(
 
     const save_changes = async (save: boolean, key: TabKey) => {
       let username = userChoices.username;
-      let data = add_derivce_settings;
+      let device = add_derivce_settings;
+      let virtual = virtual_settings;
       switch (key) {
         case 'common': {
           const new_name = settings_ref.current?.username;
@@ -168,7 +180,7 @@ export const Controls = forwardRef<ControlsExports, ControlsProps>(
           break;
         }
         case 'audio': {
-          data = Object.assign(add_derivce_settings, {
+          device = Object.assign(add_derivce_settings, {
             microphone: {
               other: volume,
             },
@@ -178,7 +190,7 @@ export const Controls = forwardRef<ControlsExports, ControlsProps>(
         }
 
         case 'video': {
-          data = Object.assign(add_derivce_settings, {
+          device = Object.assign(add_derivce_settings, {
             video: {
               blur: video_blur,
             },
@@ -189,23 +201,37 @@ export const Controls = forwardRef<ControlsExports, ControlsProps>(
           break;
         }
         case 'virtual': {
+          if (virtual_enabled) {
+            virtual = {
+              role: model_role,
+              bg: model_bg,
+              enabled: virtual_enabled,
+            };
+            console.warn('virtual', virtual);
+          }
           break;
         }
         case 'about_us':
           break;
       }
 
-      use_stored_set(username, { device: data });
+      use_stored_set(username, { device, virtual });
 
-      // 发布事件
-      publisher(SubjectKey.Setting, {
-        data,
-        identity: localParticipant.identity,
-      });
+      if (key == 'video' || key == 'audio') {
+        // 发布事件
+        publisher(SubjectKey.Setting, {
+          data: device,
+          identity: localParticipant.identity,
+        });
+      }
       set_saved(save);
       if (save) {
         set_setting_visible(false);
-        set_record(data);
+        if (key == 'video' || key == 'audio') {
+          set_record(device);
+        } else if (key == 'virtual') {
+          publisher(SubjectKey.Virtual, virtual_enabled);
+        }
         messageApi.success('Changes saved successfully');
       }
     };
@@ -316,6 +342,14 @@ export const Controls = forwardRef<ControlsExports, ControlsProps>(
         >
           <div className={styles.setting_container}>
             <Settings
+              virtual={{
+                enabled: virtual_enabled,
+                set_enabled: set_virtual_enabled,
+                model_role: model_role,
+                set_model_role: set_model_role,
+                model_bg: model_bg,
+                set_model_bg: set_model_bg,
+              }}
               ref={settings_ref}
               messageApi={messageApi}
               microphone={{
@@ -339,15 +373,15 @@ export const Controls = forwardRef<ControlsExports, ControlsProps>(
                 username: userChoices.username,
                 save_username: saveUsername,
               }}
+              tab_key={{ key, set_key }}
               save_changes={save_changes}
             ></Settings>
             <div className={styles.setting_container_footer}>
-              <Button
-                type="primary"
-                onClick={() => save_changes(true, settings_ref.current?.key || 'about_us')}
-              >
-                Save Changes
-              </Button>
+              {key !== 'about_us' && (
+                <Button type="primary" onClick={() => save_changes(true, key)}>
+                  Save Changes
+                </Button>
+              )}
             </div>
           </div>
         </Drawer>

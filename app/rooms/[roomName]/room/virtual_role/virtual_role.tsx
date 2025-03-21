@@ -6,11 +6,15 @@ import { MotionSync } from 'live2d-motionsync/stream';
 import * as faceapi from 'face-api.js';
 import styles from '@/styles/virtual_role.module.scss';
 import { VirtualRoleProps } from './live2d';
-import { use_add_user_virtual } from '@/lib/hooks/store/user_choices';
+import { ModelRole } from '@/lib/std/virtual';
 
-const Live2DComponent = ({ video_ele: videoRef }: VirtualRoleProps) => {
-  const { role: model_role, bg: model_bg, enabled } = use_add_user_virtual();
-
+export const Live2DComponent = ({
+  video_ele: videoRef,
+  model_bg,
+  model_role,
+  enabled,
+  onVirtualStreamReady,
+}: VirtualRoleProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -335,7 +339,7 @@ const Live2DComponent = ({ video_ele: videoRef }: VirtualRoleProps) => {
           );
 
           const bg = await PIXI.Sprite.from(
-            `${process.env.NEXT_PUBLIC_BASE_PATH}/images/bg/${model_bg}.png`,
+            `${process.env.NEXT_PUBLIC_BASE_PATH}/images/bg/${model_bg}`,
           );
           bg.width = app.screen.width;
           bg.height = app.screen.height;
@@ -345,8 +349,40 @@ const Live2DComponent = ({ video_ele: videoRef }: VirtualRoleProps) => {
 
           // 设置口型同步
           const motionSync = new MotionSync(model.internalModel);
+          let motion_file = '';
+          switch (model_role) {
+            case ModelRole.Haru: {
+              motion_file = 'haru_g_idle.motion3';
+              break;
+            }
+            case ModelRole.Hiyori: {
+              motion_file = 'Hiyori_m01.motion3';
+              break;
+            }
+            case ModelRole.Mao: {
+              motion_file = 'mtn_01.motion3';
+              break;
+            }
+            case ModelRole.Mark: {
+              motion_file = 'mark_m01.motion3';
+              break;
+            }
+            case ModelRole.Natori: {
+              motion_file = 'mtn_00.motion3';
+              break;
+            }
+            case ModelRole.Rice: {
+              motion_file = 'mtn_01.motion3';
+              break;
+            }
+            case ModelRole.Wanko: {
+              motion_file = 'idle_01.motion3';
+              break;
+            }
+          }
+
           motionSync.loadMotionSyncFromUrl(
-            `${process.env.NEXT_PUBLIC_BASE_PATH}/live2d_resources/${model_role}/sample_01.motion3.json`,
+            `${process.env.NEXT_PUBLIC_BASE_PATH}/live2d_resources/${model_role}/motions/${motion_file}.json`,
           );
 
           // 获取音频流用于口型同步
@@ -428,7 +464,27 @@ const Live2DComponent = ({ video_ele: videoRef }: VirtualRoleProps) => {
     if (!enabled) return;
     if (detectorReady && modelRef.current && videoRef.current && !trackingActive) {
       startFaceTracking(modelRef.current, videoRef.current);
+      const canvasElement = document.getElementById('virtual_role_canvas') as HTMLCanvasElement;
+      if (!canvasElement) return;
+      // 创建虚拟摄像头流
+      const setupVirtualStream = async () => {
+        const virtualStream = await createVirtualCameraStream(canvasElement);
+        console.log('获取虚拟流', onVirtualStreamReady);
+
+        if (virtualStream && onVirtualStreamReady) {
+          console.log('虚拟角色流创建成功，准备发送到LiveKit');
+          onVirtualStreamReady(virtualStream);
+        }
+      };
+
+      setupVirtualStream();
     }
+    return () => {
+      // 清理虚拟流
+      if (onVirtualStreamReady) {
+        onVirtualStreamReady(null);
+      }
+    };
   }, [detectorReady, modelRef.current, videoRef.current]);
 
   return (
@@ -441,7 +497,6 @@ const Live2DComponent = ({ video_ele: videoRef }: VirtualRoleProps) => {
 
       {/* <video ref={videoRef} className={styles.virtual_role_video} playsInline muted /> */}
 
-      
       <div
         style={{
           position: 'absolute',
@@ -538,3 +593,17 @@ const Live2DComponent = ({ video_ele: videoRef }: VirtualRoleProps) => {
 };
 
 export default Live2DComponent;
+
+//创建虚拟视频流
+const createVirtualCameraStream = async (canvasElement: HTMLCanvasElement) => {
+  if (!canvasElement) return null;
+
+  try {
+    // 将canvas转换为媒体流
+    const stream = canvasElement.captureStream(24); // 24 FPS
+    return stream;
+  } catch (err) {
+    console.error('创建虚拟摄像头流失败:', err);
+    return null;
+  }
+};

@@ -29,12 +29,16 @@ export interface SettingsProps {
     username: string;
     save_username: (e: string) => void;
   };
+  virtual: VirtualSettingsProps;
+  tab_key: {
+    key: TabKey;
+    set_key: (e: TabKey) => void;
+  };
   save_changes: (e: boolean, tab_key: TabKey) => void;
   messageApi: MessageInstance;
 }
 
 export interface SettingsExports {
-  key: TabKey;
   username: string;
 }
 
@@ -52,6 +56,8 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
         set_blur,
       },
       user,
+      tab_key: { key, set_key },
+      virtual: { enabled, set_enabled, model_role, set_model_role, model_bg, set_model_bg },
       save_changes,
       messageApi,
     }: SettingsProps,
@@ -60,7 +66,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
     const virtual_settings_ref = useRef<VirtualSettingsExports>(null);
 
     const [username, set_username] = useState(user.username);
-    const [key, set_key] = useState<TabKey>('common');
+
     const items: TabsProps['items'] = [
       {
         key: 'common',
@@ -140,7 +146,17 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
       {
         key: 'virtual',
         label: <TabItem type="user" label="Virtual"></TabItem>,
-        children: <VirtualSettings ref={virtual_settings_ref} messageApi={messageApi}></VirtualSettings>,
+        children: (
+          <VirtualSettings
+            messageApi={messageApi}
+            model_role={model_role}
+            set_model_role={set_model_role}
+            model_bg={model_bg}
+            set_model_bg={set_model_bg}
+            enabled={enabled}
+            set_enabled={set_enabled}
+          ></VirtualSettings>
+        ),
       },
       {
         key: 'about_us',
@@ -175,7 +191,6 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
     ];
 
     useImperativeHandle(ref, () => ({
-      key,
       username,
     }));
 
@@ -184,7 +199,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
         tabPosition="left"
         centered
         items={items}
-        style={{ width: '100%', height: '100%' }}
+        style={{ width: '100%', height: 'max-content' }}
         onChange={(k: string) => {
           set_key(k as TabKey);
         }}
@@ -211,22 +226,37 @@ export function TabItem({ type, label }: { type: SvgType; label: string }) {
 }
 
 export interface VirtualSettingsProps {
-  messageApi: MessageInstance;
-}
-
-export interface VirtualSettingsExports {
   enabled: boolean;
+  set_enabled: (e: boolean) => void;
   model_role: ModelRole;
+  set_model_role: (e: ModelRole) => void;
   model_bg: ModelBg;
+  set_model_bg: (e: ModelBg) => void;
 }
 
-export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSettingsProps>(
-  ({ messageApi }: VirtualSettingsProps, ref) => {
+export interface VirtualSettingsExports {}
+
+export const VirtualSettings = forwardRef<
+  VirtualSettingsExports,
+  VirtualSettingsProps & { messageApi: MessageInstance }
+>(
+  (
+    {
+      messageApi,
+      enabled,
+      set_enabled,
+      model_role,
+      set_model_role,
+      model_bg,
+      set_model_bg,
+    }: VirtualSettingsProps & { messageApi: MessageInstance },
+    ref,
+  ) => {
     const videoRef = useRef<HTMLVideoElement>(null);
     const [trackingActive, setTrackingActive] = useState(false);
     const [model_selected_index, set_model_selected_index] = useState(0);
     const [bg_selected_index, set_bg_selected_index] = useState(0);
-    const [use, set_use] = useState(false);
+    // const [use, set_use] = useState(false);
     const [detector_ready, set_detector_ready] = useState(false);
 
     const modelDatas = [
@@ -301,6 +331,7 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
                     className={styles.virtual_model_box}
                     onClick={() => {
                       set_model_selected_index(index);
+                      set_model_role(item.name as ModelRole);
                     }}
                   >
                     {model_selected_index == index && <SelectedMask></SelectedMask>}
@@ -331,7 +362,10 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
                 <List.Item>
                   <div
                     className={styles.virtual_model_box}
-                    onClick={() => set_bg_selected_index(index)}
+                    onClick={() => {
+                      set_bg_selected_index(index)
+                      set_model_bg(item.src as ModelBg)
+                    }}
                   >
                     {bg_selected_index == index && <SelectedMask></SelectedMask>}
                     <h4>{item.name}</h4>
@@ -403,17 +437,17 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
       };
     }, [loadVideo]);
 
-    useImperativeHandle(ref, () => ({
-      enabled: use,
-      model_role: modelDatas[model_selected_index].name as ModelRole,
-      model_bg: bgDatas[bg_selected_index].src as ModelBg,
-    }));
+    // useImperativeHandle(ref, () => ({
+    //   enabled: use,
+    //   model_role: modelDatas[model_selected_index].name as ModelRole,
+    //   model_bg: bgDatas[bg_selected_index].src as ModelBg,
+    // }));
 
     return (
       <div className={styles.virtual_settings}>
         <div className={styles.virtual_settings_header}>
           <span>Use Virtual Model:</span>
-          <Switch value={use} onClick={() => set_use(!use)}></Switch>
+          <Switch value={enabled} onClick={() => set_enabled(!enabled)}></Switch>
         </div>
         <div className={styles.virtual_video_box}>
           <div className={styles.virtual_video_box_preview}>

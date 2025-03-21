@@ -10,12 +10,24 @@ const Live2DComponent = dynamic(() => import('./virtual_role'), {
   loading: () => <div className="loading-live2d">正在准备虚拟角色...</div>,
 });
 
-export function VirtualRoleCanvas({ video_ele }: VirtualRoleProps) {
-  return <Live2DComponent video_ele={video_ele} />;
+export function VirtualRoleCanvas({ video_ele, model_bg, model_role, enabled, onVirtualStreamReady }: VirtualRoleProps) {
+  return (
+    <Live2DComponent
+      video_ele={video_ele}
+      model_bg={model_bg}
+      model_role={model_role}
+      enabled={enabled}
+      onVirtualStreamReady={onVirtualStreamReady}
+    />
+  );
 }
 
 export default VirtualRoleCanvas;
 
 export interface VirtualRoleProps {
   video_ele: RefObject<HTMLVideoElement>;
+  model_role: ModelRole;
+  model_bg: ModelBg;
+  enabled: boolean;
+  onVirtualStreamReady? : (stream: MediaStream|null) => void;
 }

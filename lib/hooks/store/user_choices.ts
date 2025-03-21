@@ -43,6 +43,29 @@ export function use_stored_get(): UserAddInfos | undefined {
   return undefined;
 }
 
+export function use_user_infos(username?: string): UserAddInfo {
+  if (!is_web()) {
+    return {
+      device: default_device(),
+      virtual: default_virtual_info(),
+    };
+  }
+  const user_name = use_lk_username() || username || '';
+  const user_infos = use_stored_get();
+  if (user_infos && user_name !== '') {
+    return (
+      user_infos.get(user_name) || {
+        device: default_device(),
+        virtual: default_virtual_info(),
+      }
+    );
+  }
+  return {
+    device: default_device(),
+    virtual: default_virtual_info(),
+  };
+}
+
 export function use_lk_username(): string {
   if (!is_web()) {
     return '';
