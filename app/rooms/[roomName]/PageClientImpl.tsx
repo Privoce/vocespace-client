@@ -14,6 +14,7 @@ import {
   Room,
   DeviceUnsupportedError,
   RoomConnectOptions,
+  RpcInvocationData,
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
 import React from 'react';
@@ -125,6 +126,7 @@ function VideoConferenceComponent(props: {
       },
       audioCaptureDefaults: {
         deviceId: props.userChoices.audioDeviceId ?? undefined,
+        noiseSuppression: true
       },
       adaptiveStream: { pixelDensity: 'screen' },
       dynacast: true,
@@ -158,6 +160,15 @@ function VideoConferenceComponent(props: {
     } else {
       setE2eeSetupComplete(true);
     }
+
+    room.registerRpcMethod("test", async (data: RpcInvocationData) => {
+      return  "test";
+    })
+
+    return () => {
+      room.unregisterRpcMethod("test");
+    }
+
   }, [e2eeEnabled, room, e2eePassphrase]);
 
   const connectOptions = React.useMemo((): RoomConnectOptions => {

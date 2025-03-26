@@ -47,6 +47,7 @@ export async function GET(request: NextRequest) {
       roomName: roomName,
       participantToken: participantToken,
       participantName: participantName,
+      
     };
     return new NextResponse(JSON.stringify(data), {
       headers: {

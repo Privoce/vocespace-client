@@ -39,6 +39,7 @@ import { Badge, Dropdown, Input, MenuProps, Modal } from 'antd';
 import { PresetStatusColorType } from 'antd/es/_util/colors';
 import VirtualRoleCanvas from '../virtual_role/live2d';
 import { HookAPI } from 'antd/es/modal/useModal';
+import { ScreenTrack } from './screen';
 
 interface ParticipantItemProps extends HTMLAttributes<HTMLDivElement> {
   trackRef?: TrackReferenceOrPlaceholder;
@@ -98,31 +99,31 @@ export function ParticipantItem({
   const trackReference = useEnsureTrackRef(trackRef);
 
   const [virtualStream, setVirtualStream] = useState<MediaStream | null>(null);
-  const handleVirtualStreamReady = (stream: MediaStream | null) =>{};
+  const handleVirtualStreamReady = (stream: MediaStream | null) => {};
   // // 处理虚拟流就绪的回调
   // const handleVirtualStreamReady = useCallback(async (stream: MediaStream | null) => {
   //   if (!room || !room.localParticipant) return;
-    
+
   //   try {
   //     if (stream) {
   //       console.log('接收到虚拟角色视频流，准备替换摄像头');
-        
+
   //       // 获取虚拟角色的视频轨道
   //       const virtualVideoTrack = stream.getVideoTracks()[0];
-        
+
   //       if (virtualVideoTrack) {
   //         // 使用 LocalParticipant 的 setCameraEnabled 方法暂时禁用摄像头
   //         await room.localParticipant.setCameraEnabled(false);
-          
+
   //         // 等待一小段时间确保先前的轨道完全关闭
   //         await new Promise(resolve => setTimeout(resolve, 500));
-          
+
   //         // 创建新的本地视频轨道
   //         const trackOptions = {
   //           name: 'virtual-character',
   //           videoTrack: virtualVideoTrack,
   //         };
-          
+
   //         // 使用 createLocalVideoTrack 而不是直接发布原始 MediaStreamTrack
   //         // const localTrack = await room.localParticipant.createLocalVideoTrak(trackOptions);
   //         const localTrack = await room.localParticipant.createTracks({
@@ -130,14 +131,14 @@ export function ParticipantItem({
   //           video: {
   //             deviceId: "virtual-character",
   //             facingMode: "user",
-  //             processor: 
+  //             processor:
   //           }
   //         })
   //         // 发布这个已封装的轨道
   //         await room.localParticipant.publishTrack(localTrack, {
   //           source: Track.Source.Camera
   //         });
-          
+
   //         console.log('虚拟角色轨道发布成功');
   //       }
   //     } else {
@@ -386,13 +387,19 @@ export function ParticipantItem({
       {isTrackReference(trackReference) &&
         trackReference.source == Track.Source.ScreenShare &&
         screen_enabled && (
-          <VideoTrack
-            ref={screen_track_ref}
-            trackRef={trackReference}
-            style={{
-              filter: `blur(${screenBlurValue}px)`,
-            }}
-          ></VideoTrack>
+          // <VideoTrack
+          //   ref={screen_track_ref}
+          //   trackRef={trackReference}
+          //   style={{
+          //     filter: `blur(${screenBlurValue}px)`,
+          //   }}
+          // ></VideoTrack>
+          <ScreenTrack
+            room={room}
+            screen_ref={screen_track_ref}
+            track={trackReference}
+            screenBlurValue={screenBlurValue}
+          ></ScreenTrack>
         )}
       {/* className="lk-participant-placeholder"  */}
       <div className="lk-participant-placeholder">
