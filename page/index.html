@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privoce, Inc. - Private Video & Audio Conferencing</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdn.jsdelivr.net/npm/remixicon@4.5.0/fonts/remixicon.css" rel="stylesheet"/>
+<style>
+:where([class^="ri-"])::before { content: "\f3c2"; }
+</style>
+<script>
+tailwind.config = {
+theme: {
+extend: {
+colors: {
+primary: '#0066FF',
+secondary: '#1E293B'
+},
+borderRadius: {
+'none': '0px',
+'sm': '4px',
+DEFAULT: '8px',
+'md': '12px',
+'lg': '16px',
+'xl': '20px',
+'2xl': '24px',
+'3xl': '32px',
+'full': '9999px',
+'button': '8px'
+}
+}
+}
+}
+</script>
+</head>
+<body class="bg-white font-['Inter']">
+<nav class="fixed w-full bg-gray-900/95 backdrop-blur-sm z-50 border-b border-gray-800">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="flex justify-between h-16">
+<div class="flex items-center">
+<a href="#" class="flex items-center">
+<img src="https://static.readdy.ai/image/736cb33f85ee328c22e5d7e17bec9c40/86cd5522c098570075a44c2661eac78d.png" alt="Voce Logo" class="h-8">
+</a>
+</div>
+<div class="flex items-center space-x-8">
+<a href="#features" class="text-gray-300 hover:text-primary">Features</a>
+<a href="#security" class="text-gray-300 hover:text-primary">Security</a>
+<a href="#pricing" class="text-gray-300 hover:text-primary">Pricing</a>
+<button onclick="openDemoModal()" class="px-4 py-2 bg-primary text-white !rounded-button hover:bg-primary/90 whitespace-nowrap">Book a Demo</button>
+</div>
+</div>
+</div>
+</nav>
+<section class="pt-32 pb-20 relative overflow-hidden">
+<div class="absolute inset-0 bg-[url('https://public.readdy.ai/ai/img_res/a11e4cd3d43ba8dc2ed1cf1dbdd50034.jpg')] opacity-10"></div>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+<div class="grid grid-cols-2 gap-12 items-center">
+<div>
+<h1 class="text-[2.7rem] font-bold text-gray-900 leading-tight mb-6">
+Secure Video Calls Under Your Domain and Brand
+</h1>
+<p class="text-xl text-gray-600 mb-8">
+We will help you host your own secure video and audio conferencing platform under your subdomain with your own logo and branding. Complete control over your data with enterprise-grade encryption.
+</p>
+<div class="flex space-x-4">
+<a href="https://space.voce.chat/rooms/xz9u-dmmv" target="_blank" class="px-6 py-3 bg-primary text-white !rounded-button hover:bg-primary/90 whitespace-nowrap text-lg inline-block">
+Try It Here
+</a>
+<button onclick="openDemoModal()" class="px-6 py-3 text-primary border border-primary !rounded-button hover:bg-primary/5 whitespace-nowrap text-lg">
+Book a Demo
+</button>
+<div id="demoModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+<div class="flex items-center justify-center min-h-screen p-4">
+<div class="bg-white rounded-xl w-full max-w-6xl h-[800px] relative">
+<button onclick="closeDemoModal()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600 z-10">
+<i class="ri-close-line text-xl"></i>
+</button>
+<div class="calendly-inline-widget w-full h-[800px]" data-url="https://calendly.com/hansu/han-meeting?back=1"></div>
+<script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+</div>
+</div>
+</div>
+<script>
+function openDemoModal() {
+document.getElementById('demoModal').classList.remove('hidden');
+document.body.style.overflow = 'hidden';
+}
+function closeDemoModal() {
+document.getElementById('demoModal').classList.add('hidden');
+document.body.style.overflow = 'auto';
+}
+document.getElementById('demoModal').addEventListener('click', (e) => {
+if (e.target.id === 'demoModal') {
+closeDemoModal();
+}
+});
+</script>
+</div>
+</div>
+<div>
+<img src="https://static.readdy.ai/image/736cb33f85ee328c22e5d7e17bec9c40/709c2c173bc8587d5789f2bd072d6a07.png"
+alt="Secure Video Conference"
+class="rounded-2xl shadow-2xl">
+</div>
+</div>
+</div>
+</section>
+<section id="features" class="py-20 bg-gray-50">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="text-center mb-16">
+<h2 class="text-4xl font-bold text-gray-900 mb-4">Enterprise-Grade Features</h2>
+<p class="text-xl text-gray-600">Everything you need for secure and efficient communication</p>
+</div>
+<div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+<div class="bg-white p-8 rounded-xl shadow-sm">
+<div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+<i class="ri-video-line text-primary text-2xl"></i>
+</div>
+<h3 class="text-xl font-semibold text-gray-900 mb-3">Video Conferencing</h3>
+<p class="text-gray-600">HD video calls with up to 100 participants, screen sharing, and recording capabilities.</p>
+</div>
+<div class="bg-white p-8 rounded-xl shadow-sm">
+<div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+<i class="ri-phone-line text-primary text-2xl"></i>
+</div>
+<h3 class="text-xl font-semibold text-gray-900 mb-3">Audio Calls</h3>
+<p class="text-gray-600">Crystal-clear audio with noise cancellation and echo reduction technology.</p>
+</div>
+<div class="bg-white p-8 rounded-xl shadow-sm">
+<div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+<i class="ri-tv-line text-primary text-2xl"></i>
+</div>
+<h3 class="text-xl font-semibold text-gray-900 mb-3">Co-watching</h3>
+<p class="text-gray-600">Watch videos together with perfect sync and integrated chat functionality.</p>
+</div>
+<div class="bg-white p-8 rounded-xl shadow-sm">
+<div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
+<i class="ri-computer-line text-primary text-2xl"></i>
+</div>
+<h3 class="text-xl font-semibold text-gray-900 mb-3">Remote Cowork Space</h3>
+<p class="text-gray-600">Virtual office environment with dedicated spaces for team collaboration.</p>
+</div>
+</div>
+</div>
+</section>
+<section class="py-20">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="grid grid-cols-2 gap-12 items-center">
+<div>
+<h2 class="text-4xl font-bold text-gray-900 mb-6">Schedule a Demo</h2>
+<p class="text-xl text-gray-600 mb-8">
+Let us show you how Privoce can transform your business communication. Book a personalized demo with our team.
+</p>
+<div class="space-y-4">
+<div class="flex items-center">
+<div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-4">
+<i class="ri-check-line text-primary text-xl"></i>
+</div>
+<span class="text-gray-700">Personalized platform walkthrough</span>
+</div>
+<div class="flex items-center">
+<div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-4">
+<i class="ri-check-line text-primary text-xl"></i>
+</div>
+<span class="text-gray-700">Security features demonstration</span>
+</div>
+<div class="flex items-center">
+<div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center mr-4">
+<i class="ri-check-line text-primary text-xl"></i>
+</div>
+<span class="text-gray-700">Custom deployment options</span>
+</div>
+</div>
+</div>
+<div class="bg-white p-8 rounded-xl shadow-lg">
+<div id="calendar" class="w-full h-[700px] bg-white rounded-lg">
+<!-- Calendly inline widget begin -->
+<div class="calendly-inline-widget" data-url="https://calendly.com/hansu/han-meeting?back=1" style="min-width:320px;height:700px;"></div>
+<script type="text/javascript" src="https://assets.calendly.com/assets/external/widget.js" async></script>
+<!-- Calendly inline widget end -->
+</div>
+</div>
+</div>
+</div>
+</section>
+<section id="pricing" class="py-20 bg-gray-50">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="text-center mb-16">
+<h2 class="text-4xl font-bold text-gray-900 mb-4">Simple, Transparent Pricing</h2>
+<p class="text-xl text-gray-600">Choose the plan that works best for your business</p>
+</div>
+<div class="grid grid-cols-3 gap-8">
+<div class="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-2xl font-bold text-gray-900">Free</h3>
+<span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">Get Started</span>
+</div>
+<div class="mb-6">
+<div class="flex items-baseline">
+<span class="text-4xl font-bold text-gray-900">$0</span>
+<span class="text-gray-600 ml-2">/month</span>
+</div>
+<p class="text-gray-600 mt-2">Perfect for trying out SecureConnect</p>
+</div>
+<ul class="space-y-4 mb-8">
+<li class="flex items-center">
+<i class="ri-check-line text-primary mr-2"></i>
+<span class="text-gray-600">Up to 5 users</span>
+</li>
+<li class="flex items-center">
+<i class="ri-check-line text-primary mr-2"></i>
+<span class="text-gray-600">Basic video conferencing</span>
+</li>
+<li class="flex items-center">
+<i class="ri-check-line text-primary mr-2"></i>
+<span class="text-gray-600">Screen sharing</span>
+</li>
+<li class="flex items-center">
+<i class="ri-check-line text-primary mr-2"></i>
+<span class="text-gray-600">Chat functionality</span>
+</li>
+</ul>
+<a href="https://space.voce.chat/rooms/xz9u-dmmv" target="_blank" class="w-full py-3 bg-primary text-white !rounded-button hover:bg-primary/90 inline-block text-center">Try It Here</a>
+</div>
+<div class="bg-white p-8 rounded-xl shadow-lg border-2 border-primary relative">
+<div class="absolute -top-4 left-1/2 transform -translate-x-1/2">
+<span class="bg-primary text-white px-4 py-1 rounded-full text-sm">Most Popular</span>
+</div>
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-2xl font-bold text-gray-900">Professional</h3>
+<span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">Best Value</span>
+</div>
+<div class="mb-6">
+<div class="flex items-baseline">
+<span class="text-4xl font-bold text-gray-900">$499</span>
+<span class="text-gray-600 ml-2">/license</span>
+</div>
+<p class="text-gray-600 mt-2">For growing businesses</p>
+</div>
+<ul class="space-y-4 mb-8">
+<li class="flex items-center">
+<i class="ri-check-line text-primary mr-2"></i>
+<span class="text-gray-600">Unlimited users</span>
+</li>
+<li class="flex items-center">
+<i class="ri-check-line text-primary mr-2"></i>
+<span class="text-gray-600">HD video quality</span>
+</li>
+<li class="flex items-center">
+<i class="ri-check-line text-primary mr-2"></i>
+<span class="text-gray-600">Advanced security features</span>
+</li>
+<li class="flex items-center">
+<i class="ri-check-line text-primary mr-2"></i>
+<span class="text-gray-600">24/7 support</span>
+</li>
+<li class="flex items-center">
+<i class="ri-check-line text-primary mr-2"></i>
+<span class="text-gray-600">Custom branding</span>
+</li>
+</ul>
+<button class="w-full py-3 bg-primary text-white !rounded-button hover:bg-primary/90">Get Started</button>
+</div>
+<div class="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
+<div class="flex justify-between items-center mb-6">
+<h3 class="text-2xl font-bold text-gray-900">Enterprise</h3>
+<span class="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm font-medium">Custom</span>
+</div>
+<div class="mb-6">
+<div class="flex items-baseline">
+<span class="text-4xl font-bold text-gray-900">Custom</span>
+</div>
+<p class="text-gray-600 mt-2">For large organizations</p>
+</div>
+<ul class="space-y-4 mb-8">
+<li class="flex items-center">
+<i class="ri-check-line text-primary mr-2"></i>
+<span class="text-gray-600">Intranet compatible</span>
+</li>
+<li class="flex items-center">
+<i class="ri-check-line text-primary mr-2"></i>
+<span class="text-gray-600">Dedicated support team</span>
+</li>
+<li class="flex items-center">
+<i class="ri-check-line text-primary mr-2"></i>
+<span class="text-gray-600">Custom deployment</span>
+</li>
+<li class="flex items-center">
+<i class="ri-check-line text-primary mr-2"></i>
+<span class="text-gray-600">SLA guarantees</span>
+</li>
+<li class="flex items-center">
+<i class="ri-check-line text-primary mr-2"></i>
+<span class="text-gray-600">Maintenance service</span>
+</li>
+</ul>
+<button onclick="openDemoModal()" class="w-full py-3 border border-primary text-primary !rounded-button hover:bg-primary/5">Schedule Meeting</button>
+</div>
+</div>
+</div>
+</section>
+<section id="security" class="py-20 bg-secondary text-white">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="text-center mb-16">
+<h2 class="text-4xl font-bold mb-4">Enterprise Security</h2>
+<p class="text-xl text-gray-300">Your data, your control, our commitment to security</p>
+</div>
+<div class="grid grid-cols-3 gap-8">
+<div class="p-8 bg-white/5 rounded-xl backdrop-blur-sm">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-6">
+<i class="ri-lock-line text-primary text-2xl"></i>
+</div>
+<h3 class="text-xl font-semibold mb-3">End-to-End Encryption</h3>
+<p class="text-gray-300">Military-grade encryption for all communications. Your conversations stay private.</p>
+</div>
+<div class="p-8 bg-white/5 rounded-xl backdrop-blur-sm">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-6">
+<i class="ri-server-line text-primary text-2xl"></i>
+</div>
+<h3 class="text-xl font-semibold mb-3">Private Hosting</h3>
+<p class="text-gray-300">Host on your own servers or choose our secure cloud infrastructure.</p>
+</div>
+<div class="p-8 bg-white/5 rounded-xl backdrop-blur-sm">
+<div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-6">
+<i class="ri-shield-check-line text-primary text-2xl"></i>
+</div>
+<h3 class="text-xl font-semibold mb-3">Access Control</h3>
+<p class="text-gray-300">Granular permissions and authentication options for complete control.</p>
+</div>
+</div>
+</div>
+</section>
+<section class="py-20 bg-primary/5">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+<h2 class="text-4xl font-bold text-gray-900 mb-6">Ready to Get Started?</h2>
+<p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto">
+Try VoceChat demo for free before hosting your own. No payment required.
+</p>
+<div class="flex justify-center space-x-4">
+<a href="https://space.voce.chat/rooms/xz9u-dmmv" target="_blank" class="px-8 py-4 bg-primary text-white !rounded-button hover:bg-primary/90 whitespace-nowrap text-lg inline-block">
+Try It Here
+</a>
+<button onclick="openDemoModal()" class="px-8 py-4 text-primary border border-primary !rounded-button hover:bg-primary/5 whitespace-nowrap text-lg">
+Book a Demo
+</button>
+</div>
+</div>
+</section>
+<footer class="bg-gray-900 py-12">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<div class="grid grid-cols-4 gap-8">
+<div>
+<a href="#" class="mb-4 block">
+<img src="https://static.readdy.ai/image/736cb33f85ee328c22e5d7e17bec9c40/86cd5522c098570075a44c2661eac78d.png" alt="Voce Logo" class="h-8">
+</a>
+<p class="text-gray-400">Secure communication platform for modern businesses</p>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-4">Product</h4>
+<ul class="space-y-2">
+<li><a href="#features" class="text-gray-400 hover:text-primary">Features</a></li>
+<li><a href="#security" class="text-gray-400 hover:text-primary">Security</a></li>
+<li><a href="#pricing" class="text-gray-400 hover:text-primary">Pricing</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-4">Contact</h4>
+<ul class="space-y-2">
+<li><a href="mailto:han@privoce.com" class="text-gray-400 hover:text-primary">han@privoce.com</a></li>
+<li><a href="https://space.voce.chat/rooms/xz9u-dmmv" target="_blank" class="text-gray-400 hover:text-primary">Try Demo</a></li>
+</ul>
+</div>
+<div>
+<h4 class="font-semibold text-white mb-4">About Privoce</h4>
+<ul class="space-y-2">
+<li><a href="https://voce.chat" target="_blank" class="text-gray-400 hover:text-primary">VoceChat</a></li>
+<li><a href="https://hub.docker.com/r/privoce/vocechat-matrix-palpo" target="_blank" class="text-gray-400 hover:text-primary">Matrix Server</a></li>
+<li><a href="https://privoce.com" target="_blank" class="text-gray-400 hover:text-primary">Official Website</a></li>
+</ul>
+</div>
+</div>
+<div class="mt-12 pt-8 border-t border-gray-700">
+<div class="flex justify-between items-center">
+<p class="text-gray-400">&copy; 2025 Privoce, Inc. All rights reserved.</p>
+<div class="flex space-x-6">
+<a href="https://github.com/privoce" target="_blank" class="text-gray-400 hover:text-primary">
+<i class="ri-github-line text-xl"></i>
+</a>
+</div>
+</div>
+</div>
+</div>
+</footer>
+</body>
+</html>
