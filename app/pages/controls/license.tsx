@@ -52,9 +52,9 @@ export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) 
     if (isCircleIp) {
       window.open('https://buy.stripe.com/bJeaEX9ex2PUer2aLe6c00O', '_blank');
     } else {
-      // 请求 在space.voce.chat/api/webhook?session_ip=IP, 让官方服务器通过stripe的api获取用户的session
+      // 请求 在chat.vocespace.com/api/webhook?session_ip=IP, 让官方服务器通过stripe的api获取用户的session
       // 然后用户侧获取到session.url进行跳转
-      const url = `https://space.voce.chat/api/webhook?session_ip=${IP}`;
+      const url = `https://chat.vocespace.com/api/webhook?session_ip=${IP}`;
       const response = await fetch(url, {
         method: 'GET',
       });
