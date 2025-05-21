@@ -192,7 +192,7 @@ export function PreJoin({
   const audio_play_ref = React.useRef<HTMLAudioElement>(null);
   const { blurValue, setVideoBlur } = useVideoBlur({
     videoRef: videoEl,
-    initialBlur: 0.15,
+    initialBlur: 0.0,
     defaultDimensions: { height: 280, width: 448 },
   });
   // [play] ------------------------------------------------------------------------
@@ -336,7 +336,7 @@ export function PreJoin({
               min={0.0}
               max={1.0}
               step={0.01}
-              defaultValue={0.15}
+              defaultValue={0.0}
               value={blur}
               onChange={(e) => {
                 setBlur(e);

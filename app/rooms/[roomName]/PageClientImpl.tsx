@@ -35,9 +35,9 @@ export const socket = io();
 export const userState = atom({
   key: 'userState',
   default: {
-    volume: 80,
-    blur: 0.15,
-    screenBlur: 0.15,
+    volume: 100,
+    blur: 0.0,
+    screenBlur: 0.0,
     virtual: {
       enabled: false,
       role: ModelRole.None,

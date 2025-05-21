@@ -46,11 +46,11 @@ export const default_device = (): AddDeviceInfo => {
     },
     video: {
       enabled: false,
-      blur: 0.15,
+      blur: 0.0,
     },
     screen: {
       enabled: false,
-      blur: 0.15,
+      blur: 0.0,
     },
   };
 };

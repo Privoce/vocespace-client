@@ -169,7 +169,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
             <div className={styles.setting_box}>
               <span>{t('settings.video.video_blur')}:</span>
               <Slider
-                defaultValue={0.15}
+                defaultValue={0.0}
                 className={`${styles.common_space} ${styles.slider}`}
                 value={videoBlur}
                 min={0.0}
@@ -186,7 +186,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
             <div className={styles.setting_box}>
               <span>{t('settings.video.screen_blur')}:</span>
               <Slider
-                defaultValue={0.15}
+                defaultValue={0.0}
                 className={`${styles.common_space} ${styles.slider}`}
                 value={screenBlur}
                 min={0.0}
@@ -716,8 +716,8 @@ function BuildUserStatus({
     },
   ];
   const [selectedIcon, setSelectedIcon] = useState(status_icons[0].key);
-  const [videoBlur, setVideoBlur] = useState(0.15);
-  const [screenBlur, setScreenBlur] = useState(0.15);
+  const [videoBlur, setVideoBlur] = useState(0.0);
+  const [screenBlur, setScreenBlur] = useState(0.0);
   const [volume, setVolume] = useState(80);
 
   const saveStatus = async () => {
@@ -769,9 +769,9 @@ function BuildUserStatus({
       setName('');
       setDesc('');
       setSelectedIcon(status_icons[0].key);
-      setVolume(80);
-      setVideoBlur(0.15);
-      setScreenBlur(0.15);
+      setVolume(100);
+      setVideoBlur(0.0);
+      setScreenBlur(0.0);
     } catch (e) {
       messageApi.error({
         content: `${t('settings.general.status.define.fail')}: ${e}`,
