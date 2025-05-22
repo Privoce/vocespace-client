@@ -37,7 +37,7 @@ export default {
     send_file_or: 'Do you want to send this file?',
     leave: 'Leave',
     share_screen: 'Share Screen',
-    stop_share: 'Stop Share Share',
+    stop_share: 'Stop Share Screen',
     wave_msg: 'sent you a reminder!',
     full_user: "The room user has exceeded the limit and cannot join. You can join other rooms or inform the builder to upgrade your license to obtain more user slots.",
   },

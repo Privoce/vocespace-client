@@ -128,5 +128,5 @@ Time 	Type 	Foundation 	Protocol 	Address 	Port 	Priority 	URL (if present) 	rel
 - [x] chat增加link跳转 ->hover 之后
 - [ ] 文件拖拽发送
 
-- [ ] docker - 无虚化 （tradition）
+- [x] docker - 无虚化 （tradition）
 - [x] 时间戳转正常时间

@@ -31,3 +31,9 @@ sh auto_deploy_prod.sh
 chmod +x nginx_deploy.sh
 sh nginx_deploy.sh
 ```
+
+
+```
+docker buildx build --platform linux/amd64 --load -t privoce/vocespace_amd:latest .
+docker buildx build --platform linux/arm64 --load -t privoce/vocespace_arm:latest .
+```

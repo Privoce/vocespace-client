@@ -11,7 +11,7 @@ server {
     if ($host = vocespace.com) {
         return 301 https://$host$request_uri;
     }
-    if ($host = chat.vocespace.com) {
+    if ($host = meeting.vocespace.com) {
         return 301 https://$host$request_uri;
     }
     return 404;
@@ -60,12 +60,12 @@ server {
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 }
 
-# 新增: HTTPS 处理 chat.vocespace.com（聊天环境）
+# 新增: HTTPS 处理 meeting.vocespace.com（聊天环境）
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
 
-    server_name chat.vocespace.com;
+    server_name meeting.vocespace.com;
 
     location / {
         proxy_http_version 1.1;

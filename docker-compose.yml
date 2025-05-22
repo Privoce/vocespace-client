@@ -1,11 +1,12 @@
-version: '3.8'
-
 services:
   vocespace:
     container_name: vocespace
     image: privoce/vocespace:latest
     build:
       context: .
+      # platforms:
+      #   - linux/amd64
+      #   - linux/arm64
       # args:
       #   - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
       #   - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-secret}
