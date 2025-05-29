@@ -34,6 +34,7 @@ sh nginx_deploy.sh
 
 
 ```
-docker buildx build --platform linux/amd64 --load -t privoce/vocespace_amd:latest .
-docker buildx build --platform linux/arm64 --load -t privoce/vocespace_arm:latest .
+docker buildx build --platform linux/amd64 --load -t privoce/vocespace:latest .
+docker buildx build --platform linux/arm64 --load -t privoce/vocespace:latest_arm .
+docker buildx build --platform linux/amd64 --load -t privoce/vocespace:preview .
 ```

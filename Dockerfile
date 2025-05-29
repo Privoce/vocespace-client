@@ -16,6 +16,7 @@ COPY package.json ./
 # COPY yarn.lock* ./
 COPY next.config.js ./
 COPY pnpm-lock.yaml* ./
+COPY server.js ./
 COPY entrypoint.sh ./entrypoint.sh
 
 # 安装依赖 --------------------------------------------------------------------
@@ -55,14 +56,14 @@ WORKDIR /app
 # 设置为生产环境 ----------------------------------------------------------------
 ENV NODE_ENV production
 # 安装必要工具
-RUN apk add --no-cache bash tar supervisor 
+RUN apk add --no-cache bash
 
 # 复制预下载的 LiveKit 服务器二进制包
-COPY livekit_1.8.4_linux_arm64.tar.gz /tmp/
-# 解压二进制文件到 /usr/local/bin 目录
-RUN tar -xzf /tmp/livekit_1.8.4_linux_arm64.tar.gz -C /usr/local/bin --wildcards --no-anchored "livekit*" && \
-    chmod +x /usr/local/bin/livekit-server && \
-    rm /tmp/livekit_1.8.4_linux_arm64.tar.gz
+# COPY livekit_1.8.4_linux_arm64.tar.gz /tmp/
+# # 解压二进制文件到 /usr/local/bin 目录
+# RUN tar -xzf /tmp/livekit_1.8.4_linux_arm64.tar.gz -C /usr/local/bin --wildcards --no-anchored "livekit*" && \
+#     chmod +x /usr/local/bin/livekit-server && \
+#     rm /tmp/livekit_1.8.4_linux_arm64.tar.gz
 
 # 添加非root用户 ---------------------------------------------------------------
 RUN addgroup --system --gid 1001 nodejs
@@ -74,22 +75,22 @@ RUN mkdir -p /app/uploads && chown -R nextjs:nodejs /app/uploads
 # 创建并配置入口点脚本 -----------------------------------------------------------
 COPY --from=builder --chown=nextjs:nodejs /app/entrypoint.sh /app/entrypoint.sh
 RUN chmod +x /app/entrypoint.sh
-# RUN ln -sf /app/entrypoint.sh /entrypoint.sh
-# RUN chmod +x /entrypoint.sh
 
+RUN mkdir -p /app/.npm-cache && \
+    chown -R nextjs:nodejs /app/.npm-cache
 # 复制整个应用 ------------------------------------------------------------------
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder --chown=nextjs:nodejs /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.env.local ./.env.local
-RUN npm install -g pnpm 
+COPY --from=builder --chown=nextjs:nodejs /app/server.js ./server.js
+RUN npm install -g pnpm
 
 USER root
-# RUN chmod +x ./entrypoint.sh
-# USER nextjs
 
 # 暴露3000端口 -----------------------------------------------------------------
-EXPOSE 3000 7880
+EXPOSE 3000
 
+VOLUME ["/app/.npm-cache"]
 # 使用入口脚本启动服务 -----------------------------------------------------------
 ENTRYPOINT ["/app/entrypoint.sh"]

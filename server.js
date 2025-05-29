@@ -12,7 +12,7 @@ import express from 'express';
 
 // [args] ---------------------------------------------------------------------------------------------------------------
 const dev = process.env.NODE_ENV !== 'production';
-const hostname = 'localhost';
+const hostname = process.env.HOST || '0.0.0.0';
 const port = process.env.PORT || 3000;
 const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 // [when using middleware `hostname` and `port` must be provided below] -------------------------------------------------
@@ -41,11 +41,13 @@ app.prepare().then(() => {
   // [io on] -------------------------------------------------------------------------------------------------------------
   // - [io connection] ---------------------------------------------------------------------------------------------------
   io.on('connection', (socket) => {
+    console.log('Socket connected', socket.id);
     // - [socket: wave hand event to other user] -------------------------------------------------------------------------
     // - on: "wave"
     // - emit: "wave_response"
     // - msg: { room: string, senderId: string, senderName: string, receiverId: string }
     socket.on('wave', (msg) => {
+      console.log('wave', msg);
       socket.to(msg.socketId).emit('wave_response', {
         room: msg.room,
         senderId: msg.senderId,
@@ -97,6 +99,7 @@ app.prepare().then(() => {
     });
     // [socket: chat message event] -------------------------------------------------------------------------------------
     socket.on('chat_msg', (msg) => {
+      console.log('chat_msg', msg);
       socket.broadcast.emit('chat_msg_response', msg);
     });
     // [socket: chat file event] ----------------------------------------------------------------------------------------
