@@ -1,92 +1,6 @@
-logging:
-  logs:
-    default:
-      level: INFO
-storage:
-  "module": "file_system"
-  "root": "/data"
-apps:
-  tls:
-    certificates:
-      automate:
-        - vocespace.xyz
-        - turn.vocespace.xyz
-        - server.vocespace.xyz
-  layer4:
-    servers:
-      main:
-        listen: [":443"]
-        routes:
-
-          # TURN 服务
-          - match:
-              - tls:
-                  sni:
-                    - "turn.vocespace.xyz"
-            handle:
-              - handler: tls
-              - handler: proxy
-                upstreams:
-                  - dial: ["localhost:5349"]
-          # 💡 LiveKit 服务，通过 server.vocespace.xyz
-          - match:
-              - tls:
-                  sni:
-                    - "server.vocespace.xyz"
-            handle:
-              - handler: tls
-              - handler: proxy
-                upstreams:
-                  - dial: ["localhost:7880"]
-
-          # 💡 前端服务，通过 vocespace.xyz
-          - match:
-              - tls:
-                  sni:
-                    - "vocespace.xyz"
-            handle:
-              - handler: tls
-                connection_policies:
-                  - alpn: ["http/1.1"]
-              - handler: proxy
-                upstreams:
-                  - dial: ["localhost:3000"]
-
-
-caddy run --config caddy.yaml --adapter yaml
-
-
-
-space.voce.chat {
-    # 默认启用 HTTPS
-    
-    # 主应用代理
-    handle / {
-        reverse_proxy 127.0.0.1:3000 {
-            header_up Host {host}
-            header_up Upgrade {http.request.header.Upgrade}
-            header_up Connection {http.request.header.Connection}
-        }
-    }
-
-    # WebRTC 代理
-    handle /rtc/* {
-        reverse_proxy 127.0.0.1:7880 {
-            header_up Host {host}
-            header_up Upgrade {http.request.header.Upgrade}
-            header_up Connection {http.request.header.Connection}
-        }
-    }
-
-    # 启用 HTTP/1.1
-    protocols http/1.1
-}
-
 vocespace.xyz {
-    # 默认启用 HTTPS
-    
-    # WebRTC/LiveKit 代理 - 需要放在更具体的路径前面
-    handle /rooms/* {
+    # LiveKit WebRTC 路径
+    handle /rtc* {
         reverse_proxy localhost:7880 {
             header_up Host {host}
             header_up Upgrade {http.request.header.Upgrade}
@@ -97,9 +11,7 @@ vocespace.xyz {
         }
     }
 
-
-    # 主应用代理 - 放在最后作为默认处理
-    handle /* {
+    handle /socket.io/* {
         reverse_proxy localhost:3000 {
             header_up Host {host}
             header_up Upgrade {http.request.header.Upgrade}
@@ -110,7 +22,19 @@ vocespace.xyz {
         }
     }
 
-    # 启用日志以便调试
+    # 主应用 - 处理所有其他请求
+    handle {
+        reverse_proxy localhost:3000 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # 日志配置
     log {
         output file /var/log/caddy/vocespace.xyz.log
         level DEBUG

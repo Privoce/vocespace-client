@@ -227,6 +227,7 @@ function VideoConferenceComponent(props: {
     } as RoomConnectOptions;
 
     if (TURN_CREDENTIAL !== '' && TURN_USERNAME !== '' && TURN_URL !== '') {
+      
       conf.rtcConfig = {
         iceServers: [
           {
