@@ -77,6 +77,22 @@ server {
         proxy_pass http://127.0.0.1:3030;
     }
 
+    # 静态资源缓存 - 使用相同的缓存策略
+    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+        proxy_pass http://127.0.0.1:3030;
+        proxy_cache_valid 200 1y;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        add_header Vary Accept-Encoding;
+    }
+
+    # 添加资源版本化支持
+    location ~ ^/_next/static/ {
+        proxy_pass http://127.0.0.1:3030;
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+    }
+
     ssl_certificate /etc/letsencrypt/live/vocespace.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/vocespace.com/privkey.pem;
     include /etc/letsencrypt/options-ssl-nginx.conf;
