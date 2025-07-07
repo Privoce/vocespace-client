@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import * as PIXI from 'pixi.js';
 import { MotionSync } from 'live2d-motionsync/stream';
-import * as faceapi from 'face-api.js';
+// import * as faceapi from 'face-api.js';
 import styles from '@/styles/virtual_role.module.scss';
 import { VirtualRoleProps } from './live2d';
 import { ModelRole } from '@/lib/std/virtual';
@@ -424,12 +424,12 @@ export const Live2DComponent = ({
       try {
         // 加载faceapi需要的模型
         if (!cState.detectorReady) {
-          await faceapi.loadTinyFaceDetectorModel(
-            src(`/models/tiny_face_detector_model-weights_manifest.json`),
-          );
-          await faceapi.loadFaceLandmarkModel(
-            src(`/models/face_landmark_68_model-weights_manifest.json`),
-          );
+          // await faceapi.loadTinyFaceDetectorModel(
+          //   src(`/models/tiny_face_detector_model-weights_manifest.json`),
+          // );
+          // await faceapi.loadFaceLandmarkModel(
+          //   src(`/models/face_landmark_68_model-weights_manifest.json`),
+          // );
           if (!isActive) return;
           setCState((prev) => ({
             ...prev,

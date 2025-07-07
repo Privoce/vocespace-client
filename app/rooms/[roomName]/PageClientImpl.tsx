@@ -19,7 +19,7 @@ import {
   MediaDeviceFailure,
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
-import React, { createContext, ReactNode, useState } from 'react';
+import React, { createContext, ReactNode, useMemo, useState } from 'react';
 import { PreJoin } from '@/app/pages/pre_join/pre_join';
 import { atom, RecoilRoot, useRecoilState } from 'recoil';
 import { connect_endpoint, UserDefineStatus, UserStatus } from '@/lib/std';
@@ -29,6 +29,16 @@ import io from 'socket.io-client';
 const TURN_CREDENTIAL = process.env.TURN_CREDENTIAL ?? '';
 const TURN_USERNAME = process.env.TURN_USERNAME ?? '';
 const TURN_URL = process.env.TURN_URL ?? '';
+// h90: '160x90 (QQVGA)',
+// h180: '320x180 (HQVGA)',
+// h216: '384x216 (WQVGA)',
+// h360: '640x360 (nHD)',
+// h540: '960x540 (qHD)',
+// h720: '1280x720 (HD)',
+// h1080: '1920x1080 (Full HD / 1080p)',
+// h1440: '2560x1440 (QHD / 2K)',
+// h2160: '3840x2160 (UHD / 4K)',
+const RESOLUTION = process.env.NEXT_PUBLIC_RESOLUTION ?? '1080p';
 
 export const socket = io();
 
@@ -56,11 +66,11 @@ export const licenseState = atom({
   default: {
     id: undefined,
     email: undefined,
-    domains: "*",
+    domains: '*',
     created_at: 1747742400,
     expires_at: 1779278400,
     value: 'vocespace_pro__KUgwpDrr-g3iXIX41rTrSCsWAcn9UFX8dOYMr0gAARQ',
-    ilimit: "Free",
+    ilimit: 'Free',
   },
 });
 
@@ -167,6 +177,79 @@ function VideoConferenceComponent(props: {
   const [permissionRequested, setPermissionRequested] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const videoContainerRef = React.useRef<VideoContainerExports>(null);
+  const resolution = useMemo(() => {
+    switch (RESOLUTION) {
+      case '4k':
+      case 'h2160':
+      case 'UHD':
+        return {
+          h: VideoPresets.h2160,
+          l: VideoPresets.h1440,
+        };
+      case '2k':
+      case 'h1440':
+      case 'QHD':
+        return {
+          h: VideoPresets.h1440,
+          l: VideoPresets.h1080,
+        };
+      case '1080p':
+      case 'h1080':
+      case 'Full HD':
+        return {
+          h: VideoPresets.h1080,
+          l: VideoPresets.h720,
+        };
+      case '720p':
+      case 'h720':
+      case 'HD':
+        return {
+          h: VideoPresets.h720,
+          l: VideoPresets.h540,
+        };
+      case '540p':
+      case 'h540':
+      case 'qHD':
+        return {
+          h: VideoPresets.h540,
+          l: VideoPresets.h360,
+        };
+      case '360p':
+      case 'h360':
+      case 'nHD':
+        return {
+          h: VideoPresets.h360,
+          l: VideoPresets.h216,
+        };
+      case '216p':
+      case 'h216':
+      case 'WQVGA':
+        return {
+          h: VideoPresets.h216,
+          l: VideoPresets.h180,
+        };
+      case '180p':
+      case 'h180':
+      case 'HQVGA':
+        return {
+          h: VideoPresets.h180,
+          l: VideoPresets.h90,
+        };
+      case '90p':
+      case 'h90':
+      case 'QQVGA':
+        return {
+          h: VideoPresets.h90,
+          l: VideoPresets.h90,
+        };
+      default:
+        return {
+          h: VideoPresets.h1080,
+          l: VideoPresets.h720,
+        };
+    }
+  }, [RESOLUTION]);
+
   const roomOptions = React.useMemo((): RoomOptions => {
     let videoCodec: VideoCodec | undefined = props.options.codec ? props.options.codec : 'vp9';
     if (e2eeEnabled && (videoCodec === 'av1' || videoCodec === 'vp9')) {
@@ -175,13 +258,11 @@ function VideoConferenceComponent(props: {
     return {
       videoCaptureDefaults: {
         deviceId: props.userChoices.videoDeviceId ?? undefined,
-        resolution: props.options.hq ? VideoPresets.h2160 : VideoPresets.h1080,
+        resolution: props.options.hq ? resolution.h : resolution.l,
       },
       publishDefaults: {
         dtx: false,
-        videoSimulcastLayers: props.options.hq
-          ? [VideoPresets.h1440, VideoPresets.h1080]
-          : [VideoPresets.h1080],
+        videoSimulcastLayers: props.options.hq ? [resolution.h, resolution.l] : [resolution.l],
         red: !e2eeEnabled,
         videoCodec,
       },
@@ -197,7 +278,7 @@ function VideoConferenceComponent(props: {
           }
         : undefined,
     };
-  }, [props.userChoices, props.options.hq, props.options.codec]);
+  }, [props.userChoices, props.options.hq, props.options.codec, resolution]);
 
   const room = React.useMemo(() => new Room(roomOptions), []);
   React.useEffect(() => {
@@ -227,7 +308,6 @@ function VideoConferenceComponent(props: {
     } as RoomConnectOptions;
 
     if (TURN_CREDENTIAL !== '' && TURN_USERNAME !== '' && TURN_URL !== '') {
-      
       conf.rtcConfig = {
         iceServers: [
           {

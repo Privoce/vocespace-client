@@ -30,6 +30,7 @@ TURN_CREDENTIAL=${TURN_CREDENTIAL:-}
 TURN_URL=${TURN_URL:-}
 TURN_USERNAME=${TURN_USERNAME:-}
 WEBHOOK=${WEBHOOK:-}
+NEXT_PUBLIC_RESOLUTION=${NEXT_PUBLIC_RESOLUTION:-1080p}
 EOF
 
 # 替换构建产物中的占位符
@@ -43,6 +44,7 @@ find /app/.next -type f -name "*.js" -exec sed -i "s|__PORT_PLACEHOLDER__|${PORT
 find /app/.next -type f -name "*.js" -exec sed -i "s|__NEXT_PUBLIC_BASE_PATH_PLACEHOLDER__|${NEXT_PUBLIC_BASE_PATH:-}|g" {} \;
 find /app/.next -type f -name "*.js" -exec sed -i "s|__WEBHOOK_PLACEHOLDER__|${WEBHOOK:-false}|g" {} \;
 find /app/.next -type f -name "*.js" -exec sed -i "s|__HOST_PLACEHOLDER__|${HOST:-0.0.0.0}|g" {} \;
+find /app/.next -type f -name "*.js" -exec sed -i "s|__NEXT_PUBLIC_RESOLUTION_PLACEHOLDER__|${NEXT_PUBLIC_RESOLUTION:-1080p}|g" {} \;
 
 echo "环境变量配置:"
 cat /app/.env.local

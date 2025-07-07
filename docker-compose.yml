@@ -19,6 +19,7 @@ services:
       - TURN_CREDENTIAL=${TURN_CREDENTIAL:-}
       - TURN_URL=${TURN_URL:-}
       - TURN_USERNAME=${TURN_USERNAME:-}
+      - NEXT_PUBLIC_RESOLUTION=${NEXT_PUBLIC_RESOLUTION:-1080p}
     volumes:
       - npm-cache:/app/.npm-cache
       - uploads:/app/uploads
