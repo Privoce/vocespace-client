@@ -31,7 +31,8 @@ const {
   PORT = '3000',
   NEXT_PUBLIC_BASE_PATH: basePath = '',
 } = process.env;
-const dev = NODE_ENV !== 'production';
+// const dev = NODE_ENV !== 'production';
+const dev = true
 const port = parseInt(PORT, 10) || 3000;
 
 console.log(`env: {

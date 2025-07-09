@@ -19,12 +19,13 @@ import {
   MediaDeviceFailure,
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
-import React, { createContext, ReactNode, useMemo, useState } from 'react';
+import React, { createContext, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import { PreJoin } from '@/app/pages/pre_join/pre_join';
 import { atom, RecoilRoot, useRecoilState } from 'recoil';
 import { connect_endpoint, UserDefineStatus, UserStatus } from '@/lib/std';
 import { ModelBg, ModelRole } from '@/lib/std/virtual';
 import io from 'socket.io-client';
+import { EnvConf } from '@/lib/std/env';
 
 // h90: '160x90 (QQVGA)',
 // h180: '320x180 (HQVGA)',
@@ -35,14 +36,11 @@ import io from 'socket.io-client';
 // h1080: '1920x1080 (Full HD / 1080p)',
 // h1440: '2560x1440 (QHD / 2K)',
 // h2160: '3840x2160 (UHD / 4K)',
+
 const {
   TURN_CREDENTIAL = '',
   TURN_USERNAME = '',
   TURN_URL = '',
-  NEXT_PUBLIC_RESOLUTION: RESOLUTION = '1080p',
-  NEXT_PUBLIC_MAXBITRATE = '12000', // 12Mbps
-  NEXT_PUBLIC_MAXFRAMERATE = '30', // 30fps
-  NEXT_PUBLIC_PRIORITY = 'medium',
 } = process.env;
 
 export const socket = io();
@@ -182,13 +180,37 @@ function VideoConferenceComponent(props: {
   const [permissionRequested, setPermissionRequested] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const videoContainerRef = React.useRef<VideoContainerExports>(null);
+  const [screenShareOption, setScreenShareOption] = React.useState<EnvConf | null>(null);
+  const fetchEnvConf = useCallback(async () => {
+    const url = new URL(connect_endpoint('/api/env'), window.location.origin);
+    const response = await fetch(url.toString());
+    if (!response.ok) {
+      return {
+        resolution: '1080p',
+        maxBitrate: 12000,
+        maxFramerate: 30,
+        priority: 'medium' as RTCPriorityType,
+      } as EnvConf;
+    } else {
+      const { resolution, maxBitrate, maxFramerate, priority }: EnvConf = await response.json();
+      return {
+        resolution,
+        maxBitrate,
+        maxFramerate,
+        priority,
+      } as EnvConf;
+    }
+  }, []);
 
-  const maxBitrate = parseInt(NEXT_PUBLIC_MAXBITRATE || '8000', 10);
-  const maxFramerate = parseInt(NEXT_PUBLIC_MAXFRAMERATE || '30', 10);
-  const priority: RTCPriorityType = (NEXT_PUBLIC_PRIORITY || 'medium') as RTCPriorityType;
+  useEffect(() => {
+    if (!screenShareOption) {
+      fetchEnvConf().then(setScreenShareOption);
+    }
+  }, [screenShareOption, fetchEnvConf]);
 
-  const resolution = useMemo(() => {
-    switch (RESOLUTION) {
+  const resolutions = useMemo(() => {
+    const resolution = screenShareOption?.resolution || '1080p';
+    switch (resolution) {
       case '4k':
       case 'h2160':
       case 'UHD':
@@ -258,9 +280,10 @@ function VideoConferenceComponent(props: {
           l: VideoPresets.h720,
         };
     }
-  }, [RESOLUTION]);
+  }, [screenShareOption]);
 
   const roomOptions = React.useMemo((): RoomOptions => {
+    console.warn(screenShareOption);
     let videoCodec: VideoCodec | undefined = props.options.codec ? props.options.codec : 'vp9';
     if (e2eeEnabled && (videoCodec === 'av1' || videoCodec === 'vp9')) {
       videoCodec = undefined;
@@ -268,19 +291,19 @@ function VideoConferenceComponent(props: {
     return {
       videoCaptureDefaults: {
         deviceId: props.userChoices.videoDeviceId ?? undefined,
-        resolution: props.options.hq ? resolution.h : resolution.l,
+        resolution: props.options.hq ? resolutions.h : resolutions.l,
       },
       publishDefaults: {
         dtx: false,
-        videoSimulcastLayers: props.options.hq ? [resolution.h, resolution.l] : [resolution.l],
+        videoSimulcastLayers: props.options.hq ? [resolutions.h, resolutions.l] : [resolutions.l],
         red: !e2eeEnabled,
         videoCodec,
         screenShareEncoding: {
-          maxBitrate,
-          maxFramerate,
-          priority,
+          maxBitrate: screenShareOption?.maxBitrate || 12000,
+          maxFramerate: screenShareOption?.maxFramerate || 30,
+          priority: screenShareOption?.priority || 'medium',
         },
-        screenShareSimulcastLayers: [resolution.h, resolution.l],
+        screenShareSimulcastLayers: [resolutions.h, resolutions.l],
       },
       audioCaptureDefaults: {
         deviceId: props.userChoices.audioDeviceId ?? undefined,
@@ -298,10 +321,8 @@ function VideoConferenceComponent(props: {
     props.userChoices,
     props.options.hq,
     props.options.codec,
-    resolution,
-    maxBitrate,
-    maxFramerate,
-    priority,
+    screenShareOption,
+    resolutions
   ]);
 
   const room = React.useMemo(() => new Room(roomOptions), []);
