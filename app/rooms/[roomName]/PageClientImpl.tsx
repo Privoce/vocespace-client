@@ -265,6 +265,12 @@ function VideoConferenceComponent(props: {
         videoSimulcastLayers: props.options.hq ? [resolution.h, resolution.l] : [resolution.l],
         red: !e2eeEnabled,
         videoCodec,
+        // screenShareEncoding: {
+        //   maxBitrate: 200000, // 20Mbps
+        //   maxFramerate: 200, // 200fps
+        //   priority: 'high',
+        // },
+        screenShareSimulcastLayers: [VideoPresets.h2160],
       },
       audioCaptureDefaults: {
         deviceId: props.userChoices.audioDeviceId ?? undefined,
