@@ -20,6 +20,9 @@ services:
       - TURN_URL=${TURN_URL:-}
       - TURN_USERNAME=${TURN_USERNAME:-}
       - NEXT_PUBLIC_RESOLUTION=${NEXT_PUBLIC_RESOLUTION:-1080p}
+      - NEXT_PUBLIC_MAXBITRATE=${NEXT_PUBLIC_MAXBITRATE:-12000}
+      - NEXT_PUBLIC_MAXFRAMERATE=${NEXT_PUBLIC_MAXFRAMERATE:-30}
+      - NEXT_PUBLIC_PRIORITY=${NEXT_PUBLIC_PRIORITY:-medium}
     volumes:
       - npm-cache:/app/.npm-cache
       - uploads:/app/uploads

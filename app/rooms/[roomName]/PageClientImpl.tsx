@@ -26,9 +26,7 @@ import { connect_endpoint, UserDefineStatus, UserStatus } from '@/lib/std';
 import { ModelBg, ModelRole } from '@/lib/std/virtual';
 import io from 'socket.io-client';
 
-const TURN_CREDENTIAL = process.env.TURN_CREDENTIAL ?? '';
-const TURN_USERNAME = process.env.TURN_USERNAME ?? '';
-const TURN_URL = process.env.TURN_URL ?? '';
+
 // h90: '160x90 (QQVGA)',
 // h180: '320x180 (HQVGA)',
 // h216: '384x216 (WQVGA)',
@@ -38,7 +36,15 @@ const TURN_URL = process.env.TURN_URL ?? '';
 // h1080: '1920x1080 (Full HD / 1080p)',
 // h1440: '2560x1440 (QHD / 2K)',
 // h2160: '3840x2160 (UHD / 4K)',
-const RESOLUTION = process.env.NEXT_PUBLIC_RESOLUTION ?? '1080p';
+const {
+  TURN_CREDENTIAL = "",
+  TURN_USERNAME = "",
+  TURN_URL = "",
+  NEXT_PUBLIC_RESOLUTION: RESOLUTION = '1080p',
+  NEXT_PUBLIC_MAXBITRATE = '12000', // 12Mbps
+  NEXT_PUBLIC_MAXFRAMERATE = '30', // 30fps
+  NEXT_PUBLIC_PRIORITY = 'medium',
+} = process.env;
 
 export const socket = io();
 
@@ -177,6 +183,11 @@ function VideoConferenceComponent(props: {
   const [permissionRequested, setPermissionRequested] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const videoContainerRef = React.useRef<VideoContainerExports>(null);
+
+  const maxBitrate = parseInt(NEXT_PUBLIC_MAXBITRATE || '8000', 10);
+  const maxFramerate = parseInt(NEXT_PUBLIC_MAXFRAMERATE || '30', 10);
+  const priority: RTCPriorityType = (NEXT_PUBLIC_PRIORITY || 'medium') as RTCPriorityType;
+
   const resolution = useMemo(() => {
     switch (RESOLUTION) {
       case '4k':
@@ -265,11 +276,11 @@ function VideoConferenceComponent(props: {
         videoSimulcastLayers: props.options.hq ? [resolution.h, resolution.l] : [resolution.l],
         red: !e2eeEnabled,
         videoCodec,
-        // screenShareEncoding: {
-        //   maxBitrate: 200000, // 20Mbps
-        //   maxFramerate: 200, // 200fps
-        //   priority: 'high',
-        // },
+        screenShareEncoding: {
+          maxBitrate,
+          maxFramerate,
+          priority,
+        },
         screenShareSimulcastLayers: [VideoPresets.h2160],
       },
       audioCaptureDefaults: {
@@ -460,7 +471,7 @@ function VideoConferenceComponent(props: {
           messageApi={messageApi}
           noteApi={notApi}
         ></VideoContainer>
-        <DebugMode />
+        {/* <DebugMode /> */}
         <RecordingIndicator />
         <Modal
           title={t('msg.request.device.title')}
