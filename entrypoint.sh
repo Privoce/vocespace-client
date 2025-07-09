@@ -18,6 +18,17 @@ else
     echo "✅ Socket.IO 已存在，跳过安装"
 fi
 
+# 检查是否需安装 dotenv
+echo "=== 检查 dotenv ==="
+# 检查是否已安装
+if [ ! -d "/app/node_modules/dotenv" ]; then
+    echo "正在安装 dotenv（使用缓存）..."
+    pnpm add dotenv
+    echo "✅ dotenv 安装完成"
+else
+    echo "✅ dotenv 已存在，跳过安装"
+fi
+
 # 直接重写整个.env文件
 cat > /app/.env.local << EOF
 LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
