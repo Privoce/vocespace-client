@@ -26,7 +26,6 @@ import { connect_endpoint, UserDefineStatus, UserStatus } from '@/lib/std';
 import { ModelBg, ModelRole } from '@/lib/std/virtual';
 import io from 'socket.io-client';
 
-
 // h90: '160x90 (QQVGA)',
 // h180: '320x180 (HQVGA)',
 // h216: '384x216 (WQVGA)',
@@ -37,9 +36,9 @@ import io from 'socket.io-client';
 // h1440: '2560x1440 (QHD / 2K)',
 // h2160: '3840x2160 (UHD / 4K)',
 const {
-  TURN_CREDENTIAL = "",
-  TURN_USERNAME = "",
-  TURN_URL = "",
+  TURN_CREDENTIAL = '',
+  TURN_USERNAME = '',
+  TURN_URL = '',
   NEXT_PUBLIC_RESOLUTION: RESOLUTION = '1080p',
   NEXT_PUBLIC_MAXBITRATE = '12000', // 12Mbps
   NEXT_PUBLIC_MAXFRAMERATE = '30', // 30fps
@@ -281,7 +280,7 @@ function VideoConferenceComponent(props: {
           maxFramerate,
           priority,
         },
-        screenShareSimulcastLayers: [VideoPresets.h2160],
+        screenShareSimulcastLayers: [resolution.h, resolution.l],
       },
       audioCaptureDefaults: {
         deviceId: props.userChoices.audioDeviceId ?? undefined,
@@ -295,7 +294,15 @@ function VideoConferenceComponent(props: {
           }
         : undefined,
     };
-  }, [props.userChoices, props.options.hq, props.options.codec, resolution]);
+  }, [
+    props.userChoices,
+    props.options.hq,
+    props.options.codec,
+    resolution,
+    maxBitrate,
+    maxFramerate,
+    priority,
+  ]);
 
   const room = React.useMemo(() => new Room(roomOptions), []);
   React.useEffect(() => {
