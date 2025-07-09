@@ -127,3 +127,11 @@ h2 a {
 .ant-input-data-count{
   color: #fff !important;
 }
+
+.lk-focus-layout {
+  grid-template-columns: 1fr 8fr !important;
+}
+
+.lk-focus-layout_collapsed {
+  grid-template-columns: 0fr 1fr !important;
+}

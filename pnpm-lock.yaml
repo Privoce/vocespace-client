@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@ant-design/icons':
+        specifier: 5.x
+        version: 5.6.1(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@datadog/browser-logs':
         specifier: ^5.23.3
         version: 5.35.0
@@ -29,9 +32,6 @@ importers:
       antd:
         specifier: ^5.24.2
         version: 5.24.2(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      detect-gpu:
-        specifier: ^5.0.70
-        version: 5.0.70
       express:
         specifier: ^5.1.0
         version: 5.1.0
@@ -68,9 +68,6 @@ importers:
       recoil:
         specifier: ^0.7.7
         version: 0.7.7(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
-      rxjs:
-        specifier: ^7.8.2
-        version: 7.8.2
       socket.io:
         specifier: ^4.8.1
         version: 4.8.1
@@ -1301,9 +1298,6 @@ packages:
   depd@2.0.0:
     resolution: {integrity: sha512-g7nH6P6dyDioJogAAGprGpCtVImJhpPk/roCzdb3fIh61/s/nPsfR6onyMwkCAR/OlC3yBC0lESvUoQEAssIrw==}
     engines: {node: '>= 0.8'}
-
-  detect-gpu@5.0.70:
-    resolution: {integrity: sha512-bqerEP1Ese6nt3rFkwPnGbsUF9a4q+gMmpTVVOEzoCyeCc+y7/RvJnQZJx1JwhgQI5Ntg0Kgat8Uu7XpBqnz1w==}
 
   detect-libc@1.0.3:
     resolution: {integrity: sha512-pGjwhsmsp4kL2RTz08wcOlGN83otlqHeD/Z5T8GXZB+/YcpQ/dgo+lbU8ZsGxV0HIvqqxo9l7mqYwyYMD9bKDg==}
@@ -3059,9 +3053,6 @@ packages:
     resolution: {integrity: sha512-TnbFSbcOCcDgjZ4piURLCbJ3nJhznVh9kw6F6iokjiFPl8ONxe9A6nMDVXDiNbrSfLILs6vB07F7wLBrwPYzJw==}
     engines: {node: '>=10.13.0'}
 
-  webgl-constants@1.1.1:
-    resolution: {integrity: sha512-LkBXKjU5r9vAW7Gcu3T5u+5cvSvh5WwINdr0C+9jpzVB41cjQAP5ePArDtk/WHYdVj0GefCgM73BA7FlIiNtdg==}
-
   webpack-sources@3.2.3:
     resolution: {integrity: sha512-/DyMEOrDgLKKIG0fmvtz+4dUX/3Ghozwgm6iPp8KRhvn+eQf9+Q7GWxVNMk3+uCPWfdXYC4ExGBckIXdFEfH1w==}
     engines: {node: '>=10.13.0'}
@@ -4417,10 +4408,6 @@ snapshots:
       object-keys: 1.1.1
 
   depd@2.0.0: {}
-
-  detect-gpu@5.0.70:
-    dependencies:
-      webgl-constants: 1.1.1
 
   detect-libc@1.0.3:
     optional: true
@@ -6102,6 +6089,7 @@ snapshots:
   rxjs@7.8.2:
     dependencies:
       tslib: 2.8.1
+    optional: true
 
   safe-array-concat@1.1.2:
     dependencies:
@@ -6557,8 +6545,6 @@ snapshots:
     dependencies:
       glob-to-regexp: 0.4.1
       graceful-fs: 4.2.11
-
-  webgl-constants@1.1.1: {}
 
   webpack-sources@3.2.3: {}
 

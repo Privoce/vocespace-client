@@ -44,6 +44,7 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { ModelBg, ModelRole } from '@/lib/std/virtual';
 import { licenseState, socket, userState } from '@/app/rooms/[roomName]/PageClientImpl';
 import { useRouter } from 'next/navigation';
+import { FocusCollapse } from './collapse';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -444,9 +445,11 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     useImperativeHandle(ref, () => ({
       removeLocalSettings: () => clearSettings(),
     }));
+    const [focusOpen, setFocusOpen] = useState(true);
 
     return (
       <div className="lk-video-conference" {...props}>
+        <FocusCollapse open={focusOpen} setOpen={setFocusOpen}></FocusCollapse>
         {is_web() && (
           <LayoutContextProvider
             value={layoutContext}
@@ -468,7 +471,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                 </div>
               ) : (
                 <div className="lk-focus-layout-wrapper">
-                  <FocusLayoutContainer>
+                  <div className={focusOpen ? "lk-focus-layout" : "lk-focus-layout lk-focus-layout_collapsed"}>
                     <CarouselLayout tracks={carouselTracks}>
                       <ParticipantItem
                         room={room?.name}
@@ -489,7 +492,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                         isFocus={isFocus}
                       ></ParticipantItem>
                     )}
-                  </FocusLayoutContainer>
+                  </div>
                 </div>
               )}
               <Controls

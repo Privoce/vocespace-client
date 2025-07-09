@@ -1,3 +1,5 @@
+import { title } from 'process';
+
 export default {
   common: {
     confirm: '确认',
@@ -41,6 +43,178 @@ export default {
     wave_msg: '向您发送了一条提醒!',
     full_user:
       '房间用户已经超出限制，无法加入，您可以加入其他房间或告知构建者升级证书获取更多用户名额。',
+    open: '开启',
+    close: '关闭',
+  },
+  recording: {
+    title: '录制记录',
+  },
+  channel: {
+    menu: {
+      header: '',
+      main: '空间',
+      sub: '房间',
+      create: '创建房间',
+      join: '加入',
+      setting: '设置',
+      delete: '删除房间',
+      leave: '离开房间',
+      rename: '重命名',
+      switch_privacy: '设为',
+      active: '在线',
+    },
+    join: {
+      success: '加入房间成功',
+    },
+    delete: {
+      success: '删除房间成功',
+      error: '删除房间失败，请稍后再试。',
+      remain: '房间中仍有成员，无法删除，请先通知所有成员离开房间。',
+    },
+    create: {
+      success: '房间创建成功',
+      error: '房间创建失败，请稍后再试。',
+      empty_name: '房间名称不能为空',
+    },
+    leave: {
+      success: '离开房间，返回空间成功',
+      error: '离开房间失败，请稍后再试。',
+    },
+    modal: {
+      title: '创建房间',
+      desc: [
+        '创建房间后，您可以邀请其他参与者加入该房间。房间可以用于特定的讨论或活动。',
+        '在房间中，空间依然可见，您可以随时返回空间进行交流。对于空间的参与者，他们无法听到房间的讨论内容，但可以看到房间的存在。',
+      ],
+      placeholder: '请输入房间名称',
+      cancel: '取消',
+      ok: '创建房间',
+      privacy: {
+        title: '隐私性',
+        public: {
+          title: '公开',
+          desc: '公开房间，任何在空间中的参与者都可以自由加入，房间权限宽松，适合开放讨论。',
+        },
+        private: {
+          title: '私有',
+          desc: '私有房间，房间权限完全被拥有者控制，只有经过房间拥有者的同意才能加入，适用于需要隐私保护的讨论。',
+        },
+        success: '隐私性切换成功, 当前为',
+      },
+      join: {
+        title: '请求加入房间',
+        want: '希望加入房间，请问您是否同意？',
+        ok: '同意',
+        cancel: '拒绝',
+        missing_data: '加入数据不可用，如果您看到此错误，请联系开发团队。',
+        reject: '很遗憾!您被拒绝加入房间。',
+      },
+      rename: {
+        title: '重命名房间',
+        desc: '请输入新的房间名称，房间名称可以随时修改。但不可与现有其他房间名称重复。',
+        placeholder: '请输入新的房间名称',
+        ok: '重命名',
+        cancel: '取消',
+        empty_name: '房间名称不能为空',
+        success: '房间重命名成功',
+        error: '房间重命名失败，请稍后再试。',
+        repeat: '房间名称已存在，请选择其他名称。',
+      },
+      remove: {
+        before: '您已被移出: ',
+        after: ' 房间，该房间已被删除。',
+      },
+    },
+  },
+  more: {
+    title: '更多',
+    channel: '频道',
+    app: {
+      title: '应用',
+      timer: {
+        title: '计时器',
+      },
+      countdown: {
+        title: '倒计时',
+        placeholder: '选择倒计时时间',
+        set: '设置时间',
+        error: {
+          set: '请先设置倒计时时间',
+          valid: '请设置有效的倒计时时间',
+        },
+      },
+      todo: {
+        title: '待办事项',
+        add: '添加待办',
+        placeholder: '请输入待办事项',
+        empty: '暂无待办事项，在下方输入待办并点击添加按钮创建新的待办事项',
+        create: '创建待办',
+        empty_value: '待办事项不能为空',
+        delete: '删除待办成功',
+      },
+    },
+    record: {
+      start: '录制',
+      stop: '停止录制',
+      title: '录制房间',
+      desc: 'VoceSpace 将会录制房间中的音频和视频。请注意，录制可能会影响性能。录制结束后，您将收到一条通知，等待传输完成后可前往下载页进行下载。',
+      request:
+        "由于您不是房间主持人，您无法直接进行录制，若您需要录制，请点击'请求录制'按钮，房间支持人将收到您的请求，若同意将会开启录制。",
+      confirm: '开始录制',
+      confirm_request: '请求录制',
+      cancel: '取消',
+      download_msg: '录制已完成，正在传输至云端进行存储，您可以访问当前服务的records进行下载。',
+      download: '下载录制文件',
+      to_download: '前往下载',
+    },
+    participant: {
+      title: '成员',
+      manage: '管理成员',
+      search: '搜索成员',
+      manager: '主持人',
+      invite: {
+        title: '邀请成员',
+        web: '浏览器中',
+        add: '加入 VoceSpace 房间',
+        texts: ['邀请您加入 VoceSpace', '请 点击|复制 以下链接到', '请复制以下房间名称到'],
+        ok: '复制邀请',
+        cancel: '取消',
+        link: '链接',
+        room: '房间名称',
+      },
+      set: {
+        invite: {
+          title: '成员邀请',
+          video: '邀请开启视频',
+          wave: '发送一条提醒',
+          audio: '邀请开启音频',
+          share: '邀请共享屏幕',
+        },
+        control: {
+          title: '成员控制',
+          trans: '转让房间主持人',
+          change_name: '修改名称',
+          mute: {
+            audio: '静音音频',
+            video: '关闭视频',
+          },
+          volume: '音量调节',
+          blur: {
+            video: '视频虚化',
+            screen: '屏幕虚化',
+          },
+        },
+        safe: {
+          title: '安全',
+          remove: {
+            title: '移除成员',
+            desc: '您确定要移除该成员吗？',
+            confirm: '确定移除',
+            cancel: '取消',
+          },
+        },
+      },
+    },
   },
   settings: {
     title: '设置',
@@ -48,6 +222,8 @@ export default {
       title: '常规',
       username: '用户名',
       lang: '语言',
+      share_audio: '共享音频',
+      prompt_sound: '进入提示音',
       status: {
         title: '状态',
         online: '在线',
@@ -147,15 +323,25 @@ export default {
       title: '由 Privoce 开发的您的网络共享工作空间',
       contact: '请联系',
       learn_more: '了解更多',
-      offical_web: "官方网站",
+      offical_web: '官方网站',
       try_free: '创建一次性的新 VoceSpace。',
       try_enter_room: '输入您的 VoceSpace 名称或链接以加入或创建。',
       connect_with_server: '使用 Voce Space Server 将 Voce Space 与自定义服务器连接。',
       enabled_e2ee: '启用端到端加密',
       enter_room: '请输入房间名或链接',
       virtual_loading: '虚拟形象加载中...',
+      invite_device: '邀请您开启:',
+      remove_participant: '您已被房间主持人移除房间',
+      req_record: '请求进行录制',
+      recording: "房间在10s后将开启录制，若您不希望被录制，可点击'离开房间'按钮退出。",
     },
     error: {
+      record: {
+        copy: '录制链接复制失败',
+        email: {
+          empty: '邮箱地址不能为空',
+        },
+      },
       virtual: {
         video_stream: '虚拟摄像头流构建错误',
         model: '模型或视频不可用',
@@ -184,6 +370,7 @@ export default {
         username: {
           change: '用户名修改失败',
           request: '请求用户名失败',
+          exist: '用户名已存在，请选择其他名称',
         },
       },
       file: {
@@ -230,14 +417,24 @@ export default {
       },
     },
     success: {
+      record: {
+        start: '房间已经成功开启录制',
+        stop: '房间录制已成功停止, 10s后录制状态将移除',
+        copy: '录制链接已复制到剪贴板',
+      },
       device: {
         granted: '已成功授予媒体权限。',
+        mute: {
+          audio: '音频-麦克风设备已静音',
+          video: '视频-摄像头设备已关闭',
+        },
       },
       user: {
         username: {
           change: '用户名修改成功',
         },
         lang: '语言修改成功',
+        transfer: '您已成功被转让为房间主持人',
       },
     },
   },

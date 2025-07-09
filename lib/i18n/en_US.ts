@@ -39,7 +39,184 @@ export default {
     share_screen: 'Share Screen',
     stop_share: 'Stop Share Screen',
     wave_msg: 'sent you a reminder!',
-    full_user: "The room user has exceeded the limit and cannot join. You can join other rooms or inform the builder to upgrade your license to obtain more user slots.",
+    full_user:
+      'The room user has exceeded the limit and cannot join. You can join other rooms or inform the builder to upgrade your license to obtain more user slots.',
+    open: 'Open',
+    close: 'Close',
+  },
+  channel: {
+    menu: {
+      header: '',
+      main: 'Space',
+      sub: 'Rooms',
+      create: 'Create room',
+      join: 'Join',
+      setting: 'Settings',
+      delete: 'Delete room',
+      leave: 'Leave room',
+      rename: 'Rename',
+      switch_privacy: 'Set to ',
+      active: 'active',
+    },
+    join: {
+      success: 'Join room successfully',
+    },
+    delete: {
+      success: 'Delete room successfully',
+      error: 'Failed to delete room, please try again later. ',
+      remain:
+        'There are still members in the room and it cannot be deleted. Please notify all members to leave the room first.',
+    },
+    create: {
+      success: 'Room created successfully',
+      error: 'Failed to create room, please try again later. ',
+      empty_name: 'Room name cannot be empty',
+    },
+    leave: {
+      success: 'Leave room, return to Space successfully',
+      error: 'Failed to leave room, please try again later. ',
+    },
+    modal: {
+      title: 'Create a room',
+      desc: [
+        'After creating a room, you can invite other participants to join the room. Rooms can be used for specific discussions or activities.',
+        'In a room, the Space is still visible, and you can return to the Space at any time to communicate. For participants in the Space, they cannot hear the discussion content of the room, but they can see the existence of the room.',
+      ],
+      placeholder: 'Please enter the room name',
+      cancel: 'Cancel',
+      ok: 'Create a room',
+      privacy: {
+        title: 'Privacy',
+        public: {
+          title: 'Public',
+          desc: 'Public rooms, any participant in the space can join freely, room permissions are loose, suitable for open discussions.',
+        },
+        private: {
+          title: 'Private',
+          desc: 'Private rooms, room permissions are completely controlled by the owner, only with the consent of the room owner can join, suitable for discussions that require privacy protection.',
+        },
+        success: 'Privacy switch successful, currently is',
+      },
+      join: {
+        title: 'Request to join the room',
+        want: 'Want to join the room, do you agree? ',
+        ok: 'Agree',
+        cancel: 'Reject',
+        missing_data:
+          'Joining data is not available. If you see this error, please contact the development team. ',
+        reject: 'Sorry! You are rejected to join the room. ',
+      },
+      rename: {
+        title: 'Rename room',
+        desc: 'Please enter a new room name. The room name can be modified at any time. But it cannot be the same as other existing room names. ',
+        placeholder: 'Please enter a new room name',
+        ok: 'Rename',
+        cancel: 'Cancel',
+        empty_name: 'Room name cannot be empty',
+        success: 'Room rename successful',
+        error: 'Room rename failed. Please try again later. ',
+        repeat: 'Room name already exists. Please choose another name. ',
+      },
+      remove: {
+        before: 'You have been removed from: ',
+        after: ' room, the room has been deleted.',
+      },
+    },
+  },
+  more: {
+    title: 'More',
+    channel: 'Channel',
+    app: {
+      title: 'Application',
+      timer: {
+        title: 'Timer',
+      },
+      countdown: {
+        title: 'Countdown',
+        placeholder: 'Select countdown time',
+        set: 'Set time',
+        error: {
+          set: 'Please set countdown time first',
+          valid: 'Please set a valid countdown time',
+        },
+      },
+      todo: {
+        title: 'Todo',
+        add: 'Add todo',
+        placeholder: 'Please enter todo',
+        empty: 'No todo, enter todo below and click the add button to create a new todo',
+        create: 'Create todo',
+        empty_value: 'Todo cannot be empty',
+        delete: 'Todo deleted successfully',
+      },
+    },
+    record: {
+      start: 'Record',
+      stop: 'Stop recording',
+      title: 'Record room',
+      desc: 'VoceSpace will record the audio and video in the room. Please note that recording may affect performance. You will receive a notification after the recording is finished and can download it from the download page after the transfer is complete.',
+      request:
+        "Since you are not the room host, you cannot record directly. If you need to record, please click the 'Request recording' button. The room host will receive your request and will start recording if they agree.",
+      confirm: 'Start recording',
+      confirm_request: 'Request recording',
+      cancel: 'Cancel',
+      download_msg:
+        'The recording is complete and is being transferred to the cloud for storage. You can access the records of the current service to download it. ',
+      download: 'Download recording',
+      to_download: 'Download Page',
+    },
+    participant: {
+      title: 'Participants',
+      manage: 'Manage Participants',
+      search: 'Search Participants',
+      manager: 'host',
+      invite: {
+        title: 'Invite Participants',
+        web: 'in Browser',
+        add: 'add into VoceSpace Room',
+        texts: [
+          'Invite you to join VoceSpace',
+          'Please click|copy the following link to',
+          'Please copy the following room name to',
+        ],
+        ok: 'Copy Invite',
+        cancel: 'Cancel',
+        link: 'Link',
+        room: 'Room Name',
+      },
+      set: {
+        invite: {
+          title: 'Participant Invite',
+          video: 'Invite to Enable Camera',
+          wave: 'Send a Reminder',
+          audio: 'Invite to Enable Microphone',
+          share: 'Invite to Share Screen',
+        },
+        control: {
+          title: 'Participant Control',
+          trans: 'Transfer Room Host',
+          change_name: 'Change Name',
+          mute: {
+            audio: 'Mute Microphone',
+            video: 'Turn Off Video',
+          },
+          volume: 'Volume Adjustment',
+          blur: {
+            video: 'Video Blur',
+            screen: 'Screen Blur',
+          },
+        },
+        safe: {
+          title: 'Safe',
+          remove: {
+            title: 'Remove member',
+            desc: 'Are you sure you want to remove this member? ',
+            confirm: 'Confirm removal',
+            cancel: 'Cancel',
+          },
+        },
+      },
+    },
   },
   settings: {
     title: 'Settings',
@@ -47,6 +224,8 @@ export default {
       title: 'General',
       username: 'Username',
       lang: 'Language',
+      share_audio: 'Share Screen Audio',
+      prompt_sound: 'Enter Prompt Sound',
       status: {
         title: 'Status',
         online: 'Online',
@@ -57,42 +236,59 @@ export default {
         busy_desc: "Busy, user's video will be blurred, audio will be muted",
         offline: 'Away',
         offline_desc: "Away, user's video and audio will be turned off",
+        define: {
+          title: 'Custom state',
+          name: 'State name',
+          desc: 'State description',
+          icon: 'State icon',
+          placeholder: {
+            name: 'Please enter the state name',
+            desc: 'Please enter the state description',
+          },
+          save: 'Save state',
+          success: 'Create new state successfully',
+          fail: 'Failed to create new state',
+        },
       },
       define: {
-        title: "Custom Status",
-        name: "Status Name",
-        desc: "Status Description",
-        icon: "Status Icon",
+        title: 'Custom Status',
+        name: 'Status Name',
+        desc: 'Status Description',
+        icon: 'Status Icon',
         placeholder: {
-          name: "Please enter status name",
-          desc: "Please enter status description",
+          name: 'Please enter status name',
+          desc: 'Please enter status description',
         },
-        save: "Save Status",
-        success: "Status saved successfully",
-        fail: "Failed to save status",
-      }
+        save: 'Save Status',
+        success: 'Status saved successfully',
+        fail: 'Failed to save status',
+      },
     },
     license: {
-      title: "License",
-      signed: "Signed",
-      domains: "Domains",
-      limit: "Limit",
-      created_at: "Created At",
-      expires_at: "Expires At",
-      value: "License Value",
-      renew: "Renew License",
-      update: "Update Manually",
-      input: "Please enter license",
+      title: 'License',
+      signed: 'Signed',
+      domains: 'Domains',
+      limit: 'Limit',
+      created_at: 'Created At',
+      expires_at: 'Expires At',
+      value: 'License Value',
+      renew: 'Renew License',
+      update: 'Update Manually',
+      input: 'Please enter license',
       gift: {
-        title: "A chance to get a free upgrade! 🎁",
-        desc: "Share your experience through blog posts or social media to get a chance to upgrade for free. Add WeChat to get: Privoce"
+        title: 'A chance to get a free upgrade! 🎁',
+        desc: 'Share your experience through blog posts or social media to get a chance to upgrade for free. Add WeChat to get: Privoce',
       },
-      license_pro: "VoceSpace Pro [$499/year]",
-      license_custom: "VoceSpace Custom",
-      price_select: "Please choose a price package",
-      meeting: "Book Meeting",
-      circle_ip: "Your current IP address is a loopback address/private address, and we do not recommend purchasing a license for this address. Please purchase a license using a public IP address. If you need to purchase licenses and support services for private addresses, please contact WeChat: Privose.",
-      confirm_ip: "Please confirm your IP address is correct!"
+      license_pro: 'VoceSpace Pro [$499/year]',
+      license_custom: 'VoceSpace Custom',
+      price_select: 'Please select a price package',
+      meeting: 'Subscribe to a meeting',
+      buy: 'Purchase a certificate',
+      invalid: 'The certificate is invalid or expired. Please check if it is correct.',
+      update_success: 'The certificate was updated successfully',
+      circle_ip:
+        'Your current IP address is a loopback address/private address, and we do not recommend purchasing a license for this address. Please purchase a license using a public IP address. If you need to purchase licenses and support services for private addresses, please contact WeChat: Privose.',
+      confirm_ip: 'Please confirm your IP address is correct!',
     },
     audio: {
       title: 'Audio',
@@ -142,15 +338,24 @@ export default {
       title: 'Your cyber co-working space developed by Privoce',
       contact: 'Contact',
       learn_more: 'Learn More',
-      offical_web: "official website",
+      offical_web: 'official website',
       try_free: 'Create a one-time new VoceSpace.',
       try_enter_room: 'Enter your VoceSpace name or link to join or create.',
       connect_with_server: 'Connect Voce Space with a custom server using Voce Space Server.',
       enabled_e2ee: 'End-to-end encryption enabled',
       enter_room: 'Please enter the space name or link',
       virtual_loading: 'Loading virtual role, please wait...',
+      invite_device: 'Inviting you to enable:',
+      remove_participant: 'You have been removed from the room by the room host',
+      req_record: 'Request to start recording',
     },
     error: {
+      record: {
+        copy: 'Failed to copy the recording link',
+        email: {
+          empty: 'Email address cannot be empty',
+        },
+      },
       virtual: {
         video_stream: 'Virtual camera stream construction error',
         model: 'Model or video unavailable',
@@ -183,12 +388,13 @@ export default {
         username: {
           change: 'Username changed failed',
           request: 'Failed to request username',
+          exist: 'Username already exists, please choose another name',
         },
       },
       file: {
         upload: 'File upload failed',
         download: 'File download failed',
-      }
+      },
     },
     request: {
       device: {
@@ -231,14 +437,24 @@ export default {
       },
     },
     success: {
+      record: {
+        start: 'The room has successfully started recording',
+        stop: 'The room recording has been successfully stopped. The recording status will be removed after 10 seconds.',
+        copy: 'Recording link copied to clipboard',
+      },
       device: {
         granted: 'Media permissions have been successfully granted.',
+        mute: {
+          audio: 'Audio-Microphone device muted',
+          video: 'Video-Camera device is turned off',
+        },
       },
       user: {
         username: {
           change: 'Username changed successfully',
         },
         lang: 'Language changed successfully',
+        transfer: 'You are now the host',
       },
     },
   },

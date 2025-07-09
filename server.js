@@ -2,6 +2,7 @@
  * @description: This is a simple Node.js server using Express and Socket.IO to handle real-time communication and file uploads.
  * @author: Will Sheng
  */
+import dotenv from 'dotenv';
 import { createServer } from 'node:http';
 import next from 'next';
 import { Server } from 'socket.io';
@@ -10,11 +11,36 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import express from 'express';
 
+const __filename = fileURLToPath(import.meta.url);
+const __cfg = path.dirname(__filename);
+
+// Load environment files in order of priority
+const envFiles = ['.env.local', '.env.development', '.env'];
+
+envFiles.forEach((file) => {
+  const envPath = path.join(__cfg, file);
+  if (fs.existsSync(envPath)) {
+    dotenv.config({ path: envPath });
+  }
+});
+
 // [args] ---------------------------------------------------------------------------------------------------------------
-const dev = process.env.NODE_ENV !== 'production';
-const hostname = process.env.HOST || '0.0.0.0';
-const port = process.env.PORT || 3000;
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+const {
+  NODE_ENV = 'production',
+  HOST: hostname = 'localhost',
+  PORT = '3000',
+  NEXT_PUBLIC_BASE_PATH: basePath = '',
+} = process.env;
+// const dev = NODE_ENV !== 'production';
+const dev = true;
+const port = parseInt(PORT, 10) || 3000;
+
+console.log(`env: {
+  NODE_ENV: ${dev},
+  HOST: ${hostname},
+  PORT: ${port},
+  NEXT_PUBLIC_BASE_PATH: ${basePath}
+}`);
 // [when using middleware `hostname` and `port` must be provided below] -------------------------------------------------
 const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
