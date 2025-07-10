@@ -6,30 +6,8 @@ echo "=== 容器启动开始 ==="
 # 设置 npm 缓存目录
 export NPM_CONFIG_CACHE=/app/.npm-cache
 
-# 检查是否需要安装 Socket.IO
-echo "=== 检查 Socket.IO ==="
-    
-# 检查是否已安装
-if [ ! -d "/app/node_modules/socket.io" ]; then
-    echo "正在安装 Socket.IO（使用缓存）..."
-    pnpm add socket.io
-    echo "✅ Socket.IO 安装完成"
-else
-    echo "✅ Socket.IO 已存在，跳过安装"
-fi
-
-# 检查是否需安装 dotenv
-echo "=== 检查 dotenv ==="
-# 检查是否已安装
-if [ ! -d "/app/node_modules/dotenv" ]; then
-    echo "正在安装 dotenv（使用缓存）..."
-    pnpm add dotenv
-    echo "✅ dotenv 安装完成"
-else
-    echo "✅ dotenv 已存在，跳过安装"
-fi
-
-# 直接重写整个.env文件
+# 设置环境变量并创建 .env.local 文件
+echo "=== 配置环境变量 ==="
 cat > /app/.env.local << EOF
 LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
 LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-secret}
@@ -47,25 +25,44 @@ NEXT_PUBLIC_MAXFRAMERATE=${NEXT_PUBLIC_MAXFRAMERATE:-30}
 NEXT_PUBLIC_PRIORITY=${NEXT_PUBLIC_PRIORITY:-medium}
 EOF
 
-# 替换构建产物中的占位符
-find /app/.next -type f -name "*.js" -exec sed -i "s|__LIVEKIT_API_KEY_PLACEHOLDER__|${LIVEKIT_API_KEY:-devkey}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__LIVEKIT_API_SECRET_PLACEHOLDER__|${LIVEKIT_API_SECRET:-secret}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__LIVEKIT_URL_PLACEHOLDER__|${LIVEKIT_URL:-ws://localhost:7880}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__TURN_CREDENTIAL_PLACEHOLDER__|${TURN_CREDENTIAL:-}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__TURN_URL_PLACEHOLDER__|${TURN_URL:-}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__TURN_USERNAME_PLACEHOLDER__|${TURN_USERNAME:-}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__PORT_PLACEHOLDER__|${PORT:-3000}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__NEXT_PUBLIC_BASE_PATH_PLACEHOLDER__|${NEXT_PUBLIC_BASE_PATH:-}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__WEBHOOK_PLACEHOLDER__|${WEBHOOK:-false}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__HOST_PLACEHOLDER__|${HOST:-0.0.0.0}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__NEXT_PUBLIC_RESOLUTION_PLACEHOLDER__|${NEXT_PUBLIC_RESOLUTION:-1080p}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__NEXT_PUBLIC_MAXBITRATE_PLACEHOLDER__|${NEXT_PUBLIC_MAXBITRATE:-12000}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__NEXT_PUBLIC_MAXFRAMERATE_PLACEHOLDER__|${NEXT_PUBLIC_MAXFRAMERATE:-30}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__NEXT_PUBLIC_PRIORITY_PLACEHOLDER__|${NEXT_PUBLIC_PRIORITY:-medium}|g" {} \;
-
 echo "环境变量配置:"
 cat /app/.env.local
 
-echo "=== 启动应用 ==="
+# 清理之前的构建
+rm -rf .next
+    
+pnpm install
 
+# 执行构建
+echo "正在构建..."
+pnpm build
+    
+# 清理构建缓存
+rm -rf .next/cache
+
+echo "恢复生产依赖并清理开发依赖..."
+rm -rf node_modules
+pnpm store prune || true
+echo "✅ 构建完成并已清理开发依赖"
+# 检查是否需要安装 Socket.IO
+echo "=== 检查 Socket.IO ==="
+if [ ! -d "/app/node_modules/socket.io" ]; then
+    echo "正在安装 Socket.IO（使用缓存）..."
+    pnpm add socket.io
+    echo "✅ Socket.IO 安装完成"
+else
+    echo "✅ Socket.IO 已存在，跳过安装"
+fi
+
+# 检查是否需安装 dotenv
+echo "=== 检查 dotenv ==="
+if [ ! -d "/app/node_modules/dotenv" ]; then
+    echo "正在安装 dotenv（使用缓存）..."
+    pnpm add dotenv
+    echo "✅ dotenv 安装完成"
+else
+    echo "✅ dotenv 已存在，跳过安装"
+fi
+
+echo "=== 启动应用 ==="
 node server.js

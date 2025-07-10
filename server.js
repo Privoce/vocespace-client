@@ -32,7 +32,7 @@ const {
   NEXT_PUBLIC_BASE_PATH: basePath = '',
 } = process.env;
 // const dev = NODE_ENV !== 'production';
-const dev = true
+const dev = false;
 const port = parseInt(PORT, 10) || 3000;
 
 console.log(`env: {

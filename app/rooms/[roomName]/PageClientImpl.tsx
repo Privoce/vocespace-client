@@ -325,7 +325,7 @@ function VideoConferenceComponent(props: {
     resolutions
   ]);
 
-  const room = React.useMemo(() => new Room(roomOptions), []);
+  const room = React.useMemo(() => new Room(roomOptions), [roomOptions]);
   React.useEffect(() => {
     if (e2eeEnabled) {
       keyProvider
@@ -479,88 +479,95 @@ function VideoConferenceComponent(props: {
     <>
       {contextHolder}
       {notHolder}
-      <LiveKitRoom
-        connect={e2eeSetupComplete}
-        room={room}
-        token={props.connectionDetails.participantToken}
-        serverUrl={props.connectionDetails.serverUrl}
-        connectOptions={connectOptions}
-        video={props.userChoices.videoEnabled}
-        audio={props.userChoices.audioEnabled}
-        onDisconnected={handleOnLeave}
-        onEncryptionError={handleEncryptionError}
-        onError={handleError}
-        onMediaDeviceFailure={handleMediaDeviceFailure}
-      >
-        <VideoContainer
-          ref={videoContainerRef}
-          chatMessageFormatter={formatChatMessageLinks}
-          SettingsComponent={undefined}
-          messageApi={messageApi}
-          noteApi={notApi}
-        ></VideoContainer>
-        {/* <DebugMode /> */}
-        <RecordingIndicator />
-        <Modal
-          title={t('msg.request.device.title')}
-          open={permissionModalVisible}
-          onCancel={() => setPermissionModalVisible(false)}
-          footer={[
-            <Button key="cancel" onClick={() => setPermissionModalVisible(false)}>
-              {t('common.cancel')}
-            </Button>,
-            <Button
-              key="request"
-              type="primary"
-              loading={permissionRequested}
-              onClick={requestMediaPermissions}
-              disabled={
-                !!permissionError &&
-                (permissionError.includes('权限被拒绝') ||
-                  permissionError.includes('Permission denied'))
-              }
-            >
-              {permissionRequested
-                ? t('msg.request.device.waiting')
-                : t('msg.request.device.allow')}
-            </Button>,
-          ]}
+      {/* 等待配置加载完成 */}
+      {!screenShareOption ? (
+        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+          <div>Loading configuration...</div>
+        </div>
+      ) : (
+        <LiveKitRoom
+          connect={e2eeSetupComplete}
+          room={room}
+          token={props.connectionDetails.participantToken}
+          serverUrl={props.connectionDetails.serverUrl}
+          connectOptions={connectOptions}
+          video={props.userChoices.videoEnabled}
+          audio={props.userChoices.audioEnabled}
+          onDisconnected={handleOnLeave}
+          onEncryptionError={handleEncryptionError}
+          onError={handleError}
+          onMediaDeviceFailure={handleMediaDeviceFailure}
         >
-          <div style={{ marginBottom: '16px' }}>Voce Space {t('msg.request.device.ask')}</div>
+          <VideoContainer
+            ref={videoContainerRef}
+            chatMessageFormatter={formatChatMessageLinks}
+            SettingsComponent={undefined}
+            messageApi={messageApi}
+            noteApi={notApi}
+          ></VideoContainer>
+          {/* <DebugMode /> */}
+          <RecordingIndicator />
+        </LiveKitRoom>
+      )}
+      <Modal
+        title={t('msg.request.device.title')}
+        open={permissionModalVisible}
+        onCancel={() => setPermissionModalVisible(false)}
+        footer={[
+          <Button key="cancel" onClick={() => setPermissionModalVisible(false)}>
+            {t('common.cancel')}
+          </Button>,
+          <Button
+            key="request"
+            type="primary"
+            loading={permissionRequested}
+            onClick={requestMediaPermissions}
+            disabled={
+              !!permissionError &&
+              (permissionError.includes('权限被拒绝') ||
+                permissionError.includes('Permission denied'))
+            }
+          >
+            {permissionRequested
+              ? t('msg.request.device.waiting')
+              : t('msg.request.device.allow')}
+          </Button>,
+        ]}
+      >
+        <div style={{ marginBottom: '16px' }}>Voce Space {t('msg.request.device.ask')}</div>
 
-          {permissionError && (
-            <div
-              style={{
-                backgroundColor: 'rgba(244, 67, 54, 0.1)',
-                padding: '12px',
-                borderRadius: '4px',
-                marginBottom: '16px',
-                color: '#f44336',
-              }}
-            >
-              <p>
-                <strong>{t('common.error')}:</strong> {permissionError}
-              </p>
+        {permissionError && (
+          <div
+            style={{
+              backgroundColor: 'rgba(244, 67, 54, 0.1)',
+              padding: '12px',
+              borderRadius: '4px',
+              marginBottom: '16px',
+              color: '#f44336',
+            }}
+          >
+            <p>
+              <strong>{t('common.error')}:</strong> {permissionError}
+            </p>
 
-              {permissionError.includes('权限被拒绝') ||
-              permissionError.includes('Permission denied') ? (
-                <div>
-                  <p>
-                    <strong>{t('msg.request.device.permission.how')}</strong>
-                  </p>
-                  {renderBrowserSpecificInstructions()}
-                  <p>{t('msg.request.device.permission.changed_with_reload')}</p>
-                </div>
-              ) : null}
-            </div>
-          )}
+            {permissionError.includes('权限被拒绝') ||
+            permissionError.includes('Permission denied') ? (
+              <div>
+                <p>
+                  <strong>{t('msg.request.device.permission.how')}</strong>
+                </p>
+                {renderBrowserSpecificInstructions()}
+                <p>{t('msg.request.device.permission.changed_with_reload')}</p>
+              </div>
+            ) : null}
+          </div>
+        )}
 
-          <p>
-            <strong>{t('common.attention')}:</strong>{' '}
-            {t('msg.request.device.permission.set_on_hand')}
-          </p>
-        </Modal>
-      </LiveKitRoom>
+        <p>
+          <strong>{t('common.attention')}:</strong>{' '}
+          {t('msg.request.device.permission.set_on_hand')}
+        </p>
+      </Modal>
     </>
   );
 }
