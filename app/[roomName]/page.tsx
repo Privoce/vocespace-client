@@ -22,7 +22,6 @@ export default function Page({
       ? searchParams.codec
       : 'vp9';
   const hq = searchParams.hq === 'true' ? true : false;
-
   return (
     <RecoilRoot>
       <PageClientImpl

@@ -18,6 +18,7 @@ import {
   RoomConnectOptions,
   MediaDeviceFailure,
   Track,
+  VideoPreset,
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -247,7 +248,13 @@ function VideoConferenceComponent(props: {
       case 'h2160':
       case 'UHD':
         return {
-          h: VideoPresets.h2160,
+          h: new VideoPreset(
+            3840,
+            2160,
+            screenShareOption?.maxBitrate || 8_000_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
           l: VideoPresets.h1440,
         };
       case '2k':
@@ -320,21 +327,23 @@ function VideoConferenceComponent(props: {
     if (e2eeEnabled && (videoCodec === 'av1' || videoCodec === 'vp9')) {
       videoCodec = undefined;
     }
+    const screenShareEncoding = {
+      maxBitrate: screenShareOption?.maxBitrate || 12000,
+      maxFramerate: screenShareOption?.maxFramerate || 30,
+      priority: screenShareOption?.priority || 'medium',
+    };
+
     return {
       videoCaptureDefaults: {
         deviceId: props.userChoices.videoDeviceId ?? undefined,
-        resolution: props.options.hq ? resolutions.h : resolutions.l,
+        resolution: props.options.hq ? resolutions.h : resolutions.h,
       },
       publishDefaults: {
         dtx: false,
-        videoSimulcastLayers: props.options.hq ? [resolutions.h, resolutions.l] : [resolutions.l],
+        videoSimulcastLayers: props.options.hq ? [resolutions.h, resolutions.l] : [resolutions.h],
         red: !e2eeEnabled,
         videoCodec,
-        screenShareEncoding: {
-          maxBitrate: screenShareOption?.maxBitrate || 12000,
-          maxFramerate: screenShareOption?.maxFramerate || 30,
-          priority: screenShareOption?.priority || 'medium',
-        },
+        screenShareEncoding,
         screenShareSimulcastLayers: [resolutions.h, resolutions.l],
       },
       audioCaptureDefaults: {

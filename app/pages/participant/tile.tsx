@@ -264,6 +264,7 @@ export const ParticipantItem: (
           );
 
         } else if (trackReference.source === Track.Source.ScreenShare) {
+          console.warn("trackReference.source === Track.Source.ScreenShare");
           // 包含远程鼠标位置
           return (
             <div style={{ height: '100%', width: '100%', position: 'relative' }}>

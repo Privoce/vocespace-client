@@ -1,4 +1,4 @@
-- [ ] VoceSteam
+- [ ] VoceStream
   - [x] 合并dev_0.2.0
   - [x] 观众模式
     - [x] 50+ 人数
