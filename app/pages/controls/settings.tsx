@@ -150,6 +150,36 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
         children: <AudioSettings volume={volume} setVolume={setVolume}></AudioSettings>,
       },
       {
+        key: 'video',
+        label: <TabItem type="video" label={t('settings.video.title')}></TabItem>,
+        children: (
+          <VideoSettings
+            videoBlur={videoBlur}
+            setVideoBlur={setVideoBlur}
+            screenBlur={screenBlur}
+            setScreenBlur={setScreenBlur}
+            virtualSettingsRef={virtualSettingsRef}
+            openShareAudio={openShareAudio}
+            setOpenShareAudio={setOpenShareAudio}
+            virtual={{
+              close,
+              blur: videoBlur,
+              messageApi,
+              modelRole,
+              setModelRole,
+              modelBg,
+              setModelBg,
+              enabled: virtualEnabled,
+              setEnabled: setVirtualEnabled,
+              compare,
+              setCompare,
+              room,
+              localParticipant,
+            }}
+          ></VideoSettings>
+        ),
+      },
+      {
         key: 'recording',
         label: <TabItem type="record" label={t('recording.title')}></TabItem>,
         children: (
@@ -165,7 +195,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
             >
               <Tag color="#22ccee">{isConnected}</Tag>
               <Tooltip title="刷新数据">
-                <Button size='small' icon={<ReloadOutlined />} onClick={searchRoomRecords}>
+                <Button size="small" icon={<ReloadOutlined />} onClick={searchRoomRecords}>
                   刷新
                 </Button>
               </Tooltip>
@@ -229,9 +259,9 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
         style={{ width: '100%', height: '100%' }}
         onChange={(k: string) => {
           setKey(k as TabKey);
-          if (k === "recording" && firstOpen) {
-             searchRoomRecords();
-             setFirstOpen(false);
+          if (k === 'recording' && firstOpen) {
+            searchRoomRecords();
+            setFirstOpen(false);
           }
         }}
       />

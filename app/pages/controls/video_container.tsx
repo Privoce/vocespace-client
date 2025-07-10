@@ -781,11 +781,12 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
     return (
       <div className="video_container_wrapper" style={{ position: 'relative' }}>
-        <FlotLayout
+        {/* <FlotLayout
           style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
           messageApi={messageApi}
           openApp={openApp}
-        ></FlotLayout>
+        ></FlotLayout> */}
+        <FocusCollapse open={focusOpen} setOpen={setFocusOpen}></FocusCollapse>
         {room && (
           <Channel
             roomName={room.name}
