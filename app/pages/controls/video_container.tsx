@@ -565,45 +565,70 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       // 远程参与者不在同一房间内，只订阅视频轨道
       // let videoTrackSid = room.localParticipant.getTrackPublication(Track.Source.Camera)?.trackSid;
 
-      let shareTackSid = room.localParticipant.getTrackPublication(
+      let shareTrackSid = room.localParticipant.getTrackPublication(
         Track.Source.ScreenShare,
       )?.trackSid;
       let audioTrackSid = room.localParticipant.getTrackPublication(
         Track.Source.Microphone,
       )?.trackSid;
 
-      let allowedTrackSids = [];
       // if (videoTrackSid) {
       //   allowedTrackSids.push(videoTrackSid);
       // }
-      if (shareTackSid) {
-        allowedTrackSids.push(shareTackSid);
-      }
-      if (audioTrackSid) {
-        allowedTrackSids.push(audioTrackSid);
-      }
+      // if (shareTackSid) {
+      //   allowedTrackSids.push(shareTackSid);
+      // }
+      // if (audioTrackSid) {
+      //   allowedTrackSids.push(audioTrackSid);
+      // }
       // 遍历所有的远程参与者，根据规则进行处理
-      room.remoteParticipants.forEach((rp) => {
-        // 由于我们已经可以从selfRoom中获取当前用户所在的房间信息，所以通过selfRoom进行判断
-        if (selfRoom.participants.includes(rp.identity)) {
-          auth.push({
-            participantIdentity: rp.identity,
-            allowAll: false,
-            allowedTrackSids,
-          });
-          let volume = settings.participants[rp.identity]?.volume / 100.0;
-          if (isNaN(volume)) {
-            volume = 1.0;
+      if (settings.ownerId === room.localParticipant.identity) {
+        // 主持人需要订阅所有参与者的音频
+        let allowedTrackSids = [];
+        if (audioTrackSid) {
+          allowedTrackSids.push(audioTrackSid);
+        }
+        room.remoteParticipants.forEach((rp) => {
+          // 由于我们已经可以从selfRoom中获取当前用户所在的房间信息，所以通过selfRoom进行判断
+          if (selfRoom.participants.includes(rp.identity)) {
+            auth.push({
+              participantIdentity: rp.identity,
+              allowAll: false,
+              allowedTrackSids,
+            });
+            let volume = settings.participants[rp.identity]?.volume / 100.0;
+            if (isNaN(volume)) {
+              volume = 1.0;
+            }
+            rp.setVolume(volume);
+          } else {
+            auth.push({
+              participantIdentity: rp.identity,
+              allowAll: false,
+              allowedTrackSids,
+            });
           }
-          rp.setVolume(volume);
-        } else {
+        });
+      } else {
+        // 对于非主持人参与者只需要订阅主持人的音频和屏幕分享
+        let owner = room.remoteParticipants.get(settings.ownerId);
+        if (owner) {
+          let allowedTrackSids = [];
+
+          if (audioTrackSid) {
+            allowedTrackSids.push(audioTrackSid);
+          }
+          if (shareTrackSid) {
+            allowedTrackSids.push(shareTrackSid);
+          }
+
           auth.push({
-            participantIdentity: rp.identity,
+            participantIdentity: owner.identity,
             allowAll: false,
             allowedTrackSids,
           });
         }
-      });
+      }
 
       // 设置房间订阅权限 ------------------------------------------------
       room.localParticipant.setTrackSubscriptionPermissions(false, auth);
