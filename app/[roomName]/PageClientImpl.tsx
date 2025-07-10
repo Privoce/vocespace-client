@@ -1,10 +1,10 @@
 'use client';
 
 import { VideoContainer, VideoContainerExports } from '@/app/pages/controls/video_container';
-import { decodePassphrase } from '@/lib/client-utils';
-import { DebugMode } from '@/lib/Debug';
+import { decodePassphrase } from '@/lib/client_utils';
+// import { DebugMode } from '@/lib/Debug';
 import { useI18n } from '@/lib/i18n/i18n';
-import { RecordingIndicator } from '@/lib/RecordingIndicator';
+import { RecordingIndicator } from './RecordingIndicator';
 import { ConnectionDetails } from '@/lib/types';
 import { formatChatMessageLinks, LiveKitRoom, LocalUserChoices } from '@livekit/components-react';
 import { Button, message, Modal, notification, Space } from 'antd';
@@ -17,15 +17,24 @@ import {
   DeviceUnsupportedError,
   RoomConnectOptions,
   MediaDeviceFailure,
+  Track,
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
-import React, { createContext, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { PreJoin } from '@/app/pages/pre_join/pre_join';
-import { atom, RecoilRoot, useRecoilState } from 'recoil';
-import { connect_endpoint, UserDefineStatus, UserStatus } from '@/lib/std';
-import { ModelBg, ModelRole } from '@/lib/std/virtual';
+import { atom, useRecoilState } from 'recoil';
+import { connect_endpoint, UserDefineStatus } from '@/lib/std';
 import io from 'socket.io-client';
 import { EnvConf } from '@/lib/std/env';
+import { ChatMsgItem } from '@/lib/std/chat';
+import { WsTo } from '@/lib/std/device';
+import {
+  DEFAULT_PARTICIPANT_SETTINGS,
+  PARTICIPANT_SETTINGS_KEY,
+  ParticipantSettings,
+} from '@/lib/std/room';
+import { TodoItem } from '../pages/apps/todo_list';
+import dayjs, { type Dayjs } from 'dayjs';
 
 // h90: '160x90 (QQVGA)',
 // h180: '320x180 (HQVGA)',
@@ -48,20 +57,13 @@ export const socket = io();
 export const userState = atom({
   key: 'userState',
   default: {
-    volume: 100,
-    blur: 0.0,
-    screenBlur: 0.0,
-    virtual: {
-      enabled: false,
-      role: ModelRole.None,
-      bg: ModelBg.ClassRoom,
-    },
-    status: UserStatus.Online as string,
-    // rpc: {
-    //   wave: false,
-    // },
-    roomStatus: [] as UserDefineStatus[],
-  },
+    ...DEFAULT_PARTICIPANT_SETTINGS,
+  } as ParticipantSettings,
+});
+
+export const roomStatusState = atom({
+  key: 'roomStatusState',
+  default: [] as UserDefineStatus[],
 });
 
 export const licenseState = atom({
@@ -87,6 +89,33 @@ export const virtualMaskState = atom({
   default: false,
 });
 
+export const chatMsgState = atom({
+  key: 'chatMsgState',
+  default: {
+    msgs: [] as ChatMsgItem[],
+    unhandled: 0,
+  },
+});
+
+export const AppsDataState = atom({
+  key: 'AppsDataState',
+  default: {
+    todo: [] as TodoItem[],
+    timer: {
+      value: null as number | null,
+      running: false,
+      stopTimeStamp: null as number | null,
+      records: [] as string[],
+    },
+    countdown: {
+      value: null as number | null,
+      duration: dayjs().hour(0).minute(5).second(0) as Dayjs | null,
+      running: false,
+      stopTimeStamp: null as number | null,
+    },
+  },
+});
+
 const CONN_DETAILS_ENDPOINT = connect_endpoint(
   process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details',
 );
@@ -99,6 +128,7 @@ export function PageClientImpl(props: {
   codec: VideoCodec;
 }) {
   const { t } = useI18n();
+  const [uState, setUState] = useRecoilState(userState);
   const [preJoinChoices, setPreJoinChoices] = React.useState<LocalUserChoices | undefined>(
     undefined,
   );
@@ -127,30 +157,45 @@ export function PageClientImpl(props: {
   }, []);
   const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
 
+  // 从localStorage中获取用户设置 --------------------------------------------------------------------
+  useEffect(() => {
+    const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
+    if (storedSettingsStr) {
+      const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
+      setUState(storedSettings);
+    } else {
+      // 没有则存到localStorage中
+      localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
+    }
+
+    return () => {
+      // 在组件卸载时将用户设置存储到localStorage中，保证用户设置的持久化
+      localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
+    };
+  }, []);
+
   return (
-    <RecoilRoot>
-      <main data-lk-theme="default" style={{ height: '100%' }}>
-        {connectionDetails === undefined || preJoinChoices === undefined ? (
-          <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-            <PreJoin
-              defaults={preJoinDefaults}
-              onSubmit={handlePreJoinSubmit}
-              onError={handlePreJoinError}
-              joinLabel={t('common.join_room')}
-              micLabel={t('common.device.microphone')}
-              camLabel={t('common.device.camera')}
-              userLabel={t('common.username')}
-            />
-          </div>
-        ) : (
-          <VideoConferenceComponent
-            connectionDetails={connectionDetails}
-            userChoices={preJoinChoices}
-            options={{ codec: props.codec, hq: props.hq }}
+    <main data-lk-theme="default" style={{ height: '100%' }}>
+      {connectionDetails === undefined || preJoinChoices === undefined ? (
+        <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+          <PreJoin
+            defaults={preJoinDefaults}
+            onSubmit={handlePreJoinSubmit}
+            onError={handlePreJoinError}
+            joinLabel={t('common.join_room')}
+            micLabel={t('common.device.microphone')}
+            camLabel={t('common.device.camera')}
+            userLabel={t('common.username')}
           />
-        )}
-      </main>
-    </RecoilRoot>
+        </div>
+      ) : (
+        <VideoConferenceComponent
+          connectionDetails={connectionDetails}
+          userChoices={preJoinChoices}
+          options={{ codec: props.codec, hq: props.hq }}
+        />
+      )}
+    </main>
   );
 }
 
@@ -179,6 +224,7 @@ function VideoConferenceComponent(props: {
   const [permissionModalVisible, setPermissionModalVisible] = useState(false);
   const [permissionRequested, setPermissionRequested] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
+  const [permissionDevice, setPermissionDevice] = useState<Track.Source | null>(null);
   const videoContainerRef = React.useRef<VideoContainerExports>(null);
   const [screenShareOption, setScreenShareOption] = React.useState<EnvConf | null>(null);
   const fetchEnvConf = useCallback(async () => {
@@ -378,9 +424,10 @@ function VideoConferenceComponent(props: {
       receiverId: '',
       receSocketId: '',
     });
+    router.push('/');
+    socket.emit('update_user_status');
     await videoContainerRef.current?.removeLocalSettings();
     socket.disconnect();
-    router.push('/');
   }, [router, room.localParticipant]);
   const handleError = React.useCallback((error: Error) => {
     console.error(`${t('msg.error.room.unexpect')}: ${error.message}`);
@@ -454,9 +501,22 @@ function VideoConferenceComponent(props: {
       // 尝试重新启用设备
       if (room) {
         try {
-          // 可以选择性地重新启用摄像头或麦克风
-          await room.localParticipant.setCameraEnabled(true);
-          await room.localParticipant.setMicrophoneEnabled(true);
+          switch (permissionDevice) {
+            case Track.Source.Camera:
+              await room.localParticipant.setCameraEnabled(true);
+              break;
+            case Track.Source.Microphone:
+              await room.localParticipant.setMicrophoneEnabled(true);
+              break;
+            case Track.Source.ScreenShare:
+              await room.localParticipant.setScreenShareEnabled(true);
+              break;
+            default:
+              // 如果没有指定设备，则启用摄像头和麦克风
+              await room.localParticipant.setCameraEnabled(true);
+              await room.localParticipant.setMicrophoneEnabled(true);
+              break;
+          }
         } catch (err) {
           console.error(t('msg.error.device.granted'), err);
         }
@@ -497,6 +557,41 @@ function VideoConferenceComponent(props: {
           onEncryptionError={handleEncryptionError}
           onError={handleError}
           onMediaDeviceFailure={handleMediaDeviceFailure}
+      >
+        <VideoContainer
+          ref={videoContainerRef}
+          chatMessageFormatter={formatChatMessageLinks}
+          SettingsComponent={undefined}
+          messageApi={messageApi}
+          noteApi={notApi}
+          setPermissionDevice={setPermissionDevice}
+        ></VideoContainer>
+        {/* <DebugMode /> */}
+        <RecordingIndicator />
+        <Modal
+          title={t('msg.request.device.title')}
+          open={permissionModalVisible}
+          onCancel={() => setPermissionModalVisible(false)}
+          footer={[
+            <Button key="cancel" onClick={() => setPermissionModalVisible(false)}>
+              {t('common.cancel')}
+            </Button>,
+            <Button
+              key="request"
+              type="primary"
+              loading={permissionRequested}
+              onClick={requestMediaPermissions}
+              disabled={
+                !!permissionError &&
+                (permissionError.includes('权限被拒绝') ||
+                  permissionError.includes('Permission denied'))
+              }
+            >
+              {permissionRequested
+                ? t('msg.request.device.waiting')
+                : t('msg.request.device.allow')}
+            </Button>,
+          ]}
         >
           <VideoContainer
             ref={videoContainerRef}

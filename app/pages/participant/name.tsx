@@ -1,5 +1,4 @@
-import { ParticipantNameProps, useEnsureParticipant } from '@livekit/components-react';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 export function PName({ name }: { name: string }) {
   // 如果name超过8个字符，仅显示前8个字符

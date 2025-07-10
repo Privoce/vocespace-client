@@ -1,4 +1,5 @@
 import os from 'os';
+import clsx from 'clsx';
 /**
  * Option<T>
  *
@@ -81,42 +82,30 @@ export const randomColor = (participantId: string): string => {
 
   // 根据哈希值选择预定义的颜色
   const colors = [
-    '#FF5733', // 红色
-    '#d54941',
-    '#ff9285',
-    '#881f1c',
-    '#33FF57', // 绿色
-    '#2ba471',
-    '#92dbb2',
-    '#006c45',
-    '#3357FF', // 蓝色
-    '#0052d9',
-    '#3663f4',
-    '002a7c',
-    '#F033FF', // 紫色
-    '#8e56dd',
-    '#c69cff',
-    '#8e56dd',
-    '#3b007b',
-    '#FF33F0', // 粉色
-    '#e851b3',
-    '#ffaedc',
-    '#800a5f',
-    '#33FFF0', // 青色
-    '#f5a623', // 橙色
-    '#f5ba18',
-    '#029cd4',
-    '#00668e',
-    '#85d3ff',
-    '#e37318',
-    '#fa9550',
-    '#954500',
+    '#667085',
+    '#D0D5DD',
+    '#22CCEE',
+    '#A4F0FC',
+    '#F97066',
+    '#FDA29B',
+    '#FDB022',
+    '#FFC84B',
+    '#32D583',
+    '#A6F4C4',
+    '#717BBC',
+    '#B3B8DB',
+    '#5FE9D0',
+    '#36BFFB',
+    '#528AFF',
+    '#865BF7',
+    '#EE45BC',
+    '#FF682F',
+    '#FDEAD7',
   ];
 
   const index = Math.abs(hash) % colors.length;
   return colors[index];
 };
-
 
 export const getServerIp = () => {
   const interfaces = os.networkInterfaces();
@@ -131,4 +120,83 @@ export const getServerIp = () => {
     }
   }
   return null;
+};
+
+export function isProp<U extends HTMLElement, T extends React.HTMLAttributes<U>>(
+  prop: T | undefined,
+): prop is T {
+  return prop !== undefined;
+}
+
+interface Props {
+  [key: string]: any;
+}
+type TupleTypes<T> = { [P in keyof T]: T[P] } extends { [key: number]: infer V } ? V : never;
+type UnionToIntersection<U> = (U extends any ? (k: U) => void : never) extends (k: infer I) => void
+  ? I
+  : never;
+
+export function mergePropsReactAria<T extends Props[]>(
+  ...args: T
+): UnionToIntersection<TupleTypes<T>> {
+  // Start with a base clone of the first argument. This is a lot faster than starting
+  // with an empty object and adding properties as we go.
+  const result: Props = { ...args[0] };
+  for (let i = 1; i < args.length; i++) {
+    const props = args[i];
+    for (const key in props) {
+      const a = result[key];
+      const b = props[key];
+
+      // Chain events
+      if (
+        typeof a === 'function' &&
+        typeof b === 'function' &&
+        // This is a lot faster than a regex.
+        key[0] === 'o' &&
+        key[1] === 'n' &&
+        key.charCodeAt(2) >= /* 'A' */ 65 &&
+        key.charCodeAt(2) <= /* 'Z' */ 90
+      ) {
+        result[key] = chain(a, b);
+
+        // Merge classnames, sometimes classNames are empty string which eval to false, so we just need to do a type check
+      } else if (
+        (key === 'className' || key === 'UNSAFE_className') &&
+        typeof a === 'string' &&
+        typeof b === 'string'
+      ) {
+        result[key] = clsx(a, b);
+      } else {
+        result[key] = b !== undefined ? b : a;
+      }
+    }
+  }
+
+  return result as UnionToIntersection<TupleTypes<T>>;
+}
+
+export function chain(...callbacks: any[]): (...args: any[]) => void {
+  return (...args: any[]) => {
+    for (const callback of callbacks) {
+      if (typeof callback === 'function') {
+        try {
+          callback(...args);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+    }
+  };
+}
+
+export function mergeProps<
+  U extends HTMLElement,
+  T extends Array<React.HTMLAttributes<U> | undefined>,
+>(...props: T) {
+  return mergePropsReactAria(...props.filter(isProp));
+}
+
+export const isUndefinedString = (value: string | undefined): boolean => {
+  return value === undefined || value.trim() === '';
 };

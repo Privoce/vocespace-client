@@ -1,6 +1,6 @@
 'use client';
 
-import { encodePassphrase, randomString } from '@/lib/client-utils';
+import { encodePassphrase, randomString } from '@/lib/client_utils';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useState } from 'react';
 import styles from '@/styles/Home.module.css';

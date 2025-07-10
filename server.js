@@ -10,6 +10,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import express from 'express';
+import Redis from 'ioredis';
 
 const __filename = fileURLToPath(import.meta.url);
 const __cfg = path.dirname(__filename);
@@ -25,22 +26,105 @@ envFiles.forEach((file) => {
 });
 
 // [args] ---------------------------------------------------------------------------------------------------------------
+const dev = process.env.NODE_ENV !== 'production';
+const hostname = process.env.HOST || 'localhost';
+const port = process.env.PORT || 3000;
+const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
 const {
-  NODE_ENV = 'production',
-  HOST: hostname = 'localhost',
-  PORT = '3000',
-  NEXT_PUBLIC_BASE_PATH: basePath = '',
+  REDIS_ENABLED = 'false',
+  REDIS_HOST = 'localhost',
+  REDIS_PORT = '6379',
+  REDIS_PASSWORD,
+  REDIS_DB = '0',
 } = process.env;
-// const dev = NODE_ENV !== 'production';
-const dev = false;
-const port = parseInt(PORT, 10) || 3000;
 
 console.log(`env: {
-  NODE_ENV: ${dev},
-  HOST: ${hostname},
-  PORT: ${port},
-  NEXT_PUBLIC_BASE_PATH: ${basePath}
+    REDIS_ENABLED: ${REDIS_ENABLED}
+    REDIS_HOST: ${REDIS_HOST}
+    REDIS_PORT: ${REDIS_PORT}
 }`);
+
+let redisClient = null;
+
+// [build redis client] --------------------------------------------------------
+if (REDIS_ENABLED === 'true') {
+  let host = REDIS_HOST;
+  let port = parseInt(REDIS_PORT, 10);
+  let db = parseInt(REDIS_DB, 10);
+
+  redisClient = new Redis({
+    host,
+    port,
+    password: REDIS_PASSWORD,
+    db,
+  });
+}
+
+// redis chat manager, use to store room chat messages into redis see interface [std.chat.ChatMsgItem]
+class ChatManager {
+  static CHAT_KEY_PREFIX = 'chat:';
+
+  static getChatKey(roomName) {
+    return `${this.CHAT_KEY_PREFIX}${roomName}`;
+  }
+
+  // delete chat messages from redis
+  static async deleteChatMessages(room) {
+    try {
+      if (!redisClient) {
+        throw new Error('Redis client is not initialized');
+      }
+      const chatKey = this.getChatKey(room);
+      // Delete the chat key from Redis
+      const exists = await redisClient.exists(chatKey);
+      if (exists) {
+        await redisClient.del(chatKey);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('Error deleting chat messages from Redis:', error);
+      return false;
+    }
+  }
+
+  // get chat messages from redis
+  static async getChatMessages(room) {
+    try {
+      if (!redisClient) {
+        throw new Error('Redis client is not initialized');
+      }
+      const chatKey = this.getChatKey(room);
+      const messages = await redisClient.get(chatKey);
+      if (!messages) {
+        return [];
+      }
+      return JSON.parse(messages);
+    } catch (error) {
+      console.error('Error getting chat messages from Redis:', error);
+      return [];
+    }
+  }
+
+  // set/push chat message to redis
+  static async setChatMessage(room, msg) {
+    try {
+      if (!redisClient) {
+        throw new Error('Redis client is not initialized');
+      }
+      const msgs = await this.getChatMessages(room);
+      msgs.push(msg);
+      const chatKey = this.getChatKey(room);
+      // Store the messages as a JSON string
+      await redisClient.set(chatKey, JSON.stringify(msgs));
+      return true;
+    } catch (error) {
+      console.error('Error setting chat message to Redis:', error);
+      return false;
+    }
+  }
+}
+
 // [when using middleware `hostname` and `port` must be provided below] -------------------------------------------------
 const app = next({ dev, hostname, port });
 const handler = app.getRequestHandler();
@@ -71,15 +155,51 @@ app.prepare().then(() => {
     // - [socket: wave hand event to other user] -------------------------------------------------------------------------
     // - on: "wave"
     // - emit: "wave_response"
-    // - msg: { room: string, senderId: string, senderName: string, receiverId: string }
+    // - msg: { room: string, senderId: string, senderName: string, receiverId: string, socketId: string } see [`std::WsTo`]
     socket.on('wave', (msg) => {
-      console.log('wave', msg);
-      socket.to(msg.socketId).emit('wave_response', {
-        room: msg.room,
-        senderId: msg.senderId,
-        senderName: msg.senderName,
-        receiverId: msg.receiverId,
-      });
+      socket.to(msg.socketId).emit('wave_response', msg);
+    });
+    // [socket: remove participant event] -------------------------------------------------------------------------------
+    // - on: "remove_participant"
+    // - emit: "remove_participant_response"
+    // - msg: { room: string, senderId: string, senderName: string, receiverId: string, socketId: string } see [`std::WsTo`]
+    socket.on('remove_participant', (msg) => {
+      socket.to(msg.socketId).emit('remove_participant_response', msg);
+    });
+    // [socket: invite open device event] --------------------------------------------------------------------------------
+    // - on: "invite_device"
+    // - emit: "invite_device_response"
+    // - msg: {
+    //    room: string,
+    //    socketId: string,
+    //    senderId: string,
+    //    senderName: string,
+    //    receiverId: string,
+    //    device: "camera" | "microphone" | "screen_share" see [`Track.Source`]
+    // } see [`std::WsInviteDevice`]
+    socket.on('invite_device', (msg) => {
+      socket.to(msg.socketId).emit('invite_device_response', msg);
+    });
+    // [socket: ask host to record room] ---------------------------------------------------------------------------------
+    // - on: "req_record"
+    // - emit: "req_record_response"
+    // - msg: see [`std::WsReqHost` extends [`std::WsTo`]]
+    socket.on('req_record', (msg) => {
+      socket.to(msg.socketId).emit('req_record_response', msg);
+    });
+    // [socket: ask other participant to record room] --------------------------------------------------------------------
+    // - on: "recording"
+    // - emit: "recording_response"
+    // - msg: {room: string}
+    socket.on('recording', (msg) => {
+      socket.broadcast.emit('recording_response', msg);
+    });
+    // [socket: control participant event] -------------------------------------------------------------------------------
+    // - on: "control_participant"
+    // - emit: "control_participant_response"
+    // - msg: see [`std::WsControlParticipant`]
+    socket.on('control_participant', (msg) => {
+      socket.to(msg.socketId).emit('control_participant_response', msg);
     });
     // [socket: update user status event] --------------------------------------------------------------------------------
     // - on: "update_user_status"
@@ -87,6 +207,13 @@ app.prepare().then(() => {
     // - msg: _
     socket.on('update_user_status', () => {
       socket.broadcast.emit('user_status_updated');
+    });
+    // [socket: refetch room] --------------------------------------------------------------------------------------------
+    // - on: "refetch_room"
+    // - emit: "refetch_room_response"
+    socket.on('refetch_room', (msg) => {
+      // 广播给所有用户包括自己
+      io.emit('refetch_room_response', msg);
     });
     // [socket: mouse move event] ----------------------------------------------------------------------------------------
     // - on: "mouse_move"
@@ -125,13 +252,14 @@ app.prepare().then(() => {
     });
     // [socket: chat message event] -------------------------------------------------------------------------------------
     socket.on('chat_msg', (msg) => {
-      console.log('chat_msg', msg);
+      // store in redis
+      ChatManager.setChatMessage(msg.roomName, msg);
       socket.broadcast.emit('chat_msg_response', msg);
     });
     // [socket: chat file event] ----------------------------------------------------------------------------------------
     socket.on('chat_file', async (msg) => {
       try {
-        const { file, sender, roomName } = msg;
+        const { file, sender, roomName, timestamp } = msg;
         const fileId = Date.now().toString();
         const fileExt = path.extname(file.name);
         const fileName = `${fileId}${fileExt}`;
@@ -168,7 +296,7 @@ app.prepare().then(() => {
           },
           roomName,
           message: `文件: ${file.name}`,
-          timestamp: Date.now(),
+          timestamp: timestamp || Date.now(),
           type: 'file',
           file: {
             name: file.name,
@@ -177,7 +305,8 @@ app.prepare().then(() => {
             url: fileUrl,
           },
         };
-
+        // store in redis
+        ChatManager.setChatMessage(roomName, fileMessage);
         io.emit('chat_file_response', fileMessage);
       } catch (error) {
         console.error('文件处理失败', error);
@@ -196,14 +325,43 @@ app.prepare().then(() => {
       if (fs.existsSync(roomDir)) {
         fs.rmdirSync(roomDir, { recursive: true });
       }
+      // delete chat messages from redis
+      await ChatManager.deleteChatMessages(roomName);
     });
     // [socket: create a new user status] ------------------------------------------------------------------------------------
     socket.on('new_user_status', (msg) => {
       io.emit('new_user_status_response', msg);
     });
-    // [socket: new user] ----------------------------------------------------------------------------------------------------
-    socket.on('disconnect', (msg) => {
+    // [socket: join privacy room] ------------------------------------------------------------------------------------------
+    socket.on('join_privacy_room', (msg) => {
+      socket.to(msg.socketId).emit('join_privacy_room_response', msg);
+    });
+    // [socket: remove from room] ----------------------------------------------------------------------------------------
+    // let room users know that thay are cleared by host
+    socket.on('removed_from_privacy_room', (msg) => {
+      // socket.broadcast.emit('removed_from_privacy_room_response', msg);
+      msg.socketIds.forEach((socketId) => {
+        socket.to(socketId).emit('removed_from_privacy_room_response', msg);
+      });
+    });
+    // [socket: del user] ----------------------------------------------------------------------------------------------------
+    socket.on('disconnect', async (_reason) => {
       console.log('Socket disconnected', socket.id);
+      // 当某个用户断开连接我们需要请求http服务器删除用户在房间中的数据
+      if (socket.id) {
+        const url = `http://${hostname}:${port}${basePath}/api/room-settings?socketId=${socket.id}`;
+        const response = await fetch(url.toString(), {
+          method: 'DELETE',
+        });
+        if (!response.ok) {
+          console.error('Failed to delete user data, socketId:', socket.id);
+        } else {
+          // 如果成功，就要让其他用户更新
+          setTimeout(() => {
+            io.emit('user_status_updated');
+          }, 3000);
+        }
+      }
     });
   });
   // [http server] ----------------------------------------------------------------------------------------------------------

@@ -1,3 +1,5 @@
+'use client';
+
 import {
   MediaDeviceMenu,
   ParticipantPlaceholder,
@@ -13,7 +15,7 @@ import { Input, InputRef, message, Skeleton, Slider, Space } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useRecoilState } from 'recoil';
-import { userState } from '@/app/rooms/[roomName]/PageClientImpl';
+import { userState } from '@/app/[roomName]/PageClientImpl';
 import { connect_endpoint, src } from '@/lib/std';
 import { useVideoBlur } from '@/lib/std/device';
 import { LangSelect } from '@/app/pages/controls/lang_select';
@@ -88,7 +90,7 @@ export function PreJoin({
   useEffect(() => {
     setTimeout(() => {
       setLoading(false);
-    }, 1500);
+    }, 500);
   }, []);
 
   // Preview tracks -----------------------------------------------------------------------------------
@@ -131,7 +133,7 @@ export function PreJoin({
     return () => {
       videoTrack?.detach();
     };
-  }, [videoTrack, inputRef,loading]);
+  }, [videoTrack, inputRef, loading]);
   // audio track --------------------------------------------------------------------------------------
   const audioTrack = React.useMemo(
     () => tracks?.filter((track) => track.kind === Track.Kind.Audio)[0] as LocalAudioTrack,
@@ -159,14 +161,13 @@ export function PreJoin({
       audioEnabled,
       audioDeviceId,
     };
-
+    // 获取roomId，从当前的url中
+    const roomId = getRoomIdFromUrl();
+    if (!roomId) return;
+    const url = new URL(CONN_DETAILS_ENDPOINT, window.location.origin);
     if (username === '') {
       messageApi.loading(t('msg.request.user.name'), 2);
       // 向服务器请求一个唯一的用户名
-      const url = new URL(CONN_DETAILS_ENDPOINT, window.location.origin);
-      // 获取roomId，从当前的url中
-      const roomId = getRoomIdFromUrl();
-      if (!roomId) return;
       url.searchParams.append('roomId', roomId);
       url.searchParams.append('pre', 'true');
       const response = await fetch(url.toString());
@@ -176,6 +177,28 @@ export function PreJoin({
         setUsername(name);
       } else {
         messageApi.error(`${t('msg.error.user.username.request')}: ${response.statusText}`);
+      }
+    } else {
+      // 虽然用户名不为空，但依然需要验证是否唯一
+      const url = new URL(CONN_DETAILS_ENDPOINT, window.location.origin);
+      url.searchParams.append('nameCheck', 'true');
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          roomId,
+          participantName: username,
+        }),
+      });
+      if (response.ok) {
+        const { success } = await response.json();
+        if (!success) {
+          messageApi.error({
+            content: t('msg.error.user.username.exist'),
+          });
+          return;
+        }
+        
       }
     }
 
@@ -377,12 +400,12 @@ export function PreJoin({
 const getRoomIdFromUrl = (): string | undefined => {
   // 获取当前URL
   const url = window.location.href;
-  // 要获取roomId只需找到url中rooms/后面的部分到下一个/为止
-  let end = url.indexOf('/', url.indexOf('rooms/') + 6);
+  // 要获取roomId只需找到url中最后一个'/'
+  let end = url.lastIndexOf('/');
   if (end == -1) {
     end = url.length;
   }
-  const roomId = url.substring(url.indexOf('rooms/') + 6, end);
+  const roomId = url.substring(end + 1, url.length);
 
   if (roomId === '') {
     return undefined;

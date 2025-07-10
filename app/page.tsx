@@ -4,7 +4,6 @@ import React, { Suspense, useEffect } from 'react';
 import styles from '@/styles/Home.module.css';
 import { useI18n } from '@/lib/i18n/i18n';
 import { DemoMeetingTab } from './pages/pre_join/demo';
-import { src } from '@/lib/std';
 import { LangSelect } from './pages/controls/lang_select';
 import { Skeleton } from 'antd';
 import { SvgResource } from './resources/svg';
@@ -45,7 +44,12 @@ export default function Page() {
           </div>
         ) : (
           <div className="header">
-            <div style={{ marginBottom: '12px' }}>
+            <div style={{
+                marginBottom: '12px',
+                width: '100%',
+                display: 'inline-flex',
+                justifyContent: 'center',
+              }}>
               <SvgResource type="logo2" svgSize={45}></SvgResource>
             </div>
             <h2>{t('msg.info.title')}</h2>

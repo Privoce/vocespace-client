@@ -3,31 +3,24 @@
 - [x] wave hand该用服务器通信
 - [x] select 组件hover效果
 - [x] 虚拟形象去除开始启动
-
 - [x] 用户名改为 User [01~99]
 - [x] 用户状态通过服务器同步
 - [x] 虚拟视频使用用户id隔离
-
-
 - [x] 虚拟形象页面UI优化
 - [x] 虚拟形象丢失（重更新后消失）
-
 - [x] 屏幕分享时传输其他用户鼠标位置
 - [x] 区分用户显示虚拟形象
 - [x] 同步修改用户视频模糊
 - [x] 同步修改用户屏幕分享模糊度
-
 - [x] focus视图无需点击就能传输用户鼠标位置
 - [x] 让所有人共享鼠标位置视图
 - [x] 开启虚拟形象之后其他用户会变黑
 - [x] 开启按钮改为model - none
-
 - [x] 鼠标位置同步(cover content获取video组件的宽高进行映射比例)
 - [x] wave 双方都要发出声音提示
 - [x] 设置页，点击外部遮罩关闭
 - [x] 声音改为用户输入声音音量
 - [x] 进入房间i18n修改
-
 - [x] 鼠标离开去除
 - [x] 默认prejoin页面聚焦用户名输入框
 - [x] 虚拟形象层级低于触发层
@@ -36,35 +29,26 @@
 - [x] tradition，去除Screen Share模糊度
 - [x] 用户鼠标颜色
 - [x] 多个人开启虚拟形象之后，上一个人的会消失
-
 - [x] 用户状态同步失败
 - [x] 鼠标移除，用户10s超时移除
 - [x] 设置音量绑定失效
 - [x] 退出设置后关闭视频获取
 - [x] 限制虚拟形象对比
 - [x] 本地模糊 (webGL)
-
 - [x] css虚化
 - [x] 虚拟形象暂停追踪(该用动画)
 - [x] 服务器room数据接口 http://localhost:3000/chat/api/room-settings?all="true"
 - [x] 搜索时www.会加上 (在DNS设置中，添加一个CNAME记录，将www.vocespace.com指向vocespace.com)
-
---- 0.1.4
-
 - [x] 客户端性能检测
 - [x] 服务端性能检测
 - [x] 聊天传输文件
   - [x] 重写Chat组件
   - [x] socket传输
-
 - [x] 离开按钮移动到最右边
 - [x] 状态图标没有正确修改 (设置时正常的，状态没有同步)
 - [x] 虚拟形象是否可以去除视频 (实际是不行的，因为虚拟视频的流替换需要原始视频流持续流入)
 - [x] 名字修改后没有同步到组件上
 - [x] 测试服务器瓶颈
-
---- 
-
 - [x] 切换布局或开启摄像头时有一瞬间清晰 ❗️
 - [x] Blur布局切换时异常 ❗️
 - [x] 模型在切换背景后消失 ❗️
@@ -72,18 +56,13 @@
 - [x] 房间区分
 - [x] API用户下线清理
 - [x] 完善chat-file
-
 - [x] 屏幕分享其他人首次加载事件很长
 由于布局进行切换，通道会进行重新订阅，元素会进行重新加载因此会导致加载延时
 - [x] Screen增加video相同滤镜切换效果
-
 - [x] 重新增加虚拟形象切换时的遮罩
 - [x] 更换压缩率较低的编解码器
 - [x] 调整chat时图片大小 = 文件大小
 - [x] 用户自定义状态，提供其他用户被选，其他用户只有可读，不可写 (socket)
-- [ ] 根据状态区分不同的room （同一状态能看到对方）(tandem)
-- [ ] 录屏 https://docs.livekit.io/home/egress/outputs/#supported-outputs
-- [ ] 少参与者，多观察者 (Egress 实时传输，站点构建)
 - [x] tradition环境进行速度缓慢
 - [x] video blur 预览
 - [x] 编辑用户名字图标，位置调整
@@ -94,7 +73,6 @@
 - [x] 持续遮罩当切换虚拟形象时
 - [x] 虚拟形象移除对比，保留None时blur的对比
 - [x] 首页骨架屏
-- [ ] 用户自定义虚拟形象: 用户提交虚拟形象图片 -> live2d cubism 自动处理 (代码尝试) -> 生成完整动画效果 + 模型数据 -> 存储 -> 返回
 - [x] 重连机制 -> webrtc turn
 - [x] 禁止输入框enter事件
 - [x] 状态点击事件
@@ -106,27 +84,257 @@
 - [x] focus布局时点击状态修改事件丢失
 - [x] Turn 测试 https://webrtc.github.io/samples/src/content/peerconnection/trickle-ice/ （测试成功）
 - [x] 进入link regex  (特殊字符)
-
-Time 	Type 	Foundation 	Protocol 	Address 	Port 	Priority 	URL (if present) 	relayProtocol (if present)
-0.001	host	0	udp	192.168.31.211	52248	126 | 32512 | 255		
-0.001	host	3	tcp	192.168.31.211	9	125 | 32704 | 255		
-0.002	host	0	udp	192.168.31.211	57546	126 | 32512 | 254		
-0.002	host	3	tcp	192.168.31.211	9	125 | 32704 | 254		
-0.658	srflx	1	udp	101.83.176.123	57546	100 | 32543 | 254		
-0.658	relay	2	udp	158.247.198.2	53072	5 | 32543 | 254		
-0.886	Done
-
-
 - [x] Docker部署
-- [ ] 视频流从setting和tile之间切换
 - [x] 视频加载两次（prejoin）video track
-- [ ] Caddy 
+- [x] Caddy 
 - [x] 自定义错误页面
-- [ ] 视频教程
-- [ ] 部署测试基础版本
+- [x] 视频教程
+- [x] 部署测试基础版本
 - [x] license服务
 - [x] chat增加link跳转 ->hover 之后
-- [ ] 文件拖拽发送
-
 - [x] docker - 无虚化 （tradition）
 - [x] 时间戳转正常时间
+- [x] 文件拖拽发送
+- [x] 修复多次接收文件
+- [ ] 模糊混用
+- [x] 主持人功能(腾讯视频 参考)
+  - [x] 增加房间用户数据 (ownerId)
+  - [x] 房间首个用户作为主持人
+  - [x] 主持人管理房间
+    - [x] 同步成员数据
+    - [x] 分离权限
+    - [x] 会议成员
+    - [x] 成员管理
+      - [x] 转让主持人
+      - [x] 修改名称
+      - [x] 静音
+      - [x] 关闭视频
+      - [x] 音量调节
+      - [x] 视频虚化
+      - [x] 屏幕虚化
+    - [x] 邀请
+      - [x] 视频
+      - [x] 音频
+      - [x] 屏幕
+      - [x] 提醒 wave hand
+    - [x] 安全
+      - [x] 移除用户
+    - [x] 搜索用户 + 用户首字母排序
+    - [x] 分享房间
+- [x] 优化进入prejoin时间
+- [x] 去除face-api.js模型
+- [x] 去除未使用资源
+- [x] 去除用户部分搜索框上的分割线
+- [x] 主持人（host） -> 管理员
+- [x] 去除用户之间的分割线
+- [x] 头像名称 3个字母
+- [x] state i18n
+- [x] 录屏 https://docs.livekit.io/home/egress/outputs/#supported-outputs
+  - [x] S3账号并构建存储桶
+  - [x] 录屏前端功能部分
+    - [x] 录屏按钮
+    - [x] 录屏请求
+      - [x] 主持人直接录屏
+      - [x] 参与者请求录屏，主持人同意进行录屏
+      - [x] 录屏通知其他人
+    - [x] 停止录屏
+    - [x] 录屏数据同步
+    - [x] 录屏数据记录到room-setting中
+    - [x] egress server部署
+    - [x] 后端服务
+      - [x] 请求egress server
+      - [x] 视频存储s3
+      - [x] 视频下载链接(需要接入aws s3 api进行链接请求)
+      - [x] 视频可下载周期，超过下载周期自动清理 (3天)
+        - [x] 设置上传时的标签
+- [x] 清理用户时，意外清理所有房间数据 (暂未排查出原因)
+- [x] server s3
+  - [x] 构建客户端
+  - [x] 连接
+  - [x] 加载配置
+  - [x] 列出文件对象
+  - [x] 对某个对象生成下载链接
+  - [x] 删除
+  - [x] 设置自动生命周期策略
+  - [x] 请求响应连接到前端
+- [x] 使用docker部署egress服务 新服务器
+- [x] 将设置按钮移动到more中
+- [x] Dashboard显示用户数据
+  - [x] 当前活跃房间数据
+  - [x] 历史使用记录
+    - [x] redis中增加使用记录 
+    - [x] roomManager 类管理使用记录 
+    - [x] 使用记录api
+- [x] 统一主题
+  - [x] 鼠标
+  - [x] device 按钮
+  - [x] 录屏 (无法更改系统录屏方案)
+  - [x] leave按钮
+- [x] 修复按钮高度差异
+- [x] record直接下载 (preview -> download)
+- [x] 手机端录屏 (增加手机端允许录屏检测)
+- [x] 录屏权限允许会开启声音，指向错误
+- [x] chat 自动下滑 失效
+  
+- [x] socket断开连接导致数据丢失 (转为使用redis)
+  - 特点：
+    - 房间快速构建，快速关闭
+    - 数据无需持久化存储
+- [x] chat，对话位置交换
+- [x] chat 小圆点去除边框 改styles
+- [x] 翻页功能失效，在小尺寸窗口下(livekit问题)
+- [x] chat增加消息提醒
+- [x] chat内容无法追溯历史 (使用redis)
+- [x] 共享屏幕系统色
+- [x] 去除无用文件和代码  
+- [x] chat 合 space.voce.chat
+- [x] 去不同房间需要从主房间列表中隐藏
+- [x] 性能测试:
+```
+lk load-test \
+  --url <YOUR-SERVER-URL> \
+  --api-key <YOUR-KEY> \
+  --api-secret <YOUR-SECRET> \
+  --room load-test \
+  --video-publishers 30 \
+  --subscribers 30
+```
+- [x] Space-Room 空间与房间概念(频道)
+  - [x] 侧边栏
+  - [x] 主房间
+  - [x] 子房间
+    - [x] 创建
+    - [x] 离开
+    - [x] 删除
+    - [x] 加入
+  - [x] 参与者频道订阅权限处理
+    - 规则: 
+      1. 当用户在主房间时，可以订阅所有参与者的视频轨道，但不能订阅子房间用户的音频轨道
+      2. 当用户在子房间时，可以订阅该子房间内的所有参与者的视频和音频轨道，包括主房间的参与者的视频轨道，但不能订阅主房间参与者的音频轨道
+
+
+- [x] 增加复制链接(records)
+- [x] records -> recording
+- [ ] safari浏览器显示标签页概览截图丢失模糊度： 缩小化模糊度丢失 (模糊度只是用css进行处理，后续处理为GPU渲染)
+- [x] 右键菜单
+  - [x] 用户管理，用户列表
+  - [x] 主页，用户视口
+  - [x] menu
+- [ ] 少参与者，多观察者 (Egress 实时传输，站点构建)
+- [ ] 用户自定义虚拟形象: 用户提交虚拟形象图片 -> live2d cubism 自动处理 (代码尝试) -> 生成完整动画效果 + 模型数据 -> 存储 -> 返回
+- [ ] 录制时无法应用模糊 (录制是直接获取通道的，我们的模糊并没有替换视频而是css模糊)
+- [x] 用户遮罩mini tile
+- [x] 自动收缩
+- [x] 主房间 -> Space, Sub room -> Rooms
+- [x] 侧边栏收回状态，hover (window.innerWidth) 10% 显示
+- [x] livekit - pagination 自定义
+  - [x] 重写GridLayout
+  - [x] 重写Pagination
+    - [x] info
+    - [x] control
+  - [x] 不可翻页时不显示翻页按钮
+- [x] 修改子房间计数 -> + 按钮，创建房间，移除底部创建房间按钮
+- [x] 隐私房间与公开房间
+  - [x] 用户进入时自动创建一个隐私房间
+  - [x] 隐私房间其他用户加入需要房主同意
+    - [x] bug 加入人反了
+  - [x] 创建房间时设置是否为隐私
+  - [x] 删除房间socket控制所有在房间内的用户返回到主空间
+  - [x] 仅房主可删除房间或修改房间
+  - [x] 修改房间名称
+  - [x] 修改房间隐私类型
+- [x] 全展开menu collapse
+- [x] Space名字去除
+- [x] 侧边栏保持显示收起状态，按钮位置调整同收回
+- [x] chat去除点击上传 （Drag部分）
+- [x] chat聊天添加时间分割 (5分钟)
+- [x] mini tile名字部分布局
+- [x] ui 参考tandom
+- [x] 修复bar部分resize异常
+- [x] 重写Collapse事件部分 
+- [x] chat消息提醒，用户第一次进入不在时为dot,在房间但没有打开聊天面板为badge
+- [x] 增加子房间对于Space的屏幕分享的权限
+- [x] recording地址修改，确定按钮跳转修改
+- [x] room数据未完全清理 (和退出时的资源清理有关，需要增加livekit-server api进行房间访问，二次确认)
+  - [x] 首先尝试重构DELETE API
+- [x] space, room, public room 图标调整
+- [x] 总空间的host需要对所有子房间拥有权限
+
+
+- [x] 重构userState和ParticipantSettings之间的关系
+- [ ] 重写MicrophoneTraggle组件
+- [x] screen share audio 关闭 （放入设置）
+  - [x] 数据
+  - [x] 绑定处理ScreenShare
+- [x] 设置持久化到localstorage
+- [x] 设置，新用户加入时的提醒音 （默认开启）
+  - [x] 数据
+  - [x] 绑定音频
+- [ ] dashboard 参会时长排序
+  - [ ] 日榜，周榜，月榜
+  - [ ] 总时长计算问题
+- [x] 重构settings部分，组件单独提取
+  - [x] general
+  - [x] audio
+  - [x] video
+  - [x] about_us
+  - [x] virtual
+  - [x] mask
+  - [x] license
+  - [x] tab_item
+- [x] 调整chat计算逻辑, 排除自己发送的消息
+- [x] 离线清理
+  - [x] 确定为什么导致离线清理失败
+    - 点击离开按钮离线没有问题
+    - 直接关闭标签页会导致SOCKET清理异常
+      - [x] SOCKET_ID未记录
+      - [x] 404NOT FOUND
+      - [x] SOCKET_ID 验证
+- [x] room中静音回到space-用户成员列表optOpen失效
+- [x] 用户加入的ID进行调整（每次重新分配的ID会导致用户占用的情况）
+  - [x] 处理API中random改为按照房间名字添加后缀
+  - [x] 确保唯一ID(在进入前查询房间中是否有重复)
+  - [x] 修改Cookie
+- [x] 增加子房间用户在线计数 （2 active｜2 人在线）
+- [x] 默认展开子房间
+- [x] wave hand增加到mini里
+- [x] chat进入时也要拉到最后
+
+- [ ] 用户自己的状态与房间状态之间进行联系
+  - [ ] 子房间状态列表
+  - [ ] 子房间拥有着同步子房间状态
+  - [ ] 增加状态设置部分
+- [x] 应用
+  - [x] TODO
+    - [x] ui tandom
+  - [x] Timer (xiaomi)
+    - [x] ui
+  - [x] CrossDown (https://medium.com/@wilskym/designing-a-minimalist-net-countdown-timer-e8a9eff9d921)
+    - [x] ui
+  - [x] 浮窗与Drawer数据统一 
+- [x] 应用浮窗
+- [x] 应用可以在浮窗中折叠
+- [x] 调整Drawer
+  - [x] 宽度
+  - [x] padding
+- [x] 优化代码和页面结构
+  - [x] 用户列表Drawer
+  - [x] 设置
+
+- [x] 同步文档
+  - [x] 本地快速部署
+  - [x] 服务器文件
+    - [x] README
+    - [x] index
+    - [x] bat
+    - [x] sh
+    - [x] i18n
+- [x] 微调menu collapse body padding
+- [x] 限制mini tile，分离meeting环境和vocespace环境
+- [x] 房间（ 设置内 ）内嵌入recording页面表单部分
+  - [x] 分离表单和页面
+  - [x] 单独构建hook
+- [x] 当用户刷新或直接关闭标签页，用户数据没有清除 （DELETE API成功执行，但无法刷新用户socket数据, 给足服务器清理用户的时间）
+- [ ] 应用共享
+  - [ ] 所有人可读可写
+  - [ ] 所有人可共享

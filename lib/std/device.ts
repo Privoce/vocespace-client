@@ -8,6 +8,52 @@ export interface Device {
   label: string;
 }
 
+export interface WsBase {
+  room: string; // 房间名
+}
+
+export interface WsRemove extends WsBase {
+  participants: string[]; // 参与者ID列表
+  childRoom: string; // 子房间名
+  socketIds: string[]; // 参与者的socket ID列表
+}
+
+export interface WsSender extends WsBase {
+  senderName: string;
+  senderId: string;
+}
+
+export interface WsTo extends WsSender {
+  receiverId: string;
+  socketId: string;
+}
+
+export interface WsJoinRoom extends WsTo {
+  childRoom: string;
+  confirm?: boolean; // 是否确认加入
+}
+
+export interface WsInviteDevice extends WsTo {
+  device: Track.Source;
+}
+
+export enum ControlType {
+  ChangeName = 'change_name',
+  MuteAudio = 'mute_audio',
+  MuteVideo = 'mute_video',
+  Volume = 'volume',
+  BlurVideo = 'blur_video',
+  BlurScreen = 'blur_screen',
+  Transfer = 'transfer',
+}
+
+export interface WsControlParticipant extends WsTo {
+  type: ControlType;
+  username?: string;
+  volume?: number; // 音量调节
+  blur?: number; // 视频或屏幕模糊度
+}
+
 export interface LiveKitDevice {
   deviceId: string;
   kind: MediaDeviceKind;
@@ -59,6 +105,7 @@ export interface ToggleProps {
   enabled: boolean;
   onClicked: (enabled: boolean) => void;
   showText?: boolean;
+  controlWidth: number;
 }
 
 /// 计算视频模糊度
@@ -85,8 +132,6 @@ export interface UseVideoBlurProps {
   defaultDimensions?: SizeNum;
 }
 
-
-
 export function useVideoBlur({
   videoRef,
   initialBlur = 0,
@@ -97,7 +142,7 @@ export function useVideoBlur({
 
   // 使用防抖处理尺寸更新
   const debouncedDimensions = useDebounce(dimensions, 100);
-  
+
   // 使用节流处理模糊值更新
   const throttledVideoBlur = useThrottle(videoBlur, 16); // 约60fps
 
@@ -108,7 +153,7 @@ export function useVideoBlur({
     // 只在尺寸真正变化时更新
     const newWidth = videoElement.clientWidth || defaultDimensions.width;
     const newHeight = videoElement.clientHeight || defaultDimensions.height;
-    
+
     if (newWidth !== dimensions.width || newHeight !== dimensions.height) {
       setDimensions({
         width: newWidth,

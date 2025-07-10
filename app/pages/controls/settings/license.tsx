@@ -1,15 +1,14 @@
-import { licenseState } from '@/app/rooms/[roomName]/PageClientImpl';
+import { licenseState } from '@/app/[roomName]/PageClientImpl';
 import { useI18n } from '@/lib/i18n/i18n';
 import styles from '@/styles/controls.module.scss';
-import { Button, Card, Input, Modal, Radio, RadioChangeEvent } from 'antd';
+import { Button, Input, Modal, Radio, RadioChangeEvent } from 'antd';
 import { CheckboxGroupProps } from 'antd/es/checkbox';
 import TextArea from 'antd/es/input/TextArea';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useMemo, useState } from 'react';
 import { useRecoilState } from 'recoil';
-import { Calendly } from './calendly';
+import { Calendly } from '../calendly';
 import { getServerIp } from '@/lib/std';
-import Stripe from 'stripe';
 
 type ModelKey = 'update' | 'renew' | 'server';
 type OptionValue = 'renew' | 'custom';

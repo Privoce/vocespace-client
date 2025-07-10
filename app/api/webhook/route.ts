@@ -62,7 +62,8 @@ export async function POST(request: Request) {
 
   const stripe = new Stripe(SECRET_KEY);
   const sig: any = request.headers.get('stripe-signature');
-  const body = await request.text();
+  const rawBody = await request.arrayBuffer();
+  const body = Buffer.from(rawBody);
 
   let event;
 
@@ -86,7 +87,6 @@ export async function POST(request: Request) {
       break;
     case 'checkout.session.completed':
       const session = event.data.object;
-      console.log('checkout.session.completed', session);
       // Now you have the session object, you can use it to send the license to the user
       if (session.payment_status === 'paid' && session.status === 'complete') {
         let domains = '';
@@ -115,7 +115,7 @@ export async function POST(request: Request) {
   }
 
   // Return a 200 response to acknowledge receipt of the event
-  return NextResponse.json({ received: true }, { status: 200 });
+  return NextResponse.json({ status: 200 }, { status: 200 });
 }
 
 const paySuccessAndSendToServer = async ({

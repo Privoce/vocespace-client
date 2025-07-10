@@ -1,31 +1,32 @@
 import { useI18n } from '@/lib/i18n/i18n';
 import {
-  ChatIcon,
   DisconnectButton,
   LeaveIcon,
   MediaDeviceMenu,
-  StartMediaButton,
   TrackToggle,
   useLocalParticipantPermissions,
   useMaybeLayoutContext,
   useMaybeRoomContext,
   usePersistentUserChoices,
-  useTrackVolume,
 } from '@livekit/components-react';
-import { Button, Drawer, message, Modal } from 'antd';
-import { Track } from 'livekit-client';
+import { Drawer, Input, message, Modal } from 'antd';
+import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
-import { SettingToggle } from './setting_toggle';
-import { SvgResource } from '@/app/resources/svg';
 import styles from '@/styles/controls.module.scss';
 import { Settings, SettingsExports, TabKey } from './settings';
-import { ModelBg, ModelRole } from '@/lib/std/virtual';
 import { useRecoilState } from 'recoil';
-import { socket, userState, virtualMaskState } from '@/app/rooms/[roomName]/PageClientImpl';
-import { ParticipantSettings } from '@/lib/hooks/room_settings';
-import { UserStatus } from '@/lib/std';
-import { EnhancedChat } from '@/app/pages/chat/chat';
+import { chatMsgState, socket, userState, virtualMaskState } from '@/app/[roomName]/PageClientImpl';
+import { ParticipantSettings, RoomSettings } from '@/lib/std/room';
+import { connect_endpoint, UserStatus } from '@/lib/std';
+import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';
 import { ChatToggle } from './chat_toggle';
+import { MoreButton } from './more_button';
+import { ControlType, WsControlParticipant, WsTo } from '@/lib/std/device';
+import { DEFAULT_DRAWER_PROP, DrawerCloser } from './drawer_tools';
+import { AppDrawer } from '../apps/app_drawer';
+import { ParticipantManage } from '../participant/manage';
+
+const RECORD_URL = connect_endpoint('/api/record');
 
 /** @public */
 export type ControlBarControls = {
@@ -51,6 +52,14 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   saveUserChoices?: boolean;
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
+  roomSettings: RoomSettings;
+  fetchSettings: () => Promise<void>;
+  updateRecord: (active: boolean, egressId?: string, filePath?: string) => Promise<boolean>;
+  setPermissionDevice: (device: Track.Source) => void;
+  collapsed: boolean;
+  setCollapsed: (collapsed: boolean) => void;
+  openApp: boolean;
+  setOpenApp: (open: boolean) => void;
 }
 
 export interface ControlBarExport {
@@ -82,6 +91,14 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       onDeviceError,
       updateSettings,
       setUserStatus,
+      roomSettings,
+      fetchSettings,
+      updateRecord,
+      setPermissionDevice,
+      collapsed,
+      setCollapsed,
+      openApp,
+      setOpenApp,
       ...props
     }: ControlBarProps,
     ref,
@@ -90,6 +107,28 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [isChatOpen, setIsChatOpen] = React.useState(false);
     const [settingVis, setSettingVis] = React.useState(false);
     const layoutContext = useMaybeLayoutContext();
+    const inviteTextRef = React.useRef<HTMLDivElement>(null);
+    const enhanceChatRef = React.useRef<EnhancedChatExports>(null);
+    const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
+    const controlLeftRef = React.useRef<HTMLDivElement>(null);
+    const [controlWidth, setControlWidth] = React.useState(
+      controlLeftRef.current ? controlLeftRef.current.clientWidth : window.innerWidth,
+    );
+
+    // 当controlLeftRef的大小发生变化时，更新controlWidth
+    React.useEffect(() => {
+      const resizeObserver = new ResizeObserver(() => {
+        if (controlLeftRef.current) {
+          setControlWidth(controlLeftRef.current.clientWidth);
+        }
+      });
+      if (controlLeftRef.current) {
+        resizeObserver.observe(controlLeftRef.current);
+      }
+      return () => {
+        resizeObserver.disconnect();
+      };
+    }, [controlLeftRef.current]);
 
     React.useEffect(() => {
       if (layoutContext?.widget.state?.showChat !== undefined) {
@@ -121,10 +160,13 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       () => variation === 'minimal' || variation === 'verbose',
       [variation],
     );
-    const showText = React.useMemo(
-      () => variation === 'textOnly' || variation === 'verbose',
-      [variation],
-    );
+    const showText = React.useMemo(() => {
+      if (controlWidth < 700) {
+        return false;
+      } else {
+        return variation === 'textOnly' || variation === 'verbose';
+      }
+    }, [variation, controlWidth]);
 
     const browserSupportsScreenSharing = supportsScreenSharing();
 
@@ -185,15 +227,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           messageApi.error(t('msg.error.user.username.change'));
         }
         // 更新其他设置 ------------------------------------------------
-        const { volume, screenBlur, blur, virtual } = settingsRef.current.state;
-
-        setUState((prev) => ({
-          ...prev,
-          volume,
-          screenBlur,
-          blur,
-          virtual,
-        }));
         await updateSettings(settingsRef.current.state);
         // 通知socket，进行状态的更新 -----------------------------------
         socket.emit('update_user_status');
@@ -236,19 +269,160 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       });
     };
 
+    // [more] -----------------------------------------------------------------------------------------------------
+    const [openMore, setOpenMore] = React.useState(false);
+    const [moreType, setMoreType] = React.useState<'record' | 'participant'>('record');
+    const [openShareModal, setOpenShareModal] = React.useState(false);
+    const [selectedParticipant, setSelectedParticipant] = React.useState<Participant | null>(null);
+    const [username, setUsername] = React.useState<string>('');
+    const [openNameModal, setOpenNameModal] = React.useState(false);
+    // const [openAppModal, setOpenAppModal] = React.useState(false);
+    const participantList = React.useMemo(() => {
+      return Object.entries(roomSettings.participants);
+    }, [roomSettings]);
+    const isOwner = React.useMemo(() => {
+      return roomSettings.ownerId === room?.localParticipant.identity;
+    }, [roomSettings.ownerId, room?.localParticipant.identity]);
+
+    // [record] -----------------------------------------------------------------------------------------------------
+    const [openRecordModal, setOpenRecordModal] = React.useState(false);
+    const [isDownload, setIsDownload] = React.useState(false);
+    const isRecording = React.useMemo(() => {
+      return roomSettings.record.active;
+    }, [roomSettings.record]);
+
+    const sendRecordRequest = (data: {
+      room: string;
+      type: 'start' | 'stop';
+      egressId?: string;
+    }): Promise<Response> => {
+      const url = new URL(RECORD_URL, window.location.origin);
+      return fetch(url.toString(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+      });
+    };
+
+    const onClickRecord = async () => {
+      if (!room && isOwner) return;
+
+      if (!isRecording) {
+        setOpenRecordModal(true);
+      } else {
+        // 停止录制
+        if (roomSettings.record.egressId && roomSettings.record.egressId !== '') {
+          const response = await sendRecordRequest({
+            room: room!.name,
+            type: 'stop',
+            egressId: roomSettings.record.egressId,
+          });
+
+          if (!response.ok) {
+            let { error } = await response.json();
+            messageApi.error(error);
+          } else {
+            messageApi.success(t('msg.success.record.stop'));
+            setIsDownload(true);
+            await updateRecord(false);
+            setOpenRecordModal(true);
+          }
+        }
+      }
+    };
+
+    const startRecord = async () => {
+      if (isRecording || !room) return;
+
+      if (isOwner) {
+        // host request to start recording
+        const response = await sendRecordRequest({
+          room: room.name,
+          type: 'start',
+        });
+        if (!response.ok) {
+          let { error } = await response.json();
+          messageApi.error(error);
+        } else {
+          let { egressId, filePath } = await response.json();
+          messageApi.success(t('msg.success.record.start'));
+          const res = await updateRecord(true, egressId, filePath);
+          // 这里有可能是房间数据出现问题，需要让所有参与者重新提供数据并重新updateRecord
+          if (!res) {
+            console.error('Failed to update record settings');
+            socket.emit('refetch_room', {
+              room: room.name,
+              record: {
+                active: true,
+                egressId,
+                filePath,
+              },
+            });
+          }
+          socket.emit('recording', {
+            room: room.name,
+          });
+        }
+        console.warn(roomSettings);
+      } else {
+        // participant request to start recording
+        socket.emit('req_record', {
+          room: room.name,
+          senderName: room.localParticipant.name,
+          senderId: room.localParticipant.identity,
+          receiverId: roomSettings.ownerId,
+          socketId: roomSettings.participants[roomSettings.ownerId].socketId,
+        } as WsTo);
+      }
+    };
+
+    const recordModalOnOk = async () => {
+      if (!room) return;
+
+      if (isDownload) {
+        // copy link to clipboard
+        // 创建一个新recording页面，相当于点击了a标签的href
+        window.open(
+          `${window.location.origin}/recording?room=${encodeURIComponent(room.name)}`,
+          '_blank',
+        );
+        setIsDownload(false);
+      } else {
+        await startRecord();
+      }
+      setOpenRecordModal(false);
+    };
+
+    const recordModalOnCancel = () => {
+      if (isDownload) {
+        setIsDownload(false);
+      }
+      setOpenRecordModal(false);
+    };
+
+    const onClickApp = async () => {
+      if (!room) return;
+
+      // 打开Notion应用
+      setOpenApp(true);
+    };
+
     return (
       <div {...htmlProps} className={styles.controls}>
         {contextHolder}
-        <div className={styles.controls_left}>
+        <div className={styles.controls_left} ref={controlLeftRef}>
           {visibleControls.microphone && (
             <div className="lk-button-group">
               <TrackToggle
                 source={Track.Source.Microphone}
                 showIcon={showIcon}
                 onChange={microphoneOnChange}
-                onDeviceError={(error) =>
-                  onDeviceError?.({ source: Track.Source.Microphone, error })
-                }
+                onDeviceError={(error) => {
+                  setPermissionDevice(Track.Source.Microphone);
+                  onDeviceError?.({ source: Track.Source.Microphone, error });
+                }}
               >
                 {showText && t('common.device.microphone')}
               </TrackToggle>
@@ -268,7 +442,10 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                 source={Track.Source.Camera}
                 showIcon={showIcon}
                 onChange={cameraOnChange}
-                onDeviceError={(error) => onDeviceError?.({ source: Track.Source.Camera, error })}
+                onDeviceError={(error) => {
+                  setPermissionDevice(Track.Source.Camera);
+                  onDeviceError?.({ source: Track.Source.Camera, error });
+                }}
               >
                 {showText && t('common.device.camera')}
               </TrackToggle>
@@ -284,13 +461,15 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           )}
           {visibleControls.screenShare && browserSupportsScreenSharing && (
             <TrackToggle
+              style={{ height: '46px' }}
               source={Track.Source.ScreenShare}
-              captureOptions={{ audio: true, selfBrowserSurface: 'include' }}
+              captureOptions={{ audio: uState.openShareAudio, selfBrowserSurface: 'include' }}
               showIcon={showIcon}
               onChange={onScreenShareChange}
-              onDeviceError={(error) =>
-                onDeviceError?.({ source: Track.Source.ScreenShare, error })
-              }
+              onDeviceError={(error) => {
+                setPermissionDevice(Track.Source.ScreenShare);
+                onDeviceError?.({ source: Track.Source.ScreenShare, error });
+              }}
             >
               {showText &&
                 (isScreenShareEnabled ? t('common.stop_share') : t('common.share_screen'))}
@@ -298,20 +477,30 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           )}
           {visibleControls.chat && (
             <ChatToggle
+              controlWidth={controlWidth}
               enabled={chatOpen}
               onClicked={() => {
                 setChatOpen(!chatOpen);
               }}
+              count={chatMsg.unhandled}
             ></ChatToggle>
           )}
-          <SettingToggle
-            enabled={settingVis}
-            onClicked={async () => {
-              // setVirtualEnabled(false);
-              setSettingVis(true);
-            }}
-          ></SettingToggle>
+          {room && roomSettings.participants && visibleControls.microphone && (
+            <MoreButton
+              controlWidth={controlWidth}
+              setOpenMore={setOpenMore}
+              setMoreType={setMoreType}
+              onSettingOpen={async () => {
+                setSettingVis(true);
+              }}
+              onClickRecord={onClickRecord}
+              onClickManage={fetchSettings}
+              onClickApp={onClickApp}
+              isRecording={isRecording}
+            ></MoreButton>
+          )}
         </div>
+
         {visibleControls.leave && (
           <DisconnectButton>
             {showIcon && <LeaveIcon />}
@@ -321,6 +510,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         {/* <StartMediaButton /> */}
         {room && (
           <EnhancedChat
+            ref={enhanceChatRef}
             messageApi={messageApi}
             open={chatOpen}
             setOpen={setChatOpen}
@@ -330,17 +520,15 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           ></EnhancedChat>
         )}
         <Drawer
-          style={{ backgroundColor: '#111', padding: 0, margin: 0, color: '#fff' }}
+          {...DEFAULT_DRAWER_PROP}
           title={t('common.setting')}
-          placement="right"
-          closable={false}
           width={'640px'}
           open={settingVis}
           onClose={() => {
             setSettingVis(false);
             closeSetting();
           }}
-          extra={setting_drawer_header({
+          extra={DrawerCloser({
             on_clicked: () => {
               setSettingVis(false);
               closeSetting();
@@ -363,6 +551,122 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             )}
           </div>
         </Drawer>
+        <ParticipantManage
+          open={openMore}
+          setOpen={setOpenMore}
+          room={room}
+          participantList={participantList}
+          setOpenShareModal={setOpenShareModal}
+          roomSettings={roomSettings}
+          selectedParticipant={selectedParticipant}
+          setSelectedParticipant={setSelectedParticipant}
+          setOpenNameModal={setOpenNameModal}
+          setUsername={setUsername}
+        ></ParticipantManage>
+        {/* ------------- share room modal -------------------------------------------------------- */}
+        <Modal
+          open={openShareModal}
+          onCancel={() => setOpenShareModal(false)}
+          title={t('more.participant.invite.title')}
+          okText={t('more.participant.invite.ok')}
+          cancelText={t('more.participant.invite.cancel')}
+          onOk={async () => {
+            await navigator.clipboard.writeText(
+              inviteTextRef.current?.innerText ||
+                `${t('more.participant.invite.link')}: ${window.location.href}`,
+            );
+            setOpenShareModal(false);
+          }}
+        >
+          <div className={styles.invite_container} ref={inviteTextRef}>
+            <div className={styles.invite_container_item}>
+              {room?.localParticipant.name} &nbsp;
+              {t('more.participant.invite.texts.0')}
+            </div>
+            <div className={styles.invite_container_item}>
+              <div className={styles.invite_container_item_justify}>
+                {t('more.participant.invite.texts.1')}
+                {t('more.participant.invite.web')}
+                {t('more.participant.invite.add')}
+              </div>
+              <div>
+                {t('more.participant.invite.link')}: {window.location.href}
+              </div>
+            </div>
+            <div className={styles.invite_container_item}>
+              <div className={styles.invite_container_item_justify}>
+                {t('more.participant.invite.texts.2')}
+                <strong>{`${window.location.href}`}</strong>
+                {t('more.participant.invite.add')}
+              </div>
+              <div>
+                {t('more.participant.invite.room')}: {room?.name}
+              </div>
+            </div>
+          </div>
+        </Modal>
+        {/* -------------- control participant name modal ---------------------------------------- */}
+        <Modal
+          open={openNameModal}
+          title={t('more.participant.set.control.change_name')}
+          okText={t('common.confirm')}
+          cancelText={t('common.cancel')}
+          onCancel={() => {
+            setOpenNameModal(false);
+          }}
+          onOk={() => {
+            if (room && selectedParticipant) {
+              socket.emit('control_participant', {
+                room: room.name,
+                senderName: room.localParticipant.name,
+                senderId: room.localParticipant.identity,
+                receiverId: selectedParticipant.identity,
+                socketId: roomSettings.participants[selectedParticipant.identity].socketId,
+                type: ControlType.ChangeName,
+                username,
+              } as WsControlParticipant);
+            }
+            setOpenNameModal(false);
+          }}
+        >
+          <Input
+            placeholder={t('settings.general.username')}
+            value={username}
+            style={{
+              outline: '1px solid #22CCEE',
+            }}
+            onChange={(e) => {
+              setUsername(e.target.value);
+            }}
+          ></Input>
+        </Modal>
+        {/* ---------------- record modal ------------------------------------------------------- */}
+        <Modal
+          open={openRecordModal}
+          title={isDownload ? t('more.record.download') : t('more.record.title')}
+          okText={
+            isDownload
+              ? t('more.record.to_download')
+              : isOwner
+              ? t('more.record.confirm')
+              : t('more.record.confirm_request')
+          }
+          cancelText={t('more.record.cancel')}
+          onCancel={recordModalOnCancel}
+          onOk={recordModalOnOk}
+        >
+          {isDownload ? (
+            <div>{t('more.record.download_msg')}</div>
+          ) : (
+            <div>{isOwner ? t('more.record.desc') : t('more.record.request')}</div>
+          )}
+        </Modal>
+
+        <AppDrawer
+          open={openApp}
+          setOpen={setOpenApp}
+          messageApi={messageApi}
+        ></AppDrawer>
       </div>
     );
   },
@@ -416,17 +720,3 @@ export function supportsScreenSharing(): boolean {
     !!navigator.mediaDevices.getDisplayMedia
   );
 }
-
-export const setting_drawer_header = ({
-  on_clicked,
-}: {
-  on_clicked: () => void;
-}): React.ReactNode => {
-  return (
-    <div>
-      <Button type="text" shape="circle" onClick={on_clicked}>
-        <SvgResource type="close" color="#fff" svgSize={16}></SvgResource>
-      </Button>
-    </div>
-  );
-};

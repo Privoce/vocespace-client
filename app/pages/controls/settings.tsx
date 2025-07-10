@@ -1,25 +1,30 @@
-import { Button, Input, List, Radio, Slider, Tabs, TabsProps } from 'antd';
+import { Button, Tabs, TabsProps, Tag, Tooltip } from 'antd';
 import styles from '@/styles/controls.module.scss';
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { MessageInstance } from 'antd/es/message/interface';
-import { loadVideo, useVideoBlur } from '@/lib/std/device';
 import { ModelBg, ModelRole } from '@/lib/std/virtual';
-import { SvgResource, SvgType } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
-import { AudioSelect } from './audio_select';
-import { VideoSelect } from './video_select';
-import { LangSelect } from './lang_select';
-import VirtualRoleCanvas from '@/app/pages/virtual_role/live2d';
-import { connect_endpoint, src, UserDefineStatus, UserStatus } from '@/lib/std';
-import { StatusSelect } from './status_select';
+import { connect_endpoint, isUndefinedString, UserStatus } from '@/lib/std';
 import { useRecoilState } from 'recoil';
-import { socket, userState, virtualMaskState } from '@/app/rooms/[roomName]/PageClientImpl';
-import TextArea from 'antd/es/input/TextArea';
+import { userState } from '@/app/[roomName]/PageClientImpl';
 import { LocalParticipant } from 'livekit-client';
+import { LicenseControl } from './settings/license';
+import { AudioSettings } from './settings/audio';
+import { GeneralSettings } from './settings/general';
+import { TabItem } from './settings/tab_item';
+import { VirtualSettingsExports } from './settings/virtual';
+import { VideoSettings } from './settings/video';
+import { AboutUs } from './settings/about_us';
+import { RecordingTable } from '@/app/recording/table';
+import {
+  EnvData,
+  RecordData,
+  RecordResponse,
+  RecordState,
+  useRecordingEnv,
+} from '@/lib/std/recording';
 import { ulid } from 'ulid';
-import { LicenseControl } from './license';
-
-const SAVE_STATUS_ENDPOINT = connect_endpoint('/api/room-settings');
+import { ReloadOutlined } from '@ant-design/icons';
 
 export interface SettingsProps {
   username: string;
@@ -47,6 +52,8 @@ export interface SettingsExports {
       role: ModelRole;
       bg: ModelBg;
     };
+    openShareAudio: boolean;
+    openPromptSound: boolean;
   };
 }
 
@@ -76,8 +83,36 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
     const [virtualEnabled, setVirtualEnabled] = useState(false);
     const [modelRole, setModelRole] = useState<ModelRole>(ModelRole.None);
     const [modelBg, setModelBg] = useState<ModelBg>(ModelBg.ClassRoom);
+    const [openShareAudio, setOpenShareAudio] = useState<boolean>(uState.openShareAudio);
+    const [openPromptSound, setOpenPromptSound] = useState<boolean>(uState.openPromptSound);
     const [compare, setCompare] = useState(false);
     const virtualSettingsRef = useRef<VirtualSettingsExports>(null);
+    const { env, state, isConnected } = useRecordingEnv(messageApi);
+    const [recordsData, setRecordsData] = useState<RecordData[]>([]);
+    const [firstOpen, setFirstOpen] = useState(true);
+
+    const searchRoomRecords = async () => {
+      console.warn('search -----');
+      const response = await fetch(`${env?.server_host}/api/s3/${room}`);
+      if (response.ok) {
+        const { records, success }: RecordResponse = await response.json();
+        if (success && records.length > 0) {
+          let formattedRecords: RecordData[] = records.map((record) => ({
+            ...record,
+            id: ulid(), // 使用 ulid 生成唯一 ID
+          }));
+
+          setRecordsData(formattedRecords);
+          messageApi.success('查找录制文件成功');
+          return;
+        } else {
+          messageApi.error(
+            '查找录制文件为空，请检查房间名是否正确，房间内可能没有录制视频文件或已经删除',
+          );
+          setRecordsData([]);
+        }
+      }
+    };
 
     useEffect(() => {
       setVolume(uState.volume);
@@ -86,6 +121,8 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
       setVirtualEnabled(uState.virtual.enabled);
       setModelRole(uState.virtual.role);
       setModelBg(uState.virtual.bg);
+      setOpenShareAudio(uState.openShareAudio);
+      setOpenPromptSound(uState.openPromptSound);
     }, [uState]);
 
     const items: TabsProps['items'] = [
@@ -93,132 +130,54 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
         key: 'general',
         label: <TabItem type="setting" label={t('settings.general.title')}></TabItem>,
         children: (
-          <div className={styles.setting_box}>
-            <div>{t('settings.general.username')}:</div>
-            <Input
-              size="large"
-              className={styles.common_space}
-              value={username}
-              onChange={(e: any) => {
-                setUsername(e.target.value);
-              }}
-            ></Input>
-            <div className={styles.common_space}>{t('settings.general.lang')}:</div>
-            <LangSelect style={{ width: '100%' }}></LangSelect>
-            <div className={styles.common_space}>{t('settings.general.status.title')}:</div>
-            <div className={styles.setting_box_line}>
-              <StatusSelect
-                style={{ width: 'calc(100% - 52px)' }}
-                setUserStatus={setUserStatus}
-              ></StatusSelect>
-              <Button
-                type="primary"
-                shape="circle"
-                style={{ cursor: 'pointer' }}
-                onClick={() => {
-                  setAppendStatus(!appendStatus);
-                }}
-              >
-                <SvgResource type="add" svgSize={16}></SvgResource>
-              </Button>
-            </div>
-            {appendStatus && (
-              <BuildUserStatus
-                messageApi={messageApi}
-                room={room}
-                localParticipant={localParticipant}
-              ></BuildUserStatus>
-            )}
-          </div>
+          <GeneralSettings
+            room={room}
+            localParticipant={localParticipant}
+            messageApi={messageApi}
+            appendStatus={appendStatus}
+            setAppendStatus={setAppendStatus}
+            setUserStatus={setUserStatus}
+            username={username}
+            setUsername={setUsername}
+            openPromptSound={openPromptSound}
+            setOpenPromptSound={setOpenPromptSound}
+          ></GeneralSettings>
         ),
       },
       {
         key: 'audio',
         label: <TabItem type="audio" label={t('settings.audio.title')}></TabItem>,
-        children: (
-          <div>
-            <div className={styles.setting_box}>
-              <div>{t('settings.audio.device')}:</div>
-              <AudioSelect className={styles.common_space}></AudioSelect>
-            </div>
-            <div className={styles.setting_box}>
-              <div>{t('settings.audio.volume')}:</div>
-              <Slider
-                value={volume}
-                className={styles.common_space}
-                min={0.0}
-                max={100.0}
-                step={1.0}
-                onChange={(e) => {
-                  setVolume(e);
-                }}
-              />
-            </div>
-          </div>
-        ),
+        children: <AudioSettings volume={volume} setVolume={setVolume}></AudioSettings>,
       },
       {
-        key: 'video',
-        label: <TabItem type="video" label={t('settings.video.title')}></TabItem>,
+        key: 'recording',
+        label: <TabItem type="record" label={t('recording.title')}></TabItem>,
         children: (
           <div>
-            <div className={styles.setting_box}>
-              <div>{t('settings.video.device')}:</div>
-              <VideoSelect className={styles.common_space}></VideoSelect>
+            <div
+              style={{
+                width: '100%',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 16,
+              }}
+            >
+              <Tag color="#22ccee">{isConnected}</Tag>
+              <Tooltip title="刷新数据">
+                <Button size='small' icon={<ReloadOutlined />} onClick={searchRoomRecords}>
+                  刷新
+                </Button>
+              </Tooltip>
             </div>
-            <div className={styles.setting_box}>
-              <span>{t('settings.video.video_blur')}:</span>
-              <Slider
-                defaultValue={0.0}
-                className={`${styles.common_space} ${styles.slider}`}
-                value={videoBlur}
-                min={0.0}
-                max={1.0}
-                step={0.05}
-                onChange={(e) => {
-                  setVideoBlur(e);
-                }}
-                onChangeComplete={(e) => {
-                  setVideoBlur(e);
-                }}
-              />
-            </div>
-            <div className={styles.setting_box}>
-              <span>{t('settings.video.screen_blur')}:</span>
-              <Slider
-                defaultValue={0.0}
-                className={`${styles.common_space} ${styles.slider}`}
-                value={screenBlur}
-                min={0.0}
-                max={1.0}
-                step={0.05}
-                onChange={(e) => {
-                  setScreenBlur(e);
-                }}
-                onChangeComplete={(e) => {
-                  setScreenBlur(e);
-                }}
-              />
-            </div>
-            <div className={styles.setting_box}>
-              <div style={{ marginBottom: '6px' }}>{t('settings.virtual.title')}:</div>
-              <VirtualSettings
-                ref={virtualSettingsRef}
-                close={close}
-                blur={videoBlur}
-                messageApi={messageApi}
-                modelRole={modelRole}
-                setModelRole={setModelRole}
-                modelBg={modelBg}
-                setModelBg={setModelBg}
-                enabled={virtualEnabled}
-                setEnabled={setVirtualEnabled}
-                compare={compare}
-                setCompare={setCompare}
-                room={room}
-                localParticipant={localParticipant}
-              ></VirtualSettings>
-            </div>
+            <RecordingTable
+              messageApi={messageApi}
+              env={env}
+              currentRoom={room}
+              recordsData={recordsData}
+              setRecordsData={setRecordsData}
+              expandable={true}
+            ></RecordingTable>
           </div>
         ),
       },
@@ -230,59 +189,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
       {
         key: 'about_us',
         label: <TabItem type="logo" label={t('settings.about_us.title')}></TabItem>,
-        children: (
-          <div
-            style={{
-              display: 'flex',
-              gap: '16px',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexWrap: 'wrap',
-            }}
-          >
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '16px' }}>
-              <SvgResource type="logo" svgSize={64}></SvgResource>
-              <span style={{ fontSize: '32px', color: '#fff', fontWeight: '700' }}>VoceSpace</span>
-            </div>
-            <div
-              style={{
-                fontSize: '18px',
-                fontWeight: '700',
-                color: '#FFFFFF',
-                textAlign: 'left',
-                width: '100%',
-                wordSpacing: '0px',
-              }}
-            >
-              {t('settings.about_us.brief')}
-            </div>
-            <div style={{ textAlign: 'justify', textIndent: '2rem' }}>
-              {t('settings.about_us.desc')}
-            </div>
-            <div style={{ textAlign: 'right', width: '100%' }}>
-              <div>
-                {' '}
-                {t('msg.info.contact')}
-                <a
-                  href="mailto:han@privoce.com"
-                  style={{ color: '#22CCEE', textDecorationLine: 'none', margin: '0 4px' }}
-                >
-                  han@privoce.com
-                </a>
-              </div>
-              <div>
-                {' '}
-                {t('msg.info.learn_more')}:
-                <a
-                  href="https://vocespace.com"
-                  style={{ color: '#22CCEE', textDecorationLine: 'none', margin: '0 4px' }}
-                >
-                  {t('msg.info.offical_web')}
-                </a>
-              </div>
-            </div>
-          </div>
-        ),
+        children: <AboutUs></AboutUs>,
       },
     ];
 
@@ -308,6 +215,8 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
           role: modelRole,
           bg: modelBg,
         },
+        openShareAudio,
+        openPromptSound,
       },
     }));
 
@@ -320,6 +229,10 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
         style={{ width: '100%', height: '100%' }}
         onChange={(k: string) => {
           setKey(k as TabKey);
+          if (k === "recording" && firstOpen) {
+             searchRoomRecords();
+             setFirstOpen(false);
+          }
         }}
       />
     );
@@ -716,8 +629,8 @@ function BuildUserStatus({
     },
   ];
   const [selectedIcon, setSelectedIcon] = useState(status_icons[0].key);
-  const [videoBlur, setVideoBlur] = useState(0.0);
-  const [screenBlur, setScreenBlur] = useState(0.0);
+  const [videoBlur, setVideoBlur] = useState(0.15);
+  const [screenBlur, setScreenBlur] = useState(0.15);
   const [volume, setVolume] = useState(80);
 
   const saveStatus = async () => {
@@ -769,9 +682,9 @@ function BuildUserStatus({
       setName('');
       setDesc('');
       setSelectedIcon(status_icons[0].key);
-      setVolume(100);
-      setVideoBlur(0.0);
-      setScreenBlur(0.0);
+      setVolume(80);
+      setVideoBlur(0.15);
+      setScreenBlur(0.15);
     } catch (e) {
       messageApi.error({
         content: `${t('settings.general.status.define.fail')}: ${e}`,
