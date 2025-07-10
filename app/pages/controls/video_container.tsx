@@ -9,10 +9,12 @@ import {
 import {
   CarouselLayout,
   ConnectionStateToast,
+  FocusLayout,
   FocusLayoutContainer,
   GridLayout,
   isTrackReference,
   LayoutContextProvider,
+  ParticipantPlaceholder,
   RoomAudioRenderer,
   TrackReference,
   useCreateLayoutContext,
@@ -561,18 +563,24 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       // 2. 当用户在子房间时，可以订阅该子房间内的所有参与者的视频和音频轨道，包括主房间的参与者的视频轨道，但不能订阅主房间参与者的音频轨道
       let auth = [] as ParticipantTrackPermission[];
       // 远程参与者不在同一房间内，只订阅视频轨道
-      let videoTrackSid = room.localParticipant.getTrackPublication(Track.Source.Camera)?.trackSid;
+      // let videoTrackSid = room.localParticipant.getTrackPublication(Track.Source.Camera)?.trackSid;
 
       let shareTackSid = room.localParticipant.getTrackPublication(
         Track.Source.ScreenShare,
       )?.trackSid;
+      let audioTrackSid = room.localParticipant.getTrackPublication(
+        Track.Source.Microphone,
+      )?.trackSid;
 
       let allowedTrackSids = [];
-      if (videoTrackSid) {
-        allowedTrackSids.push(videoTrackSid);
-      }
+      // if (videoTrackSid) {
+      //   allowedTrackSids.push(videoTrackSid);
+      // }
       if (shareTackSid) {
         allowedTrackSids.push(shareTackSid);
+      }
+      if (audioTrackSid) {
+        allowedTrackSids.push(audioTrackSid);
       }
       // 遍历所有的远程参与者，根据规则进行处理
       room.remoteParticipants.forEach((rp) => {
@@ -580,7 +588,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         if (selfRoom.participants.includes(rp.identity)) {
           auth.push({
             participantIdentity: rp.identity,
-            allowAll: true,
+            allowAll: false,
+            allowedTrackSids,
           });
           let volume = settings.participants[rp.identity]?.volume / 100.0;
           if (isNaN(volume)) {
@@ -673,7 +682,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       .filter(isTrackReference)
       .filter((track) => track.publication.source === Track.Source.ScreenShare);
 
-    const focusTrack = usePinnedTracks(layoutContext)?.[0];
+    const focusTrack =
+      usePinnedTracks(layoutContext)?.[0] ??
+      tracks.find((track) => track.source === Track.Source.ScreenShare);
     const carouselTracks = tracks.filter((track) => !isEqualTrackRef(track, focusTrack));
 
     React.useEffect(() => {
@@ -814,7 +825,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               onWidgetChange={widgetUpdate}
             >
               <div className="lk-video-conference-inner" style={{ alignItems: 'space-between' }}>
-                {!focusTrack ? (
+                {/* {!focusTrack ? (
                   <div className="lk-grid-layout-wrapper">
                     <GridLayout tracks={tracks}>
                       <ParticipantItem
@@ -851,7 +862,26 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                       )}
                     </FocusLayoutContainer>
                   </div>
+                )} */}
+
+                {!focusTrack ? (
+                  <div className="lk-grid-layout-wrapper">
+                    <ParticipantPlaceholder height={'66%'} width={'66%'} />
+                  </div>
+                ) : (
+                  <div className="lk-focus-layout-wrapper">
+                    <ParticipantItem
+                      room={room?.name}
+                      setUserStatus={setUserStatus}
+                      settings={settings}
+                      toSettings={toSettingGeneral}
+                      trackRef={focusTrack}
+                      messageApi={messageApi}
+                      isFocus={isFocus}
+                    ></ParticipantItem>
+                  </div>
                 )}
+
                 <Controls
                   ref={controlsRef}
                   setUserStatus={setUserStatus}

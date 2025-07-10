@@ -191,73 +191,78 @@ export const ParticipantItem: (
     const deviceTrack = React.useMemo(() => {
       if (isTrackReference(trackReference) && !loading) {
         if (trackReference.source === Track.Source.Camera) {
-          return (
-            <div
-              style={{
-                height: '100%',
-                width: '100%',
-              }}
-            >
-              {deleyMask && (
-                <div className="lk-participant-placeholder" style={{ opacity: 1, zIndex: 1000 }}>
-                  <ParticipantPlaceholder />
-                </div>
-              )}
-              {isLocal && uState.virtual.enabled && !virtualMask && (
-                <div
-                  className={styles.virtual_video_box_canvas}
-                  style={{ visibility: 'hidden', zIndex: '111' }}
-                >
-                  <VirtualRoleCanvas
-                    video_ele={videoRef}
-                    model_bg={uState.virtual.bg}
-                    model_role={uState.virtual.role}
-                    enabled={uState.virtual.enabled}
-                    messageApi={messageApi}
-                    trackRef={trackReference}
-                    isLocal={isLocal}
-                    isReplace={true}
-                    onReady={() => {
-                      setVirtualReady(true);
-                    }}
-                    onDestroy={() => {
-                      setVirtualReady(false);
-                    }}
-                  ></VirtualRoleCanvas>
-                </div>
-              )}
-              <VideoTrack
-                ref={videoRef}
-                style={{
-                  WebkitFilter: videoFilter,
-                  filter: videoFilter,
-                  transition: 'filter 0.2s ease-in-out',
-                  zIndex: '11',
-                }}
-                trackRef={trackReference}
-                onSubscriptionStatusChanged={handleSubscribe}
-                manageSubscription={autoManageSubscription}
-              />
+          // return (
+          //   <div
+          //     style={{
+          //       height: '100%',
+          //       width: '100%',
+          //     }}
+          //   >
+          //     {deleyMask && (
+          //       <div className="lk-participant-placeholder" style={{ opacity: 1, zIndex: 1000 }}>
+          //         <ParticipantPlaceholder />
+          //       </div>
+          //     )}
+          //     {isLocal && uState.virtual.enabled && !virtualMask && (
+          //       <div
+          //         className={styles.virtual_video_box_canvas}
+          //         style={{ visibility: 'hidden', zIndex: '111' }}
+          //       >
+          //         <VirtualRoleCanvas
+          //           video_ele={videoRef}
+          //           model_bg={uState.virtual.bg}
+          //           model_role={uState.virtual.role}
+          //           enabled={uState.virtual.enabled}
+          //           messageApi={messageApi}
+          //           trackRef={trackReference}
+          //           isLocal={isLocal}
+          //           isReplace={true}
+          //           onReady={() => {
+          //             setVirtualReady(true);
+          //           }}
+          //           onDestroy={() => {
+          //             setVirtualReady(false);
+          //           }}
+          //         ></VirtualRoleCanvas>
+          //       </div>
+          //     )}
+          //     <VideoTrack
+          //       ref={videoRef}
+          //       style={{
+          //         WebkitFilter: videoFilter,
+          //         filter: videoFilter,
+          //         transition: 'filter 0.2s ease-in-out',
+          //         zIndex: '11',
+          //       }}
+          //       trackRef={trackReference}
+          //       onSubscriptionStatusChanged={handleSubscribe}
+          //       manageSubscription={autoManageSubscription}
+          //     />
 
-              {/** 暂停使用WebGL虚化 */}
-              {/* {localParticipant.identity === trackReference.participant.identity &&
-              uState.virtual.enabled ? (
-                <div className={styles.virtual_video_box_canvas} style={{ visibility: 'hidden' }}>
-                  <VirtualRoleCanvas
-                    video_ele={videoRef}
-                    model_bg={uState.virtual.bg}
-                    model_role={uState.virtual.role}
-                    enabled={uState.virtual.enabled}
-                    messageApi={messageApi}
-                    trackRef={trackReference}
-                    isLocal={trackReference.participant.identity === localParticipant.identity}
-                  ></VirtualRoleCanvas>
-                </div>
-              ) : (
-                blurValue > 0 && <BlurVideo blur={blurValue}></BlurVideo>
-              )} */}
-            </div>
+          //     {/** 暂停使用WebGL虚化 */}
+          //     {/* {localParticipant.identity === trackReference.participant.identity &&
+          //     uState.virtual.enabled ? (
+          //       <div className={styles.virtual_video_box_canvas} style={{ visibility: 'hidden' }}>
+          //         <VirtualRoleCanvas
+          //           video_ele={videoRef}
+          //           model_bg={uState.virtual.bg}
+          //           model_role={uState.virtual.role}
+          //           enabled={uState.virtual.enabled}
+          //           messageApi={messageApi}
+          //           trackRef={trackReference}
+          //           isLocal={trackReference.participant.identity === localParticipant.identity}
+          //         ></VirtualRoleCanvas>
+          //       </div>
+          //     ) : (
+          //       blurValue > 0 && <BlurVideo blur={blurValue}></BlurVideo>
+          //     )} */}
+          //   </div>
+          // );
+
+          return (
+            <div>{trackReference.participant.name}</div>
           );
+
         } else if (trackReference.source === Track.Source.ScreenShare) {
           // 包含远程鼠标位置
           return (
@@ -667,6 +672,7 @@ export const ParticipantItem: (
         {deviceTrack}
         <div className="lk-participant-placeholder">
           <ParticipantPlaceholder />
+          {/* <div>{trackReference.participant.name}</div> */}
         </div>
         <div className="lk-participant-metadata" style={{ zIndex: 1000 }}>
           <Dropdown

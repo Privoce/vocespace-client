@@ -1,6 +1,6 @@
 - [ ] VoceSteam
   - [x] 合并dev_0.2.0
-  - [ ] 观众模式
+  - [x] 观众模式
     - [x] 50+ 人数
     - [x] 观众只能看
       - [x] 保留观众音频
@@ -17,6 +17,6 @@
       - [x] 去除App
       - [x] 去除Space-room概念
         - [x] 侧边栏
-      - [ ] 处理发布订阅模式
-      - [ ] 处理layout为focusLayout
+      - [x] 处理发布订阅模式
+      - [x] 处理layout为focusLayout
       - [x] 去除用户状态
