@@ -468,40 +468,40 @@ export const ParticipantItem: (
             </div>
           ),
         },
-        {
-          key: 'user_status',
-          label: (
-            <div onClick={(e) => e.stopPropagation()}>
-              <Dropdown
-                trigger={['hover', 'click']}
-                placement="topLeft"
-                menu={{
-                  items: status_menu,
-                  onClick: async (e) => {
-                    e.domEvent.stopPropagation();
-                    await setUserStatus(e.key);
-                  },
-                }}
-              >
-                <div className={styles.status_item_inline} style={{ width: '100%' }}>
-                  <div className={styles.status_item_inline}>
-                    {defineStatus ? (
-                      <SvgResource
-                        type="dot"
-                        svgSize={16}
-                        color={defineStatus.icon.color}
-                      ></SvgResource>
-                    ) : (
-                      <SvgResource type={userStatusDisply} svgSize={16}></SvgResource>
-                    )}
-                    <div>{setStatusLabel(defineStatus?.name)}</div>
-                  </div>
-                  <SvgResource type="right" svgSize={14} color="#fff"></SvgResource>
-                </div>
-              </Dropdown>
-            </div>
-          ),
-        },
+        // {
+        //   key: 'user_status',
+        //   label: (
+        //     <div onClick={(e) => e.stopPropagation()}>
+        //       <Dropdown
+        //         trigger={['hover', 'click']}
+        //         placement="topLeft"
+        //         menu={{
+        //           items: status_menu,
+        //           onClick: async (e) => {
+        //             e.domEvent.stopPropagation();
+        //             await setUserStatus(e.key);
+        //           },
+        //         }}
+        //       >
+        //         <div className={styles.status_item_inline} style={{ width: '100%' }}>
+        //           <div className={styles.status_item_inline}>
+        //             {defineStatus ? (
+        //               <SvgResource
+        //                 type="dot"
+        //                 svgSize={16}
+        //                 color={defineStatus.icon.color}
+        //               ></SvgResource>
+        //             ) : (
+        //               <SvgResource type={userStatusDisply} svgSize={16}></SvgResource>
+        //             )}
+        //             <div>{setStatusLabel(defineStatus?.name)}</div>
+        //           </div>
+        //           <SvgResource type="right" svgSize={14} color="#fff"></SvgResource>
+        //         </div>
+        //       </Dropdown>
+        //     </div>
+        //   ),
+        // },
       ];
     }, [settings.participants, userStatusDisply, status_menu, defineStatus]);
     // 使用ws向服务器发送消息，告诉某个人打招呼

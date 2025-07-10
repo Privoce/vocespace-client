@@ -436,7 +436,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               </div>
             </div>
           )}
-          {visibleControls.camera && (
+          {/* {visibleControls.camera && (
             <div className="lk-button-group">
               <TrackToggle
                 source={Track.Source.Camera}
@@ -458,8 +458,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                 />
               </div>
             </div>
-          )}
-          {visibleControls.screenShare && browserSupportsScreenSharing && (
+          )} */}
+          {isOwner && visibleControls.screenShare && browserSupportsScreenSharing && (
             <TrackToggle
               style={{ height: '46px' }}
               source={Track.Source.ScreenShare}
@@ -662,11 +662,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           )}
         </Modal>
 
-        <AppDrawer
-          open={openApp}
-          setOpen={setOpenApp}
-          messageApi={messageApi}
-        ></AppDrawer>
+        <AppDrawer open={openApp} setOpen={setOpenApp} messageApi={messageApi}></AppDrawer>
       </div>
     );
   },

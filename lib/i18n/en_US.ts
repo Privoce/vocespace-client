@@ -44,6 +44,9 @@ export default {
     open: 'Open',
     close: 'Close',
   },
+  recording:{
+    title: 'Recording',
+  },
   channel: {
     menu: {
       header: '',

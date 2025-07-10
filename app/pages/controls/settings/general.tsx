@@ -56,9 +56,9 @@ export function GeneralSettings({
           setUserStatus={setUserStatus}
         ></StatusSelect>
         <Button
+        disabled
           type="primary"
           shape="circle"
-          style={{ cursor: 'pointer' }}
           onClick={() => {
             setAppendStatus(!appendStatus);
           }}

@@ -37,7 +37,10 @@ const CONN_DETAILS_ENDPOINT = connect_endpoint('/api/room-settings');
  * @param PreJoinProps
  */
 export function PreJoin({
-  defaults = {},
+  defaults = {
+    videoEnabled: false,
+    audioEnabled: false,
+  },
   persistUserChoices = true,
   videoProcessor,
   onSubmit,
@@ -60,6 +63,7 @@ export function PreJoin({
     defaults,
     preventSave: !persistUserChoices,
     preventLoad: !persistUserChoices,
+    
   });
   const [userChoices, setUserChoices] = React.useState(initialUserChoices);
   // Initialize device settings -----------------------------------------------------------------------
@@ -244,7 +248,7 @@ export function PreJoin({
           <LangSelect></LangSelect>
         )}
       </span>
-      <div className={styles.view__video}>
+      {/* <div className={styles.view__video}>
         {videoTrack && videoEnabled && (
           <video
             ref={videoEl}
@@ -261,7 +265,7 @@ export function PreJoin({
             <ParticipantPlaceholder />
           </div>
         )}
-      </div>
+      </div> */}
       {loading ? (
         <div className={styles.view__controls}>
           <Space direction="vertical" size={'small'} style={{ width: '100%' }}>
@@ -328,7 +332,7 @@ export function PreJoin({
               {!play ? t('common.device.test.audio') : t('common.device.test.close_audio')}
             </button>
           </div>
-          <div className={`${styles.view__controls__group} video lk-button-group`}>
+          {/* <div className={`${styles.view__controls__group} video lk-button-group`}>
             <TrackToggle
               className={styles.view__controls__toggle}
               initialState={videoEnabled}
@@ -346,8 +350,8 @@ export function PreJoin({
                 onActiveDeviceChange={(_, id) => setVideoDeviceId(id)}
               />
             </div>
-          </div>
-          <div className={styles.view__controls__group_volume}>
+          </div> */}
+          {/* <div className={styles.view__controls__group_volume}>
             <div className={styles.view__controls__group_volume__header}>
               <div className={styles.view__controls__group_volume__header__left}>
                 <SvgResource type="video" svgSize={18}></SvgResource>
@@ -367,7 +371,7 @@ export function PreJoin({
                 setDevice({ ...device, blur: e });
               }}
             ></Slider>
-          </div>
+          </div> */}
           <Input
             ref={inputRef}
             size="large"

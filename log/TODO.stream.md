@@ -1,0 +1,22 @@
+- [ ] VoceSteam
+  - [x] 合并dev_0.2.0
+  - [ ] 观众模式
+    - [x] 50+ 人数
+    - [x] 观众只能看
+      - [x] 保留观众音频
+      - [x] 去除观众视频
+      - [x] 去除观众屏幕分享
+      - Prejoin
+        - [x] 去除视频
+        - [x] 去除模糊度调节
+      - Settings
+        - [x] 设置视频设置Disabled
+        - [x] 设置录制Disabled
+        - [x] 设置General-状态Disabled
+      - [x] 去除视频流只开放音频流和屏幕流
+      - [x] 去除App
+      - [x] 去除Space-room概念
+        - [x] 侧边栏
+      - [ ] 处理发布订阅模式
+      - [ ] 处理layout为focusLayout
+      - [x] 去除用户状态

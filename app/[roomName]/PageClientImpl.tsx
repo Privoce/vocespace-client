@@ -20,7 +20,7 @@ import {
   Track,
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { PreJoin } from '@/app/pages/pre_join/pre_join';
 import { atom, useRecoilState } from 'recoil';
 import { connect_endpoint, UserDefineStatus } from '@/lib/std';
@@ -36,21 +36,7 @@ import {
 import { TodoItem } from '../pages/apps/todo_list';
 import dayjs, { type Dayjs } from 'dayjs';
 
-// h90: '160x90 (QQVGA)',
-// h180: '320x180 (HQVGA)',
-// h216: '384x216 (WQVGA)',
-// h360: '640x360 (nHD)',
-// h540: '960x540 (qHD)',
-// h720: '1280x720 (HD)',
-// h1080: '1920x1080 (Full HD / 1080p)',
-// h1440: '2560x1440 (QHD / 2K)',
-// h2160: '3840x2160 (UHD / 4K)',
-
-const {
-  TURN_CREDENTIAL = '',
-  TURN_USERNAME = '',
-  TURN_URL = '',
-} = process.env;
+const { TURN_CREDENTIAL = '', TURN_USERNAME = '', TURN_URL = '' } = process.env;
 
 export const socket = io();
 
@@ -363,13 +349,7 @@ function VideoConferenceComponent(props: {
           }
         : undefined,
     };
-  }, [
-    props.userChoices,
-    props.options.hq,
-    props.options.codec,
-    screenShareOption,
-    resolutions
-  ]);
+  }, [props.userChoices, props.options.hq, props.options.codec, screenShareOption, resolutions]);
 
   const room = React.useMemo(() => new Room(roomOptions), [roomOptions]);
   React.useEffect(() => {
@@ -541,7 +521,14 @@ function VideoConferenceComponent(props: {
       {notHolder}
       {/* 等待配置加载完成 */}
       {!screenShareOption ? (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100vh',
+          }}
+        >
           <div>Loading configuration...</div>
         </div>
       ) : (
@@ -557,41 +544,6 @@ function VideoConferenceComponent(props: {
           onEncryptionError={handleEncryptionError}
           onError={handleError}
           onMediaDeviceFailure={handleMediaDeviceFailure}
-      >
-        <VideoContainer
-          ref={videoContainerRef}
-          chatMessageFormatter={formatChatMessageLinks}
-          SettingsComponent={undefined}
-          messageApi={messageApi}
-          noteApi={notApi}
-          setPermissionDevice={setPermissionDevice}
-        ></VideoContainer>
-        {/* <DebugMode /> */}
-        <RecordingIndicator />
-        <Modal
-          title={t('msg.request.device.title')}
-          open={permissionModalVisible}
-          onCancel={() => setPermissionModalVisible(false)}
-          footer={[
-            <Button key="cancel" onClick={() => setPermissionModalVisible(false)}>
-              {t('common.cancel')}
-            </Button>,
-            <Button
-              key="request"
-              type="primary"
-              loading={permissionRequested}
-              onClick={requestMediaPermissions}
-              disabled={
-                !!permissionError &&
-                (permissionError.includes('权限被拒绝') ||
-                  permissionError.includes('Permission denied'))
-              }
-            >
-              {permissionRequested
-                ? t('msg.request.device.waiting')
-                : t('msg.request.device.allow')}
-            </Button>,
-          ]}
         >
           <VideoContainer
             ref={videoContainerRef}
@@ -599,9 +551,35 @@ function VideoConferenceComponent(props: {
             SettingsComponent={undefined}
             messageApi={messageApi}
             noteApi={notApi}
+            setPermissionDevice={setPermissionDevice}
           ></VideoContainer>
           {/* <DebugMode /> */}
           <RecordingIndicator />
+          <Modal
+            title={t('msg.request.device.title')}
+            open={permissionModalVisible}
+            onCancel={() => setPermissionModalVisible(false)}
+            footer={[
+              <Button key="cancel" onClick={() => setPermissionModalVisible(false)}>
+                {t('common.cancel')}
+              </Button>,
+              <Button
+                key="request"
+                type="primary"
+                loading={permissionRequested}
+                onClick={requestMediaPermissions}
+                disabled={
+                  !!permissionError &&
+                  (permissionError.includes('权限被拒绝') ||
+                    permissionError.includes('Permission denied'))
+                }
+              >
+                {permissionRequested
+                  ? t('msg.request.device.waiting')
+                  : t('msg.request.device.allow')}
+              </Button>,
+            ]}
+          />
         </LiveKitRoom>
       )}
       <Modal
@@ -623,9 +601,7 @@ function VideoConferenceComponent(props: {
                 permissionError.includes('Permission denied'))
             }
           >
-            {permissionRequested
-              ? t('msg.request.device.waiting')
-              : t('msg.request.device.allow')}
+            {permissionRequested ? t('msg.request.device.waiting') : t('msg.request.device.allow')}
           </Button>,
         ]}
       >
@@ -659,8 +635,7 @@ function VideoConferenceComponent(props: {
         )}
 
         <p>
-          <strong>{t('common.attention')}:</strong>{' '}
-          {t('msg.request.device.permission.set_on_hand')}
+          <strong>{t('common.attention')}:</strong> {t('msg.request.device.permission.set_on_hand')}
         </p>
       </Modal>
     </>

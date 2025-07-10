@@ -249,13 +249,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
       // 房间事件监听器 --------------------------------------------------------------------------------
       const onParticipantConnected = async (participant: Participant) => {
-        // 通过许可证判断人数，free为5人，pro为20人，若超过则拒绝加入并给出提示
-        let user_limit = 5;
-        if (uLicenseState.id && uLicenseState.value! == '') {
-          if (uLicenseState.ilimit === 'pro') {
-            user_limit = 20;
-          }
-        }
+        // 当前为特殊通行证
+        let user_limit = 60;
 
         if (room.remoteParticipants.size > user_limit) {
           if (room.localParticipant.identity === participant.identity) {
@@ -781,13 +776,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
     return (
       <div className="video_container_wrapper" style={{ position: 'relative' }}>
+        {/* <FocusCollapse open={focusOpen} setOpen={setFocusOpen}></FocusCollapse> */}
         {/* <FlotLayout
           style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
           messageApi={messageApi}
           openApp={openApp}
         ></FlotLayout> */}
-        <FocusCollapse open={focusOpen} setOpen={setFocusOpen}></FocusCollapse>
-        {room && (
+        {/* {room && (
           <Channel
             roomName={room.name}
             participantId={room.localParticipant.identity}
@@ -802,18 +797,17 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             messageApi={messageApi}
             isActive={isActive}
           ></Channel>
-        )}
+        )} */}
         <div
           className="lk-video-conference"
           {...props}
           style={{
             height: '100vh',
             transition: 'width 0.3s ease-in-out',
-            width: collapsed ? (isActive ? 'calc(100vw - 28px)' : '100vw') : 'calc(100vw - 280px)',
+            width: collapsed ? (isActive ? 'calc(100vw - 0px)' : '100vw') : 'calc(100vw - 0px)',
           }}
         >
-          <FocusCollapse open={focusOpen} setOpen={setFocusOpen}></FocusCollapse>
-        {is_web() && (
+          {is_web() && (
             <LayoutContextProvider
               value={layoutContext}
               // onPinChange={handleFocusStateChange}
@@ -834,7 +828,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   </div>
                 ) : (
                   <div className="lk-focus-layout-wrapper">
-                    <div className={focusOpen ? "lk-focus-layout" : "lk-focus-layout lk-focus-layout_collapsed"}>
+                    <FocusLayoutContainer>
                       <CarouselLayout tracks={carouselTracks}>
                         <ParticipantItem
                           room={room?.name}
@@ -855,7 +849,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                           isFocus={isFocus}
                         ></ParticipantItem>
                       )}
-                    </div>
+                    </FocusLayoutContainer>
                   </div>
                 )}
                 <Controls

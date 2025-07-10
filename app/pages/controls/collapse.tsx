@@ -9,8 +9,8 @@ export function FocusCollapse({ open, setOpen }: FocusCollapseProps) {
   return (
     <div
       style={{
-        height: '100%',
-        width: 24,
+        height: '100vh',
+        width: 28,
         paddingTop: 24,
         display: "inline-flex",
         justifyContent: "center",

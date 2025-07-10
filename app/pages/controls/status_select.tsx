@@ -93,6 +93,7 @@ export function StatusSelect({
 
   return (
     <Select
+      disabled
       size="large"
       className={className}
       defaultValue={state.status}

@@ -61,6 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       theme={{
         token: {
           colorPrimary: '#22CCEE',
+          colorTextDisabled: '#666',
           borderRadius: 4,
           colorText: brand.primaryText,
         },
