@@ -197,6 +197,7 @@ export function mergeProps<
   return mergePropsReactAria(...props.filter(isProp));
 }
 
+// 判断字符串是否为 undefined 或空字符串
 export const isUndefinedString = (value: string | undefined): boolean => {
   return value === undefined || value.trim() === '';
 };

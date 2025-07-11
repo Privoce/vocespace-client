@@ -1,15 +1,17 @@
+import { isUndefinedString } from '@/lib/std';
+import { getConfig, STORED_CONF, VocespaceConfig } from '@/lib/std/conf';
 import { EgressClient, EncodedFileOutput, S3Upload } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
 const {
-  LIVEKIT_API_KEY,
-  LIVEKIT_API_SECRET,
-  LIVEKIT_URL,
-  S3_ACCESS_KEY,
-  S3_SECRET_KEY,
-  S3_BUCKET,
-  S3_REGION,
-} = process.env;
+  livekit: { key: LIVEKIT_API_KEY, secret: LIVEKIT_API_SECRET, url: LIVEKIT_URL },
+  s3,
+} = STORED_CONF;
+
+const S3_ACCESS_KEY = s3?.access_key;
+const S3_SECRET_KEY = s3?.secret_key;
+const S3_BUCKET = s3?.bucket;
+const S3_REGION = s3?.region;
 
 interface EgressBody {
   room: string | null;
@@ -17,18 +19,35 @@ interface EgressBody {
   egressId?: string;
 }
 
-const isUndefinedString = (value: string | undefined): boolean => {
-  return value === undefined || value.trim() === '';
+// 检查环境变量是否未定义或为空字符串只要任意有一个未设置就不行，未设置返回true
+const checkEnv = (): boolean => {
+  return (
+    isUndefinedString(LIVEKIT_API_KEY) ||
+    isUndefinedString(LIVEKIT_API_SECRET) ||
+    isUndefinedString(LIVEKIT_URL) ||
+    isUndefinedString(S3_ACCESS_KEY) ||
+    isUndefinedString(S3_SECRET_KEY) ||
+    isUndefinedString(S3_BUCKET) ||
+    isUndefinedString(S3_REGION)
+  );
 };
 
 // 获取环境变量的接口，/api/record?env=true
 export async function GET(req: NextRequest) {
+  if (checkEnv()) {
+    return NextResponse.json(
+      { error: 'Environment variables are not set properly' },
+      { status: 500 },
+    );
+  }
+
   const env = req.nextUrl.searchParams.get('env');
   if (env === 'true') {
     let server_host = process.env.SERVER_HOST;
-    server_host = (server_host?.includes('localhost') || server_host?.includes('127.0.0.1'))
-      ? `http://${server_host}`
-      : `https://${server_host}`;
+    server_host =
+      server_host?.includes('localhost') || server_host?.includes('127.0.0.1')
+        ? `http://${server_host}`
+        : `https://${server_host}`;
 
     return NextResponse.json(
       {
@@ -51,15 +70,7 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  if (
-    isUndefinedString(LIVEKIT_API_KEY) ||
-    isUndefinedString(LIVEKIT_API_SECRET) ||
-    isUndefinedString(LIVEKIT_URL) ||
-    isUndefinedString(S3_ACCESS_KEY) ||
-    isUndefinedString(S3_SECRET_KEY) ||
-    isUndefinedString(S3_BUCKET) ||
-    isUndefinedString(S3_REGION)
-  ) {
+  if (checkEnv()) {
     return NextResponse.json(
       { error: 'Environment variables are not set properly' },
       { status: 500 },

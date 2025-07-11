@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Redis from 'ioredis';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { ChildRoom, ParticipantSettings, RoomSettings } from '@/lib/std/room';
+import { STORED_CONF } from '@/lib/std/conf';
 
 interface RoomSettingsMap {
   [roomId: string]: RoomSettings;
@@ -20,26 +21,26 @@ interface RoomDateRecords {
 }
 
 // [redis config env] ----------------------------------------------------------
+// const {
+//   REDIS_ENABLED = 'false',
+//   REDIS_HOST = 'localhost',
+//   REDIS_PORT = '6379',
+//   REDIS_PASSWORD,
+//   REDIS_DB = '0',
+// } = process.env;
+
 const {
-  REDIS_ENABLED = 'false',
-  REDIS_HOST = 'localhost',
-  REDIS_PORT = '6379',
-  REDIS_PASSWORD,
-  REDIS_DB = '0',
-} = process.env;
+  redis: { enabled, host, port, password, db },
+} = STORED_CONF;
 
 let redisClient: Redis | null = null;
 
 // [build redis client] --------------------------------------------------------
-if (REDIS_ENABLED === 'true') {
-  let host = REDIS_HOST;
-  let port = parseInt(REDIS_PORT, 10);
-  let db = parseInt(REDIS_DB, 10);
-
+if (enabled) {
   redisClient = new Redis({
     host,
     port,
-    password: REDIS_PASSWORD,
+    password,
     db,
   });
 }
@@ -915,7 +916,7 @@ export async function POST(request: NextRequest) {
             { success: false, error: 'Participant name already exists' },
             { status: 200 },
           );
-        }else {
+        } else {
           // 没有参与者
           return NextResponse.json({ success: true }, { status: 200 });
         }

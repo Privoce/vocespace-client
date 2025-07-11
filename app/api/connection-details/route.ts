@@ -1,14 +1,16 @@
 import { randomString } from '@/lib/client_utils';
+import { getConfig, STORED_CONF, VocespaceConfig } from '@/lib/std/conf';
 import { ConnectionDetails } from '@/lib/types';
 import { AccessToken, AccessTokenOptions, VideoGrant } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 
-const API_KEY = process.env.LIVEKIT_API_KEY;
-const API_SECRET = process.env.LIVEKIT_API_SECRET;
-const LIVEKIT_URL = process.env.LIVEKIT_URL;
 const COOKIE_KEY = 'random-participant-postfix';
 
 export async function GET(request: NextRequest) {
+  const {
+    livekit: { url: LIVEKIT_URL, key: LIVEKIT_KEY, secret: LIVEKIT_SECRET },
+  } = STORED_CONF;
+
   try {
     // Parse query parameters
     const roomName = request.nextUrl.searchParams.get('roomName');
@@ -41,6 +43,8 @@ export async function GET(request: NextRequest) {
         metadata,
       },
       roomName,
+      LIVEKIT_KEY,
+      LIVEKIT_SECRET,
     );
 
     // Return connection details
@@ -63,8 +67,13 @@ export async function GET(request: NextRequest) {
   }
 }
 
-function createParticipantToken(userInfo: AccessTokenOptions, roomName: string) {
-  const at = new AccessToken(API_KEY, API_SECRET, userInfo);
+function createParticipantToken(
+  userInfo: AccessTokenOptions,
+  roomName: string,
+  key: string,
+  secret: string,
+) {
+  const at = new AccessToken(key, secret, userInfo);
   at.ttl = '5m';
   const grant: VideoGrant = {
     room: roomName,

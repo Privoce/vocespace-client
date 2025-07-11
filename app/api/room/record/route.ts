@@ -1,15 +1,40 @@
 // 使用livekit egress api处理房间录制
 
+import { isUndefinedString } from '@/lib/std';
+import { STORED_CONF } from '@/lib/std/conf';
 import { EgressClient, EncodedFileOutput, SegmentedFileOutput } from 'livekit-server-sdk';
 import { NextResponse, NextRequest } from 'next/server';
 
-const SERVR_URL = process.env.LIVEKIT_URL;
-const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY;
-const S3_SECRET_KEY = process.env.S3_SECRET_KEY;
-const S3_BUCKET = process.env.S3_BUCKET;
-const S3_REGION = process.env.S3_REGION;
+// const SERVR_URL = process.env.LIVEKIT_URL;
+// const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY;
+// const S3_SECRET_KEY = process.env.S3_SECRET_KEY;
+// const S3_BUCKET = process.env.S3_BUCKET;
+// const S3_REGION = process.env.S3_REGION;
+
+const {
+  s3,
+  livekit: { url: SERVR_URL },
+} = STORED_CONF;
+
+const S3_ACCESS_KEY = s3?.access_key;
+const S3_SECRET_KEY = s3?.secret_key;
+const S3_BUCKET = s3?.bucket;
+const S3_REGION = s3?.region;
 
 export async function POST(request: NextRequest) {
+  if (
+    isUndefinedString(SERVR_URL) ||
+    isUndefinedString(S3_ACCESS_KEY) ||
+    isUndefinedString(S3_SECRET_KEY) ||
+    isUndefinedString(S3_BUCKET) ||
+    isUndefinedString(S3_REGION)
+  ) {
+    return NextResponse.json(
+      { error: 'Environment variables are not set properly.' },
+      { status: 500 },
+    );
+  }
+
   if (!SERVR_URL) {
     return NextResponse.json({ error: 'LiveKit server URL is not configured.' }, { status: 500 });
   }
@@ -19,16 +44,6 @@ export async function POST(request: NextRequest) {
   const egress = new EgressClient(SERVR_URL);
   const startTime = new Date().toUTCString();
   const output = {
-    // segments: new SegmentedFileOutput({
-    //     filenamePrefix: `${roomName}_${startTime}`,
-    //     playlistName: `${roomName}_${startTime}_playlist.m3u8`,
-    //     livePlaylistName: `${roomName}_${startTime}_live.m3u8`,
-    //     segmentDuration: 10,
-    //     output: {
-    //         case: "",
-
-    //     }
-    // })
     file: new EncodedFileOutput({
       filepath: `${roomName}_${startTime}.mp4`,
       output: {

@@ -1,4 +1,5 @@
-# docker-compose -f docker-compose.amd.yml up --build -d
+# docker-compose build --build-arg BUILDPLATFORM=linux/arm64
+# docker-compose build --build-arg BUILDPLATFORM=linux/amd64
 services:
   vocespace:
     container_name: vocespace
@@ -23,11 +24,26 @@ services:
       - NEXT_PUBLIC_MAXBITRATE=${NEXT_PUBLIC_MAXBITRATE:-12000}
       - NEXT_PUBLIC_MAXFRAMERATE=${NEXT_PUBLIC_MAXFRAMERATE:-30}
       - NEXT_PUBLIC_PRIORITY=${NEXT_PUBLIC_PRIORITY:-medium}
+      - REDIS_ENABLED=${REDIS_ENABLED:-true}
+      - REDIS_HOST=${REDIS_HOST:-redis} # 指向docker的redis服务
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-vocespace}
+      - REDIS_DB=${REDIS_DB:-0}
     volumes:
       - npm-cache:/app/.npm-cache
       - uploads:/app/uploads
     depends_on:
       - livekit
+      - redis
+    networks:
+      - vocespace-network
+  redis:
+    image: redis:7-alpine
+    container_name: vocespace-redis
+    restart: unless-stopped
+    command: redis-server --requirepass vocespace
+    volumes:
+      - redis-data:/data
     networks:
       - vocespace-network
 

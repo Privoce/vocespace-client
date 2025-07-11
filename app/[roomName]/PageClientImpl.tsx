@@ -23,7 +23,7 @@ import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { PreJoin } from '@/app/pages/pre_join/pre_join';
 import { atom, useRecoilState } from 'recoil';
-import { connect_endpoint, UserDefineStatus } from '@/lib/std';
+import { connect_endpoint, isUndefinedString, UserDefineStatus } from '@/lib/std';
 import io from 'socket.io-client';
 import { EnvConf } from '@/lib/std/env';
 import { ChatMsgItem } from '@/lib/std/chat';
@@ -35,8 +35,7 @@ import {
 import { TodoItem } from '../pages/apps/todo_list';
 import dayjs, { type Dayjs } from 'dayjs';
 import JoinRoom from './join';
-
-const { TURN_CREDENTIAL = '', TURN_USERNAME = '', TURN_URL = '' } = process.env;
+import { DEFAULT_VOCESPACE_CONFIG, TurnConf, VocespaceConfig } from '@/lib/std/conf';
 
 export const socket = io();
 
@@ -214,18 +213,29 @@ function VideoConferenceComponent(props: {
   const [permissionDevice, setPermissionDevice] = useState<Track.Source | null>(null);
   const videoContainerRef = React.useRef<VideoContainerExports>(null);
   const [screenShareOption, setScreenShareOption] = React.useState<EnvConf | null>(null);
+  const [turn, setTurn] = useState<TurnConf | undefined>(undefined);
   const fetchEnvConf = useCallback(async () => {
     const url = new URL(connect_endpoint('/api/env'), window.location.origin);
     const response = await fetch(url.toString());
     if (!response.ok) {
+      const defaultConf = DEFAULT_VOCESPACE_CONFIG;
       return {
-        resolution: '1080p',
-        maxBitrate: 12000,
-        maxFramerate: 30,
-        priority: 'medium' as RTCPriorityType,
+        resolution: defaultConf.resolution,
+        maxBitrate: defaultConf.maxBitrate,
+        maxFramerate: defaultConf.maxFramerate,
+        priority: defaultConf.priority,
       } as EnvConf;
     } else {
-      const { resolution, maxBitrate, maxFramerate, priority }: EnvConf = await response.json();
+      const {
+        resolution,
+        maxBitrate,
+        maxFramerate,
+        priority,
+        livekit: { turn: turnConf },
+      }: VocespaceConfig = await response.json();
+      if (turnConf) {
+        setTurn(turnConf);
+      }
       return {
         resolution,
         maxBitrate,
@@ -425,13 +435,13 @@ function VideoConferenceComponent(props: {
       autoSubscribe: true,
     } as RoomConnectOptions;
 
-    if (TURN_CREDENTIAL !== '' && TURN_USERNAME !== '' && TURN_URL !== '') {
+    if (turn && !isUndefinedString(turn.credential) && !isUndefinedString(turn.username)) {
       conf.rtcConfig = {
         iceServers: [
           {
-            urls: TURN_URL,
-            username: TURN_USERNAME,
-            credential: TURN_CREDENTIAL,
+            urls: turn.urls,
+            username: turn.username,
+            credential: turn.credential,
           },
         ],
         iceCandidatePoolSize: 20,
@@ -440,7 +450,7 @@ function VideoConferenceComponent(props: {
     }
 
     return conf;
-  }, []);
+  }, [turn]);
 
   const router = useRouter();
   const handleOnLeave = React.useCallback(async () => {
