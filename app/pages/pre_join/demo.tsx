@@ -58,16 +58,6 @@ export function DemoMeetingTab({ onSubmit }: { onSubmit: (values: LocalUserChoic
   // start meeting if valid ------------------------------------------------------------------
   const startMeeting = async () => {
     let roomName = 'voce_stream';
-    if (e2ee) {
-      router.push(`/${roomName}${hq ? '?hq=true' : ''}#${encodePassphrase(sharedPassphrase)}`);
-    } else {
-      if (roomUrl == '') {
-        router.push(`/${roomName}${hq ? '?hq=true' : ''}`);
-      } else {
-        // 对roomUrl进行判断，如果是个有效的网址则直接跳转，否则跳转到房间
-        isAllowUrlAnd(roomUrl, router, messageApi, t('msg.error.room.invalid'));
-      }
-    }
 
     // 发起请求进入房间
     const finalUserChoices = {
@@ -77,7 +67,7 @@ export function DemoMeetingTab({ onSubmit }: { onSubmit: (values: LocalUserChoic
       videoDeviceId: '',
       audioDeviceId: '',
     } as LocalUserChoices;
-    
+
     if (username === '') {
       messageApi.loading(t('msg.request.user.name'), 2);
       // 向服务器请求一个唯一的用户名
@@ -116,6 +106,16 @@ export function DemoMeetingTab({ onSubmit }: { onSubmit: (values: LocalUserChoic
     }
     if (typeof onSubmit === 'function') {
       onSubmit(finalUserChoices);
+      // if (e2ee) {
+      //   router.push(`/${roomName}${hq ? '?hq=true' : ''}#${encodePassphrase(sharedPassphrase)}`);
+      // } else {
+      //   if (roomUrl == '') {
+      //     router.push(`/${roomName}${hq ? '?hq=true' : ''}`);
+      //   } else {
+      //     // 对roomUrl进行判断，如果是个有效的网址则直接跳转，否则跳转到房间
+      //     isAllowUrlAnd(roomUrl, router, messageApi, t('msg.error.room.invalid'));
+      //   }
+      // }
     }
   };
   React.useEffect(() => {

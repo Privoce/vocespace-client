@@ -113,6 +113,7 @@ export function PageClientImpl(props: {
   hq: boolean;
   codec: VideoCodec;
 }) {
+  console.warn(props.hq);
   const { t } = useI18n();
   const [uState, setUState] = useRecoilState(userState);
   const [preJoinChoices, setPreJoinChoices] = React.useState<LocalUserChoices | undefined>(
