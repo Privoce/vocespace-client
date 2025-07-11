@@ -12,7 +12,6 @@ import {
   ExternalE2EEKeyProvider,
   RoomOptions,
   VideoCodec,
-  VideoPresets,
   Room,
   DeviceUnsupportedError,
   RoomConnectOptions,
@@ -28,7 +27,6 @@ import { connect_endpoint, UserDefineStatus } from '@/lib/std';
 import io from 'socket.io-client';
 import { EnvConf } from '@/lib/std/env';
 import { ChatMsgItem } from '@/lib/std/chat';
-import { WsTo } from '@/lib/std/device';
 import {
   DEFAULT_PARTICIPANT_SETTINGS,
   PARTICIPANT_SETTINGS_KEY,
@@ -36,6 +34,7 @@ import {
 } from '@/lib/std/room';
 import { TodoItem } from '../pages/apps/todo_list';
 import dayjs, { type Dayjs } from 'dayjs';
+import JoinRoom from './join';
 
 const { TURN_CREDENTIAL = '', TURN_USERNAME = '', TURN_URL = '' } = process.env;
 
@@ -160,21 +159,21 @@ export function PageClientImpl(props: {
       localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
     };
   }, []);
-
   return (
     <main data-lk-theme="default" style={{ height: '100%' }}>
       {connectionDetails === undefined || preJoinChoices === undefined ? (
-        <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-          <PreJoin
-            defaults={preJoinDefaults}
-            onSubmit={handlePreJoinSubmit}
-            onError={handlePreJoinError}
-            joinLabel={t('common.join_room')}
-            micLabel={t('common.device.microphone')}
-            camLabel={t('common.device.camera')}
-            userLabel={t('common.username')}
-          />
-        </div>
+        // <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
+        //   <PreJoin
+        //     defaults={preJoinDefaults}
+        //     onSubmit={handlePreJoinSubmit}
+        //     onError={handlePreJoinError}
+        //     joinLabel={t('common.join_room')}
+        //     micLabel={t('common.device.microphone')}
+        //     camLabel={t('common.device.camera')}
+        //     userLabel={t('common.username')}
+        //   />
+        // </div>
+        <JoinRoom onSubmit={handlePreJoinSubmit}></JoinRoom>
       ) : (
         <VideoConferenceComponent
           connectionDetails={connectionDetails}
@@ -255,68 +254,106 @@ function VideoConferenceComponent(props: {
             screenShareOption?.maxFramerate || 30,
             screenShareOption?.priority || 'medium',
           ),
-          l: VideoPresets.h1440,
+          l: new VideoPreset(
+            2560,
+            1440,
+            screenShareOption?.maxBitrate || 5_000_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
         };
       case '2k':
       case 'h1440':
       case 'QHD':
         return {
-          h: VideoPresets.h1440,
-          l: VideoPresets.h1080,
+          h: new VideoPreset(
+            2560,
+            1440,
+            screenShareOption?.maxBitrate || 5_000_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
+          l: new VideoPreset(
+            1920,
+            1080,
+            screenShareOption?.maxBitrate || 3_000_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
         };
       case '1080p':
       case 'h1080':
       case 'Full HD':
         return {
-          h: VideoPresets.h1080,
-          l: VideoPresets.h720,
+          h: new VideoPreset(
+            1920,
+            1080,
+            screenShareOption?.maxBitrate || 3_000_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
+          l: new VideoPreset(
+            1280,
+            720,
+            screenShareOption?.maxBitrate || 1_700_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
         };
       case '720p':
       case 'h720':
       case 'HD':
         return {
-          h: VideoPresets.h720,
-          l: VideoPresets.h540,
+          h: new VideoPreset(
+            1280,
+            720,
+            screenShareOption?.maxBitrate || 1_700_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
+          l: new VideoPreset(
+            960,
+            540,
+            screenShareOption?.maxBitrate || 800_000,
+            screenShareOption?.maxFramerate || 25,
+            screenShareOption?.priority || 'medium',
+          ),
         };
       case '540p':
       case 'h540':
       case 'qHD':
         return {
-          h: VideoPresets.h540,
-          l: VideoPresets.h360,
-        };
-      case '360p':
-      case 'h360':
-      case 'nHD':
-        return {
-          h: VideoPresets.h360,
-          l: VideoPresets.h216,
-        };
-      case '216p':
-      case 'h216':
-      case 'WQVGA':
-        return {
-          h: VideoPresets.h216,
-          l: VideoPresets.h180,
-        };
-      case '180p':
-      case 'h180':
-      case 'HQVGA':
-        return {
-          h: VideoPresets.h180,
-          l: VideoPresets.h90,
-        };
-      case '90p':
-      case 'h90':
-      case 'QQVGA':
-        return {
-          h: VideoPresets.h90,
-          l: VideoPresets.h90,
+          h: new VideoPreset(
+            960,
+            540,
+            screenShareOption?.maxBitrate || 800_000,
+            screenShareOption?.maxFramerate || 25,
+            screenShareOption?.priority || 'medium',
+          ),
+          l: new VideoPreset(
+            640,
+            360,
+            screenShareOption?.maxBitrate || 450_000,
+            screenShareOption?.maxFramerate || 25,
+            screenShareOption?.priority || 'medium',
+          ),
         };
       default:
         return {
-          h: VideoPresets.h1080,
-          l: VideoPresets.h720,
+          h: new VideoPreset(
+            1920,
+            1080,
+            screenShareOption?.maxBitrate || 3_000_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
+          l: new VideoPreset(
+            1280,
+            720,
+            screenShareOption?.maxBitrate || 1_700_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
         };
     }
   }, [screenShareOption]);

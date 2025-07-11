@@ -898,6 +898,7 @@ export async function POST(request: NextRequest) {
 
     // 处理用户唯一名
     if (isNameCheck && roomId && participantName) {
+      console.warn('Checking participant name:', participantName, roomId);
       // 获取房间设置
       const roomSettings = await RoomManager.getRoomSettings(roomId);
       if (!roomSettings) {
@@ -914,6 +915,9 @@ export async function POST(request: NextRequest) {
             { success: false, error: 'Participant name already exists' },
             { status: 200 },
           );
+        }else {
+          // 没有参与者
+          return NextResponse.json({ success: true }, { status: 200 });
         }
       }
     }

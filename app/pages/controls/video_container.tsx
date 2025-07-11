@@ -564,12 +564,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       let auth = [] as ParticipantTrackPermission[];
       // 远程参与者不在同一房间内，只订阅视频轨道
       let videoTrackSid = room.localParticipant.getTrackPublication(Track.Source.Camera)?.trackSid;
-      let allowedTrackSids = [] ;
+      let allowedTrackSids = [];
       let shareTrackSid = room.localParticipant.getTrackPublication(
         Track.Source.ScreenShare,
-      )?.trackSid;
-      let audioTrackSid = room.localParticipant.getTrackPublication(
-        Track.Source.Microphone,
       )?.trackSid;
 
       if (videoTrackSid) {
@@ -578,83 +575,36 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       if (shareTrackSid) {
         allowedTrackSids.push(shareTrackSid);
       }
-      // if (audioTrackSid) {
-      //   allowedTrackSids.push(audioTrackSid);
-      // }
-      // 遍历所有的远程参与者，根据规则进行处理
-      // if (settings.ownerId === room.localParticipant.identity) {
-      //   // 主持人需要订阅所有参与者的音频
-      //   let allowedTrackSids = [];
-      //   if (audioTrackSid) {
-      //     allowedTrackSids.push(audioTrackSid);
-      //   }
-      //   room.remoteParticipants.forEach((rp) => {
-      //     // 由于我们已经可以从selfRoom中获取当前用户所在的房间信息，所以通过selfRoom进行判断
-      //     if (selfRoom.participants.includes(rp.identity)) {
-      //       auth.push({
-      //         participantIdentity: rp.identity,
-      //         allowAll: false,
-      //         allowedTrackSids,
-      //       });
-      //       let volume = settings.participants[rp.identity]?.volume / 100.0;
-      //       if (isNaN(volume)) {
-      //         volume = 1.0;
-      //       }
-      //       rp.setVolume(volume);
-      //     } else {
-      //       auth.push({
-      //         participantIdentity: rp.identity,
-      //         allowAll: false,
-      //         allowedTrackSids,
-      //       });
-      //     }
-      //   });
-      // } else {
-      //   // 对于非主持人参与者只需要订阅主持人的音频和屏幕分享
-      //   let owner = room.remoteParticipants.get(settings.ownerId);
-      //   console.warn("owner ------", owner);
-      //   if (owner) {
-      //     let allowedTrackSids = [];
 
-      //     if (audioTrackSid) {
-      //       allowedTrackSids.push(audioTrackSid);
-      //     }
-      //     if (shareTrackSid) {
-      //       allowedTrackSids.push(shareTrackSid);
-      //     }
+      // 对于主持人，不订阅任何轨道
+      // 对于参与者，只能订阅主持人的视频共享轨道
 
-      //     auth.push({
-      //       participantIdentity: owner.identity,
-      //       allowAll: true
-      //     });
-      //   }
-      // }
-      room.remoteParticipants.forEach((rp) => {
-        
-          // 由于我们已经可以从selfRoom中获取当前用户所在的房间信息，所以通过selfRoom进行判断
-          if (selfRoom.participants.includes(rp.identity)) {
-            auth.push({
-              participantIdentity: rp.identity,
-              allowAll: false,
-              allowedTrackSids,
-            });
-            let volume = settings.participants[rp.identity]?.volume / 100.0;
-            if (isNaN(volume)) {
-              volume = 1.0;
-            }
-            rp.setVolume(volume);
-          } else {
-            auth.push({
-              participantIdentity: rp.identity,
-              allowAll: false,
-              allowedTrackSids,
-            });
+      if (settings.ownerId === room.localParticipant.identity) {
+        // 主持人需要保证每个参与者都可以订阅自己的视频轨道
+        room.remoteParticipants.forEach((rp) => {
+          auth.push({
+            participantIdentity: rp.identity,
+            allowAll: true
+          });
+          let volume = settings.participants[rp.identity]?.volume / 100.0;
+          if (isNaN(volume)) {
+            volume = 1.0;
           }
+          rp.setVolume(volume);
         });
-     
-     
+      } else {
+        let hasOwner = room.remoteParticipants.has(settings.ownerId);
+        if (hasOwner) {
+          auth.push({
+            participantIdentity: settings.ownerId,
+            allowAll: false,
+            allowedTrackSids,
+          });
+        }
+      }
+
       // 设置房间订阅权限 ------------------------------------------------
-      // room.localParticipant.setTrackSubscriptionPermissions(false, auth);
+      room.localParticipant.setTrackSubscriptionPermissions(false, auth);
       if (freshPermission) {
         fetchSettings().then(() => {
           setFreshPermission(false);
