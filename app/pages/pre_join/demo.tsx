@@ -3,7 +3,7 @@
 import { encodePassphrase, generateRoomId, randomString } from '@/lib/client_utils';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useRouter } from 'next/navigation';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from '@/styles/Home.module.css';
 import { Button, Input, InputRef, message, Radio } from 'antd';
 import { CheckboxGroupProps } from 'antd/es/checkbox';
@@ -55,6 +55,22 @@ export function DemoMeetingTab({ onSubmit }: { onSubmit: (values: LocalUserChoic
     { label: t('common.custom'), value: 'custom' },
   ];
   const [optionVal, setOptionVal] = useState('demo');
+
+  // 处理当e2ee或hq发生变化时需要重新调整url
+  useEffect(() => {
+    let roomName = 'voce_stream';
+    if (e2ee) {
+      router.push(`/${roomName}${hq ? '?hq=true' : ''}#${encodePassphrase(sharedPassphrase)}`);
+    } else {
+      if (roomUrl == '') {
+        router.push(`/${roomName}${hq ? '?hq=true' : ''}`);
+      } else {
+        // 对roomUrl进行判断，如果是个有效的网址则直接跳转，否则跳转到房间
+        isAllowUrlAnd(roomUrl, router, messageApi, t('msg.error.room.invalid'));
+      }
+    }
+  }, [e2ee, hq]);
+
   // start meeting if valid ------------------------------------------------------------------
   const startMeeting = async () => {
     let roomName = 'voce_stream';
@@ -106,16 +122,6 @@ export function DemoMeetingTab({ onSubmit }: { onSubmit: (values: LocalUserChoic
     }
     if (typeof onSubmit === 'function') {
       onSubmit(finalUserChoices);
-      // if (e2ee) {
-      //   router.push(`/${roomName}${hq ? '?hq=true' : ''}#${encodePassphrase(sharedPassphrase)}`);
-      // } else {
-      //   if (roomUrl == '') {
-      //     router.push(`/${roomName}${hq ? '?hq=true' : ''}`);
-      //   } else {
-      //     // 对roomUrl进行判断，如果是个有效的网址则直接跳转，否则跳转到房间
-      //     isAllowUrlAnd(roomUrl, router, messageApi, t('msg.error.room.invalid'));
-      //   }
-      // }
     }
   };
   React.useEffect(() => {
