@@ -168,7 +168,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
       // 房间事件监听器 --------------------------------------------------------------------------------
       const onParticipantConnected = async (participant: Participant) => {
-        console.warn('onParticipantConnected', participant);
+        // console.warn('onParticipantConnected', participant);
         // 通过许可证判断人数，free为5人，pro为20人，若超过则拒绝加入并给出提示
         let user_limit = 5;
         if (uLicenseState.id && uLicenseState.value! == '') {

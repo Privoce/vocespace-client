@@ -32,6 +32,7 @@ export function DemoMeetingTab() {
   const router = useRouter();
   const [messageApi, contextHolder] = message.useMessage();
   const [e2ee, setE2ee] = useState(false);
+  const [hq, setHq] = useState(false);
   const [roomUrl, setRoomUrl] = useState('');
   const [sharedPassphrase, setSharedPassphrase] = useState(randomString(64));
   // tab options -----------------------------------------------------------------------------
@@ -43,10 +44,10 @@ export function DemoMeetingTab() {
   // start meeting if valid ------------------------------------------------------------------
   const startMeeting = () => {
     if (e2ee) {
-      router.push(`/rooms/${generateRoomId()}#${encodePassphrase(sharedPassphrase)}`);
+      router.push(`/rooms/${generateRoomId()}${hq ? '?hq=true' : ''}#${encodePassphrase(sharedPassphrase)}`);
     } else {
       if (roomUrl == '') {
-        router.push(`/rooms/${generateRoomId()}`);
+        router.push(`/rooms/${generateRoomId()}${hq ? '?hq=true' : ''}`);
       } else {
         // 对roomUrl进行判断，如果是个有效的网址则直接跳转，否则跳转到房间
         isAllowUrlAnd(roomUrl, router, messageApi, t('msg.error.room.invalid'));
@@ -95,6 +96,15 @@ export function DemoMeetingTab() {
             onChange={(ev) => setE2ee(ev.target.checked)}
           ></input>
           <label htmlFor="use-e2ee">{t('msg.info.enabled_e2ee')}</label>
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'row', gap: '1rem' }}>
+          <input
+            id="use-e2ee"
+            type="checkbox"
+            checked={hq}
+            onChange={(ev) => setHq(ev.target.checked)}
+          ></input>
+          <label htmlFor="use-e2ee">{t('common.hq')}</label>
         </div>
         {e2ee && (
           <div

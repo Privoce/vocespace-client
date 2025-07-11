@@ -17,6 +17,7 @@ import {
   DeviceUnsupportedError,
   RoomConnectOptions,
   MediaDeviceFailure,
+  VideoPreset,
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
 import React, { createContext, ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
@@ -37,11 +38,7 @@ import { EnvConf } from '@/lib/std/env';
 // h1440: '2560x1440 (QHD / 2K)',
 // h2160: '3840x2160 (UHD / 4K)',
 
-const {
-  TURN_CREDENTIAL = '',
-  TURN_USERNAME = '',
-  TURN_URL = '',
-} = process.env;
+const { TURN_CREDENTIAL = '', TURN_USERNAME = '', TURN_URL = '' } = process.env;
 
 export const socket = io();
 
@@ -215,75 +212,119 @@ function VideoConferenceComponent(props: {
       case 'h2160':
       case 'UHD':
         return {
-          h: VideoPresets.h2160,
-          l: VideoPresets.h1440,
+          h: new VideoPreset(
+            3840,
+            2160,
+            screenShareOption?.maxBitrate || 8_000_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
+          l: new VideoPreset(
+            2560,
+            1440,
+            screenShareOption?.maxBitrate || 5_000_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
         };
       case '2k':
       case 'h1440':
       case 'QHD':
         return {
-          h: VideoPresets.h1440,
-          l: VideoPresets.h1080,
+          h: new VideoPreset(
+            2560,
+            1440,
+            screenShareOption?.maxBitrate || 5_000_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
+          l: new VideoPreset(
+            1920,
+            1080,
+            screenShareOption?.maxBitrate || 3_000_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
         };
       case '1080p':
       case 'h1080':
       case 'Full HD':
         return {
-          h: VideoPresets.h1080,
-          l: VideoPresets.h720,
+          h: new VideoPreset(
+            1920,
+            1080,
+            screenShareOption?.maxBitrate || 3_000_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
+          l: new VideoPreset(
+            1280,
+            720,
+            screenShareOption?.maxBitrate || 1_700_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
         };
       case '720p':
       case 'h720':
       case 'HD':
         return {
-          h: VideoPresets.h720,
-          l: VideoPresets.h540,
+          h: new VideoPreset(
+            1280,
+            720,
+            screenShareOption?.maxBitrate || 1_700_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
+          l: new VideoPreset(
+            960,
+            540,
+            screenShareOption?.maxBitrate || 800_000,
+            screenShareOption?.maxFramerate || 25,
+            screenShareOption?.priority || 'medium',
+          ),
         };
       case '540p':
       case 'h540':
       case 'qHD':
         return {
-          h: VideoPresets.h540,
-          l: VideoPresets.h360,
-        };
-      case '360p':
-      case 'h360':
-      case 'nHD':
-        return {
-          h: VideoPresets.h360,
-          l: VideoPresets.h216,
-        };
-      case '216p':
-      case 'h216':
-      case 'WQVGA':
-        return {
-          h: VideoPresets.h216,
-          l: VideoPresets.h180,
-        };
-      case '180p':
-      case 'h180':
-      case 'HQVGA':
-        return {
-          h: VideoPresets.h180,
-          l: VideoPresets.h90,
-        };
-      case '90p':
-      case 'h90':
-      case 'QQVGA':
-        return {
-          h: VideoPresets.h90,
-          l: VideoPresets.h90,
+          h: new VideoPreset(
+            960,
+            540,
+            screenShareOption?.maxBitrate || 800_000,
+            screenShareOption?.maxFramerate || 25,
+            screenShareOption?.priority || 'medium',
+          ),
+          l: new VideoPreset(
+            640,
+            360,
+            screenShareOption?.maxBitrate || 450_000,
+            screenShareOption?.maxFramerate || 25,
+            screenShareOption?.priority || 'medium',
+          ),
         };
       default:
         return {
-          h: VideoPresets.h1080,
-          l: VideoPresets.h720,
+          h: new VideoPreset(
+            1920,
+            1080,
+            screenShareOption?.maxBitrate || 3_000_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
+          l: new VideoPreset(
+            1280,
+            720,
+            screenShareOption?.maxBitrate || 1_700_000,
+            screenShareOption?.maxFramerate || 30,
+            screenShareOption?.priority || 'medium',
+          ),
         };
     }
   }, [screenShareOption]);
 
   const roomOptions = React.useMemo((): RoomOptions => {
-    console.warn(screenShareOption);
+    // console.warn(screenShareOption);
     let videoCodec: VideoCodec | undefined = props.options.codec ? props.options.codec : 'vp9';
     if (e2eeEnabled && (videoCodec === 'av1' || videoCodec === 'vp9')) {
       videoCodec = undefined;
@@ -317,13 +358,7 @@ function VideoConferenceComponent(props: {
           }
         : undefined,
     };
-  }, [
-    props.userChoices,
-    props.options.hq,
-    props.options.codec,
-    screenShareOption,
-    resolutions
-  ]);
+  }, [props.userChoices, props.options.hq, props.options.codec, screenShareOption, resolutions]);
 
   const room = React.useMemo(() => new Room(roomOptions), [roomOptions]);
   React.useEffect(() => {
@@ -481,7 +516,14 @@ function VideoConferenceComponent(props: {
       {notHolder}
       {/* 等待配置加载完成 */}
       {!screenShareOption ? (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '100vh',
+          }}
+        >
           <div>Loading configuration...</div>
         </div>
       ) : (
@@ -528,9 +570,7 @@ function VideoConferenceComponent(props: {
                 permissionError.includes('Permission denied'))
             }
           >
-            {permissionRequested
-              ? t('msg.request.device.waiting')
-              : t('msg.request.device.allow')}
+            {permissionRequested ? t('msg.request.device.waiting') : t('msg.request.device.allow')}
           </Button>,
         ]}
       >
@@ -564,8 +604,7 @@ function VideoConferenceComponent(props: {
         )}
 
         <p>
-          <strong>{t('common.attention')}:</strong>{' '}
-          {t('msg.request.device.permission.set_on_hand')}
+          <strong>{t('common.attention')}:</strong> {t('msg.request.device.permission.set_on_hand')}
         </p>
       </Modal>
     </>
