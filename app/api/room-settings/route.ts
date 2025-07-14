@@ -728,7 +728,7 @@ class RoomManager {
     }
   }
   // 生成新参与者 ----------------------------------------------------------------
-  static async genUserName(room: string): Promise<string> {
+  static async genUserName(room: string, prefix: 'teacher' | 'student'): Promise<string> {
     try {
       if (!redisClient) {
         throw new Error('Redis client is not initialized or disabled.');
@@ -749,23 +749,38 @@ class RoomManager {
 
       // 获取所有参与者的名字
       const participants = Object.values(roomSettings.participants);
-      let usedUserNames: number[] = [];
+      let teacherNames: number[] = [];
+      let studentNames: number[] = [];
       participants.forEach((participant) => {
-        if (participant.name.startsWith('User')) {
+        if (participant.name.startsWith('Teacher')) {
           const userName = participant.name.split(' ')[1];
           // 判断是否是数字
           if (!isNaN(parseInt(userName))) {
             // 将数字字符串转换为数字并存储
-            usedUserNames.push(parseInt(userName));
+            teacherNames.push(parseInt(userName));
+          }
+        } else if (participant.name.startsWith('Student')) {
+          const userName = participant.name.split(' ')[1];
+          // 判断是否是数字
+          if (!isNaN(parseInt(userName))) {
+            // 将数字字符串转换为数字并存储
+            studentNames.push(parseInt(userName));
           }
         }
       });
 
       // 直接进行排序并获取最大值，+ 1之后就是可以使用的参与者名字
       let suffix = 1; // 默认从 1 开始
-      if (usedUserNames.length > 0) {
-        usedUserNames.sort((a, b) => a - b);
-        suffix = usedUserNames[usedUserNames.length - 1] + 1;
+      if (prefix === 'teacher') {
+        if (teacherNames.length > 0) {
+          teacherNames.sort((a, b) => a - b);
+          suffix = teacherNames[teacherNames.length - 1] + 1;
+        }
+      } else if (prefix === 'student') {
+        if (studentNames.length > 0) {
+          studentNames.sort((a, b) => a - b);
+          suffix = studentNames[studentNames.length - 1] + 1;
+        }
       }
 
       let suffix_str = suffix.toString();
@@ -773,12 +788,12 @@ class RoomManager {
         suffix_str = `0${suffix}`;
       }
 
-      const availableUserName = `User ${suffix_str}`;
+      const availableUserName = `${prefix.charAt(0).toUpperCase() + prefix.slice(1)} ${suffix_str}`;
 
       return availableUserName;
     } catch (error) {
       console.error('Error generating user name:', error);
-      return 'User 01'; // 默认返回第一个用户
+      return `${prefix.charAt(0).toUpperCase() + prefix.slice(1)} 01`; // 默认返回第一个用户
     }
   }
   // 更新录制设置 -------------------------------------------------------
@@ -822,6 +837,7 @@ export async function GET(request: NextRequest) {
   const all = request.nextUrl.searchParams.get('all') === 'true';
   const roomId = request.nextUrl.searchParams.get('roomId');
   const is_pre = request.nextUrl.searchParams.get('pre') === 'true';
+  const user_type = request.nextUrl.searchParams.get('user_type') || 'student';
   const is_time_record = request.nextUrl.searchParams.get('time_record') === 'true';
   const is_chat_history = request.nextUrl.searchParams.get('chat_history') === 'true';
 
@@ -866,8 +882,11 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing roomId' }, { status: 400 });
   }
 
-  if (is_pre) {
-    const availableUserName = await RoomManager.genUserName(roomId);
+  if (is_pre && user_type) {
+    const availableUserName = await RoomManager.genUserName(
+      roomId,
+      user_type as 'teacher' | 'student',
+    );
     return NextResponse.json({
       name: availableUserName,
     });

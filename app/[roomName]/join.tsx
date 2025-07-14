@@ -6,16 +6,26 @@ import { LangSelect } from '../pages/controls/lang_select';
 import { SvgResource } from '../resources/svg';
 import { LocalUserChoices } from '@livekit/components-react';
 import { DemoMeetingTab } from '../pages/pre_join/demo';
+import { connect_endpoint } from '@/lib/std';
+import api from '@/lib/api';
+
+const CONNECT_ENDPOINT = connect_endpoint('/api/env');
 
 export default function JoinRoom({ onSubmit }: { onSubmit: (values: LocalUserChoices) => void }) {
-  const { t } = useI18n();
   const [loading, setLoading] = useState(true);
+  const [token, setToken] = useState('');
+
+  const getHostToken = async () => {
+    const { host_token } = await api.envConf();
+    setToken(host_token);
+    setLoading(false);
+  };
 
   useEffect(() => {
-    setTimeout(() => {
-      setLoading(false);
-    }, 400);
-  }, []);
+    if (token === '') {
+      getHostToken();
+    }
+  }, [token]);
   return (
     <>
       <main className={styles.main} data-lk-theme="default">
@@ -50,9 +60,9 @@ export default function JoinRoom({ onSubmit }: { onSubmit: (values: LocalUserCho
                 justifyContent: 'center',
               }}
             >
-              <SvgResource type="logo2" svgSize={45}></SvgResource>
+              {/* <SvgResource type="logo2" svgSize={45}></SvgResource> */}
             </div>
-            <h2>{t('msg.info.title')}</h2>
+            <h2>LOGO</h2>
           </div>
         )}
         {/* main tab for room enter ------------------------------------------------------------ */}
@@ -65,7 +75,7 @@ export default function JoinRoom({ onSubmit }: { onSubmit: (values: LocalUserCho
           </div>
         ) : (
           <Suspense fallback="Loading">
-            <DemoMeetingTab onSubmit={onSubmit} />
+            <DemoMeetingTab onSubmit={onSubmit} hostToken={token} />
           </Suspense>
         )}
       </main>
@@ -76,22 +86,7 @@ export default function JoinRoom({ onSubmit }: { onSubmit: (values: LocalUserCho
           style={{ height: `67px`, backgroundColor: '#333', width: '100%' }}
         ></Skeleton.Node>
       ) : (
-        <footer data-lk-theme="default">
-          {t('msg.info.contact')}
-          <a
-            href="mailto:han@privoce.com"
-            style={{ color: '#22CCEE', textDecorationLine: 'none', margin: '0 4px' }}
-          >
-            han@privoce.com
-          </a>
-          {t('msg.info.learn_more')}:{' '}
-          <a
-            href="https://vocespace.com"
-            style={{ color: '#22CCEE', textDecorationLine: 'none', margin: '0 4px' }}
-          >
-            {t('msg.info.offical_web')}
-          </a>
-        </footer>
+        <footer data-lk-theme="default">FOOTER</footer>
       )}
     </>
   );

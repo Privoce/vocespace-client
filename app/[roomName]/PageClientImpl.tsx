@@ -36,6 +36,7 @@ import { TodoItem } from '../pages/apps/todo_list';
 import dayjs, { type Dayjs } from 'dayjs';
 import JoinRoom from './join';
 import { DEFAULT_VOCESPACE_CONFIG, TurnConf, VocespaceConfig } from '@/lib/std/conf';
+import api from '@/lib/api';
 
 export const socket = io();
 
@@ -215,34 +216,22 @@ function VideoConferenceComponent(props: {
   const [screenShareOption, setScreenShareOption] = React.useState<EnvConf | null>(null);
   const [turn, setTurn] = useState<TurnConf | undefined>(undefined);
   const fetchEnvConf = useCallback(async () => {
-    const url = new URL(connect_endpoint('/api/env'), window.location.origin);
-    const response = await fetch(url.toString());
-    if (!response.ok) {
-      const defaultConf = DEFAULT_VOCESPACE_CONFIG;
-      return {
-        resolution: defaultConf.resolution,
-        maxBitrate: defaultConf.maxBitrate,
-        maxFramerate: defaultConf.maxFramerate,
-        priority: defaultConf.priority,
-      } as EnvConf;
-    } else {
-      const {
-        resolution,
-        maxBitrate,
-        maxFramerate,
-        priority,
-        livekit: { turn: turnConf },
-      }: VocespaceConfig = await response.json();
-      if (turnConf) {
-        setTurn(turnConf);
-      }
-      return {
-        resolution,
-        maxBitrate,
-        maxFramerate,
-        priority,
-      } as EnvConf;
+    const {
+      resolution,
+      maxBitrate,
+      maxFramerate,
+      priority,
+      livekit: { turn: turnConf },
+    }: VocespaceConfig = await api.envConf();
+    if (turnConf) {
+      setTurn(turnConf);
     }
+    return {
+      resolution,
+      maxBitrate,
+      maxFramerate,
+      priority,
+    } as EnvConf;
   }, []);
 
   useEffect(() => {

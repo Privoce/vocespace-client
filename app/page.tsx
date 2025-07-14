@@ -12,7 +12,7 @@ export default function Page() {
   // 页面加载时自动重定向
   React.useEffect(() => {
     if (percent >= 100) {
-      router.push(`/voce_stream?hq=true`);
+      router.push(`/voce_stream`);
     } else {
       setSpinning(true);
       // 模拟加载进度

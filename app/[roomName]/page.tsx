@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import * as React from 'react';
 import { PageClientImpl } from './PageClientImpl';
@@ -21,13 +21,13 @@ export default function Page({
     typeof searchParams.codec === 'string' && isVideoCodec(searchParams.codec)
       ? searchParams.codec
       : 'vp9';
-  const hq = searchParams.hq === 'true' ? true : false;
+  // const hq = searchParams.hq === 'true' ? true : false;
   return (
     <RecoilRoot>
       <PageClientImpl
         roomName={params.roomName}
         region={searchParams.region}
-        hq={hq}
+        hq={true}
         codec={codec}
       />
     </RecoilRoot>

@@ -1,6 +1,12 @@
 import { title } from 'process';
 
 export default {
+  voce_stream: {
+    teacher: "教师",
+    student: "学生",
+    token: "令牌",
+    token_error: "教师登陆令牌错误，请检查或询问管理员。",
+  },
   common: {
     confirm: '确认',
     cancel: '取消',

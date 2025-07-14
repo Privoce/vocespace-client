@@ -48,6 +48,7 @@ export interface VocespaceConfig {
     bucket: string;
     region: string;
   };
+  host_token: string
 }
 
 export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig = {
@@ -67,6 +68,7 @@ export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig = {
     password: 'vocespace',
     db: 0,
   },
+  host_token: "vocespace"
 };
 
 // 暴露配置，给服务端使用，这样就可以在其他地方直接使用 STORED_CONF
