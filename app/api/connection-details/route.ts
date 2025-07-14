@@ -1,8 +1,7 @@
-import { randomString } from '@/lib/client_utils';
-import { getConfig, STORED_CONF, VocespaceConfig } from '@/lib/std/conf';
 import { ConnectionDetails } from '@/lib/types';
 import { AccessToken, AccessTokenOptions, VideoGrant } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
+import { STORED_CONF } from '../conf';
 
 const COOKIE_KEY = 'random-participant-postfix';
 

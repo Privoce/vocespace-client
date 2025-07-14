@@ -2,6 +2,7 @@ import {
   connect_endpoint,
   getServerIp,
   is_web,
+  Role,
   src,
   UserDefineStatus,
   UserStatus,
@@ -71,6 +72,7 @@ export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
   noteApi: NotificationInstance;
   setPermissionDevice: (device: Track.Source) => void;
+  role: Role;
 }
 
 export interface VideoContainerExports {
@@ -88,6 +90,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       noteApi,
       messageApi,
       setPermissionDevice,
+      role,
       ...props
     }: VideoContainerProps,
     ref,
@@ -144,6 +147,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           },
           openShareAudio: uState.openShareAudio,
           openPromptSound: uState.openPromptSound,
+          role,
         });
         const roomName = `${room.localParticipant.name}'s room`;
 
@@ -519,32 +523,17 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         room.off(ParticipantEvent.TrackMuted, onTrackHandler);
         room.off(RoomEvent.ParticipantDisconnected, onParticipantDisConnected);
       };
-    }, [room?.state, room?.localParticipant, uState, init, uLicenseState, IP, chatMsg, socket]);
-
-    const selfRoom = useMemo(() => {
-      if (!room || room.state !== ConnectionState.Connected) return;
-
-      let selfRoom = settings.children.find((child) => {
-        return child.participants.includes(room.localParticipant.identity);
-      });
-
-      let allChildParticipants = settings.children.reduce((acc, room) => {
-        return acc.concat(room.participants);
-      }, [] as string[]);
-
-      if (!selfRoom) {
-        // 这里还需要过滤掉进入子房间的参与者
-        selfRoom = {
-          name: room.name,
-          participants: Object.keys(settings.participants).filter((pid) => {
-            return !allChildParticipants.includes(pid);
-          }),
-          ownerId: settings.ownerId,
-          isPrivate: false,
-        };
-      }
-      return selfRoom;
-    }, [settings.children, room]);
+    }, [
+      room?.state,
+      room?.localParticipant,
+      uState,
+      init,
+      uLicenseState,
+      IP,
+      chatMsg,
+      socket,
+      role,
+    ]);
 
     useLayoutEffect(() => {
       if (!settings || !room || room.state !== ConnectionState.Connected) return;
@@ -555,16 +544,14 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     }, [settings, room, freshPermission]);
 
     useEffect(() => {
-      if (!room || room.state !== ConnectionState.Connected || !selfRoom) return;
+      if (!room || room.state !== ConnectionState.Connected) return;
 
-      // 判断当前自己在哪个房间中，在不同的房间中设置不同用户的订阅权限
-      // 订阅规则:
-      // 1. 当用户在主房间时，可以订阅所有参与者的视频轨道，但不能订阅子房间用户的音频轨道
-      // 2. 当用户在子房间时，可以订阅该子房间内的所有参与者的视频和音频轨道，包括主房间的参与者的视频轨道，但不能订阅主房间参与者的音频轨道
+      // 对于主持人，不订阅任何轨道
+      // 对于参与者，只能订阅主持人的视频共享轨道
+
       let auth = [] as ParticipantTrackPermission[];
-      // 远程参与者不在同一房间内，只订阅视频轨道
-      let videoTrackSid = room.localParticipant.getTrackPublication(Track.Source.Camera)?.trackSid;
       let allowedTrackSids = [];
+      let videoTrackSid = room.localParticipant.getTrackPublication(Track.Source.Camera)?.trackSid;
       let shareTrackSid = room.localParticipant.getTrackPublication(
         Track.Source.ScreenShare,
       )?.trackSid;
@@ -576,15 +563,12 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         allowedTrackSids.push(shareTrackSid);
       }
 
-      // 对于主持人，不订阅任何轨道
-      // 对于参与者，只能订阅主持人的视频共享轨道
-
-      if (settings.ownerId === room.localParticipant.identity) {
+      if (settings.ownerIds.includes(room.localParticipant.identity)) {
         // 主持人需要保证每个参与者都可以订阅自己的视频轨道
         room.remoteParticipants.forEach((rp) => {
           auth.push({
             participantIdentity: rp.identity,
-            allowAll: true
+            allowAll: true,
           });
           let volume = settings.participants[rp.identity]?.volume / 100.0;
           if (isNaN(volume)) {
@@ -593,14 +577,16 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           rp.setVolume(volume);
         });
       } else {
-        let hasOwner = room.remoteParticipants.has(settings.ownerId);
-        if (hasOwner) {
-          auth.push({
-            participantIdentity: settings.ownerId,
-            allowAll: false,
-            allowedTrackSids,
-          });
-        }
+        settings.ownerIds.forEach((ownerId) => {
+          let hasOwner = room.remoteParticipants.has(ownerId);
+          if (hasOwner) {
+            auth.push({
+              participantIdentity: ownerId,
+              allowAll: false,
+              // allowedTrackSids,
+            });
+          }
+        });
       }
 
       // 设置房间订阅权限 ------------------------------------------------
@@ -611,7 +597,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         });
         socket.emit('update_user_status');
       }
-    }, [room, settings, selfRoom, freshPermission]);
+    }, [room, settings, freshPermission]);
 
     useEffect(() => {
       if (!room || room.state !== ConnectionState.Connected || !settings) return;
@@ -646,22 +632,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     });
     const lastAutoFocusedScreenShareTrack = React.useRef<TrackReferenceOrPlaceholder | null>(null);
     // [track] -----------------------------------------------------------------------------------------------------
-    const originTracks = useTracks(
+    const tracks = useTracks(
       [
         { source: Track.Source.Camera, withPlaceholder: true },
         { source: Track.Source.ScreenShare, withPlaceholder: false },
       ],
       { updateOnlyOn: [RoomEvent.ActiveSpeakersChanged], onlySubscribed: false },
     );
-
-    const tracks = useMemo(() => {
-      if (!selfRoom) return originTracks;
-      // 过滤参与者轨道，只身下selfRoom中的参与者的轨道
-      const roomTracks = originTracks.filter((track) =>
-        selfRoom.participants.includes(track.participant.identity),
-      );
-      return roomTracks;
-    }, [originTracks, selfRoom]);
 
     // [widget update and layout adjust] --------------------------------------------------------------------------
     const widgetUpdate = (state: WidgetState) => {
@@ -784,28 +761,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
     return (
       <div className="video_container_wrapper" style={{ position: 'relative' }}>
-        {/* <FocusCollapse open={focusOpen} setOpen={setFocusOpen}></FocusCollapse> */}
-        {/* <FlotLayout
-          style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
-          messageApi={messageApi}
-          openApp={openApp}
-        ></FlotLayout> */}
-        {/* {room && (
-          <Channel
-            roomName={room.name}
-            participantId={room.localParticipant.identity}
-            settings={settings}
-            onUpdate={async () => {
-              await fetchSettings();
-              socket.emit('update_user_status');
-            }}
-            tracks={originTracks}
-            collapsed={collapsed}
-            setCollapsed={setCollapsed}
-            messageApi={messageApi}
-            isActive={isActive}
-          ></Channel>
-        )} */}
         <div
           className="lk-video-conference"
           {...props}
@@ -822,48 +777,23 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               onWidgetChange={widgetUpdate}
             >
               <div className="lk-video-conference-inner" style={{ alignItems: 'space-between' }}>
-                {/* {!focusTrack ? (
-                  <div className="lk-grid-layout-wrapper">
-                    <GridLayout tracks={tracks}>
-                      <ParticipantItem
-                        room={room?.name}
-                        settings={settings}
-                        toSettings={toSettingGeneral}
-                        messageApi={messageApi}
-                        setUserStatus={setUserStatus}
-                      ></ParticipantItem>
-                    </GridLayout>
-                  </div>
-                ) : (
-                  <div className="lk-focus-layout-wrapper">
-                    <FocusLayoutContainer>
-                      <CarouselLayout tracks={carouselTracks}>
-                        <ParticipantItem
-                          room={room?.name}
-                          settings={settings}
-                          toSettings={toSettingGeneral}
-                          messageApi={messageApi}
-                          setUserStatus={setUserStatus}
-                        ></ParticipantItem>
-                      </CarouselLayout>
-                      {focusTrack && (
-                        <ParticipantItem
-                          room={room?.name}
-                          setUserStatus={setUserStatus}
-                          settings={settings}
-                          toSettings={toSettingGeneral}
-                          trackRef={focusTrack}
-                          messageApi={messageApi}
-                          isFocus={isFocus}
-                        ></ParticipantItem>
-                      )}
-                    </FocusLayoutContainer>
-                  </div>
-                )} */}
-
                 {!focusTrack ? (
                   <div className="lk-grid-layout-wrapper">
-                    <ParticipantPlaceholder height={'66%'} width={'66%'} />
+                    <div
+                      style={{
+                        backgroundColor: '#1e1e1e',
+                        width: 'calc(100% - 16px)',
+                        height: 'calc(100% - 8px)',
+                        margin: '8px 8px 0 8px',
+                        boxSizing: 'border-box',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        borderRadius: 8
+                      }}
+                    >
+                      <ParticipantPlaceholder height={'66%'} width={'66%'} />
+                    </div>
                   </div>
                 ) : (
                   <div className="lk-focus-layout-wrapper">

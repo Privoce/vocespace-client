@@ -21,9 +21,8 @@ import {
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { PreJoin } from '@/app/pages/pre_join/pre_join';
 import { atom, useRecoilState } from 'recoil';
-import { connect_endpoint, isUndefinedString, UserDefineStatus } from '@/lib/std';
+import { connect_endpoint, isUndefinedString, Role, UserDefineStatus } from '@/lib/std';
 import io from 'socket.io-client';
 import { EnvConf } from '@/lib/std/env';
 import { ChatMsgItem } from '@/lib/std/chat';
@@ -34,8 +33,8 @@ import {
 } from '@/lib/std/room';
 import { TodoItem } from '../pages/apps/todo_list';
 import dayjs, { type Dayjs } from 'dayjs';
-import JoinRoom from './join';
-import { DEFAULT_VOCESPACE_CONFIG, TurnConf, VocespaceConfig } from '@/lib/std/conf';
+import { JoinRoom } from './join';
+import { TurnConf, VocespaceConfig } from '@/lib/std/conf';
 import api from '@/lib/api';
 
 export const socket = io();
@@ -102,9 +101,6 @@ export const AppsDataState = atom({
   },
 });
 
-const CONN_DETAILS_ENDPOINT = connect_endpoint(
-  process.env.NEXT_PUBLIC_CONN_DETAILS_ENDPOINT ?? '/api/connection-details',
-);
 const SHOW_SETTINGS_MENU = process.env.NEXT_PUBLIC_SHOW_SETTINGS_MENU == 'true';
 
 export function PageClientImpl(props: {
@@ -113,37 +109,20 @@ export function PageClientImpl(props: {
   hq: boolean;
   codec: VideoCodec;
 }) {
-  // console.warn(props.hq);
-  // const { t } = useI18n();
   const [uState, setUState] = useRecoilState(userState);
   const [preJoinChoices, setPreJoinChoices] = React.useState<LocalUserChoices | undefined>(
     undefined,
   );
-  // const preJoinDefaults = React.useMemo(() => {
-  //   return {
-  //     username: '',
-  //     videoEnabled: true,
-  //     audioEnabled: true,
-  //   };
-  // }, []);
+  const [role, setRole] = useState<Role>('student');
   const [connectionDetails, setConnectionDetails] = React.useState<ConnectionDetails | undefined>(
     undefined,
   );
 
   const handlePreJoinSubmit = React.useCallback(async (values: LocalUserChoices) => {
     setPreJoinChoices(values);
-    const url = new URL(CONN_DETAILS_ENDPOINT, window.location.origin);
-    url.searchParams.append('roomName', props.roomName);
-    url.searchParams.append('participantName', values.username);
-    if (props.region) {
-      url.searchParams.append('region', props.region);
-    }
-    const connectionDetailsResp = await fetch(url.toString());
-    const connectionDetailsData = await connectionDetailsResp.json();
+    const connectionDetailsData = await api.joinRoom(props.roomName, values.username, props.region);
     setConnectionDetails(connectionDetailsData);
   }, []);
-  const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
-
   // 从localStorage中获取用户设置 --------------------------------------------------------------------
   useEffect(() => {
     const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
@@ -163,23 +142,13 @@ export function PageClientImpl(props: {
   return (
     <main data-lk-theme="default" style={{ height: '100%' }}>
       {connectionDetails === undefined || preJoinChoices === undefined ? (
-        // <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
-        //   <PreJoin
-        //     defaults={preJoinDefaults}
-        //     onSubmit={handlePreJoinSubmit}
-        //     onError={handlePreJoinError}
-        //     joinLabel={t('common.join_room')}
-        //     micLabel={t('common.device.microphone')}
-        //     camLabel={t('common.device.camera')}
-        //     userLabel={t('common.username')}
-        //   />
-        // </div>
-        <JoinRoom onSubmit={handlePreJoinSubmit}></JoinRoom>
+        <JoinRoom onSubmit={handlePreJoinSubmit} role={role} setRole={setRole}></JoinRoom>
       ) : (
         <VideoConferenceComponent
           connectionDetails={connectionDetails}
           userChoices={preJoinChoices}
           options={{ codec: props.codec, hq: props.hq }}
+          role={role}
         />
       )}
     </main>
@@ -193,6 +162,7 @@ function VideoConferenceComponent(props: {
     hq: boolean;
     codec: VideoCodec;
   };
+  role: Role;
 }) {
   const { t } = useI18n();
   const e2eePassphrase =
@@ -359,7 +329,6 @@ function VideoConferenceComponent(props: {
   }, [screenShareOption]);
 
   const roomOptions = React.useMemo((): RoomOptions => {
-    console.warn(screenShareOption);
     let videoCodec: VideoCodec | undefined = props.options.codec ? props.options.codec : 'vp9';
     if (e2eeEnabled && (videoCodec === 'av1' || videoCodec === 'vp9')) {
       videoCodec = undefined;
@@ -560,7 +529,6 @@ function VideoConferenceComponent(props: {
       setPermissionRequested(false);
     }
   };
-
   return (
     <>
       {contextHolder}
@@ -598,6 +566,7 @@ function VideoConferenceComponent(props: {
             messageApi={messageApi}
             noteApi={notApi}
             setPermissionDevice={setPermissionDevice}
+            role={props.role}
           ></VideoContainer>
           {/* <DebugMode /> */}
           <RecordingIndicator />

@@ -1,20 +1,23 @@
-import { useI18n } from '@/lib/i18n/i18n';
+'use client';
+
 import { Skeleton } from 'antd';
-import { Suspense, useEffect, useState } from 'react';
+import { forwardRef, Suspense, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import styles from '@/styles/Home.module.css';
 import { LangSelect } from '../pages/controls/lang_select';
-import { SvgResource } from '../resources/svg';
 import { LocalUserChoices } from '@livekit/components-react';
-import { DemoMeetingTab } from '../pages/pre_join/demo';
-import { connect_endpoint } from '@/lib/std';
+import { DemoMeetingTab} from '../pages/pre_join/demo';
 import api from '@/lib/api';
+import { Role } from '@/lib/std';
 
-const CONNECT_ENDPOINT = connect_endpoint('/api/env');
+export interface JoinRoomProps {
+  onSubmit: (values: LocalUserChoices) => void;
+  role: Role;
+  setRole: (role: Role) => void;
+}
 
-export default function JoinRoom({ onSubmit }: { onSubmit: (values: LocalUserChoices) => void }) {
+export function JoinRoom({ onSubmit, role, setRole }: JoinRoomProps) {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState('');
-
   const getHostToken = async () => {
     const { host_token } = await api.envConf();
     setToken(host_token);
@@ -26,6 +29,7 @@ export default function JoinRoom({ onSubmit }: { onSubmit: (values: LocalUserCho
       getHostToken();
     }
   }, [token]);
+
   return (
     <>
       <main className={styles.main} data-lk-theme="default">
@@ -75,7 +79,7 @@ export default function JoinRoom({ onSubmit }: { onSubmit: (values: LocalUserCho
           </div>
         ) : (
           <Suspense fallback="Loading">
-            <DemoMeetingTab onSubmit={onSubmit} hostToken={token} />
+            <DemoMeetingTab onSubmit={onSubmit} hostToken={token} role={role} setRole={setRole} />
           </Suspense>
         )}
       </main>

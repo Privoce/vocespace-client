@@ -1,7 +1,7 @@
 // 使用livekit egress api处理房间录制
 
 import { isUndefinedString } from '@/lib/std';
-import { STORED_CONF } from '@/lib/std/conf';
+import { STORED_CONF } from '../../conf';
 import { EgressClient, EncodedFileOutput, SegmentedFileOutput } from 'livekit-server-sdk';
 import { NextResponse, NextRequest } from 'next/server';
 

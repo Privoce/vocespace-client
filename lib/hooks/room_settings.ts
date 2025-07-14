@@ -9,7 +9,7 @@ const ROOM_SETTINGS_ENDPOINT = connect_endpoint('/api/room-settings');
 export function useRoomSettings(roomId: string, participantId: string) {
   const [settings, setSettings] = useState<RoomSettings>({
     participants: {},
-    ownerId: '',
+    ownerIds: [],
     record: { active: false },
     startAt: Date.now(),
     children: [],
@@ -89,11 +89,11 @@ export function useRoomSettings(roomId: string, participantId: string) {
         return false;
       }
 
-      const { ownerId } = await response.json();
+      const { ownerIds } = await response.json();
 
       setSettings((prevSettings) => ({
         ...prevSettings,
-        ownerId: ownerId || prevSettings.ownerId,
+        ownerIds: ownerIds || prevSettings.ownerIds,
       }));
 
       return true;

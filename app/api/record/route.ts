@@ -1,7 +1,8 @@
 import { isUndefinedString } from '@/lib/std';
-import { getConfig, STORED_CONF, VocespaceConfig } from '@/lib/std/conf';
+import {  VocespaceConfig } from '@/lib/std/conf';
 import { EgressClient, EncodedFileOutput, S3Upload } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
+import { STORED_CONF } from '../conf';
 
 const {
   livekit: { key: LIVEKIT_API_KEY, secret: LIVEKIT_API_SECRET, url: LIVEKIT_URL },

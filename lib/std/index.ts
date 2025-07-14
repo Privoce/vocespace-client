@@ -201,3 +201,5 @@ export function mergeProps<
 export const isUndefinedString = (value: string | undefined): boolean => {
   return value === undefined || value.trim() === '';
 };
+
+export type Role = 'teacher' | 'student';

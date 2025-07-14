@@ -1,18 +1,20 @@
 'use client';
 
 import { useI18n } from '@/lib/i18n/i18n';
-import React, { useEffect, useState } from 'react';
+import React, { forwardRef, useEffect, useImperativeHandle, useState } from 'react';
 import styles from '@/styles/Home.module.css';
 import { Button, Input, InputRef, message, Radio } from 'antd';
 import { CheckboxGroupProps } from 'antd/es/checkbox';
 import { LocalUserChoices, usePersistentUserChoices } from '@livekit/components-react';
-import { connect_endpoint } from '@/lib/std';
+import { connect_endpoint, Role } from '@/lib/std';
 
 const CONN_DETAILS_ENDPOINT = connect_endpoint('/api/room-settings');
 
 export interface DemoMeetingTabProps {
   onSubmit: (values: LocalUserChoices) => void;
   hostToken: string;
+  role: Role;
+  setRole: (role: Role) => void;
 }
 
 /**
@@ -23,7 +25,7 @@ export interface DemoMeetingTabProps {
  * - Enable E2EE (input passphrase)
  * - Connect by room name or URL
  */
-export function DemoMeetingTab({ onSubmit, hostToken }: DemoMeetingTabProps) {
+export function DemoMeetingTab({ onSubmit, hostToken, role, setRole }: DemoMeetingTabProps) {
   const { t } = useI18n();
   // user choices -------------------------------------------------------------------------------------
   const { userChoices, saveUsername } = usePersistentUserChoices({
@@ -43,7 +45,6 @@ export function DemoMeetingTab({ onSubmit, hostToken }: DemoMeetingTabProps) {
     { label: t('voce_stream.teacher'), value: 'teacher' },
     { label: t('voce_stream.student'), value: 'student' },
   ];
-  const [optionVal, setOptionVal] = useState<'teacher' | 'student'>('student');
   // start meeting if valid ------------------------------------------------------------------
   const startMeeting = async () => {
     let roomName = 'voce_stream';
@@ -63,7 +64,7 @@ export function DemoMeetingTab({ onSubmit, hostToken }: DemoMeetingTabProps) {
       const url = new URL(CONN_DETAILS_ENDPOINT, window.location.origin);
       url.searchParams.append('roomId', roomName);
       url.searchParams.append('pre', 'true');
-      url.searchParams.append('user_type', optionVal);
+      url.searchParams.append('role', role);
       const response = await fetch(url.toString());
       if (response.ok) {
         const { name } = await response.json();
@@ -96,7 +97,7 @@ export function DemoMeetingTab({ onSubmit, hostToken }: DemoMeetingTabProps) {
     }
     if (typeof onSubmit === 'function') {
       let allowJoin =
-        optionVal === 'teacher'
+        role === 'teacher'
           ? (() => {
               return hostToken === token;
             })()
@@ -117,6 +118,7 @@ export function DemoMeetingTab({ onSubmit, hostToken }: DemoMeetingTabProps) {
       inputRef.current.focus();
     }
   }, [inputRef]);
+
   return (
     <div className={styles.tabContent}>
       {contextHolder}
@@ -127,12 +129,12 @@ export function DemoMeetingTab({ onSubmit, hostToken }: DemoMeetingTabProps) {
         optionType="button"
         buttonStyle="solid"
         size="large"
-        value={optionVal}
+        value={role}
         onChange={(e) => {
-          setOptionVal(e.target.value);
+          setRole(e.target.value);
         }}
       />
-      {optionVal == 'teacher' && (
+      {role == 'teacher' && (
         <Input
           size="large"
           type="text"

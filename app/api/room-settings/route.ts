@@ -1,10 +1,10 @@
 // /app/api/room-settings/route.ts
-import { UserDefineStatus } from '@/lib/std';
+import { Role, UserDefineStatus } from '@/lib/std';
 import { NextRequest, NextResponse } from 'next/server';
 import Redis from 'ioredis';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { ChildRoom, ParticipantSettings, RoomSettings } from '@/lib/std/room';
-import { STORED_CONF } from '@/lib/std/conf';
+import { STORED_CONF } from '../conf';
 
 interface RoomSettingsMap {
   [roomId: string]: RoomSettings;
@@ -557,9 +557,15 @@ class RoomManager {
       // 房间不存在说明是第一次创建
       if (!roomSettings) {
         let startAt = Date.now();
+        let ownerIds = [];
+        // 只有老师才能作为owner
+        if (pData.role === 'teacher') {
+          ownerIds.push(participantId);
+        }
+
         roomSettings = {
           participants: {},
-          ownerId: participantId,
+          ownerIds,
           record: { active: false },
           startAt,
           children: [],
@@ -573,6 +579,11 @@ class RoomManager {
         ...roomSettings.participants[participantId],
         ...pData,
       };
+
+      // 如果是老师则将其加入房间的主持人列表
+      if (pData.role === 'teacher') {
+        roomSettings.ownerIds.push(participantId);
+      }
 
       // 保存更新后的房间设置
       return await this.setRoomSettings(room, roomSettings);
@@ -604,23 +615,23 @@ class RoomManager {
   }
 
   // 转让房间主持人 -----------------------------------------------------------------------
-  static async transferOwnership(room: string, newOwnerId: string): Promise<boolean> {
-    try {
-      if (!redisClient) {
-        throw new Error('Redis client is not initialized or disabled.');
-      }
-      const roomSettings = await this.getRoomSettings(room);
-      if (!roomSettings || !roomSettings.participants[newOwnerId]) {
-        return false; // 房间或新主持人不存在
-      } else {
-        roomSettings.ownerId = newOwnerId;
-        return await this.setRoomSettings(room, roomSettings);
-      }
-    } catch (error) {
-      console.error('Error transferring ownership:', error);
-      return false;
-    }
-  }
+  // static async transferOwnership(room: string, newOwnerId: string): Promise<boolean> {
+  //   try {
+  //     if (!redisClient) {
+  //       throw new Error('Redis client is not initialized or disabled.');
+  //     }
+  //     const roomSettings = await this.getRoomSettings(room);
+  //     if (!roomSettings || !roomSettings.participants[newOwnerId]) {
+  //       return false; // 房间或新主持人不存在
+  //     } else {
+  //       roomSettings.ownerIds = newOwnerId;
+  //       return await this.setRoomSettings(room, roomSettings);
+  //     }
+  //   } catch (error) {
+  //     console.error('Error transferring ownership:', error);
+  //     return false;
+  //   }
+  // }
 
   // 删除参与者 -----------------------------------------------------------------------
   static async removeParticipant(
@@ -662,14 +673,14 @@ class RoomManager {
           clearAll: true,
         };
       } else {
-        // 进行转让, 一定有1个参与者
-        if (roomSettings.ownerId === participantId) {
-          const remainingParticipants = Object.keys(roomSettings.participants);
-          await this.transferOwnership(
-            room,
-            remainingParticipants[0], // 转让给第一个剩余的参与者
-          );
-        }
+        // // 进行转让, 一定有1个参与者
+        // if (roomSettings.ownerId === participantId) {
+        //   const remainingParticipants = Object.keys(roomSettings.participants);
+        //   await this.transferOwnership(
+        //     room,
+        //     remainingParticipants[0], // 转让给第一个剩余的参与者
+        //   );
+        // }
         return {
           success: true,
           clearAll: false,
@@ -728,7 +739,7 @@ class RoomManager {
     }
   }
   // 生成新参与者 ----------------------------------------------------------------
-  static async genUserName(room: string, prefix: 'teacher' | 'student'): Promise<string> {
+  static async genUserName(room: string, prefix: Role): Promise<string> {
     try {
       if (!redisClient) {
         throw new Error('Redis client is not initialized or disabled.');
@@ -738,7 +749,7 @@ class RoomManager {
         let startAt = Date.now();
         roomSettings = {
           participants: {},
-          ownerId: '',
+          ownerIds: [],
           record: { active: false },
           startAt,
           children: [],
@@ -837,7 +848,7 @@ export async function GET(request: NextRequest) {
   const all = request.nextUrl.searchParams.get('all') === 'true';
   const roomId = request.nextUrl.searchParams.get('roomId');
   const is_pre = request.nextUrl.searchParams.get('pre') === 'true';
-  const user_type = request.nextUrl.searchParams.get('user_type') || 'student';
+  const role = request.nextUrl.searchParams.get('role') || 'student';
   const is_time_record = request.nextUrl.searchParams.get('time_record') === 'true';
   const is_chat_history = request.nextUrl.searchParams.get('chat_history') === 'true';
 
@@ -882,11 +893,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ error: 'Missing roomId' }, { status: 400 });
   }
 
-  if (is_pre && user_type) {
-    const availableUserName = await RoomManager.genUserName(
-      roomId,
-      user_type as 'teacher' | 'student',
-    );
+  if (is_pre && role) {
+    const availableUserName = await RoomManager.genUserName(roomId, role as Role);
     return NextResponse.json({
       name: availableUserName,
     });
@@ -985,12 +993,13 @@ export async function POST(request: NextRequest) {
 
     // 转让房间主持人
     if (trans && roomId && participantId) {
-      const success = await RoomManager.transferOwnership(roomId, participantId);
-      if (success) {
-        return NextResponse.json({ success: true, ownerId: participantId }, { status: 200 });
-      } else {
-        return NextResponse.json({ error: 'Failed to transfer ownership' }, { status: 500 });
-      }
+      // const success = await RoomManager.transferOwnership(roomId, participantId);
+      // if (success) {
+      //   return NextResponse.json({ success: true, ownerId: participantId }, { status: 200 });
+      // } else {
+      //   return NextResponse.json({ error: 'Failed to transfer ownership' }, { status: 500 });
+      // }
+      return;
     }
 
     if (!roomId || !participantId || !settings) {

@@ -281,8 +281,9 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       return Object.entries(roomSettings.participants);
     }, [roomSettings]);
     const isOwner = React.useMemo(() => {
-      return roomSettings.ownerId === room?.localParticipant.identity;
-    }, [roomSettings.ownerId, room?.localParticipant.identity]);
+      if (!room) return false;
+      return roomSettings.ownerIds.includes(room.localParticipant.identity);
+    }, [roomSettings.ownerIds, room]);
 
     // [record] -----------------------------------------------------------------------------------------------------
     const [openRecordModal, setOpenRecordModal] = React.useState(false);
@@ -368,13 +369,13 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         console.warn(roomSettings);
       } else {
         // participant request to start recording
-        socket.emit('req_record', {
-          room: room.name,
-          senderName: room.localParticipant.name,
-          senderId: room.localParticipant.identity,
-          receiverId: roomSettings.ownerId,
-          socketId: roomSettings.participants[roomSettings.ownerId].socketId,
-        } as WsTo);
+        // socket.emit('req_record', {
+        //   room: room.name,
+        //   senderName: room.localParticipant.name,
+        //   senderId: room.localParticipant.identity,
+        //   receiverId: roomSettings.ownerId,
+        //   socketId: roomSettings.participants[roomSettings.ownerId].socketId,
+        // } as WsTo);
       }
     };
 
@@ -413,7 +414,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       <div {...htmlProps} className={styles.controls}>
         {contextHolder}
         <div className={styles.controls_left} ref={controlLeftRef}>
-          {visibleControls.microphone && (
+          {/* {visibleControls.microphone && (
             <div className="lk-button-group">
               <TrackToggle
                 source={Track.Source.Microphone}
@@ -435,7 +436,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                 />
               </div>
             </div>
-          )}
+          )} */}
           {/* {visibleControls.camera && (
             <div className="lk-button-group">
               <TrackToggle
@@ -475,7 +476,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                 (isScreenShareEnabled ? t('common.stop_share') : t('common.share_screen'))}
             </TrackToggle>
           )}
-          {visibleControls.chat && (
+          {/* {visibleControls.chat && (
             <ChatToggle
               controlWidth={controlWidth}
               enabled={chatOpen}
@@ -484,8 +485,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               }}
               count={chatMsg.unhandled}
             ></ChatToggle>
-          )}
-          {room && roomSettings.participants && visibleControls.microphone && (
+          )} */}
+          {isOwner && room && roomSettings.participants && visibleControls.microphone && (
             <MoreButton
               controlWidth={controlWidth}
               setOpenMore={setOpenMore}
@@ -508,7 +509,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           </DisconnectButton>
         )}
         {/* <StartMediaButton /> */}
-        {room && (
+        {/* {room && (
           <EnhancedChat
             ref={enhanceChatRef}
             messageApi={messageApi}
@@ -518,7 +519,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             room={room}
             sendFileConfirm={sendFileConfirm}
           ></EnhancedChat>
-        )}
+        )} */}
         <Drawer
           {...DEFAULT_DRAWER_PROP}
           title={t('common.setting')}

@@ -26,6 +26,7 @@ export interface ParticipantSettings {
   };
   openShareAudio: boolean; // 是否开启屏幕分享音频
   openPromptSound: boolean; // 是否开启新用户加入时的提示音
+  role: "teacher" | "student"
 }
 
 export interface RecordSettings {
@@ -39,7 +40,7 @@ export interface RoomSettings {
     [participantId: string]: ParticipantSettings;
   };
   status?: UserDefineStatus[];
-  ownerId: string;
+  ownerIds: string[];
   record: RecordSettings;
   startAt: number;
   children: ChildRoom[]
@@ -60,6 +61,7 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   },
   openPromptSound: true,
   openShareAudio: false,
+  role: 'student',
 }
 
 /**

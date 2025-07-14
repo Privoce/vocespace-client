@@ -1,20 +1,6 @@
 // 用来读取vocespace.conf.json这个配置文件
 // 这个配置文件的位置在项目根目录下
 // 只会在服务器端使用
-import { readFileSync } from 'fs';
-import { join } from 'path';
-
-export const getConfig = () => {
-  try {
-    const configPath = join(process.cwd(), 'vocespace.conf.json');
-    const configContent = readFileSync(configPath, 'utf-8');
-    const config = JSON.parse(configContent) as VocespaceConfig;
-    return config;
-  } catch (error) {
-    console.error('Error reading vocespace.conf.json:', error);
-    return DEFAULT_VOCESPACE_CONFIG;
-  }
-};
 
 export interface TurnConf {
   credential: string;
@@ -71,5 +57,3 @@ export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig = {
   host_token: "vocespace"
 };
 
-// 暴露配置，给服务端使用，这样就可以在其他地方直接使用 STORED_CONF
-export const STORED_CONF: VocespaceConfig = getConfig();
