@@ -25,6 +25,7 @@ import { ControlType, WsControlParticipant, WsTo } from '@/lib/std/device';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from './drawer_tools';
 import { AppDrawer } from '../apps/app_drawer';
 import { ParticipantManage } from '../participant/manage';
+import { DynParams } from './dyn_params';
 
 const RECORD_URL = connect_endpoint('/api/record');
 
@@ -414,52 +415,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       <div {...htmlProps} className={styles.controls}>
         {contextHolder}
         <div className={styles.controls_left} ref={controlLeftRef}>
-          {/* {visibleControls.microphone && (
-            <div className="lk-button-group">
-              <TrackToggle
-                source={Track.Source.Microphone}
-                showIcon={showIcon}
-                onChange={microphoneOnChange}
-                onDeviceError={(error) => {
-                  setPermissionDevice(Track.Source.Microphone);
-                  onDeviceError?.({ source: Track.Source.Microphone, error });
-                }}
-              >
-                {showText && t('common.device.microphone')}
-              </TrackToggle>
-              <div className="lk-button-group-menu">
-                <MediaDeviceMenu
-                  kind="audioinput"
-                  onActiveDeviceChange={(_kind, deviceId) =>
-                    saveAudioInputDeviceId(deviceId ?? 'default')
-                  }
-                />
-              </div>
-            </div>
-          )} */}
-          {/* {visibleControls.camera && (
-            <div className="lk-button-group">
-              <TrackToggle
-                source={Track.Source.Camera}
-                showIcon={showIcon}
-                onChange={cameraOnChange}
-                onDeviceError={(error) => {
-                  setPermissionDevice(Track.Source.Camera);
-                  onDeviceError?.({ source: Track.Source.Camera, error });
-                }}
-              >
-                {showText && t('common.device.camera')}
-              </TrackToggle>
-              <div className="lk-button-group-menu">
-                <MediaDeviceMenu
-                  kind="videoinput"
-                  onActiveDeviceChange={(_kind, deviceId) =>
-                    saveVideoInputDeviceId(deviceId ?? 'default')
-                  }
-                />
-              </div>
-            </div>
-          )} */}
+          <DynParams></DynParams>
           {isOwner && visibleControls.screenShare && browserSupportsScreenSharing && (
             <TrackToggle
               style={{ height: '46px' }}
