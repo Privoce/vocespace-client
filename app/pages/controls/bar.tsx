@@ -109,7 +109,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [settingVis, setSettingVis] = React.useState(false);
     const layoutContext = useMaybeLayoutContext();
     const inviteTextRef = React.useRef<HTMLDivElement>(null);
-    const enhanceChatRef = React.useRef<EnhancedChatExports>(null);
     const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
     const controlLeftRef = React.useRef<HTMLDivElement>(null);
     const [controlWidth, setControlWidth] = React.useState(
@@ -182,27 +181,9 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
 
     const htmlProps = { className: 'lk-control-bar', ...props };
 
-    const {
-      userChoices,
-      saveAudioInputEnabled,
-      saveVideoInputEnabled,
-      saveAudioInputDeviceId,
-      saveVideoInputDeviceId,
-      saveUsername,
-    } = usePersistentUserChoices({ preventSave: !saveUserChoices });
-
-    const microphoneOnChange = React.useCallback(
-      (enabled: boolean, isUserInitiated: boolean) =>
-        isUserInitiated ? saveAudioInputEnabled(enabled) : null,
-      [saveAudioInputEnabled],
-    );
-
-    const cameraOnChange = React.useCallback(
-      (enabled: boolean, isUserInitiated: boolean) =>
-        isUserInitiated ? saveVideoInputEnabled(enabled) : null,
-      [saveVideoInputEnabled],
-    );
-
+    const { userChoices, saveUsername } = usePersistentUserChoices({
+      preventSave: !saveUserChoices,
+    });
     // settings ------------------------------------------------------------------------------------------
     const room = useMaybeRoomContext();
     const [key, setKey] = React.useState<TabKey>('general');
@@ -257,19 +238,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         } as ControlBarExport),
     );
 
-    // [chat] -----------------------------------------------------------------------------------------------------
-    const [chatOpen, setChatOpen] = React.useState(false);
-    const onChatClose = () => {
-      setChatOpen(false);
-    };
-    const sendFileConfirm = (onOk: () => Promise<void>) => {
-      Modal.confirm({
-        title: t('common.send'),
-        content: t('common.send_file_or'),
-        onOk,
-      });
-    };
-
     // [more] -----------------------------------------------------------------------------------------------------
     const [openMore, setOpenMore] = React.useState(false);
     const [moreType, setMoreType] = React.useState<'record' | 'participant'>('record');
@@ -287,129 +255,11 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     }, [roomSettings.ownerIds, room]);
 
     // [record] -----------------------------------------------------------------------------------------------------
-    const [openRecordModal, setOpenRecordModal] = React.useState(false);
-    const [isDownload, setIsDownload] = React.useState(false);
     const isRecording = React.useMemo(() => {
       return roomSettings.record.active;
     }, [roomSettings.record]);
 
-    const sendRecordRequest = (data: {
-      room: string;
-      type: 'start' | 'stop';
-      egressId?: string;
-    }): Promise<Response> => {
-      const url = new URL(RECORD_URL, window.location.origin);
-      return fetch(url.toString(), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-      });
-    };
-
-    const onClickRecord = async () => {
-      if (!room && isOwner) return;
-
-      if (!isRecording) {
-        setOpenRecordModal(true);
-      } else {
-        // 停止录制
-        if (roomSettings.record.egressId && roomSettings.record.egressId !== '') {
-          const response = await sendRecordRequest({
-            room: room!.name,
-            type: 'stop',
-            egressId: roomSettings.record.egressId,
-          });
-
-          if (!response.ok) {
-            let { error } = await response.json();
-            messageApi.error(error);
-          } else {
-            messageApi.success(t('msg.success.record.stop'));
-            setIsDownload(true);
-            await updateRecord(false);
-            setOpenRecordModal(true);
-          }
-        }
-      }
-    };
-
-    const startRecord = async () => {
-      if (isRecording || !room) return;
-
-      if (isOwner) {
-        // host request to start recording
-        const response = await sendRecordRequest({
-          room: room.name,
-          type: 'start',
-        });
-        if (!response.ok) {
-          let { error } = await response.json();
-          messageApi.error(error);
-        } else {
-          let { egressId, filePath } = await response.json();
-          messageApi.success(t('msg.success.record.start'));
-          const res = await updateRecord(true, egressId, filePath);
-          // 这里有可能是房间数据出现问题，需要让所有参与者重新提供数据并重新updateRecord
-          if (!res) {
-            console.error('Failed to update record settings');
-            socket.emit('refetch_room', {
-              room: room.name,
-              record: {
-                active: true,
-                egressId,
-                filePath,
-              },
-            });
-          }
-          socket.emit('recording', {
-            room: room.name,
-          });
-        }
-        console.warn(roomSettings);
-      } else {
-        // participant request to start recording
-        // socket.emit('req_record', {
-        //   room: room.name,
-        //   senderName: room.localParticipant.name,
-        //   senderId: room.localParticipant.identity,
-        //   receiverId: roomSettings.ownerId,
-        //   socketId: roomSettings.participants[roomSettings.ownerId].socketId,
-        // } as WsTo);
-      }
-    };
-
-    const recordModalOnOk = async () => {
-      if (!room) return;
-
-      if (isDownload) {
-        // copy link to clipboard
-        // 创建一个新recording页面，相当于点击了a标签的href
-        window.open(
-          `${window.location.origin}/recording?room=${encodeURIComponent(room.name)}`,
-          '_blank',
-        );
-        setIsDownload(false);
-      } else {
-        await startRecord();
-      }
-      setOpenRecordModal(false);
-    };
-
-    const recordModalOnCancel = () => {
-      if (isDownload) {
-        setIsDownload(false);
-      }
-      setOpenRecordModal(false);
-    };
-
-    const onClickApp = async () => {
-      if (!room) return;
-
-      // 打开Notion应用
-      setOpenApp(true);
-    };
+    const onClickRecord = async () => {};
 
     return (
       <div {...htmlProps} className={styles.controls}>
@@ -432,16 +282,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                 (isScreenShareEnabled ? t('common.stop_share') : t('common.share_screen'))}
             </TrackToggle>
           )}
-          {/* {visibleControls.chat && (
-            <ChatToggle
-              controlWidth={controlWidth}
-              enabled={chatOpen}
-              onClicked={() => {
-                setChatOpen(!chatOpen);
-              }}
-              count={chatMsg.unhandled}
-            ></ChatToggle>
-          )} */}
           {isOwner && room && roomSettings.participants && visibleControls.microphone && (
             <MoreButton
               controlWidth={controlWidth}
@@ -452,7 +292,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               }}
               onClickRecord={onClickRecord}
               onClickManage={fetchSettings}
-              onClickApp={onClickApp}
+              onClickApp={async () => {}}
               isRecording={isRecording}
             ></MoreButton>
           )}
@@ -464,18 +304,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             {showText && t('common.leave')}
           </DisconnectButton>
         )}
-        {/* <StartMediaButton /> */}
-        {/* {room && (
-          <EnhancedChat
-            ref={enhanceChatRef}
-            messageApi={messageApi}
-            open={chatOpen}
-            setOpen={setChatOpen}
-            onClose={onChatClose}
-            room={room}
-            sendFileConfirm={sendFileConfirm}
-          ></EnhancedChat>
-        )} */}
         <Drawer
           {...DEFAULT_DRAWER_PROP}
           title={t('common.setting')}
@@ -597,29 +425,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             }}
           ></Input>
         </Modal>
-        {/* ---------------- record modal ------------------------------------------------------- */}
-        <Modal
-          open={openRecordModal}
-          title={isDownload ? t('more.record.download') : t('more.record.title')}
-          okText={
-            isDownload
-              ? t('more.record.to_download')
-              : isOwner
-              ? t('more.record.confirm')
-              : t('more.record.confirm_request')
-          }
-          cancelText={t('more.record.cancel')}
-          onCancel={recordModalOnCancel}
-          onOk={recordModalOnOk}
-        >
-          {isDownload ? (
-            <div>{t('more.record.download_msg')}</div>
-          ) : (
-            <div>{isOwner ? t('more.record.desc') : t('more.record.request')}</div>
-          )}
-        </Modal>
-
-        <AppDrawer open={openApp} setOpen={setOpenApp} messageApi={messageApi}></AppDrawer>
       </div>
     );
   },

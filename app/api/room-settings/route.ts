@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Redis from 'ioredis';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { ChildRoom, ParticipantSettings, RoomSettings } from '@/lib/std/room';
-import { STORED_CONF } from '../conf';
+import { getConfig } from '../conf';
 
 interface RoomSettingsMap {
   [roomId: string]: RoomSettings;
@@ -31,7 +31,7 @@ interface RoomDateRecords {
 
 const {
   redis: { enabled, host, port, password, db },
-} = STORED_CONF;
+} = getConfig();
 
 let redisClient: Redis | null = null;
 
@@ -582,7 +582,9 @@ class RoomManager {
 
       // 如果是老师则将其加入房间的主持人列表
       if (pData.role === 'teacher') {
-        roomSettings.ownerIds.push(participantId);
+        if (!roomSettings.ownerIds.includes(participantId)) {
+          roomSettings.ownerIds.push(participantId);
+        }
       }
 
       // 保存更新后的房间设置

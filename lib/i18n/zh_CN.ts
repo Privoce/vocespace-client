@@ -6,6 +6,11 @@ export default {
     student: "学生",
     token: "令牌",
     token_error: "教师登陆令牌错误，请检查或询问管理员。",
+    resolution: "分辨率",
+    maxBitrate: "最大码率",
+    maxFramerate: "最大帧率",
+    conf_load_error: "配置加载失败，请检查配置文件是否存在或格式是否正确。",
+    reload: "重新加载",
   },
   common: {
     confirm: '确认',

@@ -17,7 +17,7 @@ export interface LivekitConf {
 
 export interface VocespaceConfig {
   livekit: LivekitConf;
-  resolution?: '360p' | '540p' | '720p' | '1080p' | '2k' | '4k';
+  resolution?: '540p' | '720p' | '1080p' | '2k' | '4k';
   maxBitrate?: number;
   maxFramerate?: number;
   priority?: RTCPriorityType;
@@ -34,7 +34,7 @@ export interface VocespaceConfig {
     bucket: string;
     region: string;
   };
-  host_token: string
+  host_token: string;
 }
 
 export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig = {
@@ -54,6 +54,5 @@ export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig = {
     password: 'vocespace',
     db: 0,
   },
-  host_token: "vocespace"
+  host_token: 'vocespace',
 };
-

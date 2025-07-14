@@ -2,12 +2,12 @@ import { isUndefinedString } from '@/lib/std';
 import {  VocespaceConfig } from '@/lib/std/conf';
 import { EgressClient, EncodedFileOutput, S3Upload } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
-import { STORED_CONF } from '../conf';
+import { getConfig } from '../conf';
 
 const {
   livekit: { key: LIVEKIT_API_KEY, secret: LIVEKIT_API_SECRET, url: LIVEKIT_URL },
   s3,
-} = STORED_CONF;
+} = getConfig();
 
 const S3_ACCESS_KEY = s3?.access_key;
 const S3_SECRET_KEY = s3?.secret_key;

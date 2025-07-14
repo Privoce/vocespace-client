@@ -1,20 +1,13 @@
 // 使用livekit egress api处理房间录制
 
 import { isUndefinedString } from '@/lib/std';
-import { STORED_CONF } from '../../conf';
+import { getConfig } from '../../conf';
 import { EgressClient, EncodedFileOutput, SegmentedFileOutput } from 'livekit-server-sdk';
 import { NextResponse, NextRequest } from 'next/server';
-
-// const SERVR_URL = process.env.LIVEKIT_URL;
-// const S3_ACCESS_KEY = process.env.S3_ACCESS_KEY;
-// const S3_SECRET_KEY = process.env.S3_SECRET_KEY;
-// const S3_BUCKET = process.env.S3_BUCKET;
-// const S3_REGION = process.env.S3_REGION;
-
 const {
   s3,
   livekit: { url: SERVR_URL },
-} = STORED_CONF;
+} = getConfig();
 
 const S3_ACCESS_KEY = s3?.access_key;
 const S3_SECRET_KEY = s3?.secret_key;

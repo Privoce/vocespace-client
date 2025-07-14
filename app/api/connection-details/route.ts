@@ -1,14 +1,14 @@
 import { ConnectionDetails } from '@/lib/types';
 import { AccessToken, AccessTokenOptions, VideoGrant } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
-import { STORED_CONF } from '../conf';
+import { getConfig } from '../conf';
 
 const COOKIE_KEY = 'random-participant-postfix';
 
 export async function GET(request: NextRequest) {
   const {
     livekit: { url: LIVEKIT_URL, key: LIVEKIT_KEY, secret: LIVEKIT_SECRET },
-  } = STORED_CONF;
+  } = getConfig();
 
   try {
     // Parse query parameters
