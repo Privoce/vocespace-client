@@ -29,7 +29,7 @@
     - [x] 教师
       - [x] 增加登陆令牌
     - [x] 学生
-      - [ ] 客制化URL
+      - [x] 客制化URL
 - [x] 房间
   - [x] 区分角色
     - 教师
@@ -53,4 +53,4 @@
   - [x] 调整不同角色加入时随机名称
 
 
-http://localhost:3000/voce_stream?student="true"
+http://localhost:3000/voce_stream?student=true&login=true

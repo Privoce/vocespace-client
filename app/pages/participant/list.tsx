@@ -35,7 +35,9 @@ export function ParticipantList({
             disabled={item[0] === ownerId}
             trigger={['contextMenu']}
             menu={menu}
-            onOpenChange={(open) => onOpenMenu(open, item[0])}
+            onOpenChange={(_open) => {
+              // onOpenMenu(open, item[0])
+            }}
           >
             <div className={styles.particepant_item}>
               <div className={styles.particepant_item_left}>

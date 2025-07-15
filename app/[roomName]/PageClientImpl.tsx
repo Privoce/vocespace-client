@@ -108,12 +108,19 @@ export function PageClientImpl(props: {
   region?: string;
   hq: boolean;
   codec: VideoCodec;
+  student: boolean;
+  login: boolean;
 }) {
+  const { t } = useI18n();
+  const router = useRouter();
+  const [messageApi, contextHolder] = message.useMessage();
+  const [student, setStudent] = useState(props.student);
+  const [login, setLogin] = useState(props.login);
   const [uState, setUState] = useRecoilState(userState);
   const [preJoinChoices, setPreJoinChoices] = React.useState<LocalUserChoices | undefined>(
     undefined,
   );
-  const [role, setRole] = useState<Role>('student');
+  const [role, setRole] = useState<Role>('teacher');
   const [connectionDetails, setConnectionDetails] = React.useState<ConnectionDetails | undefined>(
     undefined,
   );
@@ -124,6 +131,27 @@ export function PageClientImpl(props: {
     setConnectionDetails(connectionDetailsData);
   }, []);
   // 从localStorage中获取用户设置 --------------------------------------------------------------------
+  const directLogin = async () => {
+    const response = await api.getUniqueUsername('voce_stream', 'student');
+    if (response.ok) {
+      const { name } = await response.json();
+      const finalUserChoices = {
+        username: name,
+        videoEnabled: false,
+        audioEnabled: false,
+        videoDeviceId: '',
+        audioDeviceId: '',
+      } as LocalUserChoices;
+      await handlePreJoinSubmit(finalUserChoices);
+    } else {
+      messageApi.error(`${t('msg.error.user.username.request')}: ${response.statusText}`);
+      setStudent(false);
+      setLogin(false);
+    }
+    // 路由到基本地址
+    router.replace('/voce_stream');
+  };
+
   useEffect(() => {
     const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
     if (storedSettingsStr) {
@@ -134,15 +162,27 @@ export function PageClientImpl(props: {
       localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
     }
 
+    if (student && login) {
+      // 学生登陆只要提供了这两个参数，就直接进入房间
+      directLogin();
+    }
+
     return () => {
       // 在组件卸载时将用户设置存储到localStorage中，保证用户设置的持久化
       localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
     };
-  }, []);
+  }, [student, login]);
+
   return (
     <main data-lk-theme="default" style={{ height: '100%' }}>
+      {contextHolder}
       {connectionDetails === undefined || preJoinChoices === undefined ? (
-        <JoinRoom onSubmit={handlePreJoinSubmit} role={role} setRole={setRole}></JoinRoom>
+        <JoinRoom
+          onSubmit={handlePreJoinSubmit}
+          role={role}
+          setRole={setRole}
+          messageApi={messageApi}
+        ></JoinRoom>
       ) : (
         <VideoConferenceComponent
           connectionDetails={connectionDetails}
@@ -214,8 +254,6 @@ function VideoConferenceComponent(props: {
     const resolution = screenShareOption?.resolution || '1080p';
     switch (resolution) {
       case '4k':
-      case 'h2160':
-      case 'UHD':
         return {
           h: new VideoPreset(
             3840,
@@ -233,8 +271,6 @@ function VideoConferenceComponent(props: {
           ),
         };
       case '2k':
-      case 'h1440':
-      case 'QHD':
         return {
           h: new VideoPreset(
             2560,
@@ -252,8 +288,6 @@ function VideoConferenceComponent(props: {
           ),
         };
       case '1080p':
-      case 'h1080':
-      case 'Full HD':
         return {
           h: new VideoPreset(
             1920,
@@ -271,8 +305,6 @@ function VideoConferenceComponent(props: {
           ),
         };
       case '720p':
-      case 'h720':
-      case 'HD':
         return {
           h: new VideoPreset(
             1280,
@@ -290,8 +322,6 @@ function VideoConferenceComponent(props: {
           ),
         };
       case '540p':
-      case 'h540':
-      case 'qHD':
         return {
           h: new VideoPreset(
             960,
@@ -412,6 +442,7 @@ function VideoConferenceComponent(props: {
 
   const router = useRouter();
   const handleOnLeave = React.useCallback(async () => {
+    console.warn("Leaving room...");
     socket.emit('mouse_remove', {
       room: room.name,
       senderName: room.localParticipant.name || room.localParticipant.identity,
@@ -423,6 +454,8 @@ function VideoConferenceComponent(props: {
     socket.emit('update_user_status');
     await videoContainerRef.current?.removeLocalSettings();
     socket.disconnect();
+    // 刷新页面
+    window.location.reload();
   }, [router, room.localParticipant]);
   const handleError = React.useCallback((error: Error) => {
     console.error(`${t('msg.error.room.unexpect')}: ${error.message}`);

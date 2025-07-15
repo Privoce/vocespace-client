@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Table,
   Card,
@@ -13,11 +13,16 @@ import {
   Row,
   Col,
   message,
+  Modal,
+  Input,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { SvgResource } from '../resources/svg';
 import styles from '@/styles/dashboard.module.scss';
 import { connect_endpoint } from '@/lib/std';
+import { socket } from '../[roomName]/PageClientImpl';
+import { VocespaceConfig } from '@/lib/std/conf';
+import api from '@/lib/api';
 
 const { Title } = Typography;
 
@@ -72,7 +77,8 @@ export default function Dashboard() {
   const [totalParticipants, setTotalParticipants] = useState(0);
   const [activeRecordings, setActiveRecordings] = useState(0);
   const [messageApi, contextHolder] = message.useMessage();
-
+  const [openClearModal, setOpenClearModal] = useState(false);
+  const [token, setToken] = useState('');
   // 获取当前房间数据
   const fetchCurrentRooms = async () => {
     setLoading(true);
@@ -174,10 +180,16 @@ export default function Dashboard() {
       setHistoryRoomsData(historyData);
     }
   };
+  const conf = useRef<VocespaceConfig | null>(null);
+  const getConf = async () => {
+    const data = await api.envConf();
+    conf.current = data;
+  };
 
   useEffect(() => {
     fetchCurrentRooms();
     fetchHistoryRooms();
+    getConf();
 
     // 每60秒刷新一次数据
     const interval = setInterval(() => {
@@ -330,8 +342,13 @@ export default function Dashboard() {
     },
   ];
 
+  const focusClear = async () => {
+    socket.emit('focus_clear', { room: 'voce_stream' });
+  };
+
   return (
     <div className={styles.container}>
+      {contextHolder}
       <div style={{ marginBottom: 24 }}>
         <Title level={2}>VoceSpace Dashboard</Title>
         <Row gutter={16} style={{ marginBottom: 24 }}>
@@ -364,6 +381,16 @@ export default function Dashboard() {
               <div style={{ marginBottom: '9px' }}>操作</div>
               <Button type="primary" onClick={fetchCurrentRooms} loading={loading}>
                 刷新数据
+              </Button>
+              <Button
+                danger
+                onClick={() => {
+                  setOpenClearModal(true);
+                }}
+                type="primary"
+                style={{ marginLeft: '8px' }}
+              >
+                强制清理
               </Button>
             </Card>
           </Col>
@@ -407,6 +434,34 @@ export default function Dashboard() {
           }}
         />
       </Card>
+      <Modal
+        open={openClearModal}
+        title="清理确认"
+        onCancel={() => setOpenClearModal(false)}
+        onOk={async () => {
+          await getConf();
+          if (conf.current && token === conf.current.host_token) {
+            await focusClear();
+            messageApi.success('已清理房间数据');
+          } else {
+            messageApi.error('令牌验证失败');
+          }
+          setToken('');
+          setOpenClearModal(false);
+        }}
+        okText="清理"
+        cancelText="取消"
+      >
+        <p>确定要清理房间数据吗？请输入令牌进行验证!</p>
+        <Input
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
+          placeholder="请输入令牌"
+          style={{
+            outline: '1px solid #22CCEE',
+          }}
+        ></Input>
+      </Modal>
     </div>
   );
 }

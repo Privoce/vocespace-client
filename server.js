@@ -344,6 +344,13 @@ app.prepare().then(() => {
         socket.to(socketId).emit('removed_from_privacy_room_response', msg);
       });
     });
+    // [socket: reload env]
+    socket.on("reload_env", (msg) => {
+      io.emit("reload_response", msg);
+    });
+    socket.on("focus_clear", (msg) => {
+      io.emit("focus_clear_response", msg);
+    });
     // [socket: del user] ----------------------------------------------------------------------------------------------------
     socket.on('disconnect', async (_reason) => {
       console.log('Socket disconnected', socket.id);

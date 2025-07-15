@@ -11,7 +11,8 @@ export default function Page({
 }: {
   params: { roomName: string };
   searchParams: {
-    // FIXME: We should not allow values for regions if in playground mode.
+    student?: string;
+    login?: string;
     region?: string;
     hq?: string;
     codec?: string;
@@ -29,6 +30,8 @@ export default function Page({
         region={searchParams.region}
         hq={true}
         codec={codec}
+        student={searchParams.student === 'true'}
+        login={searchParams.login === 'true'}
       />
     </RecoilRoot>
   );

@@ -8,10 +8,13 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { LocalParticipant, Room } from 'livekit-client';
 import { MessageInstance } from 'antd/es/message/interface';
 import { isUndefinedNumber, isUndefinedString, UserStatus } from '@/lib/std';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
 import api from '@/lib/api';
 import { EnvConf } from '@/lib/std/env';
+import equal from 'fast-deep-equal';
+import { socket } from '@/app/[roomName]/PageClientImpl';
+import { WsBase, WsSender } from '@/lib/std/device';
 
 export interface GeneralSettingsProps {
   room: string;
@@ -41,7 +44,7 @@ export function GeneralSettings({
   const { t } = useI18n();
   const [reload, setReload] = useState(false);
   const [conf, setConf] = useState<EnvConf | null>(null);
-
+  const originConf = useRef<EnvConf | null>(null);
   const getConf = async () => {
     const { resolution, maxBitrate, maxFramerate, priority } = await api.envConf();
     if (
@@ -52,18 +55,28 @@ export function GeneralSettings({
     ) {
       messageApi.error(t('voce_stream.conf_load_error'));
     } else {
-      setConf({
+      const data = {
         resolution: resolution!,
         maxBitrate: maxBitrate!,
         maxFramerate: maxFramerate!,
         priority: priority!,
-      });
+      };
+      setConf(data);
+      originConf.current = data;
     }
   };
 
   useEffect(() => {
     getConf();
   }, []);
+
+  useEffect(() => {
+    if (equal(conf, originConf.current)) {
+      setReload(false);
+    } else {
+      setReload(true);
+    }
+  }, [conf, originConf]);
 
   const resolutionOptions = [
     { label: '540p', value: '540p' },
@@ -75,7 +88,16 @@ export function GeneralSettings({
 
   const reloadConf = async () => {
     if (conf) {
-      await api.reloadConf(conf);
+      const response = await api.reloadConf(conf);
+      if (response.ok) {
+        // socket 通知所有其他设备需要重新加载(包括自己)
+        socket.emit('reload_env', {
+          room,
+        } as WsBase);
+      } else {
+        const { error } = await response.json();
+        messageApi.error(`${t('voce_stream.reload_env_error')}: ${error}`);
+      }
     }
   };
 
@@ -157,9 +179,17 @@ export function GeneralSettings({
               setConf({ ...conf, maxFramerate: e.target.value });
             }}
           ></Input>
-          <Button type="primary" block onClick={reloadConf}>
-            {t('vocespace.reload')}
-          </Button>
+          {reload && (
+            <Button
+              type="primary"
+              block
+              onClick={reloadConf}
+              className={styles.common_space}
+              size="large"
+            >
+              {t('voce_stream.reload')}
+            </Button>
+          )}
         </>
       ) : (
         <span>cuowu </span>

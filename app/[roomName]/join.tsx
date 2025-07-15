@@ -5,17 +5,19 @@ import { forwardRef, Suspense, useEffect, useImperativeHandle, useRef, useState 
 import styles from '@/styles/Home.module.css';
 import { LangSelect } from '../pages/controls/lang_select';
 import { LocalUserChoices } from '@livekit/components-react';
-import { DemoMeetingTab} from '../pages/pre_join/demo';
+import { DemoMeetingTab } from '../pages/pre_join/demo';
 import api from '@/lib/api';
 import { Role } from '@/lib/std';
+import { MessageInstance } from 'antd/es/message/interface';
 
 export interface JoinRoomProps {
   onSubmit: (values: LocalUserChoices) => void;
   role: Role;
   setRole: (role: Role) => void;
+  messageApi: MessageInstance;
 }
 
-export function JoinRoom({ onSubmit, role, setRole }: JoinRoomProps) {
+export function JoinRoom({ onSubmit, role, setRole, messageApi }: JoinRoomProps) {
   const [loading, setLoading] = useState(true);
   const [token, setToken] = useState('');
   const getHostToken = async () => {
@@ -79,7 +81,13 @@ export function JoinRoom({ onSubmit, role, setRole }: JoinRoomProps) {
           </div>
         ) : (
           <Suspense fallback="Loading">
-            <DemoMeetingTab onSubmit={onSubmit} hostToken={token} role={role} setRole={setRole} />
+            <DemoMeetingTab
+              onSubmit={onSubmit}
+              hostToken={token}
+              role={role}
+              setRole={setRole}
+              messageApi={messageApi}
+            />
           </Suspense>
         )}
       </main>

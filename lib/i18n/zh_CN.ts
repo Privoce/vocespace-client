@@ -10,7 +10,9 @@ export default {
     maxBitrate: "最大码率",
     maxFramerate: "最大帧率",
     conf_load_error: "配置加载失败，请检查配置文件是否存在或格式是否正确。",
+    reload_env_error: "更新配置文件失败，请联系管理员进行手动更新!",
     reload: "重新加载",
+    reload_env: "配置已更新，请重新加载页面以应用新配置。",
   },
   common: {
     confirm: '确认',

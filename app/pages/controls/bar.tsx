@@ -10,7 +10,7 @@ import {
   usePersistentUserChoices,
 } from '@livekit/components-react';
 import { Drawer, Input, message, Modal } from 'antd';
-import { Participant, Track } from 'livekit-client';
+import { Participant, Room, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
 import { Settings, SettingsExports, TabKey } from './settings';
@@ -61,6 +61,7 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   setCollapsed: (collapsed: boolean) => void;
   openApp: boolean;
   setOpenApp: (open: boolean) => void;
+  room?: Room;
 }
 
 export interface ControlBarExport {
@@ -100,6 +101,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       setCollapsed,
       openApp,
       setOpenApp,
+      room,
       ...props
     }: ControlBarProps,
     ref,
@@ -185,7 +187,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       preventSave: !saveUserChoices,
     });
     // settings ------------------------------------------------------------------------------------------
-    const room = useMaybeRoomContext();
+
     const [key, setKey] = React.useState<TabKey>('general');
     const settingsRef = React.useRef<SettingsExports>(null);
     const [messageApi, contextHolder] = message.useMessage();

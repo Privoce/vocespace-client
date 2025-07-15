@@ -1,10 +1,12 @@
 import { fetchEnvConf, reloadConf } from './env';
-import { joinRoom } from './room';
+import { checkUsername, getUniqueUsername, joinRoom } from './room';
 
 const api = {
   envConf: fetchEnvConf,
   reloadConf,
-  joinRoom
+  joinRoom,
+  getUniqueUsername,
+  checkUsername
 };
 
 export default api;

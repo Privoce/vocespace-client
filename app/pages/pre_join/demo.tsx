@@ -7,6 +7,8 @@ import { Button, Input, InputRef, message, Radio } from 'antd';
 import { CheckboxGroupProps } from 'antd/es/checkbox';
 import { LocalUserChoices, usePersistentUserChoices } from '@livekit/components-react';
 import { connect_endpoint, Role } from '@/lib/std';
+import api from '@/lib/api';
+import { MessageInstance } from 'antd/es/message/interface';
 
 const CONN_DETAILS_ENDPOINT = connect_endpoint('/api/room-settings');
 
@@ -15,6 +17,7 @@ export interface DemoMeetingTabProps {
   hostToken: string;
   role: Role;
   setRole: (role: Role) => void;
+  messageApi: MessageInstance
 }
 
 /**
@@ -25,7 +28,7 @@ export interface DemoMeetingTabProps {
  * - Enable E2EE (input passphrase)
  * - Connect by room name or URL
  */
-export function DemoMeetingTab({ onSubmit, hostToken, role, setRole }: DemoMeetingTabProps) {
+export function DemoMeetingTab({ onSubmit, hostToken, role, setRole, messageApi }: DemoMeetingTabProps) {
   const { t } = useI18n();
   // user choices -------------------------------------------------------------------------------------
   const { userChoices, saveUsername } = usePersistentUserChoices({
@@ -37,7 +40,6 @@ export function DemoMeetingTab({ onSubmit, hostToken, role, setRole }: DemoMeeti
     preventLoad: false,
   });
   const inputRef = React.useRef<InputRef>(null);
-  const [messageApi, contextHolder] = message.useMessage();
   const [token, setToken] = useState('');
   const [username, setUsername] = React.useState(userChoices.username);
   // tab options -----------------------------------------------------------------------------
@@ -61,11 +63,7 @@ export function DemoMeetingTab({ onSubmit, hostToken, role, setRole }: DemoMeeti
     if (username === '') {
       messageApi.loading(t('msg.request.user.name'), 2);
       // 向服务器请求一个唯一的用户名
-      const url = new URL(CONN_DETAILS_ENDPOINT, window.location.origin);
-      url.searchParams.append('roomId', roomName);
-      url.searchParams.append('pre', 'true');
-      url.searchParams.append('role', role);
-      const response = await fetch(url.toString());
+      const response = await api.getUniqueUsername(roomName, role);
       if (response.ok) {
         const { name } = await response.json();
         finalUserChoices.username = name;
@@ -75,16 +73,7 @@ export function DemoMeetingTab({ onSubmit, hostToken, role, setRole }: DemoMeeti
       }
     } else {
       // 虽然用户名不为空，但依然需要验证是否唯一
-      const url = new URL(CONN_DETAILS_ENDPOINT, window.location.origin);
-      url.searchParams.append('nameCheck', 'true');
-      const response = await fetch(url.toString(), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          roomId: roomName,
-          participantName: username,
-        }),
-      });
+      const response = await api.checkUsername(roomName, username);
       if (response.ok) {
         const { success } = await response.json();
         if (!success) {
@@ -121,7 +110,6 @@ export function DemoMeetingTab({ onSubmit, hostToken, role, setRole }: DemoMeeti
 
   return (
     <div className={styles.tabContent}>
-      {contextHolder}
       <Radio.Group
         block
         options={options}

@@ -47,8 +47,9 @@ export function ParticipantManage({
   const [blurVideo, setBlurVideo] = React.useState(0.0);
   const [blurScreen, setBlurScreen] = React.useState(0.0);
   const isOwner = React.useMemo(() => {
-    return roomSettings.ownerId === room?.localParticipant.identity;
-  }, [roomSettings.ownerId, room?.localParticipant.identity]);
+    if (!room) return false;
+    return roomSettings.ownerIds.includes(room.localParticipant.identity);
+  }, [roomSettings.ownerIds, room]);
 
   const handleAdjustment = (
     key: 'control.volume' | 'control.blur_video' | 'control.blur_screen',
@@ -456,7 +457,7 @@ export function ParticipantManage({
           {room && (
             <ParticipantList
               participants={participantList}
-              ownerId={roomSettings.ownerId}
+              ownerId={roomSettings.ownerIds[0]}
               menu={optMenu}
               onOpenMenu={(open, pid) => {
                 optOpen(open, room.getParticipantByIdentity(pid)!);

@@ -149,50 +149,11 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           openPromptSound: uState.openPromptSound,
           role,
         });
-        const roomName = `${room.localParticipant.name}'s room`;
-
-        // 为新加入的参与者创建一个自己的私人房间
-        if (!settings.children.some((child) => child.name === roomName)) {
-          const response = await createRoom({
-            hostRoom: room.name,
-            roomName,
-            ownerId: room.localParticipant.identity,
-            isPrivate: true,
-          });
-
-          if (!response.ok) {
-            messageApi.error({
-              content: t('channel.create.error'),
-            });
-          } else {
-            await fetchSettings();
-          }
-        }
-      };
-
-      // 获取历史聊天记录 ---------------------------------------------------------------------------
-      const fetchChatMsg = async () => {
-        const url = new URL(CONNECT_ENDPOINT, window.location.origin);
-        url.searchParams.append('roomId', room.name);
-        url.searchParams.append('chat_history', 'true');
-        const response = await fetch(url.toString());
-        if (response.ok) {
-          const { msgs }: { msgs: ChatMsgItem[] } = await response.json();
-          let othersMsgLength = msgs.filter(
-            (msg) => msg.id !== room.localParticipant.identity,
-          ).length;
-          setChatMsg((prev) => ({
-            unhandled: prev.unhandled + othersMsgLength,
-            msgs: [...prev.msgs, ...msgs],
-          }));
-        } else {
-          console.error('Failed to fetch chat messages:', response.statusText);
-        }
       };
 
       if (init) {
         // 获取历史聊天记录
-        fetchChatMsg();
+        // fetchChatMsg();
         syncSettings().then(() => {
           // 新的用户更新到服务器之后，需要给每个参与者发送一个websocket事件，通知他们更新用户状态
           socket.emit('update_user_status');
@@ -505,7 +466,36 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         }
       });
 
+      socket.on('reload_response', (msg: WsBase) => {
+        if (msg.room === room.name) {
+          noteApi.warning({
+            message: t('voce_stream.reload_env'),
+            btn: (
+              <Button
+                type="primary"
+                size="small"
+                onClick={async () => {
+                  noteApi.destroy();
+                  // do disconnect and reload
+                  await room.disconnect(true);
+                }}
+              >
+                {t('voce_stream.reload')}
+              </Button>
+            ),
+          });
+        }
+      });
+
+      socket.on('focus_clear_response', (msg: WsBase) => {
+        if (msg.room === room.name) {
+          room.disconnect(true);
+        }
+      });
+
       return () => {
+        socket.off("reload_response");
+        socket.off('reload_response');
         socket.off('wave_response');
         socket.off('user_status_updated');
         socket.off('mouse_move_response');
@@ -789,7 +779,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                         display: 'inline-flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        borderRadius: 8
+                        borderRadius: 8,
                       }}
                     >
                       <ParticipantPlaceholder height={'66%'} width={'66%'} />
@@ -822,6 +812,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   setCollapsed={setCollapsed}
                   openApp={openApp}
                   setOpenApp={setOpenApp}
+                  room={room}
                 ></Controls>
               </div>
               {SettingsComponent && (

@@ -100,15 +100,15 @@ export function DynParams() {
       children: `${params.screenResolution.width} x ${params.screenResolution.height}`,
     },
     {
-      label: '视频轨道分辨率',
+      label: '视频分辨率',
       children: params.videoTrack ? params.videoTrack.resolution : '无',
     },
     {
-      label: '视频轨道码率',
+      label: '码率',
       children: params.videoTrack ? `${(params.videoTrack.bitrate / 1000).toFixed(1)} kbps` : '无',
     },
     {
-      label: '视频轨道帧率',
+      label: '帧率',
       children: params.videoTrack ? `${params.videoTrack.framerate} fps` : '无',
     },
   ];

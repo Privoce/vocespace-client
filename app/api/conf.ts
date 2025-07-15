@@ -1,8 +1,7 @@
 import { DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
-import { readFileSync } from 'fs';
+import { EnvConf } from '@/lib/std/env';
+import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
-
-
 
 export const getConfig = () => {
   try {
@@ -13,6 +12,33 @@ export const getConfig = () => {
   } catch (error) {
     console.error('Error reading vocespace.conf.json:', error);
     return DEFAULT_VOCESPACE_CONFIG;
+  }
+};
+
+export const setConfigEnv = (
+  env: EnvConf,
+): {
+  success: boolean;
+  error?: Error;
+} => {
+  try {
+    // 更新vocespace.conf.json
+    let config: VocespaceConfig = getConfig();
+    config.resolution = env.resolution;
+    config.maxBitrate = env.maxBitrate;
+    config.maxFramerate = env.maxFramerate;
+    // 设置到文件中
+    const configPath = join(process.cwd(), 'vocespace.conf.json');
+    writeFileSync(configPath, JSON.stringify(config));
+    return {
+      success: true,
+    };
+  } catch (e) {
+    console.error(e);
+    return {
+      success: false,
+      error: e instanceof Error ? e : new Error('can not update env'),
+    };
   }
 };
 
