@@ -344,6 +344,16 @@ export default function Dashboard() {
 
   const focusClear = async () => {
     socket.emit('focus_clear', { room: 'voce_stream' });
+    setTimeout(async () => {
+      // 发送清理redis的请求
+      const response = await api.clearDb();
+      if (!response.ok) {
+        const { error } = await response.json();
+        messageApi.error('清理数据失败，请尝试手动清理数据， 错误: ' + error);
+      } else {
+        messageApi.success('已成功清理数据并下线当前房间');
+      }
+    }, 3000);
   };
 
   return (
@@ -442,7 +452,6 @@ export default function Dashboard() {
           await getConf();
           if (conf.current && token === conf.current.host_token) {
             await focusClear();
-            messageApi.success('已清理房间数据');
           } else {
             messageApi.error('令牌验证失败');
           }
@@ -452,7 +461,7 @@ export default function Dashboard() {
         okText="清理"
         cancelText="取消"
       >
-        <p>确定要清理房间数据吗？请输入令牌进行验证!</p>
+        <p>确定要清理数据并下线当前的房间吗？请输入令牌进行验证!</p>
         <Input
           value={token}
           onChange={(e) => setToken(e.target.value)}

@@ -3,6 +3,7 @@ import {
   DisconnectButton,
   LeaveIcon,
   MediaDeviceMenu,
+  TrackReferenceOrPlaceholder,
   TrackToggle,
   useLocalParticipantPermissions,
   useMaybeLayoutContext,
@@ -62,6 +63,7 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   openApp: boolean;
   setOpenApp: (open: boolean) => void;
   room?: Room;
+  track: TrackReferenceOrPlaceholder
 }
 
 export interface ControlBarExport {
@@ -102,6 +104,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       openApp,
       setOpenApp,
       room,
+      track,
       ...props
     }: ControlBarProps,
     ref,
@@ -267,7 +270,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       <div {...htmlProps} className={styles.controls}>
         {contextHolder}
         <div className={styles.controls_left} ref={controlLeftRef}>
-          <DynParams></DynParams>
+          {/* <DynParams track={track}></DynParams> */}
           {isOwner && visibleControls.screenShare && browserSupportsScreenSharing && (
             <TrackToggle
               style={{ height: '46px' }}

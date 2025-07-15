@@ -211,7 +211,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       socket.on('user_status_updated', async () => {
         // 调用fetchSettings
         await fetchSettings();
-        console.warn('update ------', settings);
+        // console.warn('update ------', settings);
       });
 
       // 房间事件监听器 --------------------------------------------------------------------------------
@@ -494,7 +494,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       });
 
       return () => {
-        socket.off("reload_response");
+        socket.off('reload_response');
         socket.off('reload_response');
         socket.off('wave_response');
         socket.off('user_status_updated');
@@ -528,7 +528,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     useLayoutEffect(() => {
       if (!settings || !room || room.state !== ConnectionState.Connected) return;
       if (!freshPermission) return;
-      console.warn('freshPermission', freshPermission);
+      // console.warn('freshPermission', freshPermission);
       // 发送一次fetchSettings请求，确保settings是最新的
       fetchSettings();
     }, [settings, room, freshPermission]);
@@ -573,7 +573,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             auth.push({
               participantIdentity: ownerId,
               allowAll: false,
-              // allowedTrackSids,
+              allowedTrackSids,
             });
           }
         });
@@ -769,7 +769,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               <div className="lk-video-conference-inner" style={{ alignItems: 'space-between' }}>
                 {!focusTrack ? (
                   <div className="lk-grid-layout-wrapper">
-                    <div
+                    {/* <div
                       style={{
                         backgroundColor: '#1e1e1e',
                         width: 'calc(100% - 16px)',
@@ -783,7 +783,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                       }}
                     >
                       <ParticipantPlaceholder height={'66%'} width={'66%'} />
-                    </div>
+                    </div> */}
                   </div>
                 ) : (
                   <div className="lk-focus-layout-wrapper">
@@ -813,6 +813,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   openApp={openApp}
                   setOpenApp={setOpenApp}
                   room={room}
+                  track={focusTrack}
                 ></Controls>
               </div>
               {SettingsComponent && (

@@ -1117,6 +1117,24 @@ export async function DELETE(request: NextRequest) {
   const isChildRoom = request.nextUrl.searchParams.get('childRoom') === 'true';
   const isDelete = request.nextUrl.searchParams.get('delete') === 'true';
   const isLeave = request.nextUrl.searchParams.get('leave') === 'true';
+  const isClearRedisDb = request.nextUrl.searchParams.get('clearDb') === 'true';
+  // [clear redis db] ---------------------------------------------------------------------------------------
+  if (isClearRedisDb) {
+    if (!redisClient) {
+      return NextResponse.json(
+        { error: 'Redis client is not initialized or disabled.' },
+        { status: 500 },
+      );
+    }
+    try {
+      await redisClient.flushdb();
+      return NextResponse.json({ success: true });
+    } catch (error) {
+      console.error('Error clearing Redis database:', error);
+      return NextResponse.json({ error: 'Failed to clear Redis database' }, { status: 500 });
+    }
+  }
+
   // [离开子房间] ---------------------------------------------------------------------------------------------
   if (isChildRoom && isLeave) {
     const body = await request.json();

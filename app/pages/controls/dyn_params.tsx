@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useLocalParticipant } from '@livekit/components-react';
+import { TrackReferenceOrPlaceholder, useLocalParticipant } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import { Descriptions, DescriptionsProps } from 'antd';
 
@@ -18,7 +18,7 @@ interface ClientParams {
   } | null;
 }
 
-export function DynParams() {
+export function DynParams({ track }: { track: TrackReferenceOrPlaceholder }) {
   const [params, setParams] = useState<ClientParams>({
     screenResolution: {
       width: 0,
@@ -58,10 +58,12 @@ export function DynParams() {
 
     const updateTrackStats = async () => {
       // 获取视频轨道统计
-      const videoTrack = localParticipant.getTrackPublication(Track.Source.Camera);
-      if (videoTrack?.track) {
+
+      if (track.source === Track.Source.ScreenShare || track.source === Track.Source.Camera) {
         try {
-          const stats = await videoTrack.track.getRTCStatsReport();
+          // const stats = await videoTrack.track.getRTCStatsReport();
+          const stats = await track.publication?.videoTrack?.getRTCStatsReport();
+
           if (!stats) return;
           let videoStats: any = null;
 

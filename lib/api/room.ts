@@ -31,3 +31,11 @@ export const checkUsername = async (roomName: string, username: string): Promise
     }),
   });
 };
+
+export const clearDb = async (): Promise<Response> => {
+  const url = new URL(connect_endpoint('/api/room-settings'), window.location.origin);
+  url.searchParams.append('clearDb', 'true');
+  return await fetch(url.toString(), {
+    method: 'DELETE',
+  });
+};
