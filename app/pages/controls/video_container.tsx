@@ -468,22 +468,23 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
       socket.on('reload_response', (msg: WsBase) => {
         if (msg.room === room.name) {
-          noteApi.warning({
-            message: t('voce_stream.reload_env'),
-            btn: (
-              <Button
-                type="primary"
-                size="small"
-                onClick={async () => {
-                  noteApi.destroy();
-                  // do disconnect and reload
-                  await room.disconnect(true);
-                }}
-              >
-                {t('voce_stream.reload')}
-              </Button>
-            ),
-          });
+          // noteApi.warning({
+          //   message: t('voce_stream.reload_env'),
+          //   btn: (
+          //     <Button
+          //       type="primary"
+          //       size="small"
+          //       onClick={async () => {
+          //         noteApi.destroy();
+          //         // do disconnect and reload
+          //         await room.disconnect(true);
+          //       }}
+          //     >
+          //       {t('voce_stream.reload')}
+          //     </Button>
+          //   ),
+          // });
+          room.disconnect(true);
         }
       });
 
@@ -769,7 +770,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               <div className="lk-video-conference-inner" style={{ alignItems: 'space-between' }}>
                 {!focusTrack ? (
                   <div className="lk-grid-layout-wrapper">
-                    {/* <div
+                    <div
                       style={{
                         backgroundColor: '#1e1e1e',
                         width: 'calc(100% - 16px)',
@@ -783,7 +784,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                       }}
                     >
                       <ParticipantPlaceholder height={'66%'} width={'66%'} />
-                    </div> */}
+                    </div>
                   </div>
                 ) : (
                   <div className="lk-focus-layout-wrapper">

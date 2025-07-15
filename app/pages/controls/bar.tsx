@@ -270,7 +270,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       <div {...htmlProps} className={styles.controls}>
         {contextHolder}
         <div className={styles.controls_left} ref={controlLeftRef}>
-          {/* <DynParams track={track}></DynParams> */}
+          <DynParams track={track}></DynParams>
           {isOwner && visibleControls.screenShare && browserSupportsScreenSharing && (
             <TrackToggle
               style={{ height: '46px' }}

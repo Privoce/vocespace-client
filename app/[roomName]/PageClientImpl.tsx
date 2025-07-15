@@ -132,6 +132,7 @@ export function PageClientImpl(props: {
   }, []);
   // 从localStorage中获取用户设置 --------------------------------------------------------------------
   const directLogin = async () => {
+    setRole('student');
     const response = await api.getUniqueUsername('voce_stream', 'student');
     if (response.ok) {
       const { name } = await response.json();
