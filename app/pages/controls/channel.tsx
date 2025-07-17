@@ -422,12 +422,12 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       }
     };
     const authDisabled = useMemo(() => {
-      if (participantId === settings.ownerId) {
+      if (settings.ownerIds.includes(participantId)) {
         return false;
       } else {
         return selectedRoom?.ownerId !== participantId;
       }
-    }, [settings.ownerId, selectedRoom, participantId]);
+    }, [settings.ownerIds, selectedRoom, participantId]);
 
     const subContextItems: MenuProps['items'] = [
       {
