@@ -108,14 +108,16 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
 
       {
         key: 'license',
+        disabled: true,
         label: <TabItem type="license" label={t('settings.license.title')}></TabItem>,
         children: <LicenseControl messageApi={messageApi}></LicenseControl>,
       },
-      {
-        key: 'about_us',
-        label: <TabItem type="logo" label={t('settings.about_us.title')}></TabItem>,
-        children: <AboutUs></AboutUs>,
-      },
+      // {
+      //   key: 'about_us',
+      //   disabled: true,
+      //   label: <TabItem type="logo" label={t('settings.about_us.title')}></TabItem>,
+      //   children: <AboutUs></AboutUs>,
+      // },
     ];
 
     useImperativeHandle(ref, () => ({

@@ -1,5 +1,3 @@
-import { title } from 'process';
-
 export default {
   voce_stream: {
     teacher: "教师",
@@ -13,6 +11,7 @@ export default {
     reload_env_error: "更新配置文件失败，请联系管理员进行手动更新!",
     reload: "重新加载",
     reload_env: "配置已更新，请重新加载页面以应用新配置。",
+    reloading: "正在重新加载配置...请不要关闭页面或进行其他操作。",
   },
   common: {
     confirm: '确认',

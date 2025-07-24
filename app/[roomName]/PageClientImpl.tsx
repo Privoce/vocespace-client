@@ -6,7 +6,12 @@ import { decodePassphrase } from '@/lib/client_utils';
 import { useI18n } from '@/lib/i18n/i18n';
 import { RecordingIndicator } from './RecordingIndicator';
 import { ConnectionDetails } from '@/lib/types';
-import { formatChatMessageLinks, LiveKitRoom, LocalUserChoices } from '@livekit/components-react';
+import {
+  formatChatMessageLinks,
+  LiveKitRoom,
+  LocalUserChoices,
+  usePersistentUserChoices,
+} from '@livekit/components-react';
 import { Button, message, Modal, notification, Space } from 'antd';
 import {
   ExternalE2EEKeyProvider,
@@ -124,12 +129,27 @@ export function PageClientImpl(props: {
   const [connectionDetails, setConnectionDetails] = React.useState<ConnectionDetails | undefined>(
     undefined,
   );
+  const { userChoices, saveUsername } = usePersistentUserChoices({
+    defaults: {
+      videoEnabled: false,
+      audioEnabled: false,
+    },
+    preventSave: false,
+    preventLoad: false,
+  });
 
-  const handlePreJoinSubmit = React.useCallback(async (values: LocalUserChoices) => {
-    setPreJoinChoices(values);
-    const connectionDetailsData = await api.joinRoom(props.roomName, values.username, props.region);
-    setConnectionDetails(connectionDetailsData);
-  }, []);
+  const handlePreJoinSubmit = React.useCallback(
+    async (values: LocalUserChoices) => {
+      setPreJoinChoices(values);
+      const connectionDetailsData = await api.joinRoom(
+        props.roomName,
+        values.username,
+        props.region,
+      );
+      setConnectionDetails(connectionDetailsData);
+    },
+    [props],
+  );
   // 从localStorage中获取用户设置 --------------------------------------------------------------------
   const directLogin = async () => {
     setRole('student');
@@ -152,6 +172,28 @@ export function PageClientImpl(props: {
     // 路由到基本地址
     router.replace('/voce_stream');
   };
+
+  // 当localStorage中有reload这个标志时，需要重登陆
+  useEffect(() => {
+    const reload = localStorage.getItem('reload');
+    if (reload && reload === 'true') {
+      setRole('student');
+      messageApi.loading(t('voce_stream.reloading'));
+      localStorage.removeItem('reload');
+      // 等待3s进行重登陆
+      setTimeout(async () => {
+        const finalUserChoices = {
+          username: userChoices.username,
+          videoEnabled: false,
+          audioEnabled: false,
+          videoDeviceId: '',
+          audioDeviceId: '',
+        } as LocalUserChoices;
+        await handlePreJoinSubmit(finalUserChoices);
+        router.replace('/voce_stream');
+      }, 3000);
+    }
+  }, []);
 
   useEffect(() => {
     const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);

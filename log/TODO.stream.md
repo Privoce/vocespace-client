@@ -56,7 +56,6 @@
 http://localhost:3000/voce_stream?student=true&login=true
 
 
-- [ ] 学生端去除参数显示
-- [ ] 学生端增加配置调整重加载（非手动）
+- [x] 学生端去除参数显示
+- [x] 学生端增加配置调整重加载（非手动）
 - [ ] meeting.sg-event.com
-- [ ] 上海市黄浦区淮海中路622弄8号5楼503室 张勇15801878091

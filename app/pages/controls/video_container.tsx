@@ -217,7 +217,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       // 房间事件监听器 --------------------------------------------------------------------------------
       const onParticipantConnected = async (participant: Participant) => {
         // 当前为特殊通行证
-        let user_limit = 60;
+        let user_limit = 99;
 
         if (room.remoteParticipants.size > user_limit) {
           if (room.localParticipant.identity === participant.identity) {
@@ -468,22 +468,10 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
       socket.on('reload_response', (msg: WsBase) => {
         if (msg.room === room.name) {
-          // noteApi.warning({
-          //   message: t('voce_stream.reload_env'),
-          //   btn: (
-          //     <Button
-          //       type="primary"
-          //       size="small"
-          //       onClick={async () => {
-          //         noteApi.destroy();
-          //         // do disconnect and reload
-          //         await room.disconnect(true);
-          //       }}
-          //     >
-          //       {t('voce_stream.reload')}
-          //     </Button>
-          //   ),
-          // });
+          // 在localstorage中添加一个reload标记，这样退出之后如果有这个标记就可以自动重载
+          if (role === 'student') {
+            localStorage.setItem('reload', 'true');
+          }
           room.disconnect(true);
         }
       });
@@ -495,7 +483,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       });
 
       return () => {
-        socket.off('reload_response');
         socket.off('reload_response');
         socket.off('wave_response');
         socket.off('user_status_updated');

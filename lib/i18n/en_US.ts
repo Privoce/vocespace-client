@@ -1,4 +1,22 @@
 export default {
+  voce_stream: {
+    teacher: 'Teacher',
+    student: 'Student',
+    token: 'Token',
+    token_error: 'Teacher login token error, please check or ask the administrator.',
+    resolution: 'Resolution',
+    maxBitrate: 'Maximum bitrate',
+    maxFramerate: 'Maximum framerate',
+    conf_load_error:
+      'Configuration loading failed, please check whether the configuration file exists or the format is correct.',
+    reload_env_error:
+      'Update configuration file failed, please contact the administrator for manual update!',
+    reload: 'Reload',
+    reload_env:
+      'Configuration has been updated, please reload the page to apply the new configuration.',
+    reloading:
+      'Reloading configuration...Please do not close the page or perform other operations.',
+  },
   common: {
     confirm: 'Confirm',
     cancel: 'Cancel',
@@ -45,7 +63,7 @@ export default {
     close: 'Close',
     hq: 'High Quality',
   },
-  recording:{
+  recording: {
     title: 'Recording',
   },
   channel: {
