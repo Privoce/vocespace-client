@@ -10,8 +10,6 @@ import { LocalParticipant } from 'livekit-client';
 import { LicenseControl } from './settings/license';
 import { GeneralSettings } from './settings/general';
 import { TabItem } from './settings/tab_item';
-import { VirtualSettingsExports } from './settings/virtual';
-import { AboutUs } from './settings/about_us';
 
 export interface SettingsProps {
   username: string;
@@ -73,7 +71,6 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
     const [openShareAudio, setOpenShareAudio] = useState<boolean>(uState.openShareAudio);
     const [openPromptSound, setOpenPromptSound] = useState<boolean>(uState.openPromptSound);
     const [compare, setCompare] = useState(false);
-    const virtualSettingsRef = useRef<VirtualSettingsExports>(null);
 
     useEffect(() => {
       setVolume(uState.volume);
@@ -123,16 +120,9 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
     useImperativeHandle(ref, () => ({
       username,
       removeVideo: () => {
-        if (virtualSettingsRef.current) {
-          virtualSettingsRef.current.removeVideo();
-          setCompare(false);
-        }
+        setCompare(false);
       },
-      startVideo: async () => {
-        if (virtualSettingsRef.current) {
-          await virtualSettingsRef.current.startVideo();
-        }
-      },
+      startVideo: async () => {},
       state: {
         volume,
         blur: videoBlur,
@@ -156,10 +146,6 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
         style={{ width: '100%', height: '100%' }}
         onChange={(k: string) => {
           setKey(k as TabKey);
-          // if (k === "recording" && firstOpen) {
-          //    searchRoomRecords();
-          //    setFirstOpen(false);
-          // }
         }}
       />
     );

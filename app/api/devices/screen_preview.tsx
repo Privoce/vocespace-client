@@ -20,6 +20,7 @@ export function ScreenPreview({ enabled, blur, onError, onClose }: ScreenPreview
     }
     try {
       setIsRequesting(true);
+      console.warn('Requesting screen share...');
       const mediaStream = await navigator.mediaDevices.getDisplayMedia({
         video: true,
         audio: false,

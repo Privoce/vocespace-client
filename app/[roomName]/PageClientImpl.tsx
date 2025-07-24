@@ -2,7 +2,6 @@
 
 import { VideoContainer, VideoContainerExports } from '@/app/pages/controls/video_container';
 import { decodePassphrase } from '@/lib/client_utils';
-// import { DebugMode } from '@/lib/Debug';
 import { useI18n } from '@/lib/i18n/i18n';
 import { RecordingIndicator } from './RecordingIndicator';
 import { ConnectionDetails } from '@/lib/types';
@@ -10,6 +9,7 @@ import {
   formatChatMessageLinks,
   LiveKitRoom,
   LocalUserChoices,
+  ParticipantPlaceholder,
   usePersistentUserChoices,
 } from '@livekit/components-react';
 import { Button, message, Modal, notification, Space } from 'antd';
@@ -23,11 +23,12 @@ import {
   MediaDeviceFailure,
   Track,
   VideoPreset,
+  VideoEncoding,
 } from 'livekit-client';
 import { useRouter } from 'next/navigation';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { atom, useRecoilState } from 'recoil';
-import { connect_endpoint, isUndefinedString, Role, UserDefineStatus } from '@/lib/std';
+import { isUndefinedString, Role, UserDefineStatus } from '@/lib/std';
 import io from 'socket.io-client';
 import { EnvConf } from '@/lib/std/env';
 import { ChatMsgItem } from '@/lib/std/chat';
@@ -36,8 +37,6 @@ import {
   PARTICIPANT_SETTINGS_KEY,
   ParticipantSettings,
 } from '@/lib/std/room';
-import { TodoItem } from '../pages/apps/todo_list';
-import dayjs, { type Dayjs } from 'dayjs';
 import { JoinRoom } from './join';
 import { TurnConf, VocespaceConfig } from '@/lib/std/conf';
 import api from '@/lib/api';
@@ -87,27 +86,6 @@ export const chatMsgState = atom({
   },
 });
 
-export const AppsDataState = atom({
-  key: 'AppsDataState',
-  default: {
-    todo: [] as TodoItem[],
-    timer: {
-      value: null as number | null,
-      running: false,
-      stopTimeStamp: null as number | null,
-      records: [] as string[],
-    },
-    countdown: {
-      value: null as number | null,
-      duration: dayjs().hour(0).minute(5).second(0) as Dayjs | null,
-      running: false,
-      stopTimeStamp: null as number | null,
-    },
-  },
-});
-
-const SHOW_SETTINGS_MENU = process.env.NEXT_PUBLIC_SHOW_SETTINGS_MENU == 'true';
-
 export function PageClientImpl(props: {
   roomName: string;
   region?: string;
@@ -129,6 +107,7 @@ export function PageClientImpl(props: {
   const [connectionDetails, setConnectionDetails] = React.useState<ConnectionDetails | undefined>(
     undefined,
   );
+  const [isReload, setIsReload] = useState(false);
   const { userChoices, saveUsername } = usePersistentUserChoices({
     defaults: {
       videoEnabled: false,
@@ -178,6 +157,7 @@ export function PageClientImpl(props: {
     const reload = localStorage.getItem('reload');
     if (reload && reload === 'true') {
       setRole('student');
+      setIsReload(true);
       messageApi.loading(t('voce_stream.reloading'));
       localStorage.removeItem('reload');
       // 等待3s进行重登陆
@@ -190,6 +170,7 @@ export function PageClientImpl(props: {
           audioDeviceId: '',
         } as LocalUserChoices;
         await handlePreJoinSubmit(finalUserChoices);
+        setIsReload(false);
         router.replace('/voce_stream');
       }, 3000);
     }
@@ -215,6 +196,23 @@ export function PageClientImpl(props: {
       localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
     };
   }, [student, login]);
+
+  if (isReload) {
+    return (
+      <main
+        data-lk-theme="default"
+        style={{
+          height: '100%',
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: '#1e1e1e',
+        }}
+      >
+        <ParticipantPlaceholder height={'76%'} width={'76%'} />
+      </main>
+    );
+  }
 
   return (
     <main data-lk-theme="default" style={{ height: '100%' }}>
@@ -407,10 +405,10 @@ function VideoConferenceComponent(props: {
       videoCodec = undefined;
     }
     const screenShareEncoding = {
-      maxBitrate: screenShareOption?.maxBitrate || 12000,
+      maxBitrate: screenShareOption?.maxBitrate || 1200000,
       maxFramerate: screenShareOption?.maxFramerate || 30,
-      priority: screenShareOption?.priority || 'medium',
-    };
+      priority: 'medium',
+    } as VideoEncoding;
 
     return {
       videoCaptureDefaults: {
@@ -643,7 +641,6 @@ function VideoConferenceComponent(props: {
             setPermissionDevice={setPermissionDevice}
             role={props.role}
           ></VideoContainer>
-          {/* <DebugMode /> */}
           <RecordingIndicator />
           <Modal
             title={t('msg.request.device.title')}

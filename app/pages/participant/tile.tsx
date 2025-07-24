@@ -23,7 +23,6 @@ import {
 } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import React, { useEffect, useMemo } from 'react';
-import VirtualRoleCanvas from '../virtual_role/live2d';
 import { useRecoilState } from 'recoil';
 import {
   roomStatusState,
@@ -264,7 +263,6 @@ export const ParticipantItem: (
           );
 
         } else if (trackReference.source === Track.Source.ScreenShare) {
-          console.warn("trackReference.source === Track.Source.ScreenShare");
           // 包含远程鼠标位置
           return (
             <div style={{ height: '100%', width: '100%', position: 'relative' }}>

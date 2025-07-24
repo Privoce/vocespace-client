@@ -2,12 +2,10 @@ import { useI18n } from '@/lib/i18n/i18n';
 import {
   DisconnectButton,
   LeaveIcon,
-  MediaDeviceMenu,
   TrackReferenceOrPlaceholder,
   TrackToggle,
   useLocalParticipantPermissions,
   useMaybeLayoutContext,
-  useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
 import { Drawer, Input, message, Modal } from 'antd';
@@ -19,12 +17,9 @@ import { useRecoilState } from 'recoil';
 import { chatMsgState, socket, userState, virtualMaskState } from '@/app/[roomName]/PageClientImpl';
 import { ParticipantSettings, RoomSettings } from '@/lib/std/room';
 import { connect_endpoint, UserStatus } from '@/lib/std';
-import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';
-import { ChatToggle } from './chat_toggle';
 import { MoreButton } from './more_button';
-import { ControlType, WsControlParticipant, WsTo } from '@/lib/std/device';
+import { ControlType, WsControlParticipant } from '@/lib/std/device';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from './drawer_tools';
-import { AppDrawer } from '../apps/app_drawer';
 import { ParticipantManage } from '../participant/manage';
 import { DynParams } from './dyn_params';
 
@@ -63,7 +58,7 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   openApp: boolean;
   setOpenApp: (open: boolean) => void;
   room?: Room;
-  track: TrackReferenceOrPlaceholder
+  track: TrackReferenceOrPlaceholder;
 }
 
 export interface ControlBarExport {
@@ -279,6 +274,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               showIcon={showIcon}
               onChange={onScreenShareChange}
               onDeviceError={(error) => {
+                console.error("ScreenShare", error);
                 setPermissionDevice(Track.Source.ScreenShare);
                 onDeviceError?.({ source: Track.Source.ScreenShare, error });
               }}

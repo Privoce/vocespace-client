@@ -1,7 +1,7 @@
 'use client';
 
 import { Skeleton } from 'antd';
-import { forwardRef, Suspense, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import styles from '@/styles/Home.module.css';
 import { LangSelect } from '../pages/controls/lang_select';
 import { LocalUserChoices } from '@livekit/components-react';
@@ -9,6 +9,7 @@ import { DemoMeetingTab } from '../pages/pre_join/demo';
 import api from '@/lib/api';
 import { Role } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
+import { SvgResource } from '../resources/svg';
 
 export interface JoinRoomProps {
   onSubmit: (values: LocalUserChoices) => void;
@@ -64,11 +65,16 @@ export function JoinRoom({ onSubmit, role, setRole, messageApi }: JoinRoomProps)
                 width: '100%',
                 display: 'inline-flex',
                 justifyContent: 'center',
+                alignItems: 'center',
+                flexDirection: 'column',
+                gap: '8px',
               }}
             >
-              {/* <SvgResource type="logo2" svgSize={45}></SvgResource> */}
+              <SvgResource type="SG_logo" svgSize={300} color="#fff"></SvgResource>
+              <span style={{ color: '#fff', fontSize: '24px', fontWeight: 700, letterSpacing: 2 }}>
+                SHANGHAI GENTING
+              </span>
             </div>
-            <h2>LOGO</h2>
           </div>
         )}
         {/* main tab for room enter ------------------------------------------------------------ */}
@@ -98,7 +104,7 @@ export function JoinRoom({ onSubmit, role, setRole, messageApi }: JoinRoomProps)
           style={{ height: `67px`, backgroundColor: '#333', width: '100%' }}
         ></Skeleton.Node>
       ) : (
-        <footer data-lk-theme="default">FOOTER</footer>
+        <footer data-lk-theme="default"></footer>
       )}
     </>
   );

@@ -9,7 +9,7 @@ import { ConfigProvider } from 'antd';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Voce Space | Self-hosted conference app',
+    default: 'SHANGHAI GENTING',
     template: '%s',
   },
   description:
@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   icons: {
     icon: {
       rel: 'icon',
-      url: '/favicon.ico',
+      url: '/images/logo.svg',
     },
     // apple: [
     //   {

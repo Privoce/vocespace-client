@@ -166,17 +166,19 @@ export function GeneralSettings({
             size="large"
             className={styles.common_space}
             value={conf.maxBitrate}
+            type='number'
             onChange={(e: any) => {
-              setConf({ ...conf, maxBitrate: e.target.value });
+              setConf({ ...conf, maxBitrate: Number(e.target.value) });
             }}
           ></Input>
           <div className={styles.common_space}>{t('voce_stream.maxFramerate')}:</div>
           <Input
             size="large"
+            type='number'
             className={styles.common_space}
             value={conf.maxFramerate}
             onChange={(e: any) => {
-              setConf({ ...conf, maxFramerate: e.target.value });
+              setConf({ ...conf, maxFramerate: Number(e.target.value) });
             }}
           ></Input>
           {reload && (

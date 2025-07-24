@@ -8,11 +8,7 @@ import {
   UserStatus,
 } from '@/lib/std';
 import {
-  CarouselLayout,
   ConnectionStateToast,
-  FocusLayout,
-  FocusLayoutContainer,
-  GridLayout,
   isTrackReference,
   LayoutContextProvider,
   ParticipantPlaceholder,
@@ -40,7 +36,6 @@ import React, {
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
-  useMemo,
   useState,
 } from 'react';
 import { ControlBarExport, Controls } from './bar';
@@ -59,14 +54,10 @@ import {
   userState,
 } from '@/app/[roomName]/PageClientImpl';
 import { useRouter } from 'next/navigation';
-import { FocusCollapse } from './collapse';
 import { ControlType, WsBase, WsControlParticipant, WsInviteDevice, WsTo } from '@/lib/std/device';
 import { Button } from 'antd';
 import { ChatMsgItem } from '@/lib/std/chat';
-import { Channel } from './channel';
-import { createRoom } from '@/lib/hooks/channel';
 import { PARTICIPANT_SETTINGS_KEY } from '@/lib/std/room';
-import { FlotLayout } from '../apps/flot';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -469,7 +460,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       socket.on('reload_response', (msg: WsBase) => {
         if (msg.room === room.name) {
           // 在localstorage中添加一个reload标记，这样退出之后如果有这个标记就可以自动重载
-          if (role === 'student') {
+          if (uState.role === 'student') {
+            console.warn(uState.role);
             localStorage.setItem('reload', 'true');
           }
           room.disconnect(true);
