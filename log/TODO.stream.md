@@ -61,5 +61,6 @@ http://localhost:3000/voce_stream?student=true&login=true
 - [x] meeting.sg-event.com
 - [x] 修改logo大小
 - [x] 全屏
-- [ ] 证书下载页
-- [ ] 设置中增加编码 
+- [x] 证书下载页
+- [x] 设置中增加编码 
+- [ ] 视频锐化滤镜

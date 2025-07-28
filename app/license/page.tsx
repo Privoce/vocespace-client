@@ -19,7 +19,6 @@ import {
   WindowsOutlined,
   LaptopOutlined,
   DownloadOutlined,
-  WarningOutlined,
   QuestionCircleOutlined,
 } from '@ant-design/icons';
 import { src } from '@/lib/std';

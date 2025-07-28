@@ -268,6 +268,7 @@ function VideoConferenceComponent(props: {
   const [turn, setTurn] = useState<TurnConf | undefined>(undefined);
   const fetchEnvConf = useCallback(async () => {
     const {
+      codec,
       resolution,
       maxBitrate,
       maxFramerate,
@@ -278,6 +279,7 @@ function VideoConferenceComponent(props: {
       setTurn(turnConf);
     }
     return {
+      codec,
       resolution,
       maxBitrate,
       maxFramerate,
@@ -400,7 +402,7 @@ function VideoConferenceComponent(props: {
   }, [screenShareOption]);
 
   const roomOptions = React.useMemo((): RoomOptions => {
-    let videoCodec: VideoCodec | undefined = props.options.codec ? props.options.codec : 'vp9';
+    let videoCodec: VideoCodec | undefined = screenShareOption?.codec ?? 'vp9';
     if (e2eeEnabled && (videoCodec === 'av1' || videoCodec === 'vp9')) {
       videoCodec = undefined;
     }

@@ -747,7 +747,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                     </div>
                   </div>
                 ) : (
-                  <div className="lk-focus-layout-wrapper">
+                  <div className="lk-focus-layout-wrapper" style={{ height: fullScreen ? '100%' : 'calc(100% - 69px)' }}>
                     <ParticipantItem
                       room={room?.name}
                       setUserStatus={setUserStatus}

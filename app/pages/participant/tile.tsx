@@ -269,7 +269,7 @@ export const ParticipantItem: (
               <VideoTrack
                 ref={videoRef}
                 style={{
-                  filter: `blur(${blurValue}px)`,
+                  filter: `contrast(1.08)`,
                   transition: 'filter 0.2s ease-in-out',
                 }}
                 trackRef={trackReference}
