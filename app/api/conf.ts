@@ -27,6 +27,7 @@ export const setConfigEnv = (
     config.resolution = env.resolution;
     config.maxBitrate = env.maxBitrate;
     config.maxFramerate = env.maxFramerate;
+    config.codec = env.codec;
     // 设置到文件中
     const configPath = join(process.cwd(), 'vocespace.conf.json');
     writeFileSync(configPath, JSON.stringify(config));

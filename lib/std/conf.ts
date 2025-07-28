@@ -2,6 +2,8 @@
 // 这个配置文件的位置在项目根目录下
 // 只会在服务器端使用
 
+import { VideoCodec } from 'livekit-client';
+
 export interface TurnConf {
   credential: string;
   username: string;
@@ -17,6 +19,7 @@ export interface LivekitConf {
 
 export interface VocespaceConfig {
   livekit: LivekitConf;
+  codec?: VideoCodec;
   resolution?: '540p' | '720p' | '1080p' | '2k' | '4k';
   maxBitrate?: number;
   maxFramerate?: number;
@@ -43,6 +46,7 @@ export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig = {
     secret: 'secret',
     url: 'wss://localhost:7880',
   },
+  codec: 'vp9',
   resolution: '1080p',
   maxBitrate: 12000,
   maxFramerate: 30,

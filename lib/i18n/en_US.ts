@@ -4,6 +4,7 @@ export default {
     student: 'Student',
     token: 'Token',
     token_error: 'Teacher login token error, please check or ask the administrator.',
+    codec: "Codec",
     resolution: 'Resolution',
     maxBitrate: 'Maximum bitrate',
     maxFramerate: 'Maximum framerate',

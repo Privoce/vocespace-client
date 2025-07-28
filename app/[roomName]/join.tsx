@@ -70,7 +70,7 @@ export function JoinRoom({ onSubmit, role, setRole, messageApi }: JoinRoomProps)
                 gap: '8px',
               }}
             >
-              <SvgResource type="SG_logo" svgSize={300} color="#fff"></SvgResource>
+              <SvgResource type="SG_logo" svgSize={200} color="#fff"></SvgResource>
               <span style={{ color: '#fff', fontSize: '24px', fontWeight: 700, letterSpacing: 2 }}>
                 SHANGHAI GENTING
               </span>

@@ -46,18 +46,12 @@ import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { useI18n } from '@/lib/i18n/i18n';
 import { ModelBg, ModelRole } from '@/lib/std/virtual';
-import {
-  chatMsgState,
-  licenseState,
-  roomStatusState,
-  socket,
-  userState,
-} from '@/app/[roomName]/PageClientImpl';
+import { licenseState, roomStatusState, socket, userState } from '@/app/[roomName]/PageClientImpl';
 import { useRouter } from 'next/navigation';
 import { ControlType, WsBase, WsControlParticipant, WsInviteDevice, WsTo } from '@/lib/std/device';
 import { Button } from 'antd';
-import { ChatMsgItem } from '@/lib/std/chat';
 import { PARTICIPANT_SETTINGS_KEY } from '@/lib/std/room';
+import { SvgResource } from '@/app/resources/svg';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -98,8 +92,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [isFocus, setIsFocus] = useState(false);
     const [freshPermission, setFreshPermission] = useState(false);
     const [cacheWidgetState, setCacheWidgetState] = useState<WidgetState>();
-    const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
+    // const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
     const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
+    const [fullScreen, setFullScreen] = useState(true);
     const router = useRouter();
     const { settings, updateSettings, fetchSettings, clearSettings, updateOwnerId, updateRecord } =
       useRoomSettings(
@@ -108,6 +103,21 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       );
     const [openApp, setOpenApp] = useState<boolean>(false);
     const isActive = true;
+
+    // 当鼠标移动到window的底部80px时，设置fullScreen为false，显示控制栏
+    // useEffect(() => {
+    //   const handleMouseMove = (event: MouseEvent) => {
+    //     if (event.clientY > window.innerHeight - 80) {
+    //       setFullScreen(false);
+    //     }else{
+    //       setFullScreen(true);
+    //     }
+    //   };
+    //   window.addEventListener('mousemove', handleMouseMove);
+    //   return () => {
+    //     window.removeEventListener('mousemove', handleMouseMove);
+    //   };
+    // }, []);
 
     useEffect(() => {
       if (!room || !socket.id) return;
@@ -428,35 +438,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           }
         },
       );
-      // [用户获取到其他参与者聊天信息事件] ------------------------------------------------
-      socket.on('chat_msg_response', (msg: ChatMsgItem) => {
-        if (msg.roomName === room.name) {
-          setChatMsg((prev) => {
-            return {
-              unhandled: prev.unhandled + 1,
-              msgs: [...prev.msgs, msg],
-            };
-          });
-        }
-      });
-
-      socket.on('chat_file_response', (msg: ChatMsgItem) => {
-        if (msg.roomName === room.name) {
-          setChatMsg((prev) => {
-            // 使用函数式更新来获取最新的 messages 状态
-            const existingFile = prev.msgs.find((m) => m.id === msg.id);
-            if (!existingFile) {
-              let isOthers = msg.id !== room.localParticipant.identity;
-              return {
-                unhandled: prev.unhandled + (isOthers ? 1 : 0),
-                msgs: [...prev.msgs, msg],
-              };
-            }
-            return prev; // 如果文件已存在，则不更新状态
-          });
-        }
-      });
-
       socket.on('reload_response', (msg: WsBase) => {
         if (msg.room === room.name) {
           // 在localstorage中添加一个reload标记，这样退出之后如果有这个标记就可以自动重载
@@ -487,8 +468,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         socket.off('req_record_response');
         socket.off('recording_response');
         socket.off('refetch_room_response');
-        socket.off('chat_msg_response');
-        socket.off('chat_file_response');
         room.off(RoomEvent.ParticipantConnected, onParticipantConnected);
         room.off(ParticipantEvent.TrackMuted, onTrackHandler);
         room.off(RoomEvent.ParticipantDisconnected, onParticipantDisConnected);
@@ -500,7 +479,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       init,
       uLicenseState,
       IP,
-      chatMsg,
       socket,
       role,
     ]);
@@ -748,7 +726,10 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             >
               <div className="lk-video-conference-inner" style={{ alignItems: 'space-between' }}>
                 {!focusTrack ? (
-                  <div className="lk-grid-layout-wrapper">
+                  <div
+                    className="lk-grid-layout-wrapper"
+                    style={{ height: fullScreen ? '100%' : 'calc(100% - 69px)' }}
+                  >
                     <div
                       style={{
                         backgroundColor: '#1e1e1e',
@@ -778,23 +759,46 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                     ></ParticipantItem>
                   </div>
                 )}
-
-                <Controls
-                  ref={controlsRef}
-                  setUserStatus={setUserStatus}
-                  controls={{ chat: true, settings: !!SettingsComponent }}
-                  updateSettings={updateSettings}
-                  roomSettings={settings}
-                  fetchSettings={fetchSettings}
-                  updateRecord={updateRecord}
-                  setPermissionDevice={setPermissionDevice}
-                  collapsed={collapsed}
-                  setCollapsed={setCollapsed}
-                  openApp={openApp}
-                  setOpenApp={setOpenApp}
-                  room={room}
-                  track={focusTrack}
-                ></Controls>
+                <div
+                  style={{
+                    position: 'absolute',
+                    left: 8,
+                    bottom: 4,
+                    width: '32px',
+                    height: '61px',
+                    alignItems: 'center',
+                    display: 'flex',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <button
+                    className="vocespace_button_text"
+                    style={{ width: '100%', height: '100%' }}
+                    onClick={() => {
+                      setFullScreen(!fullScreen);
+                    }}
+                  >
+                    <SvgResource type="right" svgSize={16}></SvgResource>
+                  </button>
+                </div>
+                {!fullScreen && (
+                  <Controls
+                    ref={controlsRef}
+                    setUserStatus={setUserStatus}
+                    controls={{ chat: true, settings: !!SettingsComponent }}
+                    updateSettings={updateSettings}
+                    roomSettings={settings}
+                    fetchSettings={fetchSettings}
+                    updateRecord={updateRecord}
+                    setPermissionDevice={setPermissionDevice}
+                    collapsed={collapsed}
+                    setCollapsed={setCollapsed}
+                    openApp={openApp}
+                    setOpenApp={setOpenApp}
+                    room={room}
+                    track={focusTrack}
+                  ></Controls>
+                )}
               </div>
               {SettingsComponent && (
                 <div

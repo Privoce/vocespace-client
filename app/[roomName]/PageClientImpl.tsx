@@ -68,23 +68,23 @@ export const licenseState = atom({
   },
 });
 
-export const roomIdTmpState = atom({
-  key: 'roomIdTmpState',
-  default: '',
-});
+// export const roomIdTmpState = atom({
+//   key: 'roomIdTmpState',
+//   default: '',
+// });
 
 export const virtualMaskState = atom({
   key: 'virtualMaskState',
   default: false,
 });
 
-export const chatMsgState = atom({
-  key: 'chatMsgState',
-  default: {
-    msgs: [] as ChatMsgItem[],
-    unhandled: 0,
-  },
-});
+// export const chatMsgState = atom({
+//   key: 'chatMsgState',
+//   default: {
+//     msgs: [] as ChatMsgItem[],
+//     unhandled: 0,
+//   },
+// });
 
 export function PageClientImpl(props: {
   roomName: string;

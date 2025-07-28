@@ -46,21 +46,23 @@ export function GeneralSettings({
   const [conf, setConf] = useState<EnvConf | null>(null);
   const originConf = useRef<EnvConf | null>(null);
   const getConf = async () => {
-    const { resolution, maxBitrate, maxFramerate, priority } = await api.envConf();
+    const { resolution, maxBitrate, maxFramerate, priority, codec } = await api.envConf();
     if (
       isUndefinedString(resolution) ||
       isUndefinedNumber(maxBitrate) ||
       isUndefinedNumber(maxFramerate) ||
-      isUndefinedString(priority)
+      isUndefinedString(priority) ||
+      isUndefinedString(codec)
     ) {
       messageApi.error(t('voce_stream.conf_load_error'));
     } else {
       const data = {
+        codec: codec!,
         resolution: resolution!,
         maxBitrate: maxBitrate!,
         maxFramerate: maxFramerate!,
         priority: priority!,
-      };
+      } as EnvConf;
       setConf(data);
       originConf.current = data;
     }
@@ -84,6 +86,13 @@ export function GeneralSettings({
     { label: '1080p', value: '1080p' },
     { label: '2k', value: '2k' },
     { label: '4K', value: '4K' },
+  ];
+
+  const codecOptions = [
+    { label: 'VP9', value: 'vp9' },
+    { label: 'VP8', value: 'vp8' },
+    { label: 'H264', value: 'h264' },
+    { label: 'AV1', value: 'av1' },
   ];
 
   const reloadConf = async () => {
@@ -151,6 +160,16 @@ export function GeneralSettings({
       </Radio.Group>
       {conf ? (
         <>
+          <div className={styles.common_space}>{t('voce_stream.codec')}:</div>
+          <Select
+            size="large"
+            options={codecOptions}
+            style={{ width: '100%' }}
+            value={conf.codec}
+            onChange={(value) => {
+              setConf({ ...conf, codec: value });
+            }}
+          ></Select>
           <div className={styles.common_space}>{t('voce_stream.resolution')}:</div>
           <Select
             size="large"
@@ -166,7 +185,7 @@ export function GeneralSettings({
             size="large"
             className={styles.common_space}
             value={conf.maxBitrate}
-            type='number'
+            type="number"
             onChange={(e: any) => {
               setConf({ ...conf, maxBitrate: Number(e.target.value) });
             }}
@@ -174,7 +193,7 @@ export function GeneralSettings({
           <div className={styles.common_space}>{t('voce_stream.maxFramerate')}:</div>
           <Input
             size="large"
-            type='number'
+            type="number"
             className={styles.common_space}
             value={conf.maxFramerate}
             onChange={(e: any) => {

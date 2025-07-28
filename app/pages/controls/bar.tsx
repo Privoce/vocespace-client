@@ -14,7 +14,7 @@ import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
 import { Settings, SettingsExports, TabKey } from './settings';
 import { useRecoilState } from 'recoil';
-import { chatMsgState, socket, userState, virtualMaskState } from '@/app/[roomName]/PageClientImpl';
+import { socket, userState, virtualMaskState } from '@/app/[roomName]/PageClientImpl';
 import { ParticipantSettings, RoomSettings } from '@/lib/std/room';
 import { connect_endpoint, UserStatus } from '@/lib/std';
 import { MoreButton } from './more_button';
@@ -109,7 +109,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [settingVis, setSettingVis] = React.useState(false);
     const layoutContext = useMaybeLayoutContext();
     const inviteTextRef = React.useRef<HTMLDivElement>(null);
-    const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
+    // const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
     const controlLeftRef = React.useRef<HTMLDivElement>(null);
     const [controlWidth, setControlWidth] = React.useState(
       controlLeftRef.current ? controlLeftRef.current.clientWidth : window.innerWidth,
@@ -245,15 +245,14 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [selectedParticipant, setSelectedParticipant] = React.useState<Participant | null>(null);
     const [username, setUsername] = React.useState<string>('');
     const [openNameModal, setOpenNameModal] = React.useState(false);
-    // const [openAppModal, setOpenAppModal] = React.useState(false);
+    const [isOwner, setIsOwner] = React.useState(false);
     const participantList = React.useMemo(() => {
       return Object.entries(roomSettings.participants);
     }, [roomSettings]);
-    const isOwner = React.useMemo(() => {
-      if (!room) return false;
-      return roomSettings.ownerIds.includes(room.localParticipant.identity);
+    React.useEffect(() => {
+      if (!room || !room?.localParticipant.identity) return;
+      setIsOwner(roomSettings.ownerIds.includes(room.localParticipant.identity));
     }, [roomSettings.ownerIds, room]);
-
     // [record] -----------------------------------------------------------------------------------------------------
     const isRecording = React.useMemo(() => {
       return roomSettings.record.active;
@@ -265,7 +264,11 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       <div {...htmlProps} className={styles.controls}>
         {contextHolder}
         <div className={styles.controls_left} ref={controlLeftRef}>
-          {isOwner && <DynParams track={track}></DynParams>}
+          {isOwner && (
+            <div style={{ marginLeft: 36 }}>
+              <DynParams track={track}></DynParams>
+            </div>
+          )}
           {isOwner && visibleControls.screenShare && browserSupportsScreenSharing && (
             <TrackToggle
               style={{ height: '46px' }}
@@ -274,7 +277,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               showIcon={showIcon}
               onChange={onScreenShareChange}
               onDeviceError={(error) => {
-                console.error("ScreenShare", error);
+                console.error('ScreenShare', error);
                 setPermissionDevice(Track.Source.ScreenShare);
                 onDeviceError?.({ source: Track.Source.ScreenShare, error });
               }}

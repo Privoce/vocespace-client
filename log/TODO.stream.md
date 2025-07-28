@@ -58,4 +58,8 @@ http://localhost:3000/voce_stream?student=true&login=true
 
 - [x] 学生端去除参数显示
 - [x] 学生端增加配置调整重加载（非手动）
-- [ ] meeting.sg-event.com
+- [x] meeting.sg-event.com
+- [x] 修改logo大小
+- [x] 全屏
+- [ ] 证书下载页
+- [ ] 设置中增加编码 

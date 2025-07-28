@@ -7,6 +7,7 @@ export default {
     resolution: "分辨率",
     maxBitrate: "最大码率",
     maxFramerate: "最大帧率",
+    codec: "编码器",
     conf_load_error: "配置加载失败，请检查配置文件是否存在或格式是否正确。",
     reload_env_error: "更新配置文件失败，请联系管理员进行手动更新!",
     reload: "重新加载",
