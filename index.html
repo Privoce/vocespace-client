@@ -51,6 +51,16 @@ DEFAULT: '8px',
 }
 }
 </script>
+<style>
+@media (max-width: 768px) {
+  .mobile-menu {
+    display: none;
+  }
+  .mobile-menu.active {
+    display: block;
+  }
+}
+</style>
 </head>
 <body class="bg-white font-['Inter']">
 <nav class="fixed w-full bg-gray-900/95 backdrop-blur-sm z-50 border-b border-gray-800">
@@ -61,7 +71,7 @@ DEFAULT: '8px',
 <img src="https://static.readdy.ai/image/736cb33f85ee328c22e5d7e17bec9c40/86cd5522c098570075a44c2661eac78d.png" alt="Voce Logo" class="h-8">
 </a>
 </div>
-<div class="flex items-center space-x-8">
+<div class="hidden md:flex items-center space-x-8">
 <a href="#features" class="text-gray-300 hover:text-primary" data-lang-en="Features" data-lang-zh="功能">Features</a>
 <a href="#security" class="text-gray-300 hover:text-primary" data-lang-en="Security" data-lang-zh="安全">Security</a>
 <a href="#pricing" class="text-gray-300 hover:text-primary" data-lang-en="Pricing" data-lang-zh="价格">Pricing</a>
@@ -79,21 +89,47 @@ DEFAULT: '8px',
 <section class="pt-32 pb-20 relative overflow-hidden">
 <div class="absolute inset-0 bg-[url('https://public.readdy.ai/ai/img_res/a11e4cd3d43ba8dc2ed1cf1dbdd50034.jpg')] opacity-10"></div>
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-<div class="grid grid-cols-2 gap-12 items-center">
-<div>
-<h1 class="text-[2.7rem] font-bold text-gray-900 leading-tight mb-6" data-lang-en="Private-hosted 4K Video Conferencing at 60 FPS" data-lang-zh="VoceSpace高清会议软件：4K分辨率，60帧，2M码率">
+<div class="flex flex-col-reverse md:flex-row-reverse gap-8 md:gap-12 items-center">
+<div class="w-full md:w-1/2">
+<img src="https://static.readdy.ai/image/736cb33f85ee328c22e5d7e17bec9c40/709c2c173bc8587d5789f2bd072d6a07.png"
+alt="Secure Video Conference"
+class="rounded-2xl shadow-2xl w-full">
+</div>
+<div class="w-full md:w-1/2">
+<h1 class="text-3xl md:text-[2.7rem] font-bold text-gray-900 leading-tight mb-6" data-lang-en="Private-hosted 4K Video Conferencing at 60 FPS" data-lang-zh="VoceSpace高清会议软件：4K分辨率，60帧，2M码率">
 Private-hosted 4K Video Conferencing at 60 FPS
 </h1>
 <p class="text-xl text-gray-600 mb-8" data-lang-en="Experience crystal-clear video meetings with 4K resolution, 60 FPS smooth performance, and 2M encoding for unmatched quality. Perfect for professional presentations and remote collaboration." data-lang-zh="体验水晶般清晰的视频会议，4K分辨率，60帧流畅表现，2M码率带来无与伦比的质量。完美适合专业演示和远程协作。">
 We will help you host your own secure video and audio conferencing platform under your subdomain with your own logo and branding. Complete control over your data with enterprise-grade encryption.
 </p>
-<div class="flex space-x-4">
+<div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4">
 <a href="https://space.voce.chat/rooms/xz9u-dmmv" target="_blank" class="px-6 py-3 bg-primary text-white !rounded-button hover:bg-primary/90 whitespace-nowrap text-lg inline-block" data-lang-en="Try It Here" data-lang-zh="立即体验">
 Try It Here
 </a>
 <button onclick="openDemoModal()" class="px-6 py-3 text-primary border border-primary !rounded-button hover:bg-primary/5 whitespace-nowrap text-lg" data-lang-en="Book a Demo" data-lang-zh="预约演示">
 Book a Demo
 </button>
+<button onclick="toggleQRCode()" class="px-6 py-3 text-primary border border-primary !rounded-button hover:bg-primary/5 whitespace-nowrap text-lg" data-lang-en="WeChat" data-lang-zh="微信">
+WeChat
+</button>
+</div>
+<div id="qrCodeModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
+<div class="flex items-center justify-center min-h-screen p-4">
+<div class="bg-white rounded-xl p-8 relative max-w-sm w-full">
+<button onclick="toggleQRCode()" class="absolute right-4 top-4 text-gray-400 hover:text-gray-600">
+<i class="ri-close-line text-xl"></i>
+</button>
+<div class="flex flex-col items-center">
+<img src="https://static.readdy.ai/image/736cb33f85ee328c22e5d7e17bec9c40/1e18fe5f59b60ead0da50d1d023aab98.png" alt="WeChat QR Code" class="w-48 h-48">
+<span class="text-gray-600 mt-4 text-lg" data-lang-en="Scan to Contact" data-lang-zh="扫码联系">Scan to Contact</span>
+<div class="flex items-center mt-2 text-gray-600">
+<i class="ri-wechat-fill mr-2"></i>
+<span>Privoce</span>
+</div>
+</div>
+</div>
+</div>
+</div>
 <div id="demoModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
 <div class="flex items-center justify-center min-h-screen p-4">
 <div class="bg-white rounded-xl w-full max-w-6xl h-[800px] relative">
@@ -119,13 +155,23 @@ if (e.target.id === 'demoModal') {
 closeDemoModal();
 }
 });
+function toggleQRCode() {
+const modal = document.getElementById('qrCodeModal');
+if (modal.classList.contains('hidden')) {
+modal.classList.remove('hidden');
+document.body.style.overflow = 'hidden';
+} else {
+modal.classList.add('hidden');
+document.body.style.overflow = 'auto';
+}
+}
+document.getElementById('qrCodeModal').addEventListener('click', (e) => {
+if (e.target.id === 'qrCodeModal') {
+toggleQRCode();
+}
+});
 </script>
 </div>
-</div>
-<div>
-<img src="https://static.readdy.ai/image/736cb33f85ee328c22e5d7e17bec9c40/709c2c173bc8587d5789f2bd072d6a07.png"
-alt="Secure Video Conference"
-class="rounded-2xl shadow-2xl">
 </div>
 </div>
 </div>
@@ -136,7 +182,7 @@ class="rounded-2xl shadow-2xl">
 <h2 class="text-4xl font-bold text-gray-900 mb-4" data-lang-en="Enterprise-Grade Features" data-lang-zh="企业级功能">Enterprise-Grade Features</h2>
 <p class="text-xl text-gray-600" data-lang-en="Everything you need for secure and efficient communication" data-lang-zh="安全高效通信所需的一切功能">Everything you need for secure and efficient communication</p>
 </div>
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
 <div class="bg-white p-8 rounded-xl shadow-sm">
 <div class="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-6">
 <i class="ri-video-line text-primary text-2xl"></i>
@@ -170,7 +216,7 @@ class="rounded-2xl shadow-2xl">
 </section>
 <section class="py-20">
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-<div class="grid grid-cols-2 gap-12 items-center">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
 <div>
 <h2 class="text-4xl font-bold text-gray-900 mb-6" data-lang-en="Schedule a Demo" data-lang-zh="预约演示">Schedule a Demo</h2>
 <p class="text-xl text-gray-600 mb-8" data-lang-en="Let us show you how Privoce can transform your business communication. Book a personalized demo with our team." data-lang-zh="让我们向您展示 Privoce 如何改变您的商务沟通。预约与我们团队的个性化演示。">
@@ -214,7 +260,7 @@ Let us show you how Privoce can transform your business communication. Book a pe
 <h2 class="text-4xl font-bold text-gray-900 mb-4" data-lang-en="Simple, Transparent Pricing" data-lang-zh="简单透明的价格">Simple, Transparent Pricing</h2>
 <p class="text-xl text-gray-600" data-lang-en="Choose the plan that works best for your business" data-lang-zh="选择最适合您业务的方案">Choose the plan that works best for your business</p>
 </div>
-<div class="grid grid-cols-3 gap-8">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 <div class="bg-white p-8 rounded-xl shadow-lg border border-gray-100">
 <div class="flex justify-between items-center mb-6">
 <h3 class="text-2xl font-bold text-gray-900" data-lang-en="Free" data-lang-zh="免费版">Free</h3>
@@ -330,7 +376,7 @@ Let us show you how Privoce can transform your business communication. Book a pe
 <h2 class="text-4xl font-bold mb-4" data-lang-en="Enterprise Security" data-lang-zh="企业级安全">Enterprise Security</h2>
 <p class="text-xl text-gray-300" data-lang-en="Your data, your control, our commitment to security" data-lang-zh="您的数据，您的控制，我们对安全的承诺">Your data, your control, our commitment to security</p>
 </div>
-<div class="grid grid-cols-3 gap-8">
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
 <div class="p-8 bg-white/5 rounded-xl backdrop-blur-sm">
 <div class="w-12 h-12 bg-primary/20 rounded-lg flex items-center justify-center mb-6">
 <i class="ri-lock-line text-primary text-2xl"></i>
@@ -361,7 +407,7 @@ Let us show you how Privoce can transform your business communication. Book a pe
 <p class="text-xl text-gray-600 mb-8 max-w-2xl mx-auto" data-lang-en="Try VoceChat demo for free before hosting your own. No payment required." data-lang-zh="在托管您自己的服务之前，免费试用 VoceChat 演示。无需付款。">
 Try VoceChat demo for free before hosting your own. No payment required.
 </p>
-<div class="flex justify-center space-x-4">
+<div class="flex flex-col sm:flex-row justify-center space-y-4 sm:space-y-0 sm:space-x-4">
 <a href="https://space.voce.chat/rooms/xz9u-dmmv" target="_blank" class="px-8 py-4 bg-primary text-white !rounded-button hover:bg-primary/90 whitespace-nowrap text-lg inline-block" data-lang-en="Try It Here" data-lang-zh="立即体验">
 Try It Here
 </a>
@@ -373,7 +419,7 @@ Book a Demo
 </section>
 <footer class="bg-gray-900 py-12">
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-<div class="grid grid-cols-4 gap-8">
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
 <div>
 <a href="#" class="mb-4 block">
 <img src="https://static.readdy.ai/image/736cb33f85ee328c22e5d7e17bec9c40/86cd5522c098570075a44c2661eac78d.png" alt="Voce Logo" class="h-8">
@@ -394,6 +440,10 @@ Book a Demo
 <li><a href="mailto:han@privoce.com" class="text-gray-400 hover:text-primary">han@privoce.com</a></li>
 <li><a href="https://space.voce.chat/rooms/xz9u-dmmv" target="_blank" class="text-gray-400 hover:text-primary" data-lang-en="Try Demo" data-lang-zh="试用演示">Try Demo</a></li>
 <li class="flex items-center text-gray-400"><i class="ri-wechat-fill mr-2"></i><span>Privoce</span></li>
+<li class="mt-4">
+<img src="https://static.readdy.ai/image/736cb33f85ee328c22e5d7e17bec9c40/1e18fe5f59b60ead0da50d1d023aab98.png" alt="WeChat QR Code" class="w-24 h-24">
+<span class="text-gray-400 text-sm block mt-2" data-lang-en="Scan to Contact" data-lang-zh="扫码联系">Scan to Contact</span>
+</li>
 </ul>
 </div>
 <div>
@@ -418,6 +468,25 @@ Book a Demo
 </div>
 </footer>
 <script>
+function toggleMobileMenu() {
+  const mobileMenu = document.getElementById('mobileMenu');
+  mobileMenu.classList.toggle('active');
+}
+// Close mobile menu when clicking outside
+document.addEventListener('click', function(event) {
+  const mobileMenu = document.getElementById('mobileMenu');
+  const mobileMenuButton = document.querySelector('.md\\:hidden');
+  
+  if (!mobileMenuButton.contains(event.target) && !mobileMenu.contains(event.target)) {
+    mobileMenu.classList.remove('active');
+  }
+});
+// Close mobile menu when clicking on a link
+document.querySelectorAll('#mobileMenu a').forEach(link => {
+  link.addEventListener('click', () => {
+    document.getElementById('mobileMenu').classList.remove('active');
+  });
+});
 // 语言切换功能
 let currentLanguage = 'en';
 function detectBrowserLanguage() {
