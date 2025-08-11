@@ -1,9 +1,9 @@
 export default {
   voce_stream: {
-    teacher: 'Teacher',
-    student: 'Student',
+    teacher: 'Host',
+    student: 'Audience',
     token: 'Token',
-    token_error: 'Teacher login token error, please check or ask the administrator.',
+    token_error: 'Host login token error, please check or ask the administrator.',
     codec: "Codec",
     resolution: 'Resolution',
     maxBitrate: 'Maximum bitrate',

@@ -1,9 +1,9 @@
 export default {
   voce_stream: {
-    teacher: "教师",
-    student: "学生",
+    teacher: "主持人",
+    student: "观众",
     token: "令牌",
-    token_error: "教师登陆令牌错误，请检查或询问管理员。",
+    token_error: "主持人登陆令牌错误，请检查或询问管理员。",
     resolution: "分辨率",
     maxBitrate: "最大码率",
     maxFramerate: "最大帧率",
