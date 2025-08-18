@@ -860,13 +860,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
     return (
       <div className="video_container_wrapper" style={{ position: 'relative' }}>
-        <FlotLayout
+        {/* <FlotLayout
           style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
           messageApi={messageApi}
           openApp={openApp}
           spaceInfo={settings}
-        ></FlotLayout>
-        {room && (
+        ></FlotLayout> */}
+        {/* {room && (
           <Channel
             ref={channelRef}
             space={room}
@@ -887,14 +887,15 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             toRenameSettings={toSettingGeneral}
             setUserStatus={setUserStatus}
           ></Channel>
-        )}
+        )} */}
         <div
           className="lk-video-conference"
           {...props}
           style={{
             height: '100vh',
             transition: 'width 0.3s ease-in-out',
-            width: collapsed ? (isActive ? 'calc(100vw - 28px)' : '100vw') : 'calc(100vw - 280px)',
+            // width: collapsed ? (isActive ? 'calc(100vw - 28px)' : '100vw') : 'calc(100vw - 280px)',
+            width: '100vw'
           }}
         >
           {is_web() && room && (
