@@ -5,7 +5,7 @@ set -e
 cat > /app/.env.local << EOF
 LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
 LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-secret}
-LIVEKIT_URL=${LIVEKIT_URL:-wss://space.voce.chat}
+LIVEKIT_URL=${LIVEKIT_URL:-ws://127.0.1:7880}
 NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH:-}
 PORT=${PORT:-3000}
 TURN_CREDENTIAL=${TURN_CREDENTIAL:-}
@@ -27,34 +27,3 @@ find /app/.next -type f -name "*.js" -exec sed -i "s|__WEBHOOK_PLACEHOLDER__|${W
 
 echo "环境变量配置:"
 cat /app/.env.local
-
-# 创建 supervisor 配置
-cat > /tmp/supervisord.conf << EOF
-[supervisord]
-nodaemon=true
-user=root
-logfile=/tmp/supervisord.log
-
-[program:nextjs]
-command=node server.js
-directory=/app
-autostart=true
-autorestart=true
-stdout_logfile=/dev/stdout
-stdout_logfile_maxbytes=0
-stderr_logfile=/dev/stderr
-stderr_logfile_maxbytes=0
-user=nextjs
-
-[program:livekit]
-command=/usr/local/bin/livekit-server --dev --bind 0.0.0.0
-autostart=true
-autorestart=true
-stdout_logfile=/dev/stdout
-stdout_logfile_maxbytes=0
-stderr_logfile=/dev/stderr
-stderr_logfile_maxbytes=0
-EOF
-
-# 启动 supervisor
-exec supervisord -c /tmp/supervisord.conf

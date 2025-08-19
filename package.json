@@ -1,6 +1,6 @@
 {
-  "name": "livekit-meet",
-  "version": "0.1.0",
+  "name": "vocespace",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "node server.js",

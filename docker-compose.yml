@@ -1,17 +1,10 @@
-version: '3.8'
-
+# docker-compose -f docker-compose.amd.yml up --build -d
 services:
   vocespace:
     container_name: vocespace
     image: privoce/vocespace:latest
     build:
       context: .
-      # args:
-      #   - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
-      #   - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-secret}
-      #   - LIVEKIT_URL=${LIVEKIT_URL:-wss://space.voce.chat}
-      #   - NEXT_PUBLIC_BASE_PATH=/chat
-      #   - TURN_CREDENTIAL=${TURN_CREDENTIAL:-}
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -20,15 +13,28 @@ services:
       - PORT=3000
       - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
       - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-secret}
-      - LIVEKIT_URL=${LIVEKIT_URL:-wss://space.voce.chat}
+      - LIVEKIT_URL=${LIVEKIT_URL:-ws://localhost:7880}
       - NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH:-}
       - PORT=${PORT:-3000}
       - TURN_CREDENTIAL=${TURN_CREDENTIAL:-}
       - TURN_URL=${TURN_URL:-}
       - TURN_USERNAME=${TURN_USERNAME:-}
+      - NEXT_PUBLIC_RESOLUTION=${NEXT_PUBLIC_RESOLUTION:-1080p}
+      - NEXT_PUBLIC_MAXBITRATE=${NEXT_PUBLIC_MAXBITRATE:-12000}
+      - NEXT_PUBLIC_MAXFRAMERATE=${NEXT_PUBLIC_MAXFRAMERATE:-30}
+      - NEXT_PUBLIC_PRIORITY=${NEXT_PUBLIC_PRIORITY:-medium}
+    volumes:
+      - npm-cache:/app/.npm-cache
+      - uploads:/app/uploads
+    depends_on:
+      - livekit
     networks:
-      - vocespace
+      - vocespace-network
+
+volumes:
+  npm-cache:
+  uploads:
 
 networks:
-  vocespace:
+  vocespace-network:
     driver: bridge
