@@ -1,39 +1,66 @@
-# docker-compose -f docker-compose.amd.yml up --build -d
+# VoceSpace Docker Compose 配置
+# 
+# 部署方式选择：
+# 1. 仅运行 VoceSpace (推荐): docker-compose up vocespace
+# 2. 完整部署 (包括 LiveKit + Redis): docker-compose up --build -d
+
 services:
+  # VoceSpace 主应用
   vocespace:
     container_name: vocespace
     image: privoce/vocespace:latest
     build:
       context: .
+      platforms:
+        - linux/arm64
+        - linux/amd64
     restart: unless-stopped
     ports:
       - "3000:3000"
-    environment:
-      - NODE_ENV=production
-      - PORT=3000
-      - LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
-      - LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-secret}
-      - LIVEKIT_URL=${LIVEKIT_URL:-ws://localhost:7880}
-      - NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH:-}
-      - PORT=${PORT:-3000}
-      - TURN_CREDENTIAL=${TURN_CREDENTIAL:-}
-      - TURN_URL=${TURN_URL:-}
-      - TURN_USERNAME=${TURN_USERNAME:-}
-      - NEXT_PUBLIC_RESOLUTION=${NEXT_PUBLIC_RESOLUTION:-1080p}
-      - NEXT_PUBLIC_MAXBITRATE=${NEXT_PUBLIC_MAXBITRATE:-12000}
-      - NEXT_PUBLIC_MAXFRAMERATE=${NEXT_PUBLIC_MAXFRAMERATE:-30}
-      - NEXT_PUBLIC_PRIORITY=${NEXT_PUBLIC_PRIORITY:-medium}
     volumes:
-      - npm-cache:/app/.npm-cache
       - uploads:/app/uploads
-    depends_on:
-      - livekit
+      # 挂载自定义配置文件（可选）
+      - ./vocespace.conf.json:/app/vocespace.conf.json:ro
+    networks:
+      - vocespace-network
+    # 如果使用外部 LiveKit，可以移除 depends_on
+    # depends_on:
+    #   - livekit
+    extra_hosts:
+      # 允许容器访问宿主机服务
+      - "host.docker.internal:host-gateway"
+
+  # LiveKit Server (可选 - 如果您在宿主机运行 LiveKit，请注释掉这整个服务)
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: livekit
+    restart: unless-stopped
+    ports:
+      - "7880:7880"
+      - "7881:7881"
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml
+    command: --config /etc/livekit.yaml
     networks:
       - vocespace-network
 
+  # Redis (可选 - 如果您在宿主机运行 Redis，请注释掉这整个服务)
+  redis:
+    image: redis:7-alpine
+    container_name: vocespace-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - vocespace-network
+    # 如果需要密码保护，取消注释下一行
+    # command: redis-server --requirepass vocespace
+
 volumes:
-  npm-cache:
   uploads:
+  redis-data:
 
 networks:
   vocespace-network:

@@ -66,7 +66,7 @@ export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig = {
   livekit: {
     key: 'apikey',
     secret: 'secret',
-    url: 'wss://localhost:7880',
+    url: 'ws://localhost:7880',
   },
   codec: 'vp9',
   resolution: '2k',

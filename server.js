@@ -35,7 +35,7 @@ export const getRedisConfig = () => {
       REDIS_ENABLED: config.redis.enabled || 'false',
       REDIS_HOST: config.redis.host || 'localhost',
       REDIS_PORT: config.redis.port || '6379',
-      REDIS_PASSWORD: config.redis.password || 'vocespace',
+      REDIS_PASSWORD: config.redis.password || '',
       REDIS_DB: config.redis.db || '0',
     };
   } catch (error) {
@@ -43,7 +43,7 @@ export const getRedisConfig = () => {
       REDIS_ENABLED: 'false',
       REDIS_HOST: 'localhost',
       REDIS_PORT: '6379',
-      REDIS_PASSWORD: 'vocespace',
+      REDIS_PASSWORD: '',
       REDIS_DB: '0',
     };
   }
@@ -72,12 +72,37 @@ if (REDIS_ENABLED === 'true') {
   let port = parseInt(REDIS_PORT, 10);
   let db = parseInt(REDIS_DB, 10);
 
-  redisClient = new Redis({
-    host,
-    port,
-    password: REDIS_PASSWORD,
-    db,
-  });
+  try {
+    redisClient = new Redis({
+      host,
+      port,
+      password: REDIS_PASSWORD,
+      db,
+      retryDelayOnFailover: 100,
+      enableReadyCheck: false,
+      maxRetriesPerRequest: 3,
+    });
+
+    // 添加错误处理
+    redisClient.on('error', (err) => {
+      console.error('Redis Client Error:', err);
+    });
+
+    redisClient.on('connect', () => {
+      console.log('Redis connected successfully');
+    });
+
+    redisClient.on('ready', () => {
+      console.log('Redis ready');
+    });
+
+    redisClient.on('close', () => {
+      console.log('Redis connection closed');
+    });
+  } catch (error) {
+    console.error('Failed to create Redis client:', error);
+    redisClient = null;
+  }
 }
 
 // redis chat manager, use to store room chat messages into redis see interface [std.chat.ChatMsgItem]

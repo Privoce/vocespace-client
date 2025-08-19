@@ -1,29 +1,30 @@
 #!/bin/bash
 set -e
 
-# 直接重写整个.env文件
-cat > /app/.env.local << EOF
-LIVEKIT_API_KEY=${LIVEKIT_API_KEY:-devkey}
-LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET:-secret}
-LIVEKIT_URL=${LIVEKIT_URL:-ws://127.0.1:7880}
-NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH:-}
-PORT=${PORT:-3000}
-TURN_CREDENTIAL=${TURN_CREDENTIAL:-}
-TURN_URL=${TURN_URL:-}
-TURN_USERNAME=${TURN_USERNAME:-}
-WEBHOOK=${WEBHOOK:-}
-EOF
+echo "正在启动 VoceSpace..."
 
-# 替换构建产物中的占位符
-find /app/.next -type f -name "*.js" -exec sed -i "s|__LIVEKIT_API_KEY_PLACEHOLDER__|${LIVEKIT_API_KEY:-devkey}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__LIVEKIT_API_SECRET_PLACEHOLDER__|${LIVEKIT_API_SECRET:-secret}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__LIVEKIT_URL_PLACEHOLDER__|${LIVEKIT_URL:-wss://space.voce.chat}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__TURN_CREDENTIAL_PLACEHOLDER__|${TURN_CREDENTIAL:-}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__TURN_URL_PLACEHOLDER__|${TURN_URL:-}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__TURN_USERNAME_PLACEHOLDER__|${TURN_USERNAME:-}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__PORT_PLACEHOLDER__|${PORT:-3000}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__NEXT_PUBLIC_BASE_PATH_PLACEHOLDER__|${NEXT_PUBLIC_BASE_PATH:-/chat}|g" {} \;
-find /app/.next -type f -name "*.js" -exec sed -i "s|__WEBHOOK_PLACEHOLDER__|${WEBHOOK:-false}|g" {} \;
+# 检查是否有挂载的自定义配置文件（只在有文件挂载时才会覆盖）
+if [ -f "/app/vocespace.conf.json" ]; then
+    # 如果配置文件存在但为空，说明可能是挂载失败，不做任何操作
+    if [ -s "/app/vocespace.conf.json" ]; then
+        echo "使用配置文件..."
+    else
+        echo "配置文件为空，可能存在挂载问题，请检查配置文件。"
+    fi
+else
+    echo "配置文件不存在，这不应该发生。"
+    exit 1
+fi
 
-echo "环境变量配置:"
-cat /app/.env.local
+# 显示当前配置
+echo "当前配置:"
+cat /app/vocespace.conf.json
+
+# 确保上传目录存在并具有正确权限
+mkdir -p /app/uploads
+chmod 755 /app/uploads
+
+echo "配置完成，启动应用..."
+
+# 启动应用
+exec node server.js

@@ -3,6 +3,12 @@ const nextConfig = {
   reactStrictMode: false,
   output: 'standalone',
   productionBrowserSourceMaps: true,
+  experimental: {
+    // 确保自定义服务器依赖被包含在 standalone 构建中
+    outputFileTracingIncludes: {
+      '*': ['./server.js', './vocespace.default.conf.json'],
+    },
+  },
   webpack: (config, { isServer }) => {
     // 处理 face-api.js 的 Node.js 模块依赖
     if (!isServer) {

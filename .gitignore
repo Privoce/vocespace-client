@@ -47,3 +47,4 @@ livekit_1.8.4_linux_arm64.tar.gz
 /deploy/server_private/*
 
 vocespace.conf.json
+vocespace.*

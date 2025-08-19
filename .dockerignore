@@ -1,12 +1,50 @@
+# Git and GitHub
 .git
 .github
+.gitignore
+
+# Dependencies
 node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Next.js build outputs
 .next
+out/
+
+# Environment files
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
-README.md
-.gitignore
+.env
+
+# IDE
 .vscode
+.idea
+
+# Documentation (except main README)
+*.md
+!README.md
+!DOCKER_DEPLOYMENT.md
+
+# Deployment files
 deploy/
+
+# Misc
+.DS_Store
+*.pem
+uploads/
+logs/
+*.log
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Docker files (except main ones)
+Dockerfile*
+docker-compose*
+.dockerignore
