@@ -262,5 +262,5 @@ docker run -d \
 -p 3000:3000 \
 -v ./vocespace.json:/app/vocespace.conf.json \
 --name vocespace \
-privoce/vocespace:preview
+privoce/vocespace:preview_opt2
 ```

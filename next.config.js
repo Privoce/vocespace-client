@@ -1,10 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
-  output: 'standalone',
+  // 移除 output: 'standalone'，因为我们使用自定义服务器
   productionBrowserSourceMaps: true,
   experimental: {
-    // 确保自定义服务器依赖被包含在 standalone 构建中
+    // 确保自定义服务器依赖被包含在构建中
     outputFileTracingIncludes: {
       '*': ['./server.js', './vocespace.default.conf.json'],
     },

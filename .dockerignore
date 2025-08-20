@@ -32,6 +32,7 @@ out/
 
 # Deployment files
 deploy/
+log/
 
 # Misc
 .DS_Store
@@ -48,3 +49,19 @@ next-env.d.ts
 Dockerfile*
 docker-compose*
 .dockerignore
+
+# Testing and linting
+coverage/
+.nyc_output/
+test/
+tests/
+__tests__/
+*.test.*
+*.spec.*
+
+# Cache directories
+.cache/
+.npm/
+.pnpm-store/
+.temp/
+.tmp/
