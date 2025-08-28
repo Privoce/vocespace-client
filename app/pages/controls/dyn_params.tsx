@@ -19,6 +19,7 @@ export function DynParams({ track }: { track: TrackReferenceOrPlaceholder }) {
         const bitrate = track.publication?.videoTrack?.currentBitrate;
 
         setParams({
+          codec: env.current?.codec || 'vp9',
           resolution: env.current?.resolution || '1080p',
           maxBitrate: bitrate || 0,
           maxFramerate: env.current?.maxFramerate || 30,

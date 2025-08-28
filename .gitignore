@@ -45,5 +45,9 @@ live_meet-livemeet-prod.tar
 livekit_1.8.4_linux_arm64.tar.gz
 
 /deploy/server_private/*
+/deploy/sge_deploy
 
-vocespace.conf.json
+vocespace*.conf.json
+vocespace.*
+
+/public/license/
