@@ -63,6 +63,7 @@ export default {
     open: 'Open',
     close: 'Close',
     hq: 'High Quality',
+    license_invalid: 'License is invalid or expired, please contact the administrator to update the license.',
   },
   recording: {
     title: 'Recording',

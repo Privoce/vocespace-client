@@ -59,6 +59,7 @@ export default {
     open: '开启',
     close: '关闭',
     hq: '无损模式',
+    license_invalid: '证书无效或已过期，请联系管理员更新证书。',
   },
   recording: {
     title: '录制记录',

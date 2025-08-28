@@ -63,8 +63,8 @@ export interface VideoContainerProps extends VideoConferenceProps {
 export interface VideoContainerExports {
   removeLocalSettings: () => Promise<void>;
 }
-const CONNECT_ENDPOINT = connect_endpoint('/api/room-settings');
-const IP = process.env.SERVER_NAME ?? getServerIp() ?? 'localhost';
+
+const IP = 'sge_event.com';
 export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerProps>(
   (
     {
@@ -120,6 +120,17 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     // }, []);
 
     useEffect(() => {
+      if (room) {
+        if (uLicenseState.expires_at < Date.now() / 1000) {
+          messageApi.error(t('common.license_invalid'), 6000);
+          setTimeout(() => {
+            room?.disconnect();
+          }, 8000);
+        }
+      }
+    }, [room]);
+
+    useEffect(() => {
       if (!room || !socket.id) return;
       if (
         room.state === ConnectionState.Connecting ||
@@ -160,42 +171,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           socket.emit('update_user_status');
         });
         setInit(false);
-      }
-
-      // license 检测 -----------------------------------------------------------------------------
-      const checkLicense = async () => {
-        let url = `https://vocespace.com/api/license/${IP}`;
-        const response = await fetch(url, {
-          method: 'GET',
-        });
-        if (response.ok) {
-          const { id, email, domains, created_at, expires_at, ilimit, value } =
-            await response.json();
-          setULicenseState((prev) => ({
-            ...prev,
-            id,
-            email,
-            domains,
-            created_at,
-            expires_at,
-            ilimit,
-            value,
-          }));
-        }
-      };
-
-      if (uLicenseState.value !== '') {
-        if (!(IP === 'localhost' || IP.startsWith('192.168.'))) {
-          checkLicense();
-        }
-      } else {
-        let value = window.localStorage.getItem('license');
-        if (value && value !== '') {
-          setULicenseState((prev) => ({
-            ...prev,
-            value,
-          }));
-        }
       }
 
       // 监听服务器的提醒事件的响应 -------------------------------------------------------------------
@@ -472,16 +447,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         room.off(ParticipantEvent.TrackMuted, onTrackHandler);
         room.off(RoomEvent.ParticipantDisconnected, onParticipantDisConnected);
       };
-    }, [
-      room?.state,
-      room?.localParticipant,
-      uState,
-      init,
-      uLicenseState,
-      IP,
-      socket,
-      role,
-    ]);
+    }, [room?.state, room?.localParticipant, uState, init, uLicenseState, IP, socket, role]);
 
     useLayoutEffect(() => {
       if (!settings || !room || room.state !== ConnectionState.Connected) return;
@@ -747,7 +713,10 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                     </div>
                   </div>
                 ) : (
-                  <div className="lk-focus-layout-wrapper" style={{ height: fullScreen ? '100%' : 'calc(100% - 69px)' }}>
+                  <div
+                    className="lk-focus-layout-wrapper"
+                    style={{ height: fullScreen ? '100%' : 'calc(100% - 69px)' }}
+                  >
                     <ParticipantItem
                       room={room?.name}
                       setUserStatus={setUserStatus}

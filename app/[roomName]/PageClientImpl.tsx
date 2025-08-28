@@ -60,11 +60,11 @@ export const licenseState = atom({
   default: {
     id: undefined,
     email: undefined,
-    domains: '*',
-    created_at: 1747742400,
-    expires_at: 1779278400,
-    value: 'vocespace_pro__KUgwpDrr-g3iXIX41rTrSCsWAcn9UFX8dOYMr0gAARQ',
-    ilimit: 'Free',
+    domains: 'sge_event.com',
+    created_at: 1756440000,
+    expires_at: 1787976000,
+    value: 'vocespace_pro__KUgwpDrr-g3iXIX41rTrSCsWAcn9UFX8dOYMr0gASGE',
+    ilimit: 'Pro',
   },
 });
 
