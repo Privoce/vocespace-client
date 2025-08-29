@@ -9,7 +9,7 @@ import { src } from '@/lib/std';
 import styles from '@/styles/apps.module.scss';
 import { CardSize } from 'antd/es/card/Card';
 import { useRecoilState } from 'recoil';
-import { AppsDataState } from '@/app/[spaceName]/PageClientImpl';
+import { AppsDataState } from '@/app/rooms/[spaceName]/PageClientImpl';
 
 export interface CountdownProps {
   messageApi: MessageInstance;

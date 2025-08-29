@@ -1,4 +1,4 @@
-import { licenseState } from '@/app/[spaceName]/PageClientImpl';
+import { licenseState } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { useI18n } from '@/lib/i18n/i18n';
 import styles from '@/styles/controls.module.scss';
 import { Button, Input, Modal, Radio, RadioChangeEvent } from 'antd';

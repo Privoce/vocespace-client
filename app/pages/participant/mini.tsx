@@ -24,7 +24,7 @@ import { ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { useVideoBlur, WsBase, WsTo, WsWave } from '@/lib/std/device';
 import { SvgResource, SvgType } from '@/app/resources/svg';
 import { useRecoilState } from 'recoil';
-import { roomStatusState, userState, virtualMaskState } from '@/app/[spaceName]/PageClientImpl';
+import { roomStatusState, userState, virtualMaskState } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { UserStatus } from '@/lib/std';
 import { WaveHand } from '../controls/widgets/wave';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';

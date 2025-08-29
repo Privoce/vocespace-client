@@ -5,7 +5,7 @@ import { useEffect, useMemo, useState } from 'react';
 import styles from '@/styles/apps.module.scss';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useRecoilState } from 'recoil';
-import { AppsDataState } from '@/app/[spaceName]/PageClientImpl';
+import { AppsDataState } from '@/app/rooms/[spaceName]/PageClientImpl';
 import equal from 'fast-deep-equal';
 
 export interface AppTodoProps {

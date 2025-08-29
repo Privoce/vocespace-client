@@ -41,7 +41,7 @@ import { ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { ParticipantTileMini } from '../participant/mini';
 import { GLayout } from '../layout/grid';
 import { CheckboxGroupProps } from 'antd/es/checkbox';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { WsJoinRoom, WsRemove, WsSender } from '@/lib/std/device';
 import { api } from '@/lib/api';
 import { UpdateRoomParam, UpdateRoomType } from '@/lib/api/channel';

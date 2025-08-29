@@ -47,7 +47,7 @@ import {
   roomStatusState,
   socket,
   userState,
-} from '@/app/[spaceName]/PageClientImpl';
+} from '@/app/rooms/[spaceName]/PageClientImpl';
 import { useRouter } from 'next/navigation';
 import {
   ControlType,

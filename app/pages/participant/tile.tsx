@@ -29,7 +29,7 @@ import {
   socket,
   userState,
   virtualMaskState,
-} from '@/app/[spaceName]/PageClientImpl';
+} from '@/app/rooms/[spaceName]/PageClientImpl';
 import styles from '@/styles/controls.module.scss';
 import { SvgResource, SvgType } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';

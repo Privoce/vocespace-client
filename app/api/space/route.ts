@@ -14,7 +14,7 @@ import {
   SpaceDateRecord,
 } from '@/lib/std/space';
 import { RoomServiceClient } from 'livekit-server-sdk';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { WsParticipant } from '@/lib/std/device';
 import {
   CheckNameBody,

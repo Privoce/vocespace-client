@@ -68,11 +68,11 @@ export function MeetingTab({ hq, setHq }: MeetingTabProps) {
     showLoader();
     if (e2ee) {
       router.push(
-        `/${generateRoomId()}#${encodePassphrase(sharedPassphrase)}${hq ? '?hq=true' : ''}`,
+        `/rooms/${generateRoomId()}#${encodePassphrase(sharedPassphrase)}${hq ? '?hq=true' : ''}`,
       );
     } else {
       if (roomUrl == '') {
-        router.push(`/${generateRoomId()}${hq ? '?hq=true' : ''}`);
+        router.push(`/rooms/${generateRoomId()}${hq ? '?hq=true' : ''}`);
       } else {
         // 对roomUrl进行判断，如果是个有效的网址则直接跳转，否则跳转到房间
         isAllowUrlAnd(roomUrl, router, messageApi, t('msg.error.room.invalid'));
@@ -83,7 +83,7 @@ export function MeetingTab({ hq, setHq }: MeetingTabProps) {
   useEffect(() => {
     let reloadRoom = localStorage.getItem('reload');
     if (reloadRoom) {
-      router.push(`/${reloadRoom}`);
+      router.push(`/rooms/${reloadRoom}`);
     }
   }, []);
   return (

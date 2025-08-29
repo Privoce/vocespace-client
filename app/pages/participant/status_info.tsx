@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import styles from '@/styles/controls.module.scss';
 import { SvgResource } from '@/app/resources/svg';
 import { useRecoilState } from 'recoil';
-import { roomStatusState, userState } from '@/app/[spaceName]/PageClientImpl';
+import { roomStatusState, userState } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { statusDefaultList } from '../controls/selects/status_select';
 import { Trans } from '@/lib/i18n/i18n';
 import { UserDefineStatus, UserStatus } from '@/lib/std';

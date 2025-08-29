@@ -6,7 +6,7 @@ import { Participant, Room, Track } from 'livekit-client';
 import { useMemo, useState } from 'react';
 import styles from '@/styles/controls.module.scss';
 import { ControlType, WsBase, WsControlParticipant, WsInviteDevice, WsTo } from '@/lib/std/device';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { src } from '@/lib/std';
 
 export interface ControlRKeyMenuProps {

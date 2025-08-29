@@ -12,7 +12,7 @@ import {
 import { api } from '@/lib/api';
 import { isUndefinedNumber, isUndefinedString } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
 import equal from 'fast-deep-equal';
 

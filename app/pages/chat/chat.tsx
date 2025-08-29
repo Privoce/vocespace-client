@@ -7,7 +7,7 @@ import styles from '@/styles/chat.module.scss';
 import { useI18n } from '@/lib/i18n/i18n';
 import { ulid } from 'ulid';
 import { Room } from 'livekit-client';
-import { chatMsgState, socket } from '@/app/[spaceName]/PageClientImpl';
+import { chatMsgState, socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { MessageInstance } from 'antd/es/message/interface';
 import { LinkPreview } from './link_preview';
 import Dragger from 'antd/es/upload/Dragger';

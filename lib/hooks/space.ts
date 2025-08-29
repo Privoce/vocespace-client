@@ -1,6 +1,6 @@
 // lib/hooks/useSpaceInfo.ts
 import { useState, useCallback } from 'react';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { DEFAULT_SPACE_INFO, ParticipantSettings, RecordSettings, SpaceInfo } from '../std/space';
 import { api } from '../api';
 

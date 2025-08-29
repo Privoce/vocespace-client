@@ -15,7 +15,7 @@ import { Input, InputRef, message, Skeleton, Slider, Space, Spin } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useRecoilState } from 'recoil';
-import { userState } from '@/app/[spaceName]/PageClientImpl';
+import { userState } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { src } from '@/lib/std';
 import { useVideoBlur } from '@/lib/std/device';
 import { LangSelect } from '@/app/pages/controls/selects/lang_select';
