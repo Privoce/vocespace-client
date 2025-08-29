@@ -176,7 +176,7 @@ const isAllowUrlAnd = (
   if (match) {
     if (!match[1] && !match[2] && !match[3]) {
       // 如果是房间名则拼接
-      router.push(`/${match[4]}`);
+      router.push(`/rooms/${match[4]}`);
     } else {
       // 只要match[2]可以成功匹配到，就直接进行外部跳转
       if (match[2] && match[4]) {
