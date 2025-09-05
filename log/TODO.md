@@ -442,3 +442,8 @@ lk load-test \
 - [ ] 少参与者，多观察者 (Egress 实时传输，站点构建)
 - [ ] 用户自定义虚拟形象: 用户提交虚拟形象图片 -> live2d cubism 自动处理 (代码尝试) -> 生成完整动画效果 + 模型数据 -> 存储 -> 返回
 - [ ] 录制时无法应用模糊 (录制是直接获取通道的，我们的模糊并没有替换视频而是css模糊)
+
+
+
+
+localhost:3000/ato?username=%E8%91%A3%E5%BB%BA%E8%B1%AA&userId=84&roomId=3493&roomName=%E6%99%BA%E9%80%A0%E6%9C%AA%E6%9D%A5

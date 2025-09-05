@@ -12,6 +12,7 @@ import {
   getUniqueUsername,
   historySpaceInfos,
   joinSpace,
+  joinSpaceDirect,
   leaveSpace,
   persistentSpace,
   updateOwnerId,
@@ -25,6 +26,7 @@ import {
 export const api = {
   // ---- space api --------
   joinSpace,
+  joinSpaceDirect,
   allSpaceInfos,
   historySpaceInfos,
   getUniqueUsername,

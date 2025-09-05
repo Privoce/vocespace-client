@@ -2,6 +2,7 @@ import { ConnectionDetails } from '@/lib/types';
 import { AccessToken, AccessTokenOptions, VideoGrant } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '../conf/conf';
+import { JoinSpaceParams } from '@/lib/api/space';
 
 const COOKIE_KEY = 'random-participant-postfix';
 
@@ -52,6 +53,57 @@ export async function GET(request: NextRequest) {
       roomName: spaceName,
       participantToken: participantToken,
       participantName: participantName,
+    };
+    return new NextResponse(JSON.stringify(data), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Set-Cookie': `${COOKIE_KEY}=${randomParticipantPostfix}; Path=/; HttpOnly; SameSite=Strict; Secure; Expires=${getCookieExpirationTime()}`,
+      },
+    });
+  } catch (error) {
+    if (error instanceof Error) {
+      return new NextResponse(error.message, { status: 500 });
+    }
+  }
+}
+
+
+export async function POST(request: NextRequest) {
+  try {
+    // Parse query parameters
+    const spaceName = request.nextUrl.searchParams.get('spaceName');
+    const metadata = request.nextUrl.searchParams.get('metadata') ?? '';
+    const region = request.nextUrl.searchParams.get('region');
+    const livekitServerUrl = region ? getLiveKitURL(region) : LIVEKIT_URL;
+    let randomParticipantPostfix = request.cookies.get(COOKIE_KEY)?.value;
+    if (livekitServerUrl === undefined) {
+      throw new Error('Invalid region');
+    }
+
+    if (typeof spaceName !== 'string') {
+      return new NextResponse('Missing required query parameter: spaceName', { status: 400 });
+    }
+    const {username, userId, roomId, roomName}: JoinSpaceParams = await request.json();
+
+    const identity = userId;
+    const participantToken = await createParticipantToken(
+      {
+        // identity: `${participantName}__${randomParticipantPostfix}`,
+        identity: identity,
+        name: username,
+        metadata,
+      },
+      spaceName,
+      API_KEY,
+      API_SECRET,
+    );
+
+    // Return connection details
+    const data: ConnectionDetails = {
+      serverUrl: livekitServerUrl,
+      roomName: spaceName,
+      participantToken: participantToken,
+      participantName: username,
     };
     return new NextResponse(JSON.stringify(data), {
       headers: {

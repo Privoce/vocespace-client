@@ -46,6 +46,7 @@ import { WsBase, WsMouseMove, WsTo } from '@/lib/std/device';
 import { createRTCQulity, DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
+import { SearchParams } from './page';
 
 const TURN_CREDENTIAL = process.env.TURN_CREDENTIAL ?? '';
 const TURN_USERNAME = process.env.TURN_USERNAME ?? '';
@@ -122,12 +123,19 @@ export const SingleAppDataState = atom({
   },
 });
 
-export function PageClientImpl(props: {
+export interface PageClientImplProps {
   spaceName: string;
-  region?: string;
   hq: boolean;
   codec: VideoCodec;
-}) {
+  region?: string;
+  userId: string;
+  username: string;
+  roomId?: string;
+  roomName?: string;
+}
+
+export function PageClientImpl(props: PageClientImplProps) {
+  console.warn(props);
   const { t } = useI18n();
   const [uState, setUState] = useRecoilState(userState);
   const [messageApi, contextHolder] = message.useMessage();
@@ -200,11 +208,42 @@ export function PageClientImpl(props: {
     }
   };
 
+  // 判断传入的参数中userId,userName,roomId,roomName是否存在，如果存在则直接发起加入空间的请求，无需预加入页面
+  const urlDirectJoin = async () => {
+    let { userId, username, roomId, roomName, spaceName } = props;
+    if (userId && username && roomId && roomName) {
+      const finualUserChoices = {
+        username,
+        videoEnabled: false,
+        audioEnabled: false,
+        videoDeviceId: '',
+        audioDeviceId: '',
+      } as LocalUserChoices;
+      setPreJoinChoices(finualUserChoices);
+      const response = await api.joinSpaceDirect(spaceName, {
+        username,
+        userId,
+        roomId,
+        roomName,
+      });
+
+      if (response.ok) {
+        const connectionDetailsData = await response.json();
+        setConnectionDetails(connectionDetailsData);
+        router.replace(`/${spaceName}`);
+      }
+    }
+  };
+
   useEffect(() => {
     if (!loadConfig) {
       getConfig();
     }
   }, [loadConfig]);
+
+  useEffect(() => {
+    urlDirectJoin();
+  }, []);
 
   // 当localStorage中有reload这个标志时，需要重登陆
   useEffect(() => {

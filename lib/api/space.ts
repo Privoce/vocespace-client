@@ -12,6 +12,13 @@ import {
 
 const SPACE_API = connect_endpoint('/api/space');
 
+export interface JoinSpaceParams {
+  username: string;
+  userId: string;
+  roomId: string;
+  roomName: string;
+}
+
 /**
  * 加入空间
  * @param spaceName 空间名称
@@ -21,11 +28,23 @@ const SPACE_API = connect_endpoint('/api/space');
 export const joinSpace = async (spaceName: string, username: string, region?: string) => {
   const url = new URL(connect_endpoint('/api/connection-details'), window.location.origin);
   url.searchParams.append('spaceName', spaceName);
-  url.searchParams.append('participantName', username);
   if (region) {
     url.searchParams.append('region', region);
   }
   return await fetch(url.toString());
+};
+
+export const joinSpaceDirect = async (spaceName: string, params: JoinSpaceParams,  region?: string) => {
+  const url = new URL(connect_endpoint('/api/connection-details'), window.location.origin);
+  url.searchParams.append('spaceName', spaceName);
+  if (region) {
+    url.searchParams.append('region', region);
+  }
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params),
+  });
 };
 
 /**
