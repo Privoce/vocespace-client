@@ -88,7 +88,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       updateSettings,
       toRenameSettings,
       setUserStatus,
-      showSingleFlotApp
+      showSingleFlotApp,
     }: ChannelProps,
     ref,
   ) => {
@@ -146,7 +146,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             setSubActiveKey((prev) => [...prev, child.name]);
             continue;
           }
-          if (!subRoomsTmp.includes(child.name)) {
+          if (!subRoomsTmp.includes(child.name) && child.participants.length > 0) {
             setSubActiveKey((prev) => [...prev, child.name]);
             continue;
           }

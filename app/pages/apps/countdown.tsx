@@ -117,40 +117,46 @@ export function AppCountdown({
       return {
         text: {
           fontSize: '48px',
-          color: '#eee',
+          color: disabled ? '#666' : '#eee',
         },
         icon: {
           fontSize: '24px',
+          color: disabled ? '#666' : '#8c8c8c',
         },
         icon_btn: {
           height: '44px',
           width: '44px',
+          cursor: disabled ? 'not-allowed' : 'pointer',
         },
         start_btn: {
           height: '44px',
           width: '120px',
+          cursor: disabled ? 'not-allowed' : 'pointer',
         },
       };
     } else {
       return {
         text: {
           fontSize: '24px',
-          color: '#eee',
+          color: disabled ? '#666' : '#eee',
         },
         icon: {
           fontSize: '14px',
+          color: disabled ? '#666' : '#8c8c8c',
         },
         icon_btn: {
           height: '20px',
           width: '20px',
+          cursor: disabled ? 'not-allowed' : 'pointer',
         },
         start_btn: {
           height: '20px',
           width: '48px',
+          cursor: disabled ? 'not-allowed' : 'pointer',
         },
       };
     }
-  }, [size]);
+  }, [size, disabled]);
 
   return (
     <Card style={{ width: '100%' }} size={size}>
@@ -170,7 +176,7 @@ export function AppCountdown({
             }}
             showNow={false}
             format="HH:mm:ss"
-            disabled={appData.running}
+            disabled={disabled || appData.running}
             placeholder={t('more.app.countdown.placeholder')}
             style={{ width: '100%', outline: '1px solid #22CCEE' }}
           />

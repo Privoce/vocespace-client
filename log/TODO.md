@@ -430,13 +430,16 @@ lk load-test \
   - [x] 增加host令牌保证只有管理员才能更改
 - [x] 画质多级降级(基于webrtc连接能力，默认可降低3级)
 - [x] 基于用户麦克风/摄像头/屏幕分享将邀请开启改为邀请开启/关闭
-- [ ] 检查隐私Collapse是否开启
+- [x] 检查隐私Collapse是否开启
 - [x] dashboard 房间历史数据bug-没有清理旧redis数据
-- [ ] tile中需要去除非子房间的webSocket鼠标数据
+- [x] tile中需要去除非子房间的webSocket鼠标数据
 - [x] 增加tooltip
-- [ ] 调整disabled的配色属性
+- [x] 调整disabled的配色属性
 - [x] 待办回车事件
 - [x] 完善打包后启动机制
+- [ ] App-Collapse展开时应该传入不同的activeKey
+- [ ] App-Collapse展开更换为默认icon
+- [ ] 默认公开待办事项，展开Collapse
 ---
 
 - [ ] 少参与者，多观察者 (Egress 实时传输，站点构建)

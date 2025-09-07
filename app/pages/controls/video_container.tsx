@@ -880,7 +880,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     return (
       <div className="video_container_wrapper" style={{ position: 'relative' }}>
         {/* 右侧应用浮窗，悬浮态 */}
-        {showFlot && space && (
+        {showFlot && space && settings && (
           <FlotLayout
             space={space.name}
             style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
@@ -954,6 +954,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                         updateSettings={updateSettings}
                         toRenameSettings={toSettingGeneral}
                         showSingleFlotApp={showSingleFlotApp}
+                        selfRoom={selfRoom}
                       ></ParticipantItem>
                     </GridLayout>
                   </div>
@@ -970,6 +971,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                           updateSettings={updateSettings}
                           toRenameSettings={toSettingGeneral}
                           showSingleFlotApp={showSingleFlotApp}
+                          selfRoom={selfRoom}
                         ></ParticipantItem>
                       </CarouselLayout>
                       {focusTrack && (
@@ -984,6 +986,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                           updateSettings={updateSettings}
                           toRenameSettings={toSettingGeneral}
                           showSingleFlotApp={showSingleFlotApp}
+                          selfRoom={selfRoom}
                         ></ParticipantItem>
                       )}
                     </FocusLayoutContainer>

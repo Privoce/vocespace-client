@@ -92,7 +92,11 @@ export function AppTodo({ messageApi, appData, setAppData, auth }: AppTodoProps)
                     messageApi.success(t('more.app.todo.delete'));
                   }}
                 >
-                  <SvgResource type="close" svgSize={12} color="#8c8c8c"></SvgResource>
+                  <SvgResource
+                    type="close"
+                    svgSize={12}
+                    color={disabled ? '#666' : '#8c8c8c'}
+                  ></SvgResource>
                 </Button>
               </div>
             </List.Item>
@@ -102,13 +106,14 @@ export function AppTodo({ messageApi, appData, setAppData, auth }: AppTodoProps)
 
       <div className={styles.todo_add_wrapper}>
         <Button style={{ padding: 0 }} type="text" onClick={addTodo} disabled={disabled}>
-          <SvgResource type="add" svgSize={16}></SvgResource>
+          <SvgResource type="add" svgSize={16} color={disabled ? '#666' : '#fff'}></SvgResource>
         </Button>
         <Input
           disabled={disabled}
           placeholder={t('more.app.todo.add')}
           width={'100%'}
           value={newTodo}
+          style={{ borderColor: disabled ? '#666' : '#22CCEE' }}
           onChange={(e) => {
             setNewTodo(e.target.value);
           }}

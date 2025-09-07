@@ -91,6 +91,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             colorBorder: '#22CCEE',
             colorTextPlaceholder: '#8c8c8c',
             paddingBlockLG: 8,
+            colorBorderSecondary: '#1E1E1E',
             colorText: '#ffffff',
           },
           InputNumber: {
@@ -197,6 +198,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Checkbox: {
             colorBgContainer: '#1E1E1E',
             colorBorder: '#333',
+            colorTextDisabled: "#888"
           },
           Tree: {
             colorBgContainer:  "#1e1e1e",

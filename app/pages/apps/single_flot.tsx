@@ -4,6 +4,8 @@ import { Popover } from 'antd';
 import {
   AppKey,
   Countdown,
+  DEFAULT_COUNTDOWN,
+  DEFAULT_TIMER,
   SpaceCountdown,
   SpaceTimer,
   SpaceTodo,
@@ -150,7 +152,7 @@ export function SingleFlotAppItem({
       {appKey === 'timer' && (
         <AppTimer
           size="small"
-          appData={appData.targetApp as Timer}
+          appData={appData.targetApp as Timer || DEFAULT_TIMER}
           setAppData={setTimerAppData}
           auth={isSelf ? 'write' : appData.auth}
         ></AppTimer>
@@ -159,7 +161,7 @@ export function SingleFlotAppItem({
         <AppCountdown
           messageApi={messageApi}
           size="small"
-          appData={appData.targetApp as Countdown}
+          appData={appData.targetApp as Countdown || DEFAULT_COUNTDOWN}
           setAppData={setCountdownAppData}
           auth={isSelf ? 'write' : appData.auth}
         />
@@ -167,7 +169,7 @@ export function SingleFlotAppItem({
       {appKey === 'todo' && (
         <AppTodo
           messageApi={messageApi}
-          appData={appData.targetApp as TodoItem[]}
+          appData={appData.targetApp as TodoItem[] || []}
           setAppData={setTodoAppData}
           auth={isSelf ? 'write' : appData.auth}
         />
