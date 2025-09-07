@@ -28,6 +28,7 @@ export interface JoinSpaceParams {
 export const joinSpace = async (spaceName: string, username: string, region?: string) => {
   const url = new URL(connect_endpoint('/api/connection-details'), window.location.origin);
   url.searchParams.append('spaceName', spaceName);
+  url.searchParams.append('participantName', username);
   if (region) {
     url.searchParams.append('region', region);
   }

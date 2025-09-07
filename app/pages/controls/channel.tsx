@@ -561,18 +561,21 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
     }, [tracks, childRooms, settings, allParticipants]);
 
     const subContext = useCallback(
-      (name: string, length: number): ReactNode => {
+      (
+        name: string,
+        _length: number,
+      ): {
+        roomTiles: ReactNode;
+        onlineCount: number;
+      } => {
         let childRoom = childRooms.find((room) => room.name === name);
 
         if (!childRoom) {
-          return <></>;
+          return {
+            roomTiles: <></>,
+            onlineCount: 0,
+          };
         }
-
-        if (length === 0) {
-          return <></>;
-        }
-
-        // let allParticipants = Object.keys(settings.participants);
 
         let subTracks = tracks.filter(
           (track) =>
@@ -580,126 +583,134 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             allParticipants.includes(track.participant.identity),
         );
 
-        return (
-          <GLayout tracks={subTracks} style={{ height: '120px', position: 'relative' }}>
-            <ParticipantTileMini
-              settings={settings}
-              space={space}
-              updateSettings={updateSettings}
-              toRenameSettings={toRenameSettings}
-              setUserStatus={setUserStatus}
-              showSingleFlotApp={showSingleFlotApp}
-            ></ParticipantTileMini>
-          </GLayout>
-        );
+        // let allParticipants = Object.keys(settings.participants);
+
+        return {
+          roomTiles: (
+            <GLayout tracks={subTracks} style={{ height: '120px', position: 'relative' }}>
+              <ParticipantTileMini
+                settings={settings}
+                space={space}
+                updateSettings={updateSettings}
+                toRenameSettings={toRenameSettings}
+                setUserStatus={setUserStatus}
+                showSingleFlotApp={showSingleFlotApp}
+              ></ParticipantTileMini>
+            </GLayout>
+          ),
+          onlineCount: subTracks.length,
+        };
       },
       [tracks, childRooms, settings, space, allParticipants],
     );
 
     const subChildren: CollapseProps['items'] = useMemo(() => {
-      return childRooms.map((room, index) => ({
-        key: room.name,
-        label: (
-          <div
-            className={styles.room_header_wrapper}
-            onMouseEnter={() => {
-              if (!isMobile) setRoomJoinVis(index);
-            }}
-            onMouseLeave={() => {
-              if (!isMobile) setRoomJoinVis(null);
-            }}
-            onTouchStart={() => {
-              if (isMobile) {
-                // 清除之前的延迟隐藏
-                if (hideTimeoutRef.current) {
-                  clearTimeout(hideTimeoutRef.current);
-                }
-                setRoomJoinVis(index);
-              }
-            }}
-            onTouchEnd={() => {
-              if (isMobile) {
-                // 延迟隐藏，给用户时间点击按钮
-                hideTimeoutRef.current = setTimeout(() => setRoomJoinVis(null), 3000);
-              }
-            }}
-          >
-            <Dropdown
-              trigger={['contextMenu']}
-              menu={{ items: subContextItems }}
-              onOpenChange={(open) => {
-                if (open) {
-                  setSelectedRoom(room);
-                }
-              }}
-            >
-              <div className={styles.room_header_wrapper_title}>
-                <div
-                  className={styles.room_header_wrapper_title}
-                  onClick={() => {
-                    setSubActiveKey((prev) => {
-                      const newActiveKey = [...prev];
-                      if (newActiveKey.includes(room.name)) {
-                        return newActiveKey.filter((r) => r !== room.name);
-                      } else {
-                        newActiveKey.push(room.name);
-                      }
-                      return newActiveKey;
-                    });
-                  }}
-                >
-                  {room.isPrivate ? (
-                    <LockOutlined />
-                  ) : (
-                    <SvgResource type="public" svgSize={16} color="#aaa"></SvgResource>
-                  )}
-                  {room.name}
-                </div>
-                {room.participants.length > 0 && (
-                  <Tag
-                    color="transparent"
-                    style={{
-                      fontSize: '0.8em',
-                      padding: '2px 4px',
-                      lineHeight: '1.2em',
-                      color: '#8c8c8c',
-                    }}
-                    bordered={false}
-                  >
-                    {room.participants.length}&nbsp;
-                    {t('channel.menu.active')}
-                  </Tag>
-                )}
-              </div>
-            </Dropdown>
+      return childRooms.map((room, index) => {
+        const { roomTiles, onlineCount } = subContext(room.name, room.participants.length);
+        return {
+          key: room.name,
+          label: (
             <div
-              className={styles.room_header_extra}
-              style={{
-                visibility: roomJoinVis === index ? 'visible' : 'hidden',
+              className={styles.room_header_wrapper}
+              onMouseEnter={() => {
+                if (!isMobile) setRoomJoinVis(index);
+              }}
+              onMouseLeave={() => {
+                if (!isMobile) setRoomJoinVis(null);
+              }}
+              onTouchStart={() => {
+                if (isMobile) {
+                  // 清除之前的延迟隐藏
+                  if (hideTimeoutRef.current) {
+                    clearTimeout(hideTimeoutRef.current);
+                  }
+                  setRoomJoinVis(index);
+                }
+              }}
+              onTouchEnd={() => {
+                if (isMobile) {
+                  // 延迟隐藏，给用户时间点击按钮
+                  hideTimeoutRef.current = setTimeout(() => setRoomJoinVis(null), 3000);
+                }
               }}
             >
-              <button
-                onClick={() => {
-                  addIntoRoom(room);
-                  // 移动设备上点击后立即隐藏按钮并清除延迟
-                  if (isMobile) {
-                    if (hideTimeoutRef.current) {
-                      clearTimeout(hideTimeoutRef.current);
-                    }
-                    setRoomJoinVis(null);
+              <Dropdown
+                trigger={['contextMenu']}
+                menu={{ items: subContextItems }}
+                onOpenChange={(open) => {
+                  if (open) {
+                    setSelectedRoom(room);
                   }
                 }}
-                className="vocespace_button"
               >
-                <PlusCircleOutlined />
-                {t('channel.menu.join')}
-              </button>
+                <div className={styles.room_header_wrapper_title}>
+                  <div
+                    className={styles.room_header_wrapper_title}
+                    onClick={() => {
+                      setSubActiveKey((prev) => {
+                        const newActiveKey = [...prev];
+                        if (newActiveKey.includes(room.name)) {
+                          return newActiveKey.filter((r) => r !== room.name);
+                        } else {
+                          newActiveKey.push(room.name);
+                        }
+                        return newActiveKey;
+                      });
+                    }}
+                  >
+                    {room.isPrivate ? (
+                      <LockOutlined />
+                    ) : (
+                      <SvgResource type="public" svgSize={16} color="#aaa"></SvgResource>
+                    )}
+                    {room.name}
+                  </div>
+                  {room.participants.length > 0 && (
+                    <Tag
+                      color="transparent"
+                      style={{
+                        fontSize: '0.8em',
+                        padding: '2px 4px',
+                        lineHeight: '1.2em',
+                        color: '#8c8c8c',
+                      }}
+                      bordered={false}
+                    >
+                      {onlineCount}&nbsp;
+                      {t('channel.menu.active')}
+                    </Tag>
+                  )}
+                </div>
+              </Dropdown>
+              <div
+                className={styles.room_header_extra}
+                style={{
+                  visibility: roomJoinVis === index ? 'visible' : 'hidden',
+                }}
+              >
+                <button
+                  onClick={() => {
+                    addIntoRoom(room);
+                    // 移动设备上点击后立即隐藏按钮并清除延迟
+                    if (isMobile) {
+                      if (hideTimeoutRef.current) {
+                        clearTimeout(hideTimeoutRef.current);
+                      }
+                      setRoomJoinVis(null);
+                    }
+                  }}
+                  className="vocespace_button"
+                >
+                  <PlusCircleOutlined />
+                  {t('channel.menu.join')}
+                </button>
+              </div>
             </div>
-          </div>
-        ),
-        children: subContext(room.name, room.participants.length),
-        style: subStyle,
-      }));
+          ),
+          children: roomTiles,
+          style: subStyle,
+        };
+      });
     }, [subContext, childRooms, selectedRoom, selfRoomName, roomJoinVis]);
 
     const mainItems: CollapseProps['items'] = useMemo(() => {

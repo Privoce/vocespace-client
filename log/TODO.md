@@ -448,5 +448,3 @@ lk load-test \
 
 
 
-
-localhost:3000/ato?username=%E8%91%A3%E5%BB%BA%E8%B1%AA&userId=84&roomId=3493&roomName=%E6%99%BA%E9%80%A0%E6%9C%AA%E6%9D%A5

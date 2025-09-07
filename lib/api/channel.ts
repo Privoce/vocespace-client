@@ -39,6 +39,21 @@ export const createRoom = async ({ spaceName, roomName, ownerId, isPrivate }: Cr
     } as CreateRoomBody),
   });
 };
+export interface CreateAtomgitRoomParam extends CreateRoomParam {
+  participantIds: string[];
+}
+
+export type CreateAtomgitRoomBody = CreateAtomgitRoomParam;
+
+export const createAtomgitRoom = async (params: CreateAtomgitRoomParam) => {
+  const url = new URL(CONNECT_ENDPOINT, window.location.origin);
+  url.searchParams.append('atomgitRoom', 'true');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(params as CreateAtomgitRoomBody),
+  });
+};
 
 export interface DeleteRoomParam extends BasicParam {}
 

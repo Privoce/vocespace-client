@@ -83,6 +83,7 @@ export interface ParticipantSettings {
     timer?: SpaceTimer;
     countdown?: SpaceCountdown;
   };
+  teamId?: number;
 }
 
 export interface SpaceTimeRecord {
@@ -118,7 +119,7 @@ export interface RecordSettings {
 }
 
 export type AppKey = 'timer' | 'countdown' | 'todo';
-export type AppAuth = 'read' | 'write' ;
+export type AppAuth = 'read' | 'write';
 
 export interface SpaceInfoMap {
   [spaceId: string]: SpaceInfo;
@@ -184,7 +185,7 @@ export interface SpaceCountdown extends CountdownDurStr {
   timestamp: number;
 }
 
-export const castTimer = (timer?: SpaceTimer): Timer|undefined => {
+export const castTimer = (timer?: SpaceTimer): Timer | undefined => {
   if (!timer) return undefined;
   return {
     value: timer.value,
@@ -194,7 +195,7 @@ export const castTimer = (timer?: SpaceTimer): Timer|undefined => {
   };
 };
 
-export const castCountdown = (countdown?: SpaceCountdown): Countdown|undefined => {
+export const castCountdown = (countdown?: SpaceCountdown): Countdown | undefined => {
   if (!countdown) return undefined;
   return {
     value: countdown.value,

@@ -230,6 +230,10 @@ export function PageClientImpl(props: PageClientImplProps) {
       if (response.ok) {
         const connectionDetailsData = await response.json();
         setConnectionDetails(connectionDetailsData);
+        setUState((prev) => ({
+          ...prev,
+          teamId: parseInt(roomId),
+        }));
         router.replace(`/${spaceName}`);
       }
     }
@@ -319,7 +323,6 @@ function VideoConferenceComponent(props: {
   const e2eeEnabled = !!(e2eePassphrase && worker);
   const keyProvider = new ExternalE2EEKeyProvider();
   const [e2eeSetupComplete, setE2eeSetupComplete] = React.useState(false);
-
   const [permissionOpened, setPermissionOpened] = useState(false);
   const [permissionModalVisible, setPermissionModalVisible] = useState(false);
   const [permissionRequested, setPermissionRequested] = useState(false);

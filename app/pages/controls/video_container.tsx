@@ -124,7 +124,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     useEffect(() => {
       if (!space) return;
       if (!socket.id) {
-        messageApi.warning(t('common.socket_reconnect'));
+        // messageApi.warning(t('common.socket_reconnect'));
         setTimeout(() => {
           socket.connect();
         }, 200);
@@ -165,15 +165,28 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           auth: uState.auth,
           appDatas: {},
         });
-        const roomName = `${space.localParticipant.name}'s room`;
+        // 查询队伍接口得到队伍信息，使用队伍名创建私人房间
+        const teamInfo = await api.atomgitGetTeamInfo(uState.teamId!);
+        if (!teamInfo) {
+          messageApi.error(t('common.atomgit.team_info_err'));
+          space.disconnect(true);
+          return;
+        }
+        // 创建房间
+        const roomName = `${teamInfo.name}`;
 
         // 为新加入的参与者创建一个自己的私人房间
         if (!settings.children.some((child) => child.name === roomName)) {
-          const response = await api.createRoom({
+          const participantIds = teamInfo.teamUserList.map((user) => {
+            return user.user.userId?.toString();
+          });
+
+          const response = await api.createAtomgitRoom({
             spaceName: space.name,
             roomName,
-            ownerId: space.localParticipant.identity,
+            ownerId: teamInfo.leaderId.toString(),
             isPrivate: true,
+            participantIds
           });
 
           if (!response.ok) {

@@ -1,4 +1,5 @@
-import { createRoom, deleteRoom, joinRoom, leaveRoom, updateRoom } from './channel';
+import { atomgitGetTeamInfo } from './atomgit';
+import { createAtomgitRoom, createRoom, deleteRoom, joinRoom, leaveRoom, updateRoom } from './channel';
 import { fetchLinkPreview, getChatMsg } from './chat';
 import { getConf, reloadConf } from './conf';
 import { checkLicenseByIP, getLicenseByIP } from './license';
@@ -53,10 +54,13 @@ export const api = {
   updateRecord,
   // ---- channel api --------
   createRoom,
+  createAtomgitRoom,
   deleteRoom,
   leaveRoom,
   joinRoom,
   updateRoom,
   getConf,
   reloadConf,
+  // ---- atomgit api --------
+  atomgitGetTeamInfo
 };

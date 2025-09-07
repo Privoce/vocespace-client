@@ -35,6 +35,7 @@ import {
 import { UpdateRecordBody } from '@/lib/api/record';
 import {
   ChildRoomMethods,
+  CreateAtomgitRoomBody,
   CreateRoomBody,
   DeleteRoomBody,
   JoinRoomBody,
@@ -1023,6 +1024,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const isChildRoom = request.nextUrl.searchParams.get('childRoom') === 'true';
+    const isAtomgitRoom = request.nextUrl.searchParams.get('atomgitRoom') === 'true';
     const isNameCheck = request.nextUrl.searchParams.get('nameCheck') === 'true';
     const isUpdateRecord = request.nextUrl.searchParams.get('record') === 'update';
     const isUpdateOwnerId = request.nextUrl.searchParams.get('ownerId') === 'update';
@@ -1141,6 +1143,7 @@ export async function POST(request: NextRequest) {
             { status: 200 },
           );
         }
+        return NextResponse.json({ success: true, name: participantName }, { status: 200 });
       }
     }
 
@@ -1156,6 +1159,24 @@ export async function POST(request: NextRequest) {
         isPrivate,
       } as ChildRoom;
 
+      const { success, error } = await SpaceManager.setChildRoom(spaceName, childRoom);
+      if (success) {
+        return NextResponse.json({ success: true }, { status: 200 });
+      } else {
+        return NextResponse.json({ error }, { status: 500 });
+      }
+    }
+
+    // 如果是创建Atomgit房间 ---------------------------------------------------------------------
+    if (isAtomgitRoom) {
+      const { spaceName, roomName, participantIds, isPrivate, ownerId }: CreateAtomgitRoomBody =
+        await request.json();
+      const childRoom = {
+        name: roomName,
+        participants: participantIds,
+        ownerId,
+        isPrivate,
+      } as ChildRoom;
       const { success, error } = await SpaceManager.setChildRoom(spaceName, childRoom);
       if (success) {
         return NextResponse.json({ success: true }, { status: 200 });
