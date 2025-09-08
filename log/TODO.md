@@ -448,3 +448,13 @@ lk load-test \
 
 
 
+- [x] 开放原始进入方式
+- [x] 数据后台API/页面
+- [x] 对隐私房间进行处理，若是队伍的队员可无需队长同意自由加入队伍房间
+
+localhost:3000/ato?username=一一&userId=19786&roomId=3429&roomName=未来已来
+localhost:3000/ato?username=董建豪&userId=84&roomId=3429&roomName=未来已来
+localhost:3000/ato?username=王奕娴&userId=2954&roomId=3493&roomName=智造未来
+localhost:3000/ato?username=董建豪&userId=84&roomId=3493&roomName=智造未来
+chatroom.opencamp.cn/atomgit-porting?username=王奕娴&userId=2954&roomId=3493&roomName=智造未来
+chatroom.opencamp.cn/atomgit-porting?username=董建豪&userId=84&roomId=3493&roomName=智造未来

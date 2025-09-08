@@ -1157,6 +1157,7 @@ export async function POST(request: NextRequest) {
         participants: [],
         ownerId: participantId,
         isPrivate,
+        teamIds: [],
       } as ChildRoom;
 
       const { success, error } = await SpaceManager.setChildRoom(spaceName, childRoom);
@@ -1176,6 +1177,7 @@ export async function POST(request: NextRequest) {
         participants: participantIds,
         ownerId,
         isPrivate,
+        teamIds: participantIds,
       } as ChildRoom;
       const { success, error } = await SpaceManager.setChildRoom(spaceName, childRoom);
       if (success) {

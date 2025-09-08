@@ -380,18 +380,19 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       // 判断是否为私密房间，如果是则需要使用socket通知拥有者
       if (room.isPrivate && room.ownerId !== localParticipantId) {
         // 只有当前房间的拥有者在Space中才能发送这个请求
-        if (settings.participants[room.ownerId]) {
-          socket.emit('join_privacy_room', {
-            receiverId: room.ownerId,
-            socketId: settings.participants[room.ownerId].socketId,
-            childRoom: room.name,
-            ...wsSender,
-          } as WsJoinRoom);
-        } else {
-          messageApi.warning(t('channel.modal.join.missing_owner'));
+        if (!room.teamIds.includes(localParticipantId)) {
+          if (settings.participants[room.ownerId]) {
+            socket.emit('join_privacy_room', {
+              receiverId: room.ownerId,
+              socketId: settings.participants[room.ownerId].socketId,
+              childRoom: room.name,
+              ...wsSender,
+            } as WsJoinRoom);
+          } else {
+            messageApi.warning(t('channel.modal.join.missing_owner'));
+          }
+          return;
         }
-
-        return;
       }
       await joinChildRoom(room, localParticipantId);
     };
@@ -427,8 +428,16 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
 
     const joinMainRoom = async () => {
       // 设置为当前自己所在的房间
-      console.warn('selfRoomName', selfRoomName);
-      await leaveChildRoom(selfRoomName);
+      if (!selfRoomName) {
+        // 如果当前自己房间名为空，则需要查找一下spaceInfo中自己的房间名
+        let targetRoom = settings.children.find((room) => {
+          return room.participants.includes(localParticipantId);
+        });
+        if (targetRoom) {
+          setSelfRoomName(targetRoom.name);
+          await leaveChildRoom(targetRoom.name);
+        }
+      }
     };
 
     const updateChildRoom = async (ty: UpdateRoomType) => {

@@ -23,6 +23,12 @@ export interface ChildRoom {
    * is private room or not
    */
   isPrivate: boolean;
+  /**
+   * 队伍所有队员的ID，当isPrivate为true时有效
+   * 当isPrivate为true时，表示该房间是一个私人房间，只有teamIds中的队员可以直接加入该房间
+   * 无需房间所有者的同意
+   */
+  teamIds: string[];
 }
 
 /**

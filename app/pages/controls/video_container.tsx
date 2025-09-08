@@ -168,8 +168,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         // 查询队伍接口得到队伍信息，使用队伍名创建私人房间
         const teamInfo = await api.atomgitGetTeamInfo(uState.teamId!);
         if (!teamInfo) {
-          messageApi.error(t('common.atomgit.team_info_err'));
-          space.disconnect(true);
+          messageApi.warning(t('common.atomgit.team_info_err'));
           return;
         }
         // 创建房间
@@ -641,6 +640,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           }),
           ownerId: settings.ownerId,
           isPrivate: false,
+          teamIds: [],
         };
       }
       return selfRoom;
