@@ -41,6 +41,9 @@ export const createRoom = async ({ spaceName, roomName, ownerId, isPrivate }: Cr
 };
 export interface CreateAtomgitRoomParam extends CreateRoomParam {
   participantIds: string[];
+  spaceName: string;
+  roomName: string;
+  fromServer?: boolean;
 }
 
 export type CreateAtomgitRoomBody = CreateAtomgitRoomParam;

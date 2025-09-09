@@ -12,6 +12,9 @@ import { fileURLToPath } from 'url';
 import express from 'express';
 import Redis from 'ioredis';
 
+// 全局变量来存储服务端 Socket.IO 实例，供 API 路由使用
+global.serverSocketIO = null;
+
 const __filename = fileURLToPath(import.meta.url);
 const __cfg = path.dirname(__filename);
 
@@ -168,6 +171,10 @@ app.prepare().then(() => {
   const httpServer = createServer(server);
 
   const io = new Server(httpServer);
+  
+  // 设置全局服务端 Socket.IO 实例，供 API 路由使用
+  global.serverSocketIO = io;
+  
   const processingSocketIds = new Set();
   // [io on] -------------------------------------------------------------------------------------------------------------
   // - [io connection] ---------------------------------------------------------------------------------------------------

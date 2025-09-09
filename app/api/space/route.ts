@@ -17,8 +17,7 @@ import {
   SpaceTodo,
 } from '@/lib/std/space';
 import { RoomServiceClient } from 'livekit-server-sdk';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { WsParticipant } from '@/lib/std/device';
+import { WsBase, WsParticipant } from '@/lib/std/device';
 import {
   CheckNameBody,
   DefineUserStatusBody,
@@ -43,6 +42,7 @@ import {
   UpdateRoomBody,
 } from '@/lib/api/channel';
 import { getConfig } from '../conf/conf';
+import { emitServerEvent } from '@/lib/server/socket';
 
 const { LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL } = process.env;
 
@@ -1170,8 +1170,14 @@ export async function POST(request: NextRequest) {
 
     // 如果是创建Atomgit房间 ---------------------------------------------------------------------
     if (isAtomgitRoom) {
-      const { spaceName, roomName, participantIds, isPrivate, ownerId }: CreateAtomgitRoomBody =
-        await request.json();
+      const {
+        spaceName,
+        roomName,
+        participantIds,
+        isPrivate,
+        ownerId,
+        fromServer,
+      }: CreateAtomgitRoomBody = await request.json();
       const childRoom = {
         name: roomName,
         participants: participantIds,
@@ -1181,6 +1187,9 @@ export async function POST(request: NextRequest) {
       } as ChildRoom;
       const { success, error } = await SpaceManager.setChildRoom(spaceName, childRoom);
       if (success) {
+        if (fromServer) {
+          emitServerEvent('user_status_updated', { space: spaceName } as WsBase);
+        }
         return NextResponse.json({ success: true }, { status: 200 });
       } else {
         return NextResponse.json({ error }, { status: 500 });
@@ -1494,7 +1503,7 @@ const userHeartbeat = async () => {
     // 处理情况2 --------------------------------------------------------------------------------------------
     if (inLKNotInRedis.length > 0) {
       for (const participant of inLKNotInRedis) {
-        socket.emit('re_init', {
+        emitServerEvent('re_init', {
           space: room.name,
           participantId: participant.identity,
         } as WsParticipant);

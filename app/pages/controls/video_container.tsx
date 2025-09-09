@@ -184,7 +184,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             spaceName: space.name,
             roomName,
             ownerId: teamInfo.leaderId.toString(),
-            isPrivate: true,
+            isPrivate: false,
             participantIds
           });
 
