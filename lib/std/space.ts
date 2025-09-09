@@ -259,7 +259,7 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   },
   openPromptSound: true,
   openShareAudio: false,
-  sync: [],
+  sync: ['todo'], // 默认同步待办事项
   auth: 'read',
   appDatas: {},
 };

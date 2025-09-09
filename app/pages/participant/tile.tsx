@@ -623,7 +623,7 @@ export const ParticipantItem: (
             <div className="lk-participant-placeholder">
               <ParticipantPlaceholder />
             </div>
-            <div className="lk-participant-metadata" style={{ zIndex: 1000 }}>
+            <div className="lk-participant-metadata" style={{ zIndex: 4 }}>
               <StatusInfo
                 disabled={trackReference.participant.identity != localParticipant.identity}
                 items={items}

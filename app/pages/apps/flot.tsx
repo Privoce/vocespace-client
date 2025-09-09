@@ -110,11 +110,39 @@ export interface TodoProp {
   auth: AppAuth;
 }
 
+const DEFAULT_KEYS: AppKey[] = ['timer', 'countdown', 'todo'];
+
 function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
-  const [activeKey, setActiveKey] = useState<string[]>(['timer', 'countdown', 'todo']);
+  const { localParticipant } = useLocalParticipant();
+  const [activeKeys, setActiveKeys] = useState<Map<string, AppKey[]>>(
+    new Map([[localParticipant.identity, DEFAULT_KEYS]]),
+  );
   const { t } = useI18n();
   const { token } = theme.useToken();
-  const { localParticipant } = useLocalParticipant();
+
+  // 初始化远程用户的 activeKeys
+  useEffect(() => {
+    const remoteParticipantKeys = Object.keys(spaceInfo.participants).filter((k) => {
+      return k !== localParticipant.identity;
+    });
+
+    setActiveKeys((prev) => {
+      const newMap = new Map(prev);
+
+      remoteParticipantKeys.forEach((participantId) => {
+        const participant = spaceInfo.participants[participantId];
+        if (participant?.sync && !newMap.has(participantId)) {
+          const keys: AppKey[] = [];
+          if (participant.appDatas?.timer) keys.push('timer');
+          if (participant.appDatas?.countdown) keys.push('countdown');
+          if (participant.appDatas?.todo) keys.push('todo');
+          newMap.set(participantId, keys);
+        }
+      });
+
+      return newMap;
+    });
+  }, [spaceInfo.participants, localParticipant.identity]);
 
   const itemStyle: React.CSSProperties = {
     marginBottom: 8,
@@ -134,14 +162,14 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
     return 'read';
   }, [spaceInfo.participants]);
 
-  const toggleCollapse = (key: 'timer' | 'countdown' | 'todo') => {
-    setActiveKey((prev) => {
-      if (prev.includes(key)) {
-        return prev.filter((k) => k !== key);
-      }
-      return [...prev, key];
-    });
-  };
+  // const toggleCollapse = (key: 'timer' | 'countdown' | 'todo') => {
+  //   setActiveKeys((prev) => {
+  //     if (prev.includes(key)) {
+  //       return prev.filter((k) => k !== key);
+  //     }
+  //     return [...prev, key];
+  //   });
+  // };
 
   const upload = async (key: AppKey, data: SpaceTimer | SpaceCountdown | SpaceTodo) => {
     let participantId = localParticipant.identity;
@@ -220,19 +248,21 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
   };
 
   const createItems = (
+    participantId: string,
     timer?: TimerProp,
     countdown?: CountdownProp,
     todo?: TodoProp,
     isRemote = false,
   ): CollapseProps['items'] => {
     let items: CollapseProps['items'] = [];
-    timer &&
+
+    if (timer) {
       items.push({
         key: 'timer',
         label: (
           <div style={{ height: 22, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             {showSyncIcon(isRemote, 'timer')}
-            {activeKey.includes('timer') ? '' : t('more.app.timer.title')}
+            {activeKeys.get(participantId)?.includes('timer') ? '' : t('more.app.timer.title')}
           </div>
         ),
         children: (
@@ -245,14 +275,17 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
         ),
         style: itemStyle,
       });
+    }
 
-    countdown &&
+    if (countdown) {
       items.push({
         key: 'countdown',
         label: (
           <div style={{ height: 22, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             {showSyncIcon(isRemote, 'countdown')}
-            {activeKey.includes('countdown') ? '' : t('more.app.countdown.title')}
+            {activeKeys.get(participantId)?.includes('countdown')
+              ? ''
+              : t('more.app.countdown.title')}
           </div>
         ),
         children: (
@@ -266,14 +299,15 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
         ),
         style: itemStyle,
       });
+    }
 
-    todo &&
+    if (todo) {
       items.push({
         key: 'todo',
         label: (
           <div style={{ height: 22, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             {showSyncIcon(isRemote, 'todo')}
-            {activeKey.includes('todo') ? '' : t('more.app.todo.title')}
+            {activeKeys.get(participantId)?.includes('todo') ? '' : t('more.app.todo.title')}
           </div>
         ),
         children: (
@@ -286,6 +320,8 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
         ),
         style: itemStyle,
       });
+    }
+
     return items;
   };
 
@@ -316,14 +352,14 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
       };
     }
 
-    const items = createItems(timer, countdown, todo);
+    const items = createItems(localParticipant.identity, timer, countdown, todo);
 
     if (!items) {
       return [];
     }
 
     return items;
-  }, [apps, activeKey, appData]);
+  }, [apps, activeKeys, appData]);
 
   const tabItems: TabsProps['items'] = useMemo(() => {
     let remoteParticipantKeys = Object.keys(spaceInfo.participants).filter((k) => {
@@ -346,11 +382,14 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
         children: (
           <Collapse
             bordered={false}
-            activeKey={activeKey}
-            onChange={(keys) => setActiveKey(keys as string[])}
-            expandIcon={({ isActive }) =>
-              isActive ? <MinusCircleOutlined /> : <PlusCircleOutlined />
-            }
+            activeKey={activeKeys.get(localParticipant.identity)}
+            onChange={(keys) => {
+              setActiveKeys((prev) => {
+                const newMap = new Map(prev);
+                newMap.set(localParticipant.identity, keys as AppKey[]);
+                return newMap;
+              });
+            }}
             expandIconPosition="end"
             items={selfItems}
           />
@@ -398,7 +437,15 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
             };
           }
 
-          let remoteItems = createItems(timer, countdown, todo, true);
+          let remoteItems = createItems(v.id, timer, countdown, todo, true);
+          setActiveKeys((prev) => {
+            if (!prev.has(v.id)) {
+              const newMap = new Map(prev);
+              newMap.set(v.id, DEFAULT_KEYS);
+              return newMap;
+            }
+            return prev;
+          });
 
           res.push({
             key: v.id,
@@ -406,10 +453,14 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
             children: (
               <Collapse
                 bordered={false}
-                onChange={(keys) => setActiveKey(keys as string[])}
-                expandIcon={({ isActive }) =>
-                  isActive ? <MinusCircleOutlined /> : <PlusCircleOutlined />
-                }
+                activeKey={activeKeys.get(v.id)}
+                onChange={(keys) => {
+                  setActiveKeys((prev) => {
+                    const newMap = new Map(prev);
+                    newMap.set(v.id, keys as AppKey[]);
+                    return newMap;
+                  });
+                }}
                 expandIconPosition="end"
                 items={remoteItems}
               />
@@ -420,7 +471,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
     }
 
     return res;
-  }, [spaceInfo, selfItems, activeKey]);
+  }, [spaceInfo, selfItems, activeKeys]);
 
   return <Tabs size="small" items={tabItems}></Tabs>;
 }

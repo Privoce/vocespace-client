@@ -169,9 +169,13 @@ export function AppCountdown({
           <TimePicker
             value={appData.duration}
             onChange={async (value) => {
+              let newValue = value;
+              if (!value) {
+                newValue = dayjs().hour(0).minute(5).second(0);
+              }
               await setAppData({
                 ...appData,
-                duration: value,
+                duration: newValue,
               });
             }}
             showNow={false}

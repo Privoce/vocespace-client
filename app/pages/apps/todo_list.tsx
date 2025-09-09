@@ -19,12 +19,37 @@ export function AppTodo({ messageApi, appData, setAppData, auth }: AppTodoProps)
     return auth !== 'write';
   }, [auth]);
   const [newTodo, setNewTodo] = useState<string>('');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingValue, setEditingValue] = useState<string>('');
   const toggleTodo = async (id: string) => {
     let data = appData.map((item) => {
       return item.id === id ? { ...item, done: !item.done } : item;
     });
 
     await setAppData(data);
+  };
+
+  const startEditing = (item: TodoItem) => {
+    if (!disabled) {
+      setEditingId(item.id);
+      setEditingValue(item.title);
+    }
+  };
+
+  const saveEdit = async () => {
+    if (editingId && editingValue.trim() !== '') {
+      const data = appData.map((item) => {
+        return item.id === editingId ? { ...item, title: editingValue.trim() } : item;
+      });
+      await setAppData(data);
+    }
+    setEditingId(null);
+    setEditingValue('');
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingValue('');
   };
   const addTodo = async () => {
     if (!newTodo || newTodo.trim() === '') {
@@ -75,15 +100,34 @@ export function AppTodo({ messageApi, appData, setAppData, auth }: AppTodoProps)
                   onChange={() => toggleTodo(item.id)}
                   checked={item.done}
                   disabled={disabled}
-                >
-                  <span
-                    style={{
-                      textDecoration: item.done ? 'line-through' : 'none',
-                    }}
-                  >
-                    {item.title}
-                  </span>
-                </Checkbox>
+                ></Checkbox>
+                <div style={{ marginLeft: '8px', flex: 1 }}>
+                  {editingId === item.id ? (
+                    <Input 
+                      value={editingValue} 
+                      size="small" 
+                      autoFocus
+                      onChange={(e) => setEditingValue(e.target.value)}
+                      onBlur={saveEdit}
+                      onPressEnter={saveEdit}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') {
+                          cancelEdit();
+                        }
+                      }}
+                    />
+                  ) : (
+                    <div
+                      onClick={() => startEditing(item)}
+                      style={{
+                        textDecoration: item.done ? 'line-through' : 'none',
+                        cursor: disabled ? 'default' : 'pointer',
+                      }}
+                    >
+                      {item.title}
+                    </div>
+                  )}
+                </div>
                 <Button
                   disabled={disabled}
                   type="text"
