@@ -34,18 +34,26 @@ import { SvgResource, SvgType } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { randomColor } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
-import { AppKey, castCountdown, castTimer, castTodo, ChildRoom, ParticipantSettings } from '@/lib/std/space';
+import {
+  AppKey,
+  castCountdown,
+  castTimer,
+  castTodo,
+  ChildRoom,
+  ParticipantSettings,
+} from '@/lib/std/space';
 import { WaveHand } from '../controls/widgets/wave';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { AppFlotIconCollect } from '../apps/app_pin';
 import { ParticipantTileMiniProps } from './mini';
+import { Tooltip } from 'antd';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps {
   toSettings?: () => void;
   messageApi: MessageInstance;
   isFocus?: boolean;
-  selfRoom?: ChildRoom
+  selfRoom?: ChildRoom;
 }
 
 export const ParticipantItem: (
@@ -63,7 +71,7 @@ export const ParticipantItem: (
       updateSettings,
       toRenameSettings,
       showSingleFlotApp,
-      selfRoom
+      selfRoom,
     }: ParticipantItemProps,
     ref,
   ) {
@@ -515,7 +523,11 @@ export const ParticipantItem: (
           // 获取之后需要将别人的鼠标位置在演讲者的屏幕上进行显示
           const { senderId, senderName, x, y, color, realVideoRect, space: spaceName } = data;
           // 更新状态
-          if (space.name == spaceName && selfRoom && selfRoom.participants.includes(data.senderId)) {
+          if (
+            space.name == spaceName &&
+            selfRoom &&
+            selfRoom.participants.includes(data.senderId)
+          ) {
             setRemoteCursors((prev) => ({
               ...prev,
               [senderId]: {
@@ -674,7 +686,8 @@ export const ParticipantItem: (
               <ConnectionQualityIndicator className="lk-participant-metadata-item" />
             </div>
             {trackReference.participant.identity != localParticipant.identity && (
-              <WaveHand wsWave={{ ...wsTo }} />
+              
+               <WaveHand wsWave={{ ...wsTo }} />
             )}
             {trackReference.source !== Track.Source.ScreenShare && (
               <AppFlotIconCollect
