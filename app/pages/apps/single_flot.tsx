@@ -21,10 +21,10 @@ import { SingleAppDataState, socket } from '@/app/[spaceName]/PageClientImpl';
 import { useLocalParticipant } from '@livekit/components-react';
 import { Participant } from 'livekit-client';
 import { useI18n } from '@/lib/i18n/i18n';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { api } from '@/lib/api';
 import { WsBase } from '@/lib/std/device';
-import { CloseCircleOutlined } from '@ant-design/icons';
+import { CloseCircleOutlined, ProfileOutlined } from '@ant-design/icons';
 
 export interface SingleFlotLayoutProps extends FlotLayoutProps {
   appKey?: AppKey;
@@ -79,9 +79,10 @@ export function SingleFlotAppItem({
   messageApi,
   localParticipant,
   space,
-  setOpen
+  setOpen,
 }: SingleFlotAppItemProps) {
   const [appData, setAppData] = useRecoilState(SingleAppDataState);
+  const [showExport, setShowExport] = useState<boolean>(false);
   const { t } = useI18n();
   const setTimerAppData = async (data: Timer) => {
     await unifiedSetAppData(
@@ -138,21 +139,50 @@ export function SingleFlotAppItem({
     }
   };
 
+  const exportTodo = (data: TodoItem[]) => {
+    if (data.length === 0) {
+      messageApi.info(t('more.app.todo.unexport'));
+    } else {
+      setShowExport(true);
+    }
+  };
+
   const isSelf = useMemo(() => {
     return appData.participantId === localParticipant.identity;
   }, [appData.participantId, localParticipant.identity]);
+
   return (
     <>
-      <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px'}}>
-        <div>{isSelf ? t('more.app.tab.self') : appData.participantName}</div>
-        <CloseCircleOutlined onClick={()=> {
-          setOpen(false);
-        }}></CloseCircleOutlined>
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '8px',
+        }}
+      >
+        <div>
+          <span style={{marginRight: 8}}>{isSelf ? t('more.app.tab.self') : appData.participantName}</span>
+          {isSelf && appKey === 'todo' && (
+            <ProfileOutlined
+              onClick={(e) => {
+                e.stopPropagation();
+                exportTodo(appData.targetApp as TodoItem[]);
+              }}
+            />
+          )}
+        </div>
+
+        <CloseCircleOutlined
+          onClick={() => {
+            setOpen(false);
+          }}
+        ></CloseCircleOutlined>
       </div>
       {appKey === 'timer' && (
         <AppTimer
           size="small"
-          appData={appData.targetApp as Timer || DEFAULT_TIMER}
+          appData={(appData.targetApp as Timer) || DEFAULT_TIMER}
           setAppData={setTimerAppData}
           auth={isSelf ? 'write' : appData.auth}
         ></AppTimer>
@@ -161,15 +191,17 @@ export function SingleFlotAppItem({
         <AppCountdown
           messageApi={messageApi}
           size="small"
-          appData={appData.targetApp as Countdown || DEFAULT_COUNTDOWN}
+          appData={(appData.targetApp as Countdown) || DEFAULT_COUNTDOWN}
           setAppData={setCountdownAppData}
           auth={isSelf ? 'write' : appData.auth}
         />
       )}
       {appKey === 'todo' && (
         <AppTodo
+          setShowExport={setShowExport}
+          showExport={showExport}
           messageApi={messageApi}
-          appData={appData.targetApp as TodoItem[] || []}
+          appData={(appData.targetApp as TodoItem[]) || []}
           setAppData={setTodoAppData}
           auth={isSelf ? 'write' : appData.auth}
         />
