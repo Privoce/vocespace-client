@@ -141,7 +141,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
         // 同时如果子房间是公开的，默认展开
         for (const child of settings.children) {
           newRooms.push(child.name);
-          if (!child.isPrivate) {
+          if (!child.isPrivate && child.participants.length > 0) {
             console.warn('public room auto expand', child.name);
             setSubActiveKey((prev) => [...prev, child.name]);
             continue;

@@ -135,7 +135,6 @@ export interface PageClientImplProps {
 }
 
 export function PageClientImpl(props: PageClientImplProps) {
-  console.warn(props);
   const { t } = useI18n();
   const [uState, setUState] = useRecoilState(userState);
   const [messageApi, contextHolder] = message.useMessage();
@@ -359,7 +358,7 @@ function VideoConferenceComponent(props: {
       },
       publishDefaults: {
         dtx: false,
-        videoSimulcastLayers: props.options.hq ? resolutions : [resolutions[1], resolutions[2]],
+        videoSimulcastLayers: resolutions,
         red: !e2eeEnabled,
         videoCodec,
         screenShareEncoding: {
@@ -369,7 +368,7 @@ function VideoConferenceComponent(props: {
         },
         screenShareSimulcastLayers: props.options.hq
           ? [resolutions[0], resolutions[1]]
-          : [resolutions[1], resolutions[2]],
+          : [resolutions[0], resolutions[1], resolutions[2]],
       },
       audioCaptureDefaults: {
         deviceId: props.userChoices.audioDeviceId ?? undefined,
