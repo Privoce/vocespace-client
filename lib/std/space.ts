@@ -36,6 +36,10 @@ export interface ChildRoom {
  */
 export interface ParticipantSettings {
   /**
+   * 客户端版本
+   */
+  version: string;
+  /**
    * 参与者名称
    */
   name: string;
@@ -84,9 +88,21 @@ export interface ParticipantSettings {
    * 用户应用权限
    */
   auth: AppAuth;
+  /**
+   * 用户应用数据
+   */
   appDatas: {
+    /**
+     * 待办事项应用数据
+     */
     todo?: SpaceTodo;
+    /**
+     * 计时器应用数据
+     */
     timer?: SpaceTimer;
+    /**
+     * 倒计时应用数据
+     */
     countdown?: SpaceCountdown;
   };
   teamId?: number;
@@ -124,6 +140,12 @@ export interface RecordSettings {
   active: boolean;
 }
 
+/**
+ * 应用Key
+ * - timer: 计时器
+ * - countdown: 倒计时
+ * - todo: 待办事项
+ */
 export type AppKey = 'timer' | 'countdown' | 'todo';
 export type AppAuth = 'read' | 'write';
 
@@ -135,20 +157,41 @@ export interface SpaceInfo {
   participants: {
     [participantId: string]: ParticipantSettings;
   };
+  /**
+   * 用户自定义状态列表，这会保存任意在空间的参与者设置过的自定义状态
+   * 主要用于在空间内的用户自定义状态选择
+   */
   status?: UserDefineStatus[];
+  /**
+   * 空间主持人ID
+   */
   ownerId: string;
+  /**
+   * 录制设置
+   */
   record: RecordSettings;
+  /**
+   * 空间创建的时间戳
+   */
   startAt: number;
+  /**
+   * 空间中子房间列表
+   */
   children: ChildRoom[];
   // 应用列表，由主持人设置参与者可以使用的应用
   apps: AppKey[];
+  /**
+   * 空间是否为持久化空间
+   * - false: 临时空间，所有数据不会持久化，空间内的应用数据也不会保存
+   * - true: 持久化空间，空间内的数据会持久化，应用数据也会保存
+   */
   persistence: boolean;
 }
 
 export interface TodoItem {
   id: string;
   title: string;
-  done: boolean;
+  done?: number
 }
 
 export interface Timer {
@@ -245,6 +288,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
+  version: '0.3.0',
   name: '',
   volume: 100,
   blur: 0.0,

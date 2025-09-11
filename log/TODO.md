@@ -443,6 +443,7 @@ lk load-test \
 - [x] 用户信息zindex层级需要低于menu
 - [x] todo可修改
 - [x] countdown清除后Invalid Date
+- [x] todo可导出/发送到chat，目标为有详细的时间记录
 
 ---
 

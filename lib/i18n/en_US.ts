@@ -190,6 +190,9 @@ export default {
         create: 'Create todo',
         empty_value: 'Todo cannot be empty',
         delete: 'Todo deleted successfully',
+        undone: 'Undone',
+        done: 'Done',
+        unexport: "Current todo is empty, cannot export"
       },
     },
     record: {

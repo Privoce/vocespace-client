@@ -145,8 +145,8 @@ export default {
         error: '上传应用失败，请稍后再试。',
       },
       tab: {
-        self: "自己",
-        no_auth: "该用户没有开启可读/可读写权限"
+        self: '自己',
+        no_auth: '该用户没有开启可读/可读写权限',
       },
       settings: {
         filter: '筛选需要的应用',
@@ -191,6 +191,9 @@ export default {
         create: '创建待办',
         empty_value: '待办事项不能为空',
         delete: '删除待办成功',
+        undone: '未完成',
+        done: '已完成',
+        unexport: "当前待办为空，无法导出"
       },
     },
     record: {

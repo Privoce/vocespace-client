@@ -650,7 +650,6 @@ class SpaceManager {
           );
         }
       }
-
       // 更新参与者数据
       spaceInfo.participants[participantId] = {
         ...spaceInfo.participants[participantId],

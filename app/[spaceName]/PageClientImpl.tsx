@@ -181,7 +181,13 @@ export function PageClientImpl(props: PageClientImplProps) {
     const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
     if (storedSettingsStr) {
       const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
-      setUState(storedSettings);
+      if (storedSettings?.version !== '0.3.0') {
+        // 版本不匹配/不存在，直接删除
+        localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
+        return;
+      } else {
+        setUState(storedSettings);
+      }
     } else {
       // 没有则存到localStorage中
       localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
