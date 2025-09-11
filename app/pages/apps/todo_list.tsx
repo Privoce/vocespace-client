@@ -23,9 +23,18 @@ export interface AppTodoProps {
   appData: TodoItem[];
   setAppData: (data: TodoItem[]) => Promise<void>;
   auth: AppAuth;
+  showExport: boolean;
+  setShowExport: (show: boolean) => void;
 }
 
-export function AppTodo({ messageApi, appData, setAppData, auth }: AppTodoProps) {
+export function AppTodo({
+  messageApi,
+  appData,
+  setAppData,
+  auth,
+  showExport,
+  setShowExport,
+}: AppTodoProps) {
   const { t } = useI18n();
   const disabled = useMemo(() => {
     return auth !== 'write';
@@ -33,7 +42,6 @@ export function AppTodo({ messageApi, appData, setAppData, auth }: AppTodoProps)
   const [newTodo, setNewTodo] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
-  const [showExport, setShowExport] = useState<boolean>(false);
   const { localParticipant } = useLocalParticipant();
   const toggleTodo = async (id: string) => {
     let data = appData.map((item) => {
@@ -108,14 +116,6 @@ export function AppTodo({ messageApi, appData, setAppData, auth }: AppTodoProps)
     });
     return items;
   }, [appData]);
-
-  const exportTodo = async () => {
-    if (appData.length !== 0) {
-      setShowExport(true);
-    } else {
-      messageApi.info(t('more.app.todo.unexport'));
-    }
-  };
 
   return (
     <>
@@ -214,12 +214,6 @@ export function AppTodo({ messageApi, appData, setAppData, auth }: AppTodoProps)
             }}
             onPressEnter={addTodo}
           ></Input>
-          <Button style={{ padding: 0 }} type="text" onClick={exportTodo} disabled={disabled}>
-            <DeliveredProcedureOutlined
-              disabled={disabled}
-              style={{ color: disabled ? '#666' : '#fff', fontSize: 16 }}
-            />
-          </Button>
         </div>
       </Card>
       <Modal

@@ -1,15 +1,22 @@
 import { SvgResource } from '@/app/resources/svg';
-import { Button, Collapse, CollapseProps, Popover, Tabs, TabsProps, theme, Tooltip } from 'antd';
+import {
+  Button,
+  Collapse,
+  CollapseProps,
+  Popover,
+  Tabs,
+  TabsProps,
+  theme,
+  Tooltip,
+} from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import styles from '@/styles/apps.module.scss';
 import { AppTimer } from './timer';
 import { AppCountdown } from './countdown';
-import { AppTodo } from './todo_list';
+import { AppTodo, ExportTodoHistroy } from './todo_list';
 import { MessageInstance } from 'antd/es/message/interface';
 import {
-  CloudUploadOutlined,
-  MinusCircleOutlined,
-  PlusCircleOutlined,
+  ProfileOutlined,
   TeamOutlined,
   UserOutlined,
 } from '@ant-design/icons';
@@ -119,6 +126,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
   );
   const { t } = useI18n();
   const { token } = theme.useToken();
+  const [showExport, setShowExport] = useState<boolean>(false);
 
   // 初始化远程用户的 activeKeys
   useEffect(() => {
@@ -223,6 +231,14 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
     }
   };
 
+  const exportTodo = (data: TodoItem[]) => {
+    if (data.length === 0) {
+      messageApi.info(t('more.app.todo.unexport'));
+    } else {
+      setShowExport(true);
+    }
+  };
+
   const showSyncIcon = (isRemote: boolean, key: AppKey) => {
     return isRemote ? (
       <span></span>
@@ -307,6 +323,14 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
         label: (
           <div style={{ height: 22, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
             {showSyncIcon(isRemote, 'todo')}
+            {!isRemote && (
+              <ProfileOutlined
+                onClick={(e) => {
+                  e.stopPropagation();
+                  exportTodo(todo.data);
+                }}
+              />
+            )}
             {activeKeys.get(participantId)?.includes('todo') ? '' : t('more.app.todo.title')}
           </div>
         ),
@@ -316,6 +340,8 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
             appData={todo.data}
             setAppData={todo.setData}
             auth={todo.auth}
+            showExport={showExport}
+            setShowExport={setShowExport}
           />
         ),
         style: itemStyle,
@@ -323,7 +349,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
     }
 
     return items;
-  };
+  }
 
   const selfItems: CollapseProps['items'] = useMemo(() => {
     // items.filter((item) => apps.includes(item.key as AppKey))
@@ -359,7 +385,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
     }
 
     return items;
-  }, [apps, activeKeys, appData]);
+  }, [apps, activeKeys, appData, showExport]);
 
   const tabItems: TabsProps['items'] = useMemo(() => {
     let remoteParticipantKeys = Object.keys(spaceInfo.participants).filter((k) => {

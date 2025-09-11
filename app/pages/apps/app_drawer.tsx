@@ -97,6 +97,8 @@ export function AppDrawer({ open, setOpen, messageApi, spaceInfo, space }: AppDr
               await upload('todo', { items: data, timestamp: Date.now() } as SpaceTodo);
             }}
             auth={'write'}
+            showExport={false}
+            setShowExport={() => {}}
           />
         ),
         disabled: !spaceInfo.apps.includes('todo'),
