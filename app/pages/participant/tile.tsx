@@ -8,7 +8,6 @@ import {
   ParticipantName,
   ParticipantPlaceholder,
   ParticipantTile,
-  ParticipantTileProps,
   PinState,
   ScreenShareIcon,
   TrackMutedIndicator,
@@ -20,12 +19,12 @@ import {
   useMaybeLayoutContext,
   VideoTrack,
 } from '@livekit/components-react';
-import { Participant, Room, Track } from 'livekit-client';
+import { Participant, Track } from 'livekit-client';
 import React, { useEffect, useMemo, useState } from 'react';
 import VirtualRoleCanvas from '../virtual_role/live2d';
 import { useRecoilState } from 'recoil';
 import {
-  roomStatusState,
+  SingleAppDataState,
   socket,
   userState,
   virtualMaskState,
@@ -33,22 +32,20 @@ import {
 import styles from '@/styles/controls.module.scss';
 import { SvgResource, SvgType } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
-import { randomColor, UserStatus } from '@/lib/std';
+import { randomColor } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
-import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { AppKey, castCountdown, castTimer, castTodo, ChildRoom, ParticipantSettings } from '@/lib/std/space';
 import { WaveHand } from '../controls/widgets/wave';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
+import { AppFlotIconCollect } from '../apps/app_pin';
+import { ParticipantTileMiniProps } from './mini';
 
-export interface ParticipantItemProps extends ParticipantTileProps {
-  settings: SpaceInfo;
-  setUserStatus: (status: UserStatus | string) => Promise<void>;
+export interface ParticipantItemProps extends ParticipantTileMiniProps {
   toSettings?: () => void;
   messageApi: MessageInstance;
   isFocus?: boolean;
-  space: Room;
-  updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
-  toRenameSettings: () => void;
+  selfRoom?: ChildRoom
 }
 
 export const ParticipantItem: (
@@ -65,6 +62,8 @@ export const ParticipantItem: (
       space,
       updateSettings,
       toRenameSettings,
+      showSingleFlotApp,
+      selfRoom
     }: ParticipantItemProps,
     ref,
   ) {
@@ -72,7 +71,8 @@ export const ParticipantItem: (
     const { localParticipant } = useLocalParticipant();
     const videoRef = React.useRef<HTMLVideoElement>(null);
     const [uState, setUState] = useRecoilState(userState);
-    const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
+    // const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
+    const [appsData, setAppsData] = useRecoilState(SingleAppDataState);
     const trackReference = useEnsureTrackRef(trackRef);
     const isEncrypted = useIsEncrypted(trackReference.participant);
     const layoutContext = useMaybeLayoutContext();
@@ -177,6 +177,10 @@ export const ParticipantItem: (
         ? `none`
         : `blur(${blurValue}px)`;
     }, [settings.participants, trackReference.participant.identity, blurValue]);
+
+    const currentParticipant: ParticipantSettings | undefined = useMemo(() => {
+      return settings.participants[trackReference.participant.identity];
+    }, [settings.participants, trackReference.participant.identity]);
 
     const deviceTrack = React.useMemo(() => {
       if (isTrackReference(trackReference) && !loading) {
@@ -511,7 +515,7 @@ export const ParticipantItem: (
           // 获取之后需要将别人的鼠标位置在演讲者的屏幕上进行显示
           const { senderId, senderName, x, y, color, realVideoRect, space: spaceName } = data;
           // 更新状态
-          if (space.name == spaceName) {
+          if (space.name == spaceName && selfRoom && selfRoom.participants.includes(data.senderId)) {
             setRemoteCursors((prev) => ({
               ...prev,
               [senderId]: {
@@ -562,6 +566,40 @@ export const ParticipantItem: (
         trackReference.source === Track.Source.ScreenShare
       );
     }, [trackReference, localParticipant.identity]);
+
+    const showApp = (appKey: AppKey) => {
+      showSingleFlotApp(appKey);
+      const targetParticipant = {
+        participantId: trackReference.participant.identity,
+        participantName: trackReference.participant.name,
+        auth: currentParticipant.auth,
+      };
+      console.warn(targetParticipant);
+      if (appKey === 'timer') {
+        const castedTimer = castTimer(currentParticipant.appDatas.timer);
+        if (castedTimer) {
+          setAppsData({
+            ...targetParticipant,
+            targetApp: castedTimer,
+          });
+        }
+      } else if (appKey === 'countdown') {
+        const castedCountdown = castCountdown(currentParticipant.appDatas.countdown);
+        if (castedCountdown) {
+          setAppsData({
+            ...targetParticipant,
+            targetApp: castedCountdown,
+          });
+        }
+      } else if (appKey === 'todo') {
+        const castedTodo = castTodo(currentParticipant.appDatas.todo);
+        setAppsData({
+          ...targetParticipant,
+          targetApp: castedTodo || [],
+        });
+      }
+    };
+
     return (
       <ControlRKeyMenu
         menu={
@@ -585,7 +623,7 @@ export const ParticipantItem: (
             <div className="lk-participant-placeholder">
               <ParticipantPlaceholder />
             </div>
-            <div className="lk-participant-metadata" style={{ zIndex: 1000 }}>
+            <div className="lk-participant-metadata" style={{ zIndex: 4 }}>
               <StatusInfo
                 disabled={trackReference.participant.identity != localParticipant.identity}
                 items={items}
@@ -637,6 +675,12 @@ export const ParticipantItem: (
             </div>
             {trackReference.participant.identity != localParticipant.identity && (
               <WaveHand wsWave={{ ...wsTo }} />
+            )}
+            {trackReference.source !== Track.Source.ScreenShare && (
+              <AppFlotIconCollect
+                showApp={showApp}
+                participant={currentParticipant}
+              ></AppFlotIconCollect>
             )}
           </ParticipantTile>
         }

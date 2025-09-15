@@ -1,6 +1,14 @@
 import { Socket } from 'socket.io-client';
 import { connect_endpoint, UserDefineStatus } from '../std';
-import { AppKey, ParticipantSettings, RecordSettings } from '../std/space';
+import {
+  AppAuth,
+  AppKey,
+  ParticipantSettings,
+  RecordSettings,
+  SpaceCountdown,
+  SpaceTimer,
+  SpaceTodo,
+} from '../std/space';
 
 const SPACE_API = connect_endpoint('/api/space');
 
@@ -203,6 +211,54 @@ export const updateSpaceApps = async (spaceName: string, appKey: AppKey, enabled
   });
 };
 
+export interface UpdateSpaceAppSyncBody {
+  spaceName: string;
+  participantId: string;
+  sync: AppKey;
+}
+
+export const updateSpaceAppSync = async (
+  spaceName: string,
+  participantId: string,
+  sync: AppKey
+) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('apps', 'sync');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      spaceName,
+      participantId,
+      sync,
+    } as UpdateSpaceAppSyncBody),
+  });
+};
+
+export interface UpdateSpaceAppAuthBody {
+  spaceName: string;
+  participantId: string;
+  appAuth: AppAuth;
+}
+
+export const updateSpaceAppAuth = async (
+  spaceName: string,
+  participantId: string,
+  appAuth: AppAuth,
+) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('apps', 'auth');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      spaceName,
+      participantId,
+      appAuth,
+    } as UpdateSpaceAppAuthBody),
+  });
+};
+
 export const leaveSpace = async (spaceName: string, removeId: string, socket: Socket) => {
   const response = await deleteSpaceParticipant(spaceName, removeId);
   if (!response.ok) {
@@ -229,5 +285,32 @@ export const persistentSpace = async (spaceName: string, persistence: boolean) =
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ spaceName, persistence } as PersistentSpaceBody),
+  });
+};
+
+export interface UploadSpaceAppBody {
+  spaceName: string;
+  participantId: string;
+  data: SpaceTimer | SpaceCountdown | SpaceTodo;
+  ty: AppKey;
+}
+
+export const uploadSpaceApp = async (
+  spaceName: string,
+  participantId: string,
+  ty: AppKey,
+  data: SpaceTimer | SpaceCountdown | SpaceTodo,
+) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('apps', 'upload');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      spaceName,
+      data,
+      participantId,
+      ty,
+    } as UploadSpaceAppBody),
   });
 };

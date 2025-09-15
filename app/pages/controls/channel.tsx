@@ -37,7 +37,7 @@ import {
 } from '@ant-design/icons';
 import { GridLayout, TrackReferenceOrPlaceholder } from '@livekit/components-react';
 import { MessageInstance } from 'antd/es/message/interface';
-import { ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { AppKey, ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { ParticipantTileMini } from '../participant/mini';
 import { GLayout } from '../layout/grid';
 import { CheckboxGroupProps } from 'antd/es/checkbox';
@@ -63,6 +63,7 @@ interface ChannelProps {
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
+  showSingleFlotApp: (appKey: AppKey) => void;
 }
 
 export interface ChannelExports {
@@ -87,6 +88,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       updateSettings,
       toRenameSettings,
       setUserStatus,
+      showSingleFlotApp,
     }: ChannelProps,
     ref,
   ) => {
@@ -144,7 +146,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             setSubActiveKey((prev) => [...prev, child.name]);
             continue;
           }
-          if (!subRoomsTmp.includes(child.name)) {
+          if (!subRoomsTmp.includes(child.name) && child.participants.length > 0) {
             setSubActiveKey((prev) => [...prev, child.name]);
             continue;
           }
@@ -552,6 +554,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             updateSettings={updateSettings}
             toRenameSettings={toRenameSettings}
             setUserStatus={setUserStatus}
+            showSingleFlotApp={showSingleFlotApp}
           ></ParticipantTileMini>
         </GLayout>
       );
@@ -585,6 +588,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
               updateSettings={updateSettings}
               toRenameSettings={toRenameSettings}
               setUserStatus={setUserStatus}
+              showSingleFlotApp={showSingleFlotApp}
             ></ParticipantTileMini>
           </GLayout>
         );

@@ -486,35 +486,38 @@ export function useControlRKeyMenu({
         type: 'group',
         children: [
           {
-            key: 'invite.audio',
-            label: (
-              <span style={{ marginLeft: '8px' }}>{t('more.participant.set.invite.audio')}</span>
-            ),
-            icon: <SvgResource type="audio" svgSize={16} />,
-            disabled: isMicDisabled,
-          },
-          {
-            key: 'invite.video',
-            label: (
-              <span style={{ marginLeft: '8px' }}>{t('more.participant.set.invite.video')}</span>
-            ),
-            icon: <SvgResource type="video" svgSize={16} />,
-            disabled: isCamDisabled,
-          },
-          {
             key: 'invite.wave',
             label: (
-              <span style={{ marginLeft: '8px' }}>{t('more.participant.set.invite.wave')}</span>
+              <span style={{ marginLeft: '8px' }}>{t(`more.participant.set.invite.wave`)}</span>
             ),
             icon: <SvgResource type="wave" svgSize={16} />,
           },
           {
+            key: 'invite.audio',
+            label: (
+              <span style={{ marginLeft: '8px' }}>
+                {t(`more.participant.set.invite.${isMicDisabled ? 'close' : 'open'}.audio`)}
+              </span>
+            ),
+            icon: <SvgResource type="audio" svgSize={16} />,
+          },
+          {
+            key: 'invite.video',
+            label: (
+              <span style={{ marginLeft: '8px' }}>
+                {t(`more.participant.set.invite.${isCamDisabled ? 'close' : 'open'}.video`)}
+              </span>
+            ),
+            icon: <SvgResource type="video" svgSize={16} />,
+          },
+          {
             key: 'invite.share',
             label: (
-              <span style={{ marginLeft: '8px' }}>{t('more.participant.set.invite.share')}</span>
+              <span style={{ marginLeft: '8px' }}>
+                {t(`more.participant.set.invite.${isScreenShareDisabled ? 'close' : 'open'}.share`)}
+              </span>
             ),
             icon: <SvgResource type="screen" svgSize={16} />,
-            disabled: isScreenShareDisabled,
           },
         ],
       },
@@ -571,10 +574,11 @@ export function useControlRKeyMenu({
         socketId: spaceInfo.participants[selectedParticipant.identity].socketId,
       } as WsTo;
 
-      const inviteDevice = () => {
+      const inviteDevice = (isOpen: boolean) => {
         socket.emit('invite_device', {
           ...wsTo,
           device,
+          isOpen
         } as WsInviteDevice);
       };
 
@@ -595,17 +599,17 @@ export function useControlRKeyMenu({
         }
         case 'invite.audio': {
           device = Track.Source.Microphone;
-          inviteDevice();
+          inviteDevice(!isMicDisabled);
           break;
         }
         case 'invite.video': {
           device = Track.Source.Camera;
-          inviteDevice();
+          inviteDevice(!isCamDisabled);
           break;
         }
         case 'invite.share': {
           device = Track.Source.ScreenShare;
-          inviteDevice();
+          inviteDevice(!isScreenShareDisabled);
           break;
         }
         case 'safe.remove':

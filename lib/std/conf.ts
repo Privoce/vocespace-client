@@ -28,8 +28,8 @@ export interface RedisConf {
 }
 
 export interface S3Conf {
-  access_key: string;
-  secret_key: string;
+  accessKey: string;
+  secretKey: string;
   bucket: string;
   region: string;
 }

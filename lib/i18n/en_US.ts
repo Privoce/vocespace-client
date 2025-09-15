@@ -137,6 +137,16 @@ export default {
     channel: 'Channel',
     app: {
       title: 'Application',
+      upload: {
+        to_space: 'Upload application to space',
+        history: 'Upload history',
+        success: 'Application upload successful',
+        error: 'Application upload failed. Please try again later.',
+      },
+      tab: {
+        self: 'self',
+        no_auth: 'This user does not have read/write permissions enabled',
+      },
       settings: {
         filter: 'Filter required apps',
         desc: 'VoceSpace provides a variety of apps. As the host, you can select the apps that participants can use here.',
@@ -144,6 +154,20 @@ export default {
         update: {
           success: 'App settings updated successfully',
           error: 'App settings update failed. Please try again later.',
+        },
+        sync: {
+          title: 'Synchronize App Data',
+          auth: 'App Permissions',
+          auth_desc: 'Control other participants permissions on your app data',
+          desc_pub: 'Set visiblility to everyone can view',
+          desc_priv: 'Set visiblility to only me',
+          read: 'Read',
+          write: 'Read & write',
+          none: 'None',
+          update: {
+            success: 'App settings updated successfully',
+            error: 'App settings update failed. Please try again later.',
+          },
         },
       },
       timer: {
@@ -166,6 +190,9 @@ export default {
         create: 'Create todo',
         empty_value: 'Todo cannot be empty',
         delete: 'Todo deleted successfully',
+        undone: 'Undone',
+        done: 'Done',
+        unexport: "Current todo is empty, cannot export"
       },
     },
     record: {
@@ -205,10 +232,17 @@ export default {
       set: {
         invite: {
           title: 'Participant Invite',
-          video: 'Invite to Enable Camera',
           wave: 'Send a Reminder',
-          audio: 'Invite to Enable Microphone',
-          share: 'Invite to Share Screen',
+          open: {
+            video: 'Invite to Enable Camera',
+            audio: 'Invite to Enable Microphone',
+            share: 'Invite to Share Screen',
+          },
+          close: {
+            video: 'Invite to Disable Camera',
+            audio: 'Invite to Disable Microphone',
+            share: 'Invite to Stop Sharing Screen',
+          },
         },
         control: {
           title: 'Participant Control',

@@ -9,8 +9,8 @@ const {
   s3,
 } = getConfig();
 
-const S3_ACCESS_KEY = s3?.access_key;
-const S3_SECRET_KEY = s3?.secret_key;
+const S3_ACCESS_KEY = s3?.accessKey;
+const S3_SECRET_KEY = s3?.secretKey;
 const S3_BUCKET = s3?.bucket;
 const S3_REGION = s3?.region;
 

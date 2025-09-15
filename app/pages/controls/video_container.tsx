@@ -61,9 +61,10 @@ import {
 import { Button } from 'antd';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { Channel, ChannelExports } from './channel';
-import { PARTICIPANT_SETTINGS_KEY } from '@/lib/std/space';
+import { AppKey, PARTICIPANT_SETTINGS_KEY } from '@/lib/std/space';
 import { FlotLayout } from '../apps/flot';
 import { api } from '@/lib/api';
+import { SingleFlotLayout } from '../apps/single_flot';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -111,7 +112,14 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         space?.localParticipant?.identity || '', // 参与者 ID
       );
     const [openApp, setOpenApp] = useState<boolean>(false);
+    const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
+    const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
     const isActive = true;
+
+    const showSingleFlotApp = (appKey: AppKey) => {
+      setTargetAppKey(appKey);
+      setOpenSingleApp(!openSingleApp);
+    };
 
     useEffect(() => {
       if (!space) return;
@@ -139,21 +147,12 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       const syncSettings = async () => {
         // 将当前参与者的基础设置发送到服务器 ----------------------------------------------------------
         await updateSettings({
-          name: space.localParticipant.name || space.localParticipant.identity,
-          blur: uState.blur,
-          screenBlur: uState.screenBlur,
-          volume: uState.volume,
-          status: UserStatus.Online,
+          ...uState,
           socketId: socket.id,
+          name: space.localParticipant.name || space.localParticipant.identity,
           startAt: new Date().getTime(),
-          virtual: {
-            enabled: false,
-            role: ModelRole.None,
-            bg: ModelBg.ClassRoom,
-          },
-          openShareAudio: uState.openShareAudio,
-          openPromptSound: uState.openPromptSound,
         });
+        console.warn(uState);
         const roomName = `${space.localParticipant.name}'s room`;
 
         // 为新加入的参与者创建一个自己的私人房间
@@ -369,16 +368,16 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           let open: () => Promise<LocalTrackPublication | undefined>;
           switch (msg.device) {
             case Track.Source.Camera:
-              device_str = '摄像头';
-              open = () => space.localParticipant.setCameraEnabled(true);
+              device_str = 'common.device.camera';
+              open = () => space.localParticipant.setCameraEnabled(msg.isOpen);
               break;
             case Track.Source.Microphone:
-              device_str = '麦克风';
-              open = () => space.localParticipant.setMicrophoneEnabled(true);
+              device_str = 'common.device.microphone';
+              open = () => space.localParticipant.setMicrophoneEnabled(msg.isOpen);
               break;
             case Track.Source.ScreenShare:
-              device_str = '屏幕共享';
-              open = () => space.localParticipant.setScreenShareEnabled(true);
+              device_str = 'common.device.screen';
+              open = () => space.localParticipant.setScreenShareEnabled(msg.isOpen);
               break;
             default:
               return;
@@ -393,12 +392,12 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                 noteApi.destroy();
               }}
             >
-              {t('common.open')}
+              {t(`common.${msg.isOpen ? 'open' : 'close'}`)}
             </Button>
           );
 
           noteApi.info({
-            message: `${msg.senderName} ${t('msg.info.invite_device')} ${device_str}`,
+            message: `${msg.senderName} ${t('msg.info.invite_device')} ${t(device_str)}`,
             duration: 5,
             actions,
           });
@@ -869,13 +868,26 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     return (
       <div className="video_container_wrapper" style={{ position: 'relative' }}>
         {/* 右侧应用浮窗，悬浮态 */}
-        {showFlot && (
+        {showFlot && space && settings && (
           <FlotLayout
+            space={space.name}
             style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
             messageApi={messageApi}
             openApp={openApp}
             spaceInfo={settings}
           ></FlotLayout>
+        )}
+        {/* 右侧单应用浮窗，悬浮态，用于当用户点击自己视图头上角图标进行显示 */}
+        {space && (
+          <SingleFlotLayout
+            space={space.name}
+            style={{ position: 'absolute', top: '100px', right: '0px', zIndex: 1001 }}
+            messageApi={messageApi}
+            openApp={openSingleApp}
+            setOpen={setOpenSingleApp}
+            spaceInfo={settings}
+            appKey={targetAppKey}
+          ></SingleFlotLayout>
         )}
         {/* 左侧侧边栏 */}
         {space && (
@@ -898,6 +910,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             updateSettings={updateSettings}
             toRenameSettings={toSettingGeneral}
             setUserStatus={setUserStatus}
+            showSingleFlotApp={showSingleFlotApp}
           ></Channel>
         )}
         {/* 主视口 */}
@@ -928,6 +941,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                         setUserStatus={setUserStatus}
                         updateSettings={updateSettings}
                         toRenameSettings={toSettingGeneral}
+                        showSingleFlotApp={showSingleFlotApp}
+                        selfRoom={selfRoom}
                       ></ParticipantItem>
                     </GridLayout>
                   </div>
@@ -943,6 +958,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                           setUserStatus={setUserStatus}
                           updateSettings={updateSettings}
                           toRenameSettings={toSettingGeneral}
+                          showSingleFlotApp={showSingleFlotApp}
+                          selfRoom={selfRoom}
                         ></ParticipantItem>
                       </CarouselLayout>
                       {focusTrack && (
@@ -956,6 +973,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                           isFocus={isFocus}
                           updateSettings={updateSettings}
                           toRenameSettings={toSettingGeneral}
+                          showSingleFlotApp={showSingleFlotApp}
+                          selfRoom={selfRoom}
                         ></ParticipantItem>
                       )}
                     </FocusLayoutContainer>

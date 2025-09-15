@@ -31,12 +31,16 @@ import { UserDefineStatus } from '@/lib/std';
 import io from 'socket.io-client';
 import { ChatMsgItem } from '@/lib/std/chat';
 import {
+  AppAuth,
+  Countdown,
+  DEFAULT_COUNTDOWN,
   DEFAULT_PARTICIPANT_SETTINGS,
+  DEFAULT_TIMER,
   PARTICIPANT_SETTINGS_KEY,
   ParticipantSettings,
+  Timer,
+  TodoItem,
 } from '@/lib/std/space';
-import { TodoItem } from '../../pages/apps/todo_list';
-import dayjs, { type Dayjs } from 'dayjs';
 import { api } from '@/lib/api';
 import { WsBase, WsMouseMove, WsTo } from '@/lib/std/device';
 import { createRTCQulity, DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
@@ -99,22 +103,22 @@ export const chatMsgState = atom({
   },
 });
 
-export const AppsDataState = atom({
-  key: 'AppsDataState',
+// export const AppsDataState = atom({
+//   key: 'AppsDataState',
+//   default: {
+//     todo: [] as TodoItem[],
+//     timer: DEFAULT_TIMER,
+//     countdown: DEFAULT_COUNTDOWN,
+//   },
+// });
+
+export const SingleAppDataState = atom({
+  key: 'SingleAppDataState',
   default: {
-    todo: [] as TodoItem[],
-    timer: {
-      value: null as number | null,
-      running: false,
-      stopTimeStamp: null as number | null,
-      records: [] as string[],
-    },
-    countdown: {
-      value: null as number | null,
-      duration: dayjs().hour(0).minute(5).second(0) as Dayjs | null,
-      running: false,
-      stopTimeStamp: null as number | null,
-    },
+    participantId: undefined as string | undefined,
+    participantName: undefined as string | undefined,
+    auth: 'read' as AppAuth,
+    targetApp: undefined as Timer | Countdown | TodoItem[] | undefined,
   },
 });
 
@@ -169,7 +173,13 @@ export function PageClientImpl(props: {
     const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
     if (storedSettingsStr) {
       const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
-      setUState(storedSettings);
+      if (storedSettings?.version !== '0.3.0') {
+        // 版本不匹配/不存在，直接删除
+        localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
+        return;
+      } else {
+        setUState(storedSettings);
+      }
     } else {
       // 没有则存到localStorage中
       localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));

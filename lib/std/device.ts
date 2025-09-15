@@ -65,6 +65,7 @@ export interface WsJoinRoom extends WsTo {
 
 export interface WsInviteDevice extends WsTo {
   device: Track.Source;
+  isOpen: boolean;
 }
 
 export enum ControlType {
