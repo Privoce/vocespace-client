@@ -26,7 +26,7 @@ import {
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
 import { useLocalParticipant } from '@livekit/components-react';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
 
 export interface FlotLayoutProps {

@@ -21,7 +21,7 @@ import {
 // import { AppHistory } from './history';
 import { useLocalParticipant } from '@livekit/components-react';
 import { useRecoilState } from 'recoil';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { api } from '@/lib/api';
 import { WsBase } from '@/lib/std/device';
 
