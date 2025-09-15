@@ -1,25 +1,12 @@
 import { SvgResource } from '@/app/resources/svg';
-import {
-  Button,
-  Collapse,
-  CollapseProps,
-  Popover,
-  Tabs,
-  TabsProps,
-  theme,
-  Tooltip,
-} from 'antd';
+import { Button, Collapse, CollapseProps, Popover, Tabs, TabsProps, theme, Tooltip } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import styles from '@/styles/apps.module.scss';
 import { AppTimer } from './timer';
 import { AppCountdown } from './countdown';
 import { AppTodo, ExportTodoHistroy } from './todo_list';
 import { MessageInstance } from 'antd/es/message/interface';
-import {
-  ProfileOutlined,
-  TeamOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
+import { ProfileOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons';
 import { useI18n } from '@/lib/i18n/i18n';
 import {
   AppAuth,
@@ -243,23 +230,27 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
     return isRemote ? (
       <span></span>
     ) : (
-      <Tooltip title={t('more.app.settings.sync.desc')}>
+      <>
         {spaceInfo.participants[localParticipant.identity].sync.includes(key) ? (
-          <TeamOutlined
-            onClick={(e) => {
-              e.stopPropagation();
-              updateAppSync(key);
-            }}
-          />
+          <Tooltip title={t('more.app.settings.sync.desc_priv')}>
+            <TeamOutlined
+              onClick={(e) => {
+                e.stopPropagation();
+                updateAppSync(key);
+              }}
+            />
+          </Tooltip>
         ) : (
-          <UserOutlined
-            onClick={(e) => {
-              e.stopPropagation();
-              updateAppSync(key);
-            }}
-          />
+          <Tooltip title={t('more.app.settings.sync.desc_pub')}>
+            <UserOutlined
+              onClick={(e) => {
+                e.stopPropagation();
+                updateAppSync(key);
+              }}
+            />
+          </Tooltip>
         )}
-      </Tooltip>
+      </>
     );
   };
 
@@ -349,7 +340,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
     }
 
     return items;
-  }
+  };
 
   const selfItems: CollapseProps['items'] = useMemo(() => {
     // items.filter((item) => apps.includes(item.key as AppKey))

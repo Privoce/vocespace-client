@@ -295,7 +295,7 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
     enabled: false,
   },
   openPromptSound: true,
-  openShareAudio: false,
+  openShareAudio: true,
   sync: ['todo'], // 默认同步待办事项
   auth: 'read',
   appDatas: {},

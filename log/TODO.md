@@ -444,7 +444,9 @@ lk load-test \
 - [x] todo可修改
 - [x] countdown清除后Invalid Date
 - [x] todo可导出/发送到chat，目标为有详细的时间记录
-
+- [x] chat link无效
+- [x] 默认分享时打开声音
+- [x] 修复share app i18n
 ---
 
 - [ ] 少参与者，多观察者 (Egress 实时传输，站点构建)
