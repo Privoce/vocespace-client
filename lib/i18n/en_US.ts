@@ -33,6 +33,7 @@ export default {
     },
     chat: 'Chat',
     chat_placeholder: 'Please enter a message',
+    chat_drag_file_here: 'Drag file here',
     send: 'Send',
     send_file_or: 'Do you want to send this file?',
     leave: 'Leave',
