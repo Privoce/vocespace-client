@@ -146,6 +146,7 @@ export default function Dashboard() {
       console.error('Failed to fetch current rooms:', error);
     } finally {
       setLoading(false);
+      await fetchHistorySpaces();
     }
   };
 
@@ -157,6 +158,7 @@ export default function Dashboard() {
       return;
     } else {
       const { records }: { records: SpaceDateRecords | null } = await response.json();
+      console.warn(records);
       if (records) {
         // 转为 HistorySpaceData 格式
         const historyData: HistorySpaceData[] = [];
@@ -251,7 +253,7 @@ export default function Dashboard() {
               monthlyParticipants[participantName] = { total: totalDuration, period: monthlyDuration };
             }
           });
-
+          console.warn(dailyParticipants);
           // 转换为LeaderboardData格式
           const formatDuration = (ms: number) => {
             const hours = Math.floor(ms / 3600000);

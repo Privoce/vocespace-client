@@ -280,7 +280,7 @@ export const DEFAULT_COUNTDOWN: Countdown = {
 export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
   participants: {},
   ownerId: '',
-  persistence: false,
+  persistence: true,
   record: { active: false },
   startAt,
   children: [],

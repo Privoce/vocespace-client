@@ -442,8 +442,8 @@ class SpaceManager {
           participants,
         } as SpaceDateRecord;
       } else {
+        // 如果有记录，需要根据timeRecord进行判断，如果传入的start和记录的start相同，表示删除房间，那么更新end
         if (!participants) {
-          // 如果有记录，需要根据timeRecord进行判断，如果传入的start和记录的start相同，表示删除房间，那么更新end
           let startRecord = record.space.find((r) => r.start === timeRecord.start);
           if (startRecord) {
             // 如果已经存在记录，则更新结束时间戳
@@ -469,13 +469,29 @@ class SpaceManager {
           }
         } else {
           // 有用户记录，这里即使有也是只有1条，更新用户的结束时间戳
-          let userRecord = record?.participants[Object.keys(record.participants)[0]];
+          let user = Object.keys(record.participants)[0];
+          let userTimeRecord = participants[user];
+          let userRecord = record?.participants[user];
           if (userRecord) {
-            userRecord.forEach((r) => {
-              if (!r.end) {
-                r.end = timeRecord.end || Date.now();
+            for (const r of userRecord) {
+              if (r.end && r.start) {
+                continue;
               }
-            });
+
+              if (!r.end) {
+                r.end = userTimeRecord[0].end || Date.now();
+              } else {
+                // 有结束时间戳就添加新的开始时间戳
+                let start = userTimeRecord[0].start;
+                if (start) {
+                  userRecord.push({
+                    start,
+                  });
+                }
+              }
+            }
+          } else {
+            record.participants = participants;
           }
         }
       }
