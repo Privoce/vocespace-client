@@ -33,6 +33,7 @@ export default {
     },
     chat: '聊天',
     chat_placeholder: '请输入消息',
+    chat_drag_file_here: '将文件拖放到此处',
     send: '发送',
     send_file_or: '是否发送文件？',
     leave: '离开',
