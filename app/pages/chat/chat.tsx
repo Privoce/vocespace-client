@@ -9,7 +9,7 @@ import { ulid } from 'ulid';
 import { Room } from 'livekit-client';
 import { chatMsgState, socket } from '@/app/[spaceName]/PageClientImpl';
 import { MessageInstance } from 'antd/es/message/interface';
-import { LinkPreview } from './link_preview';
+import {  useLinkPreview } from './link_preview';
 import Dragger from 'antd/es/upload/Dragger';
 import { useRecoilState } from 'recoil';
 import { ChatMsgItem } from '@/lib/std/chat';
@@ -241,7 +241,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
       >
         <Dragger
           className={styles.msg}
-          style={{ border: 'none' }}
+          style={{ border: 'none', cursor: 'default' }}
           multiple={false}
           name="file"
           beforeUpload={handleBeforeUpload}
@@ -301,13 +301,77 @@ function ChatMsgItemCmp({ isLocal, msg, downloadFile, isImg }: ChatMsgItemProps)
     return urlRegex.test(text);
   };
 
-  const LinkPreviewCmp = React.useMemo(() => {
-    return msg.type === 'text' && msg.message && containsUrl(msg.message) ? (
-      <LinkPreview text={msg.message}></LinkPreview>
-    ) : (
-      <></>
-    );
-  }, [msg.message]);
+  const { link, linkPreview } = useLinkPreview({
+    text: msg.message || undefined,
+    isLocal,
+  });
+
+  const mixLinkText = (originText: string, previewLink?: string) => {
+    // URL 正则表达式，匹配 http 和 https 链接
+    const urlRegex = /https?:\/\/[\w\-_]+(\.[\w\-_]+)+(?:[\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/gi;
+    
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+    let linkIndex = 0;
+
+    // 重置正则表达式的 lastIndex
+    urlRegex.lastIndex = 0;
+
+    while ((match = urlRegex.exec(originText)) !== null) {
+      const url = match[0];
+      const startIndex = match.index;
+
+      // 添加链接前的普通文本
+      if (startIndex > lastIndex) {
+        const textBefore = originText.substring(lastIndex, startIndex);
+        parts.push(
+          <span key={`text-${linkIndex}-before`}>
+            {textBefore}
+          </span>
+        );
+      }
+
+      // 添加链接
+      parts.push(
+        <a
+          key={`link-${linkIndex}`}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: '#22CCEE',
+            textDecoration: 'underline',
+          }}
+          onClick={(e) => {
+            e.stopPropagation(); // 防止冒泡
+          }}
+        >
+          {url}
+        </a>
+      );
+
+      lastIndex = startIndex + url.length;
+      linkIndex++;
+    }
+
+    // 添加最后剩余的普通文本
+    if (lastIndex < originText.length) {
+      const textAfter = originText.substring(lastIndex);
+      parts.push(
+        <span key={`text-${linkIndex}-after`}>
+          {textAfter}
+        </span>
+      );
+    }
+
+    // 如果没有找到任何链接，返回原始文本
+    if (parts.length === 0) {
+      return originText;
+    }
+
+    return <>{parts}</>;
+  }
 
   return (
     <li className={liClass}>
@@ -324,9 +388,9 @@ function ChatMsgItemCmp({ isLocal, msg, downloadFile, isImg }: ChatMsgItemProps)
                   textAlign: 'left',
                 }}
               >
-                {msg.message}
+                {mixLinkText(msg.message || '')}
               </div>
-              {LinkPreviewCmp}
+              {msg.message && containsUrl(msg.message) && linkPreview}
             </div>
           ) : (
             <Popover

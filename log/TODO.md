@@ -447,6 +447,8 @@ lk load-test \
 - [x] chat link无效
 - [x] 默认分享时打开声音
 - [x] 修复share app i18n
+- [x] chat链接布局
+- [x] 拖入显示区域
 ---
 
 - [ ] 少参与者，多观察者 (Egress 实时传输，站点构建)
