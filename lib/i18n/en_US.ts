@@ -357,6 +357,7 @@ export default {
       signed: 'Signed',
       domains: 'Domains',
       limit: 'Limit',
+      person: "Person Limit",
       created_at: 'Created At',
       expires_at: 'Expires At',
       value: 'License Value',

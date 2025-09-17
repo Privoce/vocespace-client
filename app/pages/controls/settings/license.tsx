@@ -1,7 +1,7 @@
 import { licenseState } from '@/app/[spaceName]/PageClientImpl';
 import { useI18n } from '@/lib/i18n/i18n';
 import styles from '@/styles/controls.module.scss';
-import { Button, Input, Modal, Radio, RadioChangeEvent } from 'antd';
+import { Button, Descriptions, Input, Modal, Radio, RadioChangeEvent, Tag } from 'antd';
 import { CheckboxGroupProps } from 'antd/es/checkbox';
 import TextArea from 'antd/es/input/TextArea';
 import { MessageInstance } from 'antd/es/message/interface';
@@ -10,6 +10,19 @@ import { useRecoilState } from 'recoil';
 import { Calendly } from '../widgets/calendly';
 import { getServerIp } from '@/lib/std';
 import { api } from '@/lib/api';
+import {
+  getLicensePersonLimit,
+  LicenseStatus,
+  licenseStatus,
+  licenseStatusColor,
+  licenseStatusStr,
+} from '@/lib/std/space';
+import { PresetStatusColorType } from 'antd/es/_util/colors';
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ExclamationCircleOutlined,
+} from '@ant-design/icons';
 
 type ModelKey = 'update' | 'renew' | 'server';
 type OptionValue = 'renew' | 'custom';
@@ -80,58 +93,64 @@ export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) 
   const items = useMemo(() => {
     let items = [
       {
-        key: t('settings.license.signed'),
-        value: userLicense?.id ? 'Yes' : userLicense.ilimit == 'Free' ? 'Yes' : 'No',
+        key: 1,
+        label: t('settings.license.signed'),
+        children: userLicense?.id ? 'Yes' : userLicense.ilimit == 'free' ? 'Yes' : 'No',
       },
       {
-        key: t('settings.license.domains'),
-        value: userLicense.domains,
+        key: 2,
+        label: t('settings.license.domains'),
+        children: userLicense.domains,
       },
       {
-        key: t('settings.license.limit'),
-        value: userLicense.ilimit,
+        key: 3,
+        label: t('settings.license.limit'),
+        children: userLicense.ilimit,
       },
       {
-        key: t('settings.license.created_at'),
-        value: fmtDate(new Date(userLicense.created_at * 1000)),
+        key: 4,
+        label: t('settings.license.person'),
+        children: getLicensePersonLimit(userLicense.ilimit, userLicense.isTmp).toString(),
       },
       {
-        key: t('settings.license.expires_at'),
-        value: fmtDate(new Date(userLicense.expires_at * 1000)),
+        key: 5,
+        label: t('settings.license.created_at'),
+        children: fmtDate(new Date(userLicense.created_at * 1000)),
       },
       {
-        key: t('settings.license.value'),
-        value: userLicense.value,
+        key: 6,
+        label: t('settings.license.expires_at'),
+        children: fmtDate(new Date(userLicense.expires_at * 1000)),
+      },
+      {
+        key: 7,
+        label: t('settings.license.value'),
+        children: userLicense.value,
       },
     ];
     const now_timestamp = new Date().getTime();
     const valid = userLicense.value !== '' && userLicense.expires_at < now_timestamp;
-    const validStyles = valid
-      ? {}
-      : {
-          border: '2px solid #f00',
-          backgroundColor: '#fdd',
-        };
-
-    const validTextStyles = valid
-      ? {}
-      : {
-          color: '#f00',
-        };
-
+    const status = licenseStatus(userLicense);
+    const { color, text: statusText, icon: statusIcon } = licenseStatusTag(status);
     return (
-      <div className={styles.license_wrapper} style={validStyles}>
-        {items.map((item, index) => (
-          <div key={index} style={{ width: '100%' }}>
-            <div className={styles.license_wrapper_title} style={validTextStyles}>
-              {item.key}
-            </div>
-            <div className={styles.license_wrapper_content}>{item.value}</div>
-          </div>
-        ))}
-      </div>
+      <Descriptions
+        title={
+          <>
+            <span>{t('settings.license.title')}</span>
+            <Tag style={{ marginLeft: 16 }} color={color} icon={statusIcon}>
+              {statusText}
+            </Tag>
+          </>
+        }
+        bordered
+        column={1}
+        styles={{
+          label: { color: valid ? '#8c8c8c' : '#fdd', minWidth: '120px' },
+        }}
+        items={items}
+      />
     );
-  }, [userLicense]);
+  }, [userLicense, t]);
 
   const options: CheckboxGroupProps<string>['options'] = [
     {
@@ -282,9 +301,7 @@ export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) 
           </>
         )}
       </Modal>
-      <div className={styles.setting_box}>
-        <h3>{t('settings.license.title')}</h3>
-      </div>
+      <div className={styles.setting_box}>{/* <h3>{t('settings.license.title')}</h3> */}</div>
       {items}
       <div className={styles.setting_box} style={{ gap: '8px', display: 'flex' }}>
         <Button
@@ -313,3 +330,38 @@ export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) 
     </div>
   );
 }
+
+export const licenseStatusTag = (
+  status: LicenseStatus,
+): {
+  color: PresetStatusColorType;
+  text: string;
+  icon: React.ReactNode;
+} => {
+  switch (status) {
+    case LicenseStatus.Expired:
+      return {
+        color: 'error',
+        text: 'Expired',
+        icon: <CloseCircleOutlined />,
+      };
+    case LicenseStatus.Valid:
+      return {
+        color: 'success',
+        text: 'Valid',
+        icon: <CheckCircleOutlined />,
+      };
+    case LicenseStatus.Tmp:
+      return {
+        color: 'warning',
+        text: 'Temporary',
+        icon: <ExclamationCircleOutlined />,
+      };
+    default:
+      return {
+        color: 'error',
+        text: 'Expired',
+        icon: <CloseCircleOutlined />,
+      };
+  }
+};

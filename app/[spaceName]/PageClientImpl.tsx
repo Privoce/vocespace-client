@@ -36,6 +36,7 @@ import {
   DEFAULT_COUNTDOWN,
   DEFAULT_PARTICIPANT_SETTINGS,
   DEFAULT_TIMER,
+  License,
   PARTICIPANT_SETTINGS_KEY,
   ParticipantSettings,
   Timer,
@@ -81,8 +82,9 @@ export const licenseState = atom({
     created_at: 1747742400,
     expires_at: 1779278400,
     value: 'vocespace_pro__KUgwpDrr-g3iXIX41rTrSCsWAcn9UFX8dOYMr0gAARQ',
-    ilimit: 'Free',
-  },
+    ilimit: 'free',
+    isTmp: true,
+  } as License,
 });
 
 export const roomIdTmpState = atom({

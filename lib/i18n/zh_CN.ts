@@ -336,10 +336,11 @@ export default {
       signed: '是否已签名',
       domains: '允许的域名',
       limit: '证书限制',
+      person: '人数限制',
       created_at: '创建时间',
       expires_at: '过期时间',
       value: '证书值',
-      renew: '续订/更新证书',
+      renew: '购买证书',
       update: '手动更新',
       input: '请输入证书',
       gift: {

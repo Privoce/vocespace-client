@@ -1,7 +1,7 @@
 import dayjs, { Dayjs } from 'dayjs';
 import { UserDefineStatus, UserStatus } from '.';
 import { ModelBg, ModelRole } from './virtual';
-
+import { PresetStatusColorType } from 'antd/es/_util/colors';
 /**
  * Child room information
  */
@@ -184,7 +184,7 @@ export interface SpaceInfo {
 export interface TodoItem {
   id: string;
   title: string;
-  done?: number
+  done?: number;
 }
 
 export interface Timer {
@@ -300,6 +300,115 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   auth: 'read',
   appDatas: {},
 };
+
+export type LicenseLimit = 'free' | 'pro' | 'enterprise';
+
+/**
+ * License information
+ */
+export interface License {
+  /**
+   * License ID
+   */
+  id?: string;
+  /**
+   * user email (buyer email)
+   */
+  email?: string;
+  /**
+   * server domain
+   */
+  domains?: string;
+  /**
+   * license creation timestamp
+   */
+  created_at: number;
+  /**
+   * license expiration timestamp
+   */
+  expires_at: number;
+  /**
+   * license token value
+   */
+  value: string;
+  /**
+   * license limit
+   */
+  ilimit: LicenseLimit;
+  /**
+   * is a temporary license or not
+   */
+  isTmp?: boolean;
+}
+
+export const getLicensePersonLimit = (licenseLimit: LicenseLimit, isTmp?: boolean): number => {
+  if (isTmp) return 20;
+  switch (licenseLimit) {
+    case 'free':
+      return 5;
+    case 'pro':
+      return 9999;
+    case 'enterprise':
+      return 9999;
+    default:
+      return 5;
+  }
+};
+
+export enum LicenseStatus {
+  /**
+   * license is expired
+   */
+  Expired,
+  /**
+   * license is valid
+   */
+  Valid,
+  /**
+   * tmp valid
+   */
+  Tmp,
+}
+
+export const licenseStatus = (license: License): LicenseStatus => {
+  const now = Date.now();
+  if (license.isTmp) {
+    return LicenseStatus.Tmp;
+  } else {
+    if (now > license.expires_at * 1000) {
+      return LicenseStatus.Expired;
+    }
+    return LicenseStatus.Valid;
+  }
+};
+
+export const licenseStatusStr = (status: LicenseStatus): string => {
+  switch (status) {
+    case LicenseStatus.Expired:
+      return 'Expired';
+    case LicenseStatus.Valid:
+      return 'Valid';
+    case LicenseStatus.Tmp:
+      return 'Temporary';
+    default:
+      return 'Expired';
+  }
+};
+
+export const licenseStatusColor = (status: LicenseStatus): PresetStatusColorType => {
+  switch (status) {
+    case LicenseStatus.Expired:
+      return 'error';
+    case LicenseStatus.Valid:
+      return 'success';
+    case LicenseStatus.Tmp:
+      return 'warning';
+    default:
+      return 'error';
+  }
+};
+
+
 
 /**
  * key in localStorage
