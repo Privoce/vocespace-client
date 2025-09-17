@@ -65,11 +65,14 @@ import { AppKey, PARTICIPANT_SETTINGS_KEY } from '@/lib/std/space';
 import { FlotLayout } from '../apps/flot';
 import { api } from '@/lib/api';
 import { SingleFlotLayout } from '../apps/single_flot';
+import { analyzeLicense, getLicensePersonLimit } from '@/lib/std/license';
+import { VocespaceConfig } from '@/lib/std/conf';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
   noteApi: NotificationInstance;
   setPermissionDevice: (device: Track.Source) => void;
+  config: VocespaceConfig;
 }
 
 export interface VideoContainerExports {
@@ -86,6 +89,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       noteApi,
       messageApi,
       setPermissionDevice,
+      config,
       ...props
     }: VideoContainerProps,
     ref,
@@ -191,16 +195,30 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         }
       };
 
+      // 从config中获取license进行校验 -------------------------------------------------------------------
+      const validLicense = async () => {
+        if (!uLicenseState.isAnalysis) {
+          const license = analyzeLicense(config.license);
+          setULicenseState({
+            ...license,
+            isAnalysis: true,
+            personLimit: getLicensePersonLimit(license.limit, license.isTmp),
+          });
+        }
+      };
+
       if (init) {
         // 获取历史聊天记录
-        fetchChatMsg();
-        syncSettings().then(() => {
-          // 新的用户更新到服务器之后，需要给每个参与者发送一个websocket事件，通知他们更新用户状态
-          socket.emit('update_user_status', {
-            space: space.name,
-          } as WsBase);
+        validLicense().then(() => {
+          fetchChatMsg();
+          syncSettings().then(() => {
+            // 新的用户更新到服务器之后，需要给每个参与者发送一个websocket事件，通知他们更新用户状态
+            socket.emit('update_user_status', {
+              space: space.name,
+            } as WsBase);
+          });
+          setInit(false);
         });
-        setInit(false);
       }
 
       // 重写初始化用户 -----------------------------------------------------------------------------
@@ -289,15 +307,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
       // 房间事件监听器 --------------------------------------------------------------------------------
       const onParticipantConnected = async (participant: Participant) => {
-        // 通过许可证判断人数，free为5人，pro为20人，若超过则拒绝加入并给出提示
-        let user_limit = 5;
-        if (uLicenseState.id && uLicenseState.value! == '') {
-          if (uLicenseState.ilimit === 'pro') {
-            user_limit = 20;
-          }
-        }
-
-        if (space.remoteParticipants.size > user_limit) {
+        // 通过许可证判断人数
+        if (space.remoteParticipants.size >= uLicenseState.personLimit - 1) {
           if (space.localParticipant.identity === participant.identity) {
             messageApi.error({
               content: t('common.full_user'),
@@ -594,7 +605,17 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         space.off(ParticipantEvent.TrackMuted, onTrackHandler);
         space.off(RoomEvent.ParticipantDisconnected, onParticipantDisConnected);
       };
-    }, [space?.state, space?.localParticipant, uState, init, uLicenseState, IP, chatMsg, socket]);
+    }, [
+      space?.state,
+      space?.localParticipant,
+      uState,
+      init,
+      uLicenseState,
+      IP,
+      chatMsg,
+      socket,
+      config,
+    ]);
 
     const selfRoom = useMemo(() => {
       if (!space || space.state !== ConnectionState.Connected) return;

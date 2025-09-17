@@ -3,6 +3,7 @@
 // 只会在服务器端使用
 import { SliderMarks } from 'antd/es/slider';
 import { VideoCodec, VideoPreset } from 'livekit-client';
+import { DEFAULT_LICENSE } from './license';
 
 export interface TurnConf {
   credential: string;
@@ -49,7 +50,13 @@ export interface VocespaceConfig {
   maxBitrate?: number;
   maxFramerate?: number;
   priority?: RTCPriorityType;
+  /**
+   * redis configuration for presence and other features
+   */
   redis: RedisConf;
+  /**
+   * s3 storage for recording and snapshots configuration
+   */
   s3?: S3Conf;
   /**
    * 服务器的主机地址，这可以用来检测你的令牌是否有效
@@ -59,7 +66,13 @@ export interface VocespaceConfig {
    * **无需加上 http:// 或 https:// 前缀，也无需端口号**
    */
   serverUrl: string;
+  /**
+   * host token for dashboard resolution control
+   * 默认值: vocespace_privoce
+   * 通过这个令牌，你可以在仪表盘中控制房间的分辨率
+   */
   hostToken: string;
+  license: string;
 }
 
 // 2k, 30fps, 3Mbps
@@ -83,6 +96,7 @@ export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig = {
   },
   serverUrl: 'localhost',
   hostToken: 'vocespace_privoce',
+  license: DEFAULT_LICENSE.value,
 };
 
 const RTCVideoPresets = (options: {

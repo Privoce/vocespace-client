@@ -36,7 +36,6 @@ import {
   DEFAULT_COUNTDOWN,
   DEFAULT_PARTICIPANT_SETTINGS,
   DEFAULT_TIMER,
-  License,
   PARTICIPANT_SETTINGS_KEY,
   ParticipantSettings,
   Timer,
@@ -47,6 +46,7 @@ import { WsBase, WsMouseMove, WsTo } from '@/lib/std/device';
 import { createRTCQulity, DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
+import { DEFAULT_LICENSE, License } from '@/lib/std/license';
 
 const TURN_CREDENTIAL = process.env.TURN_CREDENTIAL ?? '';
 const TURN_USERNAME = process.env.TURN_USERNAME ?? '';
@@ -76,15 +76,10 @@ export const roomStatusState = atom({
 export const licenseState = atom({
   key: 'licenseState',
   default: {
-    id: undefined,
-    email: undefined,
-    domains: '*',
-    created_at: 1747742400,
-    expires_at: 1779278400,
-    value: 'vocespace_pro__KUgwpDrr-g3iXIX41rTrSCsWAcn9UFX8dOYMr0gAARQ',
-    ilimit: 'free',
-    isTmp: true,
-  } as License,
+    ...DEFAULT_LICENSE,
+    isAnalysis: false,
+    personLimit: 5
+  },
 });
 
 export const roomIdTmpState = atom({
@@ -104,15 +99,6 @@ export const chatMsgState = atom({
     unhandled: 0,
   },
 });
-
-// export const AppsDataState = atom({
-//   key: 'AppsDataState',
-//   default: {
-//     todo: [] as TodoItem[],
-//     timer: DEFAULT_TIMER,
-//     countdown: DEFAULT_COUNTDOWN,
-//   },
-// });
 
 export const SingleAppDataState = atom({
   key: 'SingleAppDataState',
@@ -327,9 +313,7 @@ function VideoConferenceComponent(props: {
           maxFramerate: props.config.maxFramerate ?? 30, // 30fps
           priority: 'medium',
         },
-        screenShareSimulcastLayers: props.options.hq
-          ? [resolutions[0], resolutions[1]]
-          : [resolutions[1], resolutions[2]],
+        screenShareSimulcastLayers: resolutions
       },
       audioCaptureDefaults: {
         deviceId: props.userChoices.audioDeviceId ?? undefined,
@@ -537,6 +521,7 @@ function VideoConferenceComponent(props: {
           messageApi={props.messageApi}
           noteApi={props.notApi}
           setPermissionDevice={setPermissionDevice}
+          config={props.config}
         ></VideoContainer>
         {/* <DebugMode /> */}
         <RecordingIndicator />

@@ -16,7 +16,7 @@ import {
   licenseStatus,
   licenseStatusColor,
   licenseStatusStr,
-} from '@/lib/std/space';
+} from '@/lib/std/license';
 import { PresetStatusColorType } from 'antd/es/_util/colors';
 import {
   CheckCircleOutlined,
@@ -95,7 +95,7 @@ export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) 
       {
         key: 1,
         label: t('settings.license.signed'),
-        children: userLicense?.id ? 'Yes' : userLicense.ilimit == 'free' ? 'Yes' : 'No',
+        children: userLicense.isAnalysis ? 'Yes' : 'No',
       },
       {
         key: 2,
@@ -105,12 +105,12 @@ export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) 
       {
         key: 3,
         label: t('settings.license.limit'),
-        children: userLicense.ilimit,
+        children: userLicense.limit,
       },
       {
         key: 4,
         label: t('settings.license.person'),
-        children: getLicensePersonLimit(userLicense.ilimit, userLicense.isTmp).toString(),
+        children: getLicensePersonLimit(userLicense.limit, userLicense.isTmp).toString(),
       },
       {
         key: 5,
@@ -301,7 +301,6 @@ export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) 
           </>
         )}
       </Modal>
-      <div className={styles.setting_box}>{/* <h3>{t('settings.license.title')}</h3> */}</div>
       {items}
       <div className={styles.setting_box} style={{ gap: '8px', display: 'flex' }}>
         <Button
@@ -326,6 +325,10 @@ export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) 
       <div className={styles.gift_box}>
         <h2>{t('settings.license.gift.title')}</h2>
         <div>{t('settings.license.gift.desc')}</div>
+        <img
+          src="https://static.readdy.ai/image/736cb33f85ee328c22e5d7e17bec9c40/1e18fe5f59b60ead0da50d1d023aab98.png"
+          style={{ width: '120px', margin: '8px 0' }}
+        ></img>
       </div>
     </div>
   );
