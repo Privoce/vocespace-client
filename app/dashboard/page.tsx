@@ -253,12 +253,12 @@ export default function Dashboard() {
               monthlyParticipants[participantName] = { total: totalDuration, period: monthlyDuration };
             }
           });
-          console.warn(dailyParticipants);
           // 转换为LeaderboardData格式
           const formatDuration = (ms: number) => {
             const hours = Math.floor(ms / 3600000);
             const minutes = Math.floor((ms % 3600000) / 60000);
-            return `${hours}h ${minutes}m`;
+            const seconds = Math.floor((ms % 60000) / 1000);
+            return `${hours}h ${minutes}m ${seconds}s`;
           };
 
           dailyData[spaceId] = Object.entries(dailyParticipants)
