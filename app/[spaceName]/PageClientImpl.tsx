@@ -33,20 +33,18 @@ import { ChatMsgItem } from '@/lib/std/chat';
 import {
   AppAuth,
   Countdown,
-  DEFAULT_COUNTDOWN,
   DEFAULT_PARTICIPANT_SETTINGS,
-  DEFAULT_TIMER,
   PARTICIPANT_SETTINGS_KEY,
   ParticipantSettings,
   Timer,
   TodoItem,
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
-import { WsBase, WsMouseMove, WsTo } from '@/lib/std/device';
+import { WsBase, WsTo } from '@/lib/std/device';
 import { createRTCQulity, DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
-import { DEFAULT_LICENSE, License } from '@/lib/std/license';
+import { DEFAULT_LICENSE } from '@/lib/std/license';
 
 const TURN_CREDENTIAL = process.env.TURN_CREDENTIAL ?? '';
 const TURN_USERNAME = process.env.TURN_USERNAME ?? '';
@@ -78,7 +76,7 @@ export const licenseState = atom({
   default: {
     ...DEFAULT_LICENSE,
     isAnalysis: false,
-    personLimit: 5
+    personLimit: 5,
   },
 });
 
@@ -313,7 +311,7 @@ function VideoConferenceComponent(props: {
           maxFramerate: props.config.maxFramerate ?? 30, // 30fps
           priority: 'medium',
         },
-        screenShareSimulcastLayers: resolutions
+        screenShareSimulcastLayers: resolutions,
       },
       audioCaptureDefaults: {
         deviceId: props.userChoices.audioDeviceId ?? undefined,

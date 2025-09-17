@@ -118,11 +118,11 @@ export const DEFAULT_TMP_LICENSE: License = {
   expires_at: 4891334400,
   created_at: 1735660800,
   domains: '*',
-  limit: 'pro',
-  id: '608007ac-db7f-4e49-9db4-2effbbc0fe93',
-  isTmp: false,
+  limit: 'free',
+  id: '64e2260e-1340-4164-9cfd-30e028ea84ed',
+  isTmp: true,
   value:
-    'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJwcm8iLCJpZCI6IjYwODAwN2FjLWRiN2YtNGU0OS05ZGI0LTJlZmZiYmMwZmU5MyJ9.O7_iQQpP9DYsn7BzsaAlxSjEBjj5irCfRln_l6ucFtE',
+    'eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E',
 };
 
 /**

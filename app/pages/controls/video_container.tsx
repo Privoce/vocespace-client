@@ -40,7 +40,6 @@ import { useSpaceInfo } from '@/lib/hooks/space';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { useI18n } from '@/lib/i18n/i18n';
-import { ModelBg, ModelRole } from '@/lib/std/virtual';
 import {
   chatMsgState,
   licenseState,

@@ -10,13 +10,7 @@ import { useRecoilState } from 'recoil';
 import { Calendly } from '../widgets/calendly';
 import { getServerIp } from '@/lib/std';
 import { api } from '@/lib/api';
-import {
-  getLicensePersonLimit,
-  LicenseStatus,
-  licenseStatus,
-  licenseStatusColor,
-  licenseStatusStr,
-} from '@/lib/std/license';
+import { getLicensePersonLimit, LicenseStatus, licenseStatus } from '@/lib/std/license';
 import { PresetStatusColorType } from 'antd/es/_util/colors';
 import {
   CheckCircleOutlined,

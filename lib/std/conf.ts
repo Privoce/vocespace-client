@@ -1,7 +1,6 @@
 // 用来读取vocespace.conf.json这个配置文件
 // 这个配置文件的位置在项目根目录下
 // 只会在服务器端使用
-import { SliderMarks } from 'antd/es/slider';
 import { VideoCodec, VideoPreset } from 'livekit-client';
 import { DEFAULT_LICENSE } from './license';
 

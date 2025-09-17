@@ -1,7 +1,7 @@
 import dayjs, { Dayjs } from 'dayjs';
 import { UserDefineStatus, UserStatus } from '.';
 import { ModelBg, ModelRole } from './virtual';
-import { PresetStatusColorType } from 'antd/es/_util/colors';
+
 /**
  * Child room information
  */
