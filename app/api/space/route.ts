@@ -427,7 +427,8 @@ class SpaceManager {
       if (!redisClient) {
         throw new Error('Redis client is not initialized or disabled.');
       }
-      // 获取空间的使用情况，如果没有则创建一个新的记录，如果有则需要进行判断更新
+
+      // 获取空间的使用情况，如果没有则创建一个新的记录
       let record = await this.getSpaceDateRecord(space);
       if (!record) {
         // 没有记录，表示房间第一次创建，需要创建一个新的纪录
@@ -438,44 +439,16 @@ class SpaceManager {
               end: timeRecord.end,
             },
           ],
-          participants,
+          participants: participants || {},
         } as SpaceDateRecord;
       } else {
+        // 处理房间级别的时间记录
         if (!participants) {
-          // 如果有记录，需要根据timeRecord进行判断，如果传入的start和记录的start相同，表示删除房间，那么更新end
-          let startRecord = record.space.find((r) => r.start === timeRecord.start);
-          if (startRecord) {
-            // 如果已经存在记录，则更新结束时间戳
-            startRecord.end = timeRecord.end || Date.now();
-            // 接下来还需要遍历所有的用户，如果发现没有end时间戳的记录也进行更新
-            let participants = Object.keys(record.participants);
-            participants.forEach((p) => {
-              let userRecord = record?.participants[p];
-              if (userRecord) {
-                userRecord.forEach((r) => {
-                  if (!r.end) {
-                    r.end = timeRecord.end || Date.now();
-                  }
-                });
-              }
-            });
-          } else {
-            // 如果不存在记录，则添加新的记录
-            record.space.push({
-              start: timeRecord.start,
-              end: timeRecord.end,
-            });
-          }
+          // 房间级别操作（创建/删除房间）
+          await this.updateSpaceTimeRecord(record, timeRecord);
         } else {
-          // 有用户记录，这里即使有也是只有1条，更新用户的结束时间戳
-          let userRecord = record?.participants[Object.keys(record.participants)[0]];
-          if (userRecord) {
-            userRecord.forEach((r) => {
-              if (!r.end) {
-                r.end = timeRecord.end || Date.now();
-              }
-            });
-          }
+          // 用户级别操作（加入/离开房间）
+          await this.updateParticipantTimeRecord(record, participants);
         }
       }
 
@@ -487,6 +460,68 @@ class SpaceManager {
       console.error('Error setting room date records:', error);
       return false;
     }
+  }
+  // 更新房间级别的时间记录 ----------------------------------------------------------------
+  private static updateSpaceTimeRecord(record: SpaceDateRecord, timeRecord: SpaceTimeRecord): void {
+    const existingRecord = record.space.find((r) => r.start === timeRecord.start);
+
+    if (existingRecord) {
+      // 如果已经存在记录，表示房间结束，更新结束时间戳
+      existingRecord.end = timeRecord.end || Date.now();
+
+      // 同时更新所有没有结束时间戳的用户记录
+      Object.keys(record.participants).forEach((participantName) => {
+        const userRecords = record.participants[participantName];
+        if (userRecords) {
+          userRecords.forEach((userRecord) => {
+            if (!userRecord.end) {
+              userRecord.end = timeRecord.end || Date.now();
+            }
+          });
+        }
+      });
+    } else {
+      // 如果不存在记录，表示房间开始，添加新的记录
+      record.space.push({
+        start: timeRecord.start,
+        end: timeRecord.end,
+      });
+    }
+  }
+
+  // 更新用户级别的时间记录 ----------------------------------------------------------------
+  private static updateParticipantTimeRecord(
+    record: SpaceDateRecord,
+    participants: { [name: string]: SpaceTimeRecord[] },
+  ): void {
+    Object.entries(participants).forEach(([participantName, timeRecords]) => {
+      if (!record.participants[participantName]) {
+        // 用户首次加入，直接设置记录
+        record.participants[participantName] = timeRecords;
+      } else {
+        // 用户已存在，需要更新记录
+        const existingRecords = record.participants[participantName];
+        const newTimeRecord = timeRecords[0]; // 新传入的时间记录
+
+        if (newTimeRecord.end) {
+          // 如果新记录有结束时间，表示用户离开
+          const unfinishedRecord = existingRecords.find((r) => !r.end);
+          if (unfinishedRecord) {
+            unfinishedRecord.end = newTimeRecord.end;
+          }
+        } else if (newTimeRecord.start) {
+          // 如果新记录只有开始时间，表示用户加入
+          // 检查是否有未结束的记录，如果没有才添加新记录
+          const hasUnfinishedRecord = existingRecords.some((r) => !r.end);
+          if (!hasUnfinishedRecord) {
+            existingRecords.push({
+              start: newTimeRecord.start,
+              end: newTimeRecord.end,
+            });
+          }
+        }
+      }
+    });
   }
 
   // 获取空间的使用情况 --------------------------------------------------------------------
@@ -903,13 +938,13 @@ class SpaceManager {
       const availableUserName = `User ${suffix_str}`;
 
       // 这里还需要设置到房间的使用记录中
-      await this.setSpaceDateRecords(
-        room,
-        { start: startAt },
-        {
-          [availableUserName]: [{ start: startAt }],
-        },
-      );
+      // await this.setSpaceDateRecords(
+      //   room,
+      //   { start: startAt },
+      //   {
+      //     [availableUserName]: [{ start: startAt }],
+      //   },
+      // );
 
       return availableUserName;
     } catch (error) {
