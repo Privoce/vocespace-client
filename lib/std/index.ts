@@ -57,6 +57,44 @@ export function is_web(): boolean {
   return typeof window !== 'undefined';
 }
 
+export function isMobile(): boolean {
+  if (!is_web()) return false;
+  
+  // 检查用户代理字符串
+  const userAgent = navigator.userAgent.toLowerCase();
+  const mobileKeywords = [
+    'mobile', 'android', 'iphone', 'ipad', 'ipod', 
+    'blackberry', 'windows phone', 'opera mini'
+  ];
+  
+  const isMobileUserAgent = mobileKeywords.some(keyword => 
+    userAgent.includes(keyword)
+  );
+  
+  // 检查触摸屏支持
+  const hasTouchScreen = 'ontouchstart' in window || 
+    navigator.maxTouchPoints > 0 || 
+    (navigator as any).msMaxTouchPoints > 0;
+  
+  // 检查屏幕尺寸 (小于768px认为是移动设备)
+  const isSmallScreen = window.innerWidth < 768;
+  
+  return isMobileUserAgent || (hasTouchScreen && isSmallScreen);
+}
+
+export function isTablet(): boolean {
+  if (!is_web()) return false;
+  
+  const userAgent = navigator.userAgent.toLowerCase();
+  const isTabletUserAgent = userAgent.includes('ipad') || 
+    (userAgent.includes('android') && !userAgent.includes('mobile'));
+  
+  const hasTouchScreen = 'ontouchstart' in window;
+  const isTabletScreen = window.innerWidth >= 768 && window.innerWidth <= 1024;
+  
+  return isTabletUserAgent || (hasTouchScreen && isTabletScreen);
+}
+
 export function src(url: string): string {
   let prefix = process.env.NEXT_PUBLIC_BASE_PATH;
   if (!prefix || prefix === '' || prefix === '/') {

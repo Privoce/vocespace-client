@@ -33,6 +33,7 @@ export default {
     },
     chat: '聊天',
     chat_placeholder: '请输入消息',
+    chat_drag_file_here: '将文件拖放到此处',
     send: '发送',
     send_file_or: '是否发送文件？',
     leave: '离开',
@@ -135,6 +136,16 @@ export default {
     channel: '频道',
     app: {
       title: '应用',
+      upload: {
+        to_space: '上传应用到空间',
+        history: '上传历史',
+        success: '上传应用成功',
+        error: '上传应用失败，请稍后再试。',
+      },
+      tab: {
+        self: '自己',
+        no_auth: '该用户没有开启可读/可读写权限',
+      },
       settings: {
         filter: '筛选需要的应用',
         desc: 'VoceSpace 提供了多种应用，作为主持人，您可以在此处选择参与者们可以使用的应用。',
@@ -142,6 +153,20 @@ export default {
         update: {
           success: '应用设置更新成功',
           error: '应用设置更新失败，请稍后再试。',
+        },
+        sync: {
+          title: '同步应用数据',
+          auth: '应用权限',
+          auth_desc: '其他参与者对您的应用数据的权限',
+          desc_pub: '设置为公开可见',
+          desc_priv: '设置为仅自己可见',
+          read: '可读',
+          write: '可读写',
+          none: '无权限',
+          update: {
+            success: '应用设置更新成功',
+            error: '应用设置更新失败，请稍后再试。',
+          },
         },
       },
       timer: {
@@ -164,6 +189,9 @@ export default {
         create: '创建待办',
         empty_value: '待办事项不能为空',
         delete: '删除待办成功',
+        undone: '未完成',
+        done: '已完成',
+        unexport: "当前待办为空，无法导出"
       },
     },
     record: {
@@ -198,10 +226,18 @@ export default {
       set: {
         invite: {
           title: '成员邀请',
-          video: '邀请开启视频',
           wave: '发送一条提醒',
-          audio: '邀请开启音频',
-          share: '邀请共享屏幕',
+          open: {
+            video: '邀请开启视频',
+            audio: '邀请开启音频',
+            share: '邀请共享屏幕',
+          },
+
+          close: {
+            video: '邀请关闭视频',
+            audio: '邀请关闭音频',
+            share: '邀请关闭共享屏幕',
+          },
         },
         control: {
           title: '成员控制',
@@ -244,6 +280,11 @@ export default {
       lang: '语言',
       share_audio: '共享音频',
       prompt_sound: '进入提示音',
+      persistence: {
+        title: '持久化空间',
+        success: '设置当前空间持久化成功',
+        error: '设置当前空间持久化失败',
+      },
       conf: {
         load_error: '配置加载失败，请检查vocespace.conf.json文件是否存在',
         reload_env_error: '重新加载配置失败',
@@ -295,10 +336,11 @@ export default {
       signed: '是否已签名',
       domains: '允许的域名',
       limit: '证书限制',
+      person: '人数限制',
       created_at: '创建时间',
       expires_at: '过期时间',
       value: '证书值',
-      renew: '续订/更新证书',
+      renew: '购买证书',
       update: '手动更新',
       input: '请输入证书',
       gift: {
@@ -311,6 +353,8 @@ export default {
       meeting: '订阅会议',
       buy: '购买证书',
       invalid: '证书无效或已过期，请检查证书是否正确。',
+      invalid_domain: '当前域名不在证书允许的域名列表中，请联系管理员检查服务器域名配置是否正确。',
+      default_license: "为保证您的使用，当前系统已为您加载默认证书，默认证书仅支持5人以下的临时房间使用，若需要更多用户名额，请购买专业版证书。",
       update_success: '证书更新成功',
       circle_ip:
         '当前您的IP地址为回环地址/私有地址，不建议您为此地址购买证书。请使用公网IP地址购买证书。若需要为私有地址购买证书并支持服务，请联系Wechat: Privoce。',

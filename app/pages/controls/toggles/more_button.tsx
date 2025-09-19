@@ -1,7 +1,9 @@
-import { Button, Dropdown, MenuProps } from 'antd';
+import { Badge, Button, Dropdown, MenuProps } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
+import { SizeType } from 'antd/es/config-provider/SizeContext';
+import { ViewAdjusts } from '@/lib/std/window';
 
 export interface MoreButtonProps {
   showText?: boolean;
@@ -13,9 +15,21 @@ export interface MoreButtonProps {
   onClickRecord?: () => Promise<void>;
   onClickApp?: () => Promise<void>;
   controlWidth: number;
+  chat?: {
+    visible: boolean;
+    enabled: boolean;
+    count: number;
+    onClicked: () => void;
+  };
+  size: SizeType;
 }
 
-export function MoreButton({
+export interface MoreButtonInnerProps extends MoreButtonProps {
+  isDot?: boolean;
+  setIsDot?: (dot: boolean) => void;
+}
+
+export function MoreButtonInner({
   showText = true,
   setOpenMore,
   setMoreType,
@@ -25,36 +39,41 @@ export function MoreButton({
   onClickApp,
   isRecording,
   controlWidth,
-}: MoreButtonProps) {
+  chat,
+  isDot,
+  setIsDot,
+  size,
+}: MoreButtonInnerProps) {
   const { t } = useI18n();
 
   const showTextOrHide = useMemo(() => {
-    // 判断窗口的宽度是否大于720px, 如果小于则需要隐藏文字
-    if (controlWidth < 700) {
-      return false;
-    } else {
-      return showText;
-    }
+    return ViewAdjusts(controlWidth).w720 ? false : showText;
   }, [controlWidth]);
 
+  const onClickChatMsg = () => {
+    if (chat && chat.visible) {
+      chat.onClicked();
+      setIsDot!(false);
+    }
+  };
   const items: MenuProps['items'] = useMemo(() => {
-    return [
-      // // 应用
-      // {
-      //   label: <div style={{ marginLeft: '8px' }}>{t('more.app.title')}</div>,
-      //   key: 'app',
-      //   icon: <SvgResource type="app" svgSize={16} />,
-      // },
-      // // 录屏功能
-      // {
-      //   label: (
-      //     <div style={{ marginLeft: '8px' }}>
-      //       {!isRecording ? t('more.record.start') : t('more.record.stop')}
-      //     </div>
-      //   ),
-      //   key: 'record',
-      //   icon: <SvgResource type="record" svgSize={16} color={isRecording ? '#FF0000' : '#fff'} />,
-      // },
+    let moreItems = [
+      // 应用
+      {
+        label: <div style={{ marginLeft: '8px' }}>{t('more.app.title')}</div>,
+        key: 'app',
+        icon: <SvgResource type="app" svgSize={16} />,
+      },
+      // 录屏功能
+      {
+        label: (
+          <div style={{ marginLeft: '8px' }}>
+            {!isRecording ? t('more.record.start') : t('more.record.stop')}
+          </div>
+        ),
+        key: 'record',
+        icon: <SvgResource type="record" svgSize={16} color={isRecording ? '#FF0000' : '#fff'} />,
+      },
       // 参与者管理功能
       {
         label: <div style={{ marginLeft: '8px' }}>{t('more.participant.title')}</div>,
@@ -67,7 +86,20 @@ export function MoreButton({
         icon: <SvgResource type="setting" svgSize={16} />,
       },
     ];
-  }, [isRecording]);
+    if (chat && chat.visible) {
+      moreItems.push({
+        label: (
+          <div style={{ marginLeft: '8px' }}>
+            {t('common.chat')}{' '}
+            <Badge count={chat.count} color="#22CCEE" size="small" dot={isDot} offset={[2, -2]} />
+          </div>
+        ),
+        key: 'chat',
+        icon: <SvgResource type="chat" svgSize={16} />,
+      });
+    }
+    return moreItems;
+  }, [isRecording, chat, t]);
 
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
@@ -97,6 +129,9 @@ export function MoreButton({
           await onClickApp();
         }
         break;
+      case 'chat':
+        onClickChatMsg();
+        break;
       default:
         break;
     }
@@ -108,24 +143,42 @@ export function MoreButton({
   };
 
   return (
-    <>
-      <Dropdown menu={menuProps} trigger={['click']}>
-        <Button
-          style={{
-            backgroundColor: '#1E1E1E',
-            height: '46px',
-            borderRadius: '8px',
-            border: 'none',
-            color: '#fff',
-          }}
-        >
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-            <SvgResource type="more" svgSize={18}></SvgResource>
-            {showTextOrHide && t('more.title')}
-            <SvgResource type="down" svgSize={14}></SvgResource>
-          </div>
-        </Button>
-      </Dropdown>
-    </>
+    <Dropdown menu={menuProps} trigger={['click']}>
+      <Button
+        size={size}
+        style={{
+          backgroundColor: '#1E1E1E',
+          height: '46px',
+          borderRadius: '8px',
+          border: 'none',
+          color: '#fff',
+        }}
+      >
+        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+          <SvgResource type="more" svgSize={18}></SvgResource>
+          {showTextOrHide && t('more.title')}
+          <SvgResource type="down" svgSize={14}></SvgResource>
+        </div>
+      </Button>
+    </Dropdown>
+  );
+}
+
+export function MoreButton(props: MoreButtonProps) {
+  const [isDot, setIsDot] = useState(true);
+
+  return props.chat ? (
+    <Badge
+      count={props.chat.count}
+      color="#22CCEE"
+      size="small"
+      offset={[-4, 4]}
+      dot={isDot}
+      style={{ zIndex: 1000 }}
+    >
+      <MoreButtonInner {...props} isDot={isDot} setIsDot={setIsDot}></MoreButtonInner>
+    </Badge>
+  ) : (
+    <MoreButtonInner {...props}></MoreButtonInner>
   );
 }

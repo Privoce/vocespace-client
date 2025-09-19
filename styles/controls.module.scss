@@ -7,7 +7,6 @@
   justify-content: space-between;
   padding: 0 0.5rem;
   &_left {
-    width: calc(100% - 100px);
     height: 100%;
     display: flex;
     align-items: center;
@@ -399,3 +398,12 @@
   scrollbar-width: none;
   height: 100%;
 }
+
+// .app_collect {
+//   height: fit-content;
+//   width: max-content;
+//   display: inline-flex;
+//   align-items: center;
+//   justify-content: space-between;
+//   gap: 12px;
+// }

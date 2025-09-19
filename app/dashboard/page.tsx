@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Table,
   Card,
@@ -13,11 +13,17 @@ import {
   Row,
   Col,
   message,
+  Modal,
+  Input,
+  Tabs,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { SvgResource } from '../resources/svg';
 import styles from '@/styles/dashboard.module.scss';
 import { api } from '@/lib/api';
+import { ConfQulity, useRTCConf, useVoceSpaceConf } from '../pages/controls/settings/conf';
+import { RTCConf } from '@/lib/std/conf';
+import { SpaceDateRecords, SpaceInfo, SpaceInfoMap } from '@/lib/std/space';
 
 const { Title } = Typography;
 
@@ -30,14 +36,14 @@ const countDuring = (startAt: number): string => {
   return `${hours}h ${minutes}m`;
 };
 
-interface SpaceTimeRecord {
-  start: number; // 记录开始时间戳
-  end?: number; // 记录结束时间戳
-}
-
-// 记录房间的使用情况
-interface SpaceDateRecords {
-  [spaceId: string]: SpaceTimeRecord[];
+interface LeaderboardData {
+  key: string;
+  participantName: string;
+  spaceId: string;
+  totalDuration: number; // 总时长（毫秒）
+  periodDuration: number; // 期间时长（毫秒）
+  totalDisplay: string; // 总时长显示
+  periodDisplay: string; // 期间时长显示
 }
 
 interface HistorySpaceData {
@@ -65,33 +71,51 @@ interface ParticipantTableData {
 export default function Dashboard() {
   const [currentSpacesData, setCurrentSpacesData] = useState<ParticipantTableData[]>([]);
   const [historySpacesData, setHistorySpacesData] = useState<HistorySpaceData[]>([]);
+  const [dailyLeaderboard, setDailyLeaderboard] = useState<{ [spaceId: string]: LeaderboardData[] }>({});
+  const [weeklyLeaderboard, setWeeklyLeaderboard] = useState<{ [spaceId: string]: LeaderboardData[] }>({});
+  const [monthlyLeaderboard, setMonthlyLeaderboard] = useState<{ [spaceId: string]: LeaderboardData[] }>({});
   const [loading, setLoading] = useState(false);
   const [totalSpaces, setTotalSpaces] = useState(0);
   const [totalParticipants, setTotalParticipants] = useState(0);
   const [activeRecordings, setActiveRecordings] = useState(0);
   const [messageApi, contextHolder] = message.useMessage();
+  const [openConf, setOpenConf] = useState(false);
+  const [isHostManager, setIsHostManager] = useState(false);
+  const [hostToken, setHostToken] = useState('');
+  const { conf, getConf } = useVoceSpaceConf();
 
+  // 根据 Space 分组数据
+  const groupedSpacesData = useMemo(() => {
+    const grouped: { [spaceId: string]: ParticipantTableData[] } = {};
+    currentSpacesData.forEach((participant) => {
+      if (!grouped[participant.spaceId]) {
+        grouped[participant.spaceId] = [];
+      }
+      grouped[participant.spaceId].push(participant);
+    });
+    return grouped;
+  }, [currentSpacesData]);
   // 获取当前空间信息
   const fetchCurrentSpaces = async () => {
     setLoading(true);
     try {
       const response = await api.allSpaceInfos();
       if (response.ok) {
-        const roomSettings = await response.json();
+        const spaceInfoMap: SpaceInfoMap = await response.json();
 
         const participantsData: ParticipantTableData[] = [];
         let roomCount = 0;
         let participantCount = 0;
         let recordingCount = 0;
 
-        Object.entries(roomSettings).forEach(([spaceId, roomData]: [string, any]) => {
-          if (roomData.participants && Object.keys(roomData.participants).length > 0) {
+        Object.entries(spaceInfoMap).forEach(([spaceId, spaceInfo]: [string, any]) => {
+          if (spaceInfo.participants && Object.keys(spaceInfo.participants).length > 0) {
             roomCount++;
-            if (roomData.record?.active) {
+            if (spaceInfo.record?.active) {
               recordingCount++;
             }
 
-            Object.entries(roomData.participants).forEach(
+            Object.entries(spaceInfo.participants).forEach(
               ([participantId, participant]: [string, any]) => {
                 participantCount++;
                 participantsData.push({
@@ -103,8 +127,8 @@ export default function Dashboard() {
                   blur: participant.blur,
                   screenBlur: participant.screenBlur,
                   status: participant.status,
-                  isOwner: roomData.ownerId === participantId,
-                  isRecording: roomData.record?.active || false,
+                  isOwner: spaceInfo.ownerId === participantId,
+                  isRecording: spaceInfo.record?.active || false,
                   virtualEnabled: participant.virtual?.enabled || false,
                   during: countDuring(participant.startAt),
                 });
@@ -125,78 +149,177 @@ export default function Dashboard() {
     }
   };
 
-  // 获取历史房间数据（模拟数据）
+  // 获取历史房间数据
   const fetchHistorySpaces = async () => {
     const response = await api.historySpaceInfos();
     if (!response.ok) {
       messageApi.error('获取历史房间数据失败');
       return;
     } else {
-      const { records }: { records: SpaceDateRecords } = await response.json();
-      // 转为 HistorySpaceData 格式
-      const historyData: HistorySpaceData[] = [];
-      const todayStart = new Date().setHours(0, 0, 0, 0);
-      const todayEnd = new Date().setHours(23, 59, 59, 999);
-      // 遍历records中的记录，只要是todayStart < start < todayEnd的记录就是当天的记录
-      // 但也需要处理end > todayEnd的情况，这时候就累加todayEnd - start, 否则就是end - start
-      for (const [spaceId, timeRecords] of Object.entries(records)) {
-        let total = 0;
-        let today = 0;
-        timeRecords.forEach((record) => {
-          // 判断当前end是否存在，不存在就是当前的时间
-          const end = record.end || Date.now();
-          total += end - record.start;
-          if (record.start >= todayStart && record.start <= todayEnd) {
-            // 如果开始时间在今天范围内
-            if (end > todayEnd) {
-              // 如果结束时间超过今天的结束时间
-              today += todayEnd - record.start;
-            } else {
-              // 否则就是正常的结束时间
-              today += end - record.start;
+      const { records }: { records: SpaceDateRecords | null } = await response.json();
+      if (records) {
+        // 转为 HistorySpaceData 格式
+        const historyData: HistorySpaceData[] = [];
+        const dailyData: { [spaceId: string]: LeaderboardData[] } = {};
+        const weeklyData: { [spaceId: string]: LeaderboardData[] } = {};
+        const monthlyData: { [spaceId: string]: LeaderboardData[] } = {};
+
+        const now = new Date();
+        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        const todayEnd = todayStart + 24 * 60 * 60 * 1000 - 1;
+
+        const weekStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - now.getDay()).getTime();
+        const weekEnd = weekStart + 7 * 24 * 60 * 60 * 1000 - 1;
+
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+        const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).getTime();
+
+        // 遍历records中的记录
+        for (const [spaceId, timeRecords] of Object.entries(records)) {
+          // 计算房间总使用时长和今日使用时长
+          let totalSpaceDuration = 0;
+          let todaySpaceDuration = 0;
+
+          timeRecords.space.forEach((record) => {
+            const end = record.end || Date.now();
+            totalSpaceDuration += end - record.start;
+
+            if (record.start >= todayStart && record.start <= todayEnd) {
+              if (end > todayEnd) {
+                todaySpaceDuration += todayEnd - record.start;
+              } else {
+                todaySpaceDuration += end - record.start;
+              }
             }
-          }
-        });
-        historyData.push({
-          key: spaceId,
-          room: spaceId,
-          during: `${Math.floor(total / 3600000)}h ${Math.floor((total % 3600000) / 60000)}m`,
-          today: `${Math.floor(today / 3600000)}h ${Math.floor((today % 3600000) / 60000)}m`,
-        });
+          });
+
+          historyData.push({
+            key: spaceId,
+            room: spaceId,
+            during: `${Math.floor(totalSpaceDuration / 3600000)}h ${Math.floor((totalSpaceDuration % 3600000) / 60000)}m`,
+            today: `${Math.floor(todaySpaceDuration / 3600000)}h ${Math.floor((todaySpaceDuration % 3600000) / 60000)}m`,
+          });
+
+          // 计算参与者榜单数据
+          const dailyParticipants: { [name: string]: { total: number; period: number } } = {};
+          const weeklyParticipants: { [name: string]: { total: number; period: number } } = {};
+          const monthlyParticipants: { [name: string]: { total: number; period: number } } = {};
+
+          // 处理参与者记录
+          Object.entries(timeRecords.participants).forEach(([participantName, records]) => {
+            let totalDuration = 0;
+            let dailyDuration = 0;
+            let weeklyDuration = 0;
+            let monthlyDuration = 0;
+
+            records.forEach((record) => {
+              const end = record.end || Date.now();
+              const duration = end - record.start;
+              totalDuration += duration;
+
+              // 计算日榜
+              if (record.start >= todayStart && record.start <= todayEnd) {
+                if (end > todayEnd) {
+                  dailyDuration += todayEnd - record.start;
+                } else {
+                  dailyDuration += duration;
+                }
+              }
+
+              // 计算周榜
+              if (record.start >= weekStart && record.start <= weekEnd) {
+                if (end > weekEnd) {
+                  weeklyDuration += weekEnd - record.start;
+                } else {
+                  weeklyDuration += duration;
+                }
+              }
+
+              // 计算月榜
+              if (record.start >= monthStart && record.start <= monthEnd) {
+                if (end > monthEnd) {
+                  monthlyDuration += monthEnd - record.start;
+                } else {
+                  monthlyDuration += duration;
+                }
+              }
+            });
+
+            if (totalDuration > 0) {
+              dailyParticipants[participantName] = { total: totalDuration, period: dailyDuration };
+              weeklyParticipants[participantName] = { total: totalDuration, period: weeklyDuration };
+              monthlyParticipants[participantName] = { total: totalDuration, period: monthlyDuration };
+            }
+          });
+
+          // 转换为LeaderboardData格式
+          const formatDuration = (ms: number) => {
+            const hours = Math.floor(ms / 3600000);
+            const minutes = Math.floor((ms % 3600000) / 60000);
+            return `${hours}h ${minutes}m`;
+          };
+
+          dailyData[spaceId] = Object.entries(dailyParticipants)
+            .map(([name, data]) => ({
+              key: `${spaceId}-${name}-daily`,
+              participantName: name,
+              spaceId,
+              totalDuration: data.total,
+              periodDuration: data.period,
+              totalDisplay: formatDuration(data.total),
+              periodDisplay: formatDuration(data.period),
+            }))
+            .sort((a, b) => b.periodDuration - a.periodDuration);
+
+          weeklyData[spaceId] = Object.entries(weeklyParticipants)
+            .map(([name, data]) => ({
+              key: `${spaceId}-${name}-weekly`,
+              participantName: name,
+              spaceId,
+              totalDuration: data.total,
+              periodDuration: data.period,
+              totalDisplay: formatDuration(data.total),
+              periodDisplay: formatDuration(data.period),
+            }))
+            .sort((a, b) => b.periodDuration - a.periodDuration);
+
+          monthlyData[spaceId] = Object.entries(monthlyParticipants)
+            .map(([name, data]) => ({
+              key: `${spaceId}-${name}-monthly`,
+              participantName: name,
+              spaceId,
+              totalDuration: data.total,
+              periodDuration: data.period,
+              totalDisplay: formatDuration(data.total),
+              periodDisplay: formatDuration(data.period),
+            }))
+            .sort((a, b) => b.periodDuration - a.periodDuration);
+        }
+
+        setHistorySpacesData(historyData);
+        setDailyLeaderboard(dailyData);
+        setWeeklyLeaderboard(weeklyData);
+        setMonthlyLeaderboard(monthlyData);
       }
-      setHistorySpacesData(historyData);
     }
   };
 
   useEffect(() => {
+    getConf();
     fetchCurrentSpaces();
     fetchHistorySpaces();
 
-    // 每60秒刷新一次数据
+    // 每120秒刷新一次数据
     const interval = setInterval(() => {
       fetchCurrentSpaces();
       fetchHistorySpaces();
-    }, 60000);
+    }, 120000);
 
     return () => clearInterval(interval);
   }, []);
 
-  // 当前房间参与者表格列定义
+  // 当前房间参与者表格列定义（去掉房间列，因为现在按Space分组显示）
   const currentSpacesColumns: ColumnsType<ParticipantTableData> = [
-    {
-      title: '房间',
-      dataIndex: 'spaceId',
-      key: 'spaceId',
-      width: 120,
-      render: (spaceId: string, record) => (
-        <Space>
-          <span>{spaceId}</span>
-          {record.isRecording && (
-            <SvgResource type="record" svgSize={16} color="#ffffff"></SvgResource>
-          )}
-        </Space>
-      ),
-    },
     {
       title: '参与者',
       dataIndex: 'name',
@@ -206,6 +329,9 @@ export default function Dashboard() {
         <Space align="center">
           <span>{name}</span>
           {record.isOwner && '(host)'}
+          {record.isRecording && (
+            <SvgResource type="record" svgSize={16} color="#ffffff"></SvgResource>
+          )}
         </Space>
       ),
     },
@@ -323,9 +449,57 @@ export default function Dashboard() {
     },
   ];
 
+  // 榜单表格列定义
+  const createLeaderboardColumns = (periodTitle: string): ColumnsType<LeaderboardData> => [
+    {
+      title: '用户名',
+      dataIndex: 'participantName',
+      key: 'participantName',
+      width: 150,
+    },
+    {
+      title: `${periodTitle}时长`,
+      dataIndex: 'periodDisplay',
+      key: 'periodDisplay',
+      width: 120,
+      sorter: (a, b) => a.periodDuration - b.periodDuration,
+      defaultSortOrder: 'descend',
+    },
+    {
+      title: '总时长',
+      dataIndex: 'totalDisplay',
+      key: 'totalDisplay',
+      width: 120,
+      sorter: (a, b) => a.totalDuration - b.totalDuration,
+    },
+  ];
+
+  const dailyColumns = createLeaderboardColumns('日');
+  const weeklyColumns = createLeaderboardColumns('周');
+  const monthlyColumns = createLeaderboardColumns('月');
+
+  const confirmConfHandle = () => {
+    if (!isHostManager) {
+      // 验证hostToken
+      console.warn(conf?.hostToken, hostToken);
+      if (conf) {
+        if (hostToken === conf.hostToken) {
+          setIsHostManager(true);
+        }
+      } else {
+        messageApi.error('配置未加载完成或无法获得配置，请稍后再试');
+      }
+    } else {
+      // 当修改后
+      setOpenConf(false);
+      setIsHostManager(false);
+      setHostToken('');
+    }
+  };
+
   return (
     <div className={styles.container}>
-    {contextHolder}
+      {contextHolder}
       <div style={{ marginBottom: 24 }}>
         <Title level={2}>VoceSpace Dashboard</Title>
         <Row gutter={16} style={{ marginBottom: 24 }}>
@@ -356,51 +530,223 @@ export default function Dashboard() {
           <Col span={6}>
             <Card>
               <div style={{ marginBottom: '9px' }}>操作</div>
-              <Button type="primary" onClick={fetchCurrentSpaces} loading={loading}>
-                刷新数据
-              </Button>
+              <div style={{ display: 'inline-flex', gap: '8px' }}>
+                <Button type="primary" onClick={fetchCurrentSpaces} loading={loading}>
+                  刷新数据
+                </Button>
+                <Button
+                  color="danger"
+                  variant="solid"
+                  onClick={() => {
+                    setOpenConf(true);
+                  }}
+                >
+                  配置画质(全局)
+                </Button>
+              </div>
             </Card>
           </Col>
         </Row>
       </div>
 
-      {/* 当前房间用户数据 */}
-      <Card
-        title="当前活跃房间用户"
-        style={{ marginBottom: 24 }}
-        extra={
-          <Badge count={totalParticipants} showZero>
-            <SvgResource type="user" svgSize={16} color="#ffffff" />
-          </Badge>
-        }
-      >
-        <Table
-          columns={currentSpacesColumns}
-          dataSource={currentSpacesData}
-          loading={loading}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
-          }}
-          scroll={{ x: 1200 }}
-        />
+      {/* 当前房间用户数据 - 按Space分组 */}
+      <Card style={{ marginBottom: 24 }}>
+        {Object.keys(groupedSpacesData).length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>暂无活跃房间</div>
+        ) : (
+          <>
+            <Typography.Title level={5}>当前活跃用户</Typography.Title>
+            <Tabs
+              items={Object.entries(groupedSpacesData).map(([spaceId, participants]) => ({
+                key: spaceId,
+                label: (
+                  <Space>
+                    <span>{spaceId}</span>
+                    <Badge count={participants.length} size="small" />
+                    {participants.some((p) => p.isRecording) && (
+                      <SvgResource type="record" svgSize={14} color="#ff4d4f" />
+                    )}
+                  </Space>
+                ),
+                children: (
+                  <Table
+                    columns={currentSpacesColumns}
+                    dataSource={participants}
+                    loading={loading}
+                    pagination={{
+                      pageSize: 10,
+                      showSizeChanger: true,
+                      showQuickJumper: true,
+                      showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+                    }}
+                    scroll={{ x: 1000 }}
+                  />
+                ),
+              }))}
+            />
+          </>
+        )}
       </Card>
 
-      {/* 历史房间数据 */}
-      <Card title="历史房间使用统计">
-        <Table
-          columns={historySpacesColumns}
-          dataSource={historySpacesData}
-          pagination={{
-            pageSize: 10,
-            showSizeChanger: true,
-            showQuickJumper: true,
-            showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
-          }}
+      {/* 历史数据和榜单 */}
+      <Card  style={{ marginBottom: 24 }}>
+        <Tabs
+          items={[
+            {
+              key: 'history',
+              label: '历史房间统计',
+              children: (
+                <Table
+                  columns={historySpacesColumns}
+                  dataSource={historySpacesData}
+                  pagination={{
+                    pageSize: 10,
+                    showSizeChanger: true,
+                    showQuickJumper: true,
+                    showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+                  }}
+                />
+              ),
+            },
+            {
+              key: 'daily',
+              label: '日榜',
+              children: Object.keys(dailyLeaderboard).length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>暂无日榜数据</div>
+              ) : (
+                <Tabs
+                  type="card"
+                  size="small"
+                  items={Object.entries(dailyLeaderboard).map(([spaceId, participants]) => ({
+                    key: `daily-${spaceId}`,
+                    label: (
+                      <Space>
+                        <span>{spaceId}</span>
+                        <Badge count={participants.length} size="small" />
+                      </Space>
+                    ),
+                    children: (
+                      <Table
+                        columns={dailyColumns}
+                        dataSource={participants}
+                        pagination={{
+                          pageSize: 10,
+                          showSizeChanger: true,
+                          showQuickJumper: true,
+                          showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+                        }}
+                        scroll={{ x: 600 }}
+                      />
+                    ),
+                  }))}
+                />
+              ),
+            },
+            {
+              key: 'weekly',
+              label: '周榜',
+              children: Object.keys(weeklyLeaderboard).length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>暂无周榜数据</div>
+              ) : (
+                <Tabs
+                  type="card"
+                  size="small"
+                  items={Object.entries(weeklyLeaderboard).map(([spaceId, participants]) => ({
+                    key: `weekly-${spaceId}`,
+                    label: (
+                      <Space>
+                        <span>{spaceId}</span>
+                        <Badge count={participants.length} size="small" />
+                      </Space>
+                    ),
+                    children: (
+                      <Table
+                        columns={weeklyColumns}
+                        dataSource={participants}
+                        pagination={{
+                          pageSize: 10,
+                          showSizeChanger: true,
+                          showQuickJumper: true,
+                          showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+                        }}
+                        scroll={{ x: 600 }}
+                      />
+                    ),
+                  }))}
+                />
+              ),
+            },
+            {
+              key: 'monthly',
+              label: '月榜',
+              children: Object.keys(monthlyLeaderboard).length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: '#999' }}>暂无月榜数据</div>
+              ) : (
+                <Tabs
+                  type="card"
+                  size="small"
+                  items={Object.entries(monthlyLeaderboard).map(([spaceId, participants]) => ({
+                    key: `monthly-${spaceId}`,
+                    label: (
+                      <Space>
+                        <span>{spaceId}</span>
+                        <Badge count={participants.length} size="small" />
+                      </Space>
+                    ),
+                    children: (
+                      <Table
+                        columns={monthlyColumns}
+                        dataSource={participants}
+                        pagination={{
+                          pageSize: 10,
+                          showSizeChanger: true,
+                          showQuickJumper: true,
+                          showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+                        }}
+                        scroll={{ x: 600 }}
+                      />
+                    ),
+                  }))}
+                />
+              ),
+            },
+          ]}
         />
       </Card>
+      <Modal
+        title="配置全局画质"
+        open={openConf}
+        onCancel={() => {
+          setOpenConf(false);
+        }}
+        footer={
+          <Button type="primary" onClick={confirmConfHandle}>
+            {!isHostManager ? '验证' : '关闭'}
+          </Button>
+        }
+      >
+        {isHostManager ? (
+          <ConfQulity
+            space=""
+            isOwner={isHostManager}
+            messageApi={messageApi}
+            onReload={() => {
+              setHostToken('');
+              setOpenConf(false);
+              setIsHostManager(false);
+              messageApi.success('配置已更新');
+            }}
+          ></ConfQulity>
+        ) : (
+          <Input
+            placeholder="请输入管理员令牌"
+            value={hostToken}
+            onChange={(e) => {
+              setHostToken(e.target.value);
+            }}
+          ></Input>
+        )}
+      </Modal>
     </div>
   );
 }

@@ -34,7 +34,7 @@ export function ControlRKeyMenu({
 }
 
 export interface UseControlRKeyMenuProps {
-  room?: Room;
+  space?: Room;
   spaceInfo: SpaceInfo;
   selectedParticipant: Participant | null;
   setSelectedParticipant: (participant: Participant | null) => void;
@@ -45,7 +45,7 @@ export interface UseControlRKeyMenuProps {
 }
 
 export function useControlRKeyMenu({
-  room,
+  space,
   spaceInfo,
   selectedParticipant,
   setSelectedParticipant,
@@ -63,8 +63,8 @@ export function useControlRKeyMenu({
   const [blurVideo, setBlurVideo] = useState(0.0);
   const [blurScreen, setBlurScreen] = useState(0.0);
   const isOwner = useMemo(() => {
-    return spaceInfo.ownerId === room?.localParticipant.identity;
-  }, [spaceInfo.ownerId, room?.localParticipant.identity]);
+    return spaceInfo.ownerId === space?.localParticipant.identity;
+  }, [spaceInfo.ownerId, space?.localParticipant.identity]);
 
   // 处理音量、模糊视频和模糊屏幕的调整------------------------------------------------------------
   const handleAdjustment = async (
@@ -72,7 +72,7 @@ export function useControlRKeyMenu({
     isSelf = false,
   ) => {
     if (isSelf) {
-      if (room?.localParticipant) {
+      if (space?.localParticipant) {
         if (key === 'control.volume') {
           await updateSettings({
             volume,
@@ -87,15 +87,15 @@ export function useControlRKeyMenu({
           });
         }
         socket.emit('update_user_status', {
-          room: room.name,
+          space: space.name,
         } as WsBase);
       }
     } else {
-      if (room?.localParticipant && selectedParticipant && isOwner) {
+      if (space?.localParticipant && selectedParticipant && isOwner) {
         let wsTo = {
-          room: room.name,
-          senderName: room.localParticipant.name,
-          senderId: room.localParticipant.identity,
+          space: space.name,
+          senderName: space.localParticipant.name,
+          senderId: space.localParticipant.identity,
           receiverId: selectedParticipant.identity,
           socketId: spaceInfo.participants[selectedParticipant.identity].socketId,
         } as WsTo;
@@ -486,35 +486,38 @@ export function useControlRKeyMenu({
         type: 'group',
         children: [
           {
-            key: 'invite.audio',
-            label: (
-              <span style={{ marginLeft: '8px' }}>{t('more.participant.set.invite.audio')}</span>
-            ),
-            icon: <SvgResource type="audio" svgSize={16} />,
-            disabled: isMicDisabled,
-          },
-          {
-            key: 'invite.video',
-            label: (
-              <span style={{ marginLeft: '8px' }}>{t('more.participant.set.invite.video')}</span>
-            ),
-            icon: <SvgResource type="video" svgSize={16} />,
-            disabled: isCamDisabled,
-          },
-          {
             key: 'invite.wave',
             label: (
-              <span style={{ marginLeft: '8px' }}>{t('more.participant.set.invite.wave')}</span>
+              <span style={{ marginLeft: '8px' }}>{t(`more.participant.set.invite.wave`)}</span>
             ),
             icon: <SvgResource type="wave" svgSize={16} />,
           },
           {
+            key: 'invite.audio',
+            label: (
+              <span style={{ marginLeft: '8px' }}>
+                {t(`more.participant.set.invite.${isMicDisabled ? 'close' : 'open'}.audio`)}
+              </span>
+            ),
+            icon: <SvgResource type="audio" svgSize={16} />,
+          },
+          {
+            key: 'invite.video',
+            label: (
+              <span style={{ marginLeft: '8px' }}>
+                {t(`more.participant.set.invite.${isCamDisabled ? 'close' : 'open'}.video`)}
+              </span>
+            ),
+            icon: <SvgResource type="video" svgSize={16} />,
+          },
+          {
             key: 'invite.share',
             label: (
-              <span style={{ marginLeft: '8px' }}>{t('more.participant.set.invite.share')}</span>
+              <span style={{ marginLeft: '8px' }}>
+                {t(`more.participant.set.invite.${isScreenShareDisabled ? 'close' : 'open'}.share`)}
+              </span>
             ),
             icon: <SvgResource type="screen" svgSize={16} />,
-            disabled: isScreenShareDisabled,
           },
         ],
       },
@@ -523,7 +526,7 @@ export function useControlRKeyMenu({
   }, [isCamDisabled, isMicDisabled, isOwner, isScreenShareDisabled, volume, blurVideo, blurScreen]);
   // 处理自己的菜单点击事件 -------------------------------------------------------------
   const handleSelfOptClick: MenuProps['onClick'] = (e) => {
-    if (room?.localParticipant) {
+    if (space?.localParticipant) {
       switch (e.key) {
         case 'safe.remove': {
           Modal.confirm({
@@ -532,7 +535,7 @@ export function useControlRKeyMenu({
             okText: t('more.participant.set.safe.leave.confirm'),
             cancelText: t('more.participant.set.safe.leave.cancel'),
             onOk: () => {
-              room.disconnect(true);
+              space.disconnect(true);
             },
           });
           break;
@@ -542,15 +545,15 @@ export function useControlRKeyMenu({
           break;
         }
         case 'control.mute_audio': {
-          room.localParticipant.setMicrophoneEnabled(false);
+          space.localParticipant.setMicrophoneEnabled(false);
           break;
         }
         case 'control.mute_video': {
-          room.localParticipant.setCameraEnabled(false);
+          space.localParticipant.setCameraEnabled(false);
           break;
         }
         case 'control.mute_screen': {
-          room.localParticipant.setScreenShareEnabled(false);
+          space.localParticipant.setScreenShareEnabled(false);
           break;
         }
         default:
@@ -561,20 +564,21 @@ export function useControlRKeyMenu({
 
   // 处理菜单点击事件 -------------------------------------------------------------
   const handleOptClick: MenuProps['onClick'] = (e) => {
-    if (room?.localParticipant && selectedParticipant) {
+    if (space?.localParticipant && selectedParticipant) {
       let device = Track.Source.Unknown;
       let wsTo = {
-        room: room.name,
-        senderName: room.localParticipant.name,
-        senderId: room.localParticipant.identity,
+        space: space.name,
+        senderName: space.localParticipant.name,
+        senderId: space.localParticipant.identity,
         receiverId: selectedParticipant.identity,
         socketId: spaceInfo.participants[selectedParticipant.identity].socketId,
       } as WsTo;
 
-      const inviteDevice = () => {
+      const inviteDevice = (isOpen: boolean) => {
         socket.emit('invite_device', {
           ...wsTo,
           device,
+          isOpen
         } as WsInviteDevice);
       };
 
@@ -595,17 +599,17 @@ export function useControlRKeyMenu({
         }
         case 'invite.audio': {
           device = Track.Source.Microphone;
-          inviteDevice();
+          inviteDevice(!isMicDisabled);
           break;
         }
         case 'invite.video': {
           device = Track.Source.Camera;
-          inviteDevice();
+          inviteDevice(!isCamDisabled);
           break;
         }
         case 'invite.share': {
           device = Track.Source.ScreenShare;
-          inviteDevice();
+          inviteDevice(!isScreenShareDisabled);
           break;
         }
         case 'safe.remove':

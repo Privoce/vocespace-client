@@ -25,7 +25,7 @@ export interface VirtualSettingsProps {
   setCompare: (e: boolean) => void;
   close: boolean;
   blur: number;
-  room: string;
+  space: string;
   localParticipant: LocalParticipant;
   messageApi: MessageInstance;
 }
@@ -49,7 +49,7 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
       setModelBg,
       compare,
       setCompare,
-      room,
+      space,
       localParticipant,
     }: VirtualSettingsProps,
     ref,
@@ -68,7 +68,7 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
     const reloadVirtual = () => {
       socket.emit('reload_virtual', {
         identity: localParticipant.identity,
-        roomId: room,
+        roomId: space,
         reloading: true,
       });
     };

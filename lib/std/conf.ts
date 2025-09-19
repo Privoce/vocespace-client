@@ -1,8 +1,8 @@
 // 用来读取vocespace.conf.json这个配置文件
 // 这个配置文件的位置在项目根目录下
 // 只会在服务器端使用
-import { SliderMarks } from 'antd/es/slider';
 import { VideoCodec, VideoPreset } from 'livekit-client';
+import { DEFAULT_LICENSE, DEFAULT_TMP_LICENSE } from './license';
 
 export interface TurnConf {
   credential: string;
@@ -28,8 +28,8 @@ export interface RedisConf {
 }
 
 export interface S3Conf {
-  access_key: string;
-  secret_key: string;
+  accessKey: string;
+  secretKey: string;
   bucket: string;
   region: string;
 }
@@ -49,7 +49,13 @@ export interface VocespaceConfig {
   maxBitrate?: number;
   maxFramerate?: number;
   priority?: RTCPriorityType;
+  /**
+   * redis configuration for presence and other features
+   */
   redis: RedisConf;
+  /**
+   * s3 storage for recording and snapshots configuration
+   */
   s3?: S3Conf;
   /**
    * 服务器的主机地址，这可以用来检测你的令牌是否有效
@@ -58,7 +64,14 @@ export interface VocespaceConfig {
    * 例如: vocespace.com
    * **无需加上 http:// 或 https:// 前缀，也无需端口号**
    */
-  server_url: string;
+  serverUrl: string;
+  /**
+   * host token for dashboard resolution control
+   * 默认值: vocespace_privoce
+   * 通过这个令牌，你可以在仪表盘中控制房间的分辨率
+   */
+  hostToken: string;
+  license: string;
 }
 
 // 2k, 30fps, 3Mbps
@@ -80,123 +93,129 @@ export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig = {
     password: 'vocespace',
     db: 0,
   },
-  server_url: 'localhost',
+  serverUrl: 'localhost',
+  hostToken: 'vocespace_privoce',
+  license: DEFAULT_TMP_LICENSE.value,
 };
 
-export const createResolution = (options: {
+const RTCVideoPresets = (options: {
   resolution?: Resolution;
   maxBitrate?: number;
   maxFramerate?: number;
   priority?: RTCPriorityType;
-}): {
-  h: VideoPreset;
-  l: VideoPreset;
-} => {
+}): VideoPreset => {
   const resolution = options.resolution || '2k';
   switch (resolution) {
     case '4k':
-      return {
-        h: new VideoPreset(
-          3840,
-          2160,
-          options.maxBitrate || 8_000_000,
-          options.maxFramerate || 30,
-          options.priority || 'medium',
-        ),
-        l: new VideoPreset(
-          2560,
-          1440,
-          options?.maxBitrate || 5_000_000,
-          options?.maxFramerate || 30,
-          options?.priority || 'medium',
-        ),
-      };
+      return new VideoPreset(
+        3840,
+        2160,
+        options.maxBitrate || 8_000_000,
+        options.maxFramerate || 30,
+        options.priority || 'medium',
+      );
     case '2k':
-      return {
-        h: new VideoPreset(
-          2560,
-          1440,
-          options?.maxBitrate || 5_000_000,
-          options?.maxFramerate || 30,
-          options?.priority || 'medium',
-        ),
-        l: new VideoPreset(
-          1920,
-          1080,
-          options?.maxBitrate || 3_000_000,
-          options?.maxFramerate || 30,
-          options?.priority || 'medium',
-        ),
-      };
+      return new VideoPreset(
+        2560,
+        1440,
+        options.maxBitrate || 5_000_000,
+        options.maxFramerate || 30,
+        options.priority || 'medium',
+      );
     case '1080p':
-      return {
-        h: new VideoPreset(
-          1920,
-          1080,
-          options?.maxBitrate || 3_000_000,
-          options?.maxFramerate || 30,
-          options?.priority || 'medium',
-        ),
-        l: new VideoPreset(
-          1280,
-          720,
-          options?.maxBitrate || 1_700_000,
-          options?.maxFramerate || 30,
-          options?.priority || 'medium',
-        ),
-      };
+      return new VideoPreset(
+        1920,
+        1080,
+        options.maxBitrate || 3_000_000,
+        options.maxFramerate || 30,
+        options.priority || 'medium',
+      );
     case '720p':
-      return {
-        h: new VideoPreset(
-          1280,
-          720,
-          options?.maxBitrate || 1_700_000,
-          options?.maxFramerate || 30,
-          options?.priority || 'medium',
-        ),
-        l: new VideoPreset(
-          960,
-          540,
-          options?.maxBitrate || 800_000,
-          options?.maxFramerate || 25,
-          options?.priority || 'medium',
-        ),
-      };
+      return new VideoPreset(
+        1280,
+        720,
+        options.maxBitrate || 1_700_000,
+        options.maxFramerate || 30,
+        options.priority || 'medium',
+      );
     case '540p':
-      return {
-        h: new VideoPreset(
-          960,
-          540,
-          options?.maxBitrate || 800_000,
-          options?.maxFramerate || 25,
-          options?.priority || 'medium',
-        ),
-        l: new VideoPreset(
-          640,
-          360,
-          options?.maxBitrate || 450_000,
-          options?.maxFramerate || 25,
-          options?.priority || 'medium',
-        ),
-      };
+      return new VideoPreset(
+        960,
+        540,
+        options.maxBitrate || 800_000,
+        options.maxFramerate || 25,
+        options.priority || 'medium',
+      );
     default:
-      return {
-        h: new VideoPreset(
-          1920,
-          1080,
-          options?.maxBitrate || 3_000_000,
-          options?.maxFramerate || 30,
-          options?.priority || 'medium',
-        ),
-        l: new VideoPreset(
-          1280,
-          720,
-          options?.maxBitrate || 1_700_000,
-          options?.maxFramerate || 30,
-          options?.priority || 'medium',
-        ),
-      };
+      return new VideoPreset(
+        1920,
+        1080,
+        options.maxBitrate || 3_000_000,
+        options.maxFramerate || 30,
+        options.priority || 'medium',
+      );
   }
+};
+
+const lowResolutionLevelOnce = (resolution: Resolution): Resolution => {
+  switch (resolution) {
+    case '4k':
+      return '2k';
+    case '2k':
+      return '1080p';
+    case '1080p':
+      return '720p';
+    case '720p':
+      return '540p';
+    default:
+      return '540p';
+  }
+};
+
+const lowResolutionLevel = (resolution: Resolution, level: number): Resolution => {
+  let res = resolution;
+  for (let i = 0; i < level; i++) {
+    res = lowResolutionLevelOnce(res);
+  }
+  return res;
+};
+
+/**
+ * 创建视频画质/分辨率
+ * @param options 基础配置
+ * @param level 可降级数量，表示最多可以降低多少级别, [0, 4] 表示最多可降4级
+ * @returns
+ */
+export const createRTCQulity = (
+  options: {
+    resolution?: Resolution;
+    maxBitrate?: number;
+    maxFramerate?: number;
+    priority?: RTCPriorityType;
+  },
+  level: number,
+): VideoPreset[] => {
+  let lowLevel = level;
+  if (level < 0 || level > 4) {
+    lowLevel = 3;
+  }
+  const resolution = options.resolution || '2k';
+  let videoPresets = [];
+  for (let i = 0; i <= lowLevel; i++) {
+    if (resolution === '540p') {
+      break;
+    }
+    const res = lowResolutionLevel(resolution, i);
+    videoPresets.push(
+      RTCVideoPresets({
+        resolution: res,
+        maxBitrate: options.maxBitrate,
+        maxFramerate: options.maxFramerate,
+        priority: options.priority,
+      }),
+    );
+  }
+  return videoPresets;
 };
 
 export enum RTCLevel {

@@ -7,6 +7,7 @@ import {
   useEffect,
   useImperativeHandle,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import styles from '@/styles/channel.module.scss';
@@ -17,6 +18,7 @@ import {
   Button,
   Collapse,
   CollapseProps,
+  Drawer,
   Dropdown,
   Input,
   MenuProps,
@@ -35,7 +37,7 @@ import {
 } from '@ant-design/icons';
 import { GridLayout, TrackReferenceOrPlaceholder } from '@livekit/components-react';
 import { MessageInstance } from 'antd/es/message/interface';
-import { ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { AppKey, ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { ParticipantTileMini } from '../participant/mini';
 import { GLayout } from '../layout/grid';
 import { CheckboxGroupProps } from 'antd/es/checkbox';
@@ -44,7 +46,8 @@ import { WsJoinRoom, WsRemove, WsSender } from '@/lib/std/device';
 import { api } from '@/lib/api';
 import { UpdateRoomParam, UpdateRoomType } from '@/lib/api/channel';
 import { Room } from 'livekit-client';
-import { UserStatus } from '@/lib/std';
+import { isMobile as is_mobile, UserStatus } from '@/lib/std';
+import { DEFAULT_DRAWER_PROP } from './drawer_tools';
 
 interface ChannelProps {
   // roomName: string;
@@ -60,6 +63,7 @@ interface ChannelProps {
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
+  showSingleFlotApp: (appKey: AppKey) => void;
 }
 
 export interface ChannelExports {
@@ -84,6 +88,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       updateSettings,
       toRenameSettings,
       setUserStatus,
+      showSingleFlotApp,
     }: ChannelProps,
     ref,
   ) => {
@@ -119,23 +124,38 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
         value: 'private',
       },
     ];
+    const isMobile = useMemo(() => {
+      return is_mobile();
+    }, []);
 
+    // 用于清除延迟隐藏的 timeout
+    const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const mainHideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
     useEffect(() => {
       // 设置默认展开的子房间的Collapse body基于subRoomsTmp
       let currentRooms = settings.children.map((room) => room.name);
-      let isSameAsSubTmp = subRoomsTmp.every((room) => currentRooms.includes(room));
+      let isSameAsSubTmp =
+        subRoomsTmp.length > 0 ? subRoomsTmp.every((room) => currentRooms.includes(room)) : false;
       if (settings.children.length > 0 && !isSameAsSubTmp) {
         let newRooms: string[] = [];
-        settings.children.forEach((child) => {
+        // 同时如果子房间是公开的，默认展开
+        for (const child of settings.children) {
           newRooms.push(child.name);
-          if (!subRoomsTmp.includes(child.name)) {
+          if (!child.isPrivate) {
+            console.warn('public room auto expand', child.name);
             setSubActiveKey((prev) => [...prev, child.name]);
+            continue;
+          }
+          if (!subRoomsTmp.includes(child.name) && child.participants.length > 0) {
+            setSubActiveKey((prev) => [...prev, child.name]);
+            continue;
           }
           // 如果当前这个本地用户在子房间中，需要展开这个子房间
           if (child.participants.includes(localParticipantId)) {
             setSubActiveKey((prev) => [...prev, child.name]);
+            continue;
           }
-        });
+        }
         setSubRoomsTmp(newRooms);
       }
     }, [settings.children, localParticipantId, subRoomsTmp]);
@@ -154,7 +174,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       ) {
         const senderName = settings.participants[localParticipantId].name;
         return {
-          room: space.name,
+          space: space.name,
           senderName,
           senderId: localParticipantId,
         } as WsSender;
@@ -183,7 +203,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
     useEffect(() => {
       // 监听加入私密房间的socket事件 --------------------------------------------------------------------------
       socket.on('join_privacy_room_response', (msg: WsJoinRoom) => {
-        if (msg.room === space.name && msg.receiverId === localParticipantId) {
+        if (msg.space === space.name && msg.receiverId === localParticipantId) {
           if (!joinModalOpen) {
             if (msg.confirm === false) {
               // 说明对方拒绝了加入请求
@@ -207,7 +227,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       });
       // 监听从私密房间移除的socket事件 -----------------------------------------------------------------------
       socket.on('removed_from_privacy_room_response', (msg: WsRemove) => {
-        if (msg.room === space.name && msg.participants.includes(localParticipantId)) {
+        if (msg.space === space.name && msg.participants.includes(localParticipantId)) {
           messageApi.info({
             content: `${t('channel.modal.remove.before')}${msg.childRoom}${t(
               'channel.modal.remove.after',
@@ -219,6 +239,14 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       return () => {
         socket.off('join_privacy_room_response');
         socket.off('removed_from_privacy_room_response');
+
+        // 清理延迟隐藏的 timeout
+        if (hideTimeoutRef.current) {
+          clearTimeout(hideTimeoutRef.current);
+        }
+        if (mainHideTimeoutRef.current) {
+          clearTimeout(mainHideTimeoutRef.current);
+        }
       };
     }, [socket, space.name, localParticipantId, joinModalOpen]);
 
@@ -272,7 +300,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
 
         // socket通知用户移除
         socket.emit('removed_from_privacy_room', {
-          room: space.name,
+          space: space.name,
           participants: selectedRoom.participants,
           socketIds,
           childRoom: selectedRoom.name,
@@ -522,10 +550,11 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
         <GLayout tracks={mainTracks} style={{ height: '120px', position: 'relative' }}>
           <ParticipantTileMini
             settings={settings}
-            room={space}
+            space={space}
             updateSettings={updateSettings}
             toRenameSettings={toRenameSettings}
             setUserStatus={setUserStatus}
+            showSingleFlotApp={showSingleFlotApp}
           ></ParticipantTileMini>
         </GLayout>
       );
@@ -555,10 +584,11 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
           <GLayout tracks={subTracks} style={{ height: '120px', position: 'relative' }}>
             <ParticipantTileMini
               settings={settings}
-              room={space}
+              space={space}
               updateSettings={updateSettings}
               toRenameSettings={toRenameSettings}
               setUserStatus={setUserStatus}
+              showSingleFlotApp={showSingleFlotApp}
             ></ParticipantTileMini>
           </GLayout>
         );
@@ -573,10 +603,25 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
           <div
             className={styles.room_header_wrapper}
             onMouseEnter={() => {
-              setRoomJoinVis(index);
+              if (!isMobile) setRoomJoinVis(index);
             }}
             onMouseLeave={() => {
-              setRoomJoinVis(null);
+              if (!isMobile) setRoomJoinVis(null);
+            }}
+            onTouchStart={() => {
+              if (isMobile) {
+                // 清除之前的延迟隐藏
+                if (hideTimeoutRef.current) {
+                  clearTimeout(hideTimeoutRef.current);
+                }
+                setRoomJoinVis(index);
+              }
+            }}
+            onTouchEnd={() => {
+              if (isMobile) {
+                // 延迟隐藏，给用户时间点击按钮
+                hideTimeoutRef.current = setTimeout(() => setRoomJoinVis(null), 3000);
+              }
             }}
           >
             <Dropdown
@@ -629,9 +674,23 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             </Dropdown>
             <div
               className={styles.room_header_extra}
-              style={{ visibility: roomJoinVis === index ? 'visible' : 'hidden' }}
+              style={{
+                visibility: roomJoinVis === index ? 'visible' : 'hidden',
+              }}
             >
-              <button onClick={() => addIntoRoom(room)} className="vocespace_button">
+              <button
+                onClick={() => {
+                  addIntoRoom(room);
+                  // 移动设备上点击后立即隐藏按钮并清除延迟
+                  if (isMobile) {
+                    if (hideTimeoutRef.current) {
+                      clearTimeout(hideTimeoutRef.current);
+                    }
+                    setRoomJoinVis(null);
+                  }
+                }}
+                className="vocespace_button"
+              >
                 <PlusCircleOutlined />
                 {t('channel.menu.join')}
               </button>
@@ -651,10 +710,25 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             <div
               className={styles.room_header_wrapper}
               onMouseEnter={() => {
-                setMainJoinVis('visible');
+                if (!isMobile) setMainJoinVis('visible');
               }}
               onMouseLeave={() => {
-                setMainJoinVis('hidden');
+                if (!isMobile) setMainJoinVis('hidden');
+              }}
+              onTouchStart={() => {
+                if (isMobile) {
+                  // 清除之前的延迟隐藏
+                  if (mainHideTimeoutRef.current) {
+                    clearTimeout(mainHideTimeoutRef.current);
+                  }
+                  setMainJoinVis('visible');
+                }
+              }}
+              onTouchEnd={() => {
+                if (isMobile) {
+                  // 延迟隐藏，给用户时间点击按钮
+                  mainHideTimeoutRef.current = setTimeout(() => setMainJoinVis('hidden'), 3000);
+                }
               }}
             >
               <div
@@ -672,8 +746,25 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                 <span>{t('channel.menu.main')}</span>
               </div>
 
-              <div className={styles.room_header_extra} style={{ visibility: mainJoinVis }}>
-                <button onClick={joinMainRoom} className="vocespace_button">
+              <div
+                className={styles.room_header_extra}
+                style={{
+                  visibility: mainJoinVis,
+                }}
+              >
+                <button
+                  onClick={() => {
+                    joinMainRoom();
+                    // 移动设备上点击后立即隐藏按钮并清除延迟
+                    if (isMobile) {
+                      if (mainHideTimeoutRef.current) {
+                        clearTimeout(mainHideTimeoutRef.current);
+                      }
+                      setMainJoinVis('hidden');
+                    }
+                  }}
+                  className="vocespace_button"
+                >
                   <PlusCircleOutlined />
                   {t('channel.menu.join')}
                 </button>
@@ -719,71 +810,14 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       ];
     }, [mainContext, subChildren, childRooms, subActiveKey, mainJoinVis]);
 
-    if (collapsed) {
-      return (
-        <div
-          className={`${styles.container} ${styles.collapsed}`}
-          style={{
-            width: isActive ? 'fit-content' : '0px',
-          }}
-        >
-          <Button
-            type="text"
-            onClick={toggleCollapse}
-            icon={<MenuUnfoldOutlined />}
-            style={{
-              backgroundColor: '#1a1a1a',
-              height: '100%',
-              display: 'flex',
-              alignItems: 'flex-start',
-              paddingTop: 20,
-            }}
-          ></Button>
-        </div>
-      );
-    }
-
     useImperativeHandle(ref, () => ({
       join: joinChildRoom,
-      joinMain: joinMainRoom
+      joinMain: joinMainRoom,
     }));
 
-    return (
+    // 将重复的 Modal 组件提取为公共组件
+    const renderModals = () => (
       <>
-        <div className={styles.container}>
-          <div className={styles.header}>
-            <div className={styles.headerContent}>
-              <div className={styles.roomInfo}>
-                {/* <SvgResource.Hash className={styles.roomIcon} /> */}
-                <span className={styles.roomName}>{space.name}</span>
-              </div>
-              <div className={styles.headerActions}>
-                <Tag color="#22CCEE">
-                  {allParticipants.length} {t('channel.menu.active')}
-                </Tag>
-                <Button
-                  className={styles.collapseButton}
-                  onClick={toggleCollapse}
-                  icon={<MenuFoldOutlined />}
-                  type="text"
-                ></Button>
-              </div>
-            </div>
-          </div>
-          <div className={styles.main}>
-            {/* Main Room */}
-            <div>
-              <Collapse
-                bordered={false}
-                defaultActiveKey={['main', 'sub']}
-                activeKey={mainActiveKey}
-                expandIcon={() => undefined}
-                style={{ background: token.colorBgContainer }}
-                items={mainItems}
-              />
-            </div>
-          </div>
-        </div>
         <Modal
           open={roomCreateModalOpen}
           title={t('channel.modal.title')}
@@ -798,9 +832,6 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
           <p>{t('channel.modal.desc.1')}</p>
           <Input
             placeholder={t('channel.modal.placeholder')}
-            style={{
-              outline: '1px solid #22CCEE',
-            }}
             value={childRoomName}
             onChange={(e) => {
               setChildRoomName(e.target.value);
@@ -831,6 +862,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             />
           </div>
         </Modal>
+
         <Modal
           open={joinModalOpen}
           title={t('channel.modal.join.title')}
@@ -843,6 +875,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             {joinParticipant && joinParticipant.name} &nbsp; {t('channel.modal.join.want')}
           </p>
         </Modal>
+
         <Modal
           open={renameModalOpen}
           title={t('channel.menu.rename')}
@@ -854,9 +887,6 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
           <p>{t('channel.modal.rename.desc')}</p>
           <Input
             placeholder={t('channel.modal.rename.placeholder')}
-            style={{
-              outline: '1px solid #22CCEE',
-            }}
             value={renameRoomName}
             onChange={(e) => {
               setRenameRoomName(e.target.value);
@@ -865,5 +895,149 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
         </Modal>
       </>
     );
+
+    if (isMobile) {
+      // 手机上侧边栏需要做成Drawer的形式
+      return (
+        <>
+          {collapsed && (
+            <div
+              className={`${styles.container} ${styles.collapsed}`}
+              style={{
+                width: isActive ? 'fit-content' : '0px',
+              }}
+            >
+              <Button
+                type="text"
+                onClick={toggleCollapse}
+                icon={<MenuUnfoldOutlined />}
+                style={{
+                  backgroundColor: '#1a1a1a',
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  paddingTop: 20,
+                }}
+              ></Button>
+            </div>
+          )}
+          <Drawer
+            {...DEFAULT_DRAWER_PROP}
+            placement="left"
+            styles={{
+              header: {
+                backgroundColor: '#1e1e1e',
+              },
+              body: {
+                padding: '0 24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                flexWrap: 'wrap',
+                overflow: 'hidden',
+                backgroundColor: '#1e1e1e',
+              },
+            }}
+            width={'100%'}
+            title={
+              <div className={styles.header_mobile}>
+                <span className={styles.roomName}>{space.name}</span>
+                <Tag color="#22CCEE">
+                  {allParticipants.length} {t('channel.menu.active')}
+                </Tag>
+              </div>
+            }
+            open={!collapsed}
+            extra={
+              <Button
+                className={styles.collapseButton}
+                onClick={toggleCollapse}
+                icon={<MenuFoldOutlined />}
+                type="text"
+              ></Button>
+            }
+          >
+            <div className={styles.main_mobile}>
+              {/* Main Room */}
+              <div>
+                <Collapse
+                  bordered={false}
+                  defaultActiveKey={['main', 'sub']}
+                  activeKey={mainActiveKey}
+                  expandIcon={() => undefined}
+                  style={{ background: token.colorBgContainer }}
+                  items={mainItems}
+                />
+              </div>
+            </div>
+          </Drawer>
+          {renderModals()}
+        </>
+      );
+    } else {
+      if (collapsed) {
+        return (
+          <div
+            className={`${styles.container} ${styles.collapsed}`}
+            style={{
+              width: isActive ? 'fit-content' : '0px',
+            }}
+          >
+            <Button
+              type="text"
+              onClick={toggleCollapse}
+              icon={<MenuUnfoldOutlined />}
+              style={{
+                backgroundColor: '#1a1a1a',
+                height: '100%',
+                display: 'flex',
+                alignItems: 'flex-start',
+                paddingTop: 20,
+              }}
+            ></Button>
+          </div>
+        );
+      }
+
+      return (
+        <>
+          <div className={styles.container}>
+            <div className={styles.header}>
+              <div className={styles.headerContent}>
+                <div className={styles.roomInfo}>
+                  {/* <SvgResource.Hash className={styles.roomIcon} /> */}
+                  <span className={styles.roomName}>{space.name}</span>
+                </div>
+                <div className={styles.headerActions}>
+                  <Tag color="#22CCEE">
+                    {allParticipants.length} {t('channel.menu.active')}
+                  </Tag>
+                  <Button
+                    className={styles.collapseButton}
+                    onClick={toggleCollapse}
+                    icon={<MenuFoldOutlined />}
+                    type="text"
+                  ></Button>
+                </div>
+              </div>
+            </div>
+            <div className={styles.main}>
+              {/* Main Room */}
+              <div>
+                <Collapse
+                  bordered={false}
+                  defaultActiveKey={['main', 'sub']}
+                  activeKey={mainActiveKey}
+                  expandIcon={() => undefined}
+                  style={{ background: token.colorBgContainer }}
+                  items={mainItems}
+                />
+              </div>
+            </div>
+          </div>
+          {renderModals()}
+        </>
+      );
+    }
   },
 );

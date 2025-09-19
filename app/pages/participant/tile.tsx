@@ -1,5 +1,5 @@
 import { isTrackReferencePlaceholder } from '@/app/pages/controls/video_container';
-import { useVideoBlur, WsTo } from '@/lib/std/device';
+import { MouseMove, useVideoBlur, WsMouseMove, WsTo } from '@/lib/std/device';
 import {
   AudioTrack,
   ConnectionQualityIndicator,
@@ -8,7 +8,6 @@ import {
   ParticipantName,
   ParticipantPlaceholder,
   ParticipantTile,
-  ParticipantTileProps,
   PinState,
   ScreenShareIcon,
   TrackMutedIndicator,
@@ -20,12 +19,12 @@ import {
   useMaybeLayoutContext,
   VideoTrack,
 } from '@livekit/components-react';
-import { Participant, Room, Track } from 'livekit-client';
+import { Participant, Track } from 'livekit-client';
 import React, { useEffect, useMemo, useState } from 'react';
 import VirtualRoleCanvas from '../virtual_role/live2d';
 import { useRecoilState } from 'recoil';
 import {
-  roomStatusState,
+  SingleAppDataState,
   socket,
   userState,
   virtualMaskState,
@@ -33,22 +32,20 @@ import {
 import styles from '@/styles/controls.module.scss';
 import { SvgResource, SvgType } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
-import { randomColor, UserStatus } from '@/lib/std';
+import { randomColor } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
-import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { AppKey, castCountdown, castTimer, castTodo, ChildRoom, ParticipantSettings } from '@/lib/std/space';
 import { WaveHand } from '../controls/widgets/wave';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
+import { AppFlotIconCollect } from '../apps/app_pin';
+import { ParticipantTileMiniProps } from './mini';
 
-export interface ParticipantItemProps extends ParticipantTileProps {
-  settings: SpaceInfo;
-  setUserStatus: (status: UserStatus | string) => Promise<void>;
+export interface ParticipantItemProps extends ParticipantTileMiniProps {
   toSettings?: () => void;
   messageApi: MessageInstance;
   isFocus?: boolean;
-  room: Room ;
-  updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
-  toRenameSettings: () => void;
+  selfRoom?: ChildRoom
 }
 
 export const ParticipantItem: (
@@ -62,9 +59,11 @@ export const ParticipantItem: (
       messageApi,
       setUserStatus,
       isFocus,
-      room,
+      space,
       updateSettings,
       toRenameSettings,
+      showSingleFlotApp,
+      selfRoom
     }: ParticipantItemProps,
     ref,
   ) {
@@ -72,7 +71,8 @@ export const ParticipantItem: (
     const { localParticipant } = useLocalParticipant();
     const videoRef = React.useRef<HTMLVideoElement>(null);
     const [uState, setUState] = useRecoilState(userState);
-    const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
+    // const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
+    const [appsData, setAppsData] = useRecoilState(SingleAppDataState);
     const trackReference = useEnsureTrackRef(trackRef);
     const isEncrypted = useIsEncrypted(trackReference.participant);
     const layoutContext = useMaybeLayoutContext();
@@ -91,7 +91,7 @@ export const ParticipantItem: (
         'reload_virtual_response',
         (msg: { identity: string; reloading: boolean; roomId: string }) => {
           console.log('reload_virtual_response', msg);
-          if (room.name == msg.roomId) {
+          if (space.name == msg.roomId) {
             if (msg.identity != localParticipant.identity) {
               setRemoteMask(msg.reloading);
             }
@@ -102,7 +102,7 @@ export const ParticipantItem: (
       return () => {
         socket.off('reload_virtual_response');
       };
-    }, [room, localParticipant.identity]);
+    }, [space, localParticipant.identity]);
 
     useEffect(() => {
       if (isLocal) {
@@ -137,20 +137,7 @@ export const ParticipantItem: (
 
     // 存储所有观众的鼠标位置
     const [remoteCursors, setRemoteCursors] = React.useState<{
-      [participantId: string]: {
-        room?: string;
-        x: number;
-        y: number;
-        name: string;
-        color: string;
-        timestamp: number;
-        realVideoRect: {
-          left: number;
-          top: number;
-          width: number;
-          height: number;
-        };
-      };
+      [participantId: string]: MouseMove;
     }>({});
     const { blurValue, setVideoBlur } = useVideoBlur({
       videoRef,
@@ -190,6 +177,10 @@ export const ParticipantItem: (
         ? `none`
         : `blur(${blurValue}px)`;
     }, [settings.participants, trackReference.participant.identity, blurValue]);
+
+    const currentParticipant: ParticipantSettings | undefined = useMemo(() => {
+      return settings.participants[trackReference.participant.identity];
+    }, [settings.participants, trackReference.participant.identity]);
 
     const deviceTrack = React.useMemo(() => {
       if (isTrackReference(trackReference) && !loading) {
@@ -403,13 +394,13 @@ export const ParticipantItem: (
     // 使用ws向服务器发送消息，告诉某个人打招呼
     const wsTo = useMemo(() => {
       return {
-        room: room.name,
+        space: space.name,
         senderName: localParticipant.name,
         senderId: localParticipant.identity,
         receiverId: trackReference.participant.identity,
         socketId: settings.participants[trackReference.participant.identity]?.socketId,
       } as WsTo;
-    }, [room, localParticipant, trackReference, settings.participants]);
+    }, [space, localParticipant, trackReference, settings.participants]);
 
     // 处理当前用户如果是演讲者并且当前track source是screen share，那么就需要获取其他用户的鼠标位置
     useEffect(() => {
@@ -467,21 +458,21 @@ export const ParticipantItem: (
               setLastMousePos({ x, y });
             }
             let data = {
-              room: room.name,
+              space: space.name,
               x,
               y,
               color: randomColor(localParticipant.identity),
               senderName: localParticipant.name || localParticipant.identity,
               senderId: localParticipant.identity,
               receiverId: trackReference.participant.identity,
-              receSocketId: settings.participants[trackReference.participant.identity]?.socketId,
+              socketId: settings.participants[trackReference.participant.identity]?.socketId,
               realVideoRect: actualVideoRect,
-            };
+            } as WsMouseMove;
 
             setRemoteCursors((prev) => ({
               ...prev,
               [data.senderId]: {
-                room: data.room,
+                space: data.space,
                 x: data.x,
                 y: data.y,
                 name: data.senderName,
@@ -500,12 +491,12 @@ export const ParticipantItem: (
             });
             // 发送socket, 只需要知道去除者的id
             socket.emit('mouse_remove', {
-              room,
+              space: space.name,
               senderName: localParticipant.name || localParticipant.identity,
               senderId: localParticipant.identity,
               receiverId: trackReference.participant.identity,
-              receSocketId: settings.participants[trackReference.participant.identity]?.socketId,
-            });
+              socketId: settings.participants[trackReference.participant.identity]?.socketId,
+            } as WsTo);
           }
         };
         // 300ms触发一次, 节流
@@ -520,15 +511,15 @@ export const ParticipantItem: (
 
       // 如果当前用户是演讲者并且当前track source是screen share，那么就需要获取其他用户的鼠标位置
       if (localParticipant.isSpeaking && trackReference.source === Track.Source.ScreenShare) {
-        socket.on('mouse_move_response', (data) => {
+        socket.on('mouse_move_response', (data: WsMouseMove) => {
           // 获取之后需要将别人的鼠标位置在演讲者的屏幕上进行显示
-          const { senderId, senderName, x, y, color, realVideoRect, room: uRoom } = data;
+          const { senderId, senderName, x, y, color, realVideoRect, space: spaceName } = data;
           // 更新状态
-          if (room == uRoom) {
+          if (space.name == spaceName && selfRoom && selfRoom.participants.includes(data.senderId)) {
             setRemoteCursors((prev) => ({
               ...prev,
               [senderId]: {
-                room,
+                space: spaceName,
                 x,
                 y,
                 name: senderName,
@@ -539,10 +530,9 @@ export const ParticipantItem: (
             }));
           }
         });
-        socket.on('mouse_remove_response', (data) => {
-          const { senderId, room: uRoom } = data;
+        socket.on('mouse_remove_response', ({ senderId, space: spaceName }: WsTo) => {
           // 删除状态
-          if (room == uRoom) {
+          if (space.name == spaceName) {
             setRemoteCursors((prev) => {
               const newCursors = { ...prev };
               delete newCursors[senderId];
@@ -561,7 +551,7 @@ export const ParticipantItem: (
     const [username, setUsername] = useState<string>('');
     const { optItems, handleOptClick, optOpen, optSelfItems, handleSelfOptClick } =
       useControlRKeyMenu({
-        room,
+        space,
         spaceInfo: settings,
         selectedParticipant,
         setSelectedParticipant,
@@ -576,6 +566,40 @@ export const ParticipantItem: (
         trackReference.source === Track.Source.ScreenShare
       );
     }, [trackReference, localParticipant.identity]);
+
+    const showApp = (appKey: AppKey) => {
+      showSingleFlotApp(appKey);
+      const targetParticipant = {
+        participantId: trackReference.participant.identity,
+        participantName: trackReference.participant.name,
+        auth: currentParticipant.auth,
+      };
+      console.warn(targetParticipant);
+      if (appKey === 'timer') {
+        const castedTimer = castTimer(currentParticipant.appDatas.timer);
+        if (castedTimer) {
+          setAppsData({
+            ...targetParticipant,
+            targetApp: castedTimer,
+          });
+        }
+      } else if (appKey === 'countdown') {
+        const castedCountdown = castCountdown(currentParticipant.appDatas.countdown);
+        if (castedCountdown) {
+          setAppsData({
+            ...targetParticipant,
+            targetApp: castedCountdown,
+          });
+        }
+      } else if (appKey === 'todo') {
+        const castedTodo = castTodo(currentParticipant.appDatas.todo);
+        setAppsData({
+          ...targetParticipant,
+          targetApp: castedTodo || [],
+        });
+      }
+    };
+
     return (
       <ControlRKeyMenu
         menu={
@@ -591,7 +615,7 @@ export const ParticipantItem: (
         }
         isRKey={true}
         onOpenChange={(open) => {
-          optOpen(open, room.getParticipantByIdentity(trackReference.participant.identity)!);
+          optOpen(open, space.getParticipantByIdentity(trackReference.participant.identity)!);
         }}
         children={
           <ParticipantTile ref={ref} trackRef={trackReference}>
@@ -599,7 +623,7 @@ export const ParticipantItem: (
             <div className="lk-participant-placeholder">
               <ParticipantPlaceholder />
             </div>
-            <div className="lk-participant-metadata" style={{ zIndex: 1000 }}>
+            <div className="lk-participant-metadata" style={{ zIndex: 4 }}>
               <StatusInfo
                 disabled={trackReference.participant.identity != localParticipant.identity}
                 items={items}
@@ -651,6 +675,12 @@ export const ParticipantItem: (
             </div>
             {trackReference.participant.identity != localParticipant.identity && (
               <WaveHand wsWave={{ ...wsTo }} />
+            )}
+            {trackReference.source !== Track.Source.ScreenShare && (
+              <AppFlotIconCollect
+                showApp={showApp}
+                participant={currentParticipant}
+              ></AppFlotIconCollect>
             )}
           </ParticipantTile>
         }

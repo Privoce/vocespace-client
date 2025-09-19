@@ -1,6 +1,6 @@
 import { createRoom, deleteRoom, joinRoom, leaveRoom, updateRoom } from './channel';
 import { fetchLinkPreview, getChatMsg } from './chat';
-import { getConf, reloadConf } from './conf';
+import { getConf, reloadConf, reloadLicense } from './conf';
 import { checkLicenseByIP, getLicenseByIP } from './license';
 import { sendRecordRequest, updateRecord } from './record';
 import {
@@ -13,9 +13,13 @@ import {
   historySpaceInfos,
   joinSpace,
   leaveSpace,
+  persistentSpace,
   updateOwnerId,
+  updateSpaceAppAuth,
   updateSpaceApps,
+  updateSpaceAppSync,
   updateSpaceParticipant,
+  uploadSpaceApp,
 } from './space';
 
 export const api = {
@@ -32,6 +36,10 @@ export const api = {
   updateSpaceParticipant,
   updateSpaceApps,
   leaveSpace,
+  persistentSpace,
+  uploadSpaceApp,
+  updateSpaceAppSync,
+  updateSpaceAppAuth,
   // ---- chat api --------
   fetchLinkPreview,
   getChatMsg,
@@ -48,5 +56,6 @@ export const api = {
   joinRoom,
   updateRoom,
   getConf,
-  reloadConf
+  reloadConf,
+  reloadLicense,
 };

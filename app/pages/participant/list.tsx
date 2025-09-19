@@ -16,7 +16,7 @@ export interface ParticipantListProps {
   menu: MenuProps;
   selfMenu: MenuProps;
   onOpenMenu: (open: boolean, pid: string) => void;
-  room: Room;
+  space: Room;
 }
 
 /**
@@ -33,7 +33,7 @@ export function ParticipantList({
   onOpenMenu,
   size = 'large',
   selfMenu,
-  room,
+  space,
 }: ParticipantListProps) {
   const { t } = useI18n();
 
@@ -45,7 +45,7 @@ export function ParticipantList({
       renderItem={(item, index) => (
         <List.Item>
           <ControlRKeyMenu
-            menu={item[0] === room.localParticipant.identity ? selfMenu : menu}
+            menu={item[0] === space.localParticipant.identity ? selfMenu : menu}
             onOpenChange={(open) => onOpenMenu(open, item[0])}
             isRKey={true}
             children={

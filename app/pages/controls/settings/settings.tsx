@@ -30,7 +30,7 @@ export interface SettingsProps {
   };
   messageApi: MessageInstance;
   setUserStatus?: (status: UserStatus | string) => Promise<void>;
-  room: string;
+  space: string;
   localParticipant: LocalParticipant;
   spaceInfo: SpaceInfo;
 }
@@ -72,7 +72,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
       // saveChanges,
       messageApi,
       setUserStatus,
-      room,
+      space,
       localParticipant,
       spaceInfo,
     }: SettingsProps,
@@ -97,7 +97,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
     const [firstOpen, setFirstOpen] = useState(true);
 
     const searchRoomRecords = async () => {
-      const response = await fetch(`${env?.server_host}/api/s3/${room}`);
+      const response = await fetch(`${env?.server_host}/api/s3/${space}`);
       if (response.ok) {
         const { records, success }: RecordResponse = await response.json();
         if (success && records.length > 0) {
@@ -135,7 +135,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
         label: <TabItem type="setting" label={t('settings.general.title')}></TabItem>,
         children: (
           <GeneralSettings
-            room={room}
+            space={space}
             localParticipant={localParticipant}
             messageApi={messageApi}
             appendStatus={appendStatus}
@@ -145,6 +145,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
             setUsername={setUsername}
             openPromptSound={openPromptSound}
             setOpenPromptSound={setOpenPromptSound}
+            spaceInfo={spaceInfo}
           ></GeneralSettings>
         ),
       },
@@ -177,60 +178,60 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
               setEnabled: setVirtualEnabled,
               compare,
               setCompare,
-              room,
+              space,
               localParticipant,
             }}
           ></VideoSettings>
         ),
       },
-      // {
-      //   key: 'app',
-      //   label: <TabItem type="app" label={t('more.app.title')}></TabItem>,
-      //   children: (
-      //     <AppSettings
-      //       spaceInfo={spaceInfo}
-      //       localParticipant={localParticipant}
-      //       spaceName={room}
-      //       messageApi={messageApi}
-      //     ></AppSettings>
-      //   ),
-      // },
-      // {
-      //   key: 'recording',
-      //   label: <TabItem type="record" label={t('recording.title')}></TabItem>,
-      //   children: (
-      //     <div>
-      //       <div
-      //         style={{
-      //           width: '100%',
-      //           display: 'inline-flex',
-      //           alignItems: 'center',
-      //           justifyContent: 'space-between',
-      //           marginBottom: 16,
-      //         }}
-      //       >
-      //         <Tag color="#22ccee">{isConnected}</Tag>
-      //         <Tooltip title="刷新数据">
-      //           <Button size="small" icon={<ReloadOutlined />} onClick={searchRoomRecords}>
-      //             刷新
-      //           </Button>
-      //         </Tooltip>
-      //       </div>
-      //       <RecordingTable
-      //         messageApi={messageApi}
-      //         env={env}
-      //         currentRoom={room}
-      //         recordsData={recordsData}
-      //         setRecordsData={setRecordsData}
-      //         expandable={true}
-      //       ></RecordingTable>
-      //     </div>
-      //   ),
-      // },
+      {
+        key: 'app',
+        label: <TabItem type="app" label={t('more.app.title')}></TabItem>,
+        children: (
+          <AppSettings
+            spaceInfo={spaceInfo}
+            localParticipant={localParticipant}
+            spaceName={space}
+            messageApi={messageApi}
+          ></AppSettings>
+        ),
+      },
+      {
+        key: 'recording',
+        label: <TabItem type="record" label={t('recording.title')}></TabItem>,
+        children: (
+          <div>
+            <div
+              style={{
+                width: '100%',
+                display: 'inline-flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                marginBottom: 16,
+              }}
+            >
+              <Tag color="#22ccee">{isConnected}</Tag>
+              <Tooltip title="刷新数据">
+                <Button size="small" icon={<ReloadOutlined />} onClick={searchRoomRecords}>
+                  刷新
+                </Button>
+              </Tooltip>
+            </div>
+            <RecordingTable
+              messageApi={messageApi}
+              env={env}
+              currentRoom={space}
+              recordsData={recordsData}
+              setRecordsData={setRecordsData}
+              expandable={true}
+            ></RecordingTable>
+          </div>
+        ),
+      },
       {
         key: 'license',
         label: <TabItem type="license" label={t('settings.license.title')}></TabItem>,
-        children: <LicenseControl messageApi={messageApi}></LicenseControl>,
+        children: <LicenseControl messageApi={messageApi} space={space}></LicenseControl>,
       },
       {
         key: 'about_us',

@@ -20,28 +20,37 @@ import {
 import { Participant, Room, Track } from 'livekit-client';
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { isTrackReferencePinned } from './tile';
-import { ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import {
+  AppKey,
+  castCountdown,
+  castTimer,
+  castTodo,
+  ChildRoom,
+  ParticipantSettings,
+  SpaceInfo,
+} from '@/lib/std/space';
 import { useVideoBlur, WsBase, WsTo, WsWave } from '@/lib/std/device';
 import { SvgResource, SvgType } from '@/app/resources/svg';
 import { useRecoilState } from 'recoil';
-import { roomStatusState, userState, virtualMaskState } from '@/app/[spaceName]/PageClientImpl';
+import { SingleAppDataState } from '@/app/[spaceName]/PageClientImpl';
 import { UserStatus } from '@/lib/std';
 import { WaveHand } from '../controls/widgets/wave';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { RaiseHand } from '../controls/widgets/raise';
-import { Dropdown, MenuProps } from 'antd';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { useI18n } from '@/lib/i18n/i18n';
+import { AppFlotIconCollect } from '../apps/app_pin';
 
 export interface ParticipantTileMiniProps extends ParticipantTileProps {
   settings: SpaceInfo;
   /**
    * host room name
    */
-  room: Room;
+  space: Room;
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
+  showSingleFlotApp: (appKey: AppKey) => void;
 }
 
 export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMiniProps>(
@@ -49,10 +58,11 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
     {
       trackRef,
       settings,
-      room,
+      space,
       updateSettings,
       toRenameSettings,
       setUserStatus,
+      showSingleFlotApp,
     }: ParticipantTileMiniProps,
     ref,
   ) => {
@@ -60,12 +70,10 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
     const trackReference = useEnsureTrackRef(trackRef);
     const { localParticipant } = useLocalParticipant();
     const videoRef = useRef<HTMLVideoElement>(null);
-    const [uState, setUState] = useRecoilState(userState);
-    const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
+    const [appsData, setAppsData] = useRecoilState(SingleAppDataState);
     const layoutContext = useMaybeLayoutContext();
     const autoManageSubscription = useFeatureContext()?.autoSubscription;
     const isEncrypted = useIsEncrypted(trackReference.participant);
-    const [virtualMask, setVirtualMask] = useRecoilState(virtualMaskState);
 
     const { blurValue, setVideoBlur } = useVideoBlur({
       videoRef,
@@ -85,23 +93,27 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       }
     }, [settings.participants, trackReference]);
 
+    const currentParticipant: ParticipantSettings | undefined = useMemo(() => {
+      return settings.participants[trackReference.participant.identity];
+    }, [settings.participants, trackReference.participant.identity]);
+
     const wsTo = useMemo(() => {
       return {
-        room: room.name,
+        space: space.name,
         senderName: localParticipant.name,
         senderId: localParticipant.identity,
         receiverId: trackReference.participant.identity,
         socketId: settings.participants[trackReference.participant.identity]?.socketId,
       } as WsTo;
-    }, [room, localParticipant, trackReference, settings.participants]);
+    }, [space, localParticipant, trackReference, settings.participants]);
 
     const wsBase = useMemo(() => {
       return {
-        room: room.name,
+        space: space.name,
         senderName: localParticipant.name,
         senderId: localParticipant.identity,
       } as WsBase;
-    }, [room, localParticipant]);
+    }, [space, localParticipant]);
 
     const videoFilter = useMemo(() => {
       return settings.participants[trackReference.participant.identity]?.virtual?.enabled ?? false
@@ -129,7 +141,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
     const [username, setUsername] = useState<string>('');
     const { optItems, handleOptClick, optOpen, optSelfItems, handleSelfOptClick } =
       useControlRKeyMenu({
-        room,
+        space,
         spaceInfo: settings,
         selectedParticipant,
         setSelectedParticipant,
@@ -180,6 +192,38 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       };
     };
 
+    const showApp = (appKey: AppKey) => {
+      showSingleFlotApp(appKey);
+      const targetParticipant = {
+        participantId: trackReference.participant.identity,
+        participantName: trackReference.participant.name,
+        auth: currentParticipant.auth,
+      };
+      if (appKey === 'timer') {
+        const castedTimer = castTimer(currentParticipant.appDatas.timer);
+        if (castedTimer) {
+          setAppsData({
+            ...targetParticipant,
+            targetApp: castedTimer,
+          });
+        }
+      } else if (appKey === 'countdown') {
+        const castedCountdown = castCountdown(currentParticipant.appDatas.countdown);
+        if (castedCountdown) {
+          setAppsData({
+            ...targetParticipant,
+            targetApp: castedCountdown,
+          });
+        }
+      } else if (appKey === 'todo') {
+        const castedTodo = castTodo(currentParticipant.appDatas.todo);
+        setAppsData({
+          ...targetParticipant,
+          targetApp: castedTodo || [],
+        });
+      }
+    };
+
     return (
       <ControlRKeyMenu
         menu={
@@ -194,7 +238,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
               }
         }
         onOpenChange={(open) => {
-          optOpen(open, room.getParticipantByIdentity(trackReference.participant.identity)!);
+          optOpen(open, space.getParticipantByIdentity(trackReference.participant.identity)!);
         }}
         isRKey={true}
         children={
@@ -319,6 +363,22 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                 />
                 <RaiseHand wsBase={wsBase}></RaiseHand>
               </>
+            )}
+            {trackReference.source !== Track.Source.ScreenShare && (
+              <AppFlotIconCollect
+                style={{
+                  right: '0px',
+                  backgroundColor: 'transparent',
+                  padding: 0,
+                  zIndex: 111,
+                  height: 'fit-content',
+                  width: 'fit-content',
+                  fontSize: 16,
+                }}
+                contextUndefined={false}
+                showApp={showApp}
+                participant={currentParticipant}
+              ></AppFlotIconCollect>
             )}
           </ParticipantTile>
         }

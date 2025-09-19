@@ -268,35 +268,14 @@ app.prepare().then(() => {
     // [socket: mouse move event] ----------------------------------------------------------------------------------------
     // - on: "mouse_move"
     // - emit: "mouse_move_response"
-    // - msg: {
-    //     room: string | undefined;
-    //     x: number;
-    //     y: number;
-    //     color: string;
-    //     senderName: string;
-    //     senderId: string;
-    //     receiverId: string;
-    //     receSocketId: string;
-    //     realVideoRect: {
-    //         width: number;
-    //         height: number;
-    //         left: number;
-    //         top: number;
-    //     };
-    // }
+    // - msg: WsMouseMove
     socket.on('mouse_move', (msg) => {
       socket.broadcast.emit('mouse_move_response', msg);
     });
     // [socket: mouse click event] -------------------------------------------------------------------------------------
     // - on: "mouse_click"
     // - emit: "mouse_click_response"
-    // - msg: {
-    //   room: string;
-    //   senderName: string;
-    //   senderId: string;
-    //   receiverId: string;
-    //   receSocketId: string;
-    // }
+    // - msg: WsTo/WsSender
     socket.on('mouse_remove', (msg) => {
       socket.broadcast.emit('mouse_remove_response', msg);
     });

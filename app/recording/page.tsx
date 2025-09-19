@@ -7,7 +7,13 @@ import { connect_endpoint, isUndefinedString } from '@/lib/std';
 import { ulid } from 'ulid';
 import { useSearchParams } from 'next/navigation';
 import { RecordingTable } from './table';
-import { EnvData, RecordData, RecordResponse, RecordState, useRecordingEnv } from '@/lib/std/recording';
+import {
+  EnvData,
+  RecordData,
+  RecordResponse,
+  RecordState,
+  useRecordingEnv,
+} from '@/lib/std/recording';
 
 const { Title, Text } = Typography;
 
@@ -116,7 +122,6 @@ function RecordsPageContent() {
           <div style={{ flex: 1, display: 'inline-flex', justifyContent: 'space-between' }}>
             <Input
               style={{
-                outline: '1px solid #22CCEE',
                 width: 'calc(100% - 100px)',
               }}
               placeholder="请输入房间名"

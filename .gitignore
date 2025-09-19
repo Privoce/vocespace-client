@@ -48,3 +48,6 @@ livekit_1.8.4_linux_arm64.tar.gz
 
 vocespace.conf.json
 vocespace.*
+
+/deploy/sge_deploy
+/public/license

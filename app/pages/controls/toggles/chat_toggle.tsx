@@ -40,7 +40,7 @@ export function ChatToggle({
       size="small"
       offset={[-4, 4]}
       dot={isDot}
-      style={{ zIndex: 1111 }}
+      style={{ zIndex: 1000 }}
     >
       {showTextOrHide ? (
         <ToggleBtn svgType="chat" label={t('common.chat')} onClick={onClick} />

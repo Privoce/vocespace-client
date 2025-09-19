@@ -31,17 +31,20 @@ import { UserDefineStatus } from '@/lib/std';
 import io from 'socket.io-client';
 import { ChatMsgItem } from '@/lib/std/chat';
 import {
+  AppAuth,
+  Countdown,
   DEFAULT_PARTICIPANT_SETTINGS,
   PARTICIPANT_SETTINGS_KEY,
   ParticipantSettings,
+  Timer,
+  TodoItem,
 } from '@/lib/std/space';
-import { TodoItem } from '../pages/apps/todo_list';
-import dayjs, { type Dayjs } from 'dayjs';
 import { api } from '@/lib/api';
-import { WsBase } from '@/lib/std/device';
-import { createResolution, DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
+import { WsBase, WsTo } from '@/lib/std/device';
+import { createRTCQulity, DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
+import { DEFAULT_LICENSE, DEFAULT_TMP_LICENSE } from '@/lib/std/license';
 
 const TURN_CREDENTIAL = process.env.TURN_CREDENTIAL ?? '';
 const TURN_USERNAME = process.env.TURN_USERNAME ?? '';
@@ -71,13 +74,9 @@ export const roomStatusState = atom({
 export const licenseState = atom({
   key: 'licenseState',
   default: {
-    id: undefined,
-    email: undefined,
-    domains: '*',
-    created_at: 1747742400,
-    expires_at: 1779278400,
-    value: 'vocespace_pro__KUgwpDrr-g3iXIX41rTrSCsWAcn9UFX8dOYMr0gAARQ',
-    ilimit: 'Free',
+    ...DEFAULT_TMP_LICENSE,
+    isAnalysis: false,
+    personLimit: 5,
   },
 });
 
@@ -99,22 +98,13 @@ export const chatMsgState = atom({
   },
 });
 
-export const AppsDataState = atom({
-  key: 'AppsDataState',
+export const SingleAppDataState = atom({
+  key: 'SingleAppDataState',
   default: {
-    todo: [] as TodoItem[],
-    timer: {
-      value: null as number | null,
-      running: false,
-      stopTimeStamp: null as number | null,
-      records: [] as string[],
-    },
-    countdown: {
-      value: null as number | null,
-      duration: dayjs().hour(0).minute(5).second(0) as Dayjs | null,
-      running: false,
-      stopTimeStamp: null as number | null,
-    },
+    participantId: undefined as string | undefined,
+    participantName: undefined as string | undefined,
+    auth: 'read' as AppAuth,
+    targetApp: undefined as Timer | Countdown | TodoItem[] | undefined,
   },
 });
 
@@ -169,7 +159,13 @@ export function PageClientImpl(props: {
     const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
     if (storedSettingsStr) {
       const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
-      setUState(storedSettings);
+      if (storedSettings?.version !== '0.3.0') {
+        // 版本不匹配/不存在，直接删除
+        localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
+        return;
+      } else {
+        setUState(storedSettings);
+      }
     } else {
       // 没有则存到localStorage中
       localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
@@ -284,12 +280,15 @@ function VideoConferenceComponent(props: {
   const [permissionDevice, setPermissionDevice] = useState<Track.Source | null>(null);
   const videoContainerRef = React.useRef<VideoContainerExports>(null);
 
-  const resolutions = createResolution({
-    resolution: props.config.resolution,
-    maxBitrate: props.config.maxBitrate,
-    maxFramerate: props.config.maxFramerate,
-    priority: props.config.priority,
-  });
+  const resolutions = createRTCQulity(
+    {
+      resolution: props.config.resolution,
+      maxBitrate: props.config.maxBitrate,
+      maxFramerate: props.config.maxFramerate,
+      priority: props.config.priority,
+    },
+    3,
+  );
 
   const roomOptions = React.useMemo((): RoomOptions => {
     console.warn(props.config);
@@ -300,11 +299,11 @@ function VideoConferenceComponent(props: {
     return {
       videoCaptureDefaults: {
         deviceId: props.userChoices.videoDeviceId ?? undefined,
-        resolution: props.options.hq ? resolutions.h : resolutions.l,
+        resolution: props.options.hq ? resolutions[0] : resolutions[1],
       },
       publishDefaults: {
         dtx: false,
-        videoSimulcastLayers: props.options.hq ? [resolutions.h, resolutions.l] : [resolutions.l],
+        videoSimulcastLayers: props.options.hq ? resolutions : [resolutions[1], resolutions[2]],
         red: !e2eeEnabled,
         videoCodec,
         screenShareEncoding: {
@@ -312,7 +311,7 @@ function VideoConferenceComponent(props: {
           maxFramerate: props.config.maxFramerate ?? 30, // 30fps
           priority: 'medium',
         },
-        screenShareSimulcastLayers: [props.options.hq ? resolutions.h : resolutions.l],
+        screenShareSimulcastLayers: resolutions,
       },
       audioCaptureDefaults: {
         deviceId: props.userChoices.audioDeviceId ?? undefined,
@@ -375,16 +374,16 @@ function VideoConferenceComponent(props: {
   const router = useRouter();
   const handleOnLeave = React.useCallback(async () => {
     socket.emit('mouse_remove', {
-      room: room.name,
+      space: room.name,
       senderName: room.localParticipant.name || room.localParticipant.identity,
       senderId: room.localParticipant.identity,
       receiverId: '',
-      receSocketId: '',
-    });
+      socketId: '',
+    } as WsTo);
     await api.leaveSpace(room.name, room.localParticipant.identity, socket);
     await videoContainerRef.current?.clearRoom();
     socket.emit('update_user_status', {
-      room: room.name,
+      space: room.name,
     } as WsBase);
     socket.disconnect();
     router.push('/new_space');
@@ -520,6 +519,7 @@ function VideoConferenceComponent(props: {
           messageApi={props.messageApi}
           noteApi={props.notApi}
           setPermissionDevice={setPermissionDevice}
+          config={props.config}
         ></VideoContainer>
         {/* <DebugMode /> */}
         <RecordingIndicator />

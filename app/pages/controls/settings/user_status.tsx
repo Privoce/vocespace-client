@@ -14,7 +14,7 @@ import { DefineUserStatusResponse } from '@/lib/api/space';
 
 export interface BuildUserStatusProps {
   messageApi: MessageInstance;
-  room: string;
+  space: string;
   localParticipant: LocalParticipant;
 }
 
@@ -26,7 +26,7 @@ export interface BuildUserStatusProps {
  * - 用户自定义状态还可以在用户自己创建的子房间中设置为子房间的统一状态，这意味着其他加入到子房间的用户都会同步到这个状态(默认)，
  * 除非其他用户自己更改到其他状态。
  */
-export function BuildUserStatus({ messageApi, room, localParticipant }: BuildUserStatusProps) {
+export function BuildUserStatus({ messageApi, space, localParticipant }: BuildUserStatusProps) {
   const { t } = useI18n();
   const [name, setName] = useState('');
   const [desc, setDesc] = useState('');
@@ -101,7 +101,7 @@ export function BuildUserStatus({ messageApi, room, localParticipant }: BuildUse
         screenBlur,
       };
       // 发送到服务器保存状态
-      const response = await api.defineUserStatus(room, status);
+      const response = await api.defineUserStatus(space, status);
       if (!response.ok) {
         throw new Error(`Failed to save status: ${response.status}`);
       }

@@ -33,6 +33,7 @@ export default {
     },
     chat: 'Chat',
     chat_placeholder: 'Please enter a message',
+    chat_drag_file_here: 'Drag file here',
     send: 'Send',
     send_file_or: 'Do you want to send this file?',
     leave: 'Leave',
@@ -137,6 +138,16 @@ export default {
     channel: 'Channel',
     app: {
       title: 'Application',
+      upload: {
+        to_space: 'Upload application to space',
+        history: 'Upload history',
+        success: 'Application upload successful',
+        error: 'Application upload failed. Please try again later.',
+      },
+      tab: {
+        self: 'self',
+        no_auth: 'This user does not have read/write permissions enabled',
+      },
       settings: {
         filter: 'Filter required apps',
         desc: 'VoceSpace provides a variety of apps. As the host, you can select the apps that participants can use here.',
@@ -144,6 +155,20 @@ export default {
         update: {
           success: 'App settings updated successfully',
           error: 'App settings update failed. Please try again later.',
+        },
+        sync: {
+          title: 'Synchronize App Data',
+          auth: 'App Permissions',
+          auth_desc: 'Control other participants permissions on your app data',
+          desc_pub: 'Set visiblility to everyone can view',
+          desc_priv: 'Set visiblility to only me',
+          read: 'Read',
+          write: 'Read & write',
+          none: 'None',
+          update: {
+            success: 'App settings updated successfully',
+            error: 'App settings update failed. Please try again later.',
+          },
         },
       },
       timer: {
@@ -166,6 +191,9 @@ export default {
         create: 'Create todo',
         empty_value: 'Todo cannot be empty',
         delete: 'Todo deleted successfully',
+        undone: 'Undone',
+        done: 'Done',
+        unexport: 'Current todo is empty, cannot export',
       },
     },
     record: {
@@ -205,10 +233,17 @@ export default {
       set: {
         invite: {
           title: 'Participant Invite',
-          video: 'Invite to Enable Camera',
           wave: 'Send a Reminder',
-          audio: 'Invite to Enable Microphone',
-          share: 'Invite to Share Screen',
+          open: {
+            video: 'Invite to Enable Camera',
+            audio: 'Invite to Enable Microphone',
+            share: 'Invite to Share Screen',
+          },
+          close: {
+            video: 'Invite to Disable Camera',
+            audio: 'Invite to Disable Microphone',
+            share: 'Invite to Stop Sharing Screen',
+          },
         },
         control: {
           title: 'Participant Control',
@@ -251,6 +286,11 @@ export default {
       lang: 'Language',
       share_audio: 'Share Screen Audio',
       prompt_sound: 'Enter Prompt Sound',
+      persistence: {
+        title: 'Persistent Space',
+        success: 'Successfully set the current space to persistent',
+        error: 'Failed to set the current space to persistent',
+      },
       conf: {
         load_error:
           'Configuration loading failed, please check if the vocespace.conf.json file exists',
@@ -317,6 +357,7 @@ export default {
       signed: 'Signed',
       domains: 'Domains',
       limit: 'Limit',
+      person: 'Person Limit',
       created_at: 'Created At',
       expires_at: 'Expires At',
       value: 'License Value',
@@ -333,6 +374,10 @@ export default {
       meeting: 'Subscribe to a meeting',
       buy: 'Purchase a certificate',
       invalid: 'The certificate is invalid or expired. Please check if it is correct.',
+      invalid_domain:
+        'The current domain is not in the list of allowed domains for the certificate. Please contact the administrator to check the server domain configuration.',
+      default_license:
+        'To ensure your use, the current system has loaded a default certificate for you. The default certificate only supports temporary rooms with less than 5 people. If you need more user places, please purchase a professional certificate.',
       update_success: 'The certificate was updated successfully',
       circle_ip:
         'Your current IP address is a loopback address/private address, and we do not recommend purchasing a license for this address. Please purchase a license using a public IP address. If you need to purchase licenses and support services for private addresses, please contact WeChat: Privose.',

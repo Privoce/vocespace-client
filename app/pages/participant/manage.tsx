@@ -13,7 +13,7 @@ import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './
 export interface ParticipantManageProps {
   open: boolean;
   setOpen: (open: boolean) => void;
-  room?: Room;
+  space?: Room;
   participantList: [string, ParticipantSettings][];
   setOpenShareModal: (open: boolean) => void;
   spaceInfo: SpaceInfo;
@@ -28,7 +28,7 @@ export interface ParticipantManageProps {
 export function ParticipantManage({
   open,
   setOpen,
-  room,
+  space,
   participantList,
   setOpenShareModal,
   spaceInfo,
@@ -43,7 +43,7 @@ export function ParticipantManage({
 
   const { optItems, handleOptClick, optOpen, optSelfItems, handleSelfOptClick } =
     useControlRKeyMenu({
-      room,
+      space,
       spaceInfo,
       selectedParticipant,
       setSelectedParticipant,
@@ -103,9 +103,9 @@ export function ParticipantManage({
               <SvgResource type="user_add" svgSize={16}></SvgResource>
             </Button>
           </div>
-          {room && (
+          {space && (
             <ParticipantList
-              room={room}
+              space={space}
               participants={participantList}
               ownerId={spaceInfo.ownerId}
               menu={{
@@ -117,34 +117,34 @@ export function ParticipantManage({
                 onClick: handleSelfOptClick,
               }}
               onOpenMenu={(open, pid) => {
-                optOpen(open, room.getParticipantByIdentity(pid)!);
+                optOpen(open, space.getParticipantByIdentity(pid)!);
               }}
               suffix={(item, _index) => (
                 <>
-                  {room.getParticipantByIdentity(item[0]) && (
+                  {space.getParticipantByIdentity(item[0]) && (
                     <div className={styles.particepant_item_right}>
                       <TrackMutedIndicator
                         trackRef={{
-                          participant: room.getParticipantByIdentity(item[0])!,
+                          participant: space.getParticipantByIdentity(item[0])!,
                           source: Track.Source.Microphone,
                         }}
                         show={'always'}
                       ></TrackMutedIndicator>
                       <TrackMutedIndicator
                         trackRef={{
-                          participant: room.getParticipantByIdentity(item[0])!,
+                          participant: space.getParticipantByIdentity(item[0])!,
                           source: Track.Source.Camera,
                         }}
                         show={'always'}
                       ></TrackMutedIndicator>
-                      {room.localParticipant.identity !== item[0] && (
+                      {space.localParticipant.identity !== item[0] && (
                         <ControlRKeyMenu
                           menu={{
                             items: optItems,
                             onClick: handleOptClick,
                           }}
                           onOpenChange={(open) => {
-                            optOpen(open, room.getParticipantByIdentity(item[0])!);
+                            optOpen(open, space.getParticipantByIdentity(item[0])!);
                           }}
                           children={
                             <Button shape="circle" type="text">
