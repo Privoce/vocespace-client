@@ -44,14 +44,13 @@ export interface License extends LicenseClaims {
 }
 
 export const getLicensePersonLimit = (licenseLimit: LicenseLimit, isTmp?: boolean): number => {
-  if (isTmp) return 20;
   switch (licenseLimit) {
     case 'free':
       return 5;
     case 'pro':
-      return 9999;
+      return isTmp ? 20 : 9999;
     case 'enterprise':
-      return 9999;
+      return isTmp ? 20 : 9999;
     default:
       return 5;
   }
@@ -190,10 +189,15 @@ export const analyzeLicense = (licenseToken: string): License => {
       return DEFAULT_LICENSE;
     }
 
+    let isTmp = false;
+    if (licenseToken === DEFAULT_LICENSE.value || licenseToken === DEFAULT_TMP_LICENSE.value) {
+      isTmp = true;
+    }
+
     return {
       ...claims,
       value: licenseToken,
-      isTmp: false,
+      isTmp,
     };
   } catch (error) {
     console.error('Failed to parse license:', error);

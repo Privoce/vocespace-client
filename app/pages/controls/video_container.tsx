@@ -229,37 +229,37 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       });
 
       // license 检测 -----------------------------------------------------------------------------
-      const checkLicense = async () => {
-        const response = await api.checkLicenseByIP(IP);
-        if (response.ok) {
-          const { id, email, domains, created_at, expires_at, ilimit, value } =
-            await response.json();
-          setULicenseState((prev) => ({
-            ...prev,
-            id,
-            email,
-            domains,
-            created_at,
-            expires_at,
-            ilimit,
-            value,
-          }));
-        }
-      };
+      // const checkLicense = async () => {
+      //   const response = await api.checkLicenseByIP(IP);
+      //   if (response.ok) {
+      //     const { id, email, domains, created_at, expires_at, ilimit, value } =
+      //       await response.json();
+      //     setULicenseState((prev) => ({
+      //       ...prev,
+      //       id,
+      //       email,
+      //       domains,
+      //       created_at,
+      //       expires_at,
+      //       ilimit,
+      //       value,
+      //     }));
+      //   }
+      // };
 
-      if (uLicenseState.value !== '') {
-        if (!(IP === 'localhost' || IP.startsWith('192.168.'))) {
-          checkLicense();
-        }
-      } else {
-        let value = window.localStorage.getItem('license');
-        if (value && value !== '') {
-          setULicenseState((prev) => ({
-            ...prev,
-            value,
-          }));
-        }
-      }
+      // if (uLicenseState.value !== '') {
+      //   if (!(IP === 'localhost' || IP.startsWith('192.168.'))) {
+      //     checkLicense();
+      //   }
+      // } else {
+      //   let value = window.localStorage.getItem('license');
+      //   if (value && value !== '') {
+      //     setULicenseState((prev) => ({
+      //       ...prev,
+      //       value,
+      //     }));
+      //   }
+      // }
 
       // 监听服务器的提醒事件的响应 -------------------------------------------------------------------
       socket.on('wave_response', (msg: WsWave) => {

@@ -99,7 +99,7 @@ export function MoreButtonInner({
       });
     }
     return moreItems;
-  }, [isRecording, chat]);
+  }, [isRecording, chat, t]);
 
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
