@@ -156,25 +156,25 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           startAt: new Date().getTime(),
         });
         console.warn(uState);
-        const roomName = `${space.localParticipant.name}'s room`;
+        // const roomName = `${space.localParticipant.name}'s room`;
 
         // 为新加入的参与者创建一个自己的私人房间
-        if (!settings.children.some((child) => child.name === roomName)) {
-          const response = await api.createRoom({
-            spaceName: space.name,
-            roomName,
-            ownerId: space.localParticipant.identity,
-            isPrivate: true,
-          });
+        // if (!settings.children.some((child) => child.name === roomName)) {
+        //   const response = await api.createRoom({
+        //     spaceName: space.name,
+        //     roomName,
+        //     ownerId: space.localParticipant.identity,
+        //     isPrivate: true,
+        //   });
 
-          if (!response.ok) {
-            messageApi.error({
-              content: t('channel.create.error'),
-            });
-          } else {
-            await fetchSettings();
-          }
-        }
+        //   if (!response.ok) {
+        //     messageApi.error({
+        //       content: t('channel.create.error'),
+        //     });
+        //   } else {
+        //     await fetchSettings();
+        //   }
+        // }
       };
 
       // 获取历史聊天记录 ---------------------------------------------------------------------------
@@ -866,7 +866,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     return (
       <div className="video_container_wrapper" style={{ position: 'relative' }}>
         {/* 右侧应用浮窗，悬浮态 */}
-        {showFlot && space && settings && (
+        {/* {showFlot && space && settings && (
           <FlotLayout
             space={space.name}
             style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
@@ -874,9 +874,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             openApp={openApp}
             spaceInfo={settings}
           ></FlotLayout>
-        )}
+        )} */}
         {/* 右侧单应用浮窗，悬浮态，用于当用户点击自己视图头上角图标进行显示 */}
-        {space && (
+        {/* {space && (
           <SingleFlotLayout
             space={space.name}
             style={{ position: 'absolute', top: '100px', right: '0px', zIndex: 1001 }}
@@ -886,9 +886,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             spaceInfo={settings}
             appKey={targetAppKey}
           ></SingleFlotLayout>
-        )}
+        )} */}
         {/* 左侧侧边栏 */}
-        {space && (
+        {/* {space && (
           <Channel
             ref={channelRef}
             space={space}
@@ -910,7 +910,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             setUserStatus={setUserStatus}
             showSingleFlotApp={showSingleFlotApp}
           ></Channel>
-        )}
+        )} */}
         {/* 主视口 */}
         <div
           className="lk-video-conference"

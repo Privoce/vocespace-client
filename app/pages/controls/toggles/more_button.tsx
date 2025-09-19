@@ -59,11 +59,11 @@ export function MoreButtonInner({
   const items: MenuProps['items'] = useMemo(() => {
     let moreItems = [
       // 应用
-      {
-        label: <div style={{ marginLeft: '8px' }}>{t('more.app.title')}</div>,
-        key: 'app',
-        icon: <SvgResource type="app" svgSize={16} />,
-      },
+      // {
+      //   label: <div style={{ marginLeft: '8px' }}>{t('more.app.title')}</div>,
+      //   key: 'app',
+      //   icon: <SvgResource type="app" svgSize={16} />,
+      // },
       // 录屏功能
       {
         label: (

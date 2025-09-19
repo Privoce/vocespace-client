@@ -49,6 +49,10 @@ export default {
       'When enabled, video, audio, and screen sharing will be transmitted at a fixed resolution and higher quality, but may increase bandwidth usage and latency.',
     socket_reconnect: 'Reconnecting...',
   },
+  docker: {
+    record:
+      'Recording is an enterprise feature, for upgrading please contact han@priovce.com or add WeChat: Privoce',
+  },
   recording: {
     title: 'Recording',
   },

@@ -676,12 +676,12 @@ export const ParticipantItem: (
             {trackReference.participant.identity != localParticipant.identity && (
               <WaveHand wsWave={{ ...wsTo }} />
             )}
-            {trackReference.source !== Track.Source.ScreenShare && (
+            {/* {trackReference.source !== Track.Source.ScreenShare && (
               <AppFlotIconCollect
                 showApp={showApp}
                 participant={currentParticipant}
               ></AppFlotIconCollect>
-            )}
+            )} */}
           </ParticipantTile>
         }
       ></ControlRKeyMenu>

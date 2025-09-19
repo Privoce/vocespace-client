@@ -1,3 +1,4 @@
+'use client';
 import { licenseState, socket } from '@/app/[spaceName]/PageClientImpl';
 import { useI18n } from '@/lib/i18n/i18n';
 import styles from '@/styles/controls.module.scss';
@@ -97,6 +98,8 @@ export function LicenseControl({
         const { url } = await response.json();
         if (url) {
           window.open(url, '_blank');
+        } else {
+          window.open('https://buy.stripe.com/bJeaEX9ex2PUer2aLe6c00O', '_blank');
         }
       } else {
         messageApi.warning({

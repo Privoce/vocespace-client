@@ -307,30 +307,35 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     }, [spaceInfo.record]);
 
     const onClickRecord = async () => {
-      if (!space && isOwner) return;
+      // if (!space && isOwner) return;
 
-      if (!isRecording) {
-        setOpenRecordModal(true);
-      } else {
-        // 停止录制
-        if (spaceInfo.record.egressId && spaceInfo.record.egressId !== '') {
-          const response = await api.sendRecordRequest({
-            spaceName: space!.name,
-            type: 'stop',
-            egressId: spaceInfo.record.egressId,
-          });
+      // if (!isRecording) {
+      //   setOpenRecordModal(true);
+      // } else {
+      //   // 停止录制
+      //   if (spaceInfo.record.egressId && spaceInfo.record.egressId !== '') {
+      //     const response = await api.sendRecordRequest({
+      //       spaceName: space!.name,
+      //       type: 'stop',
+      //       egressId: spaceInfo.record.egressId,
+      //     });
 
-          if (!response.ok) {
-            let { error } = await response.json();
-            messageApi.error(error);
-          } else {
-            messageApi.success(t('msg.success.record.stop'));
-            setIsDownload(true);
-            await updateRecord(false);
-            setOpenRecordModal(true);
-          }
-        }
-      }
+      //     if (!response.ok) {
+      //       let { error } = await response.json();
+      //       messageApi.error(error);
+      //     } else {
+      //       messageApi.success(t('msg.success.record.stop'));
+      //       setIsDownload(true);
+      //       await updateRecord(false);
+      //       setOpenRecordModal(true);
+      //     }
+      //   }
+      // }
+
+      messageApi.warning({
+        content: t('docker.record'),
+        duration: 6,
+      });
     };
 
     const startRecord = async () => {
