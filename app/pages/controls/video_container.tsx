@@ -64,7 +64,7 @@ import { AppKey, PARTICIPANT_SETTINGS_KEY } from '@/lib/std/space';
 import { FlotLayout } from '../apps/flot';
 import { api } from '@/lib/api';
 import { SingleFlotLayout } from '../apps/single_flot';
-import { analyzeLicense, getLicensePersonLimit } from '@/lib/std/license';
+import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
 import { VocespaceConfig } from '@/lib/std/conf';
 
 export interface VideoContainerProps extends VideoConferenceProps {
@@ -77,7 +77,7 @@ export interface VideoContainerProps extends VideoConferenceProps {
 export interface VideoContainerExports {
   clearRoom: () => Promise<void>;
 }
-const IP = process.env.SERVER_NAME ?? getServerIp() ?? 'localhost';
+
 export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerProps>(
   (
     {
@@ -197,7 +197,18 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       // 从config中获取license进行校验 -------------------------------------------------------------------
       const validLicense = async () => {
         if (!uLicenseState.isAnalysis) {
-          const license = analyzeLicense(config.license);
+          const license = analyzeLicense(config.license, (_e) => {
+            messageApi.error({
+              content: t('settings.license.invalid') + t('settings.license.default_license'),
+              duration: 8,
+            });
+          });
+          if (!validLicenseDomain(license.domains, config.serverUrl)) {
+            messageApi.error(t('settings.license.invalid_domain'));
+            space.disconnect(true);
+            return;
+          }
+
           setULicenseState({
             ...license,
             isAnalysis: true,
@@ -227,39 +238,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           setInit(true);
         }
       });
-
-      // license 检测 -----------------------------------------------------------------------------
-      // const checkLicense = async () => {
-      //   const response = await api.checkLicenseByIP(IP);
-      //   if (response.ok) {
-      //     const { id, email, domains, created_at, expires_at, ilimit, value } =
-      //       await response.json();
-      //     setULicenseState((prev) => ({
-      //       ...prev,
-      //       id,
-      //       email,
-      //       domains,
-      //       created_at,
-      //       expires_at,
-      //       ilimit,
-      //       value,
-      //     }));
-      //   }
-      // };
-
-      // if (uLicenseState.value !== '') {
-      //   if (!(IP === 'localhost' || IP.startsWith('192.168.'))) {
-      //     checkLicense();
-      //   }
-      // } else {
-      //   let value = window.localStorage.getItem('license');
-      //   if (value && value !== '') {
-      //     setULicenseState((prev) => ({
-      //       ...prev,
-      //       value,
-      //     }));
-      //   }
-      // }
 
       // 监听服务器的提醒事件的响应 -------------------------------------------------------------------
       socket.on('wave_response', (msg: WsWave) => {
@@ -610,7 +588,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       uState,
       init,
       uLicenseState,
-      IP,
+
       chatMsg,
       socket,
       config,

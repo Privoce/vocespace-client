@@ -168,12 +168,14 @@ const validateClaims = (claims: any): claims is LicenseClaims => {
  * Analyze the license token and return the License object
  * 解析证书信息
  */
-export const analyzeLicense = (licenseToken: string): License => {
+export const analyzeLicense = (
+  licenseToken: string,
+  onError?: (error: Error | any) => void,
+): License => {
   try {
     const parts = licenseToken.split('.');
     if (parts.length !== 3) {
-      console.error('Invalid License format');
-      return DEFAULT_LICENSE;
+      throw new Error('Invalid license format');
     }
 
     // 解码 payload (第二部分)
@@ -185,8 +187,7 @@ export const analyzeLicense = (licenseToken: string): License => {
 
     // 验证必要字段
     if (!validateClaims(claims)) {
-      console.error('Invalid license claims');
-      return DEFAULT_LICENSE;
+      throw new Error('Invalid license claims');
     }
 
     let isTmp = false;
@@ -201,6 +202,23 @@ export const analyzeLicense = (licenseToken: string): License => {
     };
   } catch (error) {
     console.error('Failed to parse license:', error);
-    return DEFAULT_LICENSE;
+    onError?.(error);
+    return DEFAULT_TMP_LICENSE;
   }
+};
+
+/**
+ * validate license domain is in domains list
+ * @param domains domains list which from license
+ * @param selfDomain from vocespace config serverUrl
+ */
+export const validLicenseDomain = (domains: string, selfDomain: string): boolean => {
+  if (selfDomain === 'localhost' || selfDomain === '127.0.0.1') {
+    return true;
+  }
+  if (domains === '*') {
+    return true;
+  }
+  const domainList = domains.split(',');
+  return domainList.includes(selfDomain);
 };

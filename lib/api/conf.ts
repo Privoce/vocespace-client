@@ -17,3 +17,15 @@ export const reloadConf = async (env: RTCConf): Promise<Response> => {
     body: JSON.stringify(env),
   });
 };
+
+export const reloadLicense = async (license: string): Promise<Response> => {
+  const url = new URL(CONF_API_URL, window.location.origin);
+  url.searchParams.append('license', "true");
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ license }),
+  });
+}

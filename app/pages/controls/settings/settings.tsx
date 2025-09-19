@@ -231,7 +231,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
       {
         key: 'license',
         label: <TabItem type="license" label={t('settings.license.title')}></TabItem>,
-        children: <LicenseControl messageApi={messageApi}></LicenseControl>,
+        children: <LicenseControl messageApi={messageApi} space={space}></LicenseControl>,
       },
       {
         key: 'about_us',

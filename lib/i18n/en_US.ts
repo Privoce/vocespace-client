@@ -193,7 +193,7 @@ export default {
         delete: 'Todo deleted successfully',
         undone: 'Undone',
         done: 'Done',
-        unexport: "Current todo is empty, cannot export"
+        unexport: 'Current todo is empty, cannot export',
       },
     },
     record: {
@@ -357,7 +357,7 @@ export default {
       signed: 'Signed',
       domains: 'Domains',
       limit: 'Limit',
-      person: "Person Limit",
+      person: 'Person Limit',
       created_at: 'Created At',
       expires_at: 'Expires At',
       value: 'License Value',
@@ -374,6 +374,10 @@ export default {
       meeting: 'Subscribe to a meeting',
       buy: 'Purchase a certificate',
       invalid: 'The certificate is invalid or expired. Please check if it is correct.',
+      invalid_domain:
+        'The current domain is not in the list of allowed domains for the certificate. Please contact the administrator to check the server domain configuration.',
+      default_license:
+        'To ensure your use, the current system has loaded a default certificate for you. The default certificate only supports temporary rooms with less than 5 people. If you need more user places, please purchase a professional certificate.',
       update_success: 'The certificate was updated successfully',
       circle_ip:
         'Your current IP address is a loopback address/private address, and we do not recommend purchasing a license for this address. Please purchase a license using a public IP address. If you need to purchase licenses and support services for private addresses, please contact WeChat: Privose.',

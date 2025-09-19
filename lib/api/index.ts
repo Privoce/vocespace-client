@@ -1,6 +1,6 @@
 import { createRoom, deleteRoom, joinRoom, leaveRoom, updateRoom } from './channel';
 import { fetchLinkPreview, getChatMsg } from './chat';
-import { getConf, reloadConf } from './conf';
+import { getConf, reloadConf, reloadLicense } from './conf';
 import { checkLicenseByIP, getLicenseByIP } from './license';
 import { sendRecordRequest, updateRecord } from './record';
 import {
@@ -57,4 +57,5 @@ export const api = {
   updateRoom,
   getConf,
   reloadConf,
+  reloadLicense,
 };
