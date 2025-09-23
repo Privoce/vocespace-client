@@ -1,6 +1,6 @@
 import { FlotLayoutProps } from './flot';
 import styles from '@/styles/apps.module.scss';
-import { Popover } from 'antd';
+import { Popover, Tooltip } from 'antd';
 import {
   AppKey,
   Countdown,
@@ -162,14 +162,18 @@ export function SingleFlotAppItem({
         }}
       >
         <div>
-          <span style={{marginRight: 8}}>{isSelf ? t('more.app.tab.self') : appData.participantName}</span>
+          <span style={{ marginRight: 8 }}>
+            {isSelf ? t('more.app.tab.self') : appData.participantName}
+          </span>
           {isSelf && appKey === 'todo' && (
-            <ProfileOutlined
-              onClick={(e) => {
-                e.stopPropagation();
-                exportTodo(appData.targetApp as TodoItem[]);
-              }}
-            />
+            <Tooltip title={t('more.app.todo.complete')}>
+              <ProfileOutlined
+                onClick={(e) => {
+                  e.stopPropagation();
+                  exportTodo(appData.targetApp as TodoItem[]);
+                }}
+              />
+            </Tooltip>
           )}
         </div>
 

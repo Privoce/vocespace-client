@@ -404,8 +404,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
 
     const onClickApp = async () => {
       if (!space) return;
-
-      // 打开Notion应用
       setOpenApp(true);
     };
     // 当是手机的情况下需要适当增加marginBottom，因为手机端自带的Tabbar会遮挡
@@ -691,7 +689,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           )}
         </Modal>
         {/* ---------------- app drawer ------------------------------------------------------- */}
-        {spaceInfo && space && (
+        {/* {spaceInfo && space && (
           <AppDrawer
             open={openApp}
             setOpen={setOpenApp}
@@ -699,7 +697,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             spaceInfo={spaceInfo}
             space={space.name}
           ></AppDrawer>
-        )}
+        )} */}
       </div>
     );
   },

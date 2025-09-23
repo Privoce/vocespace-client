@@ -40,23 +40,31 @@ export interface FlotLayoutProps {
   style?: React.CSSProperties;
   messageApi: MessageInstance;
   openApp: boolean;
+  setOpenApp: (open: boolean) => void;
   spaceInfo: SpaceInfo;
   space: string;
 }
 
-export function FlotLayout({ style, messageApi, openApp, spaceInfo, space }: FlotLayoutProps) {
-  const [open, setOpen] = useState(false);
+export function FlotLayout({
+  style,
+  messageApi,
+  openApp,
+  spaceInfo,
+  space,
+  setOpenApp,
+}: FlotLayoutProps) {
+  // const [open, setOpen] = useState(false);
 
-  useEffect(() => {
-    if (openApp && open) {
-      setOpen(false);
-    }
-  }, [open, openApp]);
+  // useEffect(() => {
+  //   if (openApp && open) {
+  //     setOpen(false);
+  //   }
+  // }, [open, openApp]);
 
   return (
     <div style={style} className={styles.flot_layout}>
       <Popover
-        open={open}
+        open={openApp}
         placement="leftTop"
         content={
           <FlotAppItem
@@ -75,8 +83,7 @@ export function FlotLayout({ style, messageApi, openApp, spaceInfo, space }: Flo
       >
         <Button
           onClick={() => {
-            if (openApp) return;
-            setOpen(!open);
+            setOpenApp(!openApp);
           }}
           type="text"
           style={{ height: '100%', width: '100%' }}

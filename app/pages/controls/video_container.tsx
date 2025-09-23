@@ -873,6 +873,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             messageApi={messageApi}
             openApp={openApp}
             spaceInfo={settings}
+            setOpenApp={setOpenApp}
           ></FlotLayout>
         )}
         {/* 右侧单应用浮窗，悬浮态，用于当用户点击自己视图头上角图标进行显示 */}
@@ -885,6 +886,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             setOpen={setOpenSingleApp}
             spaceInfo={settings}
             appKey={targetAppKey}
+            setOpenApp={setOpenSingleApp}
           ></SingleFlotLayout>
         )}
         {/* 左侧侧边栏 */}
@@ -990,8 +992,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   collapsed={collapsed}
                   setCollapsed={setCollapsed}
                   openApp={openApp}
-                  toRenameSettings={toSettingGeneral}
                   setOpenApp={setOpenApp}
+                  toRenameSettings={toSettingGeneral}
                 ></Controls>
               </div>
               {SettingsComponent && (
