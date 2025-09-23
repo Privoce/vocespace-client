@@ -40,6 +40,7 @@ export default {
     share_screen: '共享屏幕',
     stop_share: '停止共享',
     wave_msg: '向您发送了一条提醒!',
+    cancel_raise: '取消举手',
     full_user:
       '房间用户已经超出限制，无法加入，您可以加入其他房间或告知构建者升级证书获取更多用户名额。',
     open: '开启',

@@ -1,5 +1,5 @@
 import { isTrackReferencePlaceholder } from '@/app/pages/controls/video_container';
-import { MouseMove, useVideoBlur, WsMouseMove, WsTo } from '@/lib/std/device';
+import { MouseMove, useVideoBlur, WsMouseMove, WsSender, WsWave } from '@/lib/std/device';
 import {
   AudioTrack,
   ConnectionQualityIndicator,
@@ -34,18 +34,27 @@ import { SvgResource, SvgType } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { randomColor } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
-import { AppKey, castCountdown, castTimer, castTodo, ChildRoom, ParticipantSettings } from '@/lib/std/space';
+import {
+  AppKey,
+  castCountdown,
+  castTimer,
+  castTodo,
+  ChildRoom,
+  ParticipantSettings,
+} from '@/lib/std/space';
 import { WaveHand } from '../controls/widgets/wave';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { AppFlotIconCollect } from '../apps/app_pin';
 import { ParticipantTileMiniProps } from './mini';
+import { RaiseHand } from '../controls/widgets/raise';
+import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps {
   toSettings?: () => void;
   messageApi: MessageInstance;
   isFocus?: boolean;
-  selfRoom?: ChildRoom
+  selfRoom?: ChildRoom;
 }
 
 export const ParticipantItem: (
@@ -63,7 +72,7 @@ export const ParticipantItem: (
       updateSettings,
       toRenameSettings,
       showSingleFlotApp,
-      selfRoom
+      selfRoom,
     }: ParticipantItemProps,
     ref,
   ) {
@@ -85,8 +94,10 @@ export const ParticipantItem: (
     const [virtualMask, setVirtualMask] = useRecoilState(virtualMaskState);
     const [remoteMask, setRemoteMask] = React.useState(false);
     const [deleyMask, setDelayMask] = React.useState(virtualMask);
+    const [isKeepRaise, setIsKeepRaise] = useState<boolean>(false);
 
     useEffect(() => {
+      // reload virtual socket event ----------------------------------------------
       socket.on(
         'reload_virtual_response',
         (msg: { identity: string; reloading: boolean; roomId: string }) => {
@@ -99,8 +110,24 @@ export const ParticipantItem: (
         },
       );
 
+      // raise hand socket event ----------------------------------------------
+      socket.on('raise_response', (msg: WsSender) => {
+        if (msg.space === space.name && msg.senderId === trackReference.participant.identity) {
+          setIsKeepRaise(true);
+        }
+      });
+
+      // cancel raise hand socket event ----------------------------------------------
+      socket.on('raise_cancel_response', (msg: WsSender) => {
+        if (msg.space === space.name && msg.senderId === trackReference.participant.identity) {
+          setIsKeepRaise(false);
+        }
+      });
+
       return () => {
         socket.off('reload_virtual_response');
+        socket.off('raise_response');
+        socket.off('raise_cancel_response');
       };
     }, [space, localParticipant.identity]);
 
@@ -392,14 +419,14 @@ export const ParticipantItem: (
       setUserStatus,
     });
     // 使用ws向服务器发送消息，告诉某个人打招呼
-    const wsTo = useMemo(() => {
+    const wsWave = useMemo(() => {
       return {
         space: space.name,
         senderName: localParticipant.name,
         senderId: localParticipant.identity,
         receiverId: trackReference.participant.identity,
         socketId: settings.participants[trackReference.participant.identity]?.socketId,
-      } as WsTo;
+      } as WsWave;
     }, [space, localParticipant, trackReference, settings.participants]);
 
     // 处理当前用户如果是演讲者并且当前track source是screen share，那么就需要获取其他用户的鼠标位置
@@ -496,7 +523,7 @@ export const ParticipantItem: (
               senderId: localParticipant.identity,
               receiverId: trackReference.participant.identity,
               socketId: settings.participants[trackReference.participant.identity]?.socketId,
-            } as WsTo);
+            } as WsWave);
           }
         };
         // 300ms触发一次, 节流
@@ -515,7 +542,11 @@ export const ParticipantItem: (
           // 获取之后需要将别人的鼠标位置在演讲者的屏幕上进行显示
           const { senderId, senderName, x, y, color, realVideoRect, space: spaceName } = data;
           // 更新状态
-          if (space.name == spaceName && selfRoom && selfRoom.participants.includes(data.senderId)) {
+          if (
+            space.name == spaceName &&
+            selfRoom &&
+            selfRoom.participants.includes(data.senderId)
+          ) {
             setRemoteCursors((prev) => ({
               ...prev,
               [senderId]: {
@@ -530,7 +561,7 @@ export const ParticipantItem: (
             }));
           }
         });
-        socket.on('mouse_remove_response', ({ senderId, space: spaceName }: WsTo) => {
+        socket.on('mouse_remove_response', ({ senderId, space: spaceName }: WsWave) => {
           // 删除状态
           if (space.name == spaceName) {
             setRemoteCursors((prev) => {
@@ -673,9 +704,12 @@ export const ParticipantItem: (
 
               {/* <ConnectionQualityIndicator className="lk-participant-metadata-item" /> */}
             </div>
-            {trackReference.participant.identity != localParticipant.identity && (
-              <WaveHand wsWave={{ ...wsTo }} />
-            )}
+            <TileActionCollect
+              wsWave={wsWave}
+              isSelf={trackReference.participant.identity === localParticipant.identity}
+              isKeepRaise={isKeepRaise}
+              setIsKeepRaise={setIsKeepRaise}
+            />
             {trackReference.source !== Track.Source.ScreenShare && (
               <AppFlotIconCollect
                 showApp={showApp}

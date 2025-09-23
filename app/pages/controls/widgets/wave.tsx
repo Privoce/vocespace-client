@@ -58,12 +58,15 @@ export function WaveHand({ style, wsWave, contextUndefined = true }: WaveHandPro
 export function WavePin({
   wavePin,
   style = {
-    left: '0.25rem',
     width: 'fit-content',
+    padding: 4,
+    backgroundColor: '#000',
+    margin: '0 4px',
+    borderRadius: 4,
   },
 }: WavePinProps) {
   return (
-    <button className="lk-button lk-focus-toggle-button" style={style} onClick={wavePin}>
+    <button className="lk-button" style={style} onClick={wavePin}>
       <SvgResource svgSize={16} type="wave"></SvgResource>
     </button>
   );

@@ -29,10 +29,10 @@ import {
   ParticipantSettings,
   SpaceInfo,
 } from '@/lib/std/space';
-import { useVideoBlur, WsBase, WsTo, WsWave } from '@/lib/std/device';
+import { useVideoBlur, WsBase, WsSender, WsTo, WsWave } from '@/lib/std/device';
 import { SvgResource, SvgType } from '@/app/resources/svg';
 import { useRecoilState } from 'recoil';
-import { SingleAppDataState } from '@/app/[spaceName]/PageClientImpl';
+import { SingleAppDataState, socket } from '@/app/[spaceName]/PageClientImpl';
 import { UserStatus } from '@/lib/std';
 import { WaveHand } from '../controls/widgets/wave';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
@@ -40,6 +40,7 @@ import { RaiseHand } from '../controls/widgets/raise';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { useI18n } from '@/lib/i18n/i18n';
 import { AppFlotIconCollect } from '../apps/app_pin';
+import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 
 export interface ParticipantTileMiniProps extends ParticipantTileProps {
   settings: SpaceInfo;
@@ -74,11 +75,31 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
     const layoutContext = useMaybeLayoutContext();
     const autoManageSubscription = useFeatureContext()?.autoSubscription;
     const isEncrypted = useIsEncrypted(trackReference.participant);
+    const [isKeepRaise, setIsKeepRaise] = useState<boolean>(false);
 
     const { blurValue, setVideoBlur } = useVideoBlur({
       videoRef,
       initialBlur: 0.0,
     });
+
+    useEffect(() => {
+      // raise hand socket event ----------------------------------------------
+      socket.on('raise_response', (msg: WsSender) => {
+        if (msg.space === space.name && msg.senderId === trackReference.participant.identity) {
+          setIsKeepRaise(true);
+        }
+      });
+      // cancel raise hand socket event ----------------------------------------------
+      socket.on('raise_cancel_response', (msg: WsSender) => {
+        if (msg.space === space.name && msg.senderId === trackReference.participant.identity) {
+          setIsKeepRaise(false);
+        }
+      });
+      return () => {
+        socket.off('raise_response');
+        socket.off('raise_cancel_response');
+      };
+    }, [space, localParticipant.identity]);
 
     useEffect(() => {
       if (settings.participants && Object.keys(settings.participants).length > 0) {
@@ -97,23 +118,15 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       return settings.participants[trackReference.participant.identity];
     }, [settings.participants, trackReference.participant.identity]);
 
-    const wsTo = useMemo(() => {
+    const wsWave = useMemo(() => {
       return {
         space: space.name,
         senderName: localParticipant.name,
         senderId: localParticipant.identity,
         receiverId: trackReference.participant.identity,
         socketId: settings.participants[trackReference.participant.identity]?.socketId,
-      } as WsTo;
+      } as WsWave;
     }, [space, localParticipant, trackReference, settings.participants]);
-
-    const wsBase = useMemo(() => {
-      return {
-        space: space.name,
-        senderName: localParticipant.name,
-        senderId: localParticipant.identity,
-      } as WsBase;
-    }, [space, localParticipant]);
 
     const videoFilter = useMemo(() => {
       return settings.participants[trackReference.participant.identity]?.virtual?.enabled ?? false
@@ -186,7 +199,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       }
 
       return {
-        ...wsTo,
+        ...wsWave,
         inSpace,
         childRoom,
       };
@@ -349,21 +362,15 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
               </StatusInfo>
               {/* <ConnectionQualityIndicator className="lk-participant-metadata-item" /> */}
             </div>
-            {trackReference.participant.identity != localParticipant.identity && (
-              <>
-                <WaveHand
-                  wsWave={buildWsWave}
-                  contextUndefined={false}
-                  style={{
-                    zIndex: 111,
-                    left: '0.25rem',
-                    top: '0.25rem',
-                    width: 'fit-content',
-                  }}
-                />
-                <RaiseHand wsBase={wsBase}></RaiseHand>
-              </>
-            )}
+
+            <TileActionCollect
+              wsWave={buildWsWave()}
+              isSelf={trackReference.participant.identity === localParticipant.identity}
+              contextUndefined={false}
+              isKeepRaise={isKeepRaise}
+              setIsKeepRaise={setIsKeepRaise}
+            />
+
             {trackReference.source !== Track.Source.ScreenShare && (
               <AppFlotIconCollect
                 style={{

@@ -40,6 +40,7 @@ export default {
     share_screen: 'Share Screen',
     stop_share: 'Stop Share Screen',
     wave_msg: 'sent you a reminder!',
+    cancel_raise: 'Cancel Raise Hand',
     full_user:
       'The room user has exceeded the limit and cannot join. You can join other rooms or inform the builder to upgrade your license to obtain more user slots.',
     open: 'Open',

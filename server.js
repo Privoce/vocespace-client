@@ -179,9 +179,12 @@ app.prepare().then(() => {
     socket.on('wave', (msg) => {
       socket.to(msg.socketId).emit('wave_response', msg);
     });
-    socket.on('raise_hand', (msg) => {
-      // 广播给处了自己外所有人
-      socket.broadcast.emit('raise_hand_response', msg);
+    socket.on('raise', (msg) => {
+      // 广播所有人包括自己
+      io.emit('raise_response', msg);
+    });
+    socket.on('raise_cancel', (msg) => {
+      io.emit('raise_cancel_response', msg);
     });
     // [socket: remove participant event] -------------------------------------------------------------------------------
     // - on: "remove_participant"
