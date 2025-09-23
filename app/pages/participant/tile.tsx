@@ -118,6 +118,7 @@ export const ParticipantItem: (
       socket.on('raise_response', (msg: WsSender) => {
         if (msg.space === space.name) {
           if (msg.senderId === trackReference.participant.identity) {
+            console.warn('收到raise hand', msg);
             setIsKeepRaise(true);
             if (
               localParticipant.identity === settings.ownerId &&

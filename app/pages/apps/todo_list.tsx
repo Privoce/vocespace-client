@@ -119,7 +119,7 @@ export function AppTodo({
 
   return (
     <>
-      <Card style={{ width: '100%' }}>
+      <Card style={{ width: '100%', padding: 0 }} size="default" styles={{ body: { padding: 12 } }}>
         <div className={styles.todo_list_wrapper}>
           <List
             pagination={{
@@ -173,6 +173,7 @@ export function AppTodo({
                         style={{
                           textDecoration: item.done ? 'line-through' : 'none',
                           cursor: disabled ? 'default' : 'pointer',
+                          color: '#fff',
                         }}
                       >
                         {item.title}
@@ -200,10 +201,8 @@ export function AppTodo({
         </div>
 
         <div className={styles.todo_add_wrapper}>
-          <Button style={{ padding: 0 }} type="text" onClick={addTodo} disabled={disabled}>
-            <SvgResource type="add" svgSize={16} color={disabled ? '#666' : '#fff'}></SvgResource>
-          </Button>
           <Input
+            className={styles.todo_add_input}
             disabled={disabled}
             placeholder={t('more.app.todo.add')}
             width={'100%'}
@@ -212,7 +211,23 @@ export function AppTodo({
             onChange={(e) => {
               setNewTodo(e.target.value);
             }}
+            size="middle"
             onPressEnter={addTodo}
+            suffix={
+              <Button
+                className={styles.todo_add_btn}
+                style={{ padding: 0, height: 'fit-content' }}
+                type="text"
+                onClick={addTodo}
+                disabled={disabled}
+              >
+                <SvgResource
+                  type="add"
+                  svgSize={16}
+                  color={disabled ? '#666' : '#8c8c8c'}
+                ></SvgResource>
+              </Button>
+            }
           ></Input>
         </div>
       </Card>

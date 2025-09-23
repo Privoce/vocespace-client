@@ -102,14 +102,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             colorTextPlaceholder: '#8c8c8c',
             paddingBlockLG: 8,
             colorText: '#ffffff',
-            handleBg: "#22CCEE",
+            handleBg: '#22CCEE',
             handleWidth: 32,
             handleVisible: true,
-            handleHoverColor: "#fff",
+            handleHoverColor: '#fff',
           },
           Timeline: {
             dotBg: 'transparent',
-            tailColor: "#22CCEE",
+            tailColor: '#22CCEE',
           },
           DatePicker: {
             colorBgContainer: '#1E1E1E',
@@ -198,13 +198,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           Checkbox: {
             colorBgContainer: '#1E1E1E',
             colorBorder: '#333',
-            colorTextDisabled: "#888"
+            colorTextDisabled: '#888',
           },
           Tree: {
-            colorBgContainer:  "#1e1e1e",
-            colorBorder: "#878787",
-            colorBorderBg: "#1E1E1E",
-            nodeSelectedBg: "#1E1E1E",
+            colorBgContainer: '#1e1e1e',
+            colorBorder: '#878787',
+            colorBorderBg: '#1E1E1E',
+            nodeSelectedBg: '#1E1E1E',
           },
         },
       }}
