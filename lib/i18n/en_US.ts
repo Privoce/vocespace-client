@@ -194,6 +194,7 @@ export default {
         undone: 'Undone',
         done: 'Done',
         unexport: 'Current todo is empty, cannot export',
+        complete: "Completed Tasks"
       },
     },
     record: {

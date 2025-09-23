@@ -6,7 +6,13 @@ import { AppTimer } from './timer';
 import { AppCountdown } from './countdown';
 import { AppTodo, ExportTodoHistroy } from './todo_list';
 import { MessageInstance } from 'antd/es/message/interface';
-import { ProfileOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  EyeInvisibleOutlined,
+  EyeOutlined,
+  ProfileOutlined,
+  TeamOutlined,
+  UserOutlined,
+} from '@ant-design/icons';
 import { useI18n } from '@/lib/i18n/i18n';
 import {
   AppAuth,
@@ -28,6 +34,7 @@ import { api } from '@/lib/api';
 import { useLocalParticipant } from '@livekit/components-react';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
+import { DEFAULT_COLLAPSE_HEADER_STYLES } from '../controls/collapse_tools';
 
 export interface FlotLayoutProps {
   style?: React.CSSProperties;
@@ -233,7 +240,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
       <>
         {spaceInfo.participants[localParticipant.identity].sync.includes(key) ? (
           <Tooltip title={t('more.app.settings.sync.desc_priv')}>
-            <TeamOutlined
+            <EyeOutlined
               onClick={(e) => {
                 e.stopPropagation();
                 updateAppSync(key);
@@ -242,7 +249,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
           </Tooltip>
         ) : (
           <Tooltip title={t('more.app.settings.sync.desc_pub')}>
-            <UserOutlined
+            <EyeInvisibleOutlined
               onClick={(e) => {
                 e.stopPropagation();
                 updateAppSync(key);
@@ -267,7 +274,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
       items.push({
         key: 'timer',
         label: (
-          <div style={{ height: 22, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <div className={styles.flot_header}>
             {showSyncIcon(isRemote, 'timer')}
             {activeKeys.get(participantId)?.includes('timer') ? '' : t('more.app.timer.title')}
           </div>
@@ -281,6 +288,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
           ></AppTimer>
         ),
         style: itemStyle,
+        styles: DEFAULT_COLLAPSE_HEADER_STYLES,
       });
     }
 
@@ -288,7 +296,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
       items.push({
         key: 'countdown',
         label: (
-          <div style={{ height: 22, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <div className={styles.flot_header}>
             {showSyncIcon(isRemote, 'countdown')}
             {activeKeys.get(participantId)?.includes('countdown')
               ? ''
@@ -305,6 +313,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
           />
         ),
         style: itemStyle,
+        styles: DEFAULT_COLLAPSE_HEADER_STYLES,
       });
     }
 
@@ -312,15 +321,17 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
       items.push({
         key: 'todo',
         label: (
-          <div style={{ height: 22, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <div className={styles.flot_header}>
             {showSyncIcon(isRemote, 'todo')}
             {!isRemote && (
-              <ProfileOutlined
-                onClick={(e) => {
-                  e.stopPropagation();
-                  exportTodo(todo.data);
-                }}
-              />
+              <Tooltip title={t('more.app.todo.complete')}>
+                <ProfileOutlined
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    exportTodo(todo.data);
+                  }}
+                />
+              </Tooltip>
             )}
             {activeKeys.get(participantId)?.includes('todo') ? '' : t('more.app.todo.title')}
           </div>
@@ -336,6 +347,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
           />
         ),
         style: itemStyle,
+        styles: DEFAULT_COLLAPSE_HEADER_STYLES,
       });
     }
 

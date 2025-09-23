@@ -191,7 +191,8 @@ export default {
         delete: '删除待办成功',
         undone: '未完成',
         done: '已完成',
-        unexport: "当前待办为空，无法导出"
+        unexport: "当前待办为空，无法导出",
+        complete: "已完成的事项"
       },
     },
     record: {

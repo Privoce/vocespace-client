@@ -347,7 +347,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                   )}
                 </div>
               </StatusInfo>
-              <ConnectionQualityIndicator className="lk-participant-metadata-item" />
+              {/* <ConnectionQualityIndicator className="lk-participant-metadata-item" /> */}
             </div>
             {trackReference.participant.identity != localParticipant.identity && (
               <>
