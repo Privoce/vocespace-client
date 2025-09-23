@@ -40,7 +40,6 @@ export default {
     share_screen: '共享屏幕',
     stop_share: '停止共享',
     wave_msg: '向您发送了一条提醒!',
-    cancel_raise: '取消举手',
     full_user:
       '房间用户已经超出限制，无法加入，您可以加入其他房间或告知构建者升级证书获取更多用户名额。',
     open: '开启',
@@ -137,6 +136,15 @@ export default {
     channel: '频道',
     app: {
       title: '应用',
+      raise: {
+        cancel: '取消举手',
+        receive: "发起了举手请求，请处理！",
+        handle: {
+          accept: "允许发言",
+          reject: "拒绝发言",
+          ignore: "忽略",    
+        } 
+      },
       upload: {
         to_space: '上传应用到空间',
         history: '上传历史',

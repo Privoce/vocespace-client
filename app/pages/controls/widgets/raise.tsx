@@ -115,7 +115,7 @@ export function RaiseKeeper({
     return btn;
   } else {
     return (
-      <Tooltip title={t('common.cancel_raise')} placement="right">
+      <Tooltip title={t('more.app.raise.cancel')} placement="right">
         {btn}
       </Tooltip>
     );

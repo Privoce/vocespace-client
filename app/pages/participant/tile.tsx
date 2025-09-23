@@ -49,10 +49,13 @@ import { AppFlotIconCollect } from '../apps/app_pin';
 import { ParticipantTileMiniProps } from './mini';
 import { RaiseHand } from '../controls/widgets/raise';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
+import { NotificationInstance } from 'antd/es/notification/interface';
+import { Button } from 'antd';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps {
   toSettings?: () => void;
   messageApi: MessageInstance;
+  noteApi?: NotificationInstance;
   isFocus?: boolean;
   selfRoom?: ChildRoom;
 }
@@ -66,6 +69,7 @@ export const ParticipantItem: (
       settings,
       toSettings,
       messageApi,
+      noteApi,
       setUserStatus,
       isFocus,
       space,
@@ -112,8 +116,33 @@ export const ParticipantItem: (
 
       // raise hand socket event ----------------------------------------------
       socket.on('raise_response', (msg: WsSender) => {
-        if (msg.space === space.name && msg.senderId === trackReference.participant.identity) {
-          setIsKeepRaise(true);
+        if (msg.space === space.name) {
+          if (msg.senderId === trackReference.participant.identity) {
+            setIsKeepRaise(true);
+            if (
+              localParticipant.identity === settings.ownerId &&
+              trackReference.participant.identity !== localParticipant.identity
+            ) {
+              // 主持人看到有人举手需要得到一个notion的提示
+              noteApi?.info({
+                message: `${msg.senderName} ${t('more.app.raise.receive')}`,
+                duration: 5,
+                actions: (
+                  <div style={{ display: 'flex', gap: 8 }}>
+                    <Button color="primary" size="small" variant="solid">
+                      {t('more.app.raise.handle.accept')}
+                    </Button>
+                    <Button color="orange" size="small" variant="solid">
+                      {t('more.app.raise.handle.ignore')}
+                    </Button>
+                    <Button color="danger" size="small" variant="solid">
+                      {t('more.app.raise.handle.reject')}
+                    </Button>
+                  </div>
+                ),
+              });
+            }
+          }
         }
       });
 
