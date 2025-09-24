@@ -164,7 +164,7 @@ export function AppTodo({
             // dataSource={todos}
             dataSource={appData.map((item) => item).filter((item) => item.visible)}
             renderItem={(item, index) => (
-              <List.Item>
+              <List.Item style={{border: "none"}}>
                 <div className={styles.todo_item}>
                   <Checkbox
                     onChange={() => toggleTodo(item.id)}

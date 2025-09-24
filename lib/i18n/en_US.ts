@@ -265,6 +265,9 @@ export default {
         done: 'Done',
         unexport: 'Current todo is empty, cannot export',
         complete: 'Completed Tasks',
+        together: {
+          empty: 'No user todos available',
+        },
       },
     },
     record: {

@@ -257,6 +257,9 @@ export default {
         done: '已完成',
         unexport: '当前待办为空，无法导出',
         complete: '已完成的事项',
+        together: {
+          empty: '暂无用户的待办事项',
+        },
       },
     },
     record: {

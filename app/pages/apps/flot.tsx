@@ -35,6 +35,7 @@ import { useLocalParticipant } from '@livekit/components-react';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
 import { DEFAULT_COLLAPSE_HEADER_STYLES } from '../controls/collapse_tools';
+import { TodoTogether } from './todo_together';
 
 export interface FlotLayoutProps {
   style?: React.CSSProperties;
@@ -77,7 +78,7 @@ export function FlotLayout({
         styles={{
           body: {
             // background: '#1a1a1a90',
-            background: "#1a1a1a",
+            background: '#1a1a1a',
             width: '360px',
           },
         }}
@@ -394,6 +395,19 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
     if (!items) {
       return [];
     }
+
+    items.push({
+      key: 'todo_together',
+      label: (
+        <div className={styles.flot_header}>
+          {/* {showSyncIcon(isRemote, 'timer')} */}
+          {/* {activeKeys.get(participantId)?.includes('timer') ? '' : t('more.app.timer.title')} */}
+        </div>
+      ),
+      children: <TodoTogether spaceInfo={spaceInfo} messageApi={messageApi}></TodoTogether>,
+      style: itemStyle,
+      styles: DEFAULT_COLLAPSE_HEADER_STYLES,
+    });
 
     return items;
   }, [apps, activeKeys, appData, showExport]);

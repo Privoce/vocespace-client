@@ -469,10 +469,10 @@ lk load-test \
   - [x] To-do list 待办事项
   - [x] Timer 计时器
   - [x] Raise Hand 举手
-- [ ] todo together
-  - [ ] 每个人单行（为第一条todo）
-  - [ ] 带有进度 类似：1/3 表示完成度
-  - [ ] 点击后可以展开看到详细todo
+- [x] todo together
+  - [x] 每个人单行（为第一条todo）
+  - [x] 带有进度 类似：1/3 表示完成度
+  - [x] 点击后可以展开看到详细todo
 - [x] 单条的todo
   - [x] 设计merge
   - [x] 去除输入框当disabled时
