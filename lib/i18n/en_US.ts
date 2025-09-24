@@ -50,7 +50,67 @@ export default {
     socket_reconnect: 'Reconnecting...',
   },
   recording: {
-    title: 'Recording',
+    title: 'Recording Record',
+    empty: 'No recording record yet',
+    fresh: 'Refresh',
+    search: {
+      success: 'Successfully searched for recording files',
+      error:
+        'No recording files found. Please check if the room name is correct. The room may not have any recorded video files or may have been deleted.',
+    },
+    try_s3: {
+      unavailable: 'The S3 service is not configured or the environment variables are not set',
+      init: 'Successfully retrieved the S3 service environment variables',
+      connected: 'Connected to the S3 service',
+      connect_error:
+        'Unable to connect to the S3 service. You may be accessing a local service. Please check the configuration or contact the administrator.',
+      connecting: 'Connecting to the S3 service...',
+      enving: 'Getting environment variables...',
+      unconnect: 'Unable to connect to the S3 service',
+    },
+    copy: {
+      title: 'Copy Link',
+      success: 'Download link copied to clipboard',
+      error: 'Copy link failed, please copy manually',
+    },
+    get_download_link: {
+      success: 'Get download link successfully',
+      error: 'Get download link failed, please try again later',
+    },
+    delete: {
+      title: 'Delete',
+      confirm: {
+        title: 'Confirm to delete',
+        content: [
+          'Are you sure you want to delete the recording file',
+          '? This operation cannot be undone.',
+        ],
+        ok: 'Delete',
+        cancel: 'Cancel',
+      },
+      success: 'Deleted successfully',
+      error: 'Delete failed, please try again later',
+    },
+    download: {
+      title: 'Download',
+      success: 'Download link successfully obtained, file downloading...',
+      error:
+        'Download link failed to obtain, please try again later or contact the administrator to download',
+    },
+    table: {
+      file: 'File name',
+      opt: 'Operation',
+      size: 'File size',
+      last_modified: 'Last modified',
+      ty: 'Type',
+      ty_json: 'Record file',
+      ty_video: 'Video file',
+    },
+    pagation: {
+      total: 'Total',
+      num: 'Items',
+      now: 'Number',
+    },
   },
   channel: {
     menu: {

@@ -107,12 +107,10 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
           }));
 
           setRecordsData(formattedRecords);
-          messageApi.success('查找录制文件成功');
+          messageApi.success(t('recording.search.success'));
           return;
         } else {
-          messageApi.error(
-            '查找录制文件为空，请检查房间名是否正确，房间内可能没有录制视频文件或已经删除',
-          );
+          messageApi.error(t('recording.search.error'));
           setRecordsData([]);
         }
       }
@@ -211,11 +209,9 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
               }}
             >
               <Tag color="#22ccee">{isConnected}</Tag>
-              <Tooltip title="刷新数据">
-                <Button size="small" icon={<ReloadOutlined />} onClick={searchRoomRecords}>
-                  刷新
-                </Button>
-              </Tooltip>
+              <Button size="small" icon={<ReloadOutlined />} onClick={searchRoomRecords}>
+                {t('recording.fresh')}
+              </Button>
             </div>
             <RecordingTable
               messageApi={messageApi}

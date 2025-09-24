@@ -51,6 +51,60 @@ export default {
   },
   recording: {
     title: '录制记录',
+    empty: '暂无录制记录',
+    fresh: '刷新',
+    search: {
+      success: '查找录制文件成功',
+      error: '查找录制文件为空，请检查房间名是否正确，房间内可能没有录制视频文件或已经删除',
+    },
+    try_s3: {
+      unavailible: 'S3服务未配置或环境变量未设置',
+      init: 'S3服务环境变量获取成功',
+      connected: '已连接到S3服务',
+      connect_error: '无法连接到S3服务，当前可能访问了本地服务，请检查配置或联系管理员',
+      connecting: '正在连接S3服务...',
+      enving: '获取环境变量中...',
+      unconnect: '无法连接到S3服务',
+    },
+    copy: {
+      title: '复制链接',
+      success: '下载链接已复制到剪贴板',
+      error: '复制链接失败，请手动复制',
+    },
+    get_download_link: {
+      success: '获取下载链接成功',
+      error: '获取下载链接失败，请稍后再试',
+    },
+    delete: {
+      title: '删除',
+      confirm: {
+        title: '确定删除',
+        content: ['确定要删除录制文件', '吗？此操作不可恢复。'],
+        ok: '删除',
+        cancel: '取消',
+      },
+      success: '删除成功',
+      error: '删除失败，请稍后再试',
+    },
+    download: {
+      title: '下载',
+      success: '下载链接获取成功，文件正在下载...',
+      error: '下载链接获取失败，请稍后重试或联系管理员进行下载',
+    },
+    table: {
+      file: '文件名',
+      opt: '操作',
+      size: '文件大小',
+      last_modified: '最后修改',
+      ty: '类型',
+      ty_json: '记录文件',
+      ty_video: '视频文件',
+    },
+    pagation: {
+      total: '共',
+      num: '条',
+      now: '第',
+    },
   },
   channel: {
     menu: {
@@ -139,12 +193,12 @@ export default {
       raise: {
         cancel: '取消举手',
         title: '举手',
-        receive: "发起了举手请求，请处理！",
+        receive: '发起了举手请求，请处理！',
         handle: {
-          accept: "允许发言",
-          reject: "拒绝发言",
-          ignore: "忽略",    
-        } 
+          accept: '允许发言',
+          reject: '拒绝发言',
+          ignore: '忽略',
+        },
       },
       upload: {
         to_space: '上传应用到空间',
@@ -201,8 +255,8 @@ export default {
         delete: '删除待办成功',
         undone: '未完成',
         done: '已完成',
-        unexport: "当前待办为空，无法导出",
-        complete: "已完成的事项"
+        unexport: '当前待办为空，无法导出',
+        complete: '已完成的事项',
       },
     },
     record: {
@@ -224,7 +278,7 @@ export default {
       manage: '管理成员',
       search: '搜索成员',
       manager: '主持人',
-      wave: "打招呼",
+      wave: '打招呼',
       invite: {
         title: '邀请成员',
         web: '浏览器中',
@@ -366,7 +420,8 @@ export default {
       buy: '购买证书',
       invalid: '证书无效或已过期，请检查证书是否正确。',
       invalid_domain: '当前域名不在证书允许的域名列表中，请联系管理员检查服务器域名配置是否正确。',
-      default_license: "为保证您的使用，当前系统已为您加载默认证书，默认证书仅支持5人以下的临时房间使用，若需要更多用户名额，请购买专业版证书。",
+      default_license:
+        '为保证您的使用，当前系统已为您加载默认证书，默认证书仅支持5人以下的临时房间使用，若需要更多用户名额，请购买专业版证书。',
       update_success: '证书更新成功',
       circle_ip:
         '当前您的IP地址为回环地址/私有地址，不建议您为此地址购买证书。请使用公网IP地址购买证书。若需要为私有地址购买证书并支持服务，请联系Wechat: Privoce。',
