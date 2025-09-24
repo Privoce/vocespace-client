@@ -138,6 +138,7 @@ export default {
       title: '应用',
       raise: {
         cancel: '取消举手',
+        title: '举手',
         receive: "发起了举手请求，请处理！",
         handle: {
           accept: "允许发言",
@@ -223,6 +224,7 @@ export default {
       manage: '管理成员',
       search: '搜索成员',
       manager: '主持人',
+      wave: "打招呼",
       invite: {
         title: '邀请成员',
         web: '浏览器中',

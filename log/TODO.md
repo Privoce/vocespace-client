@@ -456,12 +456,28 @@ lk load-test \
 - [x] 合并新空间榜单
 - [x] Docker合并本地证书校验
 - [x] Docker发布新版本
-- [ ] todo修改导出(修改数据结构，增加done记录完成的记录)
+- [ ] todo修改导出
+  - [ ] 数据结构增加done记录完成的任务记录
 - [x] Collapse Header增加背景色，hr标签
 - [ ] 状态混合，默认在线，用户可自定义新状态，todo list中增加记录自动切换todo为状态
 - [x] 更多 -> 应用 (到底是否改成类似Mac的浮窗，感觉视觉重复)
 - [ ] Docker测试
 - [ ] 更新部署文档的配置
+- [x] 增加tooltip
+  - [x] Send Greeting 打招呼
+  - [x] Countdown 倒计时
+  - [x] To-do list 待办事项
+  - [x] Timer 计时器
+  - [x] Raise Hand 举手
+- [ ] todo together
+  - [ ] 每个人单行（为第一条todo）
+  - [ ] 带有进度 类似：1/3 表示完成度
+  - [ ] 点击后可以展开看到详细todo
+- [ ] 单条的todo
+  - [ ] 设计merge
+  - [ ] 去除输入框
+- [ ] 开关类的使用OFF/ON
+- [ ] Recording组件i18n
 ---
 
 - [ ] 少参与者，多观察者 (Egress 实时传输，站点构建)

@@ -140,12 +140,13 @@ export default {
       title: 'Application',
       raise: {
         cancel: 'Cancel Raise Hand',
-        receive: "raised hand, please handle it!",
+        title: 'Raise Hand',
+        receive: 'raised hand, please handle it!',
         handle: {
-          accept: "Accept to Speak",
-          reject: "Reject to Speak",
-          ignore: "Ignore",
-        }
+          accept: 'Accept to Speak',
+          reject: 'Reject to Speak',
+          ignore: 'Ignore',
+        },
       },
       upload: {
         to_space: 'Upload application to space',
@@ -203,7 +204,7 @@ export default {
         undone: 'Undone',
         done: 'Done',
         unexport: 'Current todo is empty, cannot export',
-        complete: "Completed Tasks"
+        complete: 'Completed Tasks',
       },
     },
     record: {
@@ -226,6 +227,7 @@ export default {
       manage: 'Manage Participants',
       search: 'Search Participants',
       manager: 'host',
+      wave: 'Send Greeting',
       invite: {
         title: 'Invite Participants',
         web: 'in Browser',

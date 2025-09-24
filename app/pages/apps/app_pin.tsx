@@ -1,6 +1,8 @@
+import { useI18n } from '@/lib/i18n/i18n';
 import { AppKey, ParticipantSettings } from '@/lib/std/space';
 import { CarryOutOutlined, ClockCircleOutlined, HistoryOutlined } from '@ant-design/icons';
 import { LayoutContext } from '@livekit/components-react';
+import { Tooltip } from 'antd';
 
 export interface AppPinProps {
   appKey: AppKey;
@@ -39,12 +41,15 @@ export function AppFlotPin({
     borderRadius: 4,
   },
 }: AppPinProps) {
+  const { t } = useI18n();
   return (
-    <button className="lk-button" style={style} onClick={pin}>
-      {appKey === 'timer' && <ClockCircleOutlined />}
-      {appKey === 'countdown' && <HistoryOutlined />}
-      {appKey === 'todo' && <CarryOutOutlined />}
-    </button>
+    <Tooltip placement="bottom" title={t(`more.app.${appKey}.title`)}>
+      <button className="lk-button" style={style} onClick={pin}>
+        {appKey === 'timer' && <ClockCircleOutlined />}
+        {appKey === 'countdown' && <HistoryOutlined />}
+        {appKey === 'todo' && <CarryOutOutlined />}
+      </button>
+    </Tooltip>
   );
 }
 

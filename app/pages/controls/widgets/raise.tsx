@@ -54,10 +54,13 @@ export function RaisePin({
     borderRadius: 4,
   },
 }: RaisePinProps) {
+  const { t } = useI18n();
   return (
-    <button className="lk-button" style={style} onClick={raisePin}>
-      <SvgResource svgSize={20} type="hand"></SvgResource>
-    </button>
+    <Tooltip title={t('more.app.raise.title')} placement="bottom">
+      <button className="lk-button" style={style} onClick={raisePin}>
+        <SvgResource svgSize={20} type="hand"></SvgResource>
+      </button>
+    </Tooltip>
   );
 }
 
@@ -115,7 +118,7 @@ export function RaiseKeeper({
     return btn;
   } else {
     return (
-      <Tooltip title={t('more.app.raise.cancel')} placement="right">
+      <Tooltip title={t('more.app.raise.cancel')} placement="bottom">
         {btn}
       </Tooltip>
     );
