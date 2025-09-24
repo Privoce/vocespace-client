@@ -899,18 +899,17 @@ class SpaceManager {
       let spaceInfo = await this.getSpaceInfo(room);
       let startAt = Date.now();
       if (!spaceInfo) {
-        // spaceInfo = {
-        //   participants: {},
-        //   ownerId: '',
-        //   record: { active: false },
-        //   startAt,
-        //   children: [],
-        // };
         spaceInfo = DEFAULT_SPACE_INFO(startAt);
       }
 
       // 获取所有参与者的名字
       const participants = Object.values(spaceInfo.participants);
+
+      if (participants.length === 0) {
+        // 没有参与者，直接返回第一个用户（管理员）
+        return 'Admin';
+      }
+
       let usedUserNames: number[] = [];
       participants.forEach((participant) => {
         if (participant.name.startsWith('User')) {
@@ -937,19 +936,9 @@ class SpaceManager {
 
       const availableUserName = `User ${suffix_str}`;
 
-      // 这里还需要设置到房间的使用记录中
-      // await this.setSpaceDateRecords(
-      //   room,
-      //   { start: startAt },
-      //   {
-      //     [availableUserName]: [{ start: startAt }],
-      //   },
-      // );
-
       return availableUserName;
     } catch (error) {
-      console.error('Error generating user name:', error);
-      return 'User 01'; // 默认返回第一个用户
+      return 'Admin'; // 默认返回第一个用户(管理员)
     }
   }
   // 更新录制设置 -------------------------------------------------------
