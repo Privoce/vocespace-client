@@ -476,7 +476,7 @@ lk load-test \
 - [x] 单条的todo
   - [x] 设计merge
   - [x] 去除输入框当disabled时
-- [ ] 开关类的使用OFF/ON
+- [x] 开关类的使用OFF/ON
 - [ ] Recording组件i18n
 - [ ] 首个加入者如果没有自己定义名字则使用admin
 ---

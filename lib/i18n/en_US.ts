@@ -42,8 +42,8 @@ export default {
     wave_msg: 'sent you a reminder!',
     full_user:
       'The room user has exceeded the limit and cannot join. You can join other rooms or inform the builder to upgrade your license to obtain more user slots.',
-    open: 'Open',
-    close: 'Close',
+    open: 'ON',
+    close: 'OFF',
     high_quality: 'Lossless mode',
     high_quality_desc:
       'When enabled, video, audio, and screen sharing will be transmitted at a fixed resolution and higher quality, but may increase bandwidth usage and latency.',
@@ -299,7 +299,7 @@ export default {
       share_audio: 'Share Screen Audio',
       prompt_sound: 'Enter Prompt Sound',
       persistence: {
-        title: 'Persistent Space',
+        title: 'Auto-save Rooms and Members History Data',
         success: 'Successfully set the current space to persistent',
         error: 'Failed to set the current space to persistent',
       },

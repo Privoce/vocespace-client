@@ -293,7 +293,7 @@ export default {
       share_audio: '共享音频',
       prompt_sound: '进入提示音',
       persistence: {
-        title: '持久化空间',
+        title: '持久化空间和用户历史数据',
         success: '设置当前空间持久化成功',
         error: '设置当前空间持久化失败',
       },

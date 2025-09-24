@@ -866,7 +866,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     return (
       <div className="video_container_wrapper" style={{ position: 'relative' }}>
         {/* 右侧应用浮窗，悬浮态 */}
-        {showFlot && space && settings && (
+        {showFlot && space && settings.participants[space.localParticipant.identity] && (
           <FlotLayout
             space={space.name}
             style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
