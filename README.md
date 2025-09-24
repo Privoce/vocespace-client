@@ -26,37 +26,26 @@ Steps to get a local dev setup up and running:
 ```json
 {
   "livekit": {
-    "key": "your-production-key",
-    "secret": "your-production-secret",
-    "url": "ws://host.docker.internal:7880",
-    "turn": {
-      "urls": "turn:your-turn-server:3478",
-      "username": "your-turn-username",
-      "credential": "your-turn-password"
-    }
+    "key": "devkey",
+    "secret": "secret",
+    "url": "wss://yourdomain.com",
+    "turn": { "credential": "", "username": "", "urls": [] }
   },
   "codec": "vp9",
   "resolution": "1080p",
-  "maxBitrate": 3000000,
+  "maxBitrate": 2000000,
   "maxFramerate": 30,
-  "priority": "medium",
-  "redis": {
-    "enabled": true,
-    "host": "your-redis-host",
-    "port": 6379,
-    "password": "",
-    "db": 0
-  },
+  "priority": "high",
+  "redis": { "enabled": true, "host": "localhost", "port": 6379, "password": "vocespace", "db": 0 },
   "s3": {
-    "enabled": false,
-    "endpoint": "your-s3-endpoint",
-    "bucket": "your-bucket",
-    "accessKey": "your-access-key",
-    "secretKey": "your-secret-key",
-    "region": "your-region"
+    "accessKey": "s3_access_key",
+    "secretKey": "s3_secret_key",
+    "bucket": "your_bucket",
+    "region": "bucket_region"
   },
-  "serverUrl": "your-domain.com",
-  "hostToken": "your-host-token"
+  "serverUrl": "localhost",
+  "hostToken": "vocespace_privoce",
+  "license": "dev_license"
 }
 ```
 

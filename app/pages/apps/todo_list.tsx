@@ -199,37 +199,37 @@ export function AppTodo({
             )}
           ></List>
         </div>
-
-        <div className={styles.todo_add_wrapper}>
-          <Input
-            className={styles.todo_add_input}
-            disabled={disabled}
-            placeholder={t('more.app.todo.add')}
-            width={'100%'}
-            value={newTodo}
-            style={{ borderColor: disabled ? '#666' : '#22CCEE' }}
-            onChange={(e) => {
-              setNewTodo(e.target.value);
-            }}
-            size="middle"
-            onPressEnter={addTodo}
-            suffix={
-              <Button
-                className={styles.todo_add_btn}
-                style={{ padding: 0, height: 'fit-content' }}
-                type="text"
-                onClick={addTodo}
-                disabled={disabled}
-              >
-                <SvgResource
-                  type="add"
-                  svgSize={16}
-                  color={disabled ? '#666' : '#8c8c8c'}
-                ></SvgResource>
-              </Button>
-            }
-          ></Input>
-        </div>
+        {!disabled && (
+          <div className={styles.todo_add_wrapper}>
+            <Input
+              className={styles.todo_add_input}
+              placeholder={t('more.app.todo.add')}
+              width={'100%'}
+              value={newTodo}
+              style={{ borderColor: disabled ? '#666' : '#22CCEE' }}
+              onChange={(e) => {
+                setNewTodo(e.target.value);
+              }}
+              size="middle"
+              onPressEnter={addTodo}
+              suffix={
+                <Button
+                  className={styles.todo_add_btn}
+                  style={{ padding: 0, height: 'fit-content' }}
+                  type="text"
+                  onClick={addTodo}
+                  disabled={disabled}
+                >
+                  <SvgResource
+                    type="add"
+                    svgSize={16}
+                    color={disabled ? '#666' : '#8c8c8c'}
+                  ></SvgResource>
+                </Button>
+              }
+            ></Input>
+          </div>
+        )}
       </Card>
       <Modal
         width={600}

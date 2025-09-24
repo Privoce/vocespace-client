@@ -57,8 +57,8 @@ export function SingleFlotLayout({
         }
         styles={{
           body: {
-            background: '#1a1a1a90',
-            width: '300px',
+            background: '#1a1a1a',
+            width: '360px',
           },
         }}
       ></Popover>
