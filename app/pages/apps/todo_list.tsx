@@ -91,6 +91,7 @@ export function AppTodo({
       id: Date.now().toString(),
       title: newTodo.trim(),
       done: undefined,
+      visible: true,
     };
 
     let data = [...appData, newTodoItem];
@@ -116,6 +117,24 @@ export function AppTodo({
     });
     return items;
   }, [appData]);
+
+  /**
+   * 删除待办事项 (需要判断item中的done字段)
+   * - done字段有值表示已完成，则是将其中的visible字段设置为false
+   * - done字段无值表示未完成，则是直接删除该条目
+   */
+  const deleteTodo = async (item: TodoItem) => {
+    if (!item.done) {
+      await setAppData(appData.filter((todo) => todo.id !== item.id));
+      messageApi.success(t('more.app.todo.delete'));
+    } else {
+      const data = appData.map((todo) => {
+        return todo.id === item.id ? { ...todo, visible: false } : todo;
+      });
+      await setAppData(data);
+      messageApi.success(t('more.app.todo.delete'));
+    }
+  };
 
   return (
     <>
@@ -143,7 +162,7 @@ export function AppTodo({
               ),
             }}
             // dataSource={todos}
-            dataSource={appData}
+            dataSource={appData.map((item) => item).filter((item) => item.visible)}
             renderItem={(item, index) => (
               <List.Item>
                 <div className={styles.todo_item}>
@@ -180,14 +199,7 @@ export function AppTodo({
                       </div>
                     )}
                   </div>
-                  <Button
-                    disabled={disabled}
-                    type="text"
-                    onClick={async () => {
-                      await setAppData(appData.filter((todo) => todo.id !== item.id));
-                      messageApi.success(t('more.app.todo.delete'));
-                    }}
-                  >
+                  <Button disabled={disabled} type="text" onClick={() => deleteTodo(item)}>
                     <SvgResource
                       type="close"
                       svgSize={12}
@@ -284,7 +296,7 @@ export function ExportTodoHistroy({
           label: {
             color: '#8c8c8c',
             fontWeight: 700,
-            backgroundColor: '#181818',
+            backgroundColor: '#1a1a1a',
           },
           content: {
             backgroundColor: '#1E1E1E',

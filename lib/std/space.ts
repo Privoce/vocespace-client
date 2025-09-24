@@ -183,8 +183,22 @@ export interface SpaceInfo {
 
 export interface TodoItem {
   id: string;
+  /**
+   * 任务
+   */
   title: string;
+  /**
+   * 完成时间戳，如果未完成则没有该字段
+   */
   done?: number;
+  /**
+   * 是否显示
+   * - 当用户删除任务时，会检查done字段，如果有则表示任务已完成，设置visible为false而不是删除
+   * - 如果没有done字段，则表示任务未完成，直接删除
+   * - 这样做的目的是为了防止用户误操作删除了已完成的任务，导致数据丢失
+   * - 用户可以通过导出功能导出已完成的任务
+   */
+  visible: boolean;
 }
 
 export interface Timer {
@@ -253,6 +267,7 @@ export const castTodo = (todo?: SpaceTodo): TodoItem[] | undefined => {
     id: item.id,
     title: item.title,
     done: item.done,
+    visible: item.visible,
   }));
 };
 

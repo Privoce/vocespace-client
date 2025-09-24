@@ -456,8 +456,8 @@ lk load-test \
 - [x] 合并新空间榜单
 - [x] Docker合并本地证书校验
 - [x] Docker发布新版本
-- [ ] todo修改导出
-  - [ ] 数据结构增加done记录完成的任务记录
+- [x] todo修改导出
+  - [x] 数据结构增加done记录完成的任务记录
 - [x] Collapse Header增加背景色，hr标签
 - [ ] 状态混合，默认在线，用户可自定义新状态，todo list中增加记录自动切换todo为状态
 - [x] 更多 -> 应用 (到底是否改成类似Mac的浮窗，感觉视觉重复)
