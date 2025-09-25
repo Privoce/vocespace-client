@@ -124,7 +124,7 @@ const DEFAULT_KEYS: AppKey[] = ['timer', 'countdown', 'todo'];
 
 function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
   const { localParticipant } = useLocalParticipant();
-  const [activeKeys, setActiveKeys] = useState<Map<string, AppKey[]>>(
+  const [activeKeys, setActiveKeys] = useState<Map<string, (AppKey | 'together')[]>>(
     new Map([[localParticipant.identity, DEFAULT_KEYS]]),
   );
   const { t } = useI18n();
@@ -360,6 +360,21 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
       });
     }
 
+    if (!isRemote) {
+      items.push({
+        key: 'together',
+        label: (
+          <div className={styles.flot_header}>
+            {/* {showSyncIcon(isRemote, 'timer')} */}
+            {activeKeys.get(participantId)?.includes('together') ? '' : 'together'}
+          </div>
+        ),
+        children: <TodoTogether spaceInfo={spaceInfo} messageApi={messageApi}></TodoTogether>,
+        style: itemStyle,
+        styles: DEFAULT_COLLAPSE_HEADER_STYLES,
+      });
+    }
+
     return items;
   };
 
@@ -395,19 +410,6 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
     if (!items) {
       return [];
     }
-
-    items.push({
-      key: 'todo_together',
-      label: (
-        <div className={styles.flot_header}>
-          {/* {showSyncIcon(isRemote, 'timer')} */}
-          {/* {activeKeys.get(participantId)?.includes('timer') ? '' : t('more.app.timer.title')} */}
-        </div>
-      ),
-      children: <TodoTogether spaceInfo={spaceInfo} messageApi={messageApi}></TodoTogether>,
-      style: itemStyle,
-      styles: DEFAULT_COLLAPSE_HEADER_STYLES,
-    });
 
     return items;
   }, [apps, activeKeys, appData, showExport]);

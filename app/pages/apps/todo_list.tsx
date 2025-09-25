@@ -17,6 +17,7 @@ import { MessageInstance } from 'antd/es/message/interface';
 import { AppAuth, TodoItem } from '@/lib/std/space';
 import { DeliveredProcedureOutlined } from '@ant-design/icons';
 import { useLocalParticipant } from '@livekit/components-react';
+import { CardSize } from 'antd/es/card/Card';
 
 export interface AppTodoProps {
   messageApi: MessageInstance;
@@ -25,6 +26,8 @@ export interface AppTodoProps {
   auth: AppAuth;
   showExport: boolean;
   setShowExport: (show: boolean) => void;
+  size?: CardSize;
+  bodyStyle?: React.CSSProperties;
 }
 
 export function AppTodo({
@@ -34,6 +37,8 @@ export function AppTodo({
   auth,
   showExport,
   setShowExport,
+  size = 'default',
+  bodyStyle,
 }: AppTodoProps) {
   const { t } = useI18n();
   const disabled = useMemo(() => {
@@ -136,9 +141,19 @@ export function AppTodo({
     }
   };
 
+  const convertToBtnSize = (size: CardSize): 'small' | 'middle' | 'large' => {
+    switch (size) {
+      case 'small':
+        return 'small';
+      case 'default':
+      default:
+        return 'middle';
+    }
+  };
+
   return (
     <>
-      <Card style={{ width: '100%', padding: 0 }} size="default" styles={{ body: { padding: 12 } }}>
+      <Card style={{ width: '100%', padding: 0 }} size={size} styles={{ body: { padding: size == "small" ? 4 : 12, ...bodyStyle } }}>
         <div className={styles.todo_list_wrapper}>
           <List
             pagination={{
@@ -155,6 +170,7 @@ export function AppTodo({
                 <p
                   style={{
                     color: '#8c8c8c',
+                    fontSize: size === 'small' ? 12 : 14,
                   }}
                 >
                   {t('more.app.todo.empty')}
@@ -164,8 +180,14 @@ export function AppTodo({
             // dataSource={todos}
             dataSource={appData.map((item) => item).filter((item) => item.visible)}
             renderItem={(item, index) => (
-              <List.Item style={{border: "none"}}>
-                <div className={styles.todo_item}>
+              <List.Item style={{ border: 'none' }}>
+                <div
+                  className={styles.todo_item}
+                  style={{
+                    fontSize: size === 'small' ? 12 : 14,
+                    height: size === 'small' ? 28 : 32,
+                  }}
+                >
                   <Checkbox
                     onChange={() => toggleTodo(item.id)}
                     checked={Boolean(item.done)}
@@ -175,6 +197,7 @@ export function AppTodo({
                     {editingId === item.id ? (
                       <Input
                         value={editingValue}
+                        styles={{ input: { fontSize: size === 'small' ? 12 : 14 } }}
                         size="small"
                         autoFocus
                         onChange={(e) => setEditingValue(e.target.value)}
@@ -199,7 +222,12 @@ export function AppTodo({
                       </div>
                     )}
                   </div>
-                  <Button disabled={disabled} type="text" onClick={() => deleteTodo(item)}>
+                  <Button
+                    disabled={disabled}
+                    type="text"
+                    onClick={() => deleteTodo(item)}
+                    size={convertToBtnSize(size)}
+                  >
                     <SvgResource
                       type="close"
                       svgSize={12}

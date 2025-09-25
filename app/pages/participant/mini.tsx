@@ -366,6 +366,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
             <TileActionCollect
               wsWave={buildWsWave()}
               isSelf={trackReference.participant.identity === localParticipant.identity}
+              isHost={settings.ownerId === localParticipant.identity}
               contextUndefined={false}
               isKeepRaise={isKeepRaise}
               setIsKeepRaise={setIsKeepRaise}

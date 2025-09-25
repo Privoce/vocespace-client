@@ -195,9 +195,13 @@ export default {
         title: '举手',
         receive: '发起了举手请求，请处理！',
         handle: {
-          accept: '允许发言',
-          reject: '拒绝发言',
+          title: '处理请求',
+          accept: '允许',
+          accept_desc: '允许该用户发言，并通知其可以发言。',
+          reject: '拒绝',
+          reject_desc: '拒绝该用户发言，通知该用户并取消举手状态。',
           ignore: '忽略',
+          ignore_desc: '忽略该请求，不做任何处理。',
         },
       },
       upload: {

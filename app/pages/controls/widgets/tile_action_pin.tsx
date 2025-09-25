@@ -1,5 +1,5 @@
 import { WsSender, WsTo, WsWave } from '@/lib/std/device';
-import { RaiseHand, RaiseKeeper } from './raise';
+import { RaiseAuth, RaiseHand, RaiseKeeper } from './raise';
 import { WaveHand } from './wave';
 import { useMemo } from 'react';
 
@@ -8,6 +8,7 @@ export interface TileActionCollectProps {
   contextUndefined?: boolean;
   wsWave: WsWave;
   isSelf: boolean;
+  isHost: boolean;
   isKeepRaise: boolean;
   setIsKeepRaise: (keeping: boolean) => void;
 }
@@ -24,6 +25,7 @@ export function TileActionCollect({
   },
   contextUndefined,
   isSelf,
+  isHost,
   isKeepRaise,
   setIsKeepRaise,
   wsWave,
@@ -36,6 +38,10 @@ export function TileActionCollect({
     } as WsSender;
   }, [wsWave]);
 
+  const auth: RaiseAuth = useMemo(() => {
+    return isSelf ? 'write' : isHost ? 'host' : 'read';
+  }, [isSelf, isHost]);
+
   return (
     <div style={style}>
       {isKeepRaise && (
@@ -43,19 +49,23 @@ export function TileActionCollect({
           isKeeping={isKeepRaise}
           setKeeping={setIsKeepRaise}
           wsSender={wsSender}
-          disabled={!isSelf}
+          // disabled={!isSelf}
+          auth={auth}
         ></RaiseKeeper>
       )}
-      <div className='lk-focus-toggle-button' style={{
-        top: 0,
-        backgroundColor: 'transparent',
-        height: "fit-content",
-        width: 'fit-content',
-        left: isKeepRaise ? 28 : 0,
-        margin: 0,
-        padding: 0,
-        gap: 4
-      }}>
+      <div
+        className="lk-focus-toggle-button"
+        style={{
+          top: 0,
+          backgroundColor: 'transparent',
+          height: 'fit-content',
+          width: 'fit-content',
+          left: isKeepRaise ? 28 : 0,
+          margin: 0,
+          padding: 0,
+          gap: 4,
+        }}
+      >
         {' '}
         {isSelf ? (
           !isKeepRaise && (

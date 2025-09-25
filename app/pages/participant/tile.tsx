@@ -47,7 +47,7 @@ import { StatusInfo, useStatusInfo } from './status_info';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { AppFlotIconCollect } from '../apps/app_pin';
 import { ParticipantTileMiniProps } from './mini';
-import { RaiseHand } from '../controls/widgets/raise';
+import { RaiseHand, RaiseHandler } from '../controls/widgets/raise';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { Button } from 'antd';
@@ -129,17 +129,7 @@ export const ParticipantItem: (
                 message: `${msg.senderName} ${t('more.app.raise.receive')}`,
                 duration: 5,
                 actions: (
-                  <div style={{ display: 'flex', gap: 8 }}>
-                    <Button color="primary" size="small" variant="solid">
-                      {t('more.app.raise.handle.accept')}
-                    </Button>
-                    <Button color="orange" size="small" variant="solid">
-                      {t('more.app.raise.handle.ignore')}
-                    </Button>
-                    <Button color="danger" size="small" variant="solid">
-                      {t('more.app.raise.handle.reject')}
-                    </Button>
-                  </div>
+                  <RaiseHandler onAccept={() => {}} onReject={() => {}} />
                 ),
               });
             }
@@ -737,6 +727,7 @@ export const ParticipantItem: (
             <TileActionCollect
               wsWave={wsWave}
               isSelf={trackReference.participant.identity === localParticipant.identity}
+              isHost={settings.ownerId === localParticipant.identity}
               isKeepRaise={isKeepRaise}
               setIsKeepRaise={setIsKeepRaise}
             />

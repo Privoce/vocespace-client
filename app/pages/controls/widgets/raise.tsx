@@ -4,7 +4,7 @@ import { audio } from '@/lib/audio';
 import { useI18n } from '@/lib/i18n/i18n';
 import { WsSender } from '@/lib/std/device';
 import { LayoutContext } from '@livekit/components-react';
-import { Tooltip } from 'antd';
+import { Button, Popover, Tooltip } from 'antd';
 import { useMemo } from 'react';
 
 export interface RaiseHandProps {
@@ -69,8 +69,16 @@ export interface RaiseKeepProps {
   setKeeping: (keeping: boolean) => void;
   wsSender: WsSender;
   style?: React.CSSProperties;
-  disabled?: boolean;
+  auth: RaiseAuth;
 }
+
+/**
+ * ### RaiseKeeper 组件的权限类型
+ * - "host": 仅主持人可见，主持人有权限：1. 取消举手 2. 立即发言 (支持人允许该用户发言)
+ * - "read": 他人只读，表示其他人只能看到该用户的Raise状态，但无法进行任何操作
+ * - "write": 自己可操作，自己只能取消举手
+ */
+export type RaiseAuth = 'host' | 'read' | 'write';
 
 /**
  * ## RaiseKeeper 组件
@@ -83,7 +91,7 @@ export function RaiseKeeper({
   isKeeping,
   setKeeping,
   wsSender,
-  disabled = false,
+  auth,
   style = {
     width: 'fit-content',
     padding: 2,
@@ -100,7 +108,7 @@ export function RaiseKeeper({
         className="lk-button"
         style={{
           ...style,
-          cursor: disabled ? 'not-allowed' : 'pointer',
+          cursor: auth === 'read' ? 'not-allowed' : 'pointer',
         }}
         onClick={() => {
           if (isKeeping) {
@@ -112,15 +120,57 @@ export function RaiseKeeper({
         <SvgResource svgSize={20} type="hand"></SvgResource>
       </button>
     );
-  }, [isKeeping, style, setKeeping, wsSender, disabled]);
+  }, [isKeeping, style, setKeeping, wsSender, auth]);
 
-  if (disabled) {
+  if (auth === 'read') {
     return btn;
-  } else {
+  }
+  if (auth === 'write') {
     return (
       <Tooltip title={t('more.app.raise.cancel')} placement="bottom">
         {btn}
       </Tooltip>
     );
   }
+
+  if (auth === 'host') {
+    return (
+      <Popover
+        title={t('more.app.raise.handle.title')}
+        content={<RaiseHandler onAccept={() => {}} onReject={() => {}} />}
+        placement="bottom"
+      >
+        {btn}
+      </Popover>
+    );
+  }
+}
+
+export interface RaiseHandlerProps {
+  onAccept?: () => void;
+
+  onReject?: () => void;
+}
+
+export function RaiseHandler({ onAccept, onReject }: RaiseHandlerProps) {
+  const { t } = useI18n();
+
+  return (
+    <div style={{ display: 'flex', gap: 8, justifyContent: "flex-end" }}>
+      {onAccept && (
+        <Tooltip title={t('more.app.raise.handle.accept_desc')} placement="bottom">
+          <Button color="primary" size="small" variant="solid" onClick={onAccept}>
+            {t('more.app.raise.handle.accept')}
+          </Button>
+        </Tooltip>
+      )}
+      {onReject && (
+        <Tooltip title={t('more.app.raise.handle.reject_desc')} placement="bottom">
+          <Button color="danger" size="small" variant="solid" onClick={onReject}>
+            {t('more.app.raise.handle.reject')}
+          </Button>
+        </Tooltip>
+      )}
+    </div>
+  );
 }

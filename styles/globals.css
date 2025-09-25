@@ -223,3 +223,7 @@ h2 a {
   overflow-y: scroll;
   scrollbar-width: none;
 }
+
+:where(.css-dev-only-do-not-override-w30lry).ant-list .ant-list-pagination {
+  margin-block-start: 12px !important;
+}

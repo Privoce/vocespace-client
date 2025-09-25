@@ -26,27 +26,29 @@ export function TodoTogether({ spaceInfo, messageApi }: TodoTogetherProps) {
 
   // 处理参与者的todo数据
   const participantSummaries: ParticipantTodoSummary[] = useMemo(() => {
-    return Object.entries(spaceInfo.participants)
-      .filter(([_, participant]) => {
-        const todoItems = participant.appDatas?.todo?.items;
-        return todoItems && todoItems.length > 0;
-      })
-      .map(([participantId, participant]) => {
-        const todoData = participant.appDatas?.todo?.items || [];
-        const visibleTodos = todoData.filter((item) => item.visible !== false);
-        const completedCount = todoData.filter((item) => item.done).length;
-        const firstTodo = visibleTodos[0];
+    return (
+      Object.entries(spaceInfo.participants)
+        // .filter(([_, participant]) => {
+        //   const todoItems = participant.appDatas?.todo?.items;
+        //   return todoItems && todoItems.length > 0;
+        // })
+        .map(([participantId, participant]) => {
+          const todoData = participant.appDatas?.todo?.items || [];
+          const visibleTodos = todoData.filter((item) => item.visible !== false);
+          const completedCount = todoData.filter((item) => item.done).length;
+          const firstTodo = visibleTodos[0];
 
-        return {
-          participantId,
-          name: participant.name,
-          todoData: visibleTodos,
-          completedCount,
-          totalCount: todoData.length,
-          firstTodoTitle: firstTodo?.title,
-        };
-      })
-      .sort((a, b) => a.name.localeCompare(b.name)); // 按名字排序
+          return {
+            participantId,
+            name: participant.name,
+            todoData: visibleTodos,
+            completedCount,
+            totalCount: todoData.length,
+            firstTodoTitle: firstTodo?.title,
+          };
+        })
+        .sort((a, b) => a.name.localeCompare(b.name))
+    ); // 按名字排序
   }, [spaceInfo.participants]);
 
   // 生成每个参与者的Collapse项目
@@ -75,7 +77,7 @@ export function TodoTogether({ spaceInfo, messageApi }: TodoTogetherProps) {
                   width: '100%',
                 }}
               >
-                {summary.firstTodoTitle}
+                {summary.firstTodoTitle || t('more.app.todo.together.empty')}
               </div>
               <div style={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                 <Progress
@@ -100,15 +102,21 @@ export function TodoTogether({ spaceInfo, messageApi }: TodoTogetherProps) {
           </div>
         ),
         children: (
-          <div style={{ marginTop: 8 }}>
-            <AppTodo
-              messageApi={messageApi}
-              appData={summary.todoData || []}
-              setAppData={async () => {}} // 只读模式，不允许修改
-              auth="read" // 设置为只读权限
-              showExport={false}
-              setShowExport={() => {}}
-            />
+          <div style={{ marginTop: 0 }}>
+            {summary?.todoData && summary.todoData.length > 0 && (
+              <AppTodo
+                size="small"
+                bodyStyle={{
+                  padding: '0 18px 0 0',
+                }}
+                messageApi={messageApi}
+                appData={summary.todoData}
+                setAppData={async () => {}} // 只读模式，不允许修改
+                auth="read" // 设置为只读权限
+                showExport={false}
+                setShowExport={() => {}}
+              />
+            )}
           </div>
         ),
       },
