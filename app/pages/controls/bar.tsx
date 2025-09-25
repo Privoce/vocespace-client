@@ -69,7 +69,7 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 export interface ControlBarExport {
-  openSettings: (key: TabKey) => void;
+  openSettings: (key: TabKey, isDefineStatus?: boolean) => void;
 }
 
 /**
@@ -255,11 +255,25 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     };
 
     // 打开设置面板 -----------------------------------------------------------
-    const openSettings = async (tab: TabKey) => {
+    const openSettings = async (tab: TabKey, isDefineStatus?: boolean) => {
       setKey(tab);
       setSettingVis(true);
       if (settingsRef.current && tab === 'video') {
         await settingsRef.current.startVideo();
+      }
+      if (isDefineStatus) {
+        if (settingsRef.current) {
+          settingsRef.current.setAppendStatus(true);
+        } else {
+          let finish = false;
+          const interval = setInterval(() => {
+            if (settingsRef.current && !finish) {
+              settingsRef.current.setAppendStatus(true);
+              finish = true;
+              clearInterval(interval);
+            }
+          }, 300);
+        }
       }
     };
 

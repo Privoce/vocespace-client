@@ -398,7 +398,7 @@ lk load-test \
   - [x] 除了主持人，其他人不能取消哦他人举手
   - [x] TileActionCollect组件控制actions的显示
   - [x] socket：举手/取消举手 事件
-  - [ ] raise hand auth control
+  - [x] raise hand auth control
   - [ ] 主持人收到特殊通知，主持人可直接点击发言按钮，举手用户的麦克风自动打开并收到发言通知
   - [ ] 主持人拒绝发言，保持举手用户麦克风关闭并取消举手图标，收到拒绝发言通知
   - [ ] 举手排序，多人举手时主持人安排发言顺序，设置发言倒计时，开始后进行倒计时发言

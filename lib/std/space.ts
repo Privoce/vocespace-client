@@ -99,6 +99,10 @@ export interface ParticipantSettings {
      */
     countdown?: SpaceCountdown;
   };
+  /**
+   * 当前是否请求举手
+   */
+  raiseHand: boolean;
 }
 
 export interface SpaceTimeRecord {
@@ -128,8 +132,17 @@ export interface SpaceDateRecords {
 }
 
 export interface RecordSettings {
+  /**
+   * egress 服务ID for LiveKit
+   */
   egressId?: string;
+  /**
+   * 录制文件存储路径
+   */
   filePath?: string;
+  /**
+   * 录制是否开启
+   */
   active: boolean;
 }
 
@@ -314,6 +327,7 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   sync: ['todo'], // 默认同步待办事项
   auth: 'read',
   appDatas: {},
+  raiseHand: false,
 };
 
 /**

@@ -1,4 +1,4 @@
-import { Dropdown, MenuProps } from 'antd';
+import { Button, Dropdown, MenuProps, Tag } from 'antd';
 import { ItemType } from 'antd/es/menu/interface';
 import { useMemo } from 'react';
 import styles from '@/styles/controls.module.scss';
@@ -10,6 +10,7 @@ import { Trans } from '@/lib/i18n/i18n';
 import { UserDefineStatus, UserStatus } from '@/lib/std';
 import { SpaceInfo } from '@/lib/std/space';
 import { TrackReferenceOrPlaceholder } from '@livekit/components-react';
+import { PlusCircleOutlined } from '@ant-design/icons';
 
 export interface StatusInfoProps {
   disabled?: boolean;
@@ -33,7 +34,7 @@ export function StatusInfo({ disabled = false, items, children }: StatusInfoProp
 }
 
 export interface UseStatusInfoProps {
-  toRenameSettings?: () => void;
+  toRenameSettings?: (isDefineStatus?: boolean) => void;
   username: string;
   t: Trans;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
@@ -52,19 +53,42 @@ export function useStatusInfo({
   const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
   const [uState, setUState] = useRecoilState(userState);
   const userStatusDisply = useMemo(() => {
+    let item = {
+      title:
+        settings.participants[trackReference.participant.identity]?.status || UserStatus.Online,
+      icon: <SvgResource type={'online_dot'} svgSize={14}></SvgResource>,
+    };
     switch (settings.participants[trackReference.participant.identity]?.status) {
       case UserStatus.Online:
-        return 'online_dot';
+        item.title = t(UserStatus.Online);
+        break;
       case UserStatus.Offline:
-        return 'offline_dot';
+        item.title = t(UserStatus.Offline);
+        item.icon = <SvgResource type={'offline_dot'} svgSize={14}></SvgResource>;
+        break;
       case UserStatus.Busy:
-        return 'busy_dot';
+        item.title = t(UserStatus.Busy);
+        item.icon = <SvgResource type={'busy_dot'} svgSize={14}></SvgResource>;
+        break;
       case UserStatus.Leisure:
-        return 'leisure_dot';
+        item.title = t(UserStatus.Leisure);
+        item.icon = <SvgResource type={'leisure_dot'} svgSize={14}></SvgResource>;
+        break;
       default:
-        return 'online_dot';
+        break;
     }
+
+    return {
+      label: item.title,
+      tag: (
+        <div className={styles.status_tag}>
+          <span>{item.icon}</span>
+          {item.title}
+        </div>
+      ),
+    };
   }, [settings.participants, trackReference.participant.identity]);
+
   const setStatusLabel = (name?: string): String => {
     switch (uState.status) {
       case UserStatus.Online:
@@ -89,17 +113,14 @@ export function useStatusInfo({
     if (uRoomStatusState.length > 0) {
       uRoomStatusState.forEach((item) => {
         list.push({
-          title: item.name,
-          desc: item.desc,
-          icon: 'dot',
+          title: item.title,
           value: item.id,
           isDefine: true,
-          color: item.icon.color,
         });
       });
     }
 
-    return list.map((item) => ({
+    let items = list.map((item) => ({
       key: item.value,
       label: (
         <div className={styles.status_item}>
@@ -113,6 +134,26 @@ export function useStatusInfo({
         </div>
       ),
     }));
+
+    items.push({
+      key: 'add_status',
+      label: (
+        <Button
+          type="link"
+          icon={<PlusCircleOutlined></PlusCircleOutlined>}
+          style={{ color: '#22ccee' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            // Handle add status action
+            toRenameSettings && toRenameSettings(true);
+          }}
+        >
+          {t('settings.general.status.define.title')}
+        </Button>
+      ),
+    });
+
+    return items;
   }, [uRoomStatusState, t]);
 
   const items: MenuProps['items'] = useMemo(() => {
@@ -120,7 +161,7 @@ export function useStatusInfo({
       {
         key: 'user_info',
         label: (
-          <div className={styles.user_info_wrap} onClick={toRenameSettings}>
+          <div className={styles.user_info_wrap} onClick={() => toRenameSettings && toRenameSettings()}>
             <SvgResource type="modify" svgSize={16} color="#fff"></SvgResource>
             <div className={styles.user_info_wrap_name}>
               {' '}
@@ -145,18 +186,7 @@ export function useStatusInfo({
               }}
             >
               <div className={styles.status_item_inline} style={{ width: '100%' }}>
-                <div className={styles.status_item_inline}>
-                  {defineStatus ? (
-                    <SvgResource
-                      type="dot"
-                      svgSize={16}
-                      color={defineStatus.icon.color}
-                    ></SvgResource>
-                  ) : (
-                    <SvgResource type={userStatusDisply} svgSize={16}></SvgResource>
-                  )}
-                  <div>{setStatusLabel(defineStatus?.name)}</div>
-                </div>
+                <div className={styles.status_item_inline}>{userStatusDisply.label}</div>
                 <SvgResource type="right" svgSize={14} color="#fff"></SvgResource>
               </div>
             </Dropdown>
@@ -169,7 +199,8 @@ export function useStatusInfo({
   return {
     items,
     setStatusLabel,
+
     userStatusDisply,
-    defineStatus
+    defineStatus,
   };
 }

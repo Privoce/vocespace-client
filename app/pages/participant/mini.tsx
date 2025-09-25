@@ -285,7 +285,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
             >
               <ParticipantPlaceholder />
             </div>
-            <div className="lk-participant-metadata" style={{ zIndex: 1000 }}>
+            <div className="lk-participant-metadata" style={{ zIndex: 1000, width: "50%", maxWidth: "300px" }}>
               <StatusInfo
                 disabled={
                   trackReference.participant.identity != localParticipant.identity ||
@@ -329,7 +329,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                           alignItems: 'center',
                         }}
                       >
-                        {defineStatus ? (
+                        {/* {defineStatus ? (
                           <SvgResource
                             type="dot"
                             svgSize={16}
@@ -340,7 +340,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                             type={userStatusDisply as SvgType}
                             svgSize={16}
                           ></SvgResource>
-                        )}
+                        )} */}
                       </div>
                     </>
                   ) : (

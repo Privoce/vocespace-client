@@ -10,11 +10,8 @@ import { BaseOptionType } from 'antd/es/select';
 
 export interface StatusItem extends BaseOptionType {
   title: string;
-  icon: SvgType;
   value: string;
-  desc: string;
   isDefine: boolean;
-  color?: string;
 }
 
 /**
@@ -35,7 +32,7 @@ export function StatusSelect({
   const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
   const [active, setActive] = useState<string>(state.status);
 
-  useEffect(()=> {
+  useEffect(() => {
     if (state.status !== active) {
       setActive(state.status);
     }
@@ -46,12 +43,9 @@ export function StatusSelect({
     if (uRoomStatusState.length > 0) {
       uRoomStatusState.forEach((status) => {
         list.push({
-          title: status.name,
-          desc: status.desc,
-          icon: 'dot',
+          title: status.title,
           value: status.id,
           isDefine: true,
-          color: status.icon.color,
         });
       });
     }
@@ -110,8 +104,7 @@ export function StatusSelect({
   );
 }
 
-
-export const statusDefaultList = (t: Trans):StatusItem[] =>  {
+export const statusDefaultList = (t: Trans): StatusItem[] => {
   return [
     {
       title: t('settings.general.status.online'),
@@ -142,4 +135,4 @@ export const statusDefaultList = (t: Trans):StatusItem[] =>  {
       isDefine: false,
     },
   ];
-}
+};

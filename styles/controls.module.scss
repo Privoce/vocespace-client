@@ -407,3 +407,19 @@
 //   justify-content: space-between;
 //   gap: 12px;
 // }
+
+.status_tag{
+  height: fit-content;
+  font-size: 12px;
+  color: #fff;
+  border: 1px solid #8c8c8c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2px 6px;
+  border-radius: 4px;
+  margin-left: 4px;
+  & > span {
+    margin-right: 4px;
+  }
+}

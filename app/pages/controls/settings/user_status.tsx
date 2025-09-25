@@ -6,9 +6,7 @@ import { LocalParticipant } from 'livekit-client';
 import { useState } from 'react';
 import { ulid } from 'ulid';
 import styles from '@/styles/controls.module.scss';
-import TextArea from 'antd/es/input/TextArea';
 import { Button, Input, Radio, Slider } from 'antd';
-import { SvgResource } from '@/app/resources/svg';
 import { api } from '@/lib/api';
 import { DefineUserStatusResponse } from '@/lib/api/space';
 
@@ -29,45 +27,7 @@ export interface BuildUserStatusProps {
 export function BuildUserStatus({ messageApi, space, localParticipant }: BuildUserStatusProps) {
   const { t } = useI18n();
   const [name, setName] = useState('');
-  const [desc, setDesc] = useState('');
-  const status_icons: {
-    key: string;
-    color: string;
-  }[] = [
-    {
-      key: 'a',
-      color: '#3357FF',
-    },
-    {
-      key: 'b',
-      color: '#0052d9',
-    },
-    {
-      key: 'c',
-      color: '#8e56dd',
-    },
-    {
-      key: 'd',
-      color: '#ffaedc',
-    },
-    {
-      key: 'e',
-      color: '#f5ba18',
-    },
-    {
-      key: 'f',
-      color: '#85d3ff',
-    },
-    {
-      key: 'g',
-      color: '#d54941',
-    },
-    {
-      key: 'h',
-      color: '#92dbb2',
-    },
-  ];
-  const [selectedIcon, setSelectedIcon] = useState(status_icons[0].key);
+
   const [videoBlur, setVideoBlur] = useState(0.0);
   const [screenBlur, setScreenBlur] = useState(0.0);
   const [volume, setVolume] = useState(100);
@@ -75,8 +35,6 @@ export function BuildUserStatus({ messageApi, space, localParticipant }: BuildUs
   // 恢复默认状态
   const restoreAll = () => {
     setName('');
-    setDesc('');
-    setSelectedIcon(status_icons[0].key);
     setVolume(100);
     setVideoBlur(0.0);
     setScreenBlur(0.0);
@@ -90,12 +48,8 @@ export function BuildUserStatus({ messageApi, space, localParticipant }: BuildUs
           name: localParticipant.name || localParticipant.identity,
           id: localParticipant.identity,
         },
-        name,
-        desc,
-        icon: {
-          key: selectedIcon,
-          color: status_icons.find((item) => item.key == selectedIcon)?.color || '#3357FF',
-        },
+        title: name,
+
         volume,
         blur: videoBlur,
         screenBlur,
@@ -131,44 +85,13 @@ export function BuildUserStatus({ messageApi, space, localParticipant }: BuildUs
       <div>
         <div className={styles.common_space}>{t('settings.general.status.define.name')}:</div>
         <Input
+          size="large"
           value={name}
           placeholder={t('settings.general.status.define.placeholder.name')}
           onChange={(e) => {
             setName(e.target.value);
           }}
         ></Input>
-      </div>
-      <div>
-        <div className={styles.common_space}>{t('settings.general.status.define.desc')}:</div>
-        <TextArea
-          rows={3}
-          placeholder={t('settings.general.status.define.placeholder.desc')}
-          value={desc}
-          allowClear
-          onChange={(e) => {
-            setDesc(e.target.value);
-          }}
-          count={{
-            show: true,
-            max: 60,
-          }}
-        ></TextArea>
-      </div>
-      <div>
-        <div className={styles.common_space}>{t('settings.general.status.define.icon')}:</div>
-        <Radio.Group
-          value={selectedIcon}
-          size="large"
-          onChange={(e) => {
-            setSelectedIcon(e.target.value);
-          }}
-        >
-          {status_icons.map((item, index) => (
-            <Radio.Button value={item.key} key={index}>
-              <SvgResource type="dot" svgSize={16} color={item.color}></SvgResource>
-            </Radio.Button>
-          ))}
-        </Radio.Group>
       </div>
       <div>
         <div className={styles.common_space}>{t('settings.audio.volume')}:</div>

@@ -29,16 +29,17 @@ export interface UserItemProp {
 
 export interface UserDefineStatus {
   id: string;
+  /**
+   * 创建者
+   */
   creator: {
     name: string;
     id: string;
   };
-  name: string;
-  desc: string;
-  icon: {
-    key: string;
-    color: string;
-  };
+  /**
+   * 状态名称
+   */
+  title: string;
   volume: number;
   blur: number;
   screenBlur: number;
@@ -47,10 +48,10 @@ export interface UserDefineStatus {
 // export type UserStatus = 'success' | 'processing' | 'default' | 'error' | 'warning';
 
 export enum UserStatus {
-  Online = 'online',
-  Leisure = 'leisure',
-  Busy = 'busy',
-  Offline = 'offline',
+  Online = 'settings.general.status.online',
+  Leisure = 'settings.general.status.leisure',
+  Busy = 'settings.general.status.busy',
+  Offline = 'settings.general.status.offline',
 }
 
 export function is_web(): boolean {
@@ -59,39 +60,44 @@ export function is_web(): boolean {
 
 export function isMobile(): boolean {
   if (!is_web()) return false;
-  
+
   // 检查用户代理字符串
   const userAgent = navigator.userAgent.toLowerCase();
   const mobileKeywords = [
-    'mobile', 'android', 'iphone', 'ipad', 'ipod', 
-    'blackberry', 'windows phone', 'opera mini'
+    'mobile',
+    'android',
+    'iphone',
+    'ipad',
+    'ipod',
+    'blackberry',
+    'windows phone',
+    'opera mini',
   ];
-  
-  const isMobileUserAgent = mobileKeywords.some(keyword => 
-    userAgent.includes(keyword)
-  );
-  
+
+  const isMobileUserAgent = mobileKeywords.some((keyword) => userAgent.includes(keyword));
+
   // 检查触摸屏支持
-  const hasTouchScreen = 'ontouchstart' in window || 
-    navigator.maxTouchPoints > 0 || 
+  const hasTouchScreen =
+    'ontouchstart' in window ||
+    navigator.maxTouchPoints > 0 ||
     (navigator as any).msMaxTouchPoints > 0;
-  
+
   // 检查屏幕尺寸 (小于768px认为是移动设备)
   const isSmallScreen = window.innerWidth < 768;
-  
+
   return isMobileUserAgent || (hasTouchScreen && isSmallScreen);
 }
 
 export function isTablet(): boolean {
   if (!is_web()) return false;
-  
+
   const userAgent = navigator.userAgent.toLowerCase();
-  const isTabletUserAgent = userAgent.includes('ipad') || 
-    (userAgent.includes('android') && !userAgent.includes('mobile'));
-  
+  const isTabletUserAgent =
+    userAgent.includes('ipad') || (userAgent.includes('android') && !userAgent.includes('mobile'));
+
   const hasTouchScreen = 'ontouchstart' in window;
   const isTabletScreen = window.innerWidth >= 768 && window.innerWidth <= 1024;
-  
+
   return isTabletUserAgent || (hasTouchScreen && isTabletScreen);
 }
 

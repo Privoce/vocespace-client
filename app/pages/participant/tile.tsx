@@ -19,7 +19,7 @@ import {
   useMaybeLayoutContext,
   VideoTrack,
 } from '@livekit/components-react';
-import { Participant, Track } from 'livekit-client';
+import { ConnectionState, Participant, Track } from 'livekit-client';
 import React, { useEffect, useMemo, useState } from 'react';
 import VirtualRoleCanvas from '../virtual_role/live2d';
 import { useRecoilState } from 'recoil';
@@ -50,10 +50,10 @@ import { ParticipantTileMiniProps } from './mini';
 import { RaiseHand, RaiseHandler } from '../controls/widgets/raise';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
-import { Button } from 'antd';
+import { Button, Tag } from 'antd';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps {
-  toSettings?: () => void;
+  toSettings?: (isDefineStatus?: boolean) => void;
   messageApi: MessageInstance;
   noteApi?: NotificationInstance;
   isFocus?: boolean;
@@ -128,9 +128,7 @@ export const ParticipantItem: (
               noteApi?.info({
                 message: `${msg.senderName} ${t('more.app.raise.receive')}`,
                 duration: 5,
-                actions: (
-                  <RaiseHandler onAccept={() => {}} onReject={() => {}} />
-                ),
+                actions: <RaiseHandler onAccept={() => {}} onReject={() => {}} />,
               });
             }
           }
@@ -691,26 +689,7 @@ export const ParticipantItem: (
                           show={'muted'}
                         ></TrackMutedIndicator>
                         <ParticipantName />
-                        <div
-                          style={{
-                            marginLeft: '0.25rem',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                          }}
-                        >
-                          {defineStatus ? (
-                            <SvgResource
-                              type="dot"
-                              svgSize={16}
-                              color={defineStatus.icon.color}
-                            ></SvgResource>
-                          ) : (
-                            <SvgResource
-                              type={userStatusDisply as SvgType}
-                              svgSize={16}
-                            ></SvgResource>
-                          )}
-                        </div>
+                        {space.state !== ConnectionState.Connecting && userStatusDisply.tag}
                       </>
                     ) : (
                       <>

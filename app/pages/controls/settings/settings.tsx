@@ -39,6 +39,7 @@ export interface SettingsExports {
   username: string;
   removeVideo: () => void;
   startVideo: () => Promise<void>;
+  setAppendStatus: (append: boolean) => void;
   state: {
     volume: number;
     blur: number;
@@ -249,6 +250,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
           await virtualSettingsRef.current.startVideo();
         }
       },
+      setAppendStatus,
       state: {
         volume,
         blur: videoBlur,

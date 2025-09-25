@@ -791,8 +791,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       tracks,
     ]);
 
-    const toSettingGeneral = () => {
-      controlsRef.current?.openSettings('general');
+    const toSettingGeneral = (isDefineStatus?: boolean) => {
+      controlsRef.current?.openSettings('general', isDefineStatus);
     };
     // [user status] ------------------------------------------------------------------------------------------
     const setUserStatus = async (status: UserStatus | string) => {
