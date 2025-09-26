@@ -17,7 +17,7 @@ import {
   useTrackMutedIndicator,
   VideoTrack,
 } from '@livekit/components-react';
-import { Participant, Room, Track } from 'livekit-client';
+import { ConnectionState, Participant, Room, Track } from 'livekit-client';
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { isTrackReferencePinned } from './tile';
 import {
@@ -287,7 +287,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
             </div>
             <div
               className="lk-participant-metadata"
-              style={{ zIndex: 1000, width: '50%', maxWidth: '300px' }}
+              style={{ zIndex: 1000, width: 'fit-content', maxWidth: '100px' }}
             >
               <StatusInfo
                 disabled={
@@ -296,10 +296,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                 }
                 items={items}
               >
-                <div
-                  className="lk-participant-metadata-item"
-                  style={{ maxWidth: 'calc(100% - 32px)', width: 'max-content' }}
-                >
+                <div className="lk-participant-metadata-item" style={{ width: '100%' }}>
                   {trackReference.source === Track.Source.Camera ? (
                     <>
                       {isEncrypted && <LockLockedIcon style={{ marginRight: '0.25rem' }} />}
@@ -322,29 +319,10 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                           }rem)`,
                           overflow: 'clip',
                           textWrap: 'nowrap',
-                          width: '100%',
+                          width: 'fit-content',
                         }}
                       />
-                      <div
-                        style={{
-                          marginLeft: '0.25rem',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                        }}
-                      >
-                        {/* {defineStatus ? (
-                          <SvgResource
-                            type="dot"
-                            svgSize={16}
-                            color={defineStatus.icon.color}
-                          ></SvgResource>
-                        ) : (
-                          <SvgResource
-                            type={userStatusDisply as SvgType}
-                            svgSize={16}
-                          ></SvgResource>
-                        )} */}
-                      </div>
+                      {space.state !== ConnectionState.Connecting && userStatusDisply.tag}
                     </>
                   ) : (
                     <>

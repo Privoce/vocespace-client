@@ -1,4 +1,4 @@
-import { Button, Dropdown, MenuProps, Tag } from 'antd';
+import { Button, Dropdown, MenuProps, Tag, Tooltip } from 'antd';
 import { ItemType } from 'antd/es/menu/interface';
 import { useMemo } from 'react';
 import styles from '@/styles/controls.module.scss';
@@ -53,12 +53,16 @@ export function useStatusInfo({
   const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
   const [uState, setUState] = useRecoilState(userState);
   const userStatusDisply = useMemo(() => {
-    let item = {
-      title:
-        settings.participants[trackReference.participant.identity]?.status || UserStatus.Online,
+    let status = settings.participants[trackReference.participant.identity]?.status;
+    let item: {
+      title: string;
+      icon?: React.ReactNode;
+    } = {
+      title: status || UserStatus.Online,
       icon: <SvgResource type={'online_dot'} svgSize={14}></SvgResource>,
     };
-    switch (settings.participants[trackReference.participant.identity]?.status) {
+    console.warn('status', settings.participants[trackReference.participant.identity]?.status);
+    switch (status) {
       case UserStatus.Online:
         item.title = t(UserStatus.Online);
         break;
@@ -75,16 +79,21 @@ export function useStatusInfo({
         item.icon = <SvgResource type={'leisure_dot'} svgSize={14}></SvgResource>;
         break;
       default:
+        item.title = settings.status?.find((s) => s.id === status)?.title || UserStatus.Online;
+        item.icon = undefined;
         break;
     }
 
     return {
       label: item.title,
+      icon: item.icon,
       tag: (
-        <div className={styles.status_tag}>
-          <span>{item.icon}</span>
-          {item.title}
-        </div>
+        <Tooltip placement="right" title={item.title}>
+          <div className={styles.status_tag}>
+            {item.icon && <span>{item.icon}</span>}
+            {item.title}
+          </div>
+        </Tooltip>
       ),
     };
   }, [settings.participants, trackReference.participant.identity]);
@@ -161,7 +170,10 @@ export function useStatusInfo({
       {
         key: 'user_info',
         label: (
-          <div className={styles.user_info_wrap} onClick={() => toRenameSettings && toRenameSettings()}>
+          <div
+            className={styles.user_info_wrap}
+            onClick={() => toRenameSettings && toRenameSettings()}
+          >
             <SvgResource type="modify" svgSize={16} color="#fff"></SvgResource>
             <div className={styles.user_info_wrap_name}>
               {' '}
@@ -186,7 +198,10 @@ export function useStatusInfo({
               }}
             >
               <div className={styles.status_item_inline} style={{ width: '100%' }}>
-                <div className={styles.status_item_inline}>{userStatusDisply.label}</div>
+                <div className={styles.status_item_inline}>
+                  {userStatusDisply?.icon}
+                  {userStatusDisply.label}
+                </div>
                 <SvgResource type="right" svgSize={14} color="#fff"></SvgResource>
               </div>
             </Dropdown>

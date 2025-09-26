@@ -670,12 +670,12 @@ export const ParticipantItem: (
             <div className="lk-participant-placeholder">
               <ParticipantPlaceholder />
             </div>
-            <div className="lk-participant-metadata" style={{ zIndex: 4 }}>
+            <div className="lk-participant-metadata" style={{ zIndex: 4, width: 'fit-content', maxWidth: '100px' }}>
               <StatusInfo
                 disabled={trackReference.participant.identity != localParticipant.identity}
                 items={items}
                 children={
-                  <div className="lk-participant-metadata-item">
+                  <div className="lk-participant-metadata-item" style={{ width: '100%' }}>
                     {trackReference.source === Track.Source.Camera ? (
                       <>
                         {isEncrypted && <LockLockedIcon style={{ marginRight: '0.25rem' }} />}
@@ -692,7 +692,12 @@ export const ParticipantItem: (
                     ) : (
                       <>
                         <ScreenShareIcon style={{ marginRight: '0.25rem' }} />
-                        <ParticipantName>&apos;s screen</ParticipantName>
+                        <ParticipantName  style={{
+                          maxWidth: 'calc(100% - 1.5rem)',
+                          overflow: 'clip',
+                          textWrap: 'nowrap',
+                          textOverflow: 'ellipsis',
+                        }}>&apos;s screen</ParticipantName>
                       </>
                     )}
                   </div>
