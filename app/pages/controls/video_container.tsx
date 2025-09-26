@@ -622,7 +622,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     useLayoutEffect(() => {
       if (!settings || !space || space.state !== ConnectionState.Connected) return;
       if (!freshPermission) return;
-      console.warn('freshPermission', freshPermission);
       // 发送一次fetchSettings请求，确保settings是最新的
       fetchSettings();
     }, [settings, space, freshPermission]);
@@ -706,6 +705,10 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           }
           return newState;
         });
+
+        
+
+
       }
     }, [space, settings]);
 

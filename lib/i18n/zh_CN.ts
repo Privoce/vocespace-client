@@ -389,6 +389,8 @@ export default {
         busy_desc: '忙碌中，用户的视频将进行模糊处理, 音频将静音',
         offline: '离开',
         offline_desc: '离开, 用户的视频和音频都将关闭',
+        working: '工作中',
+        working_desc: '依赖待办自动生成当前工作状态',
         define: {
           title: '自定义状态',
           name: '状态名称',

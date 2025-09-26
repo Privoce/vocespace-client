@@ -272,7 +272,7 @@ function VideoConferenceComponent(props: {
   const e2eeEnabled = !!(e2eePassphrase && worker);
   const keyProvider = new ExternalE2EEKeyProvider();
   const [e2eeSetupComplete, setE2eeSetupComplete] = React.useState(false);
-
+  const [roomState, setRoomState] = useRecoilState(roomStatusState);
   const [permissionOpened, setPermissionOpened] = useState(false);
   const [permissionModalVisible, setPermissionModalVisible] = useState(false);
   const [permissionRequested, setPermissionRequested] = useState(false);
@@ -373,6 +373,7 @@ function VideoConferenceComponent(props: {
 
   const router = useRouter();
   const handleOnLeave = React.useCallback(async () => {
+    setRoomState([]);
     socket.emit('mouse_remove', {
       space: room.name,
       senderName: room.localParticipant.name || room.localParticipant.identity,

@@ -105,7 +105,7 @@ export const ParticipantItem: (
       socket.on(
         'reload_virtual_response',
         (msg: { identity: string; reloading: boolean; roomId: string }) => {
-          console.log('reload_virtual_response', msg);
+          
           if (space.name == msg.roomId) {
             if (msg.identity != localParticipant.identity) {
               setRemoteMask(msg.reloading);
@@ -621,7 +621,6 @@ export const ParticipantItem: (
         participantName: trackReference.participant.name,
         auth: currentParticipant.auth,
       };
-      console.warn(targetParticipant);
       if (appKey === 'timer') {
         const castedTimer = castTimer(currentParticipant.appDatas.timer);
         if (castedTimer) {

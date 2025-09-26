@@ -78,9 +78,19 @@ export function useStatusInfo({
         item.title = t(UserStatus.Leisure);
         item.icon = <SvgResource type={'leisure_dot'} svgSize={14}></SvgResource>;
         break;
+      case UserStatus.Working:
+        item.title = t(UserStatus.Working);
+        item.icon = <SvgResource type={'working_dot'} svgSize={14}></SvgResource>;
+        break;
       default:
-        item.title = settings.status?.find((s) => s.id === status)?.title || UserStatus.Online;
-        item.icon = undefined;
+        let targetState = settings.status?.find((s) => s.id === status)?.title;
+        if (!targetState) {
+          item.title = t(UserStatus.Online);
+        } else {
+          item.title = targetState;
+          item.icon = undefined;
+        }
+
         break;
     }
 
@@ -96,7 +106,7 @@ export function useStatusInfo({
         </Tooltip>
       ),
     };
-  }, [settings.participants, trackReference.participant.identity]);
+  }, [settings.participants, trackReference.participant.identity, t]);
 
   const setStatusLabel = (name?: string): String => {
     switch (uState.status) {

@@ -22,6 +22,7 @@ export type SvgType =
   | 'leisure_dot'
   | 'busy_dot'
   | 'offline_dot'
+  | 'working_dot'
   | 'model'
   | 'bg'
   | 'check'
@@ -246,7 +247,7 @@ export function SvgResource({ type, svgSize = 24, color = '#ffffff' }: SvgResour
           version="1.1"
           xmlns="http://www.w3.org/2000/svg"
           p-id="8078"
-           width={svgSize}
+          width={svgSize}
           height={svgSize}
         >
           <path
@@ -1204,6 +1205,8 @@ export function SvgResource({ type, svgSize = 24, color = '#ffffff' }: SvgResour
           ></path>
         </svg>
       );
+    case 'working_dot':
+      return <span style={{margin: 0, padding: 0}}>🖥️</span>;
   }
 }
 

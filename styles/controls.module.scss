@@ -172,6 +172,9 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+    overflow: hidden;
+    text-wrap: nowrap;
+    text-overflow: clip;
   }
   span {
     margin-left: 8px;
@@ -418,7 +421,7 @@
   justify-content: flex-start;
   border-radius: 0px;
   margin: 0 4px;
-  width: max-content;
+  width: 14px;
   box-sizing: border-box;
   overflow: hidden;
   text-overflow: clip;

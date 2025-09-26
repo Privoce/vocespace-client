@@ -126,5 +126,12 @@ export const statusDefaultList = (t: Trans): StatusItem[] => {
       value: UserStatus.Offline,
       isDefine: false,
     },
+    {
+      title: t('settings.general.status.working'),
+      desc: t('settings.general.status.working_desc'),
+      value: UserStatus.Working,
+      icon: 'working_dot',
+      isDefine: false,
+    },
   ];
 };

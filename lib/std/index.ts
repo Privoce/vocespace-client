@@ -52,6 +52,7 @@ export enum UserStatus {
   Leisure = 'settings.general.status.leisure',
   Busy = 'settings.general.status.busy',
   Offline = 'settings.general.status.offline',
+  Working = 'settings.general.status.working',
 }
 
 export function is_web(): boolean {

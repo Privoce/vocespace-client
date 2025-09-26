@@ -399,6 +399,8 @@ export default {
         busy_desc: "Busy, user's video will be blurred, audio will be muted",
         offline: 'Away',
         offline_desc: "Away, user's video and audio will be turned off",
+        working: 'Working',
+        working_desc: 'Dependency todo auto generates current work status',
         define: {
           title: 'Custom state',
           name: 'State name',
