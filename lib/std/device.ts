@@ -216,14 +216,10 @@ export function useVideoBlur({
     return count_video_blur(throttledVideoBlur, debouncedDimensions);
   }, [throttledVideoBlur, debouncedDimensions]);
 
-  const handleSetVideoBlur = useCallback((value: number) => {
-    setVideoBlur(value);
-  }, []);
-
   return {
     blurValue,
     dimensions: debouncedDimensions,
-    setVideoBlur: handleSetVideoBlur,
+    setVideoBlur,
   };
 }
 

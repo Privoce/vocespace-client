@@ -21,7 +21,7 @@ import {
   userState,
   virtualMaskState,
 } from '@/app/[spaceName]/PageClientImpl';
-import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { isMobile as is_moblie, UserStatus } from '@/lib/std';
 import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';
 import { ChatToggle } from './toggles/chat_toggle';
@@ -32,6 +32,7 @@ import { AppDrawer } from '../apps/app_drawer';
 import { ParticipantManage } from '../participant/manage';
 import { api } from '@/lib/api';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
+import equal from 'fast-deep-equal';
 
 /** @public */
 export type ControlBarControls = {
@@ -240,11 +241,15 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           messageApi.error(t('msg.error.user.username.change'));
         }
         // 更新其他设置 ------------------------------------------------
-        await updateSettings(settingsRef.current.state);
-        // 通知socket，进行状态的更新 -----------------------------------
-        socket.emit('update_user_status', {
-          space: space.name,
-        } as WsBase);
+        // await updateSettings(settingsRef.current.state);
+        if (!equal(getState(uState), settingsRef.current.state)) {
+          await updateSettings(settingsRef.current.state);
+          // 通知socket，进行状态的更新 -----------------------------------
+          console.warn(equal(getState(uState), settingsRef.current.state));
+          socket.emit('update_user_status', {
+            space: space.name,
+          } as WsBase);
+        }
         socket.emit('reload_virtual', {
           identity: space.localParticipant.identity,
           roomId: space.name,

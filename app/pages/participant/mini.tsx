@@ -285,7 +285,10 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
             >
               <ParticipantPlaceholder />
             </div>
-            <div className="lk-participant-metadata" style={{ zIndex: 1000, width: "50%", maxWidth: "300px" }}>
+            <div
+              className="lk-participant-metadata"
+              style={{ zIndex: 1000, width: '50%', maxWidth: '300px' }}
+            >
               <StatusInfo
                 disabled={
                   trackReference.participant.identity != localParticipant.identity ||

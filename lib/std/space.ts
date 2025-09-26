@@ -334,3 +334,31 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
  * key in localStorage
  */
 export const PARTICIPANT_SETTINGS_KEY = 'vocespace_participant_settings';
+
+export interface SettingState {
+  volume: number;
+  blur: number;
+  screenBlur: number;
+  virtual: {
+    enabled: boolean;
+    role: ModelRole;
+    bg: ModelBg;
+  };
+  openShareAudio: boolean;
+  openPromptSound: boolean;
+}
+
+export const getState = (uState: ParticipantSettings): SettingState => {
+  return {
+    volume: uState.volume,
+    blur: uState.blur,
+    screenBlur: uState.screenBlur,
+    virtual: {
+      enabled: uState.virtual.enabled,
+      role: uState.virtual.role,
+      bg: uState.virtual.bg,
+    },
+    openShareAudio: uState.openShareAudio,
+    openPromptSound: uState.openPromptSound,
+  };
+};

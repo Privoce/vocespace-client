@@ -871,7 +871,7 @@ class SpaceManager {
       if (!spaceInfo.status) {
         spaceInfo.status = [status];
       } else {
-        const isExist = spaceInfo.status.some((s) => s.name === status.name);
+        const isExist = spaceInfo.status.some((s) => s.title === status.title);
         if (isExist) {
           throw new Error('Status already exists');
         } else {

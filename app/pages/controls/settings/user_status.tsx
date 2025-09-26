@@ -9,6 +9,7 @@ import styles from '@/styles/controls.module.scss';
 import { Button, Input, Radio, Slider } from 'antd';
 import { api } from '@/lib/api';
 import { DefineUserStatusResponse } from '@/lib/api/space';
+import { WsBase } from '@/lib/std/device';
 
 export interface BuildUserStatusProps {
   messageApi: MessageInstance;
@@ -66,7 +67,10 @@ export function BuildUserStatus({ messageApi, space, localParticipant }: BuildUs
         content: t('settings.general.status.define.success'),
       });
       // 服务器已经保存了状态，使用socket通知所有房间里的人
-      socket.emit('new_user_status', { status: data.status, room: data.spaceName });
+      // socket.emit('new_user_status', { status: data.status, room: data.spaceName });
+      socket.emit('update_user_status', {
+        space: data.spaceName,
+      } as WsBase);
       restoreAll();
     } catch (e) {
       messageApi.error({

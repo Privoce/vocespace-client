@@ -19,7 +19,7 @@ import { RecordData, RecordResponse, useRecordingEnv } from '@/lib/std/recording
 import { ulid } from 'ulid';
 import { ReloadOutlined } from '@ant-design/icons';
 import { AppSettings } from './app';
-import { SpaceInfo } from '@/lib/std/space';
+import { SettingState, SpaceInfo } from '@/lib/std/space';
 
 export interface SettingsProps {
   username: string;
@@ -40,18 +40,7 @@ export interface SettingsExports {
   removeVideo: () => void;
   startVideo: () => Promise<void>;
   setAppendStatus: (append: boolean) => void;
-  state: {
-    volume: number;
-    blur: number;
-    screenBlur: number;
-    virtual: {
-      enabled: boolean;
-      role: ModelRole;
-      bg: ModelBg;
-    };
-    openShareAudio: boolean;
-    openPromptSound: boolean;
-  };
+  state: SettingState;
 }
 
 export type TabKey =
@@ -117,16 +106,16 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
       }
     };
 
-    useEffect(() => {
-      setVolume(uState.volume);
-      setVideoBlur(uState.blur);
-      setScreenBlur(uState.screenBlur);
-      setVirtualEnabled(uState.virtual.enabled);
-      setModelRole(uState.virtual.role);
-      setModelBg(uState.virtual.bg);
-      setOpenShareAudio(uState.openShareAudio);
-      setOpenPromptSound(uState.openPromptSound);
-    }, [uState]);
+    // useEffect(() => {
+    //   setVolume(uState.volume);
+    //   setVideoBlur(uState.blur);
+    //   setScreenBlur(uState.screenBlur);
+    //   setVirtualEnabled(uState.virtual.enabled);
+    //   setModelRole(uState.virtual.role);
+    //   setModelBg(uState.virtual.bg);
+    //   setOpenShareAudio(uState.openShareAudio);
+    //   setOpenPromptSound(uState.openPromptSound);
+    // }, [uState]);
 
     const items: TabsProps['items'] = [
       {

@@ -86,6 +86,7 @@ export function useControlRKeyMenu({
             screenBlur: blurScreen,
           });
         }
+        console.warn("handle self");
         socket.emit('update_user_status', {
           space: space.name,
         } as WsBase);
@@ -195,7 +196,7 @@ export function useControlRKeyMenu({
                     }}
                     onChangeComplete={(e) => {
                       setVolume(e);
-                      handleAdjustment('control.volume');
+                      handleAdjustment('control.volume', true);
                     }}
                   ></Slider>
                 </div>
@@ -229,7 +230,7 @@ export function useControlRKeyMenu({
                     }}
                     onChangeComplete={(e) => {
                       setBlurVideo(e);
-                      handleAdjustment('control.blur_video');
+                      handleAdjustment('control.blur_video', true);
                     }}
                   ></Slider>
                 </div>
@@ -263,7 +264,7 @@ export function useControlRKeyMenu({
                     }}
                     onChangeComplete={(e) => {
                       setBlurScreen(e);
-                      handleAdjustment('control.blur_screen');
+                      handleAdjustment('control.blur_screen', true);
                     }}
                   ></Slider>
                 </div>

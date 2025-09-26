@@ -707,7 +707,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           return newState;
         });
       }
-    }, [space, settings, uRoomStatusState]);
+    }, [space, settings]);
 
     const [widgetState, setWidgetState] = React.useState<WidgetState>({
       showChat: false,

@@ -189,18 +189,20 @@ export const ParticipantItem: (
       initialBlur: 0.0,
     });
     const [loading, setLoading] = React.useState(true);
+    const currentParticipant: ParticipantSettings | undefined = useMemo(() => {
+      return settings.participants[trackReference.participant.identity];
+    }, [settings.participants, trackReference.participant.identity]);
+
     useEffect(() => {
       if (settings.participants && Object.keys(settings.participants).length > 0) {
         if (trackReference.source === Track.Source.Camera) {
-          setVideoBlur(settings.participants[trackReference.participant.identity]?.blur ?? 0.0);
+          setVideoBlur(currentParticipant?.blur ?? 0.0);
         } else {
-          setVideoBlur(
-            settings.participants[trackReference.participant.identity]?.screenBlur ?? 0.0,
-          );
+          setVideoBlur(currentParticipant?.screenBlur ?? 0.0);
         }
         setLoading(false);
       }
-    }, [settings.participants, trackReference]);
+    }, [currentParticipant]);
 
     const handleSubscribe = React.useCallback(
       (subscribed: boolean) => {
@@ -222,10 +224,6 @@ export const ParticipantItem: (
         ? `none`
         : `blur(${blurValue}px)`;
     }, [settings.participants, trackReference.participant.identity, blurValue]);
-
-    const currentParticipant: ParticipantSettings | undefined = useMemo(() => {
-      return settings.participants[trackReference.participant.identity];
-    }, [settings.participants, trackReference.participant.identity]);
 
     const deviceTrack = React.useMemo(() => {
       if (isTrackReference(trackReference) && !loading) {
