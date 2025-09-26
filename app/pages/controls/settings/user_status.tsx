@@ -49,7 +49,6 @@ export function BuildUserStatus({ messageApi, space, localParticipant }: BuildUs
           id: localParticipant.identity,
         },
         title: name,
-
         volume,
         blur: videoBlur,
         screenBlur,
