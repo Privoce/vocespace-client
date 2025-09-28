@@ -66,6 +66,7 @@ import { api } from '@/lib/api';
 import { SingleFlotLayout } from '../apps/single_flot';
 import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
 import { VocespaceConfig } from '@/lib/std/conf';
+import equal from 'fast-deep-equal';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -698,19 +699,12 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       }
       // 同步settings中的房间的状态到uRoomStatusState中 ----------------------------------------
       if (settings.status && settings.status.length > 0) {
-        setURoomStatusState((prev) => {
-          const newState = [...prev];
-          if (prev !== settings!.status!) {
-            return settings!.status!;
-          }
-          return newState;
-        });
-
-        
-
-
+        // 如果uRoomStatusState和settings.status不相等才进行更新
+        if (!equal(uRoomStatusState, settings.status)) {
+          setURoomStatusState(settings.status);
+        }
       }
-    }, [space, settings]);
+    }, [space, settings, uRoomStatusState]);
 
     const [widgetState, setWidgetState] = React.useState<WidgetState>({
       showChat: false,

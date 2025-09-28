@@ -27,7 +27,7 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { PreJoin } from '@/app/pages/pre_join/pre_join';
 import { atom, useRecoilState } from 'recoil';
-import { UserDefineStatus } from '@/lib/std';
+import { DEFAULT_USER_DEFINE_STATUS, UserDefineStatus } from '@/lib/std';
 import io from 'socket.io-client';
 import { ChatMsgItem } from '@/lib/std/chat';
 import {
@@ -68,7 +68,7 @@ export const userState = atom({
 
 export const roomStatusState = atom({
   key: 'roomStatusState',
-  default: [] as UserDefineStatus[],
+  default: DEFAULT_USER_DEFINE_STATUS as UserDefineStatus[],
 });
 
 export const licenseState = atom({

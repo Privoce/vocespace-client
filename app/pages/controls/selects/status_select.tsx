@@ -1,7 +1,7 @@
 import { Select, SelectProps } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { Trans, useI18n } from '@/lib/i18n/i18n';
-import { UserStatus } from '@/lib/std';
+import { UserDefineStatus, UserStatus } from '@/lib/std';
 import { useRecoilState } from 'recoil';
 import { roomStatusState, userState } from '@/app/[spaceName]/PageClientImpl';
 import { SvgResource, SvgType } from '@/app/resources/svg';
@@ -12,11 +12,17 @@ export interface StatusItem extends BaseOptionType {
   title: string;
   value: string;
   isDefine: boolean;
+  desc?: string;
 }
 
 /**
  * ## 状态选择组件
  * 用于用户需要进行状态选择时使用。
+ * ### 注意
+ * 有一个特殊的状态"settings.general.status.working"，该状态表示用户正在进行某项任务(依赖TODO组件)，
+ * 当用户的任务有更新时，系统会自动将用户的状态修改为"settings.general.status.working"。
+ * 这个状态一开始创建出来时由系统管理，但只要有人使用了TODO组件，那么这个状态就会变成用户自定义的状态，此时
+ * isDefine会变成true，但status的id不变，所以在StatusSelect组件中进行联合了isDefine和value来判断是否为用户自定义状态。
  */
 export function StatusSelect({
   style,
@@ -39,18 +45,7 @@ export function StatusSelect({
   }, [state.status]);
 
   const items = useMemo(() => {
-    const list = statusDefaultList(t);
-    if (uRoomStatusState.length > 0) {
-      uRoomStatusState.forEach((status) => {
-        list.push({
-          title: status.title,
-          value: status.id,
-          isDefine: true,
-        });
-      });
-    }
-
-    return list;
+    return getStatusItems(t, uRoomStatusState);
   }, [uRoomStatusState, t]);
 
   const selectActive = (active: string) => {
@@ -126,12 +121,36 @@ export const statusDefaultList = (t: Trans): StatusItem[] => {
       value: UserStatus.Offline,
       isDefine: false,
     },
-    {
-      title: t('settings.general.status.working'),
-      desc: t('settings.general.status.working_desc'),
-      value: UserStatus.Working,
-      icon: 'working_dot',
-      isDefine: false,
-    },
   ];
+};
+/**
+ * ## 为StatusSelect构建状态列表
+ * @param t i18n翻译函数 (`const {t} = useI18n();`)
+ * @param uRoomStatusState 全局用户自定义状态列表
+ * @returns StatusItem[]
+ */
+export const getStatusItems = (t: Trans, uRoomStatusState: UserDefineStatus[]): StatusItem[] => {
+  const list = statusDefaultList(t);
+  if (uRoomStatusState.length > 0) {
+    uRoomStatusState.forEach((status) => {
+      if (status.id === UserStatus.Working && status.creator.id === 'system') {
+        // 系统创建的"settings.general.status.working"状态
+        list.push({
+          title: t(status.title),
+          value: status.id,
+          isDefine: false,
+          desc: t('settings.general.status.working_desc'),
+          icon: 'working_dot',
+        });
+      } else {
+        list.push({
+          title: status.title,
+          value: status.id,
+          isDefine: status.creator.id !== 'system',
+        });
+      }
+    });
+  }
+
+  return list;
 };

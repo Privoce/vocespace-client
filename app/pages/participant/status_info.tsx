@@ -5,7 +5,7 @@ import styles from '@/styles/controls.module.scss';
 import { SvgResource } from '@/app/resources/svg';
 import { useRecoilState } from 'recoil';
 import { roomStatusState, userState } from '@/app/[spaceName]/PageClientImpl';
-import { statusDefaultList } from '../controls/selects/status_select';
+import { getStatusItems, statusDefaultList } from '../controls/selects/status_select';
 import { Trans } from '@/lib/i18n/i18n';
 import { UserDefineStatus, UserStatus } from '@/lib/std';
 import { SpaceInfo } from '@/lib/std/space';
@@ -128,16 +128,7 @@ export function useStatusInfo({
     );
   }, [uRoomStatusState, settings.participants, trackReference]);
   const statusMenu: MenuProps['items'] = useMemo(() => {
-    const list = statusDefaultList(t);
-    if (uRoomStatusState.length > 0) {
-      uRoomStatusState.forEach((item) => {
-        list.push({
-          title: item.title,
-          value: item.id,
-          isDefine: true,
-        });
-      });
-    }
+    const list = getStatusItems(t, uRoomStatusState);
 
     let items = list.map((item) => ({
       key: item.value,

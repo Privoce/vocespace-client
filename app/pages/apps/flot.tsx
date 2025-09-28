@@ -166,21 +166,13 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
     return spaceInfo.participants[localParticipant.identity]?.appDatas || {};
   }, [spaceInfo, localParticipant]);
 
-  const selfAuth = useMemo(() => {
-    if (spaceInfo.participants[localParticipant.identity]) {
-      return spaceInfo.participants[localParticipant.identity].auth;
-    }
-    return 'read';
-  }, [spaceInfo.participants]);
+  // const selfAuth = useMemo(() => {
+  //   if (spaceInfo.participants[localParticipant.identity]) {
+  //     return spaceInfo.participants[localParticipant.identity].auth;
+  //   }
+  //   return 'read';
+  // }, [spaceInfo.participants]);
 
-  // const toggleCollapse = (key: 'timer' | 'countdown' | 'todo') => {
-  //   setActiveKeys((prev) => {
-  //     if (prev.includes(key)) {
-  //       return prev.filter((k) => k !== key);
-  //     }
-  //     return [...prev, key];
-  //   });
-  // };
 
   const upload = async (key: AppKey, data: SpaceTimer | SpaceCountdown | SpaceTodo) => {
     let participantId = localParticipant.identity;

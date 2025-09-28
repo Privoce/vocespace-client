@@ -17,6 +17,14 @@ export interface Size {
   width: string;
 }
 
+export enum UserStatus {
+  Online = 'settings.general.status.online',
+  Leisure = 'settings.general.status.leisure',
+  Busy = 'settings.general.status.busy',
+  Offline = 'settings.general.status.offline',
+  Working = 'settings.general.status.working',
+}
+
 export interface SizeNum {
   height: number;
   width: number;
@@ -45,15 +53,26 @@ export interface UserDefineStatus {
   screenBlur: number;
 }
 
-// export type UserStatus = 'success' | 'processing' | 'default' | 'error' | 'warning';
-
-export enum UserStatus {
-  Online = 'settings.general.status.online',
-  Leisure = 'settings.general.status.leisure',
-  Busy = 'settings.general.status.busy',
-  Offline = 'settings.general.status.offline',
-  Working = 'settings.general.status.working',
-}
+export const DEFAULT_USER_DEFINE_STATUS: UserDefineStatus[] = [
+  {
+    id: UserStatus.Working,
+    creator: {
+      name: 'system',
+      id: 'system',
+    },
+    title: 'settings.general.status.working',
+    volume: 100,
+    blur: 0,
+    screenBlur: 0,
+    // {
+    //   title: t('settings.general.status.working'),
+    //   desc: t('settings.general.status.working_desc'),
+    //   value: UserStatus.Working,
+    //   icon: 'working_dot',
+    //   isDefine: false,
+    // },
+  }
+]
 
 export function is_web(): boolean {
   return typeof window !== 'undefined';

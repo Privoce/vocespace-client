@@ -50,7 +50,6 @@ export function AppTodo({
   const { localParticipant } = useLocalParticipant();
   const toggleTodo = async (id: string) => {
     let data = appData.map((item) => {
-      // return item.id === id ? { ...item, done: Date.now() } : item;
       if (item.id === id) {
         if (!item.done) {
           return { ...item, done: Date.now() };
