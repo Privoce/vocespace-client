@@ -156,7 +156,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           name: space.localParticipant.name || space.localParticipant.identity,
           startAt: new Date().getTime(),
         });
-        console.warn(uState);
+
         const roomName = `${space.localParticipant.name}'s room`;
 
         // 为新加入的参与者创建一个自己的私人房间
@@ -699,6 +699,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       }
       // 同步settings中的房间的状态到uRoomStatusState中 ----------------------------------------
       if (settings.status && settings.status.length > 0) {
+        console.warn('settings.status', settings.status);
         // 如果uRoomStatusState和settings.status不相等才进行更新
         if (!equal(uRoomStatusState, settings.status)) {
           setURoomStatusState(settings.status);

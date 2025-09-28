@@ -460,12 +460,12 @@ lk load-test \
 - [x] todo修改导出
   - [x] 数据结构增加done记录完成的任务记录
 - [x] Collapse Header增加背景色，hr标签
-- [ ] 新状态
+- [x] 新状态
   - [x] 状态混合，默认在线，用户可自定义新状态
   - [x] 原始状态struct去除desc, icon
   - [x] 状态标签
   - [x] 修复重复更新bug
-  - [ ] todo list中增加记录自动切换todo为状态
+  - [x] todo list中增加记录自动切换todo为状态
 - [x] 更多 -> 应用 (到底是否改成类似Mac的浮窗，感觉视觉重复)
 - [ ] Docker测试
 - [ ] 更新部署文档的配置

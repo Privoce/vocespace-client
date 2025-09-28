@@ -18,6 +18,14 @@ export interface StatusInfoProps {
   children: React.ReactNode;
 }
 
+/**
+ * ## 用户状态信息组件
+ * 用于显示用户的状态信息，并提供一个下拉菜单来选择和更改状态。
+ * - 如果disabled为true，则禁用下拉菜单。
+ * - items是下拉菜单的选项列表。
+ * - children是触发下拉菜单的元素。
+ * 通常这个组件会使用在tile或mini(title)中，来显示用户的状态信息。
+ */
 export function StatusInfo({ disabled = false, items, children }: StatusInfoProps) {
   return (
     <Dropdown
@@ -41,7 +49,10 @@ export interface UseStatusInfoProps {
   settings: SpaceInfo;
   trackReference: TrackReferenceOrPlaceholder;
 }
-
+/**
+ * ## 用户状态信息钩子
+ * 用于处理用户状态信息的显示和菜单项生成。
+ */
 export function useStatusInfo({
   toRenameSettings,
   username,
@@ -61,7 +72,7 @@ export function useStatusInfo({
       title: status || UserStatus.Online,
       icon: <SvgResource type={'online_dot'} svgSize={14}></SvgResource>,
     };
-    console.warn('status', settings.participants[trackReference.participant.identity]?.status);
+   
     switch (status) {
       case UserStatus.Online:
         item.title = t(UserStatus.Online);
@@ -79,7 +90,12 @@ export function useStatusInfo({
         item.icon = <SvgResource type={'leisure_dot'} svgSize={14}></SvgResource>;
         break;
       case UserStatus.Working:
-        item.title = t(UserStatus.Working);
+        let targetWorkStatus = settings.status?.find((s) => s.id === UserStatus.Working);
+        if (targetWorkStatus && targetWorkStatus.creator.id !== 'system') {
+          item.title = targetWorkStatus.title;
+        } else {
+          item.title = t(UserStatus.Working);
+        }
         item.icon = <SvgResource type={'working_dot'} svgSize={14}></SvgResource>;
         break;
       default:
@@ -106,7 +122,7 @@ export function useStatusInfo({
         </Tooltip>
       ),
     };
-  }, [settings.participants, trackReference.participant.identity, t]);
+  }, [settings, trackReference.participant.identity, t]);
 
   const setStatusLabel = (name?: string): String => {
     switch (uState.status) {
@@ -128,7 +144,7 @@ export function useStatusInfo({
     );
   }, [uRoomStatusState, settings.participants, trackReference]);
   const statusMenu: MenuProps['items'] = useMemo(() => {
-    const list = getStatusItems(t, uRoomStatusState);
+    const list = getStatusItems(t, uRoomStatusState, trackReference.participant.identity);
 
     let items = list.map((item) => ({
       key: item.value,
@@ -164,7 +180,7 @@ export function useStatusInfo({
     });
 
     return items;
-  }, [uRoomStatusState, t]);
+  }, [uRoomStatusState, t, trackReference.participant.identity]);
 
   const items: MenuProps['items'] = useMemo(() => {
     return [
@@ -215,7 +231,6 @@ export function useStatusInfo({
   return {
     items,
     setStatusLabel,
-
     userStatusDisply,
     defineStatus,
   };

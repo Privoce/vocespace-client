@@ -1,5 +1,5 @@
 import dayjs, { Dayjs } from 'dayjs';
-import { UserDefineStatus, UserStatus } from '.';
+import { DEFAULT_USER_DEFINE_STATUS, UserDefineStatus, UserStatus } from '.';
 import { ModelBg, ModelRole } from './virtual';
 
 /**
@@ -306,6 +306,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
   startAt,
   children: [],
   apps: ['todo', 'countdown'],
+  status: DEFAULT_USER_DEFINE_STATUS
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {

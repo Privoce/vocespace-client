@@ -64,13 +64,6 @@ export const DEFAULT_USER_DEFINE_STATUS: UserDefineStatus[] = [
     volume: 100,
     blur: 0,
     screenBlur: 0,
-    // {
-    //   title: t('settings.general.status.working'),
-    //   desc: t('settings.general.status.working_desc'),
-    //   value: UserStatus.Working,
-    //   icon: 'working_dot',
-    //   isDefine: false,
-    // },
   }
 ]
 

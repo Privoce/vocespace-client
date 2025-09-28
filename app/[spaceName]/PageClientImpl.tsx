@@ -155,27 +155,27 @@ export function PageClientImpl(props: {
   const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
 
   // 从localStorage中获取用户设置 --------------------------------------------------------------------
-  useEffect(() => {
-    const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
-    if (storedSettingsStr) {
-      const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
-      if (storedSettings?.version !== '0.3.0') {
-        // 版本不匹配/不存在，直接删除
-        localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
-        return;
-      } else {
-        setUState(storedSettings);
-      }
-    } else {
-      // 没有则存到localStorage中
-      localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
-    }
+  // useEffect(() => {
+  //   const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
+  //   if (storedSettingsStr) {
+  //     const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
+  //     if (storedSettings?.version !== '0.3.0') {
+  //       // 版本不匹配/不存在，直接删除
+  //       localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
+  //       return;
+  //     } else {
+  //       setUState(storedSettings);
+  //     }
+  //   } else {
+  //     // 没有则存到localStorage中
+  //     localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
+  //   }
 
-    return () => {
-      // 在组件卸载时将用户设置存储到localStorage中，保证用户设置的持久化
-      localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
-    };
-  }, []);
+  //   return () => {
+  //     // 在组件卸载时将用户设置存储到localStorage中，保证用户设置的持久化
+  //     localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
+  //   };
+  // }, []);
 
   // 配置数据 ----------------------------------------------------------------------------------------
   const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
@@ -202,6 +202,21 @@ export function PageClientImpl(props: {
   useEffect(() => {
     const reloadRoom = localStorage.getItem('reload');
     if (reloadRoom) {
+      const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
+      if (storedSettingsStr) {
+        const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
+        if (storedSettings?.version !== '0.3.0') {
+          // 版本不匹配/不存在，直接删除
+          localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
+          return;
+        } else {
+          setUState(storedSettings);
+        }
+      } else {
+        // 没有则存到localStorage中
+        localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
+      }
+
       setIsReload(true);
       messageApi.loading(t('settings.general.conf.reloading'));
       localStorage.removeItem('reload');
@@ -219,6 +234,13 @@ export function PageClientImpl(props: {
         // router.push(`/${reloadRoom}`);
       }, 5000);
     }
+
+    return () => {
+      // 在组件卸载时将用户设置存储到localStorage中，保证用户设置的持久化
+      if (isReload) {
+        localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
+      }
+    };
   }, []);
 
   return (

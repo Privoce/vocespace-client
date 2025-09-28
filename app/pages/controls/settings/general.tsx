@@ -73,6 +73,7 @@ export function GeneralSettings({
         <StatusSelect
           style={{ width: 'calc(100% - 52px)' }}
           setUserStatus={setUserStatus}
+          localParticipant={localParticipant}
         ></StatusSelect>
         <Button
           type="primary"

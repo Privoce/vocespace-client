@@ -7,12 +7,20 @@ import { roomStatusState, userState } from '@/app/[spaceName]/PageClientImpl';
 import { SvgResource, SvgType } from '@/app/resources/svg';
 import styles from '@/styles/controls.module.scss';
 import { BaseOptionType } from 'antd/es/select';
+import { LocalParticipant } from 'livekit-client';
 
 export interface StatusItem extends BaseOptionType {
   title: string;
   value: string;
   isDefine: boolean;
   desc?: string;
+}
+
+export interface StatusSelectProps {
+  style?: React.CSSProperties;
+  className?: string;
+  setUserStatus?: (status: UserStatus | string) => Promise<void>;
+  localParticipant: LocalParticipant;
 }
 
 /**
@@ -28,11 +36,8 @@ export function StatusSelect({
   style,
   className,
   setUserStatus,
-}: {
-  style?: React.CSSProperties;
-  className?: string;
-  setUserStatus?: (status: UserStatus | string) => Promise<void>;
-}) {
+  localParticipant,
+}: StatusSelectProps) {
   const { t } = useI18n();
   const [state, setState] = useRecoilState(userState);
   const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
@@ -45,8 +50,8 @@ export function StatusSelect({
   }, [state.status]);
 
   const items = useMemo(() => {
-    return getStatusItems(t, uRoomStatusState);
-  }, [uRoomStatusState, t]);
+    return getStatusItems(t, uRoomStatusState, localParticipant.identity);
+  }, [uRoomStatusState, t, localParticipant.identity]);
 
   const selectActive = (active: string) => {
     setActive(active);
@@ -129,7 +134,11 @@ export const statusDefaultList = (t: Trans): StatusItem[] => {
  * @param uRoomStatusState 全局用户自定义状态列表
  * @returns StatusItem[]
  */
-export const getStatusItems = (t: Trans, uRoomStatusState: UserDefineStatus[]): StatusItem[] => {
+export const getStatusItems = (
+  t: Trans,
+  uRoomStatusState: UserDefineStatus[],
+  ownerId: string,
+): StatusItem[] => {
   const list = statusDefaultList(t);
   if (uRoomStatusState.length > 0) {
     uRoomStatusState.forEach((status) => {
@@ -142,11 +151,13 @@ export const getStatusItems = (t: Trans, uRoomStatusState: UserDefineStatus[]): 
           desc: t('settings.general.status.working_desc'),
           icon: 'working_dot',
         });
-      } else {
+      } else if (status.creator.id === 'system' || status.creator.id === ownerId) {
+        // 只有自己定义的状态才可见
         list.push({
           title: status.title,
           value: status.id,
           isDefine: status.creator.id !== 'system',
+          icon: status.id === UserStatus.Working ? 'working_dot' : undefined,
         });
       }
     });

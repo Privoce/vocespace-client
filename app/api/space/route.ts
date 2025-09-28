@@ -1,5 +1,5 @@
 // /app/api/space/route.ts
-import { isUndefinedString, UserDefineStatus } from '@/lib/std';
+import { isUndefinedString, UserDefineStatus, UserStatus } from '@/lib/std';
 import { NextRequest, NextResponse } from 'next/server';
 import Redis from 'ioredis';
 import { ChatMsgItem } from '@/lib/std/chat';
@@ -1103,7 +1103,35 @@ export async function POST(request: NextRequest) {
       } else if (ty === 'countdown') {
         spaceInfo.participants[participantId].appDatas.countdown = data as SpaceCountdown;
       } else {
+        // 更新todo
         spaceInfo.participants[participantId].appDatas.todo = data as SpaceTodo;
+        if ((data as SpaceTodo).items.length > 0) {
+          let currentTodo = (data as SpaceTodo).items.find((t) => {
+            // 需要找到第一个未完成的(done为undefined)
+            return !t.done;
+          });
+          
+          if (!currentTodo) {
+            // 如果没有，则取最后一个
+            currentTodo = (data as SpaceTodo).items[(data as SpaceTodo).items.length - 1];
+          }
+          // 当todo有更新时，我们需要将用户的状态修改为"settings.general.status.working"并修改空间的status的creator
+          spaceInfo.participants[participantId].status = UserStatus.Working;
+          if (spaceInfo.status) {
+            spaceInfo.status.map((s) => {
+              // 如果是系统创建的，则需要更改
+              if (s.creator.id === 'system' && s.title === UserStatus.Working) {
+                s.title = currentTodo.title;
+                s.creator.id = participantId;
+                s.creator.name = spaceInfo.participants[participantId].name;
+              }else if (s.creator.id === participantId) {
+                // 是当前用户创建，但我们需要更新
+                s.title = currentTodo.title;
+              }
+              return s;
+            });
+          }
+        }
       }
       const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
       return NextResponse.json({ success }, { status: 200 });
