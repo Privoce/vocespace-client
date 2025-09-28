@@ -1,5 +1,10 @@
 // /app/api/space/route.ts
-import { isUndefinedString, UserDefineStatus, UserStatus } from '@/lib/std';
+import {
+  DEFAULT_USER_DEFINE_STATUS,
+  isUndefinedString,
+  UserDefineStatus,
+  UserStatus,
+} from '@/lib/std';
 import { NextRequest, NextResponse } from 'next/server';
 import Redis from 'ioredis';
 import { ChatMsgItem } from '@/lib/std/chat';
@@ -1110,7 +1115,7 @@ export async function POST(request: NextRequest) {
             // 需要找到第一个未完成的(done为undefined)
             return !t.done;
           });
-          
+
           if (!currentTodo) {
             // 如果没有，则取最后一个
             currentTodo = (data as SpaceTodo).items[(data as SpaceTodo).items.length - 1];
@@ -1118,18 +1123,40 @@ export async function POST(request: NextRequest) {
           // 当todo有更新时，我们需要将用户的状态修改为"settings.general.status.working"并修改空间的status的creator
           spaceInfo.participants[participantId].status = UserStatus.Working;
           if (spaceInfo.status) {
-            spaceInfo.status.map((s) => {
-              // 如果是系统创建的，则需要更改
-              if (s.creator.id === 'system' && s.title === UserStatus.Working) {
-                s.title = currentTodo.title;
-                s.creator.id = participantId;
-                s.creator.name = spaceInfo.participants[participantId].name;
-              }else if (s.creator.id === participantId) {
-                // 是当前用户创建，但我们需要更新
-                s.title = currentTodo.title;
-              }
-              return s;
-            });
+            // 首先在房间状态中查找工作状态，如果没有则需要添加一条
+            let workingStatusIndex = spaceInfo.status.findIndex(
+              (s) =>
+                s.id === UserStatus.Working && [participantId, 'system'].includes(s.creator.id),
+            );
+            if (workingStatusIndex !== -1) {
+              // 直接替换
+              spaceInfo.status[workingStatusIndex] = {
+                ...spaceInfo.status[workingStatusIndex],
+                title: currentTodo.title,
+                creator: {
+                  id: participantId,
+                  name: spaceInfo.participants[participantId].name,
+                },
+              };
+            } else {
+              spaceInfo.status.push({
+                ...DEFAULT_USER_DEFINE_STATUS[0],
+                title: currentTodo.title,
+                creator: {
+                  id: participantId,
+                  name: spaceInfo.participants[participantId].name,
+                },
+              });
+            }
+          }else {
+            spaceInfo.status = [{
+              ...DEFAULT_USER_DEFINE_STATUS[0],
+              title: currentTodo.title,
+              creator: {
+                id: participantId,
+                name: spaceInfo.participants[participantId].name,
+              },
+            }];
           }
         }
       }

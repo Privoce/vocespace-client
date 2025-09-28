@@ -63,7 +63,7 @@ export function StatusSelect({
   const renderedItem: SelectProps<any, StatusItem>['optionRender'] = (option) => {
     return (
       <div className={styles.status_item}>
-        {!option.data.isDefine && <SvgResource type={option.data.icon} svgSize={14}></SvgResource>}
+        {option.data.icon && <SvgResource type={option.data.icon} svgSize={14}></SvgResource>}
         <span>{option.data.title}</span>
         <div>{option.data.desc}</div>
       </div>
@@ -75,7 +75,7 @@ export function StatusSelect({
 
     return (
       <div className={styles.status_item}>
-        {!item?.isDefine && <SvgResource type={item?.icon as SvgType} svgSize={14}></SvgResource>}
+        {item?.icon && <SvgResource type={item?.icon} svgSize={14}></SvgResource>}
         <span>{item?.title}</span>
       </div>
     );

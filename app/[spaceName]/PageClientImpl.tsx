@@ -68,7 +68,7 @@ export const userState = atom({
 
 export const roomStatusState = atom({
   key: 'roomStatusState',
-  default: DEFAULT_USER_DEFINE_STATUS as UserDefineStatus[],
+  default: [] as UserDefineStatus[],
 });
 
 export const licenseState = atom({

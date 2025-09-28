@@ -72,7 +72,7 @@ export function useStatusInfo({
       title: status || UserStatus.Online,
       icon: <SvgResource type={'online_dot'} svgSize={14}></SvgResource>,
     };
-   
+
     switch (status) {
       case UserStatus.Online:
         item.title = t(UserStatus.Online);
@@ -90,7 +90,11 @@ export function useStatusInfo({
         item.icon = <SvgResource type={'leisure_dot'} svgSize={14}></SvgResource>;
         break;
       case UserStatus.Working:
-        let targetWorkStatus = settings.status?.find((s) => s.id === UserStatus.Working);
+        let targetWorkStatus = settings.status?.find(
+          (s) =>
+            s.id === UserStatus.Working &&
+            [trackReference.participant.identity, 'system'].includes(s.creator.id),
+        );
         if (targetWorkStatus && targetWorkStatus.creator.id !== 'system') {
           item.title = targetWorkStatus.title;
         } else {
