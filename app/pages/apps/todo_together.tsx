@@ -4,7 +4,6 @@ import { Collapse, Progress, Empty, Card, List } from 'antd';
 import { AppTodo } from './todo_list';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useMemo } from 'react';
-import { UserOutlined } from '@ant-design/icons';
 import styles from '@/styles/apps.module.scss';
 
 export interface TodoTogetherProps {

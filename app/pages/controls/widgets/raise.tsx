@@ -2,14 +2,17 @@ import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { SvgResource } from '@/app/resources/svg';
 import { audio } from '@/lib/audio';
 import { useI18n } from '@/lib/i18n/i18n';
-import { WsSender } from '@/lib/std/device';
+import { WsSender, WsTo } from '@/lib/std/device';
+import { ParticipantSettings } from '@/lib/std/space';
 import { LayoutContext } from '@livekit/components-react';
 import { Button, Popover, Tooltip } from 'antd';
+import { Participant } from 'livekit-client';
 import { useMemo } from 'react';
 
 export interface RaiseHandProps {
   style?: React.CSSProperties;
   wsSender: WsSender;
+  setRaiseHand?: () => Promise<void>;
   contextUndefined?: boolean;
 }
 
@@ -19,9 +22,15 @@ export interface RaisePinProps {
   style?: React.CSSProperties;
 }
 
-export function RaiseHand({ style, wsSender, contextUndefined = true }: RaiseHandProps) {
+export function RaiseHand({
+  style,
+  wsSender,
+  setRaiseHand,
+  contextUndefined = true,
+}: RaiseHandProps) {
   const raisePin = async () => {
     socket.emit('raise', wsSender);
+    setRaiseHand && (await setRaiseHand());
     await audio.raise();
   };
 
@@ -66,10 +75,12 @@ export function RaisePin({
 
 export interface RaiseKeepProps {
   isKeeping: boolean;
-  setKeeping: (keeping: boolean) => void;
-  wsSender: WsSender;
+  setKeeping: (keeping: boolean) => Promise<void>;
+  wsTo: WsTo;
   style?: React.CSSProperties;
   auth: RaiseAuth;
+  participant: ParticipantSettings;
+  localParticipant: Participant;
 }
 
 /**
@@ -90,7 +101,7 @@ export type RaiseAuth = 'host' | 'read' | 'write';
 export function RaiseKeeper({
   isKeeping,
   setKeeping,
-  wsSender,
+  wsTo,
   auth,
   style = {
     width: 'fit-content',
@@ -99,8 +110,17 @@ export function RaiseKeeper({
     margin: '0 4px',
     borderRadius: 4,
   },
+  participant,
+  localParticipant,
 }: RaiseKeepProps) {
   const { t } = useI18n();
+
+  const reject = async () => {
+    await setKeeping(false);
+    socket.emit('raise_cancel', wsTo);
+  };
+
+  const accept = () => {};
 
   const btn = useMemo(() => {
     return (
@@ -110,17 +130,17 @@ export function RaiseKeeper({
           ...style,
           cursor: auth === 'read' ? 'not-allowed' : 'pointer',
         }}
-        onClick={() => {
+        onClick={async () => {
           if (isKeeping) {
-            setKeeping(false);
-            socket.emit('raise_cancel', wsSender);
+            await setKeeping(false);
+            socket.emit('raise_cancel', wsTo);
           }
         }}
       >
         <SvgResource svgSize={20} type="hand"></SvgResource>
       </button>
     );
-  }, [isKeeping, style, setKeeping, wsSender, auth]);
+  }, [isKeeping, style, setKeeping, wsTo, auth]);
 
   if (auth === 'read') {
     return btn;
@@ -137,7 +157,7 @@ export function RaiseKeeper({
     return (
       <Popover
         title={t('more.app.raise.handle.title')}
-        content={<RaiseHandler onAccept={() => {}} onReject={() => {}} />}
+        content={<RaiseHandler onAccept={() => {}} onReject={reject} />}
         placement="bottom"
       >
         {btn}
@@ -148,7 +168,6 @@ export function RaiseKeeper({
 
 export interface RaiseHandlerProps {
   onAccept?: () => void;
-
   onReject?: () => void;
 }
 
@@ -156,7 +175,7 @@ export function RaiseHandler({ onAccept, onReject }: RaiseHandlerProps) {
   const { t } = useI18n();
 
   return (
-    <div style={{ display: 'flex', gap: 8, justifyContent: "flex-end" }}>
+    <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
       {onAccept && (
         <Tooltip title={t('more.app.raise.handle.accept_desc')} placement="bottom">
           <Button color="primary" size="small" variant="solid" onClick={onAccept}>

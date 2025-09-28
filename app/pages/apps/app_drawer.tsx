@@ -1,4 +1,4 @@
-import { Button, Drawer, Tabs, TabsProps } from 'antd';
+import { Drawer, Tabs, TabsProps } from 'antd';
 import { DEFAULT_DRAWER_PROP, DrawerCloser, DrawerHeader } from '../controls/drawer_tools';
 import { useMemo, useState } from 'react';
 import { AppTimer } from './timer';
@@ -20,7 +20,6 @@ import {
 } from '@/lib/std/space';
 // import { AppHistory } from './history';
 import { useLocalParticipant } from '@livekit/components-react';
-import { useRecoilState } from 'recoil';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { api } from '@/lib/api';
 import { WsBase } from '@/lib/std/device';

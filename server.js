@@ -180,11 +180,11 @@ app.prepare().then(() => {
       socket.to(msg.socketId).emit('wave_response', msg);
     });
     socket.on('raise', (msg) => {
-      // 广播所有人包括自己
-      io.emit('raise_response', msg);
+      // 广播所有人除了自己
+      socket.broadcast.emit('raise_response', msg);
     });
     socket.on('raise_cancel', (msg) => {
-      io.emit('raise_cancel_response', msg);
+      socket.to(msg.socketId).emit('raise_cancel_response', msg);
     });
     // [socket: remove participant event] -------------------------------------------------------------------------------
     // - on: "remove_participant"

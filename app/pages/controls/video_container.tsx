@@ -54,6 +54,7 @@ import {
   WsControlParticipant,
   WsInviteDevice,
   WsParticipant,
+  WsSender,
   WsTo,
   WsWave,
 } from '@/lib/std/device';
@@ -67,6 +68,8 @@ import { SingleFlotLayout } from '../apps/single_flot';
 import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
 import { VocespaceConfig } from '@/lib/std/conf';
 import equal from 'fast-deep-equal';
+import { RaiseHandler } from './widgets/raise';
+import { audio } from '@/lib/audio';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -562,6 +565,20 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         space.disconnect(true);
       });
 
+      // raise hand socket event ----------------------------------------------
+      socket.on('raise_response', async (msg: WsSender) => {
+        if (msg.space === space.name) {
+          if (space.localParticipant.identity === settings.ownerId && msg.senderId !== space.localParticipant.identity) {
+            noteApi?.info({
+              message: `${msg.senderName} ${t('more.app.raise.receive')}`,
+              duration: 5,
+              actions: <RaiseHandler onAccept={() => {}} onReject={() => {}} />,
+            });
+          }
+          await audio.raise();
+        }
+      });
+
       return () => {
         socket.off('wave_response');
         socket.off('user_status_updated');
@@ -579,6 +596,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         socket.off('re_init_response');
         socket.off('connect');
         socket.off('reload_env_response');
+        socket.off('raise_response');
         space.off(RoomEvent.ParticipantConnected, onParticipantConnected);
         space.off(ParticipantEvent.TrackMuted, onTrackHandler);
         space.off(RoomEvent.ParticipantDisconnected, onParticipantDisConnected);

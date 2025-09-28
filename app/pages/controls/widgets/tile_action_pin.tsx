@@ -2,15 +2,20 @@ import { WsSender, WsTo, WsWave } from '@/lib/std/device';
 import { RaiseAuth, RaiseHand, RaiseKeeper } from './raise';
 import { WaveHand } from './wave';
 import { useMemo } from 'react';
+import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { Participant } from 'livekit-client';
 
 export interface TileActionCollectProps {
   style?: React.CSSProperties;
   contextUndefined?: boolean;
   wsWave: WsWave;
-  isSelf: boolean;
-  isHost: boolean;
-  isKeepRaise: boolean;
-  setIsKeepRaise: (keeping: boolean) => void;
+  setIsKeepRaise: (keeping: boolean) => Promise<void>;
+  participantId: string;
+  spaceInfo: SpaceInfo;
+  /**
+   * 本地参与者的信息
+   */
+  localParticipant: Participant;
 }
 
 export function TileActionCollect({
@@ -24,10 +29,10 @@ export function TileActionCollect({
     zIndex: 111,
   },
   contextUndefined,
-  isSelf,
-  isHost,
-  isKeepRaise,
+  spaceInfo,
   setIsKeepRaise,
+  participantId,
+  localParticipant,
   wsWave,
 }: TileActionCollectProps) {
   const wsSender = useMemo(() => {
@@ -37,6 +42,18 @@ export function TileActionCollect({
       senderId: wsWave.senderId,
     } as WsSender;
   }, [wsWave]);
+
+  const isSelf = useMemo(() => {
+    return participantId === localParticipant.identity;
+  }, [participantId, localParticipant]);
+
+  const isHost = useMemo(() => {
+    return spaceInfo.ownerId === localParticipant.identity;
+  }, [spaceInfo, localParticipant]);
+
+  const isKeepRaise = useMemo(() => {
+    return spaceInfo.participants[participantId]?.raiseHand ?? false;
+  }, [spaceInfo, participantId]);
 
   const auth: RaiseAuth = useMemo(() => {
     return isSelf ? 'write' : isHost ? 'host' : 'read';
@@ -48,9 +65,14 @@ export function TileActionCollect({
         <RaiseKeeper
           isKeeping={isKeepRaise}
           setKeeping={setIsKeepRaise}
-          wsSender={wsSender}
-          // disabled={!isSelf}
+          wsTo={{
+            ...wsSender,
+            receiverId: spaceInfo.ownerId,
+            socketId: spaceInfo.participants[spaceInfo.ownerId]?.socketId || '',
+          }}
           auth={auth}
+          participant={spaceInfo.participants[participantId]}
+          localParticipant={localParticipant}
         ></RaiseKeeper>
       )}
       <div
@@ -69,7 +91,14 @@ export function TileActionCollect({
         {' '}
         {isSelf ? (
           !isKeepRaise && (
-            <RaiseHand wsSender={wsSender} style={undefined} contextUndefined={contextUndefined} />
+            <RaiseHand
+              wsSender={wsSender}
+              style={undefined}
+              contextUndefined={contextUndefined}
+              setRaiseHand={async () => {
+                await setIsKeepRaise(true);
+              }}
+            />
           )
         ) : (
           <WaveHand wsWave={{ ...wsWave }} style={undefined} contextUndefined={contextUndefined} />

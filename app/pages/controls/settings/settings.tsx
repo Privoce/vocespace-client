@@ -1,5 +1,5 @@
-import { Button, Tabs, TabsProps, Tag, Tooltip } from 'antd';
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { Button, Tabs, TabsProps, Tag } from 'antd';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { MessageInstance } from 'antd/es/message/interface';
 import { ModelBg, ModelRole } from '@/lib/std/virtual';
 import { useI18n } from '@/lib/i18n/i18n';

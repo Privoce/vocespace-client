@@ -466,10 +466,10 @@ lk load-test \
   - [x] 状态标签
   - [x] 修复重复更新bug
   - [x] todo list中增加记录自动切换todo为状态
-  - [ ] 用户新增房间状态
+  - [x] 用户新增房间状态
 - [x] 更多 -> 应用 (到底是否改成类似Mac的浮窗，感觉视觉重复)
-- [ ] Docker测试
-- [ ] 更新部署文档的配置
+- [x] Docker测试
+- [x] 更新部署文档的配置
 - [x] 增加tooltip
   - [x] Send Greeting 打招呼
   - [x] Countdown 倒计时

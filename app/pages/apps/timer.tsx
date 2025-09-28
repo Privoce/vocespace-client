@@ -9,7 +9,7 @@ import { useMemo } from 'react';
 import { TimeRecords } from './time_records';
 import styles from '@/styles/apps.module.scss';
 import { CardSize } from 'antd/es/card/Card';
-import { AppAuth, AppKey, Timer as TimerData } from '@/lib/std/space';
+import { AppAuth, Timer as TimerData } from '@/lib/std/space';
 const { Timer } = Statistic;
 
 export interface AppTimerProps {

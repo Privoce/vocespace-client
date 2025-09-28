@@ -1,5 +1,5 @@
 import { isTrackReferencePlaceholder } from '@/app/pages/controls/video_container';
-import { MouseMove, useVideoBlur, WsMouseMove, WsSender, WsWave } from '@/lib/std/device';
+import { MouseMove, useVideoBlur, WsBase, WsMouseMove, WsSender, WsWave } from '@/lib/std/device';
 import {
   AudioTrack,
   ConnectionQualityIndicator,
@@ -98,14 +98,25 @@ export const ParticipantItem: (
     const [virtualMask, setVirtualMask] = useRecoilState(virtualMaskState);
     const [remoteMask, setRemoteMask] = React.useState(false);
     const [deleyMask, setDelayMask] = React.useState(virtualMask);
-    const [isKeepRaise, setIsKeepRaise] = useState<boolean>(false);
+
+    /**
+     * 设置举手状态
+     * @param raise
+     */
+    const setIsKeepRaise = async (raise: boolean) => {
+      await updateSettings({
+        raiseHand: raise,
+      });
+      socket.emit('update_user_status', {
+        space: space.name,
+      } as WsBase);
+    };
 
     useEffect(() => {
       // reload virtual socket event ----------------------------------------------
       socket.on(
         'reload_virtual_response',
         (msg: { identity: string; reloading: boolean; roomId: string }) => {
-          
           if (space.name == msg.roomId) {
             if (msg.identity != localParticipant.identity) {
               setRemoteMask(msg.reloading);
@@ -114,37 +125,15 @@ export const ParticipantItem: (
         },
       );
 
-      // raise hand socket event ----------------------------------------------
-      socket.on('raise_response', (msg: WsSender) => {
-        if (msg.space === space.name) {
-          if (msg.senderId === trackReference.participant.identity) {
-            console.warn('收到raise hand', msg);
-            setIsKeepRaise(true);
-            if (
-              localParticipant.identity === settings.ownerId &&
-              trackReference.participant.identity !== localParticipant.identity
-            ) {
-              // 主持人看到有人举手需要得到一个notion的提示
-              noteApi?.info({
-                message: `${msg.senderName} ${t('more.app.raise.receive')}`,
-                duration: 5,
-                actions: <RaiseHandler onAccept={() => {}} onReject={() => {}} />,
-              });
-            }
-          }
-        }
-      });
-
       // cancel raise hand socket event ----------------------------------------------
       socket.on('raise_cancel_response', (msg: WsSender) => {
         if (msg.space === space.name && msg.senderId === trackReference.participant.identity) {
-          setIsKeepRaise(false);
+          // setIsKeepRaise(false);
         }
       });
 
       return () => {
         socket.off('reload_virtual_response');
-        socket.off('raise_response');
         socket.off('raise_cancel_response');
       };
     }, [space, localParticipant.identity]);
@@ -669,7 +658,10 @@ export const ParticipantItem: (
             <div className="lk-participant-placeholder">
               <ParticipantPlaceholder />
             </div>
-            <div className="lk-participant-metadata" style={{ zIndex: 4, width: 'fit-content', maxWidth: '100px' }}>
+            <div
+              className="lk-participant-metadata"
+              style={{ zIndex: 4, width: 'fit-content', maxWidth: '100px' }}
+            >
               <StatusInfo
                 disabled={trackReference.participant.identity != localParticipant.identity}
                 items={items}
@@ -691,12 +683,16 @@ export const ParticipantItem: (
                     ) : (
                       <>
                         <ScreenShareIcon style={{ marginRight: '0.25rem' }} />
-                        <ParticipantName  style={{
-                          maxWidth: 'calc(100% - 1.5rem)',
-                          overflow: 'clip',
-                          textWrap: 'nowrap',
-                          textOverflow: 'ellipsis',
-                        }}>&apos;s screen</ParticipantName>
+                        <ParticipantName
+                          style={{
+                            maxWidth: 'calc(100% - 1.5rem)',
+                            overflow: 'clip',
+                            textWrap: 'nowrap',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          &apos;s screen
+                        </ParticipantName>
                       </>
                     )}
                   </div>
@@ -705,13 +701,15 @@ export const ParticipantItem: (
 
               {/* <ConnectionQualityIndicator className="lk-participant-metadata-item" /> */}
             </div>
-            <TileActionCollect
-              wsWave={wsWave}
-              isSelf={trackReference.participant.identity === localParticipant.identity}
-              isHost={settings.ownerId === localParticipant.identity}
-              isKeepRaise={isKeepRaise}
-              setIsKeepRaise={setIsKeepRaise}
-            />
+            {currentParticipant && (
+              <TileActionCollect
+                wsWave={wsWave}
+                spaceInfo={settings}
+                participantId={trackReference.participant.identity}
+                setIsKeepRaise={setIsKeepRaise}
+                localParticipant={localParticipant}
+              />
+            )}
             {trackReference.source !== Track.Source.ScreenShare && (
               <AppFlotIconCollect
                 showApp={showApp}

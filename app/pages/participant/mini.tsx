@@ -1,6 +1,5 @@
 import {
   AudioTrack,
-  ConnectionQualityIndicator,
   isTrackReference,
   LockLockedIcon,
   ParticipantName,
@@ -29,14 +28,11 @@ import {
   ParticipantSettings,
   SpaceInfo,
 } from '@/lib/std/space';
-import { useVideoBlur, WsBase, WsSender, WsTo, WsWave } from '@/lib/std/device';
-import { SvgResource, SvgType } from '@/app/resources/svg';
+import { useVideoBlur, WsSender, WsWave } from '@/lib/std/device';
 import { useRecoilState } from 'recoil';
 import { SingleAppDataState, socket } from '@/app/[spaceName]/PageClientImpl';
 import { UserStatus } from '@/lib/std';
-import { WaveHand } from '../controls/widgets/wave';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
-import { RaiseHand } from '../controls/widgets/raise';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { useI18n } from '@/lib/i18n/i18n';
 import { AppFlotIconCollect } from '../apps/app_pin';
@@ -75,7 +71,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
     const layoutContext = useMaybeLayoutContext();
     const autoManageSubscription = useFeatureContext()?.autoSubscription;
     const isEncrypted = useIsEncrypted(trackReference.participant);
-    const [isKeepRaise, setIsKeepRaise] = useState<boolean>(false);
+    // const [isKeepRaise, setIsKeepRaise] = useState<boolean>(false);
 
     const { blurValue, setVideoBlur } = useVideoBlur({
       videoRef,
@@ -86,13 +82,13 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       // raise hand socket event ----------------------------------------------
       socket.on('raise_response', (msg: WsSender) => {
         if (msg.space === space.name && msg.senderId === trackReference.participant.identity) {
-          setIsKeepRaise(true);
+          // setIsKeepRaise(true);
         }
       });
       // cancel raise hand socket event ----------------------------------------------
       socket.on('raise_cancel_response', (msg: WsSender) => {
         if (msg.space === space.name && msg.senderId === trackReference.participant.identity) {
-          setIsKeepRaise(false);
+          // setIsKeepRaise(false);
         }
       });
       return () => {
@@ -346,11 +342,14 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
 
             <TileActionCollect
               wsWave={buildWsWave()}
-              isSelf={trackReference.participant.identity === localParticipant.identity}
-              isHost={settings.ownerId === localParticipant.identity}
+              spaceInfo={settings}
+              participantId={trackReference.participant.identity}
+              localParticipant={localParticipant}
+              // isSelf={trackReference.participant.identity === localParticipant.identity}
+              // isHost={settings.ownerId === localParticipant.identity}
               contextUndefined={false}
-              isKeepRaise={isKeepRaise}
-              setIsKeepRaise={setIsKeepRaise}
+              // isKeepRaise={settings.participants[trackReference.participant.identity]?.raiseHand}
+              setIsKeepRaise={async (raise) => {}}
             />
 
             {trackReference.source !== Track.Source.ScreenShare && (
