@@ -485,6 +485,7 @@ lk load-test \
 - [x] 开关类的使用OFF/ON
 - [x] Recording组件i18n
 - [x] 首个加入者如果没有自己定义名字则使用admin
+- [x] 手机端底部control bar需要增加marginBottom
 ---
 
 - [ ] 少参与者，多观察者 (Egress 实时传输，站点构建)

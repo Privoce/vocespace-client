@@ -245,7 +245,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         if (!equal(getState(uState), settingsRef.current.state)) {
           await updateSettings(settingsRef.current.state);
           // 通知socket，进行状态的更新 -----------------------------------
-          console.warn(equal(getState(uState), settingsRef.current.state));
           socket.emit('update_user_status', {
             space: space.name,
           } as WsBase);
@@ -431,7 +430,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         {...htmlProps}
         className={styles.controls}
         style={{
-          marginBottom: isMobile ? '46px' : 'auto',
+          marginBottom: isMobile ? '62px' : 'auto',
         }}
       >
         {contextHolder}
@@ -707,16 +706,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             <div>{isOwner ? t('more.record.desc') : t('more.record.request')}</div>
           )}
         </Modal>
-        {/* ---------------- app drawer ------------------------------------------------------- */}
-        {/* {spaceInfo && space && (
-          <AppDrawer
-            open={openApp}
-            setOpen={setOpenApp}
-            messageApi={messageApi}
-            spaceInfo={spaceInfo}
-            space={space.name}
-          ></AppDrawer>
-        )} */}
       </div>
     );
   },
