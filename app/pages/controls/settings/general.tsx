@@ -40,7 +40,7 @@ export function GeneralSettings({
 }: GeneralSettingsProps) {
   const { t } = useI18n();
   const [isOwner, setIsOwner] = useState<boolean>(false);
-  const [persistence, setPersistence] = useState(false);
+  const [persistence, setPersistence] = useState(spaceInfo.persistence);
 
   useEffect(() => {
     setIsOwner(localParticipant.identity === spaceInfo.ownerId);
