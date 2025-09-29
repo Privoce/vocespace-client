@@ -41,6 +41,12 @@ export interface WsRemove extends WsBase {
 export interface WsSender extends WsBase {
   senderName: string;
   senderId: string;
+  /**
+   * 发送者的socket ID (可选)
+   * 如果携带此字段，服务器会将消息发送到指定的socket ID，确保消息只发送给特定的连接。
+   * 当前用于举手功能，确保主持人与举手者之间的通信
+   */
+  senderSocketId?: string; 
 }
 
 export interface WsTo extends WsSender {

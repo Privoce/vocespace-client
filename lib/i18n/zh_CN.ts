@@ -66,7 +66,7 @@ export default {
       enving: '获取环境变量中...',
       unconnect: '无法连接到S3服务',
     },
-    copy: {
+    copy: { 
       title: '复制链接',
       success: '下载链接已复制到剪贴板',
       error: '复制链接失败，请手动复制',
@@ -200,8 +200,8 @@ export default {
           accept_desc: '允许该用户发言，并通知其可以发言。',
           reject: '拒绝',
           reject_desc: '拒绝该用户发言，通知该用户并取消举手状态。',
-          ignore: '忽略',
-          ignore_desc: '忽略该请求，不做任何处理。',
+          rejected: '很抱歉，您的发言请求已被拒绝。',
+          accepted: '您已被允许发言，请开始您的发言。',
         },
       },
       upload: {

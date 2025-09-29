@@ -79,8 +79,6 @@ export interface RaiseKeepProps {
   wsTo: WsTo;
   style?: React.CSSProperties;
   auth: RaiseAuth;
-  participant: ParticipantSettings;
-  localParticipant: Participant;
 }
 
 /**
@@ -110,18 +108,15 @@ export function RaiseKeeper({
     margin: '0 4px',
     borderRadius: 4,
   },
-  participant,
-  localParticipant,
 }: RaiseKeepProps) {
   const { t } = useI18n();
 
-  const reject = async () => {
-    await setKeeping(false);
-    socket.emit('raise_cancel', wsTo);
-  };
-
-  const accept = () => {};
-
+  /**
+   * 举手按钮
+   * - 当只有读权限时，按钮不可点击
+   * - 当有写权限时，按钮可点击，点击后取消举手
+   * - 当有主持人权限时，按钮可点击，点击后弹出操作菜单，包含接受和拒绝选项
+   */
   const btn = useMemo(() => {
     return (
       <button
@@ -131,16 +126,15 @@ export function RaiseKeeper({
           cursor: auth === 'read' ? 'not-allowed' : 'pointer',
         }}
         onClick={async () => {
-          if (isKeeping) {
+          if (isKeeping && auth === 'write') {
             await setKeeping(false);
-            socket.emit('raise_cancel', wsTo);
           }
         }}
       >
         <SvgResource svgSize={20} type="hand"></SvgResource>
       </button>
     );
-  }, [isKeeping, style, setKeeping, wsTo, auth]);
+  }, [isKeeping, style, setKeeping, auth]);
 
   if (auth === 'read') {
     return btn;
@@ -157,7 +151,9 @@ export function RaiseKeeper({
     return (
       <Popover
         title={t('more.app.raise.handle.title')}
-        content={<RaiseHandler onAccept={() => {}} onReject={reject} />}
+        content={
+          <RaiseHandler onAccept={() => acceptRaise(wsTo)} onReject={() => rejectRaise(wsTo)} />
+        }
         placement="bottom"
       >
         {btn}
@@ -193,3 +189,11 @@ export function RaiseHandler({ onAccept, onReject }: RaiseHandlerProps) {
     </div>
   );
 }
+
+export const rejectRaise = async (wsTo: WsTo) => {
+  socket.emit('raise_cancel', wsTo);
+};
+
+export const acceptRaise = async (wsTo: WsTo) => {
+  socket.emit('raise_accept', wsTo);
+};

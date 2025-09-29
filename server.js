@@ -183,6 +183,17 @@ app.prepare().then(() => {
       // 广播所有人除了自己
       socket.broadcast.emit('raise_response', msg);
     });
+    // [socket: accept raise hand event to other user] -------------------------------------------------------------------
+    // - on: "raise_accept"
+    // - emit: "raise_accept_response"
+    // - msg: { room: string, senderId: string, senderName: string, receiverId: string, socketId: string } see [`std::WsTo`]
+    socket.on('raise_accept', (msg) => {
+      socket.to(msg.socketId).emit('raise_accept_response', msg);
+    });
+    // [socket: cancel raise hand event to other user] -------------------------------------------------------------------
+    // - on: "raise_cancel"
+    // - emit: "raise_cancel_response"
+    // - msg: { room: string, senderId: string, senderName: string, receiverId: string, socketId: string } see [`std::WsTo`]
     socket.on('raise_cancel', (msg) => {
       socket.to(msg.socketId).emit('raise_cancel_response', msg);
     });

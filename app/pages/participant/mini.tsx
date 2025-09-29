@@ -28,7 +28,7 @@ import {
   ParticipantSettings,
   SpaceInfo,
 } from '@/lib/std/space';
-import { useVideoBlur, WsSender, WsWave } from '@/lib/std/device';
+import { useVideoBlur, WsBase, WsSender, WsWave } from '@/lib/std/device';
 import { useRecoilState } from 'recoil';
 import { SingleAppDataState, socket } from '@/app/[spaceName]/PageClientImpl';
 import { UserStatus } from '@/lib/std';
@@ -77,6 +77,15 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       videoRef,
       initialBlur: 0.0,
     });
+
+    const setIsKeepRaise = async (raise: boolean) => {
+      await updateSettings({
+        raiseHand: raise,
+      });
+      socket.emit('update_user_status', {
+        space: space.name,
+      } as WsBase);
+    };
 
     useEffect(() => {
       // raise hand socket event ----------------------------------------------
@@ -345,11 +354,8 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
               spaceInfo={settings}
               participantId={trackReference.participant.identity}
               localParticipant={localParticipant}
-              // isSelf={trackReference.participant.identity === localParticipant.identity}
-              // isHost={settings.ownerId === localParticipant.identity}
               contextUndefined={false}
-              // isKeepRaise={settings.participants[trackReference.participant.identity]?.raiseHand}
-              setIsKeepRaise={async (raise) => {}}
+              setIsKeepRaise={setIsKeepRaise}
             />
 
             {trackReference.source !== Track.Source.ScreenShare && (

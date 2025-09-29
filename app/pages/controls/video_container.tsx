@@ -68,7 +68,7 @@ import { SingleFlotLayout } from '../apps/single_flot';
 import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
 import { VocespaceConfig } from '@/lib/std/conf';
 import equal from 'fast-deep-equal';
-import { RaiseHandler } from './widgets/raise';
+import { acceptRaise, RaiseHandler, rejectRaise } from './widgets/raise';
 import { audio } from '@/lib/audio';
 
 export interface VideoContainerProps extends VideoConferenceProps {
@@ -568,14 +568,61 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       // raise hand socket event ----------------------------------------------
       socket.on('raise_response', async (msg: WsSender) => {
         if (msg.space === space.name) {
-          if (space.localParticipant.identity === settings.ownerId && msg.senderId !== space.localParticipant.identity) {
+          if (
+            space.localParticipant.identity === settings.ownerId &&
+            msg.senderId !== space.localParticipant.identity
+          ) {
+            await audio.raise();
+
+            const wsTo: WsTo = {
+              space: space.name,
+              senderId: space.localParticipant.identity,
+              senderName: space.localParticipant.name || space.localParticipant.identity,
+              receiverId: msg.senderId,
+              socketId: msg.senderSocketId!, // 这里一定是有这个senderSocketId的
+            };
+
             noteApi?.info({
               message: `${msg.senderName} ${t('more.app.raise.receive')}`,
               duration: 5,
-              actions: <RaiseHandler onAccept={() => {}} onReject={() => {}} />,
+              actions: (
+                <RaiseHandler
+                  onAccept={() => acceptRaise(wsTo)}
+                  onReject={() => rejectRaise(wsTo)}
+                />
+              ),
             });
           }
-          await audio.raise();
+        }
+      });
+
+      const raiseHandle = async (msg: WsTo, isReject: boolean) => {
+        if (msg.space === space.name && msg.receiverId === space.localParticipant.identity) {
+          let msg = t('more.app.raise.handle.accepted');
+          if (isReject) msg = t('more.app.raise.handle.rejected');
+          messageApi.warning(msg);
+
+          await updateSettings({
+            raiseHand: false,
+          });
+
+          socket.emit('update_user_status', {
+            space: space.name,
+          } as WsBase);
+        }
+      };
+
+      // cancel raise hand socket event ----------------------------------------------
+      socket.on('raise_cancel_response', async (msg: WsTo) => {
+        await raiseHandle(msg, true);
+      });
+
+      // accept raise hand socket event ----------------------------------------------
+      socket.on('raise_accept_response', async (msg: WsTo) => {
+        await raiseHandle(msg, false);
+        // 为用户打开麦克风
+        if (!space.localParticipant.isMicrophoneEnabled) {
+          await space.localParticipant.setMicrophoneEnabled(true);
         }
       });
 
@@ -597,6 +644,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         socket.off('connect');
         socket.off('reload_env_response');
         socket.off('raise_response');
+        socket.off('raise_cancel_response');
+        socket.off('raise_accept_response');
         space.off(RoomEvent.ParticipantConnected, onParticipantConnected);
         space.off(ParticipantEvent.TrackMuted, onTrackHandler);
         space.off(RoomEvent.ParticipantDisconnected, onParticipantDisConnected);

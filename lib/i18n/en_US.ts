@@ -203,9 +203,14 @@ export default {
         title: 'Raise Hand',
         receive: 'raised hand, please handle it!',
         handle: {
-          accept: 'Accept to Speak',
-          reject: 'Reject to Speak',
-          ignore: 'Ignore',
+          title: 'Handling Request',
+          accept: 'Allow',
+          accept_desc: 'Allow the user to speak and notify them that they can speak.',
+          reject: 'Reject',
+          reject_desc:
+            "Reject the user's ability to speak, notify them, and cancel their raised hand status.",
+          rejected: 'Sorry, your request to speak has been rejected.',
+          accepted: 'You have been allowed to speak. Please begin your speech.',
         },
       },
       upload: {

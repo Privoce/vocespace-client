@@ -40,6 +40,7 @@ export function TileActionCollect({
       space: wsWave.space,
       senderName: wsWave.senderName,
       senderId: wsWave.senderId,
+      senderSocketId: spaceInfo.participants[localParticipant.identity]?.socketId,
     } as WsSender;
   }, [wsWave]);
 
@@ -67,12 +68,12 @@ export function TileActionCollect({
           setKeeping={setIsKeepRaise}
           wsTo={{
             ...wsSender,
-            receiverId: spaceInfo.ownerId,
-            socketId: spaceInfo.participants[spaceInfo.ownerId]?.socketId || '',
+            receiverId: participantId,
+            socketId: spaceInfo.participants[participantId]?.socketId || '',
           }}
           auth={auth}
-          participant={spaceInfo.participants[participantId]}
-          localParticipant={localParticipant}
+          // participant={spaceInfo.participants[participantId]}
+          // localParticipant={localParticipant}
         ></RaiseKeeper>
       )}
       <div
