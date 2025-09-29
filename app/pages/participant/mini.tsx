@@ -87,24 +87,6 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       } as WsBase);
     };
 
-    useEffect(() => {
-      // raise hand socket event ----------------------------------------------
-      socket.on('raise_response', (msg: WsSender) => {
-        if (msg.space === space.name && msg.senderId === trackReference.participant.identity) {
-          // setIsKeepRaise(true);
-        }
-      });
-      // cancel raise hand socket event ----------------------------------------------
-      socket.on('raise_cancel_response', (msg: WsSender) => {
-        if (msg.space === space.name && msg.senderId === trackReference.participant.identity) {
-          // setIsKeepRaise(false);
-        }
-      });
-      return () => {
-        socket.off('raise_response');
-        socket.off('raise_cancel_response');
-      };
-    }, [space, localParticipant.identity]);
 
     useEffect(() => {
       if (settings.participants && Object.keys(settings.participants).length > 0) {
