@@ -100,6 +100,34 @@ export function PreJoin({
     }, 500);
   }, []);
 
+  useEffect(() => {
+    const checkDevices = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const hasCamera = devices.some((device) => device.kind === 'videoinput');
+        const hasMicrophone = devices.some((device) => device.kind === 'audioinput');
+
+        // 如果没有对应设备，自动禁用
+        if (!hasCamera && videoEnabled) {
+          setVideoEnabled(false);
+        }
+        if (!hasMicrophone && audioEnabled) {
+          setAudioEnabled(false);
+        }
+      } catch (error) {
+        console.error('device check fail:', error);
+        // 检测失败时禁用所有设备
+        setVideoEnabled(false);
+        setAudioEnabled(false);
+      }
+    };
+
+    if (loading === false) {
+      // 只在加载完成后检测
+      checkDevices();
+    }
+  }, [loading]);
+
   // Preview tracks -----------------------------------------------------------------------------------
   const tracks = usePreviewTracks(
     {

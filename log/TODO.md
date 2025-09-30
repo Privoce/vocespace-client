@@ -499,6 +499,7 @@ lk load-test \
 - [ ] 多空间 (soul, twitch, clubhouse)
   - [ ] 短期
     - [ ] 提供一个用户API接口创建一个Space(link)
+- [x] 进入房间前设备检测
 ---
 
 - [ ] 少参与者，多观察者 (Egress 实时传输，站点构建)
