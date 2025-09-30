@@ -513,6 +513,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       {
         key: 'leave',
         label: t('channel.menu.leave'),
+        disabled: selfRoomName !== selectedRoom?.name,
         onClick: async () => await leaveChildRoom(),
       },
     ];
