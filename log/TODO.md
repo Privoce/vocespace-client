@@ -491,10 +491,12 @@ lk load-test \
   - [x] 放在视图右侧
   - [x] 大小不超过视图的50%
   - [ ] 重新定义状态
-    - [ ] 只起到显示的作用
-    - [ ] 去除volume/video blur/screen blur的功能性需求
-    - [ ] 修改为输入框，可以直接更改
-    - [ ] 单条状态，去除历史状态list
+    - [x] 只起到显示的作用
+    - [x] 去除volume/video blur/screen blur的功能性需求
+    - [x] 修改为输入框，可以直接更改
+    - [x] 单条状态，去除历史状态list
+    - [ ] 完整处理数据结构
+    - [ ] 处理status info 中的显示
 - [x] 用户不在房间中时，离开房间按钮需要disabled
 - [ ] 多空间 (soul, twitch, clubhouse)
   - [ ] 短期

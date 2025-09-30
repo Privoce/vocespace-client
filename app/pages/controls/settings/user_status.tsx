@@ -3,7 +3,7 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { UserDefineStatus } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
 import { LocalParticipant } from 'livekit-client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ulid } from 'ulid';
 import styles from '@/styles/controls.module.scss';
 import { Button, Input, Radio, Slider } from 'antd';
@@ -32,7 +32,7 @@ export function BuildUserStatus({ messageApi, space, localParticipant }: BuildUs
   const [videoBlur, setVideoBlur] = useState(0.0);
   const [screenBlur, setScreenBlur] = useState(0.0);
   const [volume, setVolume] = useState(100);
-
+  
   // 恢复默认状态
   const restoreAll = () => {
     setName('');

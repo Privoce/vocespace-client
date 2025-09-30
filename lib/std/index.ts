@@ -1,5 +1,6 @@
 import os from 'os';
 import clsx from 'clsx';
+import { Trans } from '../i18n/i18n';
 /**
  * Option<T>
  *
@@ -16,7 +17,6 @@ export interface Size {
   height: string;
   width: string;
 }
-
 export enum UserStatus {
   Online = 'settings.general.status.online',
   Leisure = 'settings.general.status.leisure',
@@ -24,6 +24,21 @@ export enum UserStatus {
   Offline = 'settings.general.status.offline',
   Working = 'settings.general.status.working',
 }
+
+export const TransIfSystemStatus = (t: Trans, state: string): string => {
+  switch (state) {
+    case UserStatus.Online:
+      return `🟢 ${t('settings.general.status.online')}`;
+    case UserStatus.Offline:
+      return t('settings.general.status.offline');
+    case UserStatus.Busy:
+      return t('settings.general.status.busy');
+    case UserStatus.Leisure:
+      return t('settings.general.status.leisure');
+    default:
+      return state || '';
+  }
+};
 
 export interface SizeNum {
   height: number;
@@ -64,8 +79,8 @@ export const DEFAULT_USER_DEFINE_STATUS: UserDefineStatus[] = [
     volume: 100,
     blur: 0,
     screenBlur: 0,
-  }
-]
+  },
+];
 
 export function is_web(): boolean {
   return typeof window !== 'undefined';

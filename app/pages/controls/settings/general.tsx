@@ -1,5 +1,5 @@
 import styles from '@/styles/controls.module.scss';
-import { Button, Input, Radio } from 'antd';
+import { Button, Input, InputRef, Radio } from 'antd';
 import { LangSelect } from '../selects/lang_select';
 import { StatusSelect } from '../selects/status_select';
 import { SvgResource } from '@/app/resources/svg';
@@ -7,8 +7,8 @@ import { BuildUserStatus } from './user_status';
 import { useI18n } from '@/lib/i18n/i18n';
 import { LocalParticipant } from 'livekit-client';
 import { MessageInstance } from 'antd/es/message/interface';
-import { UserStatus } from '@/lib/std';
-import { useEffect, useState } from 'react';
+import { TransIfSystemStatus, UserStatus } from '@/lib/std';
+import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { SpaceInfo } from '@/lib/std/space';
 export interface GeneralSettingsProps {
@@ -41,10 +41,19 @@ export function GeneralSettings({
   const { t } = useI18n();
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const [persistence, setPersistence] = useState(spaceInfo.persistence);
-
+  const [state, setState] = useState('');
+  const StateInputRef = useRef<InputRef>(null);
   useEffect(() => {
     setIsOwner(localParticipant.identity === spaceInfo.ownerId);
-  }, [localParticipant.identity, spaceInfo.ownerId]);
+    setState(TransIfSystemStatus(t, spaceInfo.participants[localParticipant.identity].status));
+  }, [localParticipant.identity, spaceInfo]);
+  
+  // 当appendStatus为true时自动聚焦状态输入框
+  useEffect(() => {
+    if (appendStatus && StateInputRef.current) {
+      StateInputRef.current.input?.focus();
+    }
+  }, [appendStatus, StateInputRef]);
 
   const setSpacePersistence = async (persistence: boolean) => {
     const response = await api.persistentSpace(space, persistence);
@@ -69,7 +78,7 @@ export function GeneralSettings({
       <div className={styles.common_space}>{t('settings.general.lang')}:</div>
       <LangSelect style={{ width: '100%' }}></LangSelect>
       <div className={styles.common_space}>{t('settings.general.status.title')}:</div>
-      <div className={styles.setting_box_line}>
+      {/* <div className={styles.setting_box_line}>
         <StatusSelect
           style={{ width: 'calc(100% - 52px)' }}
           setUserStatus={setUserStatus}
@@ -85,14 +94,27 @@ export function GeneralSettings({
         >
           <SvgResource type="add" svgSize={16}></SvgResource>
         </Button>
-      </div>
-      {appendStatus && (
+      </div> */}
+      {/* {appendStatus && (
         <BuildUserStatus
           messageApi={messageApi}
           space={space}
           localParticipant={localParticipant}
         ></BuildUserStatus>
-      )}
+      )} */}
+      <div className={styles.setting_box_line}>
+        <Input
+          ref={StateInputRef}
+          size="large"
+          style={{ width: '100%' }}
+          value={state}
+          placeholder={t('settings.general.status.define.placeholder.name')}
+          onChange={(e) => {
+            setState(e.target.value);
+          }}
+        ></Input>
+      </div>
+
       <div className={styles.common_space}>{t('settings.general.prompt_sound')}:</div>
       <Radio.Group
         size="large"

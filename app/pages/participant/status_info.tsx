@@ -121,7 +121,7 @@ export function useStatusInfo({
         <Tooltip placement="right" title={item.title}>
           <div className={styles.status_tag}>
             {item.icon && <span>{item.icon}</span>}
-           {item.title}
+            {item.title}
           </div>
         </Tooltip>
       ),
@@ -147,44 +147,44 @@ export function useStatusInfo({
       (item) => item.id === settings.participants[trackReference.participant.identity]?.status,
     );
   }, [uRoomStatusState, settings.participants, trackReference]);
-  const statusMenu: MenuProps['items'] = useMemo(() => {
-    const list = getStatusItems(t, uRoomStatusState, trackReference.participant.identity);
+  // const statusMenu: MenuProps['items'] = useMemo(() => {
+  //   const list = getStatusItems(t, uRoomStatusState, trackReference.participant.identity);
 
-    let items = list.map((item) => ({
-      key: item.value,
-      label: (
-        <div className={styles.status_item}>
-          {item.isDefine ? (
-            <SvgResource type={item.icon} svgSize={14} color={item.color}></SvgResource>
-          ) : (
-            <SvgResource type={item.icon} svgSize={14}></SvgResource>
-          )}
-          <span>{item.title}</span>
-          <div>{item.desc}</div>
-        </div>
-      ),
-    }));
+  //   let items = list.map((item) => ({
+  //     key: item.value,
+  //     label: (
+  //       <div className={styles.status_item}>
+  //         {item.isDefine ? (
+  //           <SvgResource type={item.icon} svgSize={14} color={item.color}></SvgResource>
+  //         ) : (
+  //           <SvgResource type={item.icon} svgSize={14}></SvgResource>
+  //         )}
+  //         <span>{item.title}</span>
+  //         <div>{item.desc}</div>
+  //       </div>
+  //     ),
+  //   }));
 
-    items.push({
-      key: 'add_status',
-      label: (
-        <Button
-          type="link"
-          icon={<PlusCircleOutlined></PlusCircleOutlined>}
-          style={{ color: '#22ccee' }}
-          onClick={(e) => {
-            e.stopPropagation();
-            // Handle add status action
-            toRenameSettings && toRenameSettings(true);
-          }}
-        >
-          {t('settings.general.status.define.title')}
-        </Button>
-      ),
-    });
+  //   items.push({
+  //     key: 'add_status',
+  //     label: (
+  //       <Button
+  //         type="link"
+  //         icon={<PlusCircleOutlined></PlusCircleOutlined>}
+  //         style={{ color: '#22ccee' }}
+  //         onClick={(e) => {
+  //           e.stopPropagation();
+  //           // Handle add status action
+  //           toRenameSettings && toRenameSettings(true);
+  //         }}
+  //       >
+  //         {t('settings.general.status.define.title')}
+  //       </Button>
+  //     ),
+  //   });
 
-    return items;
-  }, [uRoomStatusState, t, trackReference.participant.identity]);
+  //   return items;
+  // }, [uRoomStatusState, t, trackReference.participant.identity]);
 
   const items: MenuProps['items'] = useMemo(() => {
     return [
@@ -195,19 +195,23 @@ export function useStatusInfo({
             className={styles.user_info_wrap}
             onClick={() => toRenameSettings && toRenameSettings()}
           >
-            <SvgResource type="modify" svgSize={16} color="#fff"></SvgResource>
             <div className={styles.user_info_wrap_name}>
               {' '}
               {settings.participants[trackReference.participant.identity]?.name || username}
             </div>
+            <SvgResource type="modify" svgSize={16} color="#fff"></SvgResource>
           </div>
         ),
       },
       {
         key: 'user_status',
         label: (
-          <div onClick={(e) => e.stopPropagation()}>
-            <Dropdown
+          <div
+            onClick={(e) => {
+              toRenameSettings && toRenameSettings(true);
+            }}
+          >
+            {/* <Dropdown
               trigger={['hover', 'click']}
               placement="topLeft"
               menu={{
@@ -218,19 +222,21 @@ export function useStatusInfo({
                 },
               }}
             >
-              <div className={styles.status_item_inline} style={{ width: '100%' }}>
-                <div className={styles.status_item_inline}>
-                  {userStatusDisply?.icon}
-                  {userStatusDisply.label}
-                </div>
-                <SvgResource type="right" svgSize={14} color="#fff"></SvgResource>
+              
+            </Dropdown> */}
+
+            <div className={styles.status_item_inline} style={{ width: '100%' }}>
+              <div className={styles.status_item_inline}>
+                {userStatusDisply?.icon}
+                {userStatusDisply.label}
               </div>
-            </Dropdown>
+              <SvgResource type="add" svgSize={14} color="#fff"></SvgResource>
+            </div>
           </div>
         ),
       },
     ];
-  }, [settings.participants, userStatusDisply, statusMenu, defineStatus]);
+  }, [settings.participants, userStatusDisply, defineStatus]);
 
   return {
     items,
