@@ -487,9 +487,9 @@ lk load-test \
 - [x] Recording组件i18n
 - [x] 首个加入者如果没有自己定义名字则使用admin
 - [x] 手机端底部control bar需要增加marginBottom
-- [ ] 状态部分 (新分支 dev_state)
-  - [ ] 放在视图右侧
-  - [ ] 大小不超过视图的50%
+- [ ] 状态部分 (新分支 dev_0.3.0)
+  - [x] 放在视图右侧
+  - [x] 大小不超过视图的50%
   - [ ] 重新定义状态
     - [ ] 只起到显示的作用
     - [ ] 去除volume/video blur/screen blur的功能性需求

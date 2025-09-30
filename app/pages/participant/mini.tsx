@@ -37,6 +37,7 @@ import { StatusInfo, useStatusInfo } from './status_info';
 import { useI18n } from '@/lib/i18n/i18n';
 import { AppFlotIconCollect } from '../apps/app_pin';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
+import { Tooltip } from 'antd';
 
 export interface ParticipantTileMiniProps extends ParticipantTileProps {
   settings: SpaceInfo;
@@ -86,7 +87,6 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
         space: space.name,
       } as WsBase);
     };
-
 
     useEffect(() => {
       if (settings.participants && Object.keys(settings.participants).length > 0) {
@@ -274,7 +274,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
             </div>
             <div
               className="lk-participant-metadata"
-              style={{ zIndex: 1000, width: 'fit-content', maxWidth: '100px' }}
+              style={{ zIndex: 1000, width: 'fit-content', maxWidth: '44%' }}
             >
               <StatusInfo
                 disabled={
@@ -294,22 +294,16 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                         }}
                         show={'muted'}
                       ></TrackMutedIndicator>
-                      <ParticipantName
-                        style={{
-                          maxWidth: `calc(100% - ${
-                            useTrackMutedIndicator({
-                              participant: trackReference.participant,
-                              source: Track.Source.Microphone,
-                            }).isMuted
-                              ? 2.5
-                              : 1.25
-                          }rem)`,
-                          overflow: 'clip',
-                          textWrap: 'nowrap',
-                          width: 'fit-content',
-                        }}
-                      />
-                      {space.state !== ConnectionState.Connecting && userStatusDisply.tag}
+                      <Tooltip title={trackReference.participant.name} placement="right">
+                        <ParticipantName
+                          style={{
+                            overflow: 'clip',
+                            textOverflow: 'clip',
+                            textWrap: 'nowrap',
+                            width: 'calc(100% - 1.25rem)',
+                          }}
+                        />
+                      </Tooltip>
                     </>
                   ) : (
                     <>
@@ -328,7 +322,18 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                   )}
                 </div>
               </StatusInfo>
-              {/* <ConnectionQualityIndicator className="lk-participant-metadata-item" /> */}
+            </div>
+            <div
+              className="lk-participant-metadata"
+              style={{
+                zIndex: 111,
+                right: 4,
+                left: 'unset',
+                width: 'fit-content',
+                maxWidth: '48%',
+              }}
+            >
+              {space.state !== ConnectionState.Connecting && userStatusDisply.tag}
             </div>
 
             <TileActionCollect

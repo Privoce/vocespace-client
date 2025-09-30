@@ -412,21 +412,17 @@
 // }
 
 .status_tag{
-  height: fit-content;
-  font-size: 12px;
-  color: #fff;
-  // border: 1px solid #8c8c8c;
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  border-radius: 0px;
-  margin: 0 4px;
-  width: 14px;
-  box-sizing: border-box;
   overflow: hidden;
-  text-overflow: clip;
-  text-wrap: nowrap;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
   text-align: start;
+  height: fit-content;
+  font-size: 14px;
+  color: #fff;
+  background-color: #0F0F0F;
+  padding: 5px 4px;
+  border-radius: 4px;
   & > span {
     margin-right: 4px;
   }

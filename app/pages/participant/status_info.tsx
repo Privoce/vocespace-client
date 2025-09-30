@@ -121,7 +121,7 @@ export function useStatusInfo({
         <Tooltip placement="right" title={item.title}>
           <div className={styles.status_tag}>
             {item.icon && <span>{item.icon}</span>}
-            {item.title}
+           {item.title}
           </div>
         </Tooltip>
       ),

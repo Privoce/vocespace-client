@@ -670,7 +670,6 @@ export const ParticipantItem: (
                           show={'muted'}
                         ></TrackMutedIndicator>
                         <ParticipantName />
-                        {space.state !== ConnectionState.Connecting && userStatusDisply.tag}
                       </>
                     ) : (
                       <>
@@ -692,6 +691,12 @@ export const ParticipantItem: (
               ></StatusInfo>
 
               {/* <ConnectionQualityIndicator className="lk-participant-metadata-item" /> */}
+            </div>
+            <div
+              className="lk-participant-metadata"
+              style={{ zIndex: 4, right: 4, left: 'unset', width: 'fit-content', maxWidth: '48%' }}
+            >
+              {space.state !== ConnectionState.Connecting && userStatusDisply.tag}
             </div>
             {currentParticipant && (
               <TileActionCollect
