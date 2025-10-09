@@ -764,15 +764,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           return newState;
         });
       }
-      // 同步settings中的房间的状态到uRoomStatusState中 ----------------------------------------
-      if (settings.status && settings.status.length > 0) {
-        console.warn('settings.status', settings.status);
-        // 如果uRoomStatusState和settings.status不相等才进行更新
-        if (!equal(uRoomStatusState, settings.status)) {
-          setURoomStatusState(settings.status);
-        }
-      }
-    }, [space, settings, uRoomStatusState]);
+    }, [space, settings]);
 
     const [widgetState, setWidgetState] = React.useState<WidgetState>({
       showChat: false,

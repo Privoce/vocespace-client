@@ -90,20 +90,11 @@ export function useStatusInfo({
         item.icon = <SvgResource type={'leisure_dot'} svgSize={14}></SvgResource>;
         break;
       case UserStatus.Working:
-        let targetWorkStatus = settings.status?.find(
-          (s) =>
-            s.id === UserStatus.Working &&
-            [trackReference.participant.identity, 'system'].includes(s.creator.id),
-        );
-        if (targetWorkStatus && targetWorkStatus.creator.id !== 'system') {
-          item.title = targetWorkStatus.title;
-        } else {
-          item.title = t(UserStatus.Working);
-        }
+        item.title = t(UserStatus.Working);
         item.icon = <SvgResource type={'working_dot'} svgSize={14}></SvgResource>;
         break;
       default:
-        let targetState = settings.status?.find((s) => s.id === status)?.title;
+        let targetState = status;
         if (!targetState) {
           item.title = t(UserStatus.Online);
         } else {
@@ -147,44 +138,6 @@ export function useStatusInfo({
       (item) => item.id === settings.participants[trackReference.participant.identity]?.status,
     );
   }, [uRoomStatusState, settings.participants, trackReference]);
-  // const statusMenu: MenuProps['items'] = useMemo(() => {
-  //   const list = getStatusItems(t, uRoomStatusState, trackReference.participant.identity);
-
-  //   let items = list.map((item) => ({
-  //     key: item.value,
-  //     label: (
-  //       <div className={styles.status_item}>
-  //         {item.isDefine ? (
-  //           <SvgResource type={item.icon} svgSize={14} color={item.color}></SvgResource>
-  //         ) : (
-  //           <SvgResource type={item.icon} svgSize={14}></SvgResource>
-  //         )}
-  //         <span>{item.title}</span>
-  //         <div>{item.desc}</div>
-  //       </div>
-  //     ),
-  //   }));
-
-  //   items.push({
-  //     key: 'add_status',
-  //     label: (
-  //       <Button
-  //         type="link"
-  //         icon={<PlusCircleOutlined></PlusCircleOutlined>}
-  //         style={{ color: '#22ccee' }}
-  //         onClick={(e) => {
-  //           e.stopPropagation();
-  //           // Handle add status action
-  //           toRenameSettings && toRenameSettings(true);
-  //         }}
-  //       >
-  //         {t('settings.general.status.define.title')}
-  //       </Button>
-  //     ),
-  //   });
-
-  //   return items;
-  // }, [uRoomStatusState, t, trackReference.participant.identity]);
 
   const items: MenuProps['items'] = useMemo(() => {
     return [
@@ -207,24 +160,10 @@ export function useStatusInfo({
         key: 'user_status',
         label: (
           <div
-            onClick={(e) => {
+            onClick={(_e) => {
               toRenameSettings && toRenameSettings(true);
             }}
           >
-            {/* <Dropdown
-              trigger={['hover', 'click']}
-              placement="topLeft"
-              menu={{
-                items: statusMenu,
-                onClick: async (e) => {
-                  e.domEvent.stopPropagation();
-                  await setUserStatus(e.key);
-                },
-              }}
-            >
-              
-            </Dropdown> */}
-
             <div className={styles.status_item_inline} style={{ width: '100%' }}>
               <div className={styles.status_item_inline}>
                 {userStatusDisply?.icon}

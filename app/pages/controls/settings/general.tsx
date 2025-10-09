@@ -11,6 +11,9 @@ import { TransIfSystemStatus, UserStatus } from '@/lib/std';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { SpaceInfo } from '@/lib/std/space';
+import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { WsBase } from '@/lib/std/device';
+import { DefineUserStatusResponse } from '@/lib/api/space';
 export interface GeneralSettingsProps {
   space: string;
   localParticipant: LocalParticipant;
@@ -47,7 +50,7 @@ export function GeneralSettings({
     setIsOwner(localParticipant.identity === spaceInfo.ownerId);
     setState(TransIfSystemStatus(t, spaceInfo.participants[localParticipant.identity].status));
   }, [localParticipant.identity, spaceInfo]);
-  
+
   // 当appendStatus为true时自动聚焦状态输入框
   useEffect(() => {
     if (appendStatus && StateInputRef.current) {
@@ -61,6 +64,30 @@ export function GeneralSettings({
       messageApi.success(t('settings.general.persistence.success'));
     } else {
       messageApi.error(t('settings.general.persistence.error'));
+    }
+  };
+
+  const saveStatus = async () => {
+    try {
+      // 发送到服务器保存状态
+      const response = await api.defineUserStatus(space, localParticipant.identity, state);
+      if (!response.ok) {
+        throw new Error(`Failed to save status: ${response.status}`);
+      }
+      const data: DefineUserStatusResponse = await response.json();
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      messageApi.success({
+        content: t('settings.general.status.define.success'),
+      });
+      socket.emit('update_user_status', {
+        space: data.spaceName,
+      } as WsBase);
+    } catch (e) {
+      messageApi.error({
+        content: `${t('settings.general.status.define.fail')}: ${e}`,
+      });
     }
   };
 
@@ -113,6 +140,14 @@ export function GeneralSettings({
             setState(e.target.value);
           }}
         ></Input>
+        <Button
+          size="large"
+          style={{ width: 'fit-content', margin: '8px 0' }}
+          type="primary"
+          onClick={saveStatus}
+        >
+          {t('settings.general.status.define.save')}
+        </Button>
       </div>
 
       <div className={styles.common_space}>{t('settings.general.prompt_sound')}:</div>

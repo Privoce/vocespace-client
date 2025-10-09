@@ -163,11 +163,11 @@ export interface SpaceInfo {
   participants: {
     [participantId: string]: ParticipantSettings;
   };
-  /**
-   * 用户自定义状态列表，这会保存任意在空间的参与者设置过的自定义状态
-   * 主要用于在空间内的用户自定义状态选择
-   */
-  status?: UserDefineStatus[];
+  // /**
+  //  * 用户自定义状态列表，这会保存任意在空间的参与者设置过的自定义状态
+  //  * 主要用于在空间内的用户自定义状态选择
+  //  */ @deprecated 由用户内部维护
+  // status?: UserDefineStatus[];
   /**
    * 空间主持人ID
    */
@@ -306,11 +306,10 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
   startAt,
   children: [],
   apps: ['todo', 'countdown'],
-  status: []
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
-  version: '0.3.0',
+  version: '0.3.1',
   name: '',
   volume: 100,
   blur: 0.0,

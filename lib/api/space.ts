@@ -81,17 +81,21 @@ export const checkUsername = async (spaceName: string, participantName: string) 
 
 export interface DefineUserStatusBody {
   spaceName: string;
-  status: UserDefineStatus;
+  participantId: string;
+  status: string;
 }
 
 export interface DefineUserStatusResponse {
   success: boolean;
-  status?: UserDefineStatus[];
   spaceName?: string;
   error?: any;
 }
 
-export const defineUserStatus = async (spaceName: string, status: UserDefineStatus) => {
+export const defineUserStatus = async (
+  spaceName: string,
+  participantId: string,
+  status: string,
+) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('status', 'true');
   return await fetch(url.toString(), {
@@ -101,6 +105,7 @@ export const defineUserStatus = async (spaceName: string, status: UserDefineStat
     },
     body: JSON.stringify({
       spaceName,
+      participantId,
       status,
     } as DefineUserStatusBody),
   });
@@ -220,7 +225,7 @@ export interface UpdateSpaceAppSyncBody {
 export const updateSpaceAppSync = async (
   spaceName: string,
   participantId: string,
-  sync: AppKey
+  sync: AppKey,
 ) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('apps', 'sync');

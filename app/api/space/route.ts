@@ -855,10 +855,11 @@ class SpaceManager {
       };
     }
   }
-  // 定义(添加)房间的状态 --------------------------------------------------------------
+  // 定义(添加)用户的状态 --------------------------------------------------------------
   static async defineStatus(
     spaceName: string,
-    status: UserDefineStatus,
+    participantId: string,
+    status: string,
   ): Promise<{
     success: boolean;
     error?: any;
@@ -872,17 +873,14 @@ class SpaceManager {
       if (!spaceInfo) {
         throw new Error('Room not found');
       }
-      // 房间存在，需要检查是否已经存在同名状态
-      if (!spaceInfo.status) {
-        spaceInfo.status = [status];
+      // 房间存在，获取用户进行状态更新
+      let participant = spaceInfo.participants[participantId];
+      if (!participant) {
+        throw new Error('Participant not found');
       } else {
-        const isExist = spaceInfo.status.some((s) => s.title === status.title);
-        if (isExist) {
-          throw new Error('Status already exists');
-        } else {
-          spaceInfo.status.push(status);
-        }
+        spaceInfo.participants[participantId].status = status;
       }
+
       await this.setSpaceInfo(spaceName, spaceInfo);
       return {
         success: true,
@@ -1120,44 +1118,8 @@ export async function POST(request: NextRequest) {
             // 如果没有，则取最后一个
             currentTodo = (data as SpaceTodo).items[(data as SpaceTodo).items.length - 1];
           }
-          // 当todo有更新时，我们需要将用户的状态修改为"settings.general.status.working"并修改空间的status的creator
-          spaceInfo.participants[participantId].status = UserStatus.Working;
-          if (spaceInfo.status) {
-            // 首先在房间状态中查找工作状态，如果没有则需要添加一条
-            let workingStatusIndex = spaceInfo.status.findIndex(
-              (s) =>
-                s.id === UserStatus.Working && [participantId, 'system'].includes(s.creator.id),
-            );
-            if (workingStatusIndex !== -1) {
-              // 直接替换
-              spaceInfo.status[workingStatusIndex] = {
-                ...spaceInfo.status[workingStatusIndex],
-                title: currentTodo.title,
-                creator: {
-                  id: participantId,
-                  name: spaceInfo.participants[participantId].name,
-                },
-              };
-            } else {
-              spaceInfo.status.push({
-                ...DEFAULT_USER_DEFINE_STATUS[0],
-                title: currentTodo.title,
-                creator: {
-                  id: participantId,
-                  name: spaceInfo.participants[participantId].name,
-                },
-              });
-            }
-          }else {
-            spaceInfo.status = [{
-              ...DEFAULT_USER_DEFINE_STATUS[0],
-              title: currentTodo.title,
-              creator: {
-                id: participantId,
-                name: spaceInfo.participants[participantId].name,
-              },
-            }];
-          }
+          // 当todo有更新时，我们需要将用户的状态修改为`🖥️ ${todo.title}`
+          spaceInfo.participants[participantId].status = `🖥️ ${currentTodo.title}`;
         }
       }
       const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
@@ -1345,22 +1307,19 @@ export async function PUT(request: NextRequest) {
   }
   // 用户自定义状态 -------------------------------------------------------------------------------------
   if (isDefineStatus) {
-    const { spaceName, status }: DefineUserStatusBody = await request.json();
+    const { spaceName, participantId, status }: DefineUserStatusBody = await request.json();
     if (!spaceName || !status) {
       return NextResponse.json({ error: 'Space name and status are required' }, { status: 400 });
     }
-    const { success, error } = await SpaceManager.defineStatus(spaceName, status);
+    const { success, error } = await SpaceManager.defineStatus(spaceName, participantId, status);
     if (success) {
-      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
-      return NextResponse.json(
-        { success: true, status: spaceInfo?.status, spaceName } as DefineUserStatusResponse,
-        { status: 200 },
-      );
+      return NextResponse.json({ success: true, spaceName } as DefineUserStatusResponse, {
+        status: 200,
+      });
     } else {
       return NextResponse.json(
         {
           error,
-          status: [status],
         } as DefineUserStatusResponse,
         {
           status: 500,

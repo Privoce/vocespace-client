@@ -423,7 +423,13 @@
   background-color: #0F0F0F;
   padding: 5px 4px;
   border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   & > span {
     margin-right: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }

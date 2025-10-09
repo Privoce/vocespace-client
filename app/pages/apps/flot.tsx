@@ -48,14 +48,6 @@ export function FlotLayout({
   space,
   setOpenApp,
 }: FlotLayoutProps) {
-  // const [open, setOpen] = useState(false);
-
-  // useEffect(() => {
-  //   if (openApp && open) {
-  //     setOpen(false);
-  //   }
-  // }, [open, openApp]);
-
   return (
     <div style={style} className={styles.flot_layout}>
       <Popover
@@ -71,9 +63,13 @@ export function FlotLayout({
         }
         styles={{
           body: {
-            // background: '#1a1a1a90',
             background: '#1a1a1a',
             width: '360px',
+            maxHeight: "72vh",
+            overflowY: "scroll",
+            paddingRight: "0px",
+            scrollbarWidth: "thin",
+            scrollbarColor: "#888 transparent",
           },
         }}
       >
