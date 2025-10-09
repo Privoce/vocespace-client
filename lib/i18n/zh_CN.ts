@@ -49,6 +49,9 @@ export default {
       '开启后，视频，音频和屏幕分享将以固定的分辨率以及更高的质量传输，但可能会增加带宽使用和延迟。',
     socket_reconnect: '正在重新连接...',
   },
+  reaction: {
+    title: "反应"
+  },
   recording: {
     title: '录制记录',
     empty: '暂无录制记录',

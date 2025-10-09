@@ -33,6 +33,7 @@ import { ParticipantManage } from '../participant/manage';
 import { api } from '@/lib/api';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
 import equal from 'fast-deep-equal';
+import { Reaction } from './widgets/reaction';
 
 /** @public */
 export type ControlBarControls = {
@@ -506,6 +507,15 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               {showText &&
                 (isScreenShareEnabled ? t('common.stop_share') : t('common.share_screen'))}
             </TrackToggle>
+          )}
+          {space && spaceInfo.participants && visibleControls.microphone && (
+            <Reaction
+              updateSettings={updateSettings}
+              space={space.name}
+              size={controlSize}
+              controlWidth={controlWidth}
+              spaceInfo={spaceInfo}
+            ></Reaction>
           )}
           {visibleControls.chat && !isMobile && (
             <ChatToggle

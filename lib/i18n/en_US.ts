@@ -49,6 +49,9 @@ export default {
       'When enabled, video, audio, and screen sharing will be transmitted at a fixed resolution and higher quality, but may increase bandwidth usage and latency.',
     socket_reconnect: 'Reconnecting...',
   },
+  reaction: {
+    title: "Reaction"
+  },
   recording: {
     title: 'Recording Record',
     empty: 'No recording record yet',

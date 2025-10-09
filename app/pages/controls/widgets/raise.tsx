@@ -79,6 +79,7 @@ export interface RaiseKeepProps {
   wsTo: WsTo;
   style?: React.CSSProperties;
   auth: RaiseAuth;
+  isBtn?: boolean;
 }
 
 /**
@@ -108,9 +109,9 @@ export function RaiseKeeper({
     margin: '0 4px',
     borderRadius: 4,
   },
+  isBtn = false,
 }: RaiseKeepProps) {
   const { t } = useI18n();
-
   /**
    * 举手按钮
    * - 当只有读权限时，按钮不可点击
@@ -118,47 +119,60 @@ export function RaiseKeeper({
    * - 当有主持人权限时，按钮可点击，点击后弹出操作菜单，包含接受和拒绝选项
    */
   const btn = useMemo(() => {
+    let btnStyle = {
+      ...style,
+      cursor: auth === 'read' ? 'not-allowed' : 'pointer',
+      color: '#fff',
+    };
+
     return (
       <button
         className="lk-button"
-        style={{
-          ...style,
-          cursor: auth === 'read' ? 'not-allowed' : 'pointer',
-        }}
+        style={btnStyle}
         onClick={async () => {
-          if (isKeeping && auth === 'write') {
-            await setKeeping(false);
+          if (!isBtn) {
+            if (isKeeping && auth === 'write') {
+              await setKeeping(false);
+            }
+          } else {
+            if (auth === 'write') {
+              await setKeeping(!isKeeping);
+            }
           }
         }}
       >
         <SvgResource svgSize={20} type="hand"></SvgResource>
+        {isBtn && <span>{isKeeping ? t('more.app.raise.cancel') : t('more.app.raise.title')}</span>}
       </button>
     );
-  }, [isKeeping, style, setKeeping, auth]);
+  }, [isKeeping, style, setKeeping, auth, isBtn]);
+  if (!isBtn) {
+    if (auth === 'read') {
+      return btn;
+    }
+    if (auth === 'write') {
+      return (
+        <Tooltip title={t('more.app.raise.cancel')} placement="bottom">
+          {btn}
+        </Tooltip>
+      );
+    }
 
-  if (auth === 'read') {
+    if (auth === 'host') {
+      return (
+        <Popover
+          title={t('more.app.raise.handle.title')}
+          content={
+            <RaiseHandler onAccept={() => acceptRaise(wsTo)} onReject={() => rejectRaise(wsTo)} />
+          }
+          placement="bottom"
+        >
+          {btn}
+        </Popover>
+      );
+    }
+  } else {
     return btn;
-  }
-  if (auth === 'write') {
-    return (
-      <Tooltip title={t('more.app.raise.cancel')} placement="bottom">
-        {btn}
-      </Tooltip>
-    );
-  }
-
-  if (auth === 'host') {
-    return (
-      <Popover
-        title={t('more.app.raise.handle.title')}
-        content={
-          <RaiseHandler onAccept={() => acceptRaise(wsTo)} onReject={() => rejectRaise(wsTo)} />
-        }
-        placement="bottom"
-      >
-        {btn}
-      </Popover>
-    );
   }
 }
 
