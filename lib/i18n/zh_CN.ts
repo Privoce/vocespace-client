@@ -541,6 +541,7 @@ export default {
       file: {
         upload: '文件上传失败',
         download: '文件下载失败',
+        too_large: '文件过大，最大支持:',
       },
     },
     request: {
@@ -606,6 +607,9 @@ export default {
         },
         lang: '语言修改成功',
         transfer: '您已成功被转让为房间主持人',
+      },
+      file: {
+        upload: '文件上传成功',
       },
     },
   },

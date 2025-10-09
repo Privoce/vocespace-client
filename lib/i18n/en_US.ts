@@ -574,6 +574,7 @@ export default {
       file: {
         upload: 'File upload failed',
         download: 'File download failed',
+        too_large: 'File too large, maximum supported:',
       },
     },
     request: {
@@ -641,6 +642,9 @@ export default {
         },
         lang: 'Language changed successfully',
         transfer: 'You are now the host',
+      },
+      file: {
+        upload: 'File uploaded successfully',
       },
     },
   },

@@ -1,5 +1,5 @@
 import { createRoom, deleteRoom, joinRoom, leaveRoom, updateRoom } from './channel';
-import { fetchLinkPreview, getChatMsg } from './chat';
+import { fetchLinkPreview, getChatMsg, uploadFile } from './chat';
 import { getConf, reloadConf, reloadLicense } from './conf';
 import { checkLicenseByIP, getLicenseByIP } from './license';
 import { sendRecordRequest, updateRecord } from './record';
@@ -43,6 +43,7 @@ export const api = {
   // ---- chat api --------
   fetchLinkPreview,
   getChatMsg,
+  uploadFile,
   // ---- license api --------
   getLicenseByIP,
   checkLicenseByIP,

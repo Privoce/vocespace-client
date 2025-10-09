@@ -278,51 +278,54 @@ app.prepare().then(() => {
     socket.on('chat_file', async (msg) => {
       try {
         const { file, sender, roomName, timestamp } = msg;
-        const fileId = Date.now().toString();
-        const fileExt = path.extname(file.name);
-        const fileName = `${fileId}${fileExt}`;
-        const dirPath = path.join(uploadDir, roomName);
-        if (!fs.existsSync(dirPath)) {
-          fs.mkdirSync(dirPath, { recursive: true });
+        let fileMessage = msg;
+        if (!file.url) {
+          const fileId = Date.now().toString();
+          const fileExt = path.extname(file.name);
+          const fileName = `${fileId}${fileExt}`;
+          const dirPath = path.join(uploadDir, roomName);
+          if (!fs.existsSync(dirPath)) {
+            fs.mkdirSync(dirPath, { recursive: true });
+          }
+
+          const filePath = path.join(uploadDir, roomName, fileName);
+          console.log('filePath', filePath);
+          // 处理文件数据
+          let fileData;
+          if (file.data.startsWith('data:')) {
+            // 处理 base64 数据
+            const base64Data = file.data.split(',')[1];
+            fileData = Buffer.from(base64Data, 'base64');
+          } else {
+            // 处理二进制数据
+            fileData = Buffer.from(file.data);
+          }
+
+          // 保存文件
+          fs.writeFileSync(filePath, fileData);
+
+          // 文件URL (根据实际部署情况调整)
+          const fileUrl = `${basePath}/uploads/${roomName}/${fileName}`;
+
+          // 广播文件消息
+          fileMessage = {
+            id: fileId,
+            sender: {
+              id: sender.id,
+              name: sender.name,
+            },
+            roomName,
+            message: `文件: ${file.name}`,
+            timestamp: timestamp || Date.now(),
+            type: 'file',
+            file: {
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              url: fileUrl,
+            },
+          };
         }
-
-        const filePath = path.join(uploadDir, roomName, fileName);
-        console.log('filePath', filePath);
-        // 处理文件数据
-        let fileData;
-        if (file.data.startsWith('data:')) {
-          // 处理 base64 数据
-          const base64Data = file.data.split(',')[1];
-          fileData = Buffer.from(base64Data, 'base64');
-        } else {
-          // 处理二进制数据
-          fileData = Buffer.from(file.data);
-        }
-
-        // 保存文件
-        fs.writeFileSync(filePath, fileData);
-
-        // 文件URL (根据实际部署情况调整)
-        const fileUrl = `${basePath}/uploads/${roomName}/${fileName}`;
-
-        // 广播文件消息
-        const fileMessage = {
-          id: fileId,
-          sender: {
-            id: sender.id,
-            name: sender.name,
-          },
-          roomName,
-          message: `文件: ${file.name}`,
-          timestamp: timestamp || Date.now(),
-          type: 'file',
-          file: {
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            url: fileUrl,
-          },
-        };
         // store in redis
         ChatManager.setChatMessage(roomName, fileMessage);
         io.emit('chat_file_response', fileMessage);

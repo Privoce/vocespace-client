@@ -15,8 +15,8 @@ import { useRecoilState } from 'recoil';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from '../controls/drawer_tools';
 import { SnippetsOutlined } from '@ant-design/icons';
-
-type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
+import { api } from '@/lib/api';
+import { FileType } from '@/lib/std';
 
 export interface EnhancedChatProps {
   open: boolean;
@@ -48,7 +48,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
       e.preventDefault();
       e.stopPropagation();
       dragCounterRef.current++;
-      
+
       // 检查是否拖拽的是文件
       if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
         setDragOver(true);
@@ -59,7 +59,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
       e.preventDefault();
       e.stopPropagation();
       dragCounterRef.current--;
-      
+
       if (dragCounterRef.current <= 0) {
         dragCounterRef.current = 0;
         setDragOver(false);
@@ -124,47 +124,115 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
 
     // [upload] ----------------------------------------------------------------------------------
     const handleBeforeUpload = (file: FileType) => {
-      sendFileConfirm(async () => {
-        const reader = new FileReader();
-        try {
-          reader.onload = (e) => {
-            const fileData = e.target?.result;
-            // 更新本地消息记录
-            const fileMessage: ChatMsgItem = {
-              sender: {
-                id: localParticipant.identity,
-                name: localParticipant.name || localParticipant.identity,
-              },
-              message: null,
-              type: 'file',
-              roomName: space.name,
-              file: {
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                data: fileData,
-              },
-              timestamp: Date.now(),
-            };
+      // 检查文件大小限制（建议限制为 10MB）
+      const maxFileSize = 100 * 1024 * 1024; // 100MB
+      if (file.size > maxFileSize) {
+        messageApi.error({
+          content: t('msg.error.file.too_large') + ' 100MB',
+          duration: 3,
+        });
+        return false;
+      }
 
-            // 发送文件消息
-            socket.emit('chat_file', fileMessage);
-          };
-          if (file.size < 5 * 1024 * 1024) {
-            // 小于5MB的文件
-            reader.readAsDataURL(file);
+      sendFileConfirm(async () => {
+        try {
+          // 对于大文件，使用分块上传或直接上传到服务器
+          if (file.size > 1 * 1024 * 1024) {
+            // 大于1MB的文件
+            await handleLargeFileUpload(file);
           } else {
-            reader.readAsArrayBuffer(file);
+            // 小文件直接通过 Socket 发送
+            await handleSmallFileUpload(file);
           }
         } catch (e) {
           messageApi.error({
             content: `${t('msg.error.file.upload')}: ${e}`,
-            duration: 1,
+            duration: 3,
           });
-          console.error('Error reading file:', e);
+          console.error('Error uploading file:', e);
         }
       });
       return false; // 阻止自动上传
+    };
+
+    // 处理小文件上传（通过 Socket）
+    const handleSmallFileUpload = async (file: FileType) => {
+      return new Promise<void>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const fileData = e.target?.result;
+          console.log('Small file upload:', file.size, file.name, file.type);
+
+          const fileMessage: ChatMsgItem = {
+            sender: {
+              id: localParticipant.identity,
+              name: localParticipant.name || localParticipant.identity,
+            },
+            message: null,
+            type: 'file',
+            roomName: space.name,
+            file: {
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              data: fileData,
+            },
+            timestamp: Date.now(),
+          };
+
+          // 发送文件消息
+          socket.emit('chat_file', fileMessage);
+          resolve();
+        };
+        reader.onerror = () => {
+          reject(new Error('Failed to read file'));
+        };
+        reader.readAsDataURL(file);
+      });
+    };
+
+    // 处理大文件上传（通过 HTTP API）
+    const handleLargeFileUpload = async (file: FileType) => {
+      try {
+        const response = await api.uploadFile(file, space.name, localParticipant);
+
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('Large file upload success:', result);
+
+        // 创建文件消息，使用服务器返回的 URL
+        let timestamp = Date.now();
+        const fileMessage: ChatMsgItem = {
+          id: timestamp.toString(),
+          sender: {
+            id: localParticipant.identity,
+            name: localParticipant.name || localParticipant.identity,
+          },
+          message: `file: ${file.name}`,
+          type: 'file',
+          roomName: space.name,
+          file: {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            url: result.fileUrl, // 使用文件服务 API
+          },
+          timestamp,
+        };
+        // 通过 Socket 发送文件消息通知
+        socket.emit('chat_file', fileMessage);
+
+        messageApi.success({
+          content: t('msg.success.file.upload'),
+          duration: 2,
+        });
+      } catch (error) {
+        console.error('Large file upload failed:', error);
+        throw error;
+      }
     };
 
     const scrollToBottom = () => {
@@ -307,7 +375,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
         </div>
 
         <div className={styles.tool}>
-          <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
+          <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="*">
             <Button shape="circle" style={{ background: 'transparent', border: 'none' }}>
               <SvgResource type="add" svgSize={18} color="#fff" />
             </Button>

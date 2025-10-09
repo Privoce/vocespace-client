@@ -28,7 +28,6 @@ import { ChatToggle } from './toggles/chat_toggle';
 import { MoreButton } from './toggles/more_button';
 import { ControlType, WsBase, WsControlParticipant, WsTo } from '@/lib/std/device';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from './drawer_tools';
-import { AppDrawer } from '../apps/app_drawer';
 import { ParticipantManage } from '../participant/manage';
 import { api } from '@/lib/api';
 import { SizeType } from 'antd/es/config-provider/SizeContext';

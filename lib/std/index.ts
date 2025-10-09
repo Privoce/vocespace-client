@@ -1,6 +1,7 @@
 import os from 'os';
 import clsx from 'clsx';
 import { Trans } from '../i18n/i18n';
+import { GetProp, UploadProps } from 'antd';
 /**
  * Option<T>
  *
@@ -276,3 +277,6 @@ export const isUndefinedString = (value: string | undefined): boolean => {
 export const isUndefinedNumber = (value: number | undefined): boolean => {
   return value === undefined || isNaN(value);
 };
+
+
+export type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];

@@ -1,4 +1,5 @@
-import { connect_endpoint } from '../std';
+import { LocalParticipant } from 'livekit-client';
+import { connect_endpoint, FileType } from '../std';
 
 export const fetchLinkPreview = async (text: string) => {
   const url = new URL(connect_endpoint('/api/chat'), window.location.origin);
@@ -22,4 +23,21 @@ export const getChatMsg = async (spaceName: string) => {
   url.searchParams.append('chat', 'true');
   url.searchParams.append('history', 'true');
   return await fetch(url.toString());
+};
+
+export const uploadFile = async (
+  file: FileType,
+  space: string,
+  localParticipant: LocalParticipant,
+) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('roomName', space);
+  formData.append('senderId', localParticipant.identity);
+  formData.append('senderName', localParticipant.name || localParticipant.identity);
+
+  return await fetch('/api/upload', {
+    method: 'POST',
+    body: formData,
+  });
 };

@@ -3,10 +3,8 @@ import { SvgResource } from '@/app/resources/svg';
 import { audio } from '@/lib/audio';
 import { useI18n } from '@/lib/i18n/i18n';
 import { WsSender, WsTo } from '@/lib/std/device';
-import { ParticipantSettings } from '@/lib/std/space';
 import { LayoutContext } from '@livekit/components-react';
 import { Button, Popover, Tooltip } from 'antd';
-import { Participant } from 'livekit-client';
 import { useMemo } from 'react';
 
 export interface RaiseHandProps {

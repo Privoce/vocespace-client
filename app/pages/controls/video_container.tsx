@@ -541,12 +541,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       });
 
       socket.on('chat_file_response', (msg: ChatMsgItem) => {
+        console.warn(msg);
         if (msg.roomName === space.name) {
           setChatMsg((prev) => {
             // 使用函数式更新来获取最新的 messages 状态
             const existingFile = prev.msgs.find((m) => m.id === msg.id);
             if (!existingFile) {
-              let isOthers = msg.id !== space.localParticipant.identity;
+              let isOthers = msg.sender.id !== space.localParticipant.identity;
               return {
                 unhandled: prev.unhandled + (isOthers ? 1 : 0),
                 msgs: [...prev.msgs, msg],
