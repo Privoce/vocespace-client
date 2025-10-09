@@ -278,5 +278,13 @@ export const isUndefinedNumber = (value: number | undefined): boolean => {
   return value === undefined || isNaN(value);
 };
 
-
 export type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
+
+export enum CreateSpaceError {
+  ParamLack = 'common.create_space.error.param',
+  SpaceExist = 'common.create_space.error.exist',
+}
+
+export const ERROR_CODE = {
+  createSpace: CreateSpaceError,
+};

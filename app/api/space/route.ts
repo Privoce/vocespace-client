@@ -1,6 +1,7 @@
 // /app/api/space/route.ts
 import {
   DEFAULT_USER_DEFINE_STATUS,
+  ERROR_CODE,
   isUndefinedString,
   UserDefineStatus,
   UserStatus,
@@ -988,6 +989,26 @@ export async function GET(request: NextRequest) {
   const isTimeRecord = request.nextUrl.searchParams.get('timeRecord') === 'true';
   const isChat = request.nextUrl.searchParams.get('chat') === 'true';
   const isHistory = request.nextUrl.searchParams.get('history') === 'true';
+  const isCreateSpace = request.nextUrl.searchParams.get('space') === 'create';
+  // 创建一个新的空间 -------------------------------------------------------------------------------
+  if (isCreateSpace) {
+    const spaceOwner = request.nextUrl.searchParams.get('owner');
+    if (!spaceOwner) {
+      return NextResponse.json({ error: ERROR_CODE.createSpace.ParamLack }, { status: 200 });
+    } else {
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceOwner);
+      if (spaceInfo) {
+        return NextResponse.json({ error: ERROR_CODE.createSpace.SpaceExist }, { status: 200 });
+      }
+      const newSpaceInfo = {
+        ...DEFAULT_SPACE_INFO(Date.now()),
+        ownerId: `${spaceOwner}__${spaceOwner}`,
+      } as SpaceInfo;
+
+      await SpaceManager.setSpaceInfo(spaceOwner, newSpaceInfo);
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+  }
   // 获取某个空间的聊天记录 --------------------------------------------------------------------------
   if (isChat && isHistory && spaceName) {
     const chatMessages = await SpaceManager.getChatMessages(spaceName);

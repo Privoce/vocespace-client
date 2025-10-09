@@ -27,6 +27,7 @@ import {
   Radio,
   Tag,
   theme,
+  Tooltip,
 } from 'antd';
 
 import {
@@ -46,8 +47,9 @@ import { WsJoinRoom, WsRemove, WsSender } from '@/lib/std/device';
 import { api } from '@/lib/api';
 import { UpdateRoomParam, UpdateRoomType } from '@/lib/api/channel';
 import { Room } from 'livekit-client';
-import { isMobile as is_mobile, UserStatus } from '@/lib/std';
+import { CreateSpaceError, isMobile as is_mobile, UserStatus } from '@/lib/std';
 import { DEFAULT_DRAWER_PROP } from './drawer_tools';
+import { VocespaceConfig } from '@/lib/std/conf';
 
 interface ChannelProps {
   // roomName: string;
@@ -64,6 +66,7 @@ interface ChannelProps {
   toRenameSettings: () => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
   showSingleFlotApp: (appKey: AppKey) => void;
+  config: VocespaceConfig;
 }
 
 export interface ChannelExports {
@@ -77,6 +80,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
   (
     {
       space,
+      config,
       settings,
       messageApi,
       localParticipantId,
@@ -811,6 +815,40 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       ];
     }, [mainContext, subChildren, childRooms, subActiveKey, mainJoinVis]);
 
+    /**
+     * 创建属于自己的空间, 直接使用 api.createSpace，将当前用户作为空间的拥有者，在数据层创建，不跳转
+     */
+    const createOwnSpace = async () => {
+      let ownSpace = settings.participants[localParticipantId].name;
+      const response = await api.createSpace(ownSpace);
+      if (response.ok) {
+        const { success, error }: { success?: boolean; error?: CreateSpaceError } =
+          await response.json();
+        if (success) {
+          // 新建标签页进行跳转
+          Modal.success({
+            title: t('common.create_space.success'),
+            content: `${t('common.create_space.jump')} ${config.serverUrl}/${ownSpace}`,
+            okText: t('common.create_space.ok'),
+            onOk: () => {
+              window.open(`/${ownSpace}`, '_blank');
+            },
+            cancelText: t('common.create_space.cancel'),
+          });
+        } else {
+          messageApi.error({
+            content: t(error as string),
+            duration: 3,
+          });
+        }
+      } else {
+        messageApi.error({
+          content: t('common.create_space.error.unknown'),
+          duration: 3,
+        });
+      }
+    };
+
     useImperativeHandle(ref, () => ({
       join: joinChildRoom,
       joinMain: joinMainRoom,
@@ -1008,6 +1046,14 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                 <div className={styles.roomInfo}>
                   {/* <SvgResource.Hash className={styles.roomIcon} /> */}
                   <span className={styles.roomName}>{space.name}</span>
+                  <Tooltip title={t('common.create_own_space')} placement="right">
+                    <Button
+                      size="small"
+                      type="text"
+                      icon={<PlusCircleOutlined></PlusCircleOutlined>}
+                      onClick={createOwnSpace}
+                    ></Button>
+                  </Tooltip>
                 </div>
                 <div className={styles.headerActions}>
                   <Tag color="#22CCEE">

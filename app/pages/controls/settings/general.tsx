@@ -16,8 +16,6 @@ export interface GeneralSettingsProps {
   localParticipant: LocalParticipant;
   messageApi: MessageInstance;
   appendStatus: boolean;
-  setAppendStatus: (append: boolean) => void;
-  setUserStatus?: (status: UserStatus | string) => Promise<void>;
   username: string;
   setUsername: (username: string) => void;
   openPromptSound: boolean;
@@ -31,8 +29,6 @@ export function GeneralSettings({
   localParticipant,
   messageApi,
   appendStatus,
-  setAppendStatus,
-  setUserStatus,
   username,
   setUsername,
   openPromptSound,

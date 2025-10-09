@@ -48,9 +48,21 @@ export default {
     high_quality_desc:
       '开启后，视频，音频和屏幕分享将以固定的分辨率以及更高的质量传输，但可能会增加带宽使用和延迟。',
     socket_reconnect: '正在重新连接...',
+    create_own_space: '创建自己的 VoceSpace',
+    create_space: {
+      jump: '跳转到您的 VoceSpace?',
+      success: '创建空间成功',
+      error: {
+        unknown: '创建空间失败，请稍后再试或手动创建',
+        param: '缺少必要参数，创建空间失败',
+        exist: '空间已存在，请检查是否已经创建过或手动创建以访问',
+      },
+      ok: '跳转',
+      cancel: '取消',
+    },
   },
   reaction: {
-    title: "反应"
+    title: '反应',
   },
   recording: {
     title: '录制记录',
@@ -69,7 +81,7 @@ export default {
       enving: '获取环境变量中...',
       unconnect: '无法连接到S3服务',
     },
-    copy: { 
+    copy: {
       title: '复制链接',
       success: '下载链接已复制到剪贴板',
       error: '复制链接失败，请手动复制',

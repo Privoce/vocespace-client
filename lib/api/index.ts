@@ -6,6 +6,7 @@ import { sendRecordRequest, updateRecord } from './record';
 import {
   allSpaceInfos,
   checkUsername,
+  createSpace,
   defineUserStatus,
   deleteSpaceParticipant,
   getSpaceInfo,
@@ -25,6 +26,7 @@ import {
 export const api = {
   // ---- space api --------
   joinSpace,
+  createSpace,
   allSpaceInfos,
   historySpaceInfos,
   getUniqueUsername,

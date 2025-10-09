@@ -28,6 +28,13 @@ export const joinSpace = async (spaceName: string, username: string, region?: st
   return await fetch(url.toString());
 };
 
+export const createSpace = async (username: string) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('space', 'create');
+  url.searchParams.append('owner', username);
+  return await fetch(url.toString());
+};
+
 /**
  * 获取所有空间的信息
  */

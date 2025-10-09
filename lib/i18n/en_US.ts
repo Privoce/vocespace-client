@@ -48,9 +48,21 @@ export default {
     high_quality_desc:
       'When enabled, video, audio, and screen sharing will be transmitted at a fixed resolution and higher quality, but may increase bandwidth usage and latency.',
     socket_reconnect: 'Reconnecting...',
+    create_own_space: 'Create your own VoceSpace',
+    create_space: {
+      jump: 'Jump to your Vocespace?',
+      success: 'Create space successfully',
+      error: {
+        unknown: 'Create space failed, please try again later or create manually',
+        param: '缺少必要参数，创建空间失败',
+        exist: '空间已存在，请检查是否已经创建过或手动创建以访问',
+      },
+      ok: 'Jump',
+      cancel: 'Cancel',
+    },
   },
   reaction: {
-    title: "Reaction"
+    title: 'Reaction',
   },
   recording: {
     title: 'Recording Record',

@@ -951,6 +951,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         {space && (
           <Channel
             ref={channelRef}
+            config={config}
             space={space}
             localParticipantId={space.localParticipant.identity}
             settings={settings}
