@@ -515,3 +515,4 @@ lk load-test \
 - [ ] 分开名字更改和状态更改，使用 cursor : pointer
 - [x] 发送对话框 ok -> uploading
 - [x] 发送可以取消
+- [x] 修复名字消失/溢出 

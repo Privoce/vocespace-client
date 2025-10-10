@@ -283,7 +283,15 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                 }
                 items={items}
               >
-                <div className="lk-participant-metadata-item" style={{ width: '100%' }}>
+                <div
+                  className="lk-participant-metadata-item"
+                  style={{
+                    width: '100%',
+                    overflow: 'clip',
+                    whiteSpace: 'nowrap',
+                    textOverflow: 'clip',
+                  }}
+                >
                   {trackReference.source === Track.Source.Camera ? (
                     <>
                       {isEncrypted && <LockLockedIcon style={{ marginRight: '0.25rem' }} />}
@@ -295,29 +303,13 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                         show={'muted'}
                       ></TrackMutedIndicator>
                       <Tooltip title={trackReference.participant.name} placement="right">
-                        <ParticipantName
-                          style={{
-                            overflow: 'clip',
-                            textOverflow: 'clip',
-                            textWrap: 'nowrap',
-                            width: 'calc(100% - 1.25rem)',
-                          }}
-                        />
+                        <ParticipantName />
                       </Tooltip>
                     </>
                   ) : (
                     <>
                       <ScreenShareIcon style={{ marginRight: '0.25rem' }} />
-                      <ParticipantName
-                        style={{
-                          maxWidth: 'calc(100% - 1.5rem)',
-                          overflow: 'clip',
-                          textWrap: 'nowrap',
-                          textOverflow: 'ellipsis',
-                        }}
-                      >
-                        &apos;s screen
-                      </ParticipantName>
+                      <ParticipantName>&apos;s screen</ParticipantName>
                     </>
                   )}
                 </div>
