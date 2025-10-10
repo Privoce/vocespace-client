@@ -9,12 +9,12 @@ import {
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { Drawer, Input, message, Modal } from 'antd';
+import { Button, Drawer, Input, message, Modal } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
 import { Settings, SettingsExports, TabKey } from './settings/settings';
-import { useRecoilState } from 'recoil';
+import { useRecoilState, waitForAll } from 'recoil';
 import {
   chatMsgState,
   socket,
@@ -33,6 +33,7 @@ import { api } from '@/lib/api';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
 import equal from 'fast-deep-equal';
 import { Reaction } from './widgets/reaction';
+import { ChatMsgItem } from '@/lib/std/chat';
 
 /** @public */
 export type ControlBarControls = {
@@ -294,12 +295,77 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const onChatClose = () => {
       setChatOpen(false);
     };
-    const sendFileConfirm = (onOk: () => Promise<void>) => {
-      Modal.confirm({
+    const sendFileConfirm = (onOk: (abortController?: AbortController) => Promise<ChatMsgItem>) => {
+      const modal = Modal.confirm({
         title: t('common.send'),
         content: t('common.send_file_or'),
-        onOk,
+        okText: t('common.send'),
+        cancelText: t('common.cancel'),
+        onOk: async () => {
+          modal.destroy();
+          await sendingFile(onOk);
+        },
       });
+    };
+
+    const sendingFile = async (
+      onOk: (abortController?: AbortController) => Promise<ChatMsgItem>,
+    ) => {
+      // 创建 AbortController 来控制上传取消
+      const abortController = new AbortController();
+      let isUploading = false;
+
+      const sending = Modal.confirm({
+        title: t('common.send'),
+        content: t('common.sending'),
+        okText: (
+          <Button type="primary" loading>
+            {t('common.sending')}
+          </Button>
+        ),
+        cancelText: t('common.cancel'),
+        onCancel: () => {
+          // 如果正在上传，则中断上传
+          if (isUploading) {
+            abortController.abort();
+            messageApi.info({
+              content: t('msg.info.file.upload_cancelled'),
+              duration: 2,
+            });
+          }
+        },
+      });
+
+      try {
+        isUploading = true;
+        // 传递 abortController 给上传函数
+        const fileMessage = await onOk(abortController);
+        isUploading = false;
+
+        if (fileMessage) {
+          sending.destroy();
+          socket.emit('chat_file', fileMessage);
+          messageApi.success({
+            content: t('msg.success.file.upload'),
+            duration: 2,
+          });
+        }
+      } catch (error: any) {
+        isUploading = false;
+        sending.destroy();
+
+        if (error.name === 'AbortError') {
+          // 用户取消了上传
+          console.log('Upload cancelled by user');
+        } else {
+          // 其他错误
+          // messageApi.error({
+          //   content: `${t('msg.error.file.upload')}: ${error.message}`,
+          //   duration: 3,
+          // });
+          console.error(error);
+        }
+      }
     };
 
     // [more] -----------------------------------------------------------------------------------------------------

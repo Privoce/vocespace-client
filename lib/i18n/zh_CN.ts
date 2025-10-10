@@ -35,6 +35,7 @@ export default {
     chat_placeholder: '请输入消息',
     chat_drag_file_here: '将文件拖放到此处',
     send: '发送',
+    sending: '发送中',
     send_file_or: '是否发送文件？',
     leave: '离开',
     share_screen: '共享屏幕',
@@ -510,6 +511,9 @@ export default {
       remove_participant: '您已被房间主持人移除房间',
       req_record: '请求进行录制',
       recording: "房间在10s后将开启录制，若您不希望被录制，可点击'离开房间'按钮退出。",
+      file: {
+        upload_cancelled: '文件上传已取消',
+      },
     },
     error: {
       conf_load: '配置加载失败，请检查vocespace.conf.json文件是否存在',

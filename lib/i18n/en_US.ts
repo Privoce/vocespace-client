@@ -35,6 +35,7 @@ export default {
     chat_placeholder: 'Please enter a message',
     chat_drag_file_here: 'Drag file here',
     send: 'Send',
+    sending: 'Sending',
     send_file_or: 'Do you want to send this file?',
     leave: 'Leave',
     share_screen: 'Share Screen',
@@ -538,6 +539,9 @@ export default {
       invite_device: 'Inviting you to enable:',
       remove_participant: 'You have been removed from the room by the room host',
       req_record: 'Request to start recording',
+      file: {
+        upload_cancelled: 'File upload cancelled',
+      },
     },
     error: {
       conf_load:

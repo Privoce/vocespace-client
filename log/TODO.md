@@ -497,9 +497,9 @@ lk load-test \
     - [x] 完整处理数据结构
     - [x] 处理status info 中的显示
 - [x] 用户不在房间中时，离开房间按钮需要disabled
-- [ ] 多空间 (soul, twitch, clubhouse)
-  - [ ] 短期
-    - [ ] 提供一个用户API接口创建一个Space(link)
+- [x] 多空间 (soul, twitch, clubhouse)
+  - [x] 短期
+    - [x] 提供一个用户API接口创建一个Space(link)
 - [x] 进入房间前设备检测
 - [x] 举手在control bar上设置入口(zoom)
 - [x] 大文件限制 100MB
@@ -512,3 +512,6 @@ lk load-test \
   - [ ] 集成服务，客户独立付费
   - [ ] 语音转文本
   - [ ] 语音转语音
+- [ ] 分开名字更改和状态更改，使用 cursor : pointer
+- [x] 发送对话框 ok -> uploading
+- [x] 发送可以取消

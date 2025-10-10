@@ -29,6 +29,7 @@ export const uploadFile = async (
   file: FileType,
   space: string,
   localParticipant: LocalParticipant,
+  abortController?: AbortController,
 ) => {
   const formData = new FormData();
   formData.append('file', file);
@@ -39,5 +40,6 @@ export const uploadFile = async (
   return await fetch('/api/upload', {
     method: 'POST',
     body: formData,
+    signal: abortController?.signal, // 添加取消信号
   });
 };

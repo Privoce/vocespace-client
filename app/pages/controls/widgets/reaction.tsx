@@ -96,7 +96,7 @@ export interface ReactionInnerProps {
 
 export function ReactionInner({ participant, setKeeping, wsTo }: ReactionInnerProps) {
   return (
-    <div style={{ width: '140px', height: 'fit-content' }}>
+    <div style={{ width: '200px', height: 'fit-content' }}>
       <RaiseKeeper
         isKeeping={participant.raiseHand}
         setKeeping={setKeeping}
@@ -107,7 +107,6 @@ export function ReactionInner({ participant, setKeeping, wsTo }: ReactionInnerPr
           backgroundColor: participant.raiseHand ? '#3f3f3f' : '#333',
           width: '100%',
           borderRadius: 4,
-          padding: 4,
         }}
       ></RaiseKeeper>
     </div>

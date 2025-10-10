@@ -23,7 +23,7 @@ export interface EnhancedChatProps {
   setOpen: (open: boolean) => void;
   onClose: () => void;
   space: Room;
-  sendFileConfirm: (onOk: () => Promise<void>) => void;
+  sendFileConfirm: (onOk: (abortController?: AbortController) => Promise<ChatMsgItem>) => void;
   messageApi: MessageInstance;
 }
 
@@ -134,15 +134,15 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
         return false;
       }
 
-      sendFileConfirm(async () => {
+      sendFileConfirm(async (abortController?: AbortController): Promise<ChatMsgItem> => {
         try {
           // 对于大文件，使用分块上传或直接上传到服务器
           if (file.size > 1 * 1024 * 1024) {
             // 大于1MB的文件
-            await handleLargeFileUpload(file);
+            return await handleLargeFileUpload(file, abortController);
           } else {
             // 小文件直接通过 Socket 发送
-            await handleSmallFileUpload(file);
+            return await handleSmallFileUpload(file);
           }
         } catch (e) {
           messageApi.error({
@@ -150,14 +150,15 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
             duration: 3,
           });
           console.error('Error uploading file:', e);
+          return Promise.reject(e);
         }
       });
       return false; // 阻止自动上传
     };
 
     // 处理小文件上传（通过 Socket）
-    const handleSmallFileUpload = async (file: FileType) => {
-      return new Promise<void>((resolve, reject) => {
+    const handleSmallFileUpload = async (file: FileType): Promise<ChatMsgItem> => {
+      return new Promise<ChatMsgItem>((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => {
           const fileData = e.target?.result;
@@ -181,8 +182,8 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
           };
 
           // 发送文件消息
-          socket.emit('chat_file', fileMessage);
-          resolve();
+          // socket.emit('chat_file', fileMessage);
+          resolve(fileMessage);
         };
         reader.onerror = () => {
           reject(new Error('Failed to read file'));
@@ -192,9 +193,9 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
     };
 
     // 处理大文件上传（通过 HTTP API）
-    const handleLargeFileUpload = async (file: FileType) => {
+    const handleLargeFileUpload = async (file: FileType, abortController?: AbortController): Promise<ChatMsgItem> => {
       try {
-        const response = await api.uploadFile(file, space.name, localParticipant);
+        const response = await api.uploadFile(file, space.name, localParticipant, abortController);
 
         if (!response.ok) {
           throw new Error(`Upload failed: ${response.statusText}`);
@@ -222,13 +223,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
           },
           timestamp,
         };
-        // 通过 Socket 发送文件消息通知
-        socket.emit('chat_file', fileMessage);
-
-        messageApi.success({
-          content: t('msg.success.file.upload'),
-          duration: 2,
-        });
+        return fileMessage;
       } catch (error) {
         console.error('Large file upload failed:', error);
         throw error;
