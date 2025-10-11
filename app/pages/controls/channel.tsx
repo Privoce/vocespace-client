@@ -50,6 +50,7 @@ import { Room } from 'livekit-client';
 import { CreateSpaceError, isMobile as is_mobile, UserStatus } from '@/lib/std';
 import { DEFAULT_DRAWER_PROP } from './drawer_tools';
 import { VocespaceConfig } from '@/lib/std/conf';
+import { audio } from '@/lib/audio';
 
 interface ChannelProps {
   // roomName: string;
@@ -206,7 +207,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
 
     useEffect(() => {
       // 监听加入私密房间的socket事件 --------------------------------------------------------------------------
-      socket.on('join_privacy_room_response', (msg: WsJoinRoom) => {
+      socket.on('join_privacy_room_response', async (msg: WsJoinRoom) => {
         if (msg.space === space.name && msg.receiverId === localParticipantId) {
           if (!joinModalOpen) {
             if (msg.confirm === false) {
@@ -219,6 +220,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
               //同意加入
               agreeJoinRoom(msg.childRoom);
             } else {
+              await audio.wave();
               setJoinParticipant({
                 id: msg.senderId,
                 name: msg.senderName,
