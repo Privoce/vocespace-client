@@ -274,7 +274,15 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
             </div>
             <div
               className="lk-participant-metadata"
-              style={{ zIndex: 1000, width: 'fit-content', maxWidth: '44%' }}
+              style={{
+                zIndex: 1000,
+                width: 'fit-content',
+                maxWidth: '44%',
+                overflow: 'hidden',
+                padding: 4,
+                backgroundColor: '#00000080',
+                display: 'flex',
+              }}
             >
               <StatusInfo
                 disabled={
@@ -282,38 +290,52 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                   trackReference.source !== Track.Source.Camera
                 }
                 items={items}
-              >
-                <div
-                  className="lk-participant-metadata-item"
-                  style={{
-                    width: '100%',
-                    overflow: 'clip',
-                    whiteSpace: 'nowrap',
-                    textOverflow: 'clip',
-                  }}
-                >
-                  {trackReference.source === Track.Source.Camera ? (
-                    <>
-                      {isEncrypted && <LockLockedIcon style={{ marginRight: '0.25rem' }} />}
-                      <TrackMutedIndicator
-                        trackRef={{
-                          participant: trackReference.participant,
-                          source: Track.Source.Microphone,
-                        }}
-                        show={'muted'}
-                      ></TrackMutedIndicator>
-                      <Tooltip title={trackReference.participant.name} placement="right">
-                        <ParticipantName />
-                      </Tooltip>
-                    </>
-                  ) : (
-                    <>
-                      <ScreenShareIcon style={{ marginRight: '0.25rem' }} />
-                      <ParticipantName>&apos;s screen</ParticipantName>
-                    </>
-                  )}
-                </div>
-              </StatusInfo>
+                children={
+                  <Tooltip
+                    placement="right"
+                    title={
+                      trackReference.source === Track.Source.ScreenShare &&
+                      `${trackReference.participant.name}'s screen`
+                    }
+                  >
+                    <div
+                      className="lk-participant-metadata-item"
+                      style={{
+                        whiteSpace: 'nowrap',
+                        width: 'fit-content',
+                        padding: 0,
+                        minWidth: 0,
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        backgroundColor: 'transparent',
+                        color: '#fff',
+                      }}
+                    >
+                      {trackReference.source === Track.Source.Camera ? (
+                        <>
+                          {isEncrypted && <LockLockedIcon style={{ marginRight: '0.25rem' }} />}
+                          <TrackMutedIndicator
+                            trackRef={{
+                              participant: trackReference.participant,
+                              source: Track.Source.Microphone,
+                            }}
+                            show={'muted'}
+                          ></TrackMutedIndicator>
+                          <Tooltip title={trackReference.participant.name} placement="right">
+                            <ParticipantName />
+                          </Tooltip>
+                        </>
+                      ) : (
+                        <>
+                          <ScreenShareIcon style={{ marginRight: '0.25rem' }} />
+                          <ParticipantName>&apos;s screen</ParticipantName>
+                        </>
+                      )}
+                    </div>
+                  </Tooltip>
+                }
+              ></StatusInfo>
             </div>
             <div
               className="lk-participant-metadata"

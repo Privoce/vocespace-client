@@ -36,7 +36,7 @@ export function AppFlotPin({
   style = {
     width: 'fit-content',
     padding: 4,
-    backgroundColor: '#000',
+    backgroundColor: '#00000080',
     margin: '0 4px',
     borderRadius: 4,
   },

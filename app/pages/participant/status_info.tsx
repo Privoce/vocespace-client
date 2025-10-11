@@ -105,16 +105,45 @@ export function useStatusInfo({
         break;
     }
 
+    const stateItems: MenuProps['items'] = [
+      {
+        key: 'user_status',
+        label: (
+          <div
+            onClick={(_e) => {
+              toRenameSettings && toRenameSettings(true);
+            }}
+          >
+            <div className={styles.status_item_inline} style={{ width: '220px', height: '38px' }}>
+              <div className={styles.status_item_inline}>
+                {item?.icon}
+                {item.title}
+              </div>
+              <SvgResource type="modify" svgSize={16} color="#fff"></SvgResource>
+            </div>
+          </div>
+        ),
+      },
+    ];
+
     return {
       label: item.title,
       icon: item.icon,
       tag: (
-        <Tooltip placement="right" title={item.title}>
-          <div className={styles.status_tag}>
-            {item.icon && <span>{item.icon}</span>}
-            {item.title}
-          </div>
-        </Tooltip>
+        <Dropdown
+          placement="topRight"
+          trigger={['click']}
+          menu={{
+            items: stateItems,
+          }}
+        >
+          <Tooltip placement="right" title={item.title}>
+            <div className={styles.status_tag}>
+              {item.icon && <span>{item.icon}</span>}
+              {item.title}
+            </div>
+          </Tooltip>
+        </Dropdown>
       ),
     };
   }, [settings, trackReference.participant.identity, t]);
@@ -156,26 +185,8 @@ export function useStatusInfo({
           </div>
         ),
       },
-      {
-        key: 'user_status',
-        label: (
-          <div
-            onClick={(_e) => {
-              toRenameSettings && toRenameSettings(true);
-            }}
-          >
-            <div className={styles.status_item_inline} style={{ width: '100%' }}>
-              <div className={styles.status_item_inline}>
-                {userStatusDisply?.icon}
-                {userStatusDisply.label}
-              </div>
-              <SvgResource type="add" svgSize={14} color="#fff"></SvgResource>
-            </div>
-          </div>
-        ),
-      },
     ];
-  }, [settings.participants, userStatusDisply, defineStatus]);
+  }, [settings.participants]);
 
   return {
     items,

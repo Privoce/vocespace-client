@@ -50,7 +50,7 @@ import { ParticipantTileMiniProps } from './mini';
 import { RaiseHand, RaiseHandler } from '../controls/widgets/raise';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
-import { Button, Tag } from 'antd';
+import { Button, Tag, Tooltip } from 'antd';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps {
   toSettings?: (isDefineStatus?: boolean) => void;
@@ -652,40 +652,60 @@ export const ParticipantItem: (
             </div>
             <div
               className="lk-participant-metadata"
-              style={{ zIndex: 4, width: 'fit-content', maxWidth: '100px' }}
+              style={{
+                zIndex: 4,
+                width: 'fit-content',
+                maxWidth: '44%',
+                overflow: 'hidden',
+                padding: 4,
+                backgroundColor: '#00000080',
+                display: 'flex',
+              }}
             >
               <StatusInfo
                 disabled={trackReference.participant.identity != localParticipant.identity}
                 items={items}
                 children={
-                  <div
-                    className="lk-participant-metadata-item"
-                    style={{
-                      width: '100%',
-                      overflow: 'clip',
-                      whiteSpace: 'nowrap',
-                      textOverflow: 'clip',
-                    }}
+                  <Tooltip
+                    placement="right"
+                    title={
+                      trackReference.source === Track.Source.ScreenShare &&
+                      `${trackReference.participant.name}'s screen`
+                    }
                   >
-                    {trackReference.source === Track.Source.Camera ? (
-                      <>
-                        {isEncrypted && <LockLockedIcon style={{ marginRight: '0.25rem' }} />}
-                        <TrackMutedIndicator
-                          trackRef={{
-                            participant: trackReference.participant,
-                            source: Track.Source.Microphone,
-                          }}
-                          show={'muted'}
-                        ></TrackMutedIndicator>
-                        <ParticipantName />
-                      </>
-                    ) : (
-                      <>
-                        <ScreenShareIcon style={{ marginRight: '0.25rem' }} />
-                        <ParticipantName>&apos;s screen</ParticipantName>
-                      </>
-                    )}
-                  </div>
+                    <div
+                      className="lk-participant-metadata-item"
+                      style={{
+                        whiteSpace: 'nowrap',
+                        width: 'fit-content',
+                        padding: 0,
+                        minWidth: 0,
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        backgroundColor: 'transparent',
+                      }}
+                    >
+                      {trackReference.source === Track.Source.Camera ? (
+                        <>
+                          {isEncrypted && <LockLockedIcon style={{ marginRight: '0.25rem' }} />}
+                          <TrackMutedIndicator
+                            trackRef={{
+                              participant: trackReference.participant,
+                              source: Track.Source.Microphone,
+                            }}
+                            show={'muted'}
+                          ></TrackMutedIndicator>
+                          <ParticipantName />
+                        </>
+                      ) : (
+                        <>
+                          <ScreenShareIcon style={{ marginRight: '0.25rem' }} />
+                          <ParticipantName>&apos;s screen</ParticipantName>
+                        </>
+                      )}
+                    </div>
+                  </Tooltip>
                 }
               ></StatusInfo>
 

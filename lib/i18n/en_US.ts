@@ -493,7 +493,7 @@ export default {
       device: 'Video Device',
     },
     virtual: {
-      title: 'Virtual Role',
+      title: 'Video Preview',
       tab: {
         model: 'Model',
         background: 'Background',

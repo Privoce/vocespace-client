@@ -56,7 +56,7 @@ export function RaisePin({
   style = {
     width: 'fit-content',
     padding: 2,
-    backgroundColor: '#000',
+    backgroundColor: '#00000080',
     margin: '0 4px',
     borderRadius: 4,
   },
