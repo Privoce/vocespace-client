@@ -511,12 +511,12 @@ lk load-test \
 - [x] 发送对话框 ok -> uploading
 - [x] 发送可以取消
 - [x] 修复名字消失/溢出 
-- [ ] 增加打招呼时在子房间时也要有加入按钮
+- [x] 增加打招呼时在子房间时也要有加入按钮
 - [x] 加入子房间发送给房主时需要提示音
 - [x] e2ee的密码不要显示出来
-- [ ] 默认子房间
-  - [ ] Meeting Room
-  - [ ] Coffee Break
+- [x] 默认子房间
+  - [x] Meeting Room
+  - [x] Coffee Break
 - [x] 名字/分享文本溢出，颜色
 
 --- AI

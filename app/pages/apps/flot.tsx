@@ -65,7 +65,7 @@ export function FlotLayout({
           body: {
             background: '#1a1a1a',
             width: '360px',
-            maxHeight: "72vh",
+            maxHeight: "86vh",
             overflowY: "scroll",
             paddingRight: "0px",
             scrollbarWidth: "thin",

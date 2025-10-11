@@ -183,6 +183,11 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       } else if (!selfRoom && remoteRoom) {
         // 本地用户在主空间中，远程用户在子房间中
         inSpace = true;
+      } else if (selfRoom && remoteRoom) {
+        // 本地用户和远程用户都在子房间中
+        if (selfRoom.name !== remoteRoom.name) {
+          childRoom = selfRoom;
+        }
       }
 
       return {
@@ -282,6 +287,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                 padding: 4,
                 backgroundColor: '#00000080',
                 display: 'flex',
+                borderRadius: 4,
               }}
             >
               <StatusInfo

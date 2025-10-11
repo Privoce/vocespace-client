@@ -304,7 +304,20 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
   persistence: true,
   record: { active: false },
   startAt,
-  children: [],
+  children: [
+    {
+      name: 'Meeting Room',
+      participants: [],
+      ownerId: 'system',
+      isPrivate: false,
+    },
+    {
+      name: '☕️ Coffee Break',
+      participants: [],
+      ownerId: 'system',
+      isPrivate: false,
+    },
+  ],
   apps: ['todo', 'countdown'],
 });
 

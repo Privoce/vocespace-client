@@ -660,6 +660,7 @@ export const ParticipantItem: (
                 padding: 4,
                 backgroundColor: '#00000080',
                 display: 'flex',
+                borderRadius: 4
               }}
             >
               <StatusInfo
