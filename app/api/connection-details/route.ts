@@ -16,6 +16,8 @@ export async function GET(request: NextRequest) {
     const participantName = request.nextUrl.searchParams.get('participantName');
     const metadata = request.nextUrl.searchParams.get('metadata') ?? '';
     const region = request.nextUrl.searchParams.get('region');
+    // with auth id (from vocespace platform)
+    const auth = request.nextUrl.searchParams.get('auth');
     const livekitServerUrl = region ? getLiveKitURL(region) : LIVEKIT_URL;
     let randomParticipantPostfix = request.cookies.get(COOKIE_KEY)?.value;
     if (livekitServerUrl === undefined) {
@@ -33,7 +35,10 @@ export async function GET(request: NextRequest) {
     // if (!randomParticipantPostfix) {
     //   randomParticipantPostfix = randomString(4);
     // }
-    const identity = `${participantName}__${spaceName}`;
+    let identity = `${participantName}__${spaceName}`;
+    if (auth) {
+      identity = auth;
+    }
     const participantToken = await createParticipantToken(
       {
         // identity: `${participantName}__${randomParticipantPostfix}`,

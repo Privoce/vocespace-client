@@ -17,11 +17,15 @@ const SPACE_API = connect_endpoint('/api/space');
  * @param spaceName 空间名称
  * @param username 用户名
  * @param region 可选的区域
+ * @param auth 可选的身份认证ID
  */
-export const joinSpace = async (spaceName: string, username: string, region?: string) => {
+export const joinSpace = async (spaceName: string, username: string, region?: string, auth?: string) => {
   const url = new URL(connect_endpoint('/api/connection-details'), window.location.origin);
   url.searchParams.append('spaceName', spaceName);
   url.searchParams.append('participantName', username);
+  if (auth) {
+    url.searchParams.append('auth', auth);
+  }
   if (region) {
     url.searchParams.append('region', region);
   }

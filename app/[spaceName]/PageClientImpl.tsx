@@ -113,6 +113,9 @@ export function PageClientImpl(props: {
   region?: string;
   hq: boolean;
   codec: VideoCodec;
+  username?: string;
+  userId?: string;
+  auth?: boolean;
 }) {
   const { t } = useI18n();
   const [uState, setUState] = useRecoilState(userState);
@@ -198,6 +201,28 @@ export function PageClientImpl(props: {
     }
   }, [loadConfig]);
 
+  // 平台直接加入房间逻辑 --------------------------------------------------------------------------------
+  const directJoinFromPlatform = async () => {
+    let { userId, username, auth, spaceName } = props;
+    console.warn('userId, username, auth, spaceName', userId, username, auth, spaceName);
+    if (userId && username && auth && spaceName) {
+      const finalUserChoices = {
+        username,
+        videoEnabled: false,
+        audioEnabled: false,
+        videoDeviceId: '',
+        audioDeviceId: '',
+      } as LocalUserChoices;
+
+      setPreJoinChoices(finalUserChoices);
+      const connectionDetailsResp = await api.joinSpace(spaceName, username, props.region, userId);
+      const connectionDetailsData = await connectionDetailsResp.json();
+      setConnectionDetails(connectionDetailsData);
+      // 去除url参数
+      router.replace(`/${spaceName}`);
+    }
+  };
+
   // 当localStorage中有reload这个标志时，需要重登陆
   useEffect(() => {
     const reloadRoom = localStorage.getItem('reload');
@@ -234,6 +259,9 @@ export function PageClientImpl(props: {
         // router.push(`/${reloadRoom}`);
       }, 5000);
     }
+
+    // 直接加入房间逻辑
+    directJoinFromPlatform();
 
     return () => {
       // 在组件卸载时将用户设置存储到localStorage中，保证用户设置的持久化
