@@ -993,19 +993,22 @@ export async function GET(request: NextRequest) {
   // 创建一个新的空间 -------------------------------------------------------------------------------
   if (isCreateSpace) {
     const spaceOwner = request.nextUrl.searchParams.get('owner');
+    const ownerId = request.nextUrl.searchParams.get('ownerId');
     if (!spaceOwner) {
       return NextResponse.json({ error: ERROR_CODE.createSpace.ParamLack }, { status: 200 });
     } else {
-      const spaceInfo = await SpaceManager.getSpaceInfo(spaceOwner);
+      // 如果有spaceName这个参数则使用这个作为空间名字，否则使用owner作为空间名字
+      let realSpaceName = spaceName || spaceOwner;
+      const spaceInfo = await SpaceManager.getSpaceInfo(realSpaceName);
       if (spaceInfo) {
         return NextResponse.json({ error: ERROR_CODE.createSpace.SpaceExist }, { status: 200 });
       }
       const newSpaceInfo = {
         ...DEFAULT_SPACE_INFO(Date.now()),
-        ownerId: `${spaceOwner}__${spaceOwner}`,
+        ownerId: ownerId || `${spaceOwner}__${spaceOwner}`,
       } as SpaceInfo;
 
-      await SpaceManager.setSpaceInfo(spaceOwner, newSpaceInfo);
+      await SpaceManager.setSpaceInfo(realSpaceName, newSpaceInfo);
       return NextResponse.json({ success: true }, { status: 200 });
     }
   }
