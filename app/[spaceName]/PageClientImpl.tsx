@@ -38,6 +38,7 @@ import {
   ParticipantSettings,
   Timer,
   TodoItem,
+  VOCESPACE_PLATFORM_USER_ID,
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
 import { WsBase, WsTo } from '@/lib/std/device';
@@ -115,7 +116,7 @@ export function PageClientImpl(props: {
   codec: VideoCodec;
   username?: string;
   userId?: string;
-  auth?: boolean;
+  auth?: "google" | "vocespace";
 }) {
   const { t } = useI18n();
   const [uState, setUState] = useRecoilState(userState);
@@ -151,34 +152,32 @@ export function PageClientImpl(props: {
       props.spaceName,
       values.username,
       props.region,
+      props.userId,
     );
     const connectionDetailsData = await connectionDetailsResp.json();
     setConnectionDetails(connectionDetailsData);
+    if (props.userId && props.username && props.auth) {
+      // 设置登陆状态：需要在localStorage中存储来自平台提供的用户id即可，因为id才是真正的唯一标识
+      // localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, props.userId);
+      // 去除url参数
+      router.replace(`/${props.spaceName}`);
+    }
   }, []);
   const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
 
-  // 从localStorage中获取用户设置 --------------------------------------------------------------------
-  // useEffect(() => {
-  //   const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
-  //   if (storedSettingsStr) {
-  //     const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
-  //     if (storedSettings?.version !== '0.3.1') {
-  //       // 版本不匹配/不存在，直接删除
-  //       localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
-  //       return;
-  //     } else {
-  //       setUState(storedSettings);
-  //     }
-  //   } else {
-  //     // 没有则存到localStorage中
-  //     localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
-  //   }
-
-  //   return () => {
-  //     // 在组件卸载时将用户设置存储到localStorage中，保证用户设置的持久化
-  //     localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
-  //   };
-  // }, []);
+  // 从传入的参数中设置VOCESPACE_PLATFORM_USER_ID ------------------------------------------------------
+  useEffect(() => {
+    if (props.auth && props.userId && props.username) {
+      localStorage.setItem(
+        VOCESPACE_PLATFORM_USER_ID,
+        JSON.stringify({
+          userId: props.userId,
+          username: props.username,
+          auth: props.auth,
+        }),
+      );
+    }
+  }, [props.userId, props.auth, props.username]);
 
   // 配置数据 ----------------------------------------------------------------------------------------
   const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
@@ -202,26 +201,26 @@ export function PageClientImpl(props: {
   }, [loadConfig]);
 
   // 平台直接加入房间逻辑 --------------------------------------------------------------------------------
-  const directJoinFromPlatform = async () => {
-    let { userId, username, auth, spaceName } = props;
-    console.warn('userId, username, auth, spaceName', userId, username, auth, spaceName);
-    if (userId && username && auth && spaceName) {
-      const finalUserChoices = {
-        username,
-        videoEnabled: false,
-        audioEnabled: false,
-        videoDeviceId: '',
-        audioDeviceId: '',
-      } as LocalUserChoices;
+  // const directJoinFromPlatform = async () => {
+  //   let { userId, username, auth, spaceName } = props;
+  //   console.warn('userId, username, auth, spaceName', userId, username, auth, spaceName);
+  //   if (userId && username && auth && spaceName) {
+  //     const finalUserChoices = {
+  //       username,
+  //       videoEnabled: false,
+  //       audioEnabled: false,
+  //       videoDeviceId: '',
+  //       audioDeviceId: '',
+  //     } as LocalUserChoices;
 
-      setPreJoinChoices(finalUserChoices);
-      const connectionDetailsResp = await api.joinSpace(spaceName, username, props.region, userId);
-      const connectionDetailsData = await connectionDetailsResp.json();
-      setConnectionDetails(connectionDetailsData);
-      // 去除url参数
-      router.replace(`/${spaceName}`);
-    }
-  };
+  //     setPreJoinChoices(finalUserChoices);
+  //     const connectionDetailsResp = await api.joinSpace(spaceName, username, props.region, userId);
+  //     const connectionDetailsData = await connectionDetailsResp.json();
+  //     setConnectionDetails(connectionDetailsData);
+  //     // 去除url参数
+  //     router.replace(`/${spaceName}`);
+  //   }
+  // };
 
   // 当localStorage中有reload这个标志时，需要重登陆
   useEffect(() => {
@@ -261,7 +260,7 @@ export function PageClientImpl(props: {
     }
 
     // 直接加入房间逻辑
-    directJoinFromPlatform();
+    // directJoinFromPlatform();
 
     return () => {
       // 在组件卸载时将用户设置存储到localStorage中，保证用户设置的持久化
@@ -285,7 +284,12 @@ export function PageClientImpl(props: {
             micLabel={t('common.device.microphone')}
             camLabel={t('common.device.camera')}
             userLabel={t('common.username')}
-            space={props.spaceName}
+            spaceParams={{
+              spaceName: props.spaceName,
+              username: props.username,
+              userId: props.userId,
+              auth: props.auth,
+            }}
           />
         </div>
       ) : (

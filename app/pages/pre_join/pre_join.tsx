@@ -26,7 +26,12 @@ import { LoginButtons, LoginStateBtn } from './login';
 export interface PreJoinPropsExt extends PreJoinProps {
   hq?: boolean;
   setHq?: (hq: boolean) => void;
-  space: string;
+  spaceParams: {
+    userId?: string;
+    spaceName: string;
+    username?: string;
+    auth?: 'google' | 'vocespace';
+  };
 }
 
 /**
@@ -55,7 +60,7 @@ export function PreJoin({
   joinLabel,
   hq,
   setHq,
-  space,
+  spaceParams,
 }: PreJoinPropsExt) {
   const { t } = useI18n();
   // user choices -------------------------------------------------------------------------------------
@@ -77,7 +82,7 @@ export function PreJoin({
   const [videoEnabled, setVideoEnabled] = React.useState<boolean>(userChoices.videoEnabled);
   const [audioDeviceId, setAudioDeviceId] = React.useState<string>(userChoices.audioDeviceId);
   const [videoDeviceId, setVideoDeviceId] = React.useState<string>(userChoices.videoDeviceId);
-  const [username, setUsername] = React.useState(userChoices.username);
+  const [username, setUsername] = React.useState(spaceParams.username || userChoices.username);
   const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = React.useState(true);
   // Save user choices to persistent storage ---------------------------------------------------------
@@ -435,10 +440,14 @@ export function PreJoin({
           >
             {joinLabel}
           </button>
-          <LoginButtons space={space}></LoginButtons>
+          <LoginButtons space={spaceParams.spaceName}></LoginButtons>
         </div>
       )}
-      <LoginStateBtn />
+      <LoginStateBtn
+        userId={spaceParams.userId}
+        username={spaceParams.username}
+        auth={spaceParams.auth}
+      />
     </div>
   );
 }

@@ -122,6 +122,11 @@ export default {
       now: '第',
     },
   },
+  login: {
+    following: "使用以下方式登陆",
+    out: "退出登录",
+    anon: "匿名用户"
+  },
   channel: {
     menu: {
       header: '',

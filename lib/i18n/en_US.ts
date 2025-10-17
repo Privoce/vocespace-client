@@ -55,12 +55,18 @@ export default {
       success: 'Create space successfully',
       error: {
         unknown: 'Create space failed, please try again later or create manually',
-        param: '缺少必要参数，创建空间失败',
-        exist: '空间已存在，请检查是否已经创建过或手动创建以访问',
+        param: 'Required parameters missing, space creation failed',
+        exist:
+          'The space already exists. Please check whether it has been created or manually create it to access it',
       },
       ok: 'Jump',
       cancel: 'Cancel',
     },
+  },
+  login: {
+    following: 'Login using the following method',
+    out: 'Log out',
+    anon: 'Anonymous',
   },
   reaction: {
     title: 'Reaction',
