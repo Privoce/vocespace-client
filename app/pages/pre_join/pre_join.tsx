@@ -21,10 +21,12 @@ import { useVideoBlur } from '@/lib/std/device';
 import { LangSelect } from '@/app/pages/controls/selects/lang_select';
 import { ulid } from 'ulid';
 import { api } from '@/lib/api';
+import { LoginButtons, LoginStateBtn } from './login';
 
 export interface PreJoinPropsExt extends PreJoinProps {
   hq?: boolean;
   setHq?: (hq: boolean) => void;
+  space: string;
 }
 
 /**
@@ -53,6 +55,7 @@ export function PreJoin({
   joinLabel,
   hq,
   setHq,
+  space,
 }: PreJoinPropsExt) {
   const { t } = useI18n();
   // user choices -------------------------------------------------------------------------------------
@@ -432,8 +435,10 @@ export function PreJoin({
           >
             {joinLabel}
           </button>
+          <LoginButtons space={space}></LoginButtons>
         </div>
       )}
+      <LoginStateBtn />
     </div>
   );
 }

@@ -285,6 +285,7 @@ export function PageClientImpl(props: {
             micLabel={t('common.device.microphone')}
             camLabel={t('common.device.camera')}
             userLabel={t('common.username')}
+            space={props.spaceName}
           />
         </div>
       ) : (

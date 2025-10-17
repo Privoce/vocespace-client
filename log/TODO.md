@@ -518,7 +518,8 @@ lk load-test \
   - [x] Meeting Room
   - [x] Coffee Break
 - [x] 名字/分享文本溢出，颜色
-
+- [x] Vocespace platform 登陆
+- [ ] Google 登陆
 --- AI
 - [ ] azure 实时语音翻译服务
   - [ ] 定价： 一小时音频文件的文本翻译为三种目标语言。 如果初始语音转文本听录包含 10,000 个字符，则你可能需支付 2.80 美元的费用 

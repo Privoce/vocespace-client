@@ -13,7 +13,7 @@
   overflow-y: scroll;
   scrollbar-width: none;
   scroll-behavior: smooth;
-  &__lang_select{
+  &__lang_select {
     position: absolute;
     top: 1rem;
     right: 1rem;
@@ -54,13 +54,13 @@
       height: 44px;
       flex-grow: 1;
       width: 100%;
-      &_volume{
+      &_volume {
         width: 100%;
         height: fit-content;
-        background-color: #1E1E1E;
+        background-color: #1e1e1e;
         padding: 1rem;
         border-radius: 8px;
-        &__button{
+        &__button {
           width: 100%;
           background-color: #1f8cf9;
           padding: 0.8rem;
@@ -72,14 +72,14 @@
             filter: brightness(1.1);
           }
         }
-        &__header{
+        &__header {
           width: 100%;
-          display:inline-flex;
+          display: inline-flex;
           align-items: center;
           justify-content: space-between;
           margin-bottom: 0.5rem;
-          &__left{
-            display:inline-flex;
+          &__left {
+            display: inline-flex;
             align-items: center;
             justify-content: flex-start;
             gap: 0.5rem;
@@ -100,7 +100,7 @@
       justify-content: center;
       flex-wrap: wrap;
       gap: 0.5rem;
-      input{
+      input {
         width: 100%;
       }
       &__button {
@@ -119,18 +119,52 @@
   }
 }
 
-// @media screen and (max-width: 480px) {
-//   .view {
-//     &__controls{
-//       display: flex;
-//       align-items: center;
-//       justify-content: center;
-//       flex-wrap: wrap;
-//       &__group {
-//         height: 44px;
-//         flex-grow: 1;
-//         width: 100%;
-//       }
-//     }
-//   }
-// }
+.loginButtons {
+  width: 100%;
+  height: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  .loginButton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    &_btn {
+      cursor: pointer;
+      height: 44px;
+      width: 44px;
+      border: 1px solid #333;
+      background-color: #1e1e1e;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease-in-out;
+      &:hover {
+        background-color: #222;
+      }
+    }
+    span {
+      font-size: 14px;
+    }
+  }
+}
+
+
+.LoginStateBtn {
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+  background-color: #1e1e1e;
+  border: 1px solid #22ccee;
+  color: #fff;
+  .wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+}
