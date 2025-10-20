@@ -119,6 +119,9 @@ export function PageClientImpl(props: {
   auth?: "google" | "vocespace";
 }) {
   const { t } = useI18n();
+  
+  // 调试：打印接收到的 props
+  console.log('PageClientImpl props:', props);
   const [uState, setUState] = useRecoilState(userState);
   const [messageApi, contextHolder] = message.useMessage();
   const [notApi, notHolder] = notification.useNotification();
@@ -164,21 +167,6 @@ export function PageClientImpl(props: {
     }
   }, []);
   const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
-
-  // 从传入的参数中设置VOCESPACE_PLATFORM_USER_ID ------------------------------------------------------
-  useEffect(() => {
-    if (props.auth && props.userId && props.username) {
-      localStorage.setItem(
-        VOCESPACE_PLATFORM_USER_ID,
-        JSON.stringify({
-          userId: props.userId,
-          username: props.username,
-          auth: props.auth,
-        }),
-      );
-    }
-  }, [props.userId, props.auth, props.username]);
-
   // 配置数据 ----------------------------------------------------------------------------------------
   const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
   const [loadConfig, setLoadConfig] = useState(false);

@@ -27,15 +27,43 @@ export default function Page({
       : 'vp9';
   const hq = searchParams.hq === 'true' ? true : false;
 
-  const [userInfo, setUserInfo] = React.useState<LoginStateBtnProps | null>(null);
-  // 不携带任何参数时需要从localStorage中尝试获取，来确定之前的登陆状态
+  const [userInfo, setUserInfo] = React.useState<LoginStateBtnProps>(() => {
+    // 在服务器端，优先使用 URL 参数
+    if (searchParams.username && searchParams.userId && searchParams.auth) {
+      const urlUserInfo = {
+        username: searchParams.username,
+        userId: searchParams.userId,
+        auth: searchParams.auth,
+      };
+      console.log('Using URL params for userInfo:', urlUserInfo);
+      return urlUserInfo;
+    }
+    
+    console.log('No URL params found, will check localStorage in useEffect');
+    return {};
+  });
+
+  // 在客户端检查 localStorage
   React.useEffect(() => {
+    // 如果已经有用户信息（从 URL 参数），不需要检查 localStorage
+    if (userInfo.username && userInfo.userId) {
+      return;
+    }
+
+    // 尝试从 localStorage 获取用户信息
     const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER_ID);
     if (storedUserInfo) {
-      setUserInfo(JSON.parse(storedUserInfo));
+      try {
+        const parsed = JSON.parse(storedUserInfo);
+        console.log('Loading userInfo from localStorage:', parsed);
+        setUserInfo(parsed);
+      } catch (e) {
+        console.error('Failed to parse localStorage userInfo:', e);
+      }
     }
-  }, []);
-  // 当url携带参数时，优先使用url中的参数并存储到localStorage
+  }, []); // 只在组件挂载时运行一次
+
+  // 当有 URL 参数时，保存到 localStorage
   React.useEffect(() => {
     if (searchParams.username && searchParams.userId && searchParams.auth) {
       const newUserInfo = {
@@ -43,10 +71,13 @@ export default function Page({
         userId: searchParams.userId,
         auth: searchParams.auth,
       };
+      console.log('Saving URL params to localStorage:', newUserInfo);
       setUserInfo(newUserInfo);
-      localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(newUserInfo));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(newUserInfo));
+      }
     }
-  }, [searchParams]);
+  }, [searchParams.username, searchParams.userId, searchParams.auth]);
 
   return (
     <RecoilRoot>
