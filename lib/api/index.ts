@@ -21,6 +21,7 @@ import {
   updateSpaceAppSync,
   updateSpaceParticipant,
   uploadSpaceApp,
+  getGoogleUserMeta
 } from './space';
 
 export const api = {
@@ -61,4 +62,6 @@ export const api = {
   getConf,
   reloadConf,
   reloadLicense,
+  // ---- platform api --------
+  getGoogleUserMeta
 };

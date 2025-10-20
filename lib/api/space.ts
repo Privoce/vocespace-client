@@ -19,7 +19,12 @@ const SPACE_API = connect_endpoint('/api/space');
  * @param region 可选的区域
  * @param auth 可选的身份认证ID
  */
-export const joinSpace = async (spaceName: string, username: string, region?: string, auth?: string) => {
+export const joinSpace = async (
+  spaceName: string,
+  username: string,
+  region?: string,
+  auth?: string,
+) => {
   const url = new URL(connect_endpoint('/api/connection-details'), window.location.origin);
   url.searchParams.append('spaceName', spaceName);
   url.searchParams.append('participantName', username);
@@ -329,4 +334,12 @@ export const uploadSpaceApp = async (
       ty,
     } as UploadSpaceAppBody),
   });
+};
+
+export const getGoogleUserMeta = async (userId: string | undefined) => {
+  // const url = new URL('http://localhost:3000/api/vocespace'); // 开发环境测试用
+  const url = new URL("https://home.vocespace.com/api/vocespace"); // 生产环境使用
+  url.searchParams.append('userId', userId || '');
+  url.searchParams.append('auth', 'google');
+  return await fetch(url.toString());
 };

@@ -519,7 +519,7 @@ lk load-test \
   - [x] Coffee Break
 - [x] 名字/分享文本溢出，颜色
 - [x] Vocespace platform 登陆
-- [ ] Google 登陆
+- [x] Google 登陆
 - [x] 登陆状态检测
 - [x] 退出登陆
 --- AI

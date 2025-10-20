@@ -1,16 +1,24 @@
+'use client';
+
 import { SvgResource } from '@/app/resources/svg';
+import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/i18n';
 import { VOCESPACE_PLATFORM_USER_ID } from '@/lib/std/space';
 import styles from '@/styles/pre_join.module.scss';
 import { Avatar, Button, Divider, Dropdown } from 'antd';
 import { ItemType } from 'antd/es/menu/interface';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 export function LoginButtons({ space }: { space: string }) {
   const { t } = useI18n();
 
-  const toVocespace = () => {
-    window.open(`http://localhost:3000/auth/login?from=vocespace&spaceName=${space}`, '_blank');
+  const toVocespace = (google = false) => {
+    window.open(
+      `https://home.vocespace.com/auth/login?from=vocespace&spaceName=${space}&auth=${
+        google ? 'google' : 'email'
+      }`,
+      '_blank',
+    );
   };
 
   return (
@@ -19,16 +27,16 @@ export function LoginButtons({ space }: { space: string }) {
         {t('login.following')}
       </Divider>
       <div className={styles.loginButton}>
-        <button className={styles.loginButton_btn}>
+        <button className={styles.loginButton_btn} onClick={() => toVocespace(true)}>
           <SvgResource type="google" svgSize={20}></SvgResource>
         </button>
         <span>Google</span>
       </div>
       <div className={styles.loginButton}>
-        <button className={styles.loginButton_btn} onClick={toVocespace}>
+        <button className={styles.loginButton_btn} onClick={() => toVocespace()}>
           <SvgResource type="logo" svgSize={24}></SvgResource>
         </button>
-        <span>Vocespace</span>
+        <span>Email</span>
       </div>
     </div>
   );
@@ -38,31 +46,49 @@ export interface LoginStateBtnProps {
   userId?: string;
   username?: string;
   auth?: 'google' | 'vocespace';
+  avatar?: string;
 }
 
-export function LoginStateBtn({ userId, username, auth }: LoginStateBtnProps) {
+interface GoogleUserMeta {
+  email: string;
+  username: string;
+  avatar: string;
+}
+
+export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnProps) {
   const { t } = useI18n();
+  const [userInfo, setUserInfo] = useState<LoginStateBtnProps>({
+    userId,
+    username,
+    auth,
+    avatar,
+  });
 
   // 外部传入username，如果没有则可能是匿名用户，我们需要到localStorage中获取用户信息
-  const userInfo: LoginStateBtnProps = useMemo(() => {
+  useEffect(() => {
     if (!username) {
       const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER_ID);
       if (storedUserInfo) {
         // 直接解析存储的信息
-        return JSON.parse(storedUserInfo) as LoginStateBtnProps;
+        const parsedInfo = JSON.parse(storedUserInfo) as LoginStateBtnProps;
+        // 需要判断是否是google登陆，如果是我们还需要向平台请求google的user meta信息
+        if (parsedInfo.auth === 'google') {
+          api.getGoogleUserMeta(parsedInfo.userId).then(async (response) => {
+            if (response.ok) {
+              const data: GoogleUserMeta = await response.json();
+              parsedInfo.username = data.username;
+              parsedInfo.avatar = data.avatar;
+              // 更新本地存储的信息
+              localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(parsedInfo));
+            }
+          });
+        }
+        setUserInfo(parsedInfo);
       } else {
         // 不存在说明是匿名用户
-        return {
-          userId: undefined,
-          username: undefined,
-        } as LoginStateBtnProps;
+        setUserInfo({} as LoginStateBtnProps);
       }
     }
-    return {
-      userId,
-      username,
-      auth,
-    } as LoginStateBtnProps;
   }, [username, userId]);
 
   const items: ItemType[] = useMemo(() => {
@@ -73,16 +99,17 @@ export function LoginStateBtn({ userId, username, auth }: LoginStateBtnProps) {
           label: t('login.out'),
           onClick: () => {
             localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
+            window.location.reload();
           },
         },
       ];
     } else {
       return [];
     }
-  }, [userInfo]);
+  }, [userInfo, t]);
 
   return (
-    <Dropdown menu={{ items }} placement="topRight" trigger={['hover']}>
+    <Dropdown menu={{ items }} placement="bottomRight" trigger={['hover']}>
       <Button
         className={styles.LoginStateBtn}
         size="large"
@@ -92,29 +119,16 @@ export function LoginStateBtn({ userId, username, auth }: LoginStateBtnProps) {
           window.open('https://vocespace.com', '_blank');
         }}
       >
-        {userInfo.username ? (
-          <div className={styles.wrapper}>
-            <Avatar
-              size={28}
-              style={{ backgroundColor: '#22CCEE', verticalAlign: 'middle', fontSize: 16 }}
-            >
-              {userInfo.username.charAt(0).toUpperCase()}
-            </Avatar>
-            <span>Google/Vocespace 已登陆</span>
-          </div>
-        ) : (
-          <div className={styles.wrapper}>
-            <Avatar
-              size={28}
-              style={{ backgroundColor: '#22CCEE', verticalAlign: 'middle', fontSize: 16 }}
-            >
-              ?
-            </Avatar>
-            <span>
-                {t('login.anon')}
-            </span>
-          </div>
-        )}
+        <div className={styles.wrapper}>
+          <Avatar
+            src={userInfo.avatar}
+            size={38}
+            style={{ backgroundColor: '#22CCEE', verticalAlign: 'middle', fontSize: 16 }}
+          >
+            {}
+            {userInfo.username ? userInfo.username.charAt(0).toUpperCase() : '?'}
+          </Avatar>
+        </div>
       </Button>
     </Dropdown>
   );

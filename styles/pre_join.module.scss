@@ -157,14 +157,14 @@
 .LoginStateBtn {
   position: absolute;
   top: 1rem;
-  left: 1rem;
-  background-color: #1e1e1e;
-  border: 1px solid #22ccee;
+  left: 0rem;
   color: #fff;
   .wrapper {
     display: inline-flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     gap: 8px;
+    width: fit-content;
+    height: fit-content;
   }
 }

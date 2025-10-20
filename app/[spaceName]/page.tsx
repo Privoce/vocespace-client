@@ -4,6 +4,8 @@ import * as React from 'react';
 import { PageClientImpl } from './PageClientImpl';
 import { isVideoCodec } from '@/lib/types';
 import { RecoilRoot } from 'recoil';
+import { VOCESPACE_PLATFORM_USER_ID } from '@/lib/std/space';
+import { LoginStateBtnProps } from '../pages/pre_join/login';
 
 export default function Page({
   params,
@@ -16,7 +18,7 @@ export default function Page({
     codec?: string;
     username?: string;
     userId?: string;
-    auth?: string;
+    auth?: 'vocespace' | 'google';
   };
 }) {
   const codec =
@@ -24,7 +26,28 @@ export default function Page({
       ? searchParams.codec
       : 'vp9';
   const hq = searchParams.hq === 'true' ? true : false;
-  const auth = searchParams.auth === 'true' ? true : false;
+
+  const [userInfo, setUserInfo] = React.useState<LoginStateBtnProps | null>(null);
+  // 不携带任何参数时需要从localStorage中尝试获取，来确定之前的登陆状态
+  React.useEffect(() => {
+    const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER_ID);
+    if (storedUserInfo) {
+      setUserInfo(JSON.parse(storedUserInfo));
+    }
+  }, []);
+  // 当url携带参数时，优先使用url中的参数并存储到localStorage
+  React.useEffect(() => {
+    if (searchParams.username && searchParams.userId && searchParams.auth) {
+      const newUserInfo = {
+        username: searchParams.username,
+        userId: searchParams.userId,
+        auth: searchParams.auth,
+      };
+      setUserInfo(newUserInfo);
+      localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(newUserInfo));
+    }
+  }, [searchParams]);
+
   return (
     <RecoilRoot>
       <PageClientImpl
@@ -32,9 +55,9 @@ export default function Page({
         region={searchParams.region}
         hq={hq}
         codec={codec}
-        username={searchParams.username}
-        userId={searchParams.userId}
-        auth={auth}
+        username={userInfo?.username}
+        userId={userInfo?.userId}
+        auth={userInfo?.auth}
       />
     </RecoilRoot>
   );

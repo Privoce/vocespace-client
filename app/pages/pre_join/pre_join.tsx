@@ -280,6 +280,7 @@ export function PreJoin({
       setPlay(false);
     }
   };
+
   return (
     <div className={styles.view}>
       {contextHolder}
