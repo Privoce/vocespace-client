@@ -64,32 +64,67 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
     avatar,
   });
 
-  // 外部传入username，如果没有则可能是匿名用户，我们需要到localStorage中获取用户信息
+  // 调试日志
+  console.log('LoginStateBtn props:', { userId, username, auth, avatar });
+
+  // 使用 useEffect 在客户端加载用户信息
   useEffect(() => {
-    if (!username) {
+    // 如果外部传入了完整的用户信息，优先使用
+    if (username && userId) {
+      console.log('Using props user info:', { userId, username, auth, avatar });
+      setUserInfo({
+        userId,
+        username,
+        auth,
+        avatar,
+      });
+      return;
+    }
+
+    // 检查是否在客户端环境中
+    if (typeof window !== 'undefined') {
       const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER_ID);
       if (storedUserInfo) {
-        // 直接解析存储的信息
-        const parsedInfo = JSON.parse(storedUserInfo) as LoginStateBtnProps;
-        // 需要判断是否是google登陆，如果是我们还需要向平台请求google的user meta信息
-        if (parsedInfo.auth === 'google') {
-          api.getGoogleUserMeta(parsedInfo.userId).then(async (response) => {
-            if (response.ok) {
-              const data: GoogleUserMeta = await response.json();
-              parsedInfo.username = data.username;
-              parsedInfo.avatar = data.avatar;
-              // 更新本地存储的信息
-              localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(parsedInfo));
-            }
-          });
+        try {
+          const parsedInfo = JSON.parse(storedUserInfo) as LoginStateBtnProps;
+          console.log('Using localStorage user info:', parsedInfo);
+
+          // 如果是 Google 登录，异步获取额外信息
+          if (parsedInfo.auth === 'google') {
+            api
+              .getGoogleUserMeta(parsedInfo.userId)
+              .then(async (response) => {
+                if (response.ok) {
+                  const data: GoogleUserMeta = await response.json();
+                  const updatedInfo = {
+                    ...parsedInfo,
+                    username: data.username,
+                    avatar: data.avatar,
+                  };
+                  setUserInfo(updatedInfo);
+                  // 更新本地存储
+                  localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(updatedInfo));
+                } else {
+                  setUserInfo(parsedInfo);
+                }
+              })
+              .catch(() => {
+                setUserInfo(parsedInfo);
+              });
+          } else {
+            setUserInfo(parsedInfo);
+          }
+        } catch (error) {
+          console.error('Failed to parse stored user info:', error);
+          setUserInfo({} as LoginStateBtnProps);
         }
-        setUserInfo(parsedInfo);
       } else {
         // 不存在说明是匿名用户
+        console.log('No stored user info found, anonymous user');
         setUserInfo({} as LoginStateBtnProps);
       }
     }
-  }, [username, userId]);
+  }, [username, userId, auth, avatar]); // 依赖外部传入的 props
 
   const items: ItemType[] = useMemo(() => {
     if (userInfo.username && userInfo.userId) {

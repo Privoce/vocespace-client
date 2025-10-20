@@ -530,4 +530,3 @@ lk load-test \
   - [ ] 语音转文本
   - [ ] 语音转语音
 - [ ] granola 语音/截图 (egress服务) -> 文本 -> AI总结
-

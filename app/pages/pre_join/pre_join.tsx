@@ -63,6 +63,9 @@ export function PreJoin({
   spaceParams,
 }: PreJoinPropsExt) {
   const { t } = useI18n();
+  
+  // 调试：打印 spaceParams 来检查参数是否正确传递
+  console.log('PreJoin spaceParams:', spaceParams);
   // user choices -------------------------------------------------------------------------------------
   const {
     userChoices: initialUserChoices,
@@ -82,7 +85,12 @@ export function PreJoin({
   const [videoEnabled, setVideoEnabled] = React.useState<boolean>(userChoices.videoEnabled);
   const [audioDeviceId, setAudioDeviceId] = React.useState<string>(userChoices.audioDeviceId);
   const [videoDeviceId, setVideoDeviceId] = React.useState<string>(userChoices.videoDeviceId);
-  const [username, setUsername] = React.useState(spaceParams.username || userChoices.username);
+  // 确保优先使用URL参数中的username
+  const [username, setUsername] = React.useState(() => {
+    console.log('Initial username logic - spaceParams.username:', spaceParams.username);
+    console.log('Initial username logic - userChoices.username:', userChoices.username);
+    return spaceParams.username || userChoices.username || '';
+  });
   const [messageApi, contextHolder] = message.useMessage();
   const [loading, setLoading] = React.useState(true);
   // Save user choices to persistent storage ---------------------------------------------------------
@@ -107,6 +115,15 @@ export function PreJoin({
       setLoading(false);
     }, 500);
   }, []);
+
+  // 监听 spaceParams 变化，确保参数更新时重新设置用户信息
+  useEffect(() => {
+    console.log('spaceParams changed:', spaceParams);
+    if (spaceParams.username && spaceParams.username !== username) {
+      console.log('Updating username from spaceParams:', spaceParams.username);
+      setUsername(spaceParams.username);
+    }
+  }, [spaceParams.username, spaceParams.userId, spaceParams.auth]);
 
   useEffect(() => {
     const checkDevices = async () => {
