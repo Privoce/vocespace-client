@@ -642,7 +642,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             >
               <div className={styles.room_header_wrapper_title}>
                 <div
-                  className={styles.room_header_wrapper_title}
+                  className={styles.room_header_wrapper_title_name}
                   onClick={() => {
                     setSubActiveKey((prev) => {
                       const newActiveKey = [...prev];
@@ -656,11 +656,11 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                   }}
                 >
                   {room.isPrivate ? (
-                    <LockOutlined />
+                    <LockOutlined style={{fontSize: 16}} />
                   ) : (
                     <SvgResource type="public" svgSize={16} color="#aaa"></SvgResource>
                   )}
-                  {room.name}
+                  <div className={styles.room_header_wrapper_title_name_title} style={{width: room.participants.length > 0 ? '100px' : 'calc(100% - 24px)'}}>{room.name}</div>
                 </div>
                 {room.participants.length > 0 && (
                   <Tag

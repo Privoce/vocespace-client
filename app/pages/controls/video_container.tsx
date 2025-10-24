@@ -273,6 +273,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           noteApi.info({
             message: `${msg.senderName} ${t('common.wave_msg')}`,
             actions,
+            duration: 10
           });
         }
       });

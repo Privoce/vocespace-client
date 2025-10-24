@@ -40,6 +40,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  max-width: calc(100% - 108px);
+  justify-content: flex-start;
 }
 
 .roomIcon {
@@ -52,9 +55,10 @@
   font-size: 16px;
   font-weight: 600;
   color: #ffffff;
-  width: 68%;
+  max-width: calc(100% - 28px);
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .headerActions {
@@ -346,20 +350,33 @@
   display: inline-flex;
   align-items: center;
   justify-content: space-between;
+  gap: 4px;
   &_title {
     transition: all 0.2s ease-in-out;
-    margin-right: 4px;
     overflow: hidden;
     text-overflow: ellipsis;
     justify-content: flex-start;
     align-items: center;
-    white-space: nowrap;
-    gap: 8px;
-    display: inline-flex;
-    flex-grow: 1;
+    padding: 0 0 0 4px;
     height: 100%;
-    width: 180px;
-    padding-left: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    flex: 1;
+    &_name {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 8px;
+      &_title {
+        flex: 1;
+        text-overflow: ellipsis;
+        overflow: hidden;
+        white-space: nowrap;
+      }
+    }
     &:hover {
       background-color: #333;
       cursor: pointer;
