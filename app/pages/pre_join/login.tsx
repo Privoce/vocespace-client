@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/i18n';
 import { VOCESPACE_PLATFORM_USER_ID } from '@/lib/std/space';
 import styles from '@/styles/pre_join.module.scss';
+import { MailOutlined, UserOutlined } from '@ant-design/icons';
 import { Avatar, Button, Divider, Dropdown } from 'antd';
 import { ItemType } from 'antd/es/menu/interface';
 import { useEffect, useMemo, useState } from 'react';
@@ -34,7 +35,7 @@ export function LoginButtons({ space }: { space: string }) {
       </div>
       <div className={styles.loginButton}>
         <button className={styles.loginButton_btn} onClick={() => toVocespace()}>
-          <SvgResource type="logo" svgSize={24}></SvgResource>
+         <MailOutlined style={{ fontSize: 20 }} />
         </button>
         <span>Email</span>
       </div>
@@ -161,7 +162,7 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
             style={{ backgroundColor: '#22CCEE', verticalAlign: 'middle', fontSize: 16 }}
           >
             {}
-            {userInfo.username ? userInfo.username.charAt(0).toUpperCase() : '?'}
+            {userInfo.username ? userInfo.username.charAt(0).toUpperCase() : <UserOutlined></UserOutlined>}
           </Avatar>
         </div>
       </Button>
