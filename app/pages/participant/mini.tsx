@@ -148,13 +148,14 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
         setUsername,
         updateSettings,
         toRenameSettings,
+        isSelf: trackReference.participant.identity === localParticipant.identity,
       } as UseControlRKeyMenuProps);
 
     // 右键菜单可以使用：当不是自己的时候且source不是屏幕分享
     const showSelfControlMenu = useMemo(() => {
       return (
-        trackReference.participant.identity === localParticipant.identity ||
-        trackReference.source === Track.Source.ScreenShare
+        trackReference.participant.identity === localParticipant.identity &&
+        trackReference.source !== Track.Source.ScreenShare
       );
     }, [trackReference, localParticipant.identity]);
     // status标签渲染 -------------------------------------------------------------

@@ -347,7 +347,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
         label: (
           <div className={styles.flot_header}>
             {/* {showSyncIcon(isRemote, 'timer')} */}
-            {activeKeys.get(participantId)?.includes('together') ? '' : 'together'}
+            {activeKeys.get(participantId)?.includes('together') ? '' : t('more.app.todo.together.title')}
           </div>
         ),
         children: <TodoTogether spaceInfo={spaceInfo} messageApi={messageApi}></TodoTogether>,

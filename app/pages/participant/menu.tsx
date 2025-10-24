@@ -42,6 +42,7 @@ export interface UseControlRKeyMenuProps {
   setUsername: (username: string) => void;
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
+  isSelf: boolean;
 }
 
 export function useControlRKeyMenu({
@@ -53,6 +54,7 @@ export function useControlRKeyMenu({
   setUsername,
   updateSettings,
   toRenameSettings,
+  isSelf,
 }: UseControlRKeyMenuProps) {
   const { t } = useI18n();
   // 必要的状态和Owner的确定 -------------------------------------------------------------------
@@ -186,7 +188,7 @@ export function useControlRKeyMenu({
                   }}
                 >
                   <Slider
-                    disabled={!isOwner}
+                    disabled={!isSelf}
                     min={0.0}
                     max={100.0}
                     step={1.0}
@@ -220,7 +222,7 @@ export function useControlRKeyMenu({
                   }}
                 >
                   <Slider
-                    disabled={!isOwner}
+                    disabled={!isSelf}
                     min={0.0}
                     max={1.0}
                     step={0.05}
@@ -254,7 +256,7 @@ export function useControlRKeyMenu({
                   }}
                 >
                   <Slider
-                    disabled={!isOwner}
+                    disabled={!isSelf}
                     min={0.0}
                     max={1.0}
                     step={0.05}
@@ -291,7 +293,7 @@ export function useControlRKeyMenu({
         ],
       },
     ];
-  }, [isCamDisabled, isMicDisabled, isOwner, isScreenShareDisabled, volume, blurVideo, blurScreen]);
+  }, [isCamDisabled, isMicDisabled, isScreenShareDisabled, volume, blurVideo, blurScreen, isSelf]);
   // 右键他人的菜单选项 -------------------------------------------------------------
   const optItems: MenuProps['items'] = useMemo(() => {
     const controlItems: MenuProps['items'] = [

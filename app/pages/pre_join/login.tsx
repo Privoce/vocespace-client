@@ -35,7 +35,7 @@ export function LoginButtons({ space }: { space: string }) {
       </div>
       <div className={styles.loginButton}>
         <button className={styles.loginButton_btn} onClick={() => toVocespace()}>
-         <MailOutlined style={{ fontSize: 20 }} />
+          <MailOutlined style={{ fontSize: 20 }} />
         </button>
         <span>Email</span>
       </div>
@@ -66,13 +66,13 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
   });
 
   // 调试日志
-  console.log('LoginStateBtn props:', { userId, username, auth, avatar });
+  // console.log('LoginStateBtn props:', { userId, username, auth, avatar });
 
   // 使用 useEffect 在客户端加载用户信息
   useEffect(() => {
     // 如果外部传入了完整的用户信息，优先使用
     if (username && userId) {
-      console.log('Using props user info:', { userId, username, auth, avatar });
+      // console.log('Using props user info:', { userId, username, auth, avatar });
       setUserInfo({
         userId,
         username,
@@ -88,40 +88,32 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
       if (storedUserInfo) {
         try {
           const parsedInfo = JSON.parse(storedUserInfo) as LoginStateBtnProps;
-          console.log('Using localStorage user info:', parsedInfo);
-
-          // 如果是 Google 登录，异步获取额外信息
-          if (parsedInfo.auth === 'google') {
-            api
-              .getGoogleUserMeta(parsedInfo.userId)
-              .then(async (response) => {
-                if (response.ok) {
-                  const data: GoogleUserMeta = await response.json();
-                  const updatedInfo = {
-                    ...parsedInfo,
-                    username: data.username,
-                    avatar: data.avatar,
-                  };
-                  setUserInfo(updatedInfo);
-                  // 更新本地存储
-                  localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(updatedInfo));
-                } else {
-                  setUserInfo(parsedInfo);
-                }
-              })
-              .catch(() => {
+          // 登陆后向平台服务器请求完整信息
+          api
+            .getUserMeta(parsedInfo.userId)
+            .then(async (response) => {
+              if (response.ok) {
+                const data: GoogleUserMeta = await response.json();
+                const updatedInfo = {
+                  ...parsedInfo,
+                  username: data.username,
+                  avatar: data.avatar,
+                };
+                setUserInfo(updatedInfo);
+                // 更新本地存储
+                localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(updatedInfo));
+              } else {
                 setUserInfo(parsedInfo);
-              });
-          } else {
-            setUserInfo(parsedInfo);
-          }
+              }
+            })
+            .catch(() => {
+              setUserInfo(parsedInfo);
+            });
         } catch (error) {
           console.error('Failed to parse stored user info:', error);
           setUserInfo({} as LoginStateBtnProps);
         }
       } else {
-        // 不存在说明是匿名用户
-        console.log('No stored user info found, anonymous user');
         setUserInfo({} as LoginStateBtnProps);
       }
     }
@@ -162,7 +154,11 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
             style={{ backgroundColor: '#22CCEE', verticalAlign: 'middle', fontSize: 16 }}
           >
             {}
-            {userInfo.username ? userInfo.username.charAt(0).toUpperCase() : <UserOutlined></UserOutlined>}
+            {userInfo.username ? (
+              userInfo.username.charAt(0).toUpperCase()
+            ) : (
+              <UserOutlined></UserOutlined>
+            )}
           </Avatar>
         </div>
       </Button>

@@ -293,6 +293,7 @@ export default {
         unexport: 'Current todo is empty, cannot export',
         complete: 'Completed Tasks',
         together: {
+          title: 'Team Status',
           empty: 'No user todos available',
         },
       },

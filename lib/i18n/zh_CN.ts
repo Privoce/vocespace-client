@@ -283,6 +283,7 @@ export default {
         unexport: '当前待办为空，无法导出',
         complete: '已完成的事项',
         together: {
+          title: "团队进度",
           empty: '暂无用户的待办事项',
         },
       },
