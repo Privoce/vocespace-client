@@ -71,44 +71,40 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
   // 使用 useEffect 在客户端加载用户信息
   useEffect(() => {
     // 如果外部传入了完整的用户信息，优先使用
-    if (username && userId) {
-      // console.log('Using props user info:', { userId, username, auth, avatar });
-      setUserInfo({
-        userId,
-        username,
-        auth,
-        avatar,
-      });
-      return;
-    }
+    const checkInfo = async () => {
+      if (username && userId && auth && avatar) {
+        // console.log('Using props user info:', { userId, username, auth, avatar });
+        setUserInfo({
+          userId,
+          username,
+          auth,
+          avatar,
+        });
+        return;
+      }
 
-    // 检查是否在客户端环境中
-    if (typeof window !== 'undefined') {
+      // 检查是否在客户端环境中
       const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER_ID);
+      console.warn('Checking localStorage for user info', storedUserInfo);
       if (storedUserInfo) {
         try {
           const parsedInfo = JSON.parse(storedUserInfo) as LoginStateBtnProps;
           // 登陆后向平台服务器请求完整信息
-          api
-            .getUserMeta(parsedInfo.userId)
-            .then(async (response) => {
-              if (response.ok) {
-                const data: GoogleUserMeta = await response.json();
-                const updatedInfo = {
-                  ...parsedInfo,
-                  username: data.username,
-                  avatar: data.avatar,
-                };
-                setUserInfo(updatedInfo);
-                // 更新本地存储
-                localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(updatedInfo));
-              } else {
-                setUserInfo(parsedInfo);
-              }
-            })
-            .catch(() => {
-              setUserInfo(parsedInfo);
-            });
+          const response = await api.getUserMeta(parsedInfo.userId);
+
+          if (response.ok) {
+            const data: GoogleUserMeta = await response.json();
+            const updatedInfo = {
+              ...parsedInfo,
+              username: data.username,
+              avatar: data.avatar,
+            };
+            setUserInfo(updatedInfo);
+            // 更新本地存储
+            localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(updatedInfo));
+          } else {
+            setUserInfo(parsedInfo);
+          }
         } catch (error) {
           console.error('Failed to parse stored user info:', error);
           setUserInfo({} as LoginStateBtnProps);
@@ -116,7 +112,8 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
       } else {
         setUserInfo({} as LoginStateBtnProps);
       }
-    }
+    };
+    checkInfo();
   }, [username, userId, auth, avatar]); // 依赖外部传入的 props
 
   const items: ItemType[] = useMemo(() => {

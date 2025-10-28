@@ -338,6 +338,7 @@ export const uploadSpaceApp = async (
 
 export const getUserMeta = async (userId: string | undefined) => {
   // const url = new URL('http://localhost:3000/api/vocespace'); // 开发环境测试用
+  console.warn('Fetching user meta for userId:', userId);
   const url = new URL("https://home.vocespace.com/api/vocespace"); // 生产环境使用
   url.searchParams.append('userId', userId || '');
   return await fetch(url.toString());
