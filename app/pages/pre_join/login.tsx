@@ -50,8 +50,7 @@ export interface LoginStateBtnProps {
   avatar?: string;
 }
 
-interface GoogleUserMeta {
-  email: string;
+interface UserMeta {
   username: string;
   avatar: string;
 }
@@ -93,7 +92,7 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
           const response = await api.getUserMeta(parsedInfo.userId);
 
           if (response.ok) {
-            const data: GoogleUserMeta = await response.json();
+            const data: UserMeta = await response.json();
             const updatedInfo = {
               ...parsedInfo,
               username: data.username,
