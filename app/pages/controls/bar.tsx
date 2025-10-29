@@ -9,7 +9,7 @@ import {
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { Button, Drawer, Input, message, Modal } from 'antd';
+import { Button, Drawer, Input, message, Modal, Slider } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
@@ -34,6 +34,7 @@ import { SizeType } from 'antd/es/config-provider/SizeContext';
 import equal from 'fast-deep-equal';
 import { Reaction } from './widgets/reaction';
 import { ChatMsgItem } from '@/lib/std/chat';
+import { AICutService } from '@/lib/ai/cut';
 
 /** @public */
 export type ControlBarControls = {
@@ -120,6 +121,10 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const enhanceChatRef = React.useRef<EnhancedChatExports>(null);
     const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
     const controlLeftRef = React.useRef<HTMLDivElement>(null);
+    const [aiCutModalOpen, setAICutModalOpen] = React.useState(false);
+    const [cutFreq, setCutFreq] = React.useState(3);
+    const [analyFreq, setAnalyFreq] = React.useState(10);
+    const aiCutServiceRef = React.useRef<AICutService>(new AICutService());
     const [controlWidth, setControlWidth] = React.useState(
       controlLeftRef.current ? controlLeftRef.current.clientWidth : window.innerWidth,
     );
@@ -490,6 +495,27 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       if (!space) return;
       setOpenApp(true);
     };
+
+    // ai -----------------------------------------------------------------------------------------
+    const onClickAI = async () => {
+      setAICutModalOpen(true);
+    };
+
+    const confirmOpenAICut = async () => {
+      if (aiCutServiceRef.current.isRunning) {
+        aiCutServiceRef.current.stop();
+      } else {
+        await aiCutServiceRef.current.start(0.5);
+      }
+      setAICutModalOpen(false);
+    };
+
+    const checkMyAICutAnalysis = async () => {
+      const screenShots = aiCutServiceRef.current.getScreenshots();
+      console.warn(screenShots);
+      aiCutServiceRef.current.downloadAllScreenshots();
+    };
+
     // 当是手机的情况下需要适当增加marginBottom，因为手机端自带的Tabbar会遮挡
     return (
       <div
@@ -601,6 +627,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               onSettingOpen={async () => {
                 setSettingVis(true);
               }}
+              onClickAI={onClickAI}
               onClickRecord={onClickRecord}
               onClickManage={fetchSettings}
               onClickApp={onClickApp}
@@ -780,6 +807,24 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           ) : (
             <div>{isOwner ? t('more.record.desc') : t('more.record.request')}</div>
           )}
+        </Modal>
+        {/* -------------------- ai cut modal --------------------------------------------------- */}
+        <Modal
+          open={aiCutModalOpen}
+          title={t('ai.cut.title')}
+          okText={aiCutServiceRef.current.isRunning ? t('common.close') : t('common.open')}
+          cancelText={t('common.cancel')}
+          onCancel={() => {
+            setAICutModalOpen(false);
+          }}
+          onOk={confirmOpenAICut}
+        >
+          <div>{t('more.ai.desc')}</div>
+          <div>{t('ai.cut.freq')}</div>
+          <Slider min={2} max={5} value={cutFreq} onChange={(v) => setCutFreq(v)} step={0.5} />
+          <div>{t('ai.cut.freq_analysis')}</div>
+          <Slider min={5} max={15} value={analyFreq} onChange={(v) => setAnalyFreq(v)} step={0.5} />
+          <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button>
         </Modal>
       </div>
     );

@@ -6,7 +6,7 @@ import { SizeType } from 'antd/es/config-provider/SizeContext';
 import { ViewAdjusts } from '@/lib/std/window';
 import { usePlatformUserInfo } from '@/lib/hooks/platform';
 import { useLocalParticipant } from '@livekit/components-react';
-import { HomeOutlined } from '@ant-design/icons';
+import { HomeOutlined, RobotOutlined } from '@ant-design/icons';
 
 export interface MoreButtonProps {
   showText?: boolean;
@@ -17,6 +17,7 @@ export interface MoreButtonProps {
   onClickManage?: () => Promise<void>;
   onClickRecord?: () => Promise<void>;
   onClickApp?: () => Promise<void>;
+  onClickAI?: () => Promise<void>;
   controlWidth: number;
   chat?: {
     visible: boolean;
@@ -40,6 +41,7 @@ export function MoreButtonInner({
   onClickRecord,
   onSettingOpen,
   onClickApp,
+  onClickAI,
   isRecording,
   controlWidth,
   chat,
@@ -80,6 +82,12 @@ export function MoreButtonInner({
         ),
         key: 'record',
         icon: <SvgResource type="record" svgSize={16} color={isRecording ? '#FF0000' : '#fff'} />,
+      },
+      // 定时截图进行AI分析功能
+      {
+        label: <div>{t('more.ai.cut')}</div>,
+        key: 'ai_cut',
+        icon: <RobotOutlined style={{ fontSize: 16 }}></RobotOutlined>,
       },
       // 参与者管理功能
       {
@@ -151,6 +159,12 @@ export function MoreButtonInner({
       case 'platform_user':
         if (platUser && platUser.userId) {
           window.open(`https://home.vocespace.com/auth/user/${platUser.userId}`, '_blank');
+        }
+        break;
+      case "ai_cut":
+        // Handle AI cut action
+        if (onClickAI) {
+          await onClickAI();
         }
         break;
       default:

@@ -62,6 +62,14 @@ export default {
       cancel: '取消',
     },
   },
+  ai: {
+    cut: {
+      title: 'AI分析设置',
+      freq: "截图频率（分钟）",
+      freq_analysis: "AI分析频率（分钟）",
+      myAnalysis: "我的AI分析报告",
+    }
+  },
   reaction: {
     title: '反应',
   },
@@ -210,6 +218,10 @@ export default {
     title: '更多',
     channel: '频道',
     platform: '个人主页',
+    ai: {
+      cut: "AI分析",
+      desc: "定时截图并进行AI分析，帮助您总结空间内容生成报告",
+    },
     app: {
       title: '应用',
       raise: {
