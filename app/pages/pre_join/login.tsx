@@ -122,6 +122,7 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
           key: 'logout',
           label: t('login.out'),
           onClick: () => {
+            window.open(`https://home.vocespace.com/auth/user/${userInfo.userId}`, '_blank');
             localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
             window.location.reload();
           },
@@ -140,14 +141,22 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
         type="text"
         onClick={(e) => {
           e.preventDefault();
-          window.open('https://vocespace.com', '_blank');
+          window.open(
+            `https://home.vocespace.com${userInfo.userId ? `/auth/user/${userInfo.userId}` : ''}`,
+            '_blank',
+          );
         }}
       >
         <div className={styles.wrapper}>
           <Avatar
             src={userInfo.avatar}
             size={38}
-            style={{ backgroundColor: '#22CCEE', verticalAlign: 'middle', fontSize: 16 }}
+            style={{
+              backgroundColor: userInfo.avatar ? 'transparent' : '#22CCEE',
+              verticalAlign: 'middle',
+              fontSize: 16,
+              border: 'none',
+            }}
           >
             {}
             {userInfo.username ? (
