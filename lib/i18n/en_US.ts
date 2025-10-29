@@ -218,6 +218,7 @@ export default {
   more: {
     title: 'More',
     channel: 'Channel',
+    platform: 'Homepage',
     app: {
       title: 'Application',
       raise: {

@@ -209,6 +209,7 @@ export default {
   more: {
     title: '更多',
     channel: '频道',
+    platform: '个人主页',
     app: {
       title: '应用',
       raise: {

@@ -8,6 +8,8 @@ import styles from '@/styles/controls.module.scss';
 import { ControlType, WsBase, WsControlParticipant, WsInviteDevice, WsTo } from '@/lib/std/device';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { src } from '@/lib/std';
+import { usePlatformUserInfo } from '@/lib/hooks/platform';
+import { HomeOutlined } from '@ant-design/icons';
 
 export interface ControlRKeyMenuProps {
   disabled?: boolean;
@@ -67,6 +69,7 @@ export function useControlRKeyMenu({
   const isOwner = useMemo(() => {
     return spaceInfo.ownerId === space?.localParticipant.identity;
   }, [spaceInfo.ownerId, space?.localParticipant.identity]);
+  const { platUser } = usePlatformUserInfo({ uid: space?.localParticipant.identity! });
 
   // 处理音量、模糊视频和模糊屏幕的调整------------------------------------------------------------
   const handleAdjustment = async (
@@ -88,7 +91,7 @@ export function useControlRKeyMenu({
             screenBlur: blurScreen,
           });
         }
-        console.warn("handle self");
+        console.warn('handle self');
         socket.emit('update_user_status', {
           space: space.name,
         } as WsBase);
@@ -290,6 +293,15 @@ export function useControlRKeyMenu({
             ),
             icon: <SvgResource type="leave" svgSize={16} />,
           },
+          ...(platUser
+            ? [
+                {
+                  key: 'safe.platform',
+                  label: <span>{t('more.platform')}</span>,
+                  icon: <HomeOutlined style={{fontSize: 16}}></HomeOutlined>
+                },
+              ]
+            : []),
         ],
       },
     ];
@@ -543,6 +555,12 @@ export function useControlRKeyMenu({
           });
           break;
         }
+        case 'safe.platform': {
+          if (platUser && platUser.userId) {
+            window.open(`https://home.vocespace.com/auth/user/${platUser.userId}`, '_blank');
+          }
+          break;
+        }
         case 'control.change_name': {
           toRenameSettings();
           break;
@@ -581,7 +599,7 @@ export function useControlRKeyMenu({
         socket.emit('invite_device', {
           ...wsTo,
           device,
-          isOpen
+          isOpen,
         } as WsInviteDevice);
       };
 
