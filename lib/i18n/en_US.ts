@@ -63,6 +63,14 @@ export default {
       cancel: 'Cancel',
     },
   },
+  ai: {
+    cut: {
+      title: 'AI Analysis Settings',
+      freq: 'Screenshot Frequency (minutes)',
+      freq_analysis: 'AI Analysis Frequency (minutes)',
+      myAnalysis: 'My AI Analysis Report',
+    },
+  },
   login: {
     following: 'Login using the following method',
     out: 'Log out',
