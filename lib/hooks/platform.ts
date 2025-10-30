@@ -20,6 +20,11 @@ export interface PUserInfo {
   avatar?: string;
 }
 
+export interface PUserMeta {
+  username: string;
+  avatar: string;
+}
+
 export interface UsePlatformUserInfoExports {
   platUser: PUserInfo | null;
 }
@@ -30,7 +35,8 @@ export const usePlatformUserInfo = ({
   const platUser: PUserInfo | null = useMemo(() => {
     const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER_ID);
     if (storedUserInfo) {
-      return JSON.parse(storedUserInfo) as PUserInfo;
+      const parsedInfo = JSON.parse(storedUserInfo) as PUserInfo;
+      return parsedInfo.userId === uid ? parsedInfo : null;
     } else {
       return null;
     }

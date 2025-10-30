@@ -2,6 +2,7 @@
 
 import { SvgResource } from '@/app/resources/svg';
 import { api } from '@/lib/api';
+import { PUserInfo } from '@/lib/hooks/platform';
 import { useI18n } from '@/lib/i18n/i18n';
 import { VOCESPACE_PLATFORM_USER_ID } from '@/lib/std/space';
 import styles from '@/styles/pre_join.module.scss';
@@ -43,86 +44,19 @@ export function LoginButtons({ space }: { space: string }) {
   );
 }
 
-export interface LoginStateBtnProps {
-  userId?: string;
-  username?: string;
-  auth?: 'google' | 'vocespace';
-  avatar?: string;
-}
-
-interface UserMeta {
-  username: string;
-  avatar: string;
-}
+export interface LoginStateBtnProps extends PUserInfo {}
 
 export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnProps) {
   const { t } = useI18n();
-  const [userInfo, setUserInfo] = useState<LoginStateBtnProps>({
-    userId,
-    username,
-    auth,
-    avatar,
-  });
-
-  // 调试日志
-  // console.log('LoginStateBtn props:', { userId, username, auth, avatar });
-
-  // 使用 useEffect 在客户端加载用户信息
-  useEffect(() => {
-    // 如果外部传入了完整的用户信息，优先使用
-    const checkInfo = async () => {
-      if (username && userId && auth && avatar) {
-        // console.log('Using props user info:', { userId, username, auth, avatar });
-        setUserInfo({
-          userId,
-          username,
-          auth,
-          avatar,
-        });
-        return;
-      }
-
-      // 检查是否在客户端环境中
-      const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER_ID);
-      console.warn('Checking localStorage for user info', storedUserInfo);
-      if (storedUserInfo) {
-        try {
-          const parsedInfo = JSON.parse(storedUserInfo) as LoginStateBtnProps;
-          // 登陆后向平台服务器请求完整信息
-          const response = await api.getUserMeta(parsedInfo.userId);
-
-          if (response.ok) {
-            const data: UserMeta = await response.json();
-            const updatedInfo = {
-              ...parsedInfo,
-              username: data.username,
-              avatar: data.avatar,
-            };
-            setUserInfo(updatedInfo);
-            // 更新本地存储
-            localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(updatedInfo));
-          } else {
-            setUserInfo(parsedInfo);
-          }
-        } catch (error) {
-          console.error('Failed to parse stored user info:', error);
-          setUserInfo({} as LoginStateBtnProps);
-        }
-      } else {
-        setUserInfo({} as LoginStateBtnProps);
-      }
-    };
-    checkInfo();
-  }, [username, userId, auth, avatar]); // 依赖外部传入的 props
 
   const items: ItemType[] = useMemo(() => {
-    if (userInfo.username && userInfo.userId) {
+    if (userId && username) {
       return [
         {
           key: 'logout',
           label: t('login.out'),
           onClick: () => {
-            window.open(`https://home.vocespace.com/auth/user/${userInfo.userId}`, '_blank');
+            window.open(`https://home.vocespace.com/auth/user/${userId}`, '_blank');
             localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
             window.location.reload();
           },
@@ -131,7 +65,7 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
     } else {
       return [];
     }
-  }, [userInfo, t]);
+  }, [userId, username, t]);
 
   return (
     <Dropdown menu={{ items }} placement="bottomRight" trigger={['hover']}>
@@ -142,25 +76,25 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
         onClick={(e) => {
           e.preventDefault();
           window.open(
-            `https://home.vocespace.com${userInfo.userId ? `/auth/user/${userInfo.userId}` : ''}`,
+            `https://home.vocespace.com${userId ? `/auth/user/${userId}` : ''}`,
             '_blank',
           );
         }}
       >
         <div className={styles.wrapper}>
           <Avatar
-            src={userInfo.avatar}
+            src={avatar}
             size={38}
             style={{
-              backgroundColor: userInfo.avatar ? 'transparent' : '#22CCEE',
+              backgroundColor: avatar ? 'transparent' : '#22CCEE',
               verticalAlign: 'middle',
               fontSize: 16,
               border: 'none',
             }}
           >
             {}
-            {userInfo.username ? (
-              userInfo.username.charAt(0).toUpperCase()
+            {username ? (
+              username.charAt(0).toUpperCase()
             ) : (
               <UserOutlined></UserOutlined>
             )}

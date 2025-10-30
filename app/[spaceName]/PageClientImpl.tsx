@@ -117,11 +117,9 @@ export function PageClientImpl(props: {
   username?: string;
   userId?: string;
   auth?: "google" | "vocespace";
+  avatar?: string;
 }) {
   const { t } = useI18n();
-  
-  // 调试：打印接收到的 props
-  console.log('PageClientImpl props:', props);
   const [uState, setUState] = useRecoilState(userState);
   const [messageApi, contextHolder] = message.useMessage();
   const [notApi, notHolder] = notification.useNotification();
@@ -165,7 +163,7 @@ export function PageClientImpl(props: {
       // 去除url参数
       router.replace(`/${props.spaceName}`);
     }
-  }, []);
+  }, [props]);
   const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
   // 配置数据 ----------------------------------------------------------------------------------------
   const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
@@ -257,7 +255,6 @@ export function PageClientImpl(props: {
       }
     };
   }, []);
-
   return (
     <main data-lk-theme="default" style={{ height: '100%' }}>
       {contextHolder}
@@ -277,6 +274,7 @@ export function PageClientImpl(props: {
               username: props.username,
               userId: props.userId,
               auth: props.auth,
+              avatar: props.avatar,
             }}
           />
         </div>

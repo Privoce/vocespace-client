@@ -6,6 +6,8 @@ import { isVideoCodec } from '@/lib/types';
 import { RecoilRoot } from 'recoil';
 import { VOCESPACE_PLATFORM_USER_ID } from '@/lib/std/space';
 import { LoginStateBtnProps } from '../pages/pre_join/login';
+import { PUserInfo, PUserMeta } from '@/lib/hooks/platform';
+import { api } from '@/lib/api';
 
 export default function Page({
   params,
@@ -27,10 +29,10 @@ export default function Page({
       : 'vp9';
   const hq = searchParams.hq === 'true' ? true : false;
 
-  const [userInfo, setUserInfo] = React.useState<LoginStateBtnProps>(() => {
+  const [userInfo, setUserInfo] = React.useState<PUserInfo>(() => {
     // 在服务器端，优先使用 URL 参数
     if (searchParams.username && searchParams.userId && searchParams.auth) {
-      const urlUserInfo = {
+      const urlUserInfo: PUserInfo = {
         username: searchParams.username,
         userId: searchParams.userId,
         auth: searchParams.auth,
@@ -38,29 +40,44 @@ export default function Page({
       console.log('Using URL params for userInfo:', urlUserInfo);
       return urlUserInfo;
     }
-    
-    console.log('No URL params found, will check localStorage in useEffect');
     return {};
   });
 
-  // 在客户端检查 localStorage
-  React.useEffect(() => {
-    // 如果已经有用户信息（从 URL 参数），不需要检查 localStorage
-    if (userInfo.username && userInfo.userId) {
-      return;
-    }
-
-    // 尝试从 localStorage 获取用户信息
+  const checkAndFetchByStored = async () => {
+    // 检查是否在客户端环境中
     const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER_ID);
+    console.warn('Checking localStorage for user info', storedUserInfo);
     if (storedUserInfo) {
       try {
-        const parsed = JSON.parse(storedUserInfo);
-        console.log('Loading userInfo from localStorage:', parsed);
-        setUserInfo(parsed);
-      } catch (e) {
-        console.error('Failed to parse localStorage userInfo:', e);
+        const parsedInfo = JSON.parse(storedUserInfo) as LoginStateBtnProps;
+        // 登陆后向平台服务器请求完整信息
+        const response = await api.getUserMeta(parsedInfo.userId);
+
+        if (response.ok) {
+          const data: PUserMeta = await response.json();
+          const updatedInfo = {
+            ...parsedInfo,
+            username: data.username,
+            avatar: data.avatar,
+          };
+          setUserInfo(updatedInfo);
+          // 更新本地存储
+          localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(updatedInfo));
+        } else {
+          setUserInfo(parsedInfo);
+        }
+      } catch (error) {
+        console.error('Failed to parse stored user info:', error);
+        setUserInfo({} as LoginStateBtnProps);
       }
+    } else {
+      setUserInfo({} as LoginStateBtnProps);
     }
+  };
+
+  // 在客户端检查 localStorage
+  React.useEffect(() => {
+    checkAndFetchByStored();
   }, []); // 只在组件挂载时运行一次
 
   // 当有 URL 参数时，保存到 localStorage
@@ -89,6 +106,7 @@ export default function Page({
         username={userInfo?.username}
         userId={userInfo?.userId}
         auth={userInfo?.auth}
+        avatar={userInfo?.avatar}
       />
     </RecoilRoot>
   );

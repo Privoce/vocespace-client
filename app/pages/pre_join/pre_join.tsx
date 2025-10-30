@@ -31,6 +31,7 @@ export interface PreJoinPropsExt extends PreJoinProps {
     spaceName: string;
     username?: string;
     auth?: 'google' | 'vocespace';
+    avatar?: string;
   };
 }
 
@@ -297,7 +298,6 @@ export function PreJoin({
       setPlay(false);
     }
   };
-
   return (
     <div className={styles.view}>
       {contextHolder}
@@ -465,6 +465,7 @@ export function PreJoin({
         userId={spaceParams.userId}
         username={spaceParams.username}
         auth={spaceParams.auth}
+        avatar={spaceParams.avatar}
       />
     </div>
   );
