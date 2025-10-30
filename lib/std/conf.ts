@@ -72,6 +72,26 @@ export interface VocespaceConfig {
    */
   hostToken: string;
   license: string;
+  /**
+   * AI 配置项，当前用于AI进行会议截图内容分析
+   * 由于AI需要进行图片分析，所以用户需要选择使用多模态AI模型
+   * 模型推荐：
+   * | 模型名称                           | 所属公司      | 支持模态        | 主要特点                    |
+   * | --------------------------------- | --------- | ----------- | ----------------------- |
+   * | GPT-4V / GPT-4o                   | OpenAI    | 文本、图像、音频    | 综合能力强，图像理解和文本生成表现优异     |
+   * | Claude 3.5 Sonnet                 | Anthropic | 文本、图像       | 编程与推理能力强，适用于逻辑性图像任务     |
+   * | Gemini 1.5 Pro / Gemini 2.0 Flash | Google    | 文本、图像、音频、视频 | 支持长视频理解，多媒体处理能力强        |
+   * | Qwen2.5-VL-72B                    | 阿里巴巴      | 文本、图像、视频    | 中文理解能力强，视觉问答表现突出        |
+   * | 文心一言多模态版                     | 百度        | 文本、图像、语音    | 中文本土化优化，适合中文多媒体内容处理     |
+   * | 混元Vision                         | 腾讯        | 文本、图像       | 中文任务优化，SuperCLUE-V测评中领先 |
+   */
+  ai?: {
+    enabled: boolean;
+    apiKey: string;
+    apiUrl: string;
+    model: string;
+    maxTokens: number;
+  };
 }
 
 // 2k, 30fps, 3Mbps

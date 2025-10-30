@@ -1,6 +1,21 @@
+/**
+ * 裁剪截图单条信息
+ */
+export interface CutScreenShot {
+  data: string; // base64 图片数据
+  timestamp: number; // 截图时间戳
+}
+
+export const newCutScreenShot = (data: string): CutScreenShot => {
+  return {
+    data,
+    timestamp: Date.now(),
+  };
+};
+
 export class AICutService {
   private intervalId: NodeJS.Timeout | null = null;
-  private screenshots: string[] = [];
+  private screenshots: CutScreenShot[] = [];
   public isRunning: boolean = false;
   // default frequency: every 3 minutes
   public freq: number = 3;
@@ -25,7 +40,7 @@ export class AICutService {
   async doCapture() {
     const screenshot = await this.capture();
     if (screenshot) {
-      this.screenshots.push(screenshot as string);
+      this.screenshots.push(newCutScreenShot(screenshot));
       console.warn('Captured screenshot, total:', this.screenshots.length);
     } else {
       console.warn('Failed to capture screenshot');
@@ -33,18 +48,22 @@ export class AICutService {
   }
 
   // start the AI cut service
-  async start(freq: number) {
+  async start(freq: number, withAnalysis?: (screenShot: CutScreenShot) => Promise<void>) {
     if (this.isRunning) {
       console.warn('AI Cut Service is already running');
       return;
     }
     this.freq = freq;
     this.isRunning = true;
-    // do capture immediately
-    await this.doCapture();
     // set interval for periodic capture
     this.intervalId = setInterval(async () => {
       await this.doCapture();
+      // 获取最新截图并进行分析
+      if (withAnalysis) {
+        const screenshots = this.getScreenshots();
+        const lastScreenshot = screenshots[screenshots.length - 1];
+        await withAnalysis(lastScreenshot);
+      }
     }, this.freq * 60 * 1000);
 
     console.warn('AI Cut Service started with frequency:', this.freq, 'minutes');
@@ -69,10 +88,10 @@ export class AICutService {
   }
 
   downloadAllScreenshots() {
-    this.screenshots.forEach((dataUrl, index) => {
+    this.screenshots.forEach((screenshot, index) => {
       const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = `screenshot_${index + 1}.png`;
+      a.href = screenshot.data;
+      a.download = `${screenshot.timestamp}_${index + 1}.png`;
       a.click();
     });
   }

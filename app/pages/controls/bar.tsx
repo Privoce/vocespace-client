@@ -35,6 +35,7 @@ import equal from 'fast-deep-equal';
 import { Reaction } from './widgets/reaction';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { AICutService } from '@/lib/ai/cut';
+import { AICutAnalysisService, downloadMarkdown } from '@/lib/ai/analysis';
 
 /** @public */
 export type ControlBarControls = {
@@ -123,7 +124,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const controlLeftRef = React.useRef<HTMLDivElement>(null);
     const [aiCutModalOpen, setAICutModalOpen] = React.useState(false);
     const [cutFreq, setCutFreq] = React.useState(3);
-    const [analyFreq, setAnalyFreq] = React.useState(10);
     const aiCutServiceRef = React.useRef<AICutService>(new AICutService());
     const [controlWidth, setControlWidth] = React.useState(
       controlLeftRef.current ? controlLeftRef.current.clientWidth : window.innerWidth,
@@ -504,16 +504,51 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const confirmOpenAICut = async () => {
       if (aiCutServiceRef.current.isRunning) {
         aiCutServiceRef.current.stop();
+        const response = await api.ai.stop(space!.name, space!.localParticipant.identity);
+        if (response.ok) {
+          const { md }: { md: string } = await response.json();
+          console.warn('Downloaded AI cut analysis markdown:', md);
+          // 如果md不为空，则下载
+          if (!!md) {
+            downloadMarkdown(md);
+          }
+        } else {
+          messageApi.error(t('msg.error.ai.cut.download_analysis'));
+        }
+        aiCutServiceRef.current.clearScreenshots();
       } else {
-        await aiCutServiceRef.current.start(0.5);
+        await aiCutServiceRef.current.start(cutFreq, async (lastScreenShot) => {
+          if (space && space.localParticipant) {
+            const response = await api.ai.analysis(
+              space.name,
+              space.localParticipant.identity,
+              lastScreenShot,
+            );
+            if (response.ok) {
+              console.warn('AI cut screenshot sent for analysis');
+            } else {
+              console.error('Failed to send AI cut screenshot for analysis');
+            }
+          }
+        });
       }
       setAICutModalOpen(false);
     };
 
     const checkMyAICutAnalysis = async () => {
-      const screenShots = aiCutServiceRef.current.getScreenshots();
-      console.warn(screenShots);
-      aiCutServiceRef.current.downloadAllScreenshots();
+      if (space && space.localParticipant) {
+        const response = await api.ai.downloadMarkdown(space.name, space.localParticipant.identity);
+        if (response.ok) {
+          const { md }: { md: string } = await response.json();
+          console.warn('Downloaded AI cut analysis markdown:', md);
+          // 如果md不为空，则下载
+          if (!!md) {
+            downloadMarkdown(md);
+          }
+        } else {
+          messageApi.error(t('msg.error.ai.cut.download_analysis'));
+        }
+      }
     };
 
     // 当是手机的情况下需要适当增加marginBottom，因为手机端自带的Tabbar会遮挡
@@ -822,9 +857,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           <div>{t('more.ai.desc')}</div>
           <div>{t('ai.cut.freq')}</div>
           <Slider min={2} max={5} value={cutFreq} onChange={(v) => setCutFreq(v)} step={0.5} />
-          <div>{t('ai.cut.freq_analysis')}</div>
-          <Slider min={5} max={15} value={analyFreq} onChange={(v) => setAnalyFreq(v)} step={0.5} />
-          <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button>
+          {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
         </Modal>
       </div>
     );

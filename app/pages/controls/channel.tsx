@@ -147,7 +147,6 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
         for (const child of settings.children) {
           newRooms.push(child.name);
           if (!child.isPrivate) {
-            console.warn('public room auto expand', child.name);
             setSubActiveKey((prev) => [...prev, child.name]);
             continue;
           }
@@ -656,11 +655,16 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                   }}
                 >
                   {room.isPrivate ? (
-                    <LockOutlined style={{fontSize: 16}} />
+                    <LockOutlined style={{ fontSize: 16 }} />
                   ) : (
                     <SvgResource type="public" svgSize={16} color="#aaa"></SvgResource>
                   )}
-                  <div className={styles.room_header_wrapper_title_name_title} style={{width: room.participants.length > 0 ? '100px' : 'calc(100% - 24px)'}}>{room.name}</div>
+                  <div
+                    className={styles.room_header_wrapper_title_name_title}
+                    style={{ width: room.participants.length > 0 ? '100px' : 'calc(100% - 24px)' }}
+                  >
+                    {room.name}
+                  </div>
                 </div>
                 {room.participants.length > 0 && (
                   <Tag

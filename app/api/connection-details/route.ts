@@ -36,6 +36,7 @@ export async function GET(request: NextRequest) {
     //   randomParticipantPostfix = randomString(4);
     // }
     let identity = `${participantName}__${spaceName}`;
+    console.warn('auth', auth);
     if (auth) {
       identity = auth;
     }
