@@ -116,7 +116,7 @@ export function PageClientImpl(props: {
   codec: VideoCodec;
   username?: string;
   userId?: string;
-  auth?: "google" | "vocespace";
+  auth?: 'google' | 'vocespace';
   avatar?: string;
 }) {
   const { t } = useI18n();
@@ -147,23 +147,26 @@ export function PageClientImpl(props: {
     undefined,
   );
 
-  const handlePreJoinSubmit = React.useCallback(async (values: LocalUserChoices) => {
-    setPreJoinChoices(values);
-    const connectionDetailsResp = await api.joinSpace(
-      props.spaceName,
-      values.username,
-      props.region,
-      props.userId,
-    );
-    const connectionDetailsData = await connectionDetailsResp.json();
-    setConnectionDetails(connectionDetailsData);
-    if (props.userId && props.username && props.auth) {
-      // 设置登陆状态：需要在localStorage中存储来自平台提供的用户id即可，因为id才是真正的唯一标识
-      // localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, props.userId);
-      // 去除url参数
-      router.replace(`/${props.spaceName}`);
-    }
-  }, [props]);
+  const handlePreJoinSubmit = React.useCallback(
+    async (values: LocalUserChoices) => {
+      setPreJoinChoices(values);
+      const connectionDetailsResp = await api.joinSpace(
+        props.spaceName,
+        values.username,
+        props.region,
+        props.userId,
+      );
+      const connectionDetailsData = await connectionDetailsResp.json();
+      setConnectionDetails(connectionDetailsData);
+      if (props.userId && props.username && props.auth) {
+        // 设置登陆状态：需要在localStorage中存储来自平台提供的用户id即可，因为id才是真正的唯一标识
+        // localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, props.userId);
+        // 去除url参数
+        router.replace(`/${props.spaceName}`);
+      }
+    },
+    [props],
+  );
   const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
   // 配置数据 ----------------------------------------------------------------------------------------
   const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
@@ -210,24 +213,25 @@ export function PageClientImpl(props: {
 
   // 当localStorage中有reload这个标志时，需要重登陆
   useEffect(() => {
+    const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
+    if (storedSettingsStr) {
+      const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
+      if (storedSettings?.version !== '0.4.0') {
+        // 版本不匹配/不存在，直接删除
+        localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
+        localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
+        return;
+      }
+    }
     const reloadRoom = localStorage.getItem('reload');
     if (reloadRoom) {
-      const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
       if (storedSettingsStr) {
         const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
-        if (storedSettings?.version !== '0.4.0') {
-          // 版本不匹配/不存在，直接删除
-          localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
-          localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
-          return;
-        } else {
-          setUState(storedSettings);
-        }
+        setUState(storedSettings);
       } else {
         // 没有则存到localStorage中
         localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
       }
-
       setIsReload(true);
       messageApi.loading(t('settings.general.conf.reloading'));
       localStorage.removeItem('reload');
