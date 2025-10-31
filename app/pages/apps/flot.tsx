@@ -65,11 +65,11 @@ export function FlotLayout({
           body: {
             background: '#1a1a1a',
             width: '360px',
-            maxHeight: "86vh",
-            overflowY: "scroll",
-            paddingRight: "0px",
-            scrollbarWidth: "thin",
-            scrollbarColor: "#888 transparent",
+            maxHeight: '86vh',
+            overflowY: 'scroll',
+            paddingRight: '0px',
+            scrollbarWidth: 'thin',
+            scrollbarColor: '#888 transparent',
           },
         }}
       >
@@ -266,7 +266,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
         label: (
           <div className={styles.flot_header}>
             {showSyncIcon(isRemote, 'timer')}
-            {activeKeys.get(participantId)?.includes('timer') ? '' : t('more.app.timer.title')}
+            {t('more.app.timer.title')}
           </div>
         ),
         children: (
@@ -288,9 +288,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
         label: (
           <div className={styles.flot_header}>
             {showSyncIcon(isRemote, 'countdown')}
-            {activeKeys.get(participantId)?.includes('countdown')
-              ? ''
-              : t('more.app.countdown.title')}
+            {t('more.app.countdown.title')}
           </div>
         ),
         children: (
@@ -323,7 +321,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
                 />
               </Tooltip>
             )}
-            {activeKeys.get(participantId)?.includes('todo') ? '' : t('more.app.todo.title')}
+            {t('more.app.todo.title')}
           </div>
         ),
         children: (
@@ -347,7 +345,7 @@ function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
         label: (
           <div className={styles.flot_header}>
             {/* {showSyncIcon(isRemote, 'timer')} */}
-            {activeKeys.get(participantId)?.includes('together') ? '' : t('more.app.todo.together.title')}
+            {t('more.app.todo.together.title')}
           </div>
         ),
         children: <TodoTogether spaceInfo={spaceInfo} messageApi={messageApi}></TodoTogether>,

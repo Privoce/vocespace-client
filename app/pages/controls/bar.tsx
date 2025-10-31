@@ -9,7 +9,7 @@ import {
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { Button, Drawer, Input, message, Modal, Slider, Tooltip } from 'antd';
+import { Button, Drawer, Input, message, Modal, notification, Slider, Tooltip } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
@@ -129,6 +129,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [controlWidth, setControlWidth] = React.useState(
       controlLeftRef.current ? controlLeftRef.current.clientWidth : window.innerWidth,
     );
+    const [noteApi, noteContextHolder] = notification.useNotification();
     const isMobile = React.useMemo(() => {
       return is_moblie();
     }, []);
@@ -518,20 +519,41 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         }
         aiCutServiceRef.current.clearScreenshots();
       } else {
-        await aiCutServiceRef.current.start(cutFreq, async (lastScreenShot) => {
-          if (space && space.localParticipant) {
-            const response = await api.ai.analysis(
-              space.name,
-              space.localParticipant.identity,
-              lastScreenShot,
-            );
-            if (response.ok) {
-              console.warn('AI cut screenshot sent for analysis');
-            } else {
-              console.error('Failed to send AI cut screenshot for analysis');
+        // 开启AI截屏服务 --------------------------------------------------------
+        if (!space?.localParticipant.isScreenShareEnabled) {
+          noteApi.open({
+            message: t('ai.cut.ask_permission_title'),
+            description: t('ai.cut.ask_permission'),
+            duration: 5,
+            btn: (
+              <Button
+                type="primary"
+                onClick={() => {
+                  space?.localParticipant.setScreenShareEnabled(true);
+                }}
+              >
+                {t('common.open')}
+              </Button>
+            ),
+          });
+        }
+
+        if (space?.localParticipant.isScreenShareEnabled) {
+          await aiCutServiceRef.current.start(cutFreq, async (lastScreenShot) => {
+            if (space && space.localParticipant) {
+              const response = await api.ai.analysis(
+                space.name,
+                space.localParticipant.identity,
+                lastScreenShot,
+              );
+              if (response.ok) {
+                console.warn('AI cut screenshot sent for analysis');
+              } else {
+                console.error('Failed to send AI cut screenshot for analysis');
+              }
             }
-          }
-        });
+          });
+        }
       }
       setAICutModalOpen(false);
     };
@@ -561,6 +583,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           marginBottom: isMobile ? '62px' : 'auto',
         }}
       >
+        {noteContextHolder}
         {contextHolder}
         <div
           className={styles.controls_left}

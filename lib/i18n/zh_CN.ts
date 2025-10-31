@@ -65,11 +65,14 @@ export default {
   ai: {
     cut: {
       title: 'AI分析设置',
-      freq: "截图频率(分钟)",
-      freq_desc: "设置AI分析的截图频率，默认为每5分钟截图一次进行分析。若长于5分钟则在5分钟时会进行第一次截图。",
-      freq_analysis: "AI分析频率(分钟)",
-      myAnalysis: "我的AI分析报告",
-    }
+      freq: '截图频率(分钟)',
+      freq_desc:
+        '设置AI分析的截图频率，默认为每5分钟截图一次进行分析。若长于5分钟则在5分钟时会进行第一次截图。',
+      ask_permission: 'AI分析需要获取您的屏幕共享权限，请问是否允许？',
+      ask_permission_title: '屏幕共享权限',
+      freq_analysis: 'AI分析频率(分钟)',
+      myAnalysis: '我的AI分析报告',
+    },
   },
   reaction: {
     title: '反应',
@@ -132,9 +135,9 @@ export default {
     },
   },
   login: {
-    following: "使用以下方式登陆",
-    out: "退出登录",
-    anon: "匿名用户"
+    following: '使用以下方式登陆',
+    out: '退出登录',
+    anon: '匿名用户',
   },
   channel: {
     menu: {
@@ -220,8 +223,8 @@ export default {
     channel: '频道',
     platform: '个人主页',
     ai: {
-      cut: "AI分析",
-      desc: "定时截图并进行AI分析，帮助您总结空间内容生成报告",
+      cut: 'AI分析',
+      desc: '定时截图并进行AI分析，帮助您总结空间内容生成报告',
     },
     app: {
       title: '应用',
@@ -297,7 +300,7 @@ export default {
         unexport: '当前待办为空，无法导出',
         complete: '已完成的事项',
         together: {
-          title: "团队进度",
+          title: '团队进度',
           empty: '暂无用户的待办事项',
         },
       },
