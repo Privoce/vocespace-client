@@ -80,7 +80,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             dotSize: 32,
           },
           Radio: {
-            buttonBg: '#1E1E1E',
+            buttonBg: '#2E2E2E',
             colorBorder: '#1E1E1E',
             buttonCheckedBg: '#1E1E1E',
           },

@@ -70,6 +70,8 @@ export default {
         '设置AI分析的截图频率，默认为每5分钟截图一次进行分析。若长于5分钟则在5分钟时会进行第一次截图。',
       ask_permission: 'AI分析需要获取您的屏幕共享权限，请问是否允许？',
       ask_permission_title: '屏幕共享权限',
+      timeline: "开启时间轴",
+      timeline_desc: '时间轴开启后会在总结中加入时间点，方便定位内容。',
       freq_analysis: 'AI分析频率(分钟)',
       myAnalysis: '我的AI分析报告',
     },

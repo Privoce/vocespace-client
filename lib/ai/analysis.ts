@@ -123,6 +123,16 @@ export class AICutAnalysisService {
               url: tg.data,
             },
           },
+          ...(tg.showTime
+            ? [
+                {
+                  type: 'text',
+                  text: `请对该任务markdown格式的标题后增加时间标记，格式为(${new Date(
+                    tg.timestamp,
+                  ).toLocaleTimeString()})`,
+                },
+              ]
+            : []),
         ],
       },
     ];

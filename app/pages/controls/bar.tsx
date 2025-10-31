@@ -9,7 +9,7 @@ import {
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { Button, Drawer, Input, message, Modal, notification, Slider, Tooltip } from 'antd';
+import { Button, Drawer, Input, message, Modal, notification, Radio, Slider, Tooltip } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
@@ -129,6 +129,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [controlWidth, setControlWidth] = React.useState(
       controlLeftRef.current ? controlLeftRef.current.clientWidth : window.innerWidth,
     );
+    const [openCutTimeline, setOpenCutTimeline] = React.useState<boolean>(false);
     const [noteApi, noteContextHolder] = notification.useNotification();
     const isMobile = React.useMemo(() => {
       return is_moblie();
@@ -539,7 +540,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         }
 
         if (space?.localParticipant.isScreenShareEnabled) {
-          await aiCutServiceRef.current.start(cutFreq, async (lastScreenShot) => {
+          await aiCutServiceRef.current.start(cutFreq, openCutTimeline, async (lastScreenShot) => {
             if (space && space.localParticipant) {
               const response = await api.ai.analysis(
                 space.name,
@@ -892,6 +893,27 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               <Slider min={1} max={15} value={cutFreq} onChange={(v) => setCutFreq(v)} step={0.5} />
             </>
           )}
+          <div className={styles.ai_cut_line}>
+            <div className={styles.ai_cut_line}>
+              <span> {t('ai.cut.timeline')}</span>
+              <Tooltip title={t('ai.cut.timeline_desc')} trigger={['hover']}>
+                <InfoCircleFilled></InfoCircleFilled>
+              </Tooltip>
+            </div>
+            <div style={{width: "100%"}}>
+              <Radio.Group
+              size="large"
+              block
+              value={openCutTimeline}
+              onChange={(e) => {
+                setOpenCutTimeline(e.target.value);
+              }}
+            >
+              <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+              <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+            </Radio.Group>
+            </div>
+          </div>
 
           {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
         </Modal>

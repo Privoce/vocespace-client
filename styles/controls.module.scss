@@ -367,9 +367,9 @@
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 12px;
-  &_item{
+  &_item {
     width: 100%;
-    &_justify{
+    &_justify {
       text-align: justify;
       margin-bottom: 2px;
     }
@@ -383,7 +383,7 @@
   gap: 8px;
 }
 
-.checkbox_item{
+.checkbox_item {
   height: 32px;
   width: 100%;
   display: inline-flex;
@@ -411,7 +411,7 @@
 //   gap: 12px;
 // }
 
-.status_tag{
+.status_tag {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -439,10 +439,10 @@
   &_line {
     width: 100%;
     margin-top: 8px;
-    display: inline-flex;
+    display: flex;
     align-items: center;
     justify-content: flex-start;
+    flex-wrap: wrap;
     gap: 8px;
   }
-  
 }

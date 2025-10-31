@@ -4,12 +4,14 @@
 export interface CutScreenShot {
   data: string; // base64 图片数据
   timestamp: number; // 截图时间戳
+  showTime: boolean; // 是否在时间轴上显示时间
 }
 
-export const newCutScreenShot = (data: string): CutScreenShot => {
+export const newCutScreenShot = (data: string, showTime: boolean): CutScreenShot => {
   return {
     data,
     timestamp: Date.now(),
+    showTime,
   };
 };
 
@@ -19,7 +21,7 @@ export class AICutService {
   public isRunning: boolean = false;
   // default frequency: every 3 minutes
   public freq: number = 3;
-
+  public timeline: boolean = false;
   // capture use html2canvas
   async capture() {
     try {
@@ -40,7 +42,7 @@ export class AICutService {
   async doCapture() {
     const screenshot = await this.capture();
     if (screenshot) {
-      this.screenshots.push(newCutScreenShot(screenshot));
+      this.screenshots.push(newCutScreenShot(screenshot, this.timeline));
       console.warn('Captured screenshot, total:', this.screenshots.length);
     } else {
       console.warn('Failed to capture screenshot');
@@ -48,13 +50,32 @@ export class AICutService {
   }
 
   // start the AI cut service
-  async start(freq: number, withAnalysis?: (screenShot: CutScreenShot) => Promise<void>) {
+  async start(
+    freq: number,
+    timeline: boolean,
+    withAnalysis?: (screenShot: CutScreenShot) => Promise<void>,
+  ) {
     if (this.isRunning) {
       console.warn('AI Cut Service is already running');
       return;
     }
     this.freq = freq;
+    this.timeline = timeline;
     this.isRunning = true;
+    // 超过5分钟，都需要在4分钟这个节点进行一次截图，避免时间点偏移过大
+    if (this.freq > 5) {
+      setTimeout(async () => {
+        if (this.isRunning) {
+          await this.doCapture();
+          if (withAnalysis) {
+            const screenshots = this.getScreenshots();
+            const lastScreenshot = screenshots[screenshots.length - 1];
+            await withAnalysis(lastScreenshot);
+          }
+        }
+      }, 4 * 60 * 1000);
+    }
+
     // set interval for periodic capture
     this.intervalId = setInterval(async () => {
       await this.doCapture();
