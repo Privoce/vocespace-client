@@ -224,6 +224,9 @@ export default {
     },
   },
   more: {
+    ai: {
+      cut: 'AI Analysis',
+    },
     title: 'More',
     channel: 'Channel',
     platform: 'Homepage',

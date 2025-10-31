@@ -9,7 +9,7 @@ import {
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { Button, Drawer, Input, message, Modal, Slider } from 'antd';
+import { Button, Drawer, Input, message, Modal, Slider, Tooltip } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
@@ -36,6 +36,7 @@ import { Reaction } from './widgets/reaction';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { AICutService } from '@/lib/ai/cut';
 import { AICutAnalysisService, downloadMarkdown } from '@/lib/ai/analysis';
+import { InfoCircleFilled } from '@ant-design/icons';
 
 /** @public */
 export type ControlBarControls = {
@@ -855,8 +856,20 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           onOk={confirmOpenAICut}
         >
           <div>{t('more.ai.desc')}</div>
-          <div>{t('ai.cut.freq')}</div>
-          <Slider min={2} max={5} value={cutFreq} onChange={(v) => setCutFreq(v)} step={0.5} />
+
+          {space?.localParticipant.identity === spaceInfo.ownerId && (
+            <>
+              {' '}
+              <div className={styles.ai_cut_line}>
+                <span> {t('ai.cut.freq')}</span>
+                <Tooltip title={t('ai.cut.freq_desc')} trigger={['hover']}>
+                  <InfoCircleFilled></InfoCircleFilled>
+                </Tooltip>
+              </div>{' '}
+              <Slider min={1} max={15} value={cutFreq} onChange={(v) => setCutFreq(v)} step={0.5} />
+            </>
+          )}
+
           {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
         </Modal>
       </div>

@@ -351,7 +351,9 @@
   align-items: center;
   justify-content: space-between;
   gap: 4px;
+  
   &_title {
+    border-radius: 4px;
     transition: all 0.2s ease-in-out;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -364,7 +366,6 @@
     justify-content: flex-start;
     gap: 8px;
     flex: 1;
-    max-width: 180px;
     &_name {
       width: 100%;
       display: inline-flex;

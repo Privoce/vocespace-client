@@ -65,8 +65,9 @@ export default {
   ai: {
     cut: {
       title: 'AI分析设置',
-      freq: "截图频率（分钟）",
-      freq_analysis: "AI分析频率（分钟）",
+      freq: "截图频率(分钟)",
+      freq_desc: "设置AI分析的截图频率，默认为每5分钟截图一次进行分析。若长于5分钟则在5分钟时会进行第一次截图。",
+      freq_analysis: "AI分析频率(分钟)",
       myAnalysis: "我的AI分析报告",
     }
   },

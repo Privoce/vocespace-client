@@ -434,3 +434,15 @@
     justify-content: center;
   }
 }
+
+.ai_cut {
+  &_line {
+    width: 100%;
+    margin-top: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  
+}
