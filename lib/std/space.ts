@@ -103,6 +103,15 @@ export interface ParticipantSettings {
    * 当前是否请求举手
    */
   raiseHand: boolean;
+  /**
+   * ai相关的功能设置
+   */
+  ai: {
+    /**
+     * 是否开启AI截图分析功能
+     */
+    cut: boolean;
+  };
 }
 
 export interface SpaceTimeRecord {
@@ -322,7 +331,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
-  version: '0.4.0',
+  version: '0.4.1',
   name: '',
   volume: 100,
   blur: 0.0,
@@ -341,6 +350,9 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   auth: 'read',
   appDatas: {},
   raiseHand: false,
+  ai: {
+    cut: true,
+  }
 };
 
 /**

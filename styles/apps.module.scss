@@ -150,3 +150,23 @@
   height: 100%;
   width: 100%;
 }
+
+.ai_analysis_md {
+  &_header {
+    height: 32px;
+    width: 100%;
+    padding: 4px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #333;
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    &_icon {
+      cursor: pointer;
+    }
+  }
+  &_content {
+    padding: 16px;
+  }
+}

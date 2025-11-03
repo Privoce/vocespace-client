@@ -6,7 +6,12 @@ import { AppTimer } from './timer';
 import { AppCountdown } from './countdown';
 import { AppTodo } from './todo_list';
 import { MessageInstance } from 'antd/es/message/interface';
-import { EyeInvisibleOutlined, EyeOutlined, ProfileOutlined } from '@ant-design/icons';
+import {
+  EyeInvisibleOutlined,
+  EyeOutlined,
+  ProfileOutlined,
+  RobotOutlined,
+} from '@ant-design/icons';
 import { useI18n } from '@/lib/i18n/i18n';
 import {
   AppAuth,
@@ -31,6 +36,7 @@ import { WsBase } from '@/lib/std/device';
 import { DEFAULT_COLLAPSE_HEADER_STYLES } from '../controls/collapse_tools';
 import { TodoTogether } from './todo_together';
 import { AICutAnalysisMd, AICutAnalysisMdTabs, AICutAnalysisTabItem } from './ai_analysis_md';
+import { AICutAnalysisRes } from '@/lib/ai/analysis';
 
 export interface FlotLayoutProps {
   style?: React.CSSProperties;
@@ -51,43 +57,24 @@ export function FlotLayout({
 }: FlotLayoutProps) {
   const flotAppItemRef = useRef<FlotAppExports>(null);
 
-  const items = useMemo(() => {
-    // return (
-    //   flotAppItemRef.current?.aiCutAnalysisItems || [
-    //     {
-    //       userId: '1',
-    //       username: 'unknown',
-    //       lines: {
-    //         lines: [
-    //           {
-    //             timestamp: Date.now(),
-    //             content: '### Test Content\n this is a test content',
-    //             name: '## Test',
-    //           },
-    //         ],
-    //         summary: '',
-    //         markdown: '',
-    //       },
-    //     },
-    //   ]
-    // );
-    return [
-      {
-        userId: '1',
-        username: 'unknown',
-        lines: {
-          lines: [
-            {
-              timestamp: Date.now(),
-              content: '### Test Content\n this is a test content',
-              name: '## Test',
-            },
-          ],
-          summary: '',
-          markdown: '',
-        },
+  const item = useMemo(() => {
+    // return flotAppItemRef.current?.aiCutAnalysisItem || null;
+    return {
+      userId: '1',
+      username: 'unknown',
+      lines: {
+        lines: [
+          {
+            timestamp: Date.now(),
+            content:
+              '### Test Content\n this is a test content\n - item 1 🥳\n - item 2\n\n **ssadjsl**',
+            name: '## Test',
+          },
+        ],
+        summary: '',
+        markdown: '',
       },
-    ];
+    };
   }, [flotAppItemRef.current]);
 
   return (
@@ -97,7 +84,13 @@ export function FlotLayout({
         placement="leftTop"
         content={
           <div className={styles.flot_app_content}>
-            {items.length > 0 && <AICutAnalysisMdTabs items={items}></AICutAnalysisMdTabs>}
+            {item && (
+              <AICutAnalysisMdTabs
+                item={item}
+                space={space}
+                messageApi={messageApi}
+              ></AICutAnalysisMdTabs>
+            )}
             <FlotAppItem
               ref={flotAppItemRef}
               messageApi={messageApi}
@@ -110,7 +103,7 @@ export function FlotLayout({
         styles={{
           body: {
             background: '#1a1a1a',
-            width: '1080px',
+            width: 'fit-content',
             maxHeight: '86vh',
             overflowY: 'scroll',
             paddingRight: '0px',
@@ -159,7 +152,7 @@ export interface TodoProp {
 const DEFAULT_KEYS: AppKey[] = ['timer', 'countdown', 'todo'];
 
 export interface FlotAppExports {
-  aiCutAnalysisItems: AICutAnalysisTabItem[];
+  aiCutAnalysisItem: AICutAnalysisTabItem | null;
 }
 
 const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
@@ -171,6 +164,47 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
     const { t } = useI18n();
     const { token } = theme.useToken();
     const [showExport, setShowExport] = useState<boolean>(false);
+    const [aiCutAnalysisItem, setAICutAnalysisItem] = useState<AICutAnalysisTabItem | null>(null);
+    const aiCutIntervalRef = useRef<NodeJS.Timeout | null>(null);
+    const aiCutAnalysisItemHistoryRef = useRef<AICutAnalysisTabItem | null>(null);
+
+    const fetchAICutAnalysisItem = async (participantId: string) => {
+      const response = await api.ai.getAnalysisRes(space, participantId);
+      if (!response.ok) {
+        messageApi.error(t('ai.cut.error.res'));
+        return;
+      }
+
+      const { res }: { res: AICutAnalysisRes } = await response.json();
+
+      setAICutAnalysisItem({
+        userId: participantId,
+        username: spaceInfo.participants[participantId].name || participantId,
+        lines: res,
+      });
+    };
+
+    // 获取AI截图分析结果
+    const getAICutAnalysisItem = async (participantId: string) => {
+      // 如果不存在为null，进行获取，并设置一个每5分钟更新一次的定时器
+      if (!aiCutAnalysisItem && !aiCutIntervalRef.current) {
+        await fetchAICutAnalysisItem(participantId);
+
+        aiCutIntervalRef.current = setInterval(async () => {
+          await fetchAICutAnalysisItem(participantId);
+        }, 5 * 60 * 1000);
+        return;
+      }
+
+      if (aiCutAnalysisItem) {
+        // 如果已经存在，用户再次点击表示不显示, 将数据设置到历史记录中，然后设置为null
+        aiCutAnalysisItemHistoryRef.current = aiCutAnalysisItem;
+        setAICutAnalysisItem(null);
+        aiCutIntervalRef.current && clearInterval(aiCutIntervalRef.current);
+        aiCutIntervalRef.current = null;
+        return;
+      }
+    };
 
     // 初始化远程用户的 activeKeys
     useEffect(() => {
@@ -363,14 +397,25 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
             <div className={styles.flot_header}>
               {showSyncIcon(isRemote, 'todo')}
               {!isRemote && (
-                <Tooltip title={t('more.app.todo.complete')}>
-                  <ProfileOutlined
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      exportTodo(todo.data);
-                    }}
-                  />
-                </Tooltip>
+                <>
+                  <Tooltip title={t('more.app.todo.complete')}>
+                    <ProfileOutlined
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        exportTodo(todo.data);
+                      }}
+                    />
+                  </Tooltip>
+                  <Tooltip title={t('more.ai.cut')}>
+                    <RobotOutlined
+                      disabled={!spaceInfo.participants[participantId]?.ai.cut}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        await getAICutAnalysisItem(participantId);
+                      }}
+                    />
+                  </Tooltip>
+                </>
               )}
               {t('more.app.todo.title')}
             </div>
@@ -557,11 +602,13 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
     }, [spaceInfo, selfItems, activeKeys]);
 
     useImperativeHandle(ref, () => ({
-      aiCutAnalysisItems: [],
+      aiCutAnalysisItem,
     }));
 
     // 暂时不使用tab，返回自己的即可
     // return <Tabs style={{ width: 360 }} size="small" items={tabItems}></Tabs>;
-    return <>{selfItems}</>;
+    return (
+      <div style={{ width: 360 }}>{tabItems.find((item) => item.key === 'self')?.children}</div>
+    );
   },
 );

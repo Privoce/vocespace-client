@@ -81,6 +81,13 @@ export default {
       open: '开启AI分析服务',
       freq_analysis: 'AI分析频率(分钟)',
       myAnalysis: '我的AI分析报告',
+      error: {
+        res: '无法获取AI分析结果，请稍后再试。',
+        download: "无法下载Markdown报告，请稍后再试。",
+      },
+      download: "下载Markdown报告",
+      download_content: "正在为您整理报告内容，这个过程大约需要30秒，请耐心等待并不要关闭当前页面。",
+      reload: "更新报告"
     },
   },
   reaction: {

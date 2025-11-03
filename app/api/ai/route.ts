@@ -61,6 +61,11 @@ export async function GET(request: NextRequest) {
         console.warn('Returning AI cut analysis markdown:', analysisResult);
         return NextResponse.json({ md: analysisResult });
 
+      case 'result':
+        const finalResult = userService.getResult();
+        console.warn('Returning AI cut analysis result:', finalResult);
+        return NextResponse.json({ res: finalResult });
+
       default:
         return createErrorResponse('Invalid action parameter.');
     }
@@ -73,7 +78,7 @@ export async function GET(request: NextRequest) {
 // 提取获取或创建用户服务的逻辑
 const getOrCreateUserService = (spaceName: string, userId: string): AICutAnalysisService => {
   let spaceServices = AI_CUT_ANALYSIS_SERVICES.get(spaceName);
-  
+
   if (!spaceServices) {
     spaceServices = new Map<string, AICutAnalysisService>();
     AI_CUT_ANALYSIS_SERVICES.set(spaceName, spaceServices);
@@ -95,14 +100,13 @@ export async function POST(request: NextRequest) {
 
   try {
     const { spaceName, userId, screenShot }: AnalysisRequestBody = await request.json();
-    
+
     // 获取或创建用户服务实例
     const targetService = getOrCreateUserService(spaceName, userId);
-    
+
     // 进行分析
     await targetService.doAnalysisLine(screenShot);
     return NextResponse.json({ success: true });
-    
   } catch (e) {
     console.error('POST request error:', e);
     return createErrorResponse('Failed to process AI analysis request.', 500);
