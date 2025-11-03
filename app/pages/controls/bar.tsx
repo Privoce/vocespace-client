@@ -9,7 +9,20 @@ import {
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { Button, Drawer, Input, message, Modal, notification, Radio, Slider, Tooltip } from 'antd';
+import {
+  Button,
+  Checkbox,
+  CheckboxOptionType,
+  Drawer,
+  GetProp,
+  Input,
+  message,
+  Modal,
+  notification,
+  Radio,
+  Slider,
+  Tooltip,
+} from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
@@ -35,7 +48,7 @@ import equal from 'fast-deep-equal';
 import { Reaction } from './widgets/reaction';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { AICutService } from '@/lib/ai/cut';
-import { AICutAnalysisService, downloadMarkdown } from '@/lib/ai/analysis';
+import { AICutAnalysisService, AICutDeps, downloadMarkdown } from '@/lib/ai/analysis';
 import { InfoCircleFilled } from '@ant-design/icons';
 
 /** @public */
@@ -504,22 +517,22 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       setAICutModalOpen(true);
     };
 
-    const confirmOpenAICut = async () => {
-      if (aiCutServiceRef.current.isRunning) {
-        aiCutServiceRef.current.stop();
-        const response = await api.ai.stop(space!.name, space!.localParticipant.identity);
-        if (response.ok) {
-          const { md }: { md: string } = await response.json();
-          console.warn('Downloaded AI cut analysis markdown:', md);
-          // 如果md不为空，则下载
-          if (!!md) {
-            downloadMarkdown(md);
-          }
-        } else {
-          messageApi.error(t('msg.error.ai.cut.download_analysis'));
-        }
-        aiCutServiceRef.current.clearScreenshots();
-      } else {
+    const [aiCutDeps, setAICutDeps] = React.useState<AICutDeps[]>(['screen']);
+
+    const aiCutOptions: CheckboxOptionType<AICutDeps>[] = React.useMemo(() => {
+      return [
+        { label: t('ai.cut.share_screen'), value: 'screen' },
+        { label: t('ai.cut.share_todo'), value: 'todo' },
+        { label: t('ai.cut.share_time'), value: 'time' },
+      ];
+    }, [t]);
+
+    const aiCutOptionsChange: GetProp<typeof Checkbox.Group, 'onChange'> = (checkedValues) => {
+      setAICutDeps(checkedValues as AICutDeps[]);
+    };
+
+    const confirmOpenAICut = async (run: boolean) => {
+      if (run) {
         // 开启AI截屏服务 --------------------------------------------------------
         if (!space?.localParticipant.isScreenShareEnabled) {
           noteApi.open({
@@ -555,6 +568,20 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             }
           });
         }
+      } else {
+        aiCutServiceRef.current.stop();
+        const response = await api.ai.stop(space!.name, space!.localParticipant.identity);
+        if (response.ok) {
+          const { md }: { md: string } = await response.json();
+          console.warn('Downloaded AI cut analysis markdown:', md);
+          // 如果md不为空，则下载
+          if (!!md) {
+            downloadMarkdown(md);
+          }
+        } else {
+          messageApi.error(t('msg.error.ai.cut.download_analysis'));
+        }
+        aiCutServiceRef.current.clearScreenshots();
       }
       setAICutModalOpen(false);
     };
@@ -872,12 +899,12 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         <Modal
           open={aiCutModalOpen}
           title={t('ai.cut.title')}
+          footer={null}
           okText={aiCutServiceRef.current.isRunning ? t('common.close') : t('common.open')}
           cancelText={t('common.cancel')}
           onCancel={() => {
             setAICutModalOpen(false);
           }}
-          onOk={confirmOpenAICut}
         >
           <div>{t('more.ai.desc')}</div>
 
@@ -893,25 +920,38 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               <Slider min={1} max={15} value={cutFreq} onChange={(v) => setCutFreq(v)} step={0.5} />
             </>
           )}
+
           <div className={styles.ai_cut_line}>
             <div className={styles.ai_cut_line}>
-              <span> {t('ai.cut.timeline')}</span>
-              <Tooltip title={t('ai.cut.timeline_desc')} trigger={['hover']}>
+              <span> {t('ai.cut.source_dep')}</span>
+              <Tooltip title={t('ai.cut.source_dep_desc')} trigger={['hover']}>
                 <InfoCircleFilled></InfoCircleFilled>
               </Tooltip>
             </div>
-            <div style={{width: "100%"}}>
+            <div style={{ width: '100%' }}>
+              <Checkbox.Group
+                options={aiCutOptions}
+                defaultValue={['screen', 'todo']}
+                onChange={aiCutOptionsChange}
+              />
+            </div>
+          </div>
+          <div className={styles.ai_cut_line}>
+            <div className={styles.ai_cut_line}>
+              <span> {t('ai.cut.open')}</span>
+            </div>
+            <div style={{ width: '100%' }}>
               <Radio.Group
-              size="large"
-              block
-              value={openCutTimeline}
-              onChange={(e) => {
-                setOpenCutTimeline(e.target.value);
-              }}
-            >
-              <Radio.Button value={true}>{t('common.open')}</Radio.Button>
-              <Radio.Button value={false}>{t('common.close')}</Radio.Button>
-            </Radio.Group>
+                size="large"
+                block
+                value={aiCutServiceRef.current.isRunning}
+                onChange={(e) => {
+                  confirmOpenAICut(e.target.value);
+                }}
+              >
+                <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+                <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+              </Radio.Group>
             </div>
           </div>
 

@@ -67,8 +67,22 @@ export default {
     cut: {
       title: 'AI Analysis Settings',
       freq: 'Screenshot Frequency (minutes)',
-      freq_analysis: 'AI Analysis Frequency (minutes)',
-      myAnalysis: 'My AI Analysis Report',
+      freq_desc:
+        'Sets the screenshot frequency for AI analysis. The default is to take a screenshot every 5 minutes for analysis. If it takes longer than 5 minutes, the first screenshot will be taken at the 5-minute mark.',
+      ask_permission:
+        'Your AI worklog will capture screen activity. Please share the screen or window of your task.',
+      ask_permission_title: 'Screen Sharing Permission',
+      choose: 'Choose Screen',
+      not_now: 'Not now',
+      source_dep: 'AI Work Log Source Data',
+      source_dep_desc:
+        'Select the screen sharing source data to use for AI analysis. You can choose to share the entire screen, work to-dos, or time spent. Choosing appropriate source data helps improve the accuracy and relevance of AI analysis.',
+      share_screen: 'Share Screen',
+      share_todo: 'To-do List',
+      share_time: 'Time Spent',
+      open: 'Enable AI analysis service',
+      freq_analysis: 'AI analysis frequency (minutes)',
+      myAnalysis: 'My AI analysis report',
     },
   },
   login: {
@@ -224,12 +238,13 @@ export default {
     },
   },
   more: {
-    ai: {
-      cut: 'AI Analysis',
-    },
     title: 'More',
     channel: 'Channel',
     platform: 'Homepage',
+    ai: {
+      cut: 'AI Analysis',
+      desc: "Timed screenshots and AI analysis help you summarize your space's content and generate reports.",
+    },
     app: {
       title: 'Application',
       raise: {

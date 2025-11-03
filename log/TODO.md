@@ -548,7 +548,18 @@ lk load-test \
   - [x] 设置为时间轴/无时间轴选线
   - [x] 管理员设置截图频率，也在AI分析弹窗中
   - [x] widget展开后保持名字显示
-  - [ ] widget增加AI总结，大小 2x2 todo list
+  - [ ] widget增加AI总结，大小 2x2 todo list <360 * 220>
   - [x] AI分析需要开启屏幕分享，增加提示弹窗
   - [ ] 总结设置为3～5分钟总结一次
   - [ ] 用户状态检查是否是退出后清理了，持久化应该不清理
+  - [x] AI Worklog source data
+    - [x] Shared Screen。（默认）
+    - [x] To-do List (默认)
+    - [x] Time Spent
+  - [ ] AI截图分析开启会议默认开启
+  - [x] 开启屏幕分享i18n
+    - [x] Choose Screen （btn）
+    - [x] Not now（btn）
+    - [x] Your AI worklog will capture screen activity. Please share the screen or window of your task
+    - [x] 您的AI助手需要捕捉屏幕截图，请选择需要进行分析的窗口
+  - [x]flot中去除tab header部分

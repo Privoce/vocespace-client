@@ -37,6 +37,8 @@ export interface AICutAnalysisRes {
   markdown: string;
 }
 
+export type AICutDeps = 'screen' | 'todo' | 'time';
+
 /**
  * 由于AI需要进行图片分析，所以用户需要选择使用多模态AI模型
  * 模型推荐：
