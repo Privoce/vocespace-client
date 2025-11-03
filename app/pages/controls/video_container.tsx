@@ -112,7 +112,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
     const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
     const channelRef = React.useRef<ChannelExports>(null);
-    const router = useRouter();
     const { settings, updateSettings, fetchSettings, clearSettings, updateOwnerId, updateRecord } =
       useSpaceInfo(
         space?.name || '', // 房间 ID
@@ -153,12 +152,16 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
       const syncSettings = async () => {
         // 将当前参与者的基础设置发送到服务器 ----------------------------------------------------------
-        await updateSettings({
-          ...uState,
-          socketId: socket.id,
-          name: space.localParticipant.name || space.localParticipant.identity,
-          startAt: new Date().getTime(),
-        });
+        await updateSettings(
+          {
+            ...uState,
+            socketId: socket.id,
+            name: space.localParticipant.name || space.localParticipant.identity,
+            startAt: new Date().getTime(),
+          },
+          undefined,
+          true,
+        );
 
         const roomName = `${space.localParticipant.name}'s room`;
 
@@ -273,7 +276,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           noteApi.info({
             message: `${msg.senderName} ${t('common.wave_msg')}`,
             actions,
-            duration: 10
+            duration: 10,
           });
         }
       });

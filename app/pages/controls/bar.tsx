@@ -941,17 +941,19 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               <span> {t('ai.cut.open')}</span>
             </div>
             <div style={{ width: '100%' }}>
-              <Radio.Group
-                size="large"
-                block
-                value={aiCutServiceRef.current.isRunning}
-                onChange={(e) => {
-                  confirmOpenAICut(e.target.value);
-                }}
-              >
-                <Radio.Button value={true}>{t('common.open')}</Radio.Button>
-                <Radio.Button value={false}>{t('common.close')}</Radio.Button>
-              </Radio.Group>
+              {space && (
+                <Radio.Group
+                  size="large"
+                  block
+                  value={spaceInfo.participants[space.localParticipant.identity]?.ai.cut || false}
+                  onChange={(e) => {
+                    confirmOpenAICut(e.target.value);
+                  }}
+                >
+                  <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+                  <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+                </Radio.Group>
+              )}
             </div>
           </div>
 

@@ -256,7 +256,7 @@ export function PreJoin({
       }
     } else {
       // 虽然用户名不为空，但依然需要验证是否唯一
-      const response = await api.checkUsername(spaceName, username);
+      const response = await api.checkUsername(spaceName, username, spaceParams.userId);
       if (response.ok) {
         const { success } = await response.json();
         if (!success) {

@@ -58,12 +58,10 @@ export async function GET(request: NextRequest) {
 
       case 'md':
         const analysisResult = userService.getResult().markdown;
-        console.warn('Returning AI cut analysis markdown:', analysisResult);
         return NextResponse.json({ md: analysisResult });
 
       case 'result':
         const finalResult = userService.getResult();
-        console.warn('Returning AI cut analysis result:', finalResult);
         return NextResponse.json({ res: finalResult });
 
       default:

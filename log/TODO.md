@@ -548,9 +548,9 @@ lk load-test \
   - [x] 设置为时间轴/无时间轴选线
   - [x] 管理员设置截图频率，也在AI分析弹窗中
   - [x] widget展开后保持名字显示
-  - [ ] widget增加AI总结，大小 2x2 todo list <360 * 220>
+  - [x] widget增加AI总结，大小 2x2 todo list <360 * 220>
   - [x] AI分析需要开启屏幕分享，增加提示弹窗
-  - [ ] 总结设置为3～5分钟总结一次
+  - [x] 总结设置为3～5分钟总结一次
   - [ ] 用户状态检查是否是退出后清理了，持久化应该不清理
   - [x] AI Worklog source data
     - [x] Shared Screen。（默认）

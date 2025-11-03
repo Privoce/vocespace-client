@@ -59,23 +59,27 @@ export function FlotLayout({
 
   const item = useMemo(() => {
     // return flotAppItemRef.current?.aiCutAnalysisItem || null;
-    return {
-      userId: '1',
-      username: 'unknown',
-      lines: {
-        lines: [
-          {
-            timestamp: Date.now(),
-            content:
-              '### Test Content\n this is a test content\n - item 1 🥳\n - item 2\n\n **ssadjsl**',
-            name: '## Test',
-          },
-        ],
-        summary: '',
-        markdown: '',
-      },
-    };
-  }, [flotAppItemRef.current]);
+    if (flotAppItemRef.current) {
+      return {
+        userId: '1',
+        username: 'unknown',
+        lines: {
+          lines: [
+            {
+              timestamp: Date.now(),
+              content:
+                '### Test Content\n this is a test content\n - item 1 🥳\n - item 2\n\n **ssadjsl**',
+              name: '## Test',
+            },
+          ],
+          summary: '',
+          markdown: '',
+        },
+      };
+    } else {
+      return null;
+    }
+  }, [flotAppItemRef.current?.aiCutAnalysisItem]);
 
   return (
     <div style={style} className={styles.flot_layout}>

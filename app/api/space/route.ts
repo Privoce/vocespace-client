@@ -656,6 +656,7 @@ class SpaceManager {
     room: string,
     participantId: string,
     pData: ParticipantSettings,
+    init = false,
   ): Promise<boolean> {
     try {
       if (!redisClient) {
@@ -688,8 +689,25 @@ class SpaceManager {
               [pData.name]: [{ start: startAt }],
             },
           );
+        } else {
+          if (init) {
+            // 这里说明房间存在而且且用户也存在，说明用户可能是重连或房间是持久化的，我们无需大范围数据更新，只需要更新
+            // 用户的最基础设置即可
+            spaceInfo.participants[participantId] = {
+              ...participant,
+              name: pData.name,
+              volume: pData.volume,
+              version: pData.version,
+              blur: pData.blur,
+              screenBlur: pData.screenBlur,
+              socketId: pData.socketId,
+              startAt: participant.startAt,
+            };
+            return await this.setSpaceInfo(room, spaceInfo);
+          }
         }
       }
+
       // 更新参与者数据
       spaceInfo.participants[participantId] = {
         ...spaceInfo.participants[participantId],
@@ -771,6 +789,17 @@ class SpaceManager {
           success: false,
           error: 'Room or participant does not exist, or not complete initialized.',
         }; // 房间或参与者不存在可能出现了问题
+      }
+      // 如果是持久化房间，无需删除房间也无需删除参与者数据，只需要将用户的online改为false即可
+      if (spaceInfo.persistence) {
+        if (spaceInfo.participants[participantId].online) {
+          spaceInfo.participants[participantId].online = false;
+          await this.setSpaceInfo(room, spaceInfo);
+        }
+        return {
+          success: true,
+          clearAll: false,
+        };
       }
       // 删除参与者前删除该参与者构建的子房间 (新需求无需清理子房间, 暂时注释)
       // const childRoomsToDelete = spaceInfo.children
@@ -1188,22 +1217,27 @@ export async function POST(request: NextRequest) {
 
     // 处理用户唯一名 -------------------------------------------------------------------------
     if (isNameCheck) {
-      const { spaceName, participantName }: CheckNameBody = await request.json();
+      const { spaceName, participantName, participantId }: CheckNameBody = await request.json();
       // 获取房间设置
       const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
       if (!spaceInfo) {
         // 房间不存在说明是第一次创建
         return NextResponse.json({ success: true, name: participantName }, { status: 200 });
       } else {
-        const pid = `${participantName}__${spaceName}`;
+        const pid = participantId || `${participantName}__${spaceName}`;
         const participantSettings = spaceInfo.participants[pid];
         if (participantSettings) {
-          console.warn(pid);
-          // 有参与者
-          return NextResponse.json(
-            { success: false, error: 'Participant name already exists' },
-            { status: 200 },
-          );
+          // 有参与者，判断当前参与者的online状态，如果为false，说明是重连，可以直接使用该名字
+          if (participantSettings.online) {
+            // 在线状态，那么不允许使用该名字
+            return NextResponse.json(
+              { success: false, error: 'Participant name already exists' },
+              { status: 200 },
+            );
+          } else {
+            // 离线状态，允许使用该名字
+            return NextResponse.json({ success: true, name: participantName }, { status: 200 });
+          }
         }
       }
     }
@@ -1256,9 +1290,14 @@ export async function POST(request: NextRequest) {
     }
     // 更新参与者设置 ---------------------------------------------------------------------------
     if (isUpdateParticipant && isSpace) {
-      const { spaceName, settings, participantId }: UpdateSpaceParticipantBody =
+      const { spaceName, settings, participantId, init }: UpdateSpaceParticipantBody =
         await request.json();
-      const success = await SpaceManager.updateParticipant(spaceName, participantId, settings);
+      const success = await SpaceManager.updateParticipant(
+        spaceName,
+        participantId,
+        settings,
+        init,
+      );
       return NextResponse.json({ success }, { status: 200 });
     }
 
@@ -1524,6 +1563,11 @@ const userHeartbeat = async () => {
     });
     // 处理情况1 --------------------------------------------------------------------------------------------
     if (inRedisNotInLK.length > 0) {
+      // 检查房间是否为持久化房间
+      if (redisRoom.persistence) {
+        console.warn(`Skipping participant removal for persistent room: ${room.name}`);
+        continue; // 跳过持久化房间的参与者清理
+      }
       for (const participantId of inRedisNotInLK) {
         await SpaceManager.removeParticipant(room.name, participantId);
       }

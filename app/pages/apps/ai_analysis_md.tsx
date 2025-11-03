@@ -1,6 +1,6 @@
 import { AICutAnalysisRes, AICutAnalysisResLine, downloadMarkdown } from '@/lib/ai/analysis';
-import { Card, Modal, Tabs, TabsProps, Tooltip } from 'antd';
-import { useMemo } from 'react';
+import { Card, Modal, Tooltip } from 'antd';
+import { useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import styles from '@/styles/apps.module.scss';
 import { DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
@@ -52,16 +52,22 @@ export function AICutAnalysisMdTabs({ item, space, messageApi }: AICutAnalysisMd
   //   </div>
   // );
 
+  const [result, setResult] = useState(item.lines);
+  // 更新 md 内容如果外部 item 变化
+  useEffect(() => {
+    setResult(item.lines);
+  }, [item]);
+  // 真正的 md 内容
   const md = useMemo(() => {
     return (
-      item.lines.markdown ||
-      item.lines.lines
+      result.markdown ||
+      result.lines
         .map((line: AICutAnalysisResLine) => {
           return line.content;
         })
         .join('\n')
     );
-  }, [item]);
+  }, [result]);
 
   const downloadMd = () => {
     const modal = Modal.confirm({});
@@ -76,21 +82,31 @@ export function AICutAnalysisMdTabs({ item, space, messageApi }: AICutAnalysisMd
         if (response.ok) {
           const { md }: { md: string } = await response.json();
           downloadMarkdown(md);
-         
-        }else {
+        } else {
           messageApi.error(t('ai.cut.error.download'));
         }
       },
     });
 
-     modal.destroy();
+    modal.destroy();
+  };
+
+  const reloadResult = async () => {
+    const response = await api.ai.getAnalysisRes(space, item.userId);
+    if (response.ok) {
+      const { res }: { res: AICutAnalysisRes } = await response.json();
+      setResult(res);
+      messageApi.success(t('ai.cut.success.reload'));
+    } else {
+      messageApi.error(t('ai.cut.error.reload'));
+    }
   };
 
   return (
     <Card style={{ height: 502, width: '720px' }} styles={{ body: { padding: 0 } }}>
       <div className={styles.ai_analysis_md_header}>
         <Tooltip title={t('ai.cut.reload')}>
-          <ReloadOutlined className={styles.ai_analysis_md_header_icon} />
+          <ReloadOutlined className={styles.ai_analysis_md_header_icon} onClick={reloadResult} />
         </Tooltip>
         <Tooltip title={t('ai.cut.download')}>
           <DownloadOutlined className={styles.ai_analysis_md_header_icon} onClick={downloadMd} />

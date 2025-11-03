@@ -112,6 +112,10 @@ export interface ParticipantSettings {
      */
     cut: boolean;
   };
+  /**
+   * 是否在线，如果用户在线则新用户如果重名无法加入，如果不在线则允许重名加入
+   */
+  online: boolean;
 }
 
 export interface SpaceTimeRecord {
@@ -352,7 +356,8 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   raiseHand: false,
   ai: {
     cut: true,
-  }
+  },
+  online: true,
 };
 
 /**
