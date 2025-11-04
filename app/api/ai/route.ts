@@ -97,13 +97,11 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { spaceName, userId, screenShot }: AnalysisRequestBody = await request.json();
-
+    const { spaceName, userId, screenShot, todos }: AnalysisRequestBody = await request.json();
     // 获取或创建用户服务实例
     const targetService = getOrCreateUserService(spaceName, userId);
-
     // 进行分析
-    await targetService.doAnalysisLine(screenShot);
+    await targetService.doAnalysisLine(screenShot, todos);
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error('POST request error:', e);

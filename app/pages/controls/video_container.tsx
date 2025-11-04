@@ -31,6 +31,7 @@ import React, {
   useImperativeHandle,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { ControlBarExport, Controls } from './bar';
@@ -47,7 +48,6 @@ import {
   socket,
   userState,
 } from '@/app/[spaceName]/PageClientImpl';
-import { useRouter } from 'next/navigation';
 import {
   ControlType,
   WsBase,
@@ -67,10 +67,10 @@ import { api } from '@/lib/api';
 import { SingleFlotLayout } from '../apps/single_flot';
 import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
 import { VocespaceConfig } from '@/lib/std/conf';
-import equal from 'fast-deep-equal';
 import { acceptRaise, RaiseHandler, rejectRaise } from './widgets/raise';
 import { audio } from '@/lib/audio';
 import { AICutService } from '@/lib/ai/cut';
+import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -123,64 +123,147 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
     const isActive = true;
     const aiCutServiceRef = React.useRef<AICutService>(new AICutService());
-
+    const [noteStateForAICutService, setNoteStateForAICutService] = useState({
+      openAIService: false,
+      noteClosed: false,
+      hasAsked: false, // 添加标记表示是否已经询问过用户
+    });
+    const [aiCutAnalysisRes, setAICutAnalysisRes] = useState<AICutAnalysisRes>(DEFAULT_AI_CUT_ANALYSIS_RES);
+    const aiCutAnalysisIntervalId = useRef<NodeJS.Timeout | null>(null);
     const showSingleFlotApp = (appKey: AppKey) => {
       setTargetAppKey(appKey);
       setOpenSingleApp(!openSingleApp);
     };
-    // 开启AI截屏服务 --------------------------------------------------------
-    const startAICutAnalysis = async () => {
-      if (space?.localParticipant.isScreenShareEnabled) {
-        // await aiCutServiceRef.current.start(, openCutTimeline, async (lastScreenShot) => {
-        //   if (space && space.localParticipant) {
-        //     const response = await api.ai.analysis(
-        //       space.name,
-        //       space.localParticipant.identity,
-        //       lastScreenShot,
-        //     );
-        //     if (response.ok) {
-        //       console.warn('AI cut screenshot sent for analysis');
-        //     } else {
-        //       console.error('Failed to send AI cut screenshot for analysis');
-        //     }
-        //   }
-        // });
+    const reloadResult = async () => {
+    const response = await api.ai.getAnalysisRes(space!.name, space!.localParticipant.identity);
+    if (response.ok) {
+      const { res }: { res: AICutAnalysisRes } = await response.json();
+      setAICutAnalysisRes(res);
+      messageApi.success(t('ai.cut.success.reload'));
+    } else {
+      messageApi.error(t('ai.cut.error.reload'));
+    }
+  };
+    // 开启或关闭AI截屏服务 --------------------------------------------------------
+    const startOrStopAICutAnalysis = async (open: boolean) => {
+      if (!space || !space.localParticipant) return;
+      if (open) {
+        await aiCutServiceRef.current.start(
+          settings.ai.cut.freq,
+          uState.ai.cut.spent,
+          async (lastScreenShot) => {
+            if (space && space.localParticipant) {
+              const response = await api.ai.analysis(
+                space.name,
+                space.localParticipant.identity,
+                lastScreenShot,
+                uState.appDatas.todo?.items.map((item) => item.title) || [],
+              );
+              if (response.ok) {
+                messageApi.success(t('ai.cut.success.start'));
+              } else {
+                messageApi.warning(t('ai.cut.error.start'));
+              }
+            }
+          },
+        );
+        aiCutAnalysisIntervalId.current = setInterval(async () => {
+          reloadResult();
+        }, (settings.ai.cut.freq + 2) * 60 * 1000); //增加2分钟的缓冲时间
+
+      } else {
+        // 停止截图服务并停止AI分析
+        aiCutServiceRef.current.stop();
+        aiCutServiceRef.current.clearScreenshots();
+        if (aiCutAnalysisIntervalId.current) {
+          clearInterval(aiCutAnalysisIntervalId.current);
+          aiCutAnalysisIntervalId.current = null;
+        }
+        const response = await api.ai.stop(space.name, space.localParticipant.identity);
+        if (response.ok) {
+          messageApi.success(t('ai.cut.success.stop'));
+        }
       }
+
+      await updateSettings({
+        ai: {
+          cut: {
+            ...uState.ai.cut,
+            enabled: open,
+          },
+        },
+      });
+      socket.emit('update_user_status', {
+        space: space.name,
+      } as WsBase);
+    };
+
+    const openAIServiceAskNote = () => {
+      // 提示用户开启屏幕共享权限, 关闭后判断开启还是关闭AI服务
+      noteApi.open({
+        message: t('ai.cut.ask_permission_title'),
+        description: t('ai.cut.ask_permission'),
+        duration: 10,
+        onClose: async () => {
+          // 用户关闭弹窗或超时关闭，默认不开启AI服务
+          setNoteStateForAICutService({
+            openAIService: false,
+            noteClosed: true,
+            hasAsked: true,
+          });
+        },
+        btn: (
+          <div style={{ display: 'inline-flex', gap: 16 }}>
+            <Button
+              type="primary"
+              onClick={() => {
+                // 用户选择不开启AI服务
+                setNoteStateForAICutService({
+                  openAIService: false,
+                  noteClosed: true,
+                  hasAsked: true,
+                });
+                noteApi.destroy();
+              }}
+            >
+              {t('common.close')}
+            </Button>
+            <Button
+              type="primary"
+              onClick={() => {
+                // 用户选择开启屏幕共享和AI服务
+                space?.localParticipant.setScreenShareEnabled(true);
+                setNoteStateForAICutService({
+                  hasAsked: true,
+                  openAIService: true,
+                  noteClosed: true,
+                });
+                noteApi.destroy();
+              }}
+            >
+              {t('common.open')}
+            </Button>
+          </div>
+        ),
+      });
     };
 
     // 监控AI截屏服务状态 --------------------------------------------------------
     // 用户需要确保至少开启屏幕共享，如果关闭则需要提示用户，如果用户确定关闭则要停止AI截屏服务
-    // useEffect(() => {
-    //   if (!space) return;
-    //   if (!space.localParticipant.isScreenShareEnabled) {
-    //     // 提示用户开启屏幕共享权限
-    //     noteApi.open({
-    //       message: t('ai.cut.ask_permission_title'),
-    //       description: t('ai.cut.ask_permission'),
-    //       duration: 5,
-    //       btn: (
-    //         <>
-    //           <Button
-    //             type="primary"
-    //             onClick={() => {
-    //               space?.localParticipant.setScreenShareEnabled(true);
-    //             }}
-    //           >
-    //             {t('common.close')}
-    //           </Button>
-    //           <Button
-    //             type="primary"
-    //             onClick={() => {
-    //               space?.localParticipant.setScreenShareEnabled(true);
-    //             }}
-    //           >
-    //             {t('common.open')}
-    //           </Button>
-    //         </>
-    //       ),
-    //     });
-    //   }
-    // }, [space, uState]);
+    useEffect(() => {
+      // 完成初始化并没有询问过用户时显示弹窗并询问
+      if (!init && !noteStateForAICutService.hasAsked && uState.ai.cut.enabled) {
+        openAIServiceAskNote();
+      }
+    }, [init, noteStateForAICutService, uState.ai.cut.enabled]);
+
+    useEffect(() => {
+      if (noteStateForAICutService.noteClosed) {
+        startOrStopAICutAnalysis(noteStateForAICutService.openAIService);
+      }
+    }, [noteStateForAICutService.noteClosed, noteStateForAICutService.openAIService]);
+     
+
 
     useEffect(() => {
       if (!space) return;
@@ -256,14 +339,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         }
       };
 
-      // ai相关功能开启 -----------------------------------------------------------------------------
-      const openAIServices = async () => {
-        // 开启AI截图工作分析功能
-        if (uState.ai.cut) {
-          await startAICutAnalysis();
-        }
-      };
-
       // 从config中获取license进行校验 -------------------------------------------------------------------
       const validLicense = async () => {
         if (!uLicenseState.isAnalysis) {
@@ -288,12 +363,17 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       };
 
       if (init) {
+        // 重置AI截图询问状态，允许在新会话中重新询问
+        setNoteStateForAICutService({
+          openAIService: false,
+          noteClosed: false,
+          hasAsked: false,
+        });
+
         // 获取历史聊天记录
         validLicense().then(() => {
           fetchChatMsg();
           syncSettings().then(() => {
-            // 开启AI相关功能
-
             // 新的用户更新到服务器之后，需要给每个参与者发送一个websocket事件，通知他们更新用户状态
             socket.emit('update_user_status', {
               space: space.name,
@@ -1001,6 +1081,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             openApp={openApp}
             spaceInfo={settings}
             setOpenApp={setOpenApp}
+            showAICutAnalysisSettings={controlsRef.current?.showAICutAnalysisSettings}
+            reloadResult={reloadResult}
+            aiCutAnalysisRes={aiCutAnalysisRes}
           ></FlotLayout>
         )}
         {/* 右侧单应用浮窗，悬浮态，用于当用户点击自己视图头上角图标进行显示 */}
@@ -1125,6 +1208,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   openApp={openApp}
                   setOpenApp={setOpenApp}
                   toRenameSettings={toSettingGeneral}
+                  startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+                  openAIServiceAskNote={openAIServiceAskNote}
                 ></Controls>
               </div>
               {SettingsComponent && (

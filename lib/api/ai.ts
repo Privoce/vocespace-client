@@ -5,18 +5,25 @@ export interface AnalysisRequestBody {
   spaceName: string;
   userId: string;
   screenShot: CutScreenShot;
+  todos: string[];
 }
 
 const BASE_URL = connect_endpoint('/api/ai');
 
 /**
  * 开启AI分析
- * @param spaceName 
- * @param userId 
- * @param screenShot 
- * @returns 
+ * @param spaceName
+ * @param userId
+ * @param screenShot
+ * @param todos: 用户的待办事项列表，AI可以依靠这些待办事项来生成更符合用户需求的分析结果
+ * @returns
  */
-const analysis = async (spaceName: string, userId: string, screenShot: CutScreenShot) => {
+const analysis = async (
+  spaceName: string,
+  userId: string,
+  screenShot: CutScreenShot,
+  todos: string[],
+) => {
   const url = new URL(BASE_URL, window.location.origin);
   return await fetch(url.toString(), {
     method: 'POST',
@@ -27,6 +34,7 @@ const analysis = async (spaceName: string, userId: string, screenShot: CutScreen
       spaceName,
       userId,
       screenShot,
+      todos,
     } as AnalysisRequestBody),
   });
 };
@@ -80,5 +88,5 @@ export const ai = {
   analysis,
   stop,
   downloadMarkdown,
-  getAnalysisRes
+  getAnalysisRes,
 };

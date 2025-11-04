@@ -37,6 +37,12 @@ export interface AICutAnalysisRes {
   markdown: string;
 }
 
+export const DEFAULT_AI_CUT_ANALYSIS_RES: AICutAnalysisRes = {
+  lines: [],
+  summary: '',
+  markdown: '',
+};
+
 export type AICutDeps = 'screen' | 'todo' | 'time';
 
 /**
@@ -56,7 +62,7 @@ export class AICutAnalysisService {
   private static readonly DEFAULT_MAX_TOKENS = 4000;
 
   private static readonly PROMPT_TEMPLATES = {
-    LINE: '作为一个个人工作汇总整理助理，请将我提供的截图内容进行分析，提取出其中的主要任务和活动。请根据截图的内容，识别出用户在该时间点所进行的具体任务，并生成一个结构化的报告。报告应包括以下内容：1. 任务名称：简洁明了地描述用户正在进行的任务。2. 任务内容：详细说明任务的具体内容和目的。3. 时间戳：标记每个任务对应的时间点。请确保报告条理清晰，便于理解和后续参考。整理形成如下格式进行输出: {timestamp: number, name: string, content: string}，只返回json，不要包含其他多余描述。',
+    LINE: '作为一个个人工作汇总整理助理，请将我提供的截图内容进行分析，提取出其中的主要任务和活动，关注视频分享区域，不要关注应用界面。请根据截图的内容，识别出用户在该时间点所进行的具体任务，并生成一个结构化的报告。报告应包括以下内容：1. 任务名称：简洁明了地描述用户正在进行的任务。2. 任务内容：详细说明任务的具体内容和目的。3. 时间戳：标记每个任务对应的时间点。请确保报告条理清晰，便于理解和后续参考。整理形成如下格式进行输出: {timestamp: number, name: string, content: string}，只返回json，不要包含其他多余描述。',
 
     ALL: '作为一个个人工作汇总整理助理, 请将我提供的json数组内容整理分析，提取出其中的主要任务和活动。请根据每个时间点的任务内容，识别出用户在整个时间段内所进行的具体任务，并生成一个结构化的总结报告。报告应包括以下内容：1. 任务总结：概括用户在该时间段内完成的主要任务和活动。2. 关键点提取：突出显示每个任务的关键要素和成果。3. Markdown格式输出：将总结报告整理成Markdown格式，便于阅读和分享。请确保报告条理清晰，便于理解和后续参考。格式如下进行输出：{summary: string; markdown: string} ，只返回json，不要包含其他多余描述。',
   };
@@ -110,7 +116,7 @@ export class AICutAnalysisService {
    * @param tg 截图数据
    * @returns 消息数组
    */
-  private buildImageAnalysisMessage(tg: CutScreenShot): any[] {
+  private buildImageAnalysisMessage(tg: CutScreenShot, todos: string[]): any[] {
     return [
       {
         role: 'system',
@@ -132,6 +138,16 @@ export class AICutAnalysisService {
                   text: `请对该任务markdown格式的标题后增加时间标记，格式为(${new Date(
                     tg.timestamp,
                   ).toLocaleTimeString()})`,
+                },
+              ]
+            : []),
+          ...(todos.length > 0
+            ? [
+                {
+                  type: 'text',
+                  text: `此外，当前我的待办事项有：${todos.join(
+                    '，',
+                  )}，你可以结合这些待办事项来分析这张截图内容。`,
                 },
               ]
             : []),
@@ -161,8 +177,8 @@ export class AICutAnalysisService {
    * 调用AI服务对单张图片进行分析
    * @param tg 截图数据
    */
-  async doAnalysisLine(tg: CutScreenShot): Promise<void> {
-    const messages = this.buildImageAnalysisMessage(tg);
+  async doAnalysisLine(tg: CutScreenShot, todos: string[]): Promise<void> {
+    const messages = this.buildImageAnalysisMessage(tg, todos);
     const data = await this.makeAIRequest(messages);
     const content = data.choices?.[0]?.message?.content;
     if (!!content) {

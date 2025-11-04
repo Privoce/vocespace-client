@@ -533,7 +533,7 @@ lk load-test \
 - [x] together -> team status 团队进度 默认展开
 - [ ] 房间设置的话，默认访客（直接输名字）可以进，然后我们让房间创建者可以选择是否允许访客
 - [x] vocespace -> 更多 -> 个人主页
-- [ ] right menu增加个人主页选项
+- [x] right menu增加个人主页选项
 
 --- AI
 
@@ -556,7 +556,7 @@ lk load-test \
     - [x] Shared Screen。（默认）
     - [x] To-do List (默认)
     - [x] Time Spent
-  - [ ] AI截图分析开启会议默认开启
+  - [x] AI截图分析开启会议默认开启
   - [x] 开启屏幕分享i18n
     - [x] Choose Screen （btn）
     - [x] Not now（btn）
@@ -564,4 +564,4 @@ lk load-test \
     - [x] 您的AI助手需要捕捉屏幕截图，请选择需要进行分析的窗口
   - [x]flot中去除tab header部分
 - [x] AI Analysis md 的高度需要撑满
-- [ ] 默认显示如果用户允许AI截图服务开启
+- [x] 默认显示如果用户允许AI截图服务开启

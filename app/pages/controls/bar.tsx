@@ -84,10 +84,13 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   openApp: boolean;
   setOpenApp: (open: boolean) => void;
   toRenameSettings: () => void;
+  startOrStopAICutAnalysis: (open: boolean) => Promise<void>;
+  openAIServiceAskNote: () => void;
 }
 
 export interface ControlBarExport {
   openSettings: (key: TabKey, isDefineStatus?: boolean) => void;
+  showAICutAnalysisSettings: (open: boolean) => void;
 }
 
 /**
@@ -124,6 +127,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       openApp,
       setOpenApp,
       toRenameSettings,
+      startOrStopAICutAnalysis,
+      openAIServiceAskNote,
       ...props
     }: ControlBarProps,
     ref,
@@ -137,13 +142,10 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
     const controlLeftRef = React.useRef<HTMLDivElement>(null);
     const [aiCutModalOpen, setAICutModalOpen] = React.useState(false);
-    const [cutFreq, setCutFreq] = React.useState(3);
     const aiCutServiceRef = React.useRef<AICutService>(new AICutService());
     const [controlWidth, setControlWidth] = React.useState(
       controlLeftRef.current ? controlLeftRef.current.clientWidth : window.innerWidth,
     );
-    const [openCutTimeline, setOpenCutTimeline] = React.useState<boolean>(false);
-    const [noteApi, noteContextHolder] = notification.useNotification();
     const isMobile = React.useMemo(() => {
       return is_moblie();
     }, []);
@@ -302,14 +304,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         }
       }
     };
-
-    React.useImperativeHandle(
-      ref,
-      () =>
-        ({
-          openSettings,
-        } as ControlBarExport),
-    );
 
     // [chat] -----------------------------------------------------------------------------------------------------
     const [chatOpen, setChatOpen] = React.useState(false);
@@ -513,11 +507,36 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     };
 
     // ai -----------------------------------------------------------------------------------------
+    const [isServiceOpen, setIsServiceOpen] = React.useState(false);
+    const [aiCutDeps, setAICutDeps] = React.useState<AICutDeps[]>(['screen', 'todo']);
+    const [cutFreq, setCutFreq] = React.useState(3);
     const onClickAI = async () => {
       setAICutModalOpen(true);
     };
 
-    const [aiCutDeps, setAICutDeps] = React.useState<AICutDeps[]>(['screen']);
+    React.useEffect(() => {
+      if (
+        space &&
+        space.localParticipant &&
+        spaceInfo.participants[space.localParticipant.identity]
+      ) {
+        const { spent, todo } = spaceInfo.participants[space.localParticipant.identity]?.ai.cut;
+        const deps: AICutDeps[] = ['screen'];
+        if (spent) {
+          deps.push('time');
+        }
+        if (todo) {
+          deps.push('todo');
+        }
+        setAICutDeps(deps);
+
+        setIsServiceOpen(
+          spaceInfo.participants[space.localParticipant.identity]?.ai.cut.enabled || false,
+        );
+
+        setCutFreq(spaceInfo.ai.cut.freq || 3);
+      }
+    }, [space, spaceInfo]);
 
     const aiCutOptions: CheckboxOptionType<AICutDeps>[] = React.useMemo(() => {
       return [
@@ -527,86 +546,38 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       ];
     }, [t]);
 
-    const aiCutOptionsChange: GetProp<typeof Checkbox.Group, 'onChange'> = (checkedValues) => {
+    const aiCutOptionsChange: GetProp<typeof Checkbox.Group, 'onChange'> = async (
+      checkedValues,
+    ) => {
       setAICutDeps(checkedValues as AICutDeps[]);
+      await updateSettings({
+        ai: {
+          cut: {
+            ...spaceInfo.participants[space!.localParticipant.identity]?.ai.cut,
+            spent: checkedValues.includes('time'),
+            todo: checkedValues.includes('todo'),
+          },
+        },
+      });
     };
 
-    const confirmOpenAICut = async (run: boolean) => {
-      if (run) {
-        // 开启AI截屏服务 --------------------------------------------------------
-        if (!space?.localParticipant.isScreenShareEnabled) {
-          noteApi.open({
-            message: t('ai.cut.ask_permission_title'),
-            description: t('ai.cut.ask_permission'),
-            duration: 5,
-            btn: (
-              <Button
-                type="primary"
-                onClick={() => {
-                  space?.localParticipant.setScreenShareEnabled(true);
-                }}
-              >
-                {t('common.open')}
-              </Button>
-            ),
-          });
-        }
-
-        if (space?.localParticipant.isScreenShareEnabled) {
-          await aiCutServiceRef.current.start(cutFreq, openCutTimeline, async (lastScreenShot) => {
-            if (space && space.localParticipant) {
-              const response = await api.ai.analysis(
-                space.name,
-                space.localParticipant.identity,
-                lastScreenShot,
-              );
-              if (response.ok) {
-                console.warn('AI cut screenshot sent for analysis');
-              } else {
-                console.error('Failed to send AI cut screenshot for analysis');
-              }
-            }
-          });
-        }
-      } else {
-        aiCutServiceRef.current.stop();
-        const response = await api.ai.stop(space!.name, space!.localParticipant.identity);
-        if (response.ok) {
-          const { md }: { md: string } = await response.json();
-          console.warn('Downloaded AI cut analysis markdown:', md);
-          // 如果md不为空，则下载
-          if (!!md) {
-            downloadMarkdown(md);
-          }
-        } else {
-          messageApi.error(t('msg.error.ai.cut.download_analysis'));
-        }
-        aiCutServiceRef.current.clearScreenshots();
-      }
+    const saveAICutServiceSettings = async () => {
       setAICutModalOpen(false);
-    };
-
-    const checkMyAICutAnalysis = async () => {
-      if (space && space.localParticipant) {
-        const response = await api.ai.downloadMarkdown(space.name, space.localParticipant.identity);
-        if (response.ok) {
-          const { md }: { md: string } = await response.json();
-          console.warn('Downloaded AI cut analysis markdown:', md);
-          // 如果md不为空，则下载
-          if (!!md) {
-            downloadMarkdown(md);
-          }
-        } else {
-          messageApi.error(t('msg.error.ai.cut.download_analysis'));
-        }
+      console.warn('saveAICutServiceSettings', isServiceOpen, cutFreq, aiCutDeps);
+      if (space && !space.localParticipant.isScreenShareEnabled && isServiceOpen) {
+        openAIServiceAskNote();
       }
+      startOrStopAICutAnalysis(isServiceOpen);
     };
 
-    const isServiceOpen = React.useMemo(() => {
-      if (!space || !spaceInfo) return false;
-      return spaceInfo.participants[space.localParticipant.identity]?.ai.cut.enabled || false;
-    }, [spaceInfo, space]);
-
+    React.useImperativeHandle(
+      ref,
+      () =>
+        ({
+          openSettings,
+          showAICutAnalysisSettings: setAICutModalOpen,
+        } as ControlBarExport),
+    );
     // 当是手机的情况下需要适当增加marginBottom，因为手机端自带的Tabbar会遮挡
     return (
       <div
@@ -616,7 +587,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           marginBottom: isMobile ? '62px' : 'auto',
         }}
       >
-        {noteContextHolder}
         {contextHolder}
         <div
           className={styles.controls_left}
@@ -907,9 +877,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           footer={null}
           okText={aiCutServiceRef.current.isRunning ? t('common.close') : t('common.open')}
           cancelText={t('common.cancel')}
-          onCancel={() => {
-            setAICutModalOpen(false);
-          }}
+          onCancel={saveAICutServiceSettings}
         >
           <div>{t('more.ai.desc')}</div>
           <div className={styles.ai_cut_line}>
@@ -922,9 +890,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                   size="large"
                   block
                   value={isServiceOpen}
-                  onChange={(e) => {
-                    confirmOpenAICut(e.target.value);
-                  }}
+                  onChange={(e) => setIsServiceOpen(e.target.value)}
                 >
                   <Radio.Button value={true}>{t('common.open')}</Radio.Button>
                   <Radio.Button value={false}>{t('common.close')}</Radio.Button>
@@ -954,8 +920,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               </div>
               <div style={{ width: '100%' }}>
                 <Checkbox.Group
+                  value={aiCutDeps}
                   options={aiCutOptions}
-                  defaultValue={['screen', 'todo']}
                   onChange={aiCutOptionsChange}
                 />
               </div>

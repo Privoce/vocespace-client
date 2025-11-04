@@ -35,7 +35,7 @@ import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
 import { DEFAULT_COLLAPSE_HEADER_STYLES } from '../controls/collapse_tools';
 import { TodoTogether } from './todo_together';
-import { AICutAnalysisMd, AICutAnalysisMdTabs, AICutAnalysisTabItem } from './ai_analysis_md';
+import { AICutAnalysisMdTabs } from './ai_analysis_md';
 import { AICutAnalysisRes } from '@/lib/ai/analysis';
 
 export interface FlotLayoutProps {
@@ -45,6 +45,9 @@ export interface FlotLayoutProps {
   setOpenApp: (open: boolean) => void;
   spaceInfo: SpaceInfo;
   space: string;
+  showAICutAnalysisSettings?: (open: boolean) => void;
+  aiCutAnalysisRes?: AICutAnalysisRes;
+  reloadResult?: () => Promise<void>;
 }
 
 export function FlotLayout({
@@ -54,33 +57,14 @@ export function FlotLayout({
   spaceInfo,
   space,
   setOpenApp,
+  showAICutAnalysisSettings,
+  reloadResult,
+  aiCutAnalysisRes
 }: FlotLayoutProps) {
   const flotAppItemRef = useRef<FlotAppExports>(null);
   const [containerHeight, setContainerHeight] = useState<number>(0);
-  
-  const item = useMemo(() => {
-    // return flotAppItemRef.current?.aiCutAnalysisItem || null;
-    if (flotAppItemRef.current) {
-      return {
-        userId: '1',
-        username: 'unknown',
-        lines: {
-          lines: [
-            {
-              timestamp: Date.now(),
-              content:
-                '### Test Content\n this is a test content\n - item 1 🥳\n - item 2\n\n **ssadjsl**',
-              name: '## Test',
-            },
-          ],
-          summary: '',
-          markdown: '',
-        },
-      };
-    } else {
-      return null;
-    }
-  }, [flotAppItemRef.current?.aiCutAnalysisItem]);
+  const { localParticipant } = useLocalParticipant();
+  const [showAICutAnalysis, setShowAICutAnalysis] = useState<boolean>(true);
 
   return (
     <div style={style} className={styles.flot_layout}>
@@ -89,12 +73,12 @@ export function FlotLayout({
         placement="leftTop"
         content={
           <div className={styles.flot_app_content}>
-            {containerHeight > 0 && item && (
+            {containerHeight > 0 && showAICutAnalysis && (
               <AICutAnalysisMdTabs
-                item={item}
-                space={space}
-                messageApi={messageApi}
+                result={aiCutAnalysisRes}
+                reloadResult={reloadResult}
                 height={containerHeight - 8}
+                showSettings={showAICutAnalysisSettings}
               ></AICutAnalysisMdTabs>
             )}
             <FlotAppItem
@@ -104,6 +88,8 @@ export function FlotLayout({
               space={space}
               spaceInfo={spaceInfo}
               onHeightChange={setContainerHeight}
+              showAICutAnalysis={showAICutAnalysis}
+              setShowAICutAnalysis={setShowAICutAnalysis}
             />
           </div>
         }
@@ -140,6 +126,8 @@ interface FlotAppItemProps {
   space: string;
   spaceInfo: SpaceInfo;
   onHeightChange?: (height: number) => void;
+  setShowAICutAnalysis: (show: boolean) => void;
+  showAICutAnalysis: boolean;
 }
 
 export interface TimerProp {
@@ -162,12 +150,22 @@ export interface TodoProp {
 const DEFAULT_KEYS: (AppKey | 'together')[] = ['timer', 'countdown', 'todo', 'together'];
 
 export interface FlotAppExports {
-  aiCutAnalysisItem: AICutAnalysisTabItem | null;
   clientHeight?: number;
 }
 
 const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
-  ({ messageApi, apps, space, spaceInfo, onHeightChange }: FlotAppItemProps, ref) => {
+  (
+    {
+      messageApi,
+      apps,
+      space,
+      spaceInfo,
+      onHeightChange,
+      setShowAICutAnalysis,
+      showAICutAnalysis,
+    }: FlotAppItemProps,
+    ref,
+  ) => {
     const { localParticipant } = useLocalParticipant();
     const [activeKeys, setActiveKeys] = useState<Map<string, (AppKey | 'together')[]>>(
       new Map([[localParticipant.identity, DEFAULT_KEYS]]),
@@ -175,49 +173,8 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
     const { t } = useI18n();
     const { token } = theme.useToken();
     const [showExport, setShowExport] = useState<boolean>(false);
-    const [aiCutAnalysisItem, setAICutAnalysisItem] = useState<AICutAnalysisTabItem | null>(null);
-    const aiCutIntervalRef = useRef<NodeJS.Timeout | null>(null);
-    const aiCutAnalysisItemHistoryRef = useRef<AICutAnalysisTabItem | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const resizeObserverRef = useRef<ResizeObserver | null>(null);
-
-    const fetchAICutAnalysisItem = async (participantId: string) => {
-      const response = await api.ai.getAnalysisRes(space, participantId);
-      if (!response.ok) {
-        messageApi.error(t('ai.cut.error.res'));
-        return;
-      }
-
-      const { res }: { res: AICutAnalysisRes } = await response.json();
-
-      setAICutAnalysisItem({
-        userId: participantId,
-        username: spaceInfo.participants[participantId].name || participantId,
-        lines: res,
-      });
-    };
-
-    // 获取AI截图分析结果
-    const getAICutAnalysisItem = async (participantId: string) => {
-      // 如果不存在为null，进行获取，并设置一个每5分钟更新一次的定时器
-      if (!aiCutAnalysisItem && !aiCutIntervalRef.current) {
-        await fetchAICutAnalysisItem(participantId);
-
-        aiCutIntervalRef.current = setInterval(async () => {
-          await fetchAICutAnalysisItem(participantId);
-        }, 5 * 60 * 1000);
-        return;
-      }
-
-      if (aiCutAnalysisItem) {
-        // 如果已经存在，用户再次点击表示不显示, 将数据设置到历史记录中，然后设置为null
-        aiCutAnalysisItemHistoryRef.current = aiCutAnalysisItem;
-        setAICutAnalysisItem(null);
-        aiCutIntervalRef.current && clearInterval(aiCutIntervalRef.current);
-        aiCutIntervalRef.current = null;
-        return;
-      }
-    };
 
     // 监听容器高度变化
     useEffect(() => {
@@ -452,9 +409,9 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
                     <Tooltip title={t('more.ai.cut')}>
                       <RobotOutlined
                         disabled={!spaceInfo.participants[participantId]?.ai.cut}
-                        onClick={async (e) => {
+                        onClick={(e) => {
                           e.stopPropagation();
-                          await getAICutAnalysisItem(participantId);
+                          setShowAICutAnalysis(!showAICutAnalysis);
                         }}
                       />
                     </Tooltip>
@@ -530,7 +487,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
       }
 
       return items;
-    }, [apps, activeKeys, appData, showExport]);
+    }, [apps, activeKeys, appData, showExport, showAICutAnalysis]);
 
     const tabItems: TabsProps['items'] = useMemo(() => {
       let remoteParticipantKeys = Object.keys(spaceInfo.participants).filter((k) => {
@@ -645,7 +602,6 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
     }, [spaceInfo, selfItems, activeKeys]);
 
     useImperativeHandle(ref, () => ({
-      aiCutAnalysisItem,
       clientHeight: containerRef.current?.clientHeight,
     }));
     // 暂时不使用tab，返回自己的即可

@@ -85,9 +85,12 @@ export default {
         res: '无法获取AI分析结果，请稍后再试。',
         download: "无法下载Markdown报告，请稍后再试。",
         reload: "无法更新AI分析结果，请稍后再试。",
+        start: "无法开启AI分析服务，请检查是否已开启屏幕共享权限。",
       },
       success: {
         reload: "AI分析结果已更新",
+        stop: "已停止AI分析服务",
+        start: "AI分析服务已开启",
       },
       download: "下载Markdown报告",
       download_content: "正在为您整理报告内容，这个过程大约需要30秒，请耐心等待并不要关闭当前页面。",
