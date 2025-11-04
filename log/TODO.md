@@ -551,7 +551,7 @@ lk load-test \
   - [x] widget增加AI总结，大小 2x2 todo list <360 * 220>
   - [x] AI分析需要开启屏幕分享，增加提示弹窗
   - [x] 总结设置为3～5分钟总结一次
-  - [ ] 用户状态检查是否是退出后清理了，持久化应该不清理
+  - [x] 用户状态检查是否是退出后清理了，持久化应该不清理
   - [x] AI Worklog source data
     - [x] Shared Screen。（默认）
     - [x] To-do List (默认)
@@ -563,3 +563,5 @@ lk load-test \
     - [x] Your AI worklog will capture screen activity. Please share the screen or window of your task
     - [x] 您的AI助手需要捕捉屏幕截图，请选择需要进行分析的窗口
   - [x]flot中去除tab header部分
+- [x] AI Analysis md 的高度需要撑满
+- [ ] 默认显示如果用户允许AI截图服务开启

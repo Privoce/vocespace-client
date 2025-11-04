@@ -70,6 +70,7 @@ import { VocespaceConfig } from '@/lib/std/conf';
 import equal from 'fast-deep-equal';
 import { acceptRaise, RaiseHandler, rejectRaise } from './widgets/raise';
 import { audio } from '@/lib/audio';
+import { AICutService } from '@/lib/ai/cut';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -121,11 +122,65 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
     const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
     const isActive = true;
+    const aiCutServiceRef = React.useRef<AICutService>(new AICutService());
 
     const showSingleFlotApp = (appKey: AppKey) => {
       setTargetAppKey(appKey);
       setOpenSingleApp(!openSingleApp);
     };
+    // 开启AI截屏服务 --------------------------------------------------------
+    const startAICutAnalysis = async () => {
+      if (space?.localParticipant.isScreenShareEnabled) {
+        // await aiCutServiceRef.current.start(, openCutTimeline, async (lastScreenShot) => {
+        //   if (space && space.localParticipant) {
+        //     const response = await api.ai.analysis(
+        //       space.name,
+        //       space.localParticipant.identity,
+        //       lastScreenShot,
+        //     );
+        //     if (response.ok) {
+        //       console.warn('AI cut screenshot sent for analysis');
+        //     } else {
+        //       console.error('Failed to send AI cut screenshot for analysis');
+        //     }
+        //   }
+        // });
+      }
+    };
+
+    // 监控AI截屏服务状态 --------------------------------------------------------
+    // 用户需要确保至少开启屏幕共享，如果关闭则需要提示用户，如果用户确定关闭则要停止AI截屏服务
+    // useEffect(() => {
+    //   if (!space) return;
+    //   if (!space.localParticipant.isScreenShareEnabled) {
+    //     // 提示用户开启屏幕共享权限
+    //     noteApi.open({
+    //       message: t('ai.cut.ask_permission_title'),
+    //       description: t('ai.cut.ask_permission'),
+    //       duration: 5,
+    //       btn: (
+    //         <>
+    //           <Button
+    //             type="primary"
+    //             onClick={() => {
+    //               space?.localParticipant.setScreenShareEnabled(true);
+    //             }}
+    //           >
+    //             {t('common.close')}
+    //           </Button>
+    //           <Button
+    //             type="primary"
+    //             onClick={() => {
+    //               space?.localParticipant.setScreenShareEnabled(true);
+    //             }}
+    //           >
+    //             {t('common.open')}
+    //           </Button>
+    //         </>
+    //       ),
+    //     });
+    //   }
+    // }, [space, uState]);
 
     useEffect(() => {
       if (!space) return;
@@ -201,6 +256,14 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         }
       };
 
+      // ai相关功能开启 -----------------------------------------------------------------------------
+      const openAIServices = async () => {
+        // 开启AI截图工作分析功能
+        if (uState.ai.cut) {
+          await startAICutAnalysis();
+        }
+      };
+
       // 从config中获取license进行校验 -------------------------------------------------------------------
       const validLicense = async () => {
         if (!uLicenseState.isAnalysis) {
@@ -229,6 +292,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         validLicense().then(() => {
           fetchChatMsg();
           syncSettings().then(() => {
+            // 开启AI相关功能
+
             // 新的用户更新到服务器之后，需要给每个参与者发送一个websocket事件，通知他们更新用户状态
             socket.emit('update_user_status', {
               space: space.name,

@@ -3,7 +3,7 @@ import { Card, Modal, Tooltip } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import styles from '@/styles/apps.module.scss';
-import { DownloadOutlined, ReloadOutlined } from '@ant-design/icons';
+import { DownloadOutlined, ReloadOutlined, SettingOutlined } from '@ant-design/icons';
 import { useI18n } from '@/lib/i18n/i18n';
 import { api } from '@/lib/api';
 import { MessageInstance } from 'antd/es/message/interface';
@@ -24,9 +24,10 @@ export interface AICutAnalysisMdTabsProps {
   item: AICutAnalysisTabItem;
   space: string;
   messageApi: MessageInstance;
+  height: number;
 }
 
-export function AICutAnalysisMdTabs({ item, space, messageApi }: AICutAnalysisMdTabsProps) {
+export function AICutAnalysisMdTabs({ item, space, messageApi, height }: AICutAnalysisMdTabsProps) {
   const { t } = useI18n();
   // const tabItems = useMemo(() => {
   //   return items.map((item) => {
@@ -103,18 +104,21 @@ export function AICutAnalysisMdTabs({ item, space, messageApi }: AICutAnalysisMd
   };
 
   return (
-    <Card style={{ height: 502, width: '720px' }} styles={{ body: { padding: 0 } }}>
+    <div style={{ height: height, width: '720px', marginBottom: 8, backgroundColor:"#1e1e1e"}} >
       <div className={styles.ai_analysis_md_header}>
         <Tooltip title={t('ai.cut.reload')}>
           <ReloadOutlined className={styles.ai_analysis_md_header_icon} onClick={reloadResult} />
         </Tooltip>
-        <Tooltip title={t('ai.cut.download')}>
+        {/* <Tooltip title={t('ai.cut.download')}>
           <DownloadOutlined className={styles.ai_analysis_md_header_icon} onClick={downloadMd} />
+        </Tooltip> */}
+        <Tooltip title={t('ai.cut.reload')}>
+          <SettingOutlined className={styles.ai_analysis_md_header_icon} onClick={reloadResult} />
         </Tooltip>
       </div>
       <div className={styles.ai_analysis_md_content}>
         <ReactMarkdown>{md}</ReactMarkdown>
       </div>
-    </Card>
+    </div>
   );
 }

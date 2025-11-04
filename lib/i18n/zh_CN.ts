@@ -77,7 +77,7 @@ export default {
         '选择用于AI分析的屏幕共享源数据。您可以选择共享整屏幕、工作待办、花费时间。选择合适的源数据有助于提高AI分析的准确性和相关性。',
       share_screen: '共享屏幕',
       share_todo: '待办事项',
-      share_time: '花费时间',
+      share_time: '工作时间',
       open: '开启AI分析服务',
       freq_analysis: 'AI分析频率(分钟)',
       myAnalysis: '我的AI分析报告',

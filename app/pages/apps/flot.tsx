@@ -56,7 +56,8 @@ export function FlotLayout({
   setOpenApp,
 }: FlotLayoutProps) {
   const flotAppItemRef = useRef<FlotAppExports>(null);
-
+  const [containerHeight, setContainerHeight] = useState<number>(0);
+  
   const item = useMemo(() => {
     // return flotAppItemRef.current?.aiCutAnalysisItem || null;
     if (flotAppItemRef.current) {
@@ -88,11 +89,12 @@ export function FlotLayout({
         placement="leftTop"
         content={
           <div className={styles.flot_app_content}>
-            {item && (
+            {containerHeight > 0 && item && (
               <AICutAnalysisMdTabs
                 item={item}
                 space={space}
                 messageApi={messageApi}
+                height={containerHeight - 8}
               ></AICutAnalysisMdTabs>
             )}
             <FlotAppItem
@@ -101,6 +103,7 @@ export function FlotLayout({
               apps={spaceInfo.apps}
               space={space}
               spaceInfo={spaceInfo}
+              onHeightChange={setContainerHeight}
             />
           </div>
         }
@@ -109,8 +112,10 @@ export function FlotLayout({
             background: '#1a1a1a',
             width: 'fit-content',
             maxHeight: '86vh',
+            height: 'fit-content',
             overflowY: 'scroll',
-            paddingRight: '0px',
+            paddingRight: 0,
+            paddingBottom: 0,
             scrollbarWidth: 'thin',
             scrollbarColor: '#888 transparent',
           },
@@ -134,6 +139,7 @@ interface FlotAppItemProps {
   apps: AppKey[];
   space: string;
   spaceInfo: SpaceInfo;
+  onHeightChange?: (height: number) => void;
 }
 
 export interface TimerProp {
@@ -153,14 +159,15 @@ export interface TodoProp {
   auth: AppAuth;
 }
 
-const DEFAULT_KEYS: AppKey[] = ['timer', 'countdown', 'todo'];
+const DEFAULT_KEYS: (AppKey | 'together')[] = ['timer', 'countdown', 'todo', 'together'];
 
 export interface FlotAppExports {
   aiCutAnalysisItem: AICutAnalysisTabItem | null;
+  clientHeight?: number;
 }
 
 const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
-  ({ messageApi, apps, space, spaceInfo }: FlotAppItemProps, ref) => {
+  ({ messageApi, apps, space, spaceInfo, onHeightChange }: FlotAppItemProps, ref) => {
     const { localParticipant } = useLocalParticipant();
     const [activeKeys, setActiveKeys] = useState<Map<string, (AppKey | 'together')[]>>(
       new Map([[localParticipant.identity, DEFAULT_KEYS]]),
@@ -171,6 +178,8 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
     const [aiCutAnalysisItem, setAICutAnalysisItem] = useState<AICutAnalysisTabItem | null>(null);
     const aiCutIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const aiCutAnalysisItemHistoryRef = useRef<AICutAnalysisTabItem | null>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
     const fetchAICutAnalysisItem = async (participantId: string) => {
       const response = await api.ai.getAnalysisRes(space, participantId);
@@ -209,6 +218,34 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
         return;
       }
     };
+
+    // 监听容器高度变化
+    useEffect(() => {
+      if (containerRef.current && onHeightChange) {
+        const updateHeight = () => {
+          if (containerRef.current) {
+            const height = containerRef.current.clientHeight;
+            onHeightChange(height);
+          }
+        };
+
+        // 初始设置高度
+        updateHeight();
+
+        // 设置 ResizeObserver
+        resizeObserverRef.current = new ResizeObserver(() => {
+          updateHeight();
+        });
+
+        resizeObserverRef.current.observe(containerRef.current);
+
+        return () => {
+          if (resizeObserverRef.current) {
+            resizeObserverRef.current.disconnect();
+          }
+        };
+      }
+    }, [onHeightChange]);
 
     // 初始化远程用户的 activeKeys
     useEffect(() => {
@@ -354,8 +391,8 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
           key: 'timer',
           label: (
             <div className={styles.flot_header}>
-              {showSyncIcon(isRemote, 'timer')}
               {t('more.app.timer.title')}
+              {showSyncIcon(isRemote, 'timer')}
             </div>
           ),
           children: (
@@ -376,8 +413,8 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
           key: 'countdown',
           label: (
             <div className={styles.flot_header}>
-              {showSyncIcon(isRemote, 'countdown')}
               {t('more.app.countdown.title')}
+              {showSyncIcon(isRemote, 'countdown')}
             </div>
           ),
           children: (
@@ -399,29 +436,31 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
           key: 'todo',
           label: (
             <div className={styles.flot_header}>
-              {showSyncIcon(isRemote, 'todo')}
-              {!isRemote && (
-                <>
-                  <Tooltip title={t('more.app.todo.complete')}>
-                    <ProfileOutlined
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        exportTodo(todo.data);
-                      }}
-                    />
-                  </Tooltip>
-                  <Tooltip title={t('more.ai.cut')}>
-                    <RobotOutlined
-                      disabled={!spaceInfo.participants[participantId]?.ai.cut}
-                      onClick={async (e) => {
-                        e.stopPropagation();
-                        await getAICutAnalysisItem(participantId);
-                      }}
-                    />
-                  </Tooltip>
-                </>
-              )}
               {t('more.app.todo.title')}
+              <div className={styles.flot_header_icons}>
+                {showSyncIcon(isRemote, 'todo')}
+                {!isRemote && (
+                  <>
+                    <Tooltip title={t('more.app.todo.complete')}>
+                      <ProfileOutlined
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          exportTodo(todo.data);
+                        }}
+                      />
+                    </Tooltip>
+                    <Tooltip title={t('more.ai.cut')}>
+                      <RobotOutlined
+                        disabled={!spaceInfo.participants[participantId]?.ai.cut}
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          await getAICutAnalysisItem(participantId);
+                        }}
+                      />
+                    </Tooltip>
+                  </>
+                )}
+              </div>
             </div>
           ),
           children: (
@@ -522,7 +561,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
                   return newMap;
                 });
               }}
-              expandIconPosition="end"
+              expandIconPosition="start"
               items={selfItems}
             />
           ),
@@ -607,12 +646,14 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
 
     useImperativeHandle(ref, () => ({
       aiCutAnalysisItem,
+      clientHeight: containerRef.current?.clientHeight,
     }));
-
     // 暂时不使用tab，返回自己的即可
     // return <Tabs style={{ width: 360 }} size="small" items={tabItems}></Tabs>;
     return (
-      <div style={{ width: 360 }}>{tabItems.find((item) => item.key === 'self')?.children}</div>
+      <div ref={containerRef} style={{ width: 360 }}>
+        {tabItems.find((item) => item.key === 'self')?.children}
+      </div>
     );
   },
 );

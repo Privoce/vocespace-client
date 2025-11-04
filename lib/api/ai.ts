@@ -9,6 +9,13 @@ export interface AnalysisRequestBody {
 
 const BASE_URL = connect_endpoint('/api/ai');
 
+/**
+ * 开启AI分析
+ * @param spaceName 
+ * @param userId 
+ * @param screenShot 
+ * @returns 
+ */
 const analysis = async (spaceName: string, userId: string, screenShot: CutScreenShot) => {
   const url = new URL(BASE_URL, window.location.origin);
   return await fetch(url.toString(), {

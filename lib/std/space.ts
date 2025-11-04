@@ -108,9 +108,19 @@ export interface ParticipantSettings {
    */
   ai: {
     /**
-     * 是否开启AI截图分析功能
+     * AI截图分析功能
      */
-    cut: boolean;
+    cut: {
+      enabled: boolean;
+      /**
+       * 是否需要在任务栏显示分析时间
+       */
+      spent: boolean;
+      /**
+       * 是否要结合待办事项进行分析
+       */
+      todo: boolean;
+    };
   };
   /**
    * 是否在线，如果用户在线则新用户如果重名无法加入，如果不在线则允许重名加入
@@ -205,6 +215,11 @@ export interface SpaceInfo {
    * - true: 持久化空间，空间内的数据会持久化，应用数据也会保存
    */
   persistence: boolean;
+  ai: {
+    cut: {
+      freq: number; // 截图频率，单位分钟
+    };
+  };
 }
 
 export interface TodoItem {
@@ -332,6 +347,11 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
     },
   ],
   apps: ['todo', 'countdown'],
+  ai: {
+    cut: {
+      freq: 5,
+    },
+  },
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
@@ -355,7 +375,11 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   appDatas: {},
   raiseHand: false,
   ai: {
-    cut: true,
+    cut: {
+      enabled: true,
+      spent: true,
+      todo: true
+    }
   },
   online: true,
 };

@@ -602,6 +602,11 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       }
     };
 
+    const isServiceOpen = React.useMemo(() => {
+      if (!space || !spaceInfo) return false;
+      return spaceInfo.participants[space.localParticipant.identity]?.ai.cut.enabled || false;
+    }, [spaceInfo, space]);
+
     // 当是手机的情况下需要适当增加marginBottom，因为手机端自带的Tabbar会遮挡
     return (
       <div
@@ -907,8 +912,27 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           }}
         >
           <div>{t('more.ai.desc')}</div>
-
-          {space?.localParticipant.identity === spaceInfo.ownerId && (
+          <div className={styles.ai_cut_line}>
+            <div className={styles.ai_cut_line}>
+              <span> {t('ai.cut.open')}</span>
+            </div>
+            <div style={{ width: '100%' }}>
+              {space && (
+                <Radio.Group
+                  size="large"
+                  block
+                  value={isServiceOpen}
+                  onChange={(e) => {
+                    confirmOpenAICut(e.target.value);
+                  }}
+                >
+                  <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+                  <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+                </Radio.Group>
+              )}
+            </div>
+          </div>
+          {space?.localParticipant.identity === spaceInfo.ownerId && isServiceOpen && (
             <>
               {' '}
               <div className={styles.ai_cut_line}>
@@ -920,42 +944,23 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               <Slider min={1} max={15} value={cutFreq} onChange={(v) => setCutFreq(v)} step={0.5} />
             </>
           )}
-
-          <div className={styles.ai_cut_line}>
+          {isServiceOpen && (
             <div className={styles.ai_cut_line}>
-              <span> {t('ai.cut.source_dep')}</span>
-              <Tooltip title={t('ai.cut.source_dep_desc')} trigger={['hover']}>
-                <InfoCircleFilled></InfoCircleFilled>
-              </Tooltip>
+              <div className={styles.ai_cut_line}>
+                <span> {t('ai.cut.source_dep')}</span>
+                <Tooltip title={t('ai.cut.source_dep_desc')} trigger={['hover']}>
+                  <InfoCircleFilled></InfoCircleFilled>
+                </Tooltip>
+              </div>
+              <div style={{ width: '100%' }}>
+                <Checkbox.Group
+                  options={aiCutOptions}
+                  defaultValue={['screen', 'todo']}
+                  onChange={aiCutOptionsChange}
+                />
+              </div>
             </div>
-            <div style={{ width: '100%' }}>
-              <Checkbox.Group
-                options={aiCutOptions}
-                defaultValue={['screen', 'todo']}
-                onChange={aiCutOptionsChange}
-              />
-            </div>
-          </div>
-          <div className={styles.ai_cut_line}>
-            <div className={styles.ai_cut_line}>
-              <span> {t('ai.cut.open')}</span>
-            </div>
-            <div style={{ width: '100%' }}>
-              {space && (
-                <Radio.Group
-                  size="large"
-                  block
-                  value={spaceInfo.participants[space.localParticipant.identity]?.ai.cut || false}
-                  onChange={(e) => {
-                    confirmOpenAICut(e.target.value);
-                  }}
-                >
-                  <Radio.Button value={true}>{t('common.open')}</Radio.Button>
-                  <Radio.Button value={false}>{t('common.close')}</Radio.Button>
-                </Radio.Group>
-              )}
-            </div>
-          </div>
+          )}
 
           {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
         </Modal>
