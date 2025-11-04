@@ -83,6 +83,22 @@ export default {
       open: 'Enable AI analysis service',
       freq_analysis: 'AI analysis frequency (minutes)',
       myAnalysis: 'My AI analysis report',
+      error: {
+        res: 'Unable to retrieve AI analysis results, please try again later.',
+        download: 'Unable to download Markdown report, please try again later.',
+        reload: 'Unable to update AI analysis results, please try again later.',
+        start:
+          'Unable to start AI analysis service, please check if screen sharing permission is enabled.',
+      },
+      success: {
+        reload: 'AI analysis results updated',
+        stop: 'AI analysis service stopped',
+        start: 'AI analysis service started',
+      },
+      download: 'Download Markdown report',
+      download_content:
+        'Preparing report content for you, this process will take approximately 30 seconds, please wait patiently and do not close the current page.',
+      reload: 'Update report',
     },
   },
   login: {
