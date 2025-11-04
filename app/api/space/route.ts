@@ -1109,6 +1109,26 @@ export async function POST(request: NextRequest) {
     const isSpace = request.nextUrl.searchParams.get('space') === 'true';
     const spaceAppsAPIType = request.nextUrl.searchParams.get('apps');
     const isUpdateSpacePersistence = request.nextUrl.searchParams.get('persistence') === 'update';
+    const isUpdate = request.nextUrl.searchParams.get('update') === 'true';
+    // 是否更新空间相关设置 -----------------------------------------------------------------------------
+    if (isUpdate && isSpace) {
+      const { spaceName, info }: { spaceName: string; info: Partial<SpaceInfo> } =
+        await request.json();
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      const updatedSpaceInfo = {
+        ...spaceInfo,
+        ...info,
+      };
+      const success = await SpaceManager.setSpaceInfo(spaceName, updatedSpaceInfo);
+      if (!success) {
+        return NextResponse.json({ error: 'Failed to update space settings' }, { status: 500 });
+      }
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+
     // 用户应用是否同步 -----------------------------------------------------------------------
     if (spaceAppsAPIType === 'sync') {
       const { spaceName, participantId, sync }: UpdateSpaceAppSyncBody = await request.json();

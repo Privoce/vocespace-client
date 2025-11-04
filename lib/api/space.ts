@@ -6,6 +6,7 @@ import {
   ParticipantSettings,
   RecordSettings,
   SpaceCountdown,
+  SpaceInfo,
   SpaceTimer,
   SpaceTodo,
 } from '../std/space';
@@ -54,6 +55,20 @@ export const allSpaceInfos = async () => {
   return await fetch(url.toString());
 };
 
+export const updateSpaceInfo = async (spaceName: string, info: Partial<SpaceInfo>) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('space', 'true');
+  url.searchParams.append('update', 'true');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      spaceName,
+      info,
+    }),
+  });
+};
+
 /**
  * 获取历史空间信息
  */
@@ -83,7 +98,11 @@ export interface CheckNameBody {
  * @param spaceName 空间名称
  * @param participantName 用户名称
  */
-export const checkUsername = async (spaceName: string, participantName: string, participantId?: string) => {
+export const checkUsername = async (
+  spaceName: string,
+  participantName: string,
+  participantId?: string,
+) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('nameCheck', 'true');
   return await fetch(url.toString(), {

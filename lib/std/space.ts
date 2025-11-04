@@ -349,7 +349,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
   apps: ['todo', 'countdown'],
   ai: {
     cut: {
-      freq: 1,
+      freq: 5,
     },
   },
 });
@@ -378,8 +378,8 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
     cut: {
       enabled: true,
       spent: false,
-      todo: true
-    }
+      todo: true,
+    },
   },
   online: true,
 };

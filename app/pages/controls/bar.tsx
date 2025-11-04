@@ -550,20 +550,29 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       checkedValues,
     ) => {
       setAICutDeps(checkedValues as AICutDeps[]);
-      await updateSettings({
-        ai: {
-          cut: {
-            ...spaceInfo.participants[space!.localParticipant.identity]?.ai.cut,
-            spent: checkedValues.includes('time'),
-            todo: checkedValues.includes('todo'),
-          },
-        },
-      });
     };
 
     const saveAICutServiceSettings = async () => {
       setAICutModalOpen(false);
-      console.warn('saveAICutServiceSettings', isServiceOpen, cutFreq, aiCutDeps);
+      const response = await api.updateSpaceInfo(space!.name, {
+        ai: { cut: { freq: cutFreq } },
+      });
+
+      if (!response.ok) {
+        let { error } = await response.json();
+        messageApi.error(error);
+        return;
+      }
+
+      await updateSettings({
+        ai: {
+          cut: {
+            enabled: isServiceOpen,
+            spent: aiCutDeps.includes('time'),
+            todo: aiCutDeps.includes('todo'),
+          },
+        },
+      });
       if (space && !space.localParticipant.isScreenShareEnabled && isServiceOpen) {
         openAIServiceAskNote();
       }

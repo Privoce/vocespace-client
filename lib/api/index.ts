@@ -22,12 +22,14 @@ import {
   updateSpaceAppSync,
   updateSpaceParticipant,
   uploadSpaceApp,
-  getUserMeta
+  getUserMeta,
+  updateSpaceInfo
 } from './space';
 
 export const api = {
   // ---- space api --------
   joinSpace,
+  updateSpaceInfo,
   createSpace,
   allSpaceInfos,
   historySpaceInfos,

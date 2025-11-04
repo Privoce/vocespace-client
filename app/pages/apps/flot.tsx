@@ -63,7 +63,6 @@ export function FlotLayout({
 }: FlotLayoutProps) {
   const flotAppItemRef = useRef<FlotAppExports>(null);
   const [containerHeight, setContainerHeight] = useState<number>(0);
-  const { localParticipant } = useLocalParticipant();
   const [showAICutAnalysis, setShowAICutAnalysis] = useState<boolean>(true);
 
   return (
@@ -79,6 +78,7 @@ export function FlotLayout({
                 reloadResult={reloadResult}
                 height={containerHeight - 8}
                 showSettings={showAICutAnalysisSettings}
+                setFlotAppOpen={setOpenApp}
               ></AICutAnalysisMdTabs>
             )}
             <FlotAppItem

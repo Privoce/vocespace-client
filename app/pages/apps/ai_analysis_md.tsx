@@ -11,6 +11,7 @@ export interface AICutAnalysisMdTabsProps {
   reloadResult?: () => Promise<void>;
   height: number;
   showSettings?: (open: boolean) => void;
+  setFlotAppOpen: (open: boolean) => void;
 }
 
 export function AICutAnalysisMdTabs({
@@ -18,6 +19,7 @@ export function AICutAnalysisMdTabs({
   showSettings,
   result,
   reloadResult,
+  setFlotAppOpen,
 }: AICutAnalysisMdTabsProps) {
   const { t } = useI18n();
 
@@ -80,7 +82,10 @@ export function AICutAnalysisMdTabs({
         <Tooltip title={t('ai.cut.reload')}>
           <SettingOutlined
             className={styles.ai_analysis_md_header_icon}
-            onClick={() => showSettings && showSettings(true)}
+            onClick={() => {
+              setFlotAppOpen(false);
+              showSettings && showSettings(true);
+            }}
           />
         </Tooltip>
       </div>
