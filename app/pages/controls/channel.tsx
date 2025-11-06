@@ -66,7 +66,7 @@ interface ChannelProps {
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
-  showSingleFlotApp: (appKey: AppKey) => void;
+  showSingleFlotApp: () => void;
   config: VocespaceConfig;
 }
 
