@@ -9,7 +9,7 @@ import {
   usePreviewTracks,
 } from '@livekit/components-react';
 import styles from '@/styles/pre_join.module.scss';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { facingModeFromLocalTrack, LocalAudioTrack, LocalVideoTrack, Track } from 'livekit-client';
 import { Input, InputRef, message, Skeleton, Slider, Space, Spin } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
@@ -298,6 +298,10 @@ export function PreJoin({
       setPlay(false);
     }
   };
+
+  const showLoginBtn = useMemo(() => {
+    return !spaceParams.userId
+  }, [spaceParams]);
   return (
     <div className={styles.view}>
       {contextHolder}
@@ -436,6 +440,9 @@ export function PreJoin({
               }}
             ></Slider>
           </div>
+          {
+            showLoginBtn &&  <LoginButtons space={spaceParams.spaceName}></LoginButtons>
+          }
           <Input
             ref={inputRef}
             size="large"
@@ -458,7 +465,7 @@ export function PreJoin({
           >
             {joinLabel}
           </button>
-          <LoginButtons space={spaceParams.spaceName}></LoginButtons>
+         
         </div>
       )}
       <LoginStateBtn

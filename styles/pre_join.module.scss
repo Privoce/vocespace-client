@@ -32,7 +32,7 @@
     &__placeholder {
       height: auto;
       width: 100%;
-      aspect-ratio: 16/10;
+      aspect-ratio: 16/8;
       display: inline-flex;
       justify-content: center;
       align-items: center;
@@ -126,16 +126,19 @@
   align-items: center;
   justify-content: space-around;
   flex-wrap: wrap;
+  gap: 8px;
   .loginButton {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
+    height: fit-content;
+    width: 100%;
     &_btn {
       cursor: pointer;
       height: 44px;
-      width: 44px;
+      width: 100%;
       border: 1px solid #333;
       background-color: #1e1e1e;
       border-radius: 8px;
@@ -143,6 +146,11 @@
       align-items: center;
       justify-content: center;
       transition: all 0.3s ease-in-out;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 14px;
       &:hover {
         background-color: #222;
       }

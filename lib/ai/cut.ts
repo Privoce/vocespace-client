@@ -1,3 +1,5 @@
+import { LocalParticipant, LocalTrackPublication, Track } from 'livekit-client';
+
 /**
  * 裁剪截图单条信息
  */
@@ -22,6 +24,43 @@ export class AICutService {
   // default frequency: every 3 minutes
   public freq: number = 3;
   public timeline: boolean = false;
+  public localParicipant: LocalParticipant | null = null;
+  // 从用户的分享屏幕的视频流中进行截图
+  async captureFromChannel() {
+    if (!this.localParicipant) return;
+
+    try {
+      const videoTracks = this.localParicipant.videoTrackPublications;
+      let screenShareTrack: LocalTrackPublication | null = null;
+      for (const [tid, track] of videoTracks) {
+        if (track.kind === Track.Kind.Video && track.source === Track.Source.ScreenShare) {
+          // Capture the screen share video track
+          screenShareTrack = track;
+          break;
+        }
+      }
+      // 获取到了屏幕分享的视频流
+      if (screenShareTrack && screenShareTrack.videoTrack) {
+        const videoElement = document.createElement('video');
+        videoElement.srcObject = new MediaStream([screenShareTrack.videoTrack.mediaStreamTrack]);
+        await videoElement.play();
+
+        const canvas = document.createElement('canvas');
+        canvas.width = videoElement.videoWidth;
+        canvas.height = videoElement.videoHeight;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
+          this.screenshots.push(newCutScreenShot(dataUrl, this.timeline));
+          console.warn('Captured screenshot from screen share, total:', this.screenshots.length);
+        }
+      }
+    } catch (e) {
+      console.error('Capture from channel failed:', e);
+    }
+  }
+
   // capture use html2canvas
   async capture() {
     try {
@@ -53,12 +92,14 @@ export class AICutService {
   async start(
     freq: number,
     timeline: boolean,
+    localParicipant: LocalParticipant,
     withAnalysis?: (screenShot: CutScreenShot) => Promise<void>,
   ) {
     if (this.isRunning) {
       console.warn('AI Cut Service is already running');
       return;
     }
+    this.localParicipant = localParicipant;
     this.freq = freq;
     this.timeline = timeline;
     this.isRunning = true;
@@ -78,7 +119,8 @@ export class AICutService {
 
     // set interval for periodic capture
     this.intervalId = setInterval(async () => {
-      await this.doCapture();
+      // await this.doCapture();
+      await this.captureFromChannel();
       // 获取最新截图并进行分析
       if (withAnalysis) {
         const screenshots = this.getScreenshots();

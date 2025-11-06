@@ -11,7 +11,7 @@ export interface AICutAnalysisMdTabsProps {
   reloadResult?: () => Promise<void>;
   height: number;
   showSettings?: (open: boolean) => void;
-  setFlotAppOpen: (open: boolean) => void;
+  setFlotAppOpen?: (open: boolean) => void;
 }
 
 export function AICutAnalysisMdTabs({
@@ -83,7 +83,7 @@ export function AICutAnalysisMdTabs({
           <SettingOutlined
             className={styles.ai_analysis_md_header_icon}
             onClick={() => {
-              setFlotAppOpen(false);
+              setFlotAppOpen && setFlotAppOpen(false);
               showSettings && showSettings(true);
             }}
           />

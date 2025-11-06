@@ -21,10 +21,11 @@ import { SingleAppDataState, socket } from '@/app/[spaceName]/PageClientImpl';
 import { useLocalParticipant } from '@livekit/components-react';
 import { Participant } from 'livekit-client';
 import { useI18n } from '@/lib/i18n/i18n';
-import { useMemo, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { WsBase } from '@/lib/std/device';
 import { CloseCircleOutlined, ProfileOutlined } from '@ant-design/icons';
+import { AICutAnalysisMdTabs } from './ai_analysis_md';
 
 export interface SingleFlotLayoutProps extends FlotLayoutProps {
   appKey?: AppKey;
@@ -84,6 +85,10 @@ export function SingleFlotAppItem({
   const [appData, setAppData] = useRecoilState(SingleAppDataState);
   const [showExport, setShowExport] = useState<boolean>(false);
   const { t } = useI18n();
+  const appWidgetRef = useRef<HTMLDivElement>(null);
+  const containerHeight = useMemo(() => {
+    return appWidgetRef.current?.clientHeight || 628;
+  }, [appWidgetRef.current?.clientHeight]);
   const setTimerAppData = async (data: Timer) => {
     await unifiedSetAppData(
       {
@@ -183,33 +188,44 @@ export function SingleFlotAppItem({
           }}
         ></CloseCircleOutlined>
       </div>
-      {appKey === 'timer' && (
-        <AppTimer
-          size="small"
-          appData={(appData.targetApp as Timer) || DEFAULT_TIMER}
-          setAppData={setTimerAppData}
-          auth={isSelf ? 'write' : appData.auth}
-        ></AppTimer>
-      )}
-      {appKey === 'countdown' && (
-        <AppCountdown
-          messageApi={messageApi}
-          size="small"
-          appData={(appData.targetApp as Countdown) || DEFAULT_COUNTDOWN}
-          setAppData={setCountdownAppData}
-          auth={isSelf ? 'write' : appData.auth}
-        />
-      )}
-      {appKey === 'todo' && (
-        <AppTodo
-          setShowExport={setShowExport}
-          showExport={showExport}
-          messageApi={messageApi}
-          appData={(appData.targetApp as TodoItem[]) || []}
-          setAppData={setTodoAppData}
-          auth={isSelf ? 'write' : appData.auth}
-        />
-      )}
+      <div className={styles.flot_app_content}>
+        <AICutAnalysisMdTabs
+          // result={aiCutAnalysisRes}
+          // reloadResult={reloadResult}
+          height={containerHeight - 8}
+          // showSettings={showAICutAnalysisSettings}
+          // setFlotAppOpen={setOpenApp}
+        ></AICutAnalysisMdTabs>
+        <div ref={appWidgetRef}>
+          {appKey === 'timer' && (
+            <AppTimer
+              size="small"
+              appData={(appData.targetApp as Timer) || DEFAULT_TIMER}
+              setAppData={setTimerAppData}
+              auth={isSelf ? 'write' : appData.auth}
+            ></AppTimer>
+          )}
+          {appKey === 'countdown' && (
+            <AppCountdown
+              messageApi={messageApi}
+              size="small"
+              appData={(appData.targetApp as Countdown) || DEFAULT_COUNTDOWN}
+              setAppData={setCountdownAppData}
+              auth={isSelf ? 'write' : appData.auth}
+            />
+          )}
+          {appKey === 'todo' && (
+            <AppTodo
+              setShowExport={setShowExport}
+              showExport={showExport}
+              messageApi={messageApi}
+              appData={(appData.targetApp as TodoItem[]) || []}
+              setAppData={setTodoAppData}
+              auth={isSelf ? 'write' : appData.auth}
+            />
+          )}
+        </div>
+      </div>
     </>
   );
 }

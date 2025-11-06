@@ -1,6 +1,6 @@
 import { useI18n } from '@/lib/i18n/i18n';
 import { AppKey, ParticipantSettings } from '@/lib/std/space';
-import { CarryOutOutlined, ClockCircleOutlined, HistoryOutlined } from '@ant-design/icons';
+import { AppstoreOutlined } from '@ant-design/icons';
 import { LayoutContext } from '@livekit/components-react';
 import { Tooltip } from 'antd';
 
@@ -32,7 +32,6 @@ export function AppFlotIcon({ style, pin, appKey, contextUndefined = true }: App
 
 export function AppFlotPin({
   pin,
-  appKey,
   style = {
     width: 'fit-content',
     padding: 4,
@@ -43,11 +42,9 @@ export function AppFlotPin({
 }: AppPinProps) {
   const { t } = useI18n();
   return (
-    <Tooltip placement="bottom" title={t(`more.app.${appKey}.title`)}>
+    <Tooltip placement="bottom" title={t(`more.app.title`)}>
       <button className="lk-button" style={style} onClick={pin}>
-        {appKey === 'timer' && <ClockCircleOutlined />}
-        {appKey === 'countdown' && <HistoryOutlined />}
-        {appKey === 'todo' && <CarryOutOutlined />}
+        <AppstoreOutlined />
       </button>
     </Tooltip>
   );
@@ -68,21 +65,7 @@ export function AppFlotIconCollect({
 }: AppFlotIconCollectProps) {
   return participant && participant.sync ? (
     <div className="lk-focus-toggle-button" style={style}>
-      {participant.sync.includes('timer') && (
-        <AppFlotIcon
-          appKey="timer"
-          pin={() => showApp('timer')}
-          contextUndefined={contextUndefined}
-        ></AppFlotIcon>
-      )}
-      {participant.sync.includes('countdown') && (
-        <AppFlotIcon
-          appKey="countdown"
-          pin={() => showApp('countdown')}
-          contextUndefined={contextUndefined}
-        ></AppFlotIcon>
-      )}
-      {participant.sync.includes('todo') && (
+      {participant.sync.length > 0 && (
         <AppFlotIcon
           appKey="todo"
           pin={() => showApp('todo')}

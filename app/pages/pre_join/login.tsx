@@ -25,21 +25,24 @@ export function LoginButtons({ space }: { space: string }) {
 
   return (
     <div className={styles.loginButtons}>
-      <Divider style={{ fontSize: 14, borderColor: '#333', margin: '0.25rem 0' }}>
+      <Divider style={{ fontSize: 12, borderColor: '#333', margin: '0 0' }}>
         {t('login.following')}
       </Divider>
       <div className={styles.loginButton}>
         <button className={styles.loginButton_btn} onClick={() => toVocespace(true)}>
           <SvgResource type="google" svgSize={20}></SvgResource>
+          Continue with Google
         </button>
-        <span>Google</span>
       </div>
       <div className={styles.loginButton}>
         <button className={styles.loginButton_btn} onClick={() => toVocespace()}>
           <MailOutlined style={{ fontSize: 20 }} />
+          Continue with Email
         </button>
-        <span>Email</span>
       </div>
+      <Divider style={{ fontSize: 12, borderColor: '#333', margin: '0 0' }}>
+        {t('login.guest')}
+      </Divider>
     </div>
   );
 }
@@ -75,10 +78,11 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
         type="text"
         onClick={(e) => {
           e.preventDefault();
-          window.open(
-            `https://home.vocespace.com${userId ? `/auth/user/${userId}` : ''}`,
-            '_blank',
-          );
+          if (!userId) {
+            window.open(`https://home.vocespace.com/auth/login`, '_blank');
+          } else {
+            window.open(`https://home.vocespace.com/auth/user/${userId}`, '_blank');
+          }
         }}
       >
         <div className={styles.wrapper}>
@@ -93,11 +97,7 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
             }}
           >
             {}
-            {username ? (
-              username.charAt(0).toUpperCase()
-            ) : (
-              <UserOutlined></UserOutlined>
-            )}
+            {username ? username.charAt(0).toUpperCase() : <UserOutlined></UserOutlined>}
           </Avatar>
         </div>
       </Button>

@@ -128,29 +128,34 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       noteClosed: false,
       hasAsked: false, // 添加标记表示是否已经询问过用户
     });
-    const [aiCutAnalysisRes, setAICutAnalysisRes] = useState<AICutAnalysisRes>(DEFAULT_AI_CUT_ANALYSIS_RES);
+    const [aiCutAnalysisRes, setAICutAnalysisRes] = useState<AICutAnalysisRes>(
+      DEFAULT_AI_CUT_ANALYSIS_RES,
+    );
     const aiCutAnalysisIntervalId = useRef<NodeJS.Timeout | null>(null);
     const showSingleFlotApp = (appKey: AppKey) => {
       setTargetAppKey(appKey);
       setOpenSingleApp(!openSingleApp);
     };
     const reloadResult = async () => {
-    const response = await api.ai.getAnalysisRes(space!.name, space!.localParticipant.identity);
-    if (response.ok) {
-      const { res }: { res: AICutAnalysisRes } = await response.json();
-      setAICutAnalysisRes(res);
-      messageApi.success(t('ai.cut.success.reload'));
-    } else {
-      messageApi.error(t('ai.cut.error.reload'));
-    }
-  };
+      const response = await api.ai.getAnalysisRes(space!.name, space!.localParticipant.identity);
+      if (response.ok) {
+        const { res }: { res: AICutAnalysisRes } = await response.json();
+        setAICutAnalysisRes(res);
+        messageApi.success(t('ai.cut.success.reload'));
+      } else {
+        messageApi.error(t('ai.cut.error.reload'));
+      }
+    };
+
     // 开启或关闭AI截屏服务 --------------------------------------------------------
     const startOrStopAICutAnalysis = async (open: boolean) => {
       if (!space || !space.localParticipant) return;
       if (open) {
         await aiCutServiceRef.current.start(
-          settings.ai.cut.freq,
+          // settings.ai.cut.freq,
+          1,
           uState.ai.cut.spent,
+          space.localParticipant,
           async (lastScreenShot) => {
             if (space && space.localParticipant) {
               const response = await api.ai.analysis(
@@ -170,7 +175,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         aiCutAnalysisIntervalId.current = setInterval(async () => {
           reloadResult();
         }, (settings.ai.cut.freq + 2) * 60 * 1000); //增加2分钟的缓冲时间
-
       } else {
         // 停止截图服务并停止AI分析
         aiCutServiceRef.current.stop();
@@ -214,7 +218,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         },
         btn: (
           <div style={{ display: 'inline-flex', gap: 16 }}>
-            <Button
+            {/* <Button
               type="primary"
               onClick={() => {
                 // 用户选择不开启AI服务
@@ -227,7 +231,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               }}
             >
               {t('common.close')}
-            </Button>
+            </Button> */}
             <Button
               type="primary"
               onClick={() => {
@@ -262,8 +266,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         startOrStopAICutAnalysis(noteStateForAICutService.openAIService);
       }
     }, [noteStateForAICutService.noteClosed, noteStateForAICutService.openAIService]);
-     
-
 
     useEffect(() => {
       if (!space) return;

@@ -161,6 +161,7 @@ export default {
     following: '使用以下方式登陆',
     out: '退出登录',
     anon: '匿名用户',
+    guest: '以访客身份加入',
   },
   channel: {
     menu: {

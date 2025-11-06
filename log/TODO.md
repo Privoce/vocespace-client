@@ -565,3 +565,24 @@ lk load-test \
   - [x]flot中去除tab header部分
 - [x] AI Analysis md 的高度需要撑满
 - [x] 默认显示如果用户允许AI截图服务开启
+- [ ] checkbox group 没有正常更新 flot  - ai cut
+- [ ] track.publish.screen 的right menu的判断有问题
+- [ ] AI 截图服务反复提示messageApi
+- [ ] messageApi.success(t('ai.cut.success.reload')); 反复提示
+- [x] 用户视图右上角改为显示所有公开的widget <AppstoreOutlined />
+  - [ ] 重写他人浮窗组件
+  - [x] 图标
+- [x] 登陆之后需要隐藏google和email登陆的按钮
+- [x] 将login button修改为block button 放在 名字输入框的上面
+- [x] 左侧登陆状态按钮没有登陆点击跳转登陆页
+- [x] 平台协议
+- [x] platform登陆页右侧title
+  - [x] Ai辅助的远程工作平台
+  一起工作，团队对齐，AI工作总结
+  ---
+  VoceSpace is for Remote Teams
+  AI Worklog, Team spaces, Private Rooms
+- [x] AI屏幕分享请求只留start sharing按钮
+- [ ] 子房间退出后似乎没有重新ws进行更新
+
+  https://ngzobewgavfuvkrhhnou.supabase.co/auth/v1/callback
