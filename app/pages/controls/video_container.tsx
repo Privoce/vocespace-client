@@ -21,12 +21,14 @@ import {
   Participant,
   ParticipantEvent,
   ParticipantTrackPermission,
+  Room,
   RoomEvent,
   Track,
   TrackPublication,
 } from 'livekit-client';
 import React, {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
@@ -61,7 +63,7 @@ import {
 import { Button } from 'antd';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { Channel, ChannelExports } from './channel';
-import { AppKey, PARTICIPANT_SETTINGS_KEY } from '@/lib/std/space';
+import { AppKey, PARTICIPANT_SETTINGS_KEY, SpaceInfo } from '@/lib/std/space';
 import { FlotLayout } from '../apps/flot';
 import { api } from '@/lib/api';
 import { SingleFlotLayout } from '../apps/single_flot';
@@ -146,61 +148,88 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         messageApi.error(t('ai.cut.error.reload'));
       }
     };
-
-    // 开启或关闭AI截屏服务 --------------------------------------------------------
-    const startOrStopAICutAnalysis = async (open: boolean) => {
-      if (!space || !space.localParticipant) return;
-      if (open) {
-        await aiCutServiceRef.current.start(
-          // settings.ai.cut.freq,
-          1,
-          uState.ai.cut.spent,
-          space.localParticipant,
-          async (lastScreenShot) => {
-            if (space && space.localParticipant) {
-              const response = await api.ai.analysis(
-                space.name,
-                space.localParticipant.identity,
-                lastScreenShot,
-                uState.appDatas.todo?.items.map((item) => item.title) || [],
-              );
-              if (response.ok) {
-                messageApi.success(t('ai.cut.success.start'));
-              } else {
-                messageApi.warning(t('ai.cut.error.start'));
-              }
-            }
-          },
-        );
-        aiCutAnalysisIntervalId.current = setInterval(async () => {
-          reloadResult();
-        }, (settings.ai.cut.freq + 2) * 60 * 1000); //增加2分钟的缓冲时间
-      } else {
-        // 停止截图服务并停止AI分析
-        aiCutServiceRef.current.stop();
-        aiCutServiceRef.current.clearScreenshots();
-        if (aiCutAnalysisIntervalId.current) {
-          clearInterval(aiCutAnalysisIntervalId.current);
-          aiCutAnalysisIntervalId.current = null;
-        }
-        const response = await api.ai.stop(space.name, space.localParticipant.identity);
-        if (response.ok) {
-          messageApi.success(t('ai.cut.success.stop'));
-        }
+    const stopAICutService = async (space: Room) => {
+      aiCutServiceRef.current.stop();
+      aiCutServiceRef.current.clearScreenshots();
+      if (aiCutAnalysisIntervalId.current) {
+        clearInterval(aiCutAnalysisIntervalId.current);
+        aiCutAnalysisIntervalId.current = null;
       }
-
-      await updateSettings({
-        ai: {
-          cut: {
-            ...uState.ai.cut,
-            enabled: open,
-          },
-        },
-      });
-      socket.emit('update_user_status', {
-        space: space.name,
-      } as WsBase);
+      const response = await api.ai.stop(space.name, space.localParticipant.identity);
+      if (response.ok) {
+        // messageApi.success(t('ai.cut.success.stop'));
+      }
     };
+    // 开启或关闭AI截屏服务 --------------------------------------------------------
+    const startOrStopAICutAnalysis = useCallback(
+      async (enabled: boolean, freq: number, spent: boolean, todo: boolean, reload?: boolean) => {
+        if (!space || !space.localParticipant) return;
+        if (enabled) {
+          await aiCutServiceRef.current.start(
+            freq,
+            spent,
+            space.localParticipant,
+            reload,
+            async (lastScreenShot) => {
+              if (space && space.localParticipant) {
+                const response = await api.ai.analysis(
+                  space.name,
+                  space.localParticipant.identity,
+                  lastScreenShot,
+                  todo ? uState.appDatas.todo?.items.map((item) => item.title) || [] : [],
+                );
+
+                if (!response.ok) {
+                  messageApi.warning(t('ai.cut.error.start'));
+                  // 停止AI截屏服务
+                  stopAICutService(space);
+                  await updateSettings({
+                    ai: {
+                      cut: {
+                        spent,
+                        todo,
+                        enabled: false,
+                      },
+                    },
+                  });
+                  socket.emit('update_user_status', {
+                    space: space.name,
+                  } as WsBase);
+                  return;
+                }
+              }
+            },
+            () => {
+              messageApi.success(t('ai.cut.success.start'));
+            },
+            (e) => {
+              console.error('Failed to start AI Cut Service:', e);
+              messageApi.warning(t('ai.cut.error.start'));
+            },
+          );
+          aiCutAnalysisIntervalId.current = setInterval(async () => {
+            await reloadResult();
+          }, (freq + 2) * 60 * 1000); //增加2分钟的缓冲时间
+        } else {
+          // 停止截图服务并停止AI分析
+          stopAICutService(space);
+        }
+
+        await updateSettings({
+          ai: {
+            cut: {
+              spent,
+              todo,
+              enabled,
+            },
+          },
+        });
+        socket.emit('update_user_status', {
+          space: space.name,
+        } as WsBase);
+      },
+      [space, settings.ai.cut, uState.ai.cut, t, updateSettings, aiCutAnalysisIntervalId],
+    );
 
     const openAIServiceAskNote = () => {
       // 提示用户开启屏幕共享权限, 关闭后判断开启还是关闭AI服务
@@ -216,22 +245,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             hasAsked: true,
           });
         },
-        btn: (
+        actions: (
           <div style={{ display: 'inline-flex', gap: 16 }}>
-            {/* <Button
-              type="primary"
-              onClick={() => {
-                // 用户选择不开启AI服务
-                setNoteStateForAICutService({
-                  openAIService: false,
-                  noteClosed: true,
-                  hasAsked: true,
-                });
-                noteApi.destroy();
-              }}
-            >
-              {t('common.close')}
-            </Button> */}
             <Button
               type="primary"
               onClick={() => {
@@ -263,7 +278,12 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
     useEffect(() => {
       if (noteStateForAICutService.noteClosed) {
-        startOrStopAICutAnalysis(noteStateForAICutService.openAIService);
+        startOrStopAICutAnalysis(
+          noteStateForAICutService.openAIService,
+          settings.ai.cut.freq,
+          uState.ai.cut.spent,
+          uState.ai.cut.todo,
+        );
       }
     }, [noteStateForAICutService.noteClosed, noteStateForAICutService.openAIService]);
 
@@ -396,7 +416,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       // 监听服务器的提醒事件的响应 -------------------------------------------------------------------
       socket.on('wave_response', (msg: WsWave) => {
         if (msg.receiverId === space.localParticipant.identity && msg.space === space.name) {
-          console.warn(msg);
           waveAudioRef.current?.play();
           let actions = undefined;
           if (msg.childRoom || msg.inSpace) {

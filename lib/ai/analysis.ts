@@ -43,7 +43,7 @@ export const DEFAULT_AI_CUT_ANALYSIS_RES: AICutAnalysisRes = {
   markdown: '',
 };
 
-export type AICutDeps = 'screen' | 'todo' | 'time';
+export type AICutDeps = 'screen' | 'todo' | 'spent';
 
 /**
  * 由于AI需要进行图片分析，所以用户需要选择使用多模态AI模型
@@ -62,7 +62,7 @@ export class AICutAnalysisService {
   private static readonly DEFAULT_MAX_TOKENS = 4000;
 
   private static readonly PROMPT_TEMPLATES = {
-    LINE: '作为一个个人工作汇总整理助理，请将我提供的截图内容进行分析，提取出其中的主要任务和活动，关注视频分享区域，不要关注应用界面。请根据截图的内容，识别出用户在该时间点所进行的具体任务，并生成一个结构化的报告。报告应包括以下内容：1. 任务名称：简洁明了地描述用户正在进行的任务。2. 任务内容：详细说明任务的具体内容和目的。3. 时间戳：标记每个任务对应的时间点。请确保报告条理清晰，便于理解和后续参考。整理形成如下格式进行输出: {timestamp: number, name: string, content: string}，只返回json，不要包含其他多余描述。',
+    LINE: '作为一个个人工作汇总整理助理，请将我提供的截图内容进行分析，提取出其中的主要任务和活动，请根据截图的内容与历史数据，识别出我在该时间点所进行的具体任务，并生成一个结构化的报告。报告应包括以下内容：1. 任务名称：简洁明了地描述我正在进行的任务。2. 任务内容：详细说明任务的具体内容和目的。3. 比较历史分析数据，如果发现当前任务和历史任务基本没有变化，在返回时将timestamp使用历史任务的时间戳，并将name和content设置为空字符串即可。请确保报告条理清晰，便于理解和后续参考。整理形成如下格式进行输出: {timestamp: number, name: string, content: string}，只返回json，不要包含其他多余描述。',
 
     ALL: '作为一个个人工作汇总整理助理, 请将我提供的json数组内容整理分析，提取出其中的主要任务和活动。请根据每个时间点的任务内容，识别出用户在整个时间段内所进行的具体任务，并生成一个结构化的总结报告。报告应包括以下内容：1. 任务总结：概括用户在该时间段内完成的主要任务和活动。2. 关键点提取：突出显示每个任务的关键要素和成果。3. Markdown格式输出：将总结报告整理成Markdown格式，便于阅读和分享。请确保报告条理清晰，便于理解和后续参考。格式如下进行输出：{summary: string; markdown: string} ，只返回json，不要包含其他多余描述。',
   };
@@ -131,6 +131,15 @@ export class AICutAnalysisService {
               url: tg.data,
             },
           },
+          // 历史任务数据辅助分析
+          ...(this.result.lines.length > 0
+            ? [
+                {
+                  type: 'text',
+                  text: `此外，以下是我之前的任务分析数据：${JSON.stringify(this.result.lines)}`,
+                },
+              ]
+            : []),
           ...(tg.showTime
             ? [
                 {
@@ -181,8 +190,24 @@ export class AICutAnalysisService {
     const messages = this.buildImageAnalysisMessage(tg, todos);
     const data = await this.makeAIRequest(messages);
     const content = data.choices?.[0]?.message?.content;
+    console.warn(content);
     if (!!content) {
-      this.result.lines.push(JSON.parse(parseJsonBack(content)));
+      const line = JSON.parse(parseJsonBack(content)) as AICutAnalysisResLine;
+      // 判断是否和历史数据重复
+      let repeat = false;
+      if (line.name === '' && line.content === '') {
+        // 遍历历史数据找到时间戳相同的
+        for (const historyLine of this.result.lines) {
+          if (historyLine.timestamp === line.timestamp) {
+            repeat = true;
+            break;
+          }
+        }
+      }
+
+      if (!repeat) {
+        this.result.lines.push(line);
+      }
     }
   }
 

@@ -45,6 +45,9 @@ export async function GET(request: NextRequest) {
 
     const userService = getUserService(spaceName, userId);
     if (!userService) {
+      if (action === 'stop') {
+        return NextResponse.json({ md: '', success: true });
+      }
       return createErrorResponse('No AI analysis service found for this user.');
     }
 

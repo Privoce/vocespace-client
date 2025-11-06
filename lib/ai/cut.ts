@@ -26,9 +26,11 @@ export class AICutService {
   public timeline: boolean = false;
   public localParicipant: LocalParticipant | null = null;
   // 从用户的分享屏幕的视频流中进行截图
-  async captureFromChannel() {
-    if (!this.localParicipant) return;
-
+  async captureFromChannel(onError?: (error: any) => void) {
+    if (!this.localParicipant) {
+      onError && onError('Local participant is not set');
+      return;
+    }
     try {
       const videoTracks = this.localParicipant.videoTrackPublications;
       let screenShareTrack: LocalTrackPublication | null = null;
@@ -93,8 +95,16 @@ export class AICutService {
     freq: number,
     timeline: boolean,
     localParicipant: LocalParticipant,
+    reload?: boolean,
     withAnalysis?: (screenShot: CutScreenShot) => Promise<void>,
+    onSuccess?: () => void,
+    onError?: (error: any) => void,
   ) {
+    if (reload) {
+      this.stop();
+      this.clearScreenshots();
+    }
+
     if (this.isRunning) {
       console.warn('AI Cut Service is already running');
       return;
@@ -120,7 +130,7 @@ export class AICutService {
     // set interval for periodic capture
     this.intervalId = setInterval(async () => {
       // await this.doCapture();
-      await this.captureFromChannel();
+      await this.captureFromChannel(onError);
       // 获取最新截图并进行分析
       if (withAnalysis) {
         const screenshots = this.getScreenshots();

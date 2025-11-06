@@ -565,10 +565,11 @@ lk load-test \
   - [x]flot中去除tab header部分
 - [x] AI Analysis md 的高度需要撑满
 - [x] 默认显示如果用户允许AI截图服务开启
-- [ ] checkbox group 没有正常更新 flot  - ai cut
+- [x] checkbox group 没有正常更新 flot  - ai cut
 - [ ] track.publish.screen 的right menu的判断有问题
-- [ ] AI 截图服务反复提示messageApi
-- [ ] messageApi.success(t('ai.cut.success.reload')); 反复提示
+- [x] AI 截图服务反复提示messageApi
+- [x] messageApi.success(t('ai.cut.success.reload')); 反复提示
+- [x] 截图修改为从用户视频分享流中进行截图
 - [x] 用户视图右上角改为显示所有公开的widget <AppstoreOutlined />
   - [ ] 重写他人浮窗组件
   - [x] 图标
@@ -584,5 +585,7 @@ lk load-test \
   AI Worklog, Team spaces, Private Rooms
 - [x] AI屏幕分享请求只留start sharing按钮
 - [ ] 子房间退出后似乎没有重新ws进行更新
+- [x] 修复AI错误关闭和启动，优化接口
+- [x] 与历史数据结合分析
 
   https://ngzobewgavfuvkrhhnou.supabase.co/auth/v1/callback

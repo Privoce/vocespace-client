@@ -84,7 +84,13 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   openApp: boolean;
   setOpenApp: (open: boolean) => void;
   toRenameSettings: () => void;
-  startOrStopAICutAnalysis: (open: boolean) => Promise<void>;
+  startOrStopAICutAnalysis: (
+    open: boolean,
+    freq: number,
+    spent: boolean,
+    todo: boolean,
+    reload?: boolean,
+  ) => Promise<void>;
   openAIServiceAskNote: () => void;
 }
 
@@ -523,7 +529,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         const { spent, todo } = spaceInfo.participants[space.localParticipant.identity]?.ai.cut;
         const deps: AICutDeps[] = ['screen'];
         if (spent) {
-          deps.push('time');
+          deps.push('spent');
         }
         if (todo) {
           deps.push('todo');
@@ -542,7 +548,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       return [
         { label: t('ai.cut.share_screen'), value: 'screen' },
         { label: t('ai.cut.share_todo'), value: 'todo' },
-        { label: t('ai.cut.share_time'), value: 'time' },
+        { label: t('ai.cut.share_time'), value: 'spent' },
       ];
     }, [t]);
 
@@ -553,7 +559,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     };
 
     const saveAICutServiceSettings = async () => {
-      setAICutModalOpen(false);
       const response = await api.updateSpaceInfo(space!.name, {
         ai: { cut: { freq: cutFreq } },
       });
@@ -561,22 +566,30 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       if (!response.ok) {
         let { error } = await response.json();
         messageApi.error(error);
+        setAICutModalOpen(false);
         return;
       }
+      // await updateSettings({
+      //   ai: {
+      //     cut: {
+      //       enabled: isServiceOpen,
+      //       todo: aiCutDeps.includes('todo'),
+      //       spent: aiCutDeps.includes('spent'),
+      //     },
+      //   },
+      // });
 
-      await updateSettings({
-        ai: {
-          cut: {
-            enabled: isServiceOpen,
-            spent: aiCutDeps.includes('time'),
-            todo: aiCutDeps.includes('todo'),
-          },
-        },
-      });
+      setAICutModalOpen(false);
       if (space && !space.localParticipant.isScreenShareEnabled && isServiceOpen) {
         openAIServiceAskNote();
       }
-      startOrStopAICutAnalysis(isServiceOpen);
+      await startOrStopAICutAnalysis(
+        isServiceOpen,
+        cutFreq,
+        aiCutDeps.includes('spent'),
+        aiCutDeps.includes('todo'),
+        true
+      );
     };
 
     React.useImperativeHandle(
