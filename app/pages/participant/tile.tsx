@@ -24,7 +24,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import VirtualRoleCanvas from '../virtual_role/live2d';
 import { useRecoilState } from 'recoil';
 import {
-  SingleAppDataState,
+  RemoteTargetApp,
   socket,
   userState,
   virtualMaskState,
@@ -85,7 +85,7 @@ export const ParticipantItem: (
     const videoRef = React.useRef<HTMLVideoElement>(null);
     const [uState, setUState] = useRecoilState(userState);
     // const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
-    const [appsData, setAppsData] = useRecoilState(SingleAppDataState);
+    const [appsData, setAppsData] = useRecoilState(RemoteTargetApp);
     const trackReference = useEnsureTrackRef(trackRef);
     const isEncrypted = useIsEncrypted(trackReference.participant);
     const layoutContext = useMaybeLayoutContext();
@@ -596,36 +596,13 @@ export const ParticipantItem: (
       );
     }, [trackReference, localParticipant.identity]);
 
-    const showApp = (appKey: AppKey) => {
-      showSingleFlotApp(appKey);
-      const targetParticipant = {
+    const showApp = () => {
+      showSingleFlotApp();
+      setAppsData({
         participantId: trackReference.participant.identity,
         participantName: trackReference.participant.name,
         auth: currentParticipant.auth,
-      };
-      if (appKey === 'timer') {
-        const castedTimer = castTimer(currentParticipant.appDatas.timer);
-        if (castedTimer) {
-          setAppsData({
-            ...targetParticipant,
-            targetApp: castedTimer,
-          });
-        }
-      } else if (appKey === 'countdown') {
-        const castedCountdown = castCountdown(currentParticipant.appDatas.countdown);
-        if (castedCountdown) {
-          setAppsData({
-            ...targetParticipant,
-            targetApp: castedCountdown,
-          });
-        }
-      } else if (appKey === 'todo') {
-        const castedTodo = castTodo(currentParticipant.appDatas.todo);
-        setAppsData({
-          ...targetParticipant,
-          targetApp: castedTodo || [],
-        });
-      }
+      });
     };
 
     return (
@@ -661,7 +638,7 @@ export const ParticipantItem: (
                 padding: 4,
                 backgroundColor: '#00000080',
                 display: 'flex',
-                borderRadius: 4
+                borderRadius: 4,
               }}
             >
               <StatusInfo

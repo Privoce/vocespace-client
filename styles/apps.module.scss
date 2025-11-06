@@ -152,13 +152,19 @@
   width: 100%;
 }
 
-.flot_app_content {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  height: fit-content;
-  width: 100%;
+.flot_app {
+  &_content {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    height: fit-content;
+    width: 100%;
+  }
+
+  &_item {
+    width: 360px;
+  }
 }
 
 .ai_analysis_md {
@@ -178,5 +184,9 @@
   }
   &_content {
     padding: 16px;
+    max-height: calc(86vh - 46px);
+    overflow-y: scroll;
+    scrollbar-width: thin;
+    height: calc(100% - 32px);
   }
 }

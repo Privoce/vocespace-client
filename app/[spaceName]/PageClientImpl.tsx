@@ -99,13 +99,12 @@ export const chatMsgState = atom({
   },
 });
 
-export const SingleAppDataState = atom({
-  key: 'SingleAppDataState',
+export const RemoteTargetApp = atom({
+  key: 'RemoteTargetApp',
   default: {
     participantId: undefined as string | undefined,
     participantName: undefined as string | undefined,
     auth: 'read' as AppAuth,
-    targetApp: undefined as Timer | Countdown | TodoItem[] | undefined,
   },
 });
 

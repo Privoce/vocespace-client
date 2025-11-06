@@ -46,6 +46,7 @@ import { useI18n } from '@/lib/i18n/i18n';
 import {
   chatMsgState,
   licenseState,
+  RemoteTargetApp,
   roomStatusState,
   socket,
   userState,
@@ -115,6 +116,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
     const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
     const channelRef = React.useRef<ChannelExports>(null);
+    const [remoteApp, setRemoteApp] = useRecoilState(RemoteTargetApp);
     const { settings, updateSettings, fetchSettings, clearSettings, updateOwnerId, updateRecord } =
       useSpaceInfo(
         space?.name || '', // 房间 ID
@@ -134,9 +136,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       DEFAULT_AI_CUT_ANALYSIS_RES,
     );
     const aiCutAnalysisIntervalId = useRef<NodeJS.Timeout | null>(null);
-    const showSingleFlotApp = (appKey: AppKey) => {
-      setTargetAppKey(appKey);
-      setOpenSingleApp(!openSingleApp);
+    const showSingleFlotApp = () => {
+      // setTargetAppKey(appKey);
+      if (remoteApp.participantId !== space?.localParticipant.identity) {
+        setOpenSingleApp(!openSingleApp);
+      }else {
+        setOpenApp(!openApp);
+      }
     };
     const reloadResult = async () => {
       const response = await api.ai.getAnalysisRes(space!.name, space!.localParticipant.identity);

@@ -59,7 +59,7 @@ export function FlotLayout({
   setOpenApp,
   showAICutAnalysisSettings,
   reloadResult,
-  aiCutAnalysisRes
+  aiCutAnalysisRes,
 }: FlotLayoutProps) {
   const flotAppItemRef = useRef<FlotAppExports>(null);
   const [containerHeight, setContainerHeight] = useState<number>(0);
@@ -589,7 +589,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
                       return newMap;
                     });
                   }}
-                  expandIconPosition="end"
+                  expandIconPosition="start"
                   items={remoteItems}
                 />
               ),
@@ -607,7 +607,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
     // 暂时不使用tab，返回自己的即可
     // return <Tabs style={{ width: 360 }} size="small" items={tabItems}></Tabs>;
     return (
-      <div ref={containerRef} style={{ width: 360 }}>
+      <div ref={containerRef} className={styles.flot_app_item}>
         {tabItems.find((item) => item.key === 'self')?.children}
       </div>
     );

@@ -51,7 +51,7 @@ export function AppFlotPin({
 }
 
 export interface AppFlotIconCollectProps {
-  showApp: (appKey: AppKey) => void;
+  showApp: () => void;
   participant?: ParticipantSettings;
   style?: React.CSSProperties;
   contextUndefined?: boolean;
@@ -68,7 +68,7 @@ export function AppFlotIconCollect({
       {participant.sync.length > 0 && (
         <AppFlotIcon
           appKey="todo"
-          pin={() => showApp('todo')}
+          pin={() => showApp()}
           contextUndefined={contextUndefined}
         ></AppFlotIcon>
       )}

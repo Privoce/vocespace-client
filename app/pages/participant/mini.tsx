@@ -30,7 +30,7 @@ import {
 } from '@/lib/std/space';
 import { useVideoBlur, WsBase, WsSender, WsWave } from '@/lib/std/device';
 import { useRecoilState } from 'recoil';
-import { SingleAppDataState, socket } from '@/app/[spaceName]/PageClientImpl';
+import { RemoteTargetApp, socket } from '@/app/[spaceName]/PageClientImpl';
 import { UserStatus } from '@/lib/std';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { StatusInfo, useStatusInfo } from './status_info';
@@ -48,7 +48,7 @@ export interface ParticipantTileMiniProps extends ParticipantTileProps {
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
-  showSingleFlotApp: (appKey: AppKey) => void;
+  showSingleFlotApp: () => void;
 }
 
 export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMiniProps>(
@@ -68,7 +68,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
     const trackReference = useEnsureTrackRef(trackRef);
     const { localParticipant } = useLocalParticipant();
     const videoRef = useRef<HTMLVideoElement>(null);
-    const [appsData, setAppsData] = useRecoilState(SingleAppDataState);
+    const [appsData, setAppsData] = useRecoilState(RemoteTargetApp);
     const layoutContext = useMaybeLayoutContext();
     const autoManageSubscription = useFeatureContext()?.autoSubscription;
     const isEncrypted = useIsEncrypted(trackReference.participant);
@@ -198,36 +198,13 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       };
     };
 
-    const showApp = (appKey: AppKey) => {
-      showSingleFlotApp(appKey);
-      const targetParticipant = {
+    const showApp = () => {
+      showSingleFlotApp();
+      setAppsData({
         participantId: trackReference.participant.identity,
         participantName: trackReference.participant.name,
         auth: currentParticipant.auth,
-      };
-      if (appKey === 'timer') {
-        const castedTimer = castTimer(currentParticipant.appDatas.timer);
-        if (castedTimer) {
-          setAppsData({
-            ...targetParticipant,
-            targetApp: castedTimer,
-          });
-        }
-      } else if (appKey === 'countdown') {
-        const castedCountdown = castCountdown(currentParticipant.appDatas.countdown);
-        if (castedCountdown) {
-          setAppsData({
-            ...targetParticipant,
-            targetApp: castedCountdown,
-          });
-        }
-      } else if (appKey === 'todo') {
-        const castedTodo = castTodo(currentParticipant.appDatas.todo);
-        setAppsData({
-          ...targetParticipant,
-          targetApp: castedTodo || [],
-        });
-      }
+      });
     };
 
     return (
