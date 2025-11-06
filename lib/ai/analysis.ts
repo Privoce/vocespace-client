@@ -194,20 +194,19 @@ export class AICutAnalysisService {
     if (!!content) {
       const line = JSON.parse(parseJsonBack(content)) as AICutAnalysisResLine;
       // 判断是否和历史数据重复
-      let repeat = false;
+
       if (line.name === '' && line.content === '') {
         // 遍历历史数据找到时间戳相同的
-        for (const historyLine of this.result.lines) {
-          if (historyLine.timestamp === line.timestamp) {
-            repeat = true;
-            break;
-          }
-        }
+        // for (const historyLine of this.result.lines) {
+        //   if (historyLine.timestamp === line.timestamp) {
+        //     repeat = true;
+        //     break;
+        //   }
+        // }
+        return;
       }
 
-      if (!repeat) {
-        this.result.lines.push(line);
-      }
+      this.result.lines.push(line);
     }
   }
 
