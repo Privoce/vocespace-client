@@ -271,7 +271,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                 noteApi.destroy();
               }}
             >
-              {t('common.open')}
+              {t('common.start_sharing')}
             </Button>
           </div>
         ),
@@ -1117,6 +1117,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             showAICutAnalysisSettings={controlsRef.current?.showAICutAnalysisSettings}
             reloadResult={reloadResult}
             aiCutAnalysisRes={aiCutAnalysisRes}
+            startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+            openAIServiceAskNote={openAIServiceAskNote}
           ></FlotLayout>
         )}
         {/* 右侧单应用浮窗，悬浮态，用于当用户点击自己视图头上角图标进行显示 */}

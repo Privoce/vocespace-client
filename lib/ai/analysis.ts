@@ -62,7 +62,7 @@ export class AICutAnalysisService {
   private static readonly DEFAULT_MAX_TOKENS = 4000;
 
   private static readonly PROMPT_TEMPLATES = {
-    LINE: '作为一个个人工作汇总整理助理，请将我提供的截图内容进行分析，提取出其中的主要任务和活动，请根据截图的内容与历史数据，识别出我在该时间点所进行的具体任务，并生成一个结构化的报告。报告应包括以下内容：1. 任务名称：简洁明了地描述我正在进行的任务。2. 任务内容：详细说明任务的具体内容和目的。3. 比较历史分析数据，如果发现当前任务和历史任务基本没有变化，在返回时将timestamp使用历史任务的时间戳，并将name和content设置为空字符串即可。请确保报告条理清晰，便于理解和后续参考。整理形成如下格式进行输出: {timestamp: number, name: string, content: string}，只返回json，不要包含其他多余描述。',
+    LINE: '作为一个个人工作汇总整理助理，请将我提供的截图内容进行分析，提取出其中的主要任务和活动，请根据截图的内容与历史数据，识别出我在该时间点所进行的具体任务，并生成一个结构化的报告。报告应包括以下内容：1. 任务名称：简洁明了地描述我正在进行的任务。2. 任务内容：详细说明任务的具体内容和目的。请确保报告条理清晰，便于理解和后续参考。整理形成如下格式进行输出: {timestamp: number, name: string, content: string}，只返回json，不要包含其他多余描述。',
 
     ALL: '作为一个个人工作汇总整理助理, 请将我提供的json数组内容整理分析，提取出其中的主要任务和活动。请根据每个时间点的任务内容，识别出用户在整个时间段内所进行的具体任务，并生成一个结构化的总结报告。报告应包括以下内容：1. 任务总结：概括用户在该时间段内完成的主要任务和活动。2. 关键点提取：突出显示每个任务的关键要素和成果。3. Markdown格式输出：将总结报告整理成Markdown格式，便于阅读和分享。请确保报告条理清晰，便于理解和后续参考。格式如下进行输出：{summary: string; markdown: string} ，只返回json，不要包含其他多余描述。',
   };
@@ -136,7 +136,9 @@ export class AICutAnalysisService {
             ? [
                 {
                   type: 'text',
-                  text: `此外，以下是我之前的任务分析数据：${JSON.stringify(this.result.lines)}`,
+                  text: `此外，以下是我之前的任务分析数据：${JSON.stringify(
+                    this.result.lines,
+                  )}, 如果你发现当前任务和某条历史任务基本没有变化，请将本次返回的name和content设置为空字符串即可`,
                 },
               ]
             : []),
@@ -144,9 +146,7 @@ export class AICutAnalysisService {
             ? [
                 {
                   type: 'text',
-                  text: `请对该任务markdown格式的标题后增加时间标记，格式为(${new Date(
-                    tg.timestamp,
-                  ).toLocaleTimeString()})`,
+                  text: `这是我当前任务的时间戳: ${tg.timestamp}，请将其作为返回的json中的时间戳。`,
                 },
               ]
             : []),
@@ -192,17 +192,16 @@ export class AICutAnalysisService {
     const content = data.choices?.[0]?.message?.content;
     console.warn(content);
     if (!!content) {
-      const line = JSON.parse(parseJsonBack(content)) as AICutAnalysisResLine;
-      // 判断是否和历史数据重复
-
-      if (line.name === '' && line.content === '') {
-        // 遍历历史数据找到时间戳相同的
-        // for (const historyLine of this.result.lines) {
-        //   if (historyLine.timestamp === line.timestamp) {
-        //     repeat = true;
-        //     break;
-        //   }
-        // }
+      let line = JSON.parse(parseJsonBack(content));
+      // 如果压根在line中没有name和content字段，说明返回格式可能错误，直接将解析结果作为content即可
+      // 如果line中name和content都是空字符串，说明当前任务和历史任务基本没有变化，直接跳过即可
+      if (!('name' in line) || !('content' in line)) {
+        line = {
+          name: '',
+          content: content,
+          timestamp: tg.timestamp,
+        };
+      } else if (line.name === '' && line.content === '') {
         return;
       }
 
@@ -266,8 +265,15 @@ export const downloadMarkdown = (md: string) => {
  * 返回格式为:
  * ```json
  * ```
+ * or
+ * ```markdown
+ * ```
+ * or
+ * ```
+ * ```
  * @param jsonCode
  */
 export const parseJsonBack = (jsonCode: string): string => {
-  return jsonCode.replace(/^[\s\S]*?```json/, '').replace(/```[\s\S]*?$/, '');
+  // return jsonCode.replace(/^[\s\S]*?```json/, '').replace(/```[\s\S]*?$/, '');
+  return jsonCode.replace(/^[\s\S]*?```(?:json|markdown)?/, '').replace(/```[\s\S]*?$/, '');
 };

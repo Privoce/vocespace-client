@@ -154,10 +154,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
 
     // 右键菜单可以使用：当不是自己的时候且source不是屏幕分享
     const showSelfControlMenu = useMemo(() => {
-      return (
-        trackReference.participant.identity === localParticipant.identity &&
-        trackReference.source !== Track.Source.ScreenShare
-      );
+      return trackReference.participant.identity === localParticipant.identity;
     }, [trackReference, localParticipant.identity]);
     // status标签渲染 -------------------------------------------------------------
     const { items, userStatusDisply, defineStatus } = useStatusInfo({

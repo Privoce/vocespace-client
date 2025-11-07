@@ -179,6 +179,18 @@
 }
 
 .ai_analysis_md {
+  &_icons {
+    display: inline-flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+  }
+  &_empty {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
   &_header {
     height: 32px;
     width: 100%;
@@ -187,8 +199,7 @@
     border-bottom: 1px solid #333;
     display: inline-flex;
     align-items: center;
-    justify-content: flex-start;
-    gap: 8px;
+    justify-content: space-between;
     &_icon {
       cursor: pointer;
     }

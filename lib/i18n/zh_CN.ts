@@ -61,10 +61,14 @@ export default {
       ok: '跳转',
       cancel: '取消',
     },
+    start_sharing: '开始共享',
   },
   ai: {
     cut: {
+      report: 'AI分析报告',
+      start: "开启分析",
       title: 'AI分析设置',
+      empty: "开启AI分析后，系统将会定时截图并进行分析，帮助您总结空间内容生成报告。",
       freq: '截图频率(分钟)',
       freq_desc:
         '设置AI分析的截图频率，默认为每5分钟截图一次进行分析。若长于5分钟则在5分钟时会进行第一次截图。',

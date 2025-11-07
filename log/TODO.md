@@ -566,12 +566,12 @@ lk load-test \
 - [x] AI Analysis md 的高度需要撑满
 - [x] 默认显示如果用户允许AI截图服务开启
 - [x] checkbox group 没有正常更新 flot  - ai cut
-- [ ] track.publish.screen 的right menu的判断有问题
+- [x] track.publish.screen 的right menu的判断有问题
 - [x] AI 截图服务反复提示messageApi
 - [x] messageApi.success(t('ai.cut.success.reload')); 反复提示
 - [x] 截图修改为从用户视频分享流中进行截图
 - [x] 用户视图右上角改为显示所有公开的widget <AppstoreOutlined />
-  - [ ] 重写他人浮窗组件
+  - [x] 重写他人浮窗组件
   - [x] 图标
 - [x] 登陆之后需要隐藏google和email登陆的按钮
 - [x] 将login button修改为block button 放在 名字输入框的上面
@@ -586,11 +586,11 @@ lk load-test \
 - [x] AI屏幕分享请求只留start sharing按钮
 - [x] 在子房间直接离开或刷新屏幕会导致人数残留
 - [x] 侧边栏active人数应该是上线人数
-- [ ] AI总结为空的时候显示Empty状态（）
+- [x] AI总结为空的时候显示Empty状态
 - [x] 修复AI错误关闭和启动，优化接口
 - [x] 与历史数据结合分析
-- [ ] 如果正在运行AI分析，进入设置后如果没有关闭也没有更改，不需要reload
-- [ ] 时间戳使用截图的时间戳
-- [ ] 过滤似乎没有起效(时间戳过滤)
+- [x] 如果正在运行AI分析，进入设置后如果没有关闭也没有更改，不需要reload
+- [x] 时间戳使用截图的时间戳
+- [x] 过滤似乎没有起效(时间戳过滤)
 
   https://ngzobewgavfuvkrhhnou.supabase.co/auth/v1/callback

@@ -42,7 +42,7 @@ export default {
     stop_share: 'Stop Share Screen',
     wave_msg: 'sent you a reminder!',
     full_user:
-      'The room user has exceeded the limit and cannot join. You can join other rooms or inform the builder to upgrade your license to obtain more user slots.',
+      'The room user has exceeded thene limit and cannot join. You can join other rooms or inform the builder to upgrade your license to obtain more user slots.',
     open: 'ON',
     close: 'OFF',
     high_quality: 'Lossless mode',
@@ -62,9 +62,13 @@ export default {
       ok: 'Jump',
       cancel: 'Cancel',
     },
+    start_sharing: 'Start Sharing',
   },
   ai: {
     cut: {
+      report: 'AI Analysis Report',
+      start: "Start Analysis",
+      empty: "Once AI analysis is enabled, the system will periodically take screenshots and analyze them to help you summarize the content of your space and generate reports.",
       title: 'AI Analysis Settings',
       freq: 'Screenshot Frequency (minutes)',
       freq_desc:

@@ -1,10 +1,17 @@
 import { AICutAnalysisRes, AICutAnalysisResLine } from '@/lib/ai/analysis';
-import { Tooltip } from 'antd';
+import { Empty, Tooltip } from 'antd';
 import { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import styles from '@/styles/apps.module.scss';
-import { ReloadOutlined, SettingOutlined } from '@ant-design/icons';
+import {
+  PauseCircleOutlined,
+  PlayCircleOutlined,
+  ReloadOutlined,
+  SettingOutlined,
+} from '@ant-design/icons';
 import { useI18n } from '@/lib/i18n/i18n';
+import { SpaceInfo } from '@/lib/std/space';
+import { useLocalParticipant } from '@livekit/components-react';
 
 export interface AICutAnalysisMdTabsProps {
   result?: AICutAnalysisRes;
@@ -12,6 +19,16 @@ export interface AICutAnalysisMdTabsProps {
   height: number;
   showSettings?: (open: boolean) => void;
   setFlotAppOpen?: (open: boolean) => void;
+  startOrStopAICutAnalysis?: (
+    open: boolean,
+    freq: number,
+    spent: boolean,
+    todo: boolean,
+    reload?: boolean,
+  ) => Promise<void>;
+  openAIServiceAskNote?: () => void;
+  spaceInfo: SpaceInfo;
+  userId?: string;
 }
 
 export function AICutAnalysisMdTabs({
@@ -20,9 +37,13 @@ export function AICutAnalysisMdTabs({
   result,
   reloadResult,
   setFlotAppOpen,
+  startOrStopAICutAnalysis,
+  spaceInfo,
+  userId,
+  openAIServiceAskNote,
 }: AICutAnalysisMdTabsProps) {
   const { t } = useI18n();
-
+  const { localParticipant } = useLocalParticipant();
   // 真正的 md 内容
   const md = useMemo(() => {
     if (!result) return '';
@@ -33,14 +54,13 @@ export function AICutAnalysisMdTabs({
 
     // 处理嵌套的 lines 数组结构
     const flattenedLines = result.lines.flat();
-
+    console.warn(result);
     const markdown = flattenedLines
       .map((line: AICutAnalysisResLine) => {
-        console.warn(line.name, line.timestamp);
         // 如果有 name，作为标题显示
         const title =
-          (line.name ? `## ${line.name}\n\n` : '') +
-          `(${new Date(line.timestamp * 1000).toLocaleString()})`;
+          (line.name ? `## ${line.name}` : '') +
+          `(${new Date(line.timestamp).toLocaleString()})\n\n`;
         return title + line.content;
       })
       .join('\n\n');
@@ -48,32 +68,88 @@ export function AICutAnalysisMdTabs({
     return markdown;
   }, [result]);
 
+  const cutParams = useMemo(() => {
+    let realUserId = !userId ? localParticipant.identity : userId;
+    let isSelf = localParticipant.identity === realUserId;
+    const { todo, spent, enabled } = spaceInfo.participants[realUserId]?.ai.cut;
+    return {
+      freq: spaceInfo.ai.cut.freq,
+      spent: spent || false,
+      todo: todo || false,
+      isSelf,
+      enabled: enabled || false,
+    };
+  }, [spaceInfo, userId, localParticipant]);
+
   return (
     <div style={{ height: height, width: '720px', marginBottom: 8, backgroundColor: '#1e1e1e' }}>
       <div className={styles.ai_analysis_md_header}>
-        <Tooltip title={t('ai.cut.reload')}>
-          <ReloadOutlined
-            className={styles.ai_analysis_md_header_icon}
-            onClick={() => {
-              reloadResult && reloadResult();
-            }}
-          />
-        </Tooltip>
-        {/* <Tooltip title={t('ai.cut.download')}>
-          <DownloadOutlined className={styles.ai_analysis_md_header_icon} onClick={downloadMd} />
-        </Tooltip> */}
-        <Tooltip title={t('ai.cut.reload')}>
-          <SettingOutlined
-            className={styles.ai_analysis_md_header_icon}
-            onClick={() => {
-              setFlotAppOpen && setFlotAppOpen(false);
-              showSettings && showSettings(true);
-            }}
-          />
-        </Tooltip>
+        <div>{t('ai.cut.report')}</div>
+        {cutParams.isSelf && (
+          <div className={styles.ai_analysis_md_icons}>
+            <Tooltip title={t('ai.cut.start')}>
+              {cutParams.enabled ? (
+                <PauseCircleOutlined
+                  className={styles.ai_analysis_md_header_icon}
+                  onClick={() => {
+                    startOrStopAICutAnalysis &&
+                      startOrStopAICutAnalysis(
+                        false,
+                        cutParams.freq,
+                        cutParams.spent,
+                        cutParams.todo,
+                      );
+                  }}
+                />
+              ) : (
+                <PlayCircleOutlined
+                  className={styles.ai_analysis_md_header_icon}
+                  onClick={() => {
+                    if (!localParticipant.isScreenShareEnabled) {
+                      openAIServiceAskNote && openAIServiceAskNote();
+                      return;
+                    }
+                    if (localParticipant.isScreenShareEnabled) {
+                      startOrStopAICutAnalysis &&
+                        startOrStopAICutAnalysis(
+                          true,
+                          cutParams.freq,
+                          cutParams.spent,
+                          cutParams.todo,
+                        );
+                    }
+                  }}
+                />
+              )}
+            </Tooltip>
+            <Tooltip title={t('ai.cut.reload')}>
+              <ReloadOutlined
+                className={styles.ai_analysis_md_header_icon}
+                onClick={() => {
+                  reloadResult && reloadResult();
+                }}
+              />
+            </Tooltip>
+            <Tooltip title={t('ai.cut.title')}>
+              <SettingOutlined
+                className={styles.ai_analysis_md_header_icon}
+                onClick={() => {
+                  setFlotAppOpen && setFlotAppOpen(false);
+                  showSettings && showSettings(true);
+                }}
+              />
+            </Tooltip>
+          </div>
+        )}
       </div>
       <div className={styles.ai_analysis_md_content}>
-        <ReactMarkdown>{md}</ReactMarkdown>
+        {!md ? (
+          <div className={styles.ai_analysis_md_empty}>
+            <Empty description={t('ai.cut.empty')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
+          </div>
+        ) : (
+          <ReactMarkdown>{md}</ReactMarkdown>
+        )}
       </div>
     </div>
   );

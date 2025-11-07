@@ -54,7 +54,6 @@ export function SingleFlotLayout({
   space,
   appKey,
 }: SingleFlotLayoutProps) {
-  const { localParticipant } = useLocalParticipant();
   const [showAICutAnalysis, setShowAICutAnalysis] = useState<boolean>(true);
   const [containerHeight, setContainerHeight] = useState<number>(0);
   return (
@@ -74,11 +73,8 @@ export function SingleFlotLayout({
             <div className={styles.flot_app_content}>
               {containerHeight > 0 && showAICutAnalysis && (
                 <AICutAnalysisMdTabs
-                  // result={aiCutAnalysisRes}
-                  // reloadResult={reloadResult}
                   height={containerHeight - 8}
-                  // showSettings={showAICutAnalysisSettings}
-                  // setFlotAppOpen={setOpenApp}
+                  spaceInfo={spaceInfo}
                 ></AICutAnalysisMdTabs>
               )}
               <RemoteFlotAppItem

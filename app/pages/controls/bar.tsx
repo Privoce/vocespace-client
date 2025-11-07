@@ -583,13 +583,16 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       if (space && !space.localParticipant.isScreenShareEnabled && isServiceOpen) {
         openAIServiceAskNote();
       }
-      await startOrStopAICutAnalysis(
-        isServiceOpen,
-        cutFreq,
-        aiCutDeps.includes('spent'),
-        aiCutDeps.includes('todo'),
-        true
-      );
+      const includeSpent = aiCutDeps.includes('spent');
+      const includeTodo = aiCutDeps.includes('todo');
+      let reload = true;
+      // 判断，如果spent, todo的选中状态或cutFreq与之前不同则需要reload
+      const { spent, todo } = spaceInfo.participants[space!.localParticipant.identity]?.ai.cut;
+      if (spent === includeSpent && todo === includeTodo && spaceInfo.ai.cut.freq === cutFreq) {
+        reload = false;
+      }
+
+      await startOrStopAICutAnalysis(isServiceOpen, cutFreq, includeSpent, includeTodo, reload);
     };
 
     React.useImperativeHandle(

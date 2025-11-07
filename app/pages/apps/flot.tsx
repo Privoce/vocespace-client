@@ -48,6 +48,14 @@ export interface FlotLayoutProps {
   showAICutAnalysisSettings?: (open: boolean) => void;
   aiCutAnalysisRes?: AICutAnalysisRes;
   reloadResult?: () => Promise<void>;
+  startOrStopAICutAnalysis?: (
+    open: boolean,
+    freq: number,
+    spent: boolean,
+    todo: boolean,
+    reload?: boolean,
+  ) => Promise<void>;
+  openAIServiceAskNote?: () => void
 }
 
 export function FlotLayout({
@@ -59,6 +67,8 @@ export function FlotLayout({
   setOpenApp,
   showAICutAnalysisSettings,
   reloadResult,
+  startOrStopAICutAnalysis,
+  openAIServiceAskNote,
   aiCutAnalysisRes,
 }: FlotLayoutProps) {
   const flotAppItemRef = useRef<FlotAppExports>(null);
@@ -79,6 +89,9 @@ export function FlotLayout({
                 height={containerHeight - 8}
                 showSettings={showAICutAnalysisSettings}
                 setFlotAppOpen={setOpenApp}
+                spaceInfo={spaceInfo}
+                startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+                openAIServiceAskNote={openAIServiceAskNote}
               ></AICutAnalysisMdTabs>
             )}
             <FlotAppItem

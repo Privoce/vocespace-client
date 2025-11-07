@@ -10,6 +10,7 @@ import {
   SpaceTimer,
   SpaceTodo,
 } from '../std/space';
+import { ai } from './ai';
 
 const SPACE_API = connect_endpoint('/api/space');
 
@@ -305,6 +306,8 @@ export const updateSpaceAppAuth = async (
 };
 
 export const leaveSpace = async (spaceName: string, removeId: string, socket: Socket) => {
+  // 离开前先去删除AI分析服务实例, 无需管是否返回成功，因为返回失败，说明服务本来就不存在
+  const _ = await ai.stop(spaceName, removeId);
   const response = await deleteSpaceParticipant(spaceName, removeId);
   if (!response.ok) {
     // console.error('Failed to leave space:', spaceName, 'with ID:', removeId);
