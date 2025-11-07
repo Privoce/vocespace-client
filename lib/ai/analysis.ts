@@ -203,6 +203,14 @@ export class AICutAnalysisService {
         };
       } else if (line.name === '' && line.content === '') {
         return;
+      } else {
+        // 从历史中判断是否name和content有相似的，有的话也直接跳过
+        const similarLine = this.result.lines.find(
+          (l) => l.name === line.name || l.content === line.content,
+        );
+        if (similarLine) {
+          return;
+        }
       }
 
       this.result.lines.push(line);
