@@ -63,27 +63,33 @@ export function SingleFlotLayout({
         open={openApp}
         placement="leftTop"
         content={
-          <div className={styles.flot_app_content}>
-            {containerHeight > 0 && showAICutAnalysis && (
-              <AICutAnalysisMdTabs
-                // result={aiCutAnalysisRes}
-                // reloadResult={reloadResult}
-                height={containerHeight - 8}
-                // showSettings={showAICutAnalysisSettings}
-                // setFlotAppOpen={setOpenApp}
-              ></AICutAnalysisMdTabs>
-            )}
-            <RemoteFlotAppItem
-              appKey={appKey}
-              messageApi={messageApi}
-              localParticipant={localParticipant}
-              space={space}
-              setOpen={setOpen}
-              spaceInfo={spaceInfo}
-              showAICutAnalysis={showAICutAnalysis}
-              setShowAICutAnalysis={setShowAICutAnalysis}
-              onHeightChange={setContainerHeight}
-            ></RemoteFlotAppItem>
+          <div className={styles.flot_app}>
+            <div className={styles.flot_app_header}>
+              <CloseCircleOutlined
+                onClick={() => {
+                  setOpen(false);
+                }}
+              ></CloseCircleOutlined>
+            </div>
+            <div className={styles.flot_app_content}>
+              {containerHeight > 0 && showAICutAnalysis && (
+                <AICutAnalysisMdTabs
+                  // result={aiCutAnalysisRes}
+                  // reloadResult={reloadResult}
+                  height={containerHeight - 8}
+                  // showSettings={showAICutAnalysisSettings}
+                  // setFlotAppOpen={setOpenApp}
+                ></AICutAnalysisMdTabs>
+              )}
+              <RemoteFlotAppItem
+                messageApi={messageApi}
+                space={space}
+                spaceInfo={spaceInfo}
+                showAICutAnalysis={showAICutAnalysis}
+                setShowAICutAnalysis={setShowAICutAnalysis}
+                onHeightChange={setContainerHeight}
+              ></RemoteFlotAppItem>
+            </div>
           </div>
         }
         styles={{
@@ -105,11 +111,8 @@ export function SingleFlotLayout({
 }
 
 export interface RemoteFlotAppItemProps {
-  appKey?: AppKey;
   messageApi: MessageInstance;
-  localParticipant: Participant;
   space: string;
-  setOpen: (open: boolean) => void;
   onHeightChange?: (height: number) => void;
   spaceInfo: SpaceInfo;
   setShowAICutAnalysis: (show: boolean) => void;
@@ -121,11 +124,7 @@ const DEFAULT_KEYS: AppKey[] = ['timer', 'countdown', 'todo'];
 export const RemoteFlotAppItem = forwardRef<FlotAppExports, RemoteFlotAppItemProps>(
   (
     {
-      appKey,
       messageApi,
-      localParticipant,
-      space,
-      setOpen,
       spaceInfo,
       onHeightChange,
       showAICutAnalysis,
@@ -134,10 +133,7 @@ export const RemoteFlotAppItem = forwardRef<FlotAppExports, RemoteFlotAppItemPro
     ref,
   ) => {
     const [remote, setRemote] = useRecoilState(RemoteTargetApp);
-
-    const [activeKeys, setActiveKeys] = useState<Map<string, (AppKey | 'together')[]>>(
-      new Map([[localParticipant.identity, DEFAULT_KEYS]]),
-    );
+    const [activeKeys, setActiveKeys] = useState<AppKey[]>(DEFAULT_KEYS);
     const { t } = useI18n();
     const { token } = theme.useToken();
     const [showExport, setShowExport] = useState<boolean>(false);
@@ -172,30 +168,6 @@ export const RemoteFlotAppItem = forwardRef<FlotAppExports, RemoteFlotAppItemPro
       }
     }, [onHeightChange]);
 
-    // 初始化远程用户的 activeKeys
-    useEffect(() => {
-      const remoteParticipantKeys = Object.keys(spaceInfo.participants).filter((k) => {
-        return k !== localParticipant.identity;
-      });
-
-      setActiveKeys((prev) => {
-        const newMap = new Map(prev);
-
-        remoteParticipantKeys.forEach((participantId) => {
-          const participant = spaceInfo.participants[participantId];
-          if (participant?.sync && !newMap.has(participantId)) {
-            const keys: AppKey[] = [];
-            if (participant.appDatas?.timer) keys.push('timer');
-            if (participant.appDatas?.countdown) keys.push('countdown');
-            if (participant.appDatas?.todo) keys.push('todo');
-            newMap.set(participantId, keys);
-          }
-        });
-
-        return newMap;
-      });
-    }, [spaceInfo.participants, localParticipant.identity]);
-
     const itemStyle: React.CSSProperties = {
       marginBottom: 8,
       background: token.colorFillAlter,
@@ -209,52 +181,12 @@ export const RemoteFlotAppItem = forwardRef<FlotAppExports, RemoteFlotAppItemPro
       // const response = await api.updateParticipantApp(participantId, 'timer', timer);
     };
 
-    const updateAppSync = async (key: AppKey) => {
-      const response = await api.updateSpaceAppSync(space, localParticipant.identity, key);
-      if (response.ok) {
-        socket.emit('update_user_status', {
-          space,
-        } as WsBase);
-        messageApi.success(t('more.app.settings.sync.update.success'));
-      } else {
-        messageApi.error(t('more.app.settings.sync.update.error'));
-      }
-    };
-
     const exportTodo = (data: TodoItem[]) => {
       if (data.length === 0) {
         messageApi.info(t('more.app.todo.unexport'));
       } else {
         setShowExport(true);
       }
-    };
-
-    const showSyncIcon = (isRemote: boolean, key: AppKey) => {
-      return isRemote ? (
-        <span></span>
-      ) : (
-        <>
-          {spaceInfo.participants[localParticipant.identity].sync.includes(key) ? (
-            <Tooltip title={t('more.app.settings.sync.desc_priv')}>
-              <EyeOutlined
-                onClick={(e) => {
-                  e.stopPropagation();
-                  updateAppSync(key);
-                }}
-              />
-            </Tooltip>
-          ) : (
-            <Tooltip title={t('more.app.settings.sync.desc_pub')}>
-              <EyeInvisibleOutlined
-                onClick={(e) => {
-                  e.stopPropagation();
-                  updateAppSync(key);
-                }}
-              />
-            </Tooltip>
-          )}
-        </>
-      );
     };
 
     const createItems = (
@@ -269,12 +201,7 @@ export const RemoteFlotAppItem = forwardRef<FlotAppExports, RemoteFlotAppItemPro
       if (timer) {
         items.push({
           key: 'timer',
-          label: (
-            <div className={styles.flot_header}>
-              {t('more.app.timer.title')}
-              {showSyncIcon(isRemote, 'timer')}
-            </div>
-          ),
+          label: <div className={styles.flot_header}>{t('more.app.timer.title')}</div>,
           children: (
             <AppTimer
               size="small"
@@ -291,12 +218,7 @@ export const RemoteFlotAppItem = forwardRef<FlotAppExports, RemoteFlotAppItemPro
       if (countdown) {
         items.push({
           key: 'countdown',
-          label: (
-            <div className={styles.flot_header}>
-              {t('more.app.countdown.title')}
-              {showSyncIcon(isRemote, 'countdown')}
-            </div>
-          ),
+          label: <div className={styles.flot_header}>{t('more.app.countdown.title')}</div>,
           children: (
             <AppCountdown
               messageApi={messageApi}
@@ -318,7 +240,6 @@ export const RemoteFlotAppItem = forwardRef<FlotAppExports, RemoteFlotAppItemPro
             <div className={styles.flot_header}>
               {t('more.app.todo.title')}
               <div className={styles.flot_header_icons}>
-                {showSyncIcon(isRemote, 'todo')}
                 {!isRemote && (
                   <>
                     <Tooltip title={t('more.app.todo.complete')}>
@@ -405,31 +326,28 @@ export const RemoteFlotAppItem = forwardRef<FlotAppExports, RemoteFlotAppItemPro
             },
             auth: remoteParticipant.auth,
           };
+        } else {
+          // 给一个空的todo
+          todo = {
+            data: [],
+            setData: async (data) => {
+              // update the todo data
+              console.warn(data);
+            },
+            auth: remoteParticipant.auth,
+          };
         }
-        console.warn('remoteParticipant', remoteParticipant, timer, countdown, todo);
-        let remoteItems = createItems(remote.participantId, timer, countdown, todo, true);
-        setActiveKeys((prev) => {
-          if (!prev.has(remote.participantId!)) {
-            const newMap = new Map(prev);
-            newMap.set(remote.participantId!, DEFAULT_KEYS);
-            return newMap;
-          }
-          return prev;
-        });
 
+        let remoteItems = createItems(remote.participantId, timer, countdown, todo, true);
         return {
           key: remote.participantId,
           label: remoteParticipant.name,
           children: (
             <Collapse
               bordered={false}
-              activeKey={activeKeys.get(remote.participantId)}
+              activeKey={activeKeys}
               onChange={(keys) => {
-                setActiveKeys((prev) => {
-                  const newMap = new Map(prev);
-                  newMap.set(remote.participantId!, keys as AppKey[]);
-                  return newMap;
-                });
+                setActiveKeys(keys as AppKey[]);
               }}
               expandIconPosition="start"
               items={remoteItems}
@@ -437,7 +355,7 @@ export const RemoteFlotAppItem = forwardRef<FlotAppExports, RemoteFlotAppItemPro
           ),
         };
       }
-    }, [spaceInfo, remote]);
+    }, [spaceInfo, remote, activeKeys]);
 
     useImperativeHandle(ref, () => ({
       clientHeight: containerRef.current?.clientHeight,

@@ -597,12 +597,11 @@ export const ParticipantItem: (
     }, [trackReference, localParticipant.identity]);
 
     const showApp = () => {
-      showSingleFlotApp();
-      setAppsData({
-        participantId: trackReference.participant.identity,
-        participantName: trackReference.participant.name,
-        auth: currentParticipant.auth,
-      });
+      showSingleFlotApp(
+        trackReference.participant.identity,
+        trackReference.participant.name,
+        currentParticipant.auth,
+      );
     };
 
     return (

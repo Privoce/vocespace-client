@@ -20,6 +20,7 @@ import { ConnectionState, Participant, Room, Track } from 'livekit-client';
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { isTrackReferencePinned } from './tile';
 import {
+  AppAuth,
   AppKey,
   castCountdown,
   castTimer,
@@ -48,7 +49,7 @@ export interface ParticipantTileMiniProps extends ParticipantTileProps {
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
-  showSingleFlotApp: () => void;
+  showSingleFlotApp: (id?: string, participantName?: string, auth?: AppAuth) => void;
 }
 
 export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMiniProps>(
@@ -199,12 +200,11 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
     };
 
     const showApp = () => {
-      showSingleFlotApp();
-      setAppsData({
-        participantId: trackReference.participant.identity,
-        participantName: trackReference.participant.name,
-        auth: currentParticipant.auth,
-      });
+      showSingleFlotApp(
+        trackReference.participant.identity,
+        trackReference.participant.name,
+        currentParticipant.auth!,
+      );
     };
 
     return (

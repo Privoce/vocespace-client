@@ -64,7 +64,7 @@ import {
 import { Button } from 'antd';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { Channel, ChannelExports } from './channel';
-import { AppKey, PARTICIPANT_SETTINGS_KEY, SpaceInfo } from '@/lib/std/space';
+import { AppAuth, AppKey, PARTICIPANT_SETTINGS_KEY, SpaceInfo } from '@/lib/std/space';
 import { FlotLayout } from '../apps/flot';
 import { api } from '@/lib/api';
 import { SingleFlotLayout } from '../apps/single_flot';
@@ -136,17 +136,16 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       DEFAULT_AI_CUT_ANALYSIS_RES,
     );
     const aiCutAnalysisIntervalId = useRef<NodeJS.Timeout | null>(null);
-    const showSingleFlotApp = () => {
-      // setTargetAppKey(appKey);
+    const showSingleFlotApp = (id?: string, participantName?: string, auth?: AppAuth) => {
+      setRemoteApp({
+        participantId: id,
+        participantName,
+        auth: auth || 'read',
+      });
 
-      if (!remoteApp.participantId) {
-        setOpenApp(!openApp);
-        return;
-      }
-
-      if (remoteApp.participantId !== space?.localParticipant.identity) {
+      if (id !== space?.localParticipant.identity) {
         setOpenSingleApp(!openSingleApp);
-      }else {
+      } else {
         setOpenApp(!openApp);
       }
     };
@@ -330,7 +329,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             socketId: socket.id,
             name: space.localParticipant.name || space.localParticipant.identity,
             startAt: new Date().getTime(),
-            online: true
+            online: true,
           },
           undefined,
           true,

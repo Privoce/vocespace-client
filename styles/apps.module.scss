@@ -153,7 +153,18 @@
 }
 
 .flot_app {
+  margin: 0;
+  padding: 0;
+  &_header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 4px;
+    padding-bottom: 4px;
+    width: 100%;
+  }
   &_content {
+    flex-wrap: wrap;
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
