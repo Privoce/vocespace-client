@@ -165,8 +165,13 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
     }, [settings.children, localParticipantId, subRoomsTmp]);
 
     const allParticipants = useMemo(() => {
-      // console.warn(Object.keys(settings.participants).length, settings.participants);
-      return Object.keys(settings.participants);
+      // return Object.keys(settings.participants);
+      // 只返回在线的参与者
+      return Object.entries(settings.participants)
+        .filter(([_, p]) => {
+          return p.online;
+        })
+        .map(([pid, _]) => pid);
     }, [settings]);
 
     const wsSender = useMemo(() => {

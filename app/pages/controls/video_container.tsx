@@ -138,6 +138,12 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const aiCutAnalysisIntervalId = useRef<NodeJS.Timeout | null>(null);
     const showSingleFlotApp = () => {
       // setTargetAppKey(appKey);
+
+      if (!remoteApp.participantId) {
+        setOpenApp(!openApp);
+        return;
+      }
+
       if (remoteApp.participantId !== space?.localParticipant.identity) {
         setOpenSingleApp(!openSingleApp);
       }else {
@@ -324,6 +330,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             socketId: socket.id,
             name: space.localParticipant.name || space.localParticipant.identity,
             startAt: new Date().getTime(),
+            online: true
           },
           undefined,
           true,

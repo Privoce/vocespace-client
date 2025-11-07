@@ -702,6 +702,7 @@ class SpaceManager {
               screenBlur: pData.screenBlur,
               socketId: pData.socketId,
               startAt: participant.startAt,
+              online: true
             };
             return await this.setSpaceInfo(room, spaceInfo);
           }
@@ -790,17 +791,6 @@ class SpaceManager {
           error: 'Room or participant does not exist, or not complete initialized.',
         }; // 房间或参与者不存在可能出现了问题
       }
-      // 如果是持久化房间，无需删除房间也无需删除参与者数据，只需要将用户的online改为false即可
-      if (spaceInfo.persistence) {
-        if (spaceInfo.participants[participantId].online) {
-          spaceInfo.participants[participantId].online = false;
-          await this.setSpaceInfo(room, spaceInfo);
-        }
-        return {
-          success: true,
-          clearAll: false,
-        };
-      }
       // 删除参与者前删除该参与者构建的子房间 (新需求无需清理子房间, 暂时注释)
       // const childRoomsToDelete = spaceInfo.children
       //   .filter((child) => child.ownerId === participantId)
@@ -838,7 +828,12 @@ class SpaceManager {
       let participantName = spaceInfo.participants[participantId].name;
       let participantStartAt = spaceInfo.participants[participantId].startAt;
       // 删除参与者
-      delete spaceInfo.participants[participantId];
+      if (!spaceInfo.persistence) {
+        delete spaceInfo.participants[participantId];
+      } else {
+        // 将这个用户的在线状态设置为false
+        spaceInfo.participants[participantId].online = false;
+      }
       // 先设置回去, 以防transferOwner读取脏数据
       await this.setSpaceInfo(room, spaceInfo);
       // 用户离开需要更新用户的end记录
@@ -849,6 +844,13 @@ class SpaceManager {
           [participantName]: [{ start: participantStartAt, end: Date.now() }],
         },
       );
+      // 如果是持久化房间，删除参与者操作到此为止
+      if (spaceInfo.persistence) {
+        return {
+          success: true,
+          clearAll: false,
+        };
+      }
 
       // 判断这个参与者是否是主持人，如果是则进行转让，转给第一个参与者， 如果没有参与者直接删除房间
       if (Object.keys(spaceInfo.participants).length === 0) {

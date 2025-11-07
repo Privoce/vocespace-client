@@ -584,8 +584,8 @@ lk load-test \
   VoceSpace is for Remote Teams
   AI Worklog, Team spaces, Private Rooms
 - [x] AI屏幕分享请求只留start sharing按钮
-- [ ] 子房间退出后似乎没有重新ws进行更新
-- [ ] 侧边栏active人数应该是上线人数
+- [x] 在子房间直接离开或刷新屏幕会导致人数残留
+- [x] 侧边栏active人数应该是上线人数
 - [ ] AI总结为空的时候显示Empty状态（）
 - [x] 修复AI错误关闭和启动，优化接口
 - [x] 与历史数据结合分析
