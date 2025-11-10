@@ -3,6 +3,7 @@
 </a>
 
 # VoceSpace
+
 Private-hosted 4K Video Conferencing at 60 FPS
 
 Experience crystal-clear video meetings with 4K resolution, 60 FPS smooth performance, and 2M encoding for unmatched quality. Perfect for professional presentations and remote collaboration.
@@ -26,26 +27,45 @@ Steps to get a local dev setup up and running:
 ```json
 {
   "livekit": {
-    "key": "devkey",
-    "secret": "secret",
-    "url": "wss://yourdomain.com",
-    "turn": { "credential": "", "username": "", "urls": [] }
+    "key": "your-production-key",
+    "secret": "your-production-secret",
+    "url": "ws://host.docker.internal:7880",
+    "turn": {
+      "urls": "turn:your-turn-server:3478",
+      "username": "your-turn-username",
+      "credential": "your-turn-password"
+    }
   },
   "codec": "vp9",
   "resolution": "1080p",
-  "maxBitrate": 2000000,
+  "maxBitrate": 3000000,
   "maxFramerate": 30,
-  "priority": "high",
-  "redis": { "enabled": true, "host": "localhost", "port": 6379, "password": "vocespace", "db": 0 },
-  "s3": {
-    "accessKey": "s3_access_key",
-    "secretKey": "s3_secret_key",
-    "bucket": "your_bucket",
-    "region": "bucket_region"
+  "priority": "medium",
+  "redis": {
+    "enabled": true,
+    "host": "host.docker.internal",
+    "port": 6379,
+    "password": "",
+    "db": 0
   },
-  "serverUrl": "localhost",
-  "hostToken": "vocespace_privoce",
-  "license": "dev_license"
+  "s3": {
+    "enabled": false,
+    "endpoint": "your-s3-endpoint",
+    "bucket": "your-bucket",
+    "accessKey": "your-access-key",
+    "secretKey": "your-secret-key",
+    "region": "your-region"
+  },
+  "serverUrl": "your-domain.com",
+  "hostToken": "your-host-token",
+  "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E",
+  "ai": {
+    "enabled": true,
+    "apiKey": "your-ai-api-key",
+    "apiUrl": "your-ai-api-url",
+    "model": "your-ai-model",
+    "maxTokens": 4000
+  }
 }
 ```
 
@@ -56,227 +76,307 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 ### 🎥 Pre-Join Experience
 
 **Basic Controls**
-- [x] Microphone preview and testing
-- [x] Camera preview with device selection
-- [x] Real-time video preview
-- [x] Custom username input with auto-generation (User 01-99 format)
-- [x] One-click room joining
-- [x] Username focus on entry
-- [x] Optimized loading times with skeleton screens
+
+- [x] Microphone Preview and Test
+- [x] Camera Preview and Device Selection
+- [x] Live Video Preview
+- [x] Custom Username Input and Auto-Generation (User 01-99 Format)
+- [x] One-Click Room Joining
+- [x] Username Focus Upon Entry
+- [x] Optimized Loading Time with Skeleton Screen
 
 **Advanced Settings**
-- [x] Audio volume adjustment and testing
-- [x] Multiple microphone device selection
-- [x] Video blur intensity control with live preview
-- [x] Multiple camera device selection
-- [x] Settings reset functionality
-- [x] Auto-generated usernames (ULID-based)
-- [x] Lossless high-quality transmission
-- [x] End-to-end encryption (E2EE)
+
+- [x] Volume Adjustment and Test
+- [x] Multi-Microphone Device Selection
+- [x] Video Blur Intensity Control with Live Preview
+- [x] Multi-Camera Device Selection
+- [x] Camera Flip Support (Mobile)
+- [x] Settings Reset Function
+- [x] Auto-Generate Username (ULID Based)
+- [x] First Joiner Automatically Named admin
+- [x] High-Quality Lossless Transmission
+- [x] End-to-End Encryption (E2EE)
+- [x] Device Permission Detection and Bootstrapping
 
 ### 💬 Room Experience
 
 **Core Features**
-- [x] High-quality audio/video communication (4K@60fps, 2M encoding)
+
+- [x] High-quality audio and video communication (4K@60fps, 2M encoding)
 - [x] Screen sharing with audio support (configurable)
-- [x] Multiple layout options (Grid, Focus, Speaker view)
-- [x] Real-time chat with file sharing
-- [x] Drag-and-drop file uploads
-- [x] Message history persistence (Redis-backed)
-- [x] Unread message notifications with badges
-- [x] Chat message timestamps with 5-minute grouping
-- [x] Automatic message scrolling
+- [x] Multiple layout options (grid, focus, speaker view)
+- [x] Customizable pagination controls and layout
+- [x] Real-time chat and file sharing
+- [x] Drag-and-drop file upload (maximum 100MB)
+- [x] File upload progress display and cancellation function
+- [x] Message history persistence (Redis support)
+- [x] Unread message notification (with badge)
+- [x] Chat message timestamps, 5-minute grouping
+- [x] Automatic message scrolling to the latest
 - [x] Link preview and clickable links
+- [x] Mobile-responsive layout and controls
 
 **Host Management**
-- [x] Room ownership and moderation
-- [x] Participant management (mute, video control, remove)
-- [x] Host transfer capabilities
-- [x] Volume control for participants
-- [x] Video/screen blur control for others
-- [x] Device invitation system (camera, microphone, screen on/off)
-- [x] Room security controls
+
+- [x] Room ownership and host
+- [x] Participant management (mute, video control, removal)
+- [x] Host transfer function
+- [x] Participant volume control
+- [x] Other people's video/screen blur control
+- [x] Device invitation system (camera, microphone, screen switch)
+- [x] Room security control
 - [x] Global quality settings management
-- [x] Host token authentication for admin features
+- [x] Host token authentication for admin functions
 
 **Interactive Features**
-- [x] Real-time cursor sharing during screen share
-- [x] Wave hand notifications between users
-- [x] User status indicators and custom statuses
+
+- [x] Real-time cursor sharing during screen sharing
+- [x] Hand gesture notification and room invitation between users
+- [x] User status indicator and custom status
+- [x] Real-time user status synchronization and updates
 - [x] Multi-language support (Chinese/English)
-- [x] Participant search and sorting by first letter
-- [x] Right-click context menus for user management
-- [x] Raise hand functionality with broadcast notifications
+- [x] Search and sort participants by first letter
+- [x] Right-click menu for user management
+- [x] Hand-raising function with broadcast notification
+- [x] Hand-raising speaking permission control and host approval
+- [x] Hand-raising queue and status display
+- [x] Quick sending of reaction emoticons
 
-### 🏢 Space & Room Management
+### 🏢 Space and Room Management
 
-**Multi-Room Architecture**
-- [x] Main space with unlimited sub-rooms
-- [x] Public and private room types
-- [x] Room creation, deletion, and renaming
-- [x] Real-time participant count display
-- [x] Room permission management
-- [x] Auto-collapsible sidebar with hover expansion
-- [x] Room persistence settings
+**Multi-room Architecture**
+
+- [x] Main space containing an unlimited number of sub-rooms
+- [x] Public and Private Room Types
+- [x] Default Sub-Rooms (Meeting Room, Coffee Break)
+- [x] Room Creation, Deletion, and Renaming
+- [x] Real-time Display of Participant Count and Online Status
+- [x] Room Permission Management
+- [x] Hoverable Expandable Auto-Collapse Sidebar
+- [x] Room Persistence Settings (Data Retention)
+- [x] Public Rooms Default Expand Display
 
 **Advanced Room Features**
-- [x] Private room approval system
-- [x] Room owner privileges and controls
+
+- [x] Private room approval system and join notification
+- [x] Room owner permissions and control
+- [x] Host's full permissions over all sub-rooms
 - [x] Cross-room screen sharing permissions
-- [x] Automatic room cleanup on exit
-- [x] Room-specific user status management
+- [x] Automatic room cleanup upon exit (non-persistent)
+- [x] Specific room user status management
+- [x] In-room user track subscription permission control
+- [x] Sub-room user isolation and audio filtering
 
-### 🤖 AI-Powered Features
+### 🤖 AI Features
 
-**Virtual Avatars**
-- [x] Live2D avatar integration with facial tracking
+**AI Screenshot Analysis and Work Log**
+
+- [x] Automatic screenshots and AI analysis
+- [x] Configurable screenshot frequency (1-15 minute interval)
+- [x] Multi-data source support (screen sharing, to-do items, time statistics)
+- [x] Real-time work log generation and summary
+- [x] Export analysis results in Markdown format
+- [x] Contextual analysis combined with historical data
+- [x] Automatic scheduled updates of analysis results
+- [x] Screen sharing permission request and guidance
+- [x] Support for AI work log widget display
+- [x] Customizable AI prompt word configuration
+- [x] Multi-language AI analysis support
+
+**Virtual Characters**
+
+- [x] Live2D virtual character integrated facial tracking
 - [x] Real-time facial tracking and animation
-- [x] Multiple avatar models selection
-- [x] Custom backgrounds and environments
-- [x] Performance optimization and auto-detection
-- [x] Seamless avatar switching with masking effects
-- [x] Compare mode for before/after effects
-- [x] Avatar model isolation per user
+- [x] Multiple virtual character model selection
+- [x] Customizable background and environment
+- [x] Performance optimization and automatic detection
+- [x] Seamless virtual character switching with masking effect
+- [x] Before and after effect comparison mode
+- [x] Virtual character model isolation for each user
 
 **Audio Enhancement**
-- [x] AI noise cancellation
+
+- [x] AI noise reduction
 - [x] Real-time audio processing
 - [x] Volume normalization
-- [x] Customizable prompt sounds for new user joins
+- [x] Customizable new user joining notification sound
 
-### 🎬 Recording & Media
+### 🎬 Recording and Media
 
 **Room Recording**
-- [x] Full room recording capabilities with 4K quality
+
+- [x] 4K full-room recording
 - [x] Host-initiated recording
-- [x] Participant recording requests with approval workflow
+- [x] Participant recording requests and approval process
 - [x] Real-time recording notifications
 - [x] Automatic S3 storage integration
-- [x] Download links with 3-day expiration lifecycle
-- [x] Mobile recording support with permission detection
-- [x] Recording management dashboard
+- [x] Download link, valid for 3 days
+- [x] Supports mobile recording with permission detection
+- [x] Recording management panel
 
 **File Management**
-- [x] In-chat file sharing with drag-and-drop
+
+- [x] Drag and drop file sharing in chat
 - [x] Image preview and download
 - [x] Automatic file organization by room
 - [x] Secure file storage and retrieval
-- [x] File size and type validation
+- [x] File size and type verification
 
 ### 🎮 Built-in Applications
 
-**Productivity Apps**
-- [x] TODO List application with task management
-- [x] Timer application with lap recording
-- [x] Countdown timer with custom durations
-- [x] Application floating windows
-- [x] Collapsible app widgets
+**Productivity Applications**
+
+- [x] To-do list application with task management
+- [x] Editable to-do items and completion markers
+- [x] To-do item export function (including time records)
+- [x] Team Status displays the to-do progress of all members
+- [x] Timer app with lap tracking
+- [x] Customizable countdown timer
+- [x] App floating window and scrollbar support
+- [x] Collapsible app widget
 - [x] Cross-participant app data sharing
+- [x] Individual app sharing
+- [x] Quick access via app icon in the upper right corner of the user view
 
 **App Management**
-- [x] Host-controlled app permissions
-- [x] App data upload and sync
-- [x] Application history tracking
-- [x] Individual app sharing controls
+
+- [x] App permissions controlled by the host
+- [x] App data upload and synchronization
+- [x] App history tracking
+- [x] Personal app sharing controls (public/private)
 - [x] App data persistence across sessions
+- [x] Automatic upload configuration option
+- [x] Per-user app data isolation
 
 ### 🔧 Advanced Settings
 
 **Audio Configuration**
+
 - [x] Device selection and switching
-- [x] Volume controls and testing
+- [x] Volume control and testing
 - [x] Real-time audio quality adjustment
-- [x] Screen share audio toggle
+- [x] Screen sharing audio switching
 - [x] Customizable notification sounds
 
 **Video Configuration**
+
 - [x] Camera device management
-- [x] Blur intensity controls (0-100%) with GPU acceleration
-- [x] Screen share blur settings
+- [x] GPU-accelerated blur intensity control (0-100%)
+- [x] Screen sharing blur settings
 - [x] Real-time video quality optimization
 - [x] Lossless transmission mode
-- [x] Dynamic quality adjustment based on connection
+- [x] Dynamically adjust quality based on network connection
 
 **Virtual Environment**
-- [x] Avatar model selection with Live2D integration
+
+- [x] Virtual model selection with integrated Live2D
 - [x] Background customization
-- [x] Performance monitoring and auto-adjustment
-- [x] Compare mode for effects preview
-- [x] WebGL-accelerated video processing
+- [x] Performance monitoring and automatic adjustment
+- [x] Effect comparison mode
+- [x] WebGL accelerated video processing
 
 **System Preferences**
-- [x] Multi-language interface (i18n)
-- [x] Custom user status creation and management
+
+- [x] Multilingual interface (i18n)
+- [x] Customizable user status creation and management
+- [x] User status linked to to-do items
 - [x] Theme and UI customization
-- [x] Persistent settings storage in localStorage
-- [x] Auto-save settings with instant sync
+- [x] Persistent storage settings in localStorage
+- [x] Automatic saving and instant synchronization of settings
+- [x] Dynamic global configuration support
+- [x] Host configuration with hot reload function
 
-### 🔒 Security & Privacy
+### 🔒 Security and Privacy
 
-**Encryption & Security**
-- [x] End-to-end encryption (E2EE) support
-- [x] Secure WebRTC communication
-- [x] TURN server integration for connectivity
-- [x] Unique participant ID generation
-- [x] Session-based authentication
+**Encryption and Security**
 
-**Permissions & Access Control**
-- [x] Device permission management
-- [x] Detailed permission descriptions and guides
-- [x] Granular access controls
-- [x] Private room approval workflows
-- [x] Host privilege management
+- [x] Supports End-to-End Encryption (E2EE)
+- [x] Secure WebRTC Communication
+- [x] TURN Server Integration for Connectivity
+- [x] Unique Participant ID Generation (ULID-based)
+- [x] Session-Based Authentication
+- [x] License Certificate Verification System
+- [x] Domain and Participant Limit Control
+- [x] Temporary and Official Certificate Support
+
+**Permissions and Access Control**
+
+- [x] Device Permission Management
+- [x] Detailed Permission Descriptions and Guidelines
+- [x] Fine-grained Access Control
+- [x] Private Room Approval Process
+- [x] Host Permission Management
+- [x] Hand-Raising Speaking Permission Control
+- [x] Application Data Access Permission Management
 
 ### 🏗️ Technical Features
 
-**Performance & Reliability**
-- [x] Client-side performance monitoring
-- [x] Server-side performance tracking with heartbeat
-- [x] WebGL-accelerated video processing
-- [x] Optimized codec selection (VP9/VP8/H264/AV1)
-- [x] Automatic reconnection mechanisms
-- [x] Connection quality monitoring
-- [x] Fallback connectivity options
+**Performance and Reliability**
+
+- [x] Client Performance Monitoring
+- [x] Server-Side Performance Tracking (with Heartbeat)
+- [x] WebGL Accelerated Video Processing
+- [x] Optimized Codec Selection (VP9/VP8/H264/AV1)
+- [x] Automatic Reconnection Mechanism
+- [x] Connection Quality Monitoring
+- [x] Connection Fallback Option
 
 **Infrastructure**
-- [x] Redis-based data persistence
-- [x] WebSocket real-time communication with Socket.IO
-- [x] Docker deployment support
-- [x] S3 integration for media storage
-- [x] Custom Express + Next.js server architecture
-- [x] Horizontal scaling support
+
+- [x] Redis-based Data Persistence
+- [x] WebSocket Real-time Communication using Socket.IO
+- [x] Socket Disconnection Reconnection and Automatic Recovery Mechanism
+- [x] Support for Docker Deployment and Containerization
+- [x] Integration with S3 for Media Storage
+- [x] Custom Express + Next.js Server Architecture
+- [x] Support for Horizontal Scaling
+- [x] Server Heartbeat Detection and Health Monitoring
 
 **Data Management**
-- [x] User session management
-- [x] Room state synchronization
-- [x] Chat history persistence
-- [x] Application data backup and restore
-- [x] Automatic data cleanup and lifecycle management
 
-### 📊 Analytics & Monitoring
+- [x] User Session Management and Unique ID Generation
+- [x] Room Status Synchronization and Real-time Updates
+- [x] Chat History Persistence
+- [x] Application Data Backup and Recovery
+- [x] Automatic Data Cleanup and Lifecycle Management
+- [x] Persistent Room Data Retention
+- [x] User Offline Detection and Cleanup Mechanism
 
-**Usage Analytics**
-- [x] Real-time active room monitoring
-- [x] Historical usage records with daily/weekly/monthly rankings
-- [x] User activity analytics and leaderboards
-- [x] Performance metrics dashboard
-- [x] Participant engagement tracking
+### 📊 Analysis and Monitoring
 
-**Administrative Tools**
-- [x] Admin dashboard with comprehensive statistics
-- [x] Real-time participant tracking across all rooms
-- [x] Session duration monitoring
-- [x] Resource usage optimization
-- [x] Global configuration management
-- [x] User management and moderation tools
+**Usage Analysis**
 
-**Development & Deployment**
-- [x] Docker containerization
-- [x] Environment-based configuration
-- [x] Production/development mode differentiation
-- [x] Automated deployment scripts
-- [x] Performance testing and load balancing
-- [x] SEO optimization and meta tags
+- [x] Real-time Active Room Monitoring
+- [x] Historical Records, Including Daily/Weekly/Monthly Rankings
+- [x] Meeting Duration Sorting and Leaderboard Display
+- [x] User Activity Analysis and Leaderboard
+- [x] Performance Metrics Dashboard
+- [x] Participant Engagement Tracking
+- [x] Redis Heartbeat Detection and User Status Synchronization
+
+**Management Tools**
+
+- [x] Management Dashboard with Comprehensive Statistics
+- [x] Dashboard Quality Configuration Management
+- [x] Real-time Participant Tracking for All Rooms
+- [x] Session Duration Monitoring
+- [x] Resource Usage Optimization
+- [x] Global Configuration Management and Hot Reload
+- [x] User Management and Approval Tools
+- [x] Host Token Authentication
+
+**Development and Deployment**
+
+- [x] Docker Containerization and One-Click Deployment
+- [x] Environment-Based Configuration
+- [x] Production/Development Mode Differentiation
+- [x] Automated Deployment Scripts (Chinese and English Versions)
+- [x] Performance Testing and Load Balancing
+- [x] SEO Optimization and Meta Tags
+- [x] Multi-Environment Configuration File Support
+- [x] Quick Local Deployment Documentation
+- [x] Egress Recording Service Integration
 
 For detailed feature specifications and implementation notes, see [FEATURE.md](./log/FEATURE.md) and [TODO.md](./log/TODO.md).
 

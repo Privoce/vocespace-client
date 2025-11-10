@@ -88,8 +88,8 @@ export function PreJoin({
   const [videoDeviceId, setVideoDeviceId] = React.useState<string>(userChoices.videoDeviceId);
   // 确保优先使用URL参数中的username
   const [username, setUsername] = React.useState(() => {
-    console.log('Initial username logic - spaceParams.username:', spaceParams.username);
-    console.log('Initial username logic - userChoices.username:', userChoices.username);
+    // console.log('Initial username logic - spaceParams.username:', spaceParams.username);
+    // console.log('Initial username logic - userChoices.username:', userChoices.username);
     return spaceParams.username || userChoices.username || '';
   });
   const [messageApi, contextHolder] = message.useMessage();
@@ -119,9 +119,9 @@ export function PreJoin({
 
   // 监听 spaceParams 变化，确保参数更新时重新设置用户信息
   useEffect(() => {
-    console.log('spaceParams changed:', spaceParams);
+    // console.log('spaceParams changed:', spaceParams);
     if (spaceParams.username && spaceParams.username !== username) {
-      console.log('Updating username from spaceParams:', spaceParams.username);
+      // console.log('Updating username from spaceParams:', spaceParams.username);
       setUsername(spaceParams.username);
     }
   }, [spaceParams.username, spaceParams.userId, spaceParams.auth]);

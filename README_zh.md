@@ -23,28 +23,46 @@
 ```json
 {
   "livekit": {
-    "key": "devkey",
-    "secret": "secret",
-    "url": "wss://yourdomain.com",
-    "turn": { "credential": "", "username": "", "urls": [] }
+    "key": "your-production-key",
+    "secret": "your-production-secret",
+    "url": "ws://host.docker.internal:7880",
+    "turn": {
+      "urls": "turn:your-turn-server:3478",
+      "username": "your-turn-username",
+      "credential": "your-turn-password"
+    }
   },
   "codec": "vp9",
   "resolution": "1080p",
-  "maxBitrate": 2000000,
+  "maxBitrate": 3000000,
   "maxFramerate": 30,
-  "priority": "high",
-  "redis": { "enabled": true, "host": "localhost", "port": 6379, "password": "vocespace", "db": 0 },
-  "s3": {
-    "accessKey": "s3_access_key",
-    "secretKey": "s3_secret_key",
-    "bucket": "your_bucket",
-    "region": "bucket_region"
+  "priority": "medium",
+  "redis": {
+    "enabled": true,
+    "host": "host.docker.internal",
+    "port": 6379,
+    "password": "",
+    "db": 0
   },
-  "serverUrl": "localhost",
-  "hostToken": "vocespace_privoce",
-  "license": "dev_license"
+  "s3": {
+    "enabled": false,
+    "endpoint": "your-s3-endpoint",
+    "bucket": "your-bucket",
+    "accessKey": "your-access-key",
+    "secretKey": "your-secret-key",
+    "region": "your-region"
+  },
+  "serverUrl": "your-domain.com",
+  "hostToken": "your-host-token",
+  "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E",
+  "ai": {
+    "enabled": true,
+    "apiKey": "your-ai-api-key",
+    "apiUrl": "your-ai-api-url",
+    "model": "your-ai-model",
+    "maxTokens": 4000
+  }
 }
-
 ```
 
 ## 功能
@@ -67,10 +85,13 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 多麦克风设备选择
 - [x] 带实时预览的视频模糊强度控制
 - [x] 多摄像头设备选择
+- [x] 摄像头翻转支持（移动端）
 - [x] 设置重置功能
 - [x] 自动生成用户名（基于 ULID）
+- [x] 首个加入者自动命名为 admin
 - [x] 高质量无损传输
 - [x] 端到端加密 (E2EE)
+- [x] 设备权限检测和引导
 
 ### 💬 房间体验
 
@@ -78,13 +99,16 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 高质量音视频通信 (4K@60fps, 2M 编码）
 - [x] 支持音频的屏幕共享（可配置）
 - [x] 多种布局选项（网格、焦点、演讲者视图）
+- [x] 自定义分页控制和布局
 - [x] 实时聊天及文件共享
-- [x] 拖放式文件上传
+- [x] 拖放式文件上传（最大 100MB）
+- [x] 文件上传进度显示和取消功能
 - [x] 消息历史记录持久化（Redis 支持）
 - [x] 未读消息通知（带徽章）
 - [x] 聊天消息时间戳，5 分钟分组
-- [x] 自动消息滚动
+- [x] 自动消息滚动到最新
 - [x] 链接预览和可点击链接
+- [x] 移动端响应式布局和控制
 
 **主持人管理**
 - [x] 房间所有权和主持人
@@ -99,32 +123,54 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 
 **互动功能**
 - [x] 屏幕共享期间实时光标共享
-- [x] 用户之间挥手通知
+- [x] 用户之间挥手通知和房间邀请
 - [x] 用户状态指示器和自定义状态
+- [x] 实时用户状态同步和更新
 - [x] 多语言支持（中/英）
 - [x] 按首字母搜索和排序参与者
 - [x] 右键菜单用于用户管理
 - [x] 带有广播通知的举手功能
+- [x] 举手发言权限控制和主持人审批
+- [x] 举手排队和状态显示
+- [x] 反应表情快捷发送
 
 ### 🏢 空间和房间管理
 
 **多房间架构**
 - [x] 主空间，包含无限个子房间
 - [x] 公共和私人房间类型
+- [x] 默认子房间（Meeting Room、Coffee Break）
 - [x] 房间创建、删除和重命名
-- [x] 实时显示参与者数量
+- [x] 实时显示参与者数量和在线状态
 - [x] 房间权限管理
 - [x] 可悬停扩展的自动折叠侧边栏
-- [x] 房间持久性设置
+- [x] 房间持久性设置（数据保留）
+- [x] 公开房间默认展开显示
 
 **高级房间功能**
-- [x] 私人房间审批系统
+- [x] 私人房间审批系统和加入通知
 - [x] 房间所有者权限和控制
+- [x] 主持人对所有子房间的完全权限
 - [x] 跨房间屏幕共享权限
-- [x] 退出时自动清理房间
+- [x] 退出时自动清理房间（非持久化）
 - [x] 特定房间用户状态管理
+- [x] 房间内用户轨道订阅权限控制
+- [x] 子房间用户隔离和音频过滤
 
 ### 🤖 AI 功能
+
+**AI 截图分析与工作日志**
+- [x] 自动屏幕截图和 AI 分析
+- [x] 可配置的截图频率（1-15 分钟间隔）
+- [x] 多数据源支持（屏幕分享、待办事项、时间统计）
+- [x] 实时工作日志生成和总结
+- [x] Markdown 格式的分析结果导出
+- [x] 与历史数据结合的上下文分析
+- [x] 自动定时更新分析结果
+- [x] 屏幕共享权限请求和引导
+- [x] 支持 AI 工作日志小部件显示
+- [x] 自定义 AI 提示词配置
+- [x] 多语言 AI 分析支持
 
 **虚拟角色**
 - [x] Live2D 虚拟角色集成面部追踪
@@ -165,18 +211,25 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 
 **效率应用**
 - [x] 带任务管理功能的待办事项列表应用
+- [x] 待办事项可编辑和完成标记
+- [x] 待办事项导出功能（包含时间记录）
+- [x] 团队进度（Team Status）显示所有成员的待办进度
 - [x] 带圈数记录功能的计时器应用
 - [x] 可自定义时长的倒计时器
-- [x] 应用浮动窗口
+- [x] 应用浮动窗口和滚动条支持
 - [x] 可折叠的应用小部件
 - [x] 跨参与者应用数据共享
+- [x] 单个应用独立分享功能
+- [x] 用户视图右上角应用图标快捷访问
 
 **应用管理**
 - [x] 主持人控制的应用权限
 - [x] 应用数据上传和同步
 - [x] 应用历史记录追踪
-- [x] 个人应用共享控件
+- [x] 个人应用共享控件（公开/私密）
 - [x] 应用数据跨会话持久化
+- [x] 自动上传配置选项
+- [x] 每用户应用数据隔离
 
 ### 🔧 高级设置
 
@@ -205,9 +258,12 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 **系统偏好设置**
 - [x] 多语言界面 (i18n)
 - [x] 自定义用户状态创建和管理
+- [x] 用户状态与待办事项联动
 - [x] 主题和 UI 自定义
 - [x] 在 localStorage 中持久存储设置
 - [x] 自动保存设置并即时同步
+- [x] 动态全局配置支持
+- [x] 主持人配置热重载功能
 
 ### 🔒 安全与隐私
 
@@ -215,8 +271,11 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 支持端到端加密 (E2EE)
 - [x] 安全的 WebRTC 通信
 - [x] TURN 服务器集成以实现连接
-- [x] 唯一参与者 ID 生成
+- [x] 唯一参与者 ID 生成（基于 ULID）
 - [x] 基于会话的身份验证
+- [x] License 证书验证系统
+- [x] 域名和人数限制控制
+- [x] 临时证书和正式证书支持
 
 **权限与访问控制**
 - [x] 设备权限管理
@@ -224,6 +283,8 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 精细的访问控制
 - [x] 私人房间审批流程
 - [x] 主持人权限管理
+- [x] 举手发言权限控制
+- [x] 应用数据访问权限管理
 
 ### 🏗️ 技术特性
 
@@ -239,42 +300,53 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 **基础架构**
 - [x] 基于 Redis 的数据持久化
 - [x] 使用 Socket.IO 进行 WebSocket 实时通信
-- [x] 支持 Docker 部署
+- [x] Socket 断线重连和自动恢复机制
+- [x] 支持 Docker 部署和容器化
 - [x] 集成 S3 用于媒体存储
 - [x] 自定义 Express + Next.js 服务器架构
 - [x] 支持水平扩展
+- [x] 服务器心跳检测和健康监控
 
 **数据管理**
-- [x] 用户会话管理
-- [x] 房间状态同步
+- [x] 用户会话管理和唯一 ID 生成
+- [x] 房间状态同步和实时更新
 - [x] 聊天记录持久化
 - [x] 应用程序数据备份和恢复
 - [x] 自动数据清理和生命周期管理
+- [x] 持久化房间数据保留
+- [x] 用户离线检测和清理机制
 
 ### 📊 分析与监控
 
 **使用情况分析**
 - [x] 实时活跃房间监控
 - [x] 历史记录，包含每日/每周/每月排名
+- [x] 参会时长排序和榜单显示
 - [x] 用户活动分析和排行榜
 - [x] 性能指标仪表盘
 - [x] 参与者参与度追踪
+- [x] Redis 心跳检测和用户状态同步
 
 **管理工具**
 - [x] 包含全面统计数据的管理仪表盘
+- [x] Dashboard 画质配置管理
 - [x] 所有房间的实时参与者追踪
 - [x] 会话时长监控
 - [x] 资源使用优化
-- [x] 全局配置管理
+- [x] 全局配置管理和热重载
 - [x] 用户管理和审核工具
+- [x] 主持人令牌身份验证
 
 **开发与部署**
-- [x] Docker 容器化
+- [x] Docker 容器化和一键部署
 - [x] 基于环境的配置
 - [x] 生产/开发模式区分
-- [x] 自动部署脚本
+- [x] 自动部署脚本（中英文版本）
 - [x] 性能测试和负载均衡
 - [x] SEO 优化和元标签
+- [x] 多环境配置文件支持
+- [x] 快速本地部署文档
+- [x] Egress 录制服务集成
 
 有关详细的功能规范和实现说明，请参阅 [FEATURE.md](./log/FEATURE.md) 和 [TODO.md](./log/TODO.md)。
 

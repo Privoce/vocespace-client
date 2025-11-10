@@ -216,7 +216,7 @@ export class AICutAnalysisService {
     const messages = this.buildImageAnalysisMessage(tg, todos);
     const data = await this.makeAIRequest(messages);
     const content = data.choices?.[0]?.message?.content;
-    console.warn(content);
+    // console.warn(content);
     if (!!content) {
       let line = JSON.parse(parseJsonBack(content));
       // 如果压根在line中没有name和content字段，说明返回格式可能错误，直接将解析结果作为content即可
@@ -271,7 +271,7 @@ export class AICutAnalysisService {
       const analysisRes = await this.doAnalysisAll();
       this.result.summary = analysisRes.summary;
       this.result.markdown = analysisRes.markdown;
-      console.warn('AI Cut Analysis Service final analysis completed');
+      // console.warn('AI Cut Analysis Service final analysis completed');
     } catch (e) {
       console.error('AI Cut Analysis Service final analysis failed:', e);
     }
