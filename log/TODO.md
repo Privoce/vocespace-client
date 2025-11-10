@@ -585,12 +585,19 @@ lk load-test \
   AI Worklog, Team spaces, Private Rooms
 - [x] AI屏幕分享请求只留start sharing按钮
 - [x] 在子房间直接离开或刷新屏幕会导致人数残留
-- [x] 侧边栏active人数应该是上线人数
+- [x] 侧边栏active人数应该是上线–人数
 - [x] AI总结为空的时候显示Empty状态
 - [x] 修复AI错误关闭和启动，优化接口
 - [x] 与历史数据结合分析
 - [x] 如果正在运行AI分析，进入设置后如果没有关闭也没有更改，不需要reload
 - [x] 时间戳使用截图的时间戳
 - [x] 过滤似乎没有起效(时间戳过滤)
-
-  https://ngzobewgavfuvkrhhnou.supabase.co/auth/v1/callback
+- [x] AI得到的返回数据不稳定，第一次正确，后面则使用了数组进行返回而且可能缺少字段
+  - [x] 采取直接返回markdown文本进行渲染即可，不要限制返回结构体
+  - [x] 需要大量测试提示词稳定性和返回稳定性
+  - [x] 新的提示词
+  - [x] 分离提示词配置
+- [ ] AI分析开启改为按钮
+- [ ] prejoin增加一个平台身份状态验证请求的loading
+- [ ] 用户不选择公开自己的TODO就无需更改状态
+- [ ] 提示词和AI总结的多语言支持

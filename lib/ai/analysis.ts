@@ -1,6 +1,13 @@
-import { content } from 'html2canvas/dist/types/css/property-descriptors/content';
-import { AICutService, CutScreenShot } from './cut';
+import { CutScreenShot } from './cut';
 import { OpenAI } from 'openai';
+
+/**
+ * 提示词模板接口
+ */
+export interface PromptTemplates {
+  system: string;
+  user: string;
+}
 
 /**
  * AI 对单个裁剪的图片进行分析的结果
@@ -61,25 +68,43 @@ export class AICutAnalysisService {
   // 静态常量配置
   private static readonly DEFAULT_MAX_TOKENS = 4000;
 
-  private static readonly PROMPT_TEMPLATES = {
-    LINE: '作为一个个人工作汇总整理助理，请将我提供的截图内容进行分析，提取出其中的主要任务和活动，请根据截图的内容与历史数据，识别出我在该时间点所进行的具体任务，并生成一个结构化的报告。报告应包括以下内容：1. 任务名称：简洁明了地描述我正在进行的任务。2. 任务内容：详细说明任务的具体内容和目的。请确保报告条理清晰，便于理解和后续参考。整理形成如下格式进行输出: {timestamp: number, name: string, content: string}，只返回json，不要包含其他多余描述。',
+  private static readonly DEFAULT_PROMPT_TEMPLATES = {
+    LINE: {
+      system:
+        '作为一个个人工作汇总整理助理，请将我提供的截图内容进行分析，提取出其中的主要任务和活动，请根据截图的内容与历史数据，识别出我在该时间点所进行的具体任务，并生成一个结构化的报告。报告应包括以下内容：1. 任务名称：简洁明了地描述我正在进行的任务。2. 任务内容：详细说明任务的具体内容和目的。请确保报告条理清晰，便于理解和后续参考。整理形成如下格式进行输出: {timestamp: number, name: string, content: string}，只返回json，不要包含其他多余描述。',
+      user: '当前时间戳: {current_timestamp}\n用户待办事项: {user_todo_list}\n历史分析记录: {history_analysis}\n请基于以下截图内容，按照指定的输出格式，生成任务名称和内容概要：',
+    },
 
-    ALL: '作为一个个人工作汇总整理助理, 请将我提供的json数组内容整理分析，提取出其中的主要任务和活动。请根据每个时间点的任务内容，识别出用户在整个时间段内所进行的具体任务，并生成一个结构化的总结报告。报告应包括以下内容：1. 任务总结：概括用户在该时间段内完成的主要任务和活动。2. 关键点提取：突出显示每个任务的关键要素和成果。3. Markdown格式输出：将总结报告整理成Markdown格式，便于阅读和分享。请确保报告条理清晰，便于理解和后续参考。格式如下进行输出：{summary: string; markdown: string} ，只返回json，不要包含其他多余描述。',
+    ALL: {
+      system:
+        '作为一个个人工作汇总整理助理, 请将我提供的json数组内容整理分析，提取出其中的主要任务和活动。请根据每个时间点的任务内容，识别出用户在整个时间段内所进行的具体任务，并生成一个结构化的总结报告。报告应包括以下内容：1. 任务总结：概括用户在该时间段内完成的主要任务和活动。2. 关键点提取：突出显示每个任务的关键要素和成果。3. Markdown格式输出：将总结报告整理成Markdown格式，便于阅读和分享。请确保报告条理清晰，便于理解和后续参考。格式如下进行输出：{summary: string; markdown: string} ，只返回json，不要包含其他多余描述。',
+      user: '请分析以下任务数据：',
+    },
   };
 
   private readonly MODEL: string;
   private readonly MAX_TOKEN: number;
   private OPENAI: OpenAI;
+  private readonly ANALYSIS_PROMPT: PromptTemplates;
+  private readonly SUMMARY_PROMPT: PromptTemplates;
 
   public result: AICutAnalysisRes;
 
-  constructor(apiKey: string, apiUrl: string, modal: string) {
+  constructor(
+    apiKey: string,
+    apiUrl: string,
+    modal: string,
+    analysisPrompt?: PromptTemplates,
+    summaryPrompt?: PromptTemplates,
+  ) {
     this.OPENAI = new OpenAI({
       apiKey,
       baseURL: apiUrl,
     });
     this.MODEL = modal;
     this.MAX_TOKEN = AICutAnalysisService.DEFAULT_MAX_TOKENS;
+    this.ANALYSIS_PROMPT = analysisPrompt || AICutAnalysisService.DEFAULT_PROMPT_TEMPLATES.LINE;
+    this.SUMMARY_PROMPT = summaryPrompt || AICutAnalysisService.DEFAULT_PROMPT_TEMPLATES.ALL;
     this.result = this.createEmptyResult();
   }
 
@@ -112,54 +137,55 @@ export class AICutAnalysisService {
   }
 
   /**
+   * 替换提示词模板中的变量
+   * @param template 模板字符串
+   * @param variables 变量对象
+   * @returns 替换后的字符串
+   */
+  private replaceTemplateVariables(template: string, variables: Record<string, any>): string {
+    let result = template;
+    for (const [key, value] of Object.entries(variables)) {
+      const placeholder = `{${key}}`;
+      result = result.replace(new RegExp(placeholder, 'g'), String(value));
+    }
+    return result;
+  }
+
+  /**
    * 构建单张图片分析的消息内容
    * @param tg 截图数据
+   * @param todos 待办事项列表
    * @returns 消息数组
    */
   private buildImageAnalysisMessage(tg: CutScreenShot, todos: string[]): any[] {
+    // 准备模板变量
+    const variables = {
+      current_timestamp: tg.timestamp,
+      user_todo_list: todos.length > 0 ? todos.join('，') : '无',
+      history_analysis: this.result.lines.length > 0 ? JSON.stringify(this.result.lines) : '无',
+    };
+
+    // 替换 user 提示词中的变量
+    const userPrompt = this.replaceTemplateVariables(this.ANALYSIS_PROMPT.user, variables);
+
     return [
       {
         role: 'system',
-        content: AICutAnalysisService.PROMPT_TEMPLATES.LINE,
+        content: this.ANALYSIS_PROMPT.system,
       },
       {
         role: 'user',
         content: [
+          {
+            type: 'text',
+            text: userPrompt,
+          },
           {
             type: 'image_url',
             image_url: {
               url: tg.data,
             },
           },
-          // 历史任务数据辅助分析
-          ...(this.result.lines.length > 0
-            ? [
-                {
-                  type: 'text',
-                  text: `此外，以下是我之前的任务分析数据：${JSON.stringify(
-                    this.result.lines,
-                  )}, 如果你发现当前任务和某条历史任务基本没有变化，请将本次返回的name和content设置为空字符串即可`,
-                },
-              ]
-            : []),
-          ...(tg.showTime
-            ? [
-                {
-                  type: 'text',
-                  text: `这是我当前任务的时间戳: ${tg.timestamp}，请将其作为返回的json中的时间戳。`,
-                },
-              ]
-            : []),
-          ...(todos.length > 0
-            ? [
-                {
-                  type: 'text',
-                  text: `此外，当前我的待办事项有：${todos.join(
-                    '，',
-                  )}，你可以结合这些待办事项来分析这张截图内容。`,
-                },
-              ]
-            : []),
         ],
       },
     ];
@@ -173,11 +199,11 @@ export class AICutAnalysisService {
     return [
       {
         role: 'system',
-        content: AICutAnalysisService.PROMPT_TEMPLATES.ALL,
+        content: this.SUMMARY_PROMPT.system,
       },
       {
         role: 'user',
-        content: JSON.stringify(this.result.lines),
+        content: this.SUMMARY_PROMPT.user + '\n\n' + JSON.stringify(this.result.lines),
       },
     ];
   }
@@ -211,6 +237,8 @@ export class AICutAnalysisService {
         if (similarLine) {
           return;
         }
+
+        line.timestamp = tg.timestamp;
       }
 
       this.result.lines.push(line);

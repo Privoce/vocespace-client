@@ -3,9 +3,10 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '../conf/conf';
 import { AnalysisRequestBody } from '@/lib/api/ai';
 import { AICutAnalysisService } from '@/lib/ai/analysis';
+import { getDefaultPrompts } from '@/lib/ai/load';
 
 const { ai } = getConfig();
-console.warn('AI Config:', ai);
+
 // 检查 AI 配置是否完整
 const checkAiConfig = (): boolean => {
   if (!ai || !ai.enabled) return false;
@@ -14,6 +15,13 @@ const checkAiConfig = (): boolean => {
   }
   return false;
 };
+
+let promptsConfig: ReturnType<typeof getDefaultPrompts>;
+try {
+  promptsConfig = getDefaultPrompts();
+} catch (error) {
+  console.error('加载提示词配置失败，使用默认配置:', error);
+}
 
 /**
  * 存储每个用户的 AI 分析服务实例
@@ -87,7 +95,13 @@ const getOrCreateUserService = (spaceName: string, userId: string): AICutAnalysi
 
   let userService = spaceServices.get(userId);
   if (!userService) {
-    userService = new AICutAnalysisService(ai!.apiKey, ai!.apiUrl, ai!.model);
+    userService = new AICutAnalysisService(
+      ai!.apiKey,
+      ai!.apiUrl,
+      ai!.model,
+      promptsConfig.analysisPrompt,
+      promptsConfig.summaryPrompt,
+    );
     spaceServices.set(userId, userService);
   }
 

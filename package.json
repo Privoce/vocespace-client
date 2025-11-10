@@ -11,6 +11,7 @@
   "dependencies": {
     "@ant-design/icons": "5.x",
     "@datadog/browser-logs": "^5.23.3",
+    "@iarna/toml": "^2.2.5",
     "@livekit/components-react": "2.8.1",
     "@livekit/components-styles": "1.1.4",
     "@livekit/krisp-noise-filter": "0.2.16",
