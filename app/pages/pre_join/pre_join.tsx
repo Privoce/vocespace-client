@@ -33,6 +33,8 @@ export interface PreJoinPropsExt extends PreJoinProps {
     auth?: 'google' | 'vocespace';
     avatar?: string;
   };
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
 }
 
 /**
@@ -62,11 +64,12 @@ export function PreJoin({
   hq,
   setHq,
   spaceParams,
+  loading,
+  setLoading,
 }: PreJoinPropsExt) {
   const { t } = useI18n();
-  
   // 调试：打印 spaceParams 来检查参数是否正确传递
-  console.log('PreJoin spaceParams:', spaceParams);
+  // console.log('PreJoin spaceParams:', spaceParams);
   // user choices -------------------------------------------------------------------------------------
   const {
     userChoices: initialUserChoices,
@@ -93,7 +96,7 @@ export function PreJoin({
     return spaceParams.username || userChoices.username || '';
   });
   const [messageApi, contextHolder] = message.useMessage();
-  const [loading, setLoading] = React.useState(true);
+  
   // Save user choices to persistent storage ---------------------------------------------------------
   React.useEffect(() => {
     saveAudioInputEnabled(audioEnabled);
@@ -111,11 +114,13 @@ export function PreJoin({
     saveUsername(username);
   }, [username, saveUsername]);
 
-  useEffect(() => {
-    setTimeout(() => {
-      setLoading(false);
-    }, 500);
-  }, []);
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //   }, 500);
+  // }, []);
+  // 如果 spaceParams 有变化，需要loading 状态
+
 
   // 监听 spaceParams 变化，确保参数更新时重新设置用户信息
   useEffect(() => {

@@ -27,17 +27,14 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { PreJoin } from '@/app/pages/pre_join/pre_join';
 import { atom, useRecoilState } from 'recoil';
-import { DEFAULT_USER_DEFINE_STATUS, UserDefineStatus } from '@/lib/std';
+import { UserDefineStatus } from '@/lib/std';
 import io from 'socket.io-client';
 import { ChatMsgItem } from '@/lib/std/chat';
 import {
   AppAuth,
-  Countdown,
   DEFAULT_PARTICIPANT_SETTINGS,
   PARTICIPANT_SETTINGS_KEY,
   ParticipantSettings,
-  Timer,
-  TodoItem,
   VOCESPACE_PLATFORM_USER_ID,
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
@@ -117,6 +114,8 @@ export function PageClientImpl(props: {
   userId?: string;
   auth?: 'google' | 'vocespace';
   avatar?: string;
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
 }) {
   const { t } = useI18n();
   const [uState, setUState] = useRecoilState(userState);
@@ -280,6 +279,8 @@ export function PageClientImpl(props: {
               auth: props.auth,
               avatar: props.avatar,
             }}
+            loading={props.loading}
+            setLoading={props.setLoading}
           />
         </div>
       ) : (

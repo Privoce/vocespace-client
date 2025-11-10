@@ -23,6 +23,7 @@ export default function Page({
     auth?: 'vocespace' | 'google';
   };
 }) {
+  const [loading, setLoading] = React.useState(true);
   const codec =
     typeof searchParams.codec === 'string' && isVideoCodec(searchParams.codec)
       ? searchParams.codec
@@ -37,16 +38,16 @@ export default function Page({
         userId: searchParams.userId,
         auth: searchParams.auth,
       };
-      console.log('Using URL params for userInfo:', urlUserInfo);
       return urlUserInfo;
     }
     return {};
   });
 
   const checkAndFetchByStored = async () => {
+    setLoading(true);
     // 检查是否在客户端环境中
     const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER_ID);
-    console.warn('Checking localStorage for user info', storedUserInfo);
+    // console.warn('Checking localStorage for user info', storedUserInfo);
     if (storedUserInfo) {
       try {
         const parsedInfo = JSON.parse(storedUserInfo) as LoginStateBtnProps;
@@ -69,9 +70,16 @@ export default function Page({
       } catch (error) {
         console.error('Failed to parse stored user info:', error);
         setUserInfo({} as LoginStateBtnProps);
+      } finally {
+        setTimeout(() => {
+          setLoading(false);
+        }, 500);
       }
     } else {
       setUserInfo({} as LoginStateBtnProps);
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
     }
   };
 
@@ -88,7 +96,7 @@ export default function Page({
         userId: searchParams.userId,
         auth: searchParams.auth,
       };
-      console.log('Saving URL params to localStorage:', newUserInfo);
+      // console.log('Saving URL params to localStorage:', newUserInfo);
       setUserInfo(newUserInfo);
       if (typeof window !== 'undefined') {
         localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(newUserInfo));
@@ -107,6 +115,8 @@ export default function Page({
         userId={userInfo?.userId}
         auth={userInfo?.auth}
         avatar={userInfo?.avatar}
+        loading={loading}
+        setLoading={setLoading}
       />
     </RecoilRoot>
   );
