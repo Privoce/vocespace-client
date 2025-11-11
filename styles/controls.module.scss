@@ -413,7 +413,7 @@
 
 .status_tag {
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip;
   white-space: nowrap;
   width: 100%;
   text-align: start;
@@ -423,10 +423,19 @@
   background-color: #00000080;
   padding: 5px 4px;
   border-radius: 4px;
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: flex-start;
   cursor: pointer;
+  &_title{
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    height: 100%;
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+  }
   & > span {
     margin-right: 4px;
     display: inline-flex;

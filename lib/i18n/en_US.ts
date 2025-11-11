@@ -68,6 +68,7 @@ export default {
     cut: {
       report: 'AI Analysis Report',
       start: "Start Analysis",
+      stop: "Stop Analysis",
       empty: "Once AI analysis is enabled, the system will periodically take screenshots and analyze them to help you summarize the content of your space and generate reports.",
       title: 'AI Analysis Settings',
       freq: 'Screenshot Frequency (minutes)',

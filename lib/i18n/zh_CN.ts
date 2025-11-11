@@ -67,6 +67,7 @@ export default {
     cut: {
       report: 'AI分析报告',
       start: "开启分析",
+      stop: "停止分析",
       title: 'AI分析设置',
       empty: "开启AI分析后，系统将会定时截图并进行分析，帮助您总结空间内容生成报告。",
       freq: '截图频率(分钟)',

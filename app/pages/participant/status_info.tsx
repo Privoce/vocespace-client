@@ -5,12 +5,10 @@ import styles from '@/styles/controls.module.scss';
 import { SvgResource } from '@/app/resources/svg';
 import { useRecoilState } from 'recoil';
 import { roomStatusState, userState } from '@/app/[spaceName]/PageClientImpl';
-import { getStatusItems } from '../controls/selects/status_select';
 import { Trans } from '@/lib/i18n/i18n';
 import { UserStatus } from '@/lib/std';
 import { SpaceInfo } from '@/lib/std/space';
 import { TrackReferenceOrPlaceholder } from '@livekit/components-react';
-import { PlusCircleOutlined } from '@ant-design/icons';
 
 export interface StatusInfoProps {
   disabled?: boolean;
@@ -140,7 +138,7 @@ export function useStatusInfo({
           <Tooltip placement="right" title={item.title}>
             <div className={styles.status_tag}>
               {item.icon && <span>{item.icon}</span>}
-              {item.title}
+              <div className={styles.status_tag_title}>{item.title}</div>
             </div>
           </Tooltip>
         </Dropdown>
