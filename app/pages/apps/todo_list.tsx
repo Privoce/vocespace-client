@@ -15,7 +15,6 @@ import { useMemo, useState } from 'react';
 import styles from '@/styles/apps.module.scss';
 import { MessageInstance } from 'antd/es/message/interface';
 import { AppAuth, TodoItem } from '@/lib/std/space';
-import { DeliveredProcedureOutlined } from '@ant-design/icons';
 import { useLocalParticipant } from '@livekit/components-react';
 import { CardSize } from 'antd/es/card/Card';
 

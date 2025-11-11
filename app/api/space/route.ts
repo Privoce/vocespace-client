@@ -702,7 +702,7 @@ class SpaceManager {
               screenBlur: pData.screenBlur,
               socketId: pData.socketId,
               startAt: participant.startAt,
-              online: true
+              online: true,
             };
             return await this.setSpaceInfo(room, spaceInfo);
           }
@@ -1194,7 +1194,11 @@ export async function POST(request: NextRequest) {
             currentTodo = (data as SpaceTodo).items[(data as SpaceTodo).items.length - 1];
           }
           // 当todo有更新时，我们需要将用户的状态修改为`🖥️ ${todo.title}`
-          spaceInfo.participants[participantId].status = `🖥️ ${currentTodo.title}`;
+          // ⚠️当用户不选择公开todo时不要修改
+          let targetParticipant = spaceInfo.participants[participantId];
+          if (targetParticipant.sync.includes('todo')) {
+            targetParticipant.status = `🖥️ ${currentTodo.title}`;
+          }
         }
       }
       const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
