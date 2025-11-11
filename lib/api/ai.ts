@@ -6,6 +6,7 @@ export interface AnalysisRequestBody {
   userId: string;
   screenShot: CutScreenShot;
   todos: string[];
+  lang: string;
 }
 
 const BASE_URL = connect_endpoint('/api/ai');
@@ -23,6 +24,7 @@ const analysis = async (
   userId: string,
   screenShot: CutScreenShot,
   todos: string[],
+  lang: string,
 ) => {
   const url = new URL(BASE_URL, window.location.origin);
   return await fetch(url.toString(), {
@@ -35,6 +37,7 @@ const analysis = async (
       userId,
       screenShot,
       todos,
+      lang,
     } as AnalysisRequestBody),
   });
 };

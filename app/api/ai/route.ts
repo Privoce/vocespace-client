@@ -85,7 +85,11 @@ export async function GET(request: NextRequest) {
 }
 
 // 提取获取或创建用户服务的逻辑
-const getOrCreateUserService = (spaceName: string, userId: string): AICutAnalysisService => {
+const getOrCreateUserService = (
+  spaceName: string,
+  userId: string,
+  lang: string,
+): AICutAnalysisService => {
   let spaceServices = AI_CUT_ANALYSIS_SERVICES.get(spaceName);
 
   if (!spaceServices) {
@@ -101,6 +105,7 @@ const getOrCreateUserService = (spaceName: string, userId: string): AICutAnalysi
       ai!.model,
       promptsConfig.analysisPrompt,
       promptsConfig.summaryPrompt,
+      lang,
     );
     spaceServices.set(userId, userService);
   }
@@ -114,9 +119,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { spaceName, userId, screenShot, todos }: AnalysisRequestBody = await request.json();
+    const { spaceName, userId, screenShot, todos, lang }: AnalysisRequestBody =
+      await request.json();
     // 获取或创建用户服务实例
-    const targetService = getOrCreateUserService(spaceName, userId);
+    const targetService = getOrCreateUserService(spaceName, userId, lang);
     // 进行分析
     await targetService.doAnalysisLine(screenShot, todos);
     return NextResponse.json({ success: true });

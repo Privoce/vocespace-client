@@ -103,7 +103,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
   ) => {
     const space = useMaybeRoomContext();
     const [init, setInit] = useState(true);
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
     const [uState, setUState] = useRecoilState(userState);
     const [collapsed, setCollapsed] = useState(isMobile());
     const [uLicenseState, setULicenseState] = useRecoilState(licenseState);
@@ -188,6 +188,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   space.localParticipant.identity,
                   lastScreenShot,
                   todo ? uState.appDatas.todo?.items.map((item) => item.title) || [] : [],
+                  locale,
                 );
 
                 if (!response.ok) {
@@ -239,7 +240,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           space: space.name,
         } as WsBase);
       },
-      [space, settings.ai.cut, uState.ai.cut, t, updateSettings, aiCutAnalysisIntervalId],
+      [space, settings.ai.cut, uState.ai.cut, t, updateSettings, aiCutAnalysisIntervalId, locale],
     );
 
     const openAIServiceAskNote = () => {

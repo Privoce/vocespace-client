@@ -66,6 +66,7 @@ user = """
 当前时间戳: {current_timestamp}
 用户待办事项: {user_todo_list}
 历史分析记录: {history_analysis}
+语言: {language}
 请基于以下截图内容，按照指定的输出格式，生成任务名称和内容概要：
 """
 

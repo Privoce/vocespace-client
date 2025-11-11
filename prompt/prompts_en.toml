@@ -69,8 +69,8 @@ user = """
 Current Timestamp: {current_timestamp}
 User To-Do List: {user_todo_list}
 Historical Analysis Records: {history_analysis}
+Language: {language}
 Based on the following screenshot, generate the task name and content summary according to the specified output format:
-
 """
 [summary]
 system = """

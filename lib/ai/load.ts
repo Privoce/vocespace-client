@@ -63,12 +63,16 @@ export function loadPromptsFromToml(filePath: string): {
 }
 
 /**
- * 获取默认的提示词配置（从 prompts_zh.toml）
- * 当前先使用中文提示词，后续功能稳定后增加多语言支持
+ * 获取默认的提示词配置
  */
-export function getDefaultPrompts(): {
+export function getDefaultPrompts(lang?: string): {
   analysisPrompt: PromptTemplates;
   summaryPrompt?: PromptTemplates;
 } {
-  return loadPromptsFromToml('/prompt/prompts_zh.toml');
+  if (!lang || !['en', 'zh'].includes(lang)) {
+    return getDefaultPrompts('zh');
+  }
+
+  let source = `/prompt/prompts_${lang}.toml`;
+  return loadPromptsFromToml(source);
 }

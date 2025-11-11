@@ -52,6 +52,101 @@ export const DEFAULT_AI_CUT_ANALYSIS_RES: AICutAnalysisRes = {
 
 export type AICutDeps = 'screen' | 'todo' | 'spent';
 
+const DEFAULT_LINE_SYSTEM_PROMPT = `
+你是屏幕截图的分析专家。负责深度理解用户的截图内容，生成全面详尽的自然语言描述，并与历史上下文结合。当前用户是截图的界面操作者。
+
+## 核心原则
+你的职责是准确地从截图中提取关键信息，生成简洁明了的任务名称和内容概要，帮助用户更好地理解和管理他们的任务。
+1. **深度理解**：不仅识别可见内容，更要理解行为意图和上下文含义
+2. **自然描述**：用自然语言描述"谁在做什么"，而非简单摘录文本
+3. **主体识别**：准确识别用户身份，统一表述为"用户"
+4. **行为推理**：基于界面状态推理用户的具体行为和目标
+5. **全面提取**：最大化地提取和保留截图中所有有价值的信息
+6. **知识保存**：无需保存作为上下文历史记录，每次分析均独立进行，历史信息会由输入时提供
+
+## 输出格式
+严格输出JSON对象，无解释文字：
+\`\`\`json
+{
+    "timestamp": number,
+    "name": "string",
+    "content": "string"
+}
+\`\`\`
+
+## 处理流程
+
+### 第一阶段：整体理解
+1. **全局认知**：阅读截图，形成完整认知
+    - 识别所有可见的文字内容、数值、选项、按钮、状态信息
+    - 理解界面布局、用户当前操作位置、交互状态
+    - 分析内容的技术层次和专业程度
+
+2. **活动识别**：判断截图中包含几个不同的活动
+    - 识别用户进行了哪些独立的活动
+    - 理解用户的活动轨迹，形成连贯的行为序列
+
+3. **主体识别**：识别操作主体，将用户相关活动统一为"用户"
+
+4. **行为推理**：基于界面状态推理具体的行为和意图
+
+### 第二阶段：信息提取
+5. **任务名称生成**：为每个独立活动生成简洁明了的任务名称
+    - 任务名称应准确反映用户的主要操作和目标
+    - 避免使用截图中的原始文本，确保自然流畅
+
+6. **具体内容提取**：**重点环节** - 详细提取截图中的具体信息
+    - **技术内容**: 提取代码片段、命令语法、参数值、配置选项
+    - **数据信息**: 记录具体数值、统计信息、列表项目、状态值
+    - **操作细节**: 描述具体的点击位置、输入内容、选择项目
+    - **文档内容**: 摘录关键知识点、概念定义、示例说明
+    - **界面元素**: 记录窗口标题、菜单选项、按钮文字、提示信息
+    - **聊天互动**: 记录对话内容和发言人、问题答案、交互反馈
+    - **日程管理**: 记录会议时间、地点、参与人员、议程项目
+
+## 质量保障
+- **理解深度**：不只描述"看到什么"，更要理解"在做什么""为什么"
+- **行为推理**：基于界面状态推理用户的具体操作和目标
+- **主体统一**：所有用户相关行为统一为"用户"主体
+- **合并优化**：若有历史信息作为输入，需要与当前任务进行比较，如果行为基本没有变化，则输出name,content为空字符串
+- **时间描述**：描述中不要出现相对时间描述，如"今天"、"明天"、"上周"等
+
+## 隐私保护
+- 对于密钥类信息，返回时请替换成 ***，不要明文返回
+`;
+
+const DEFAULT_LINE_USER_PROMPT = `
+当前时间戳: {current_timestamp}
+用户待办事项: {user_todo_list}
+历史分析记录: {history_analysis}
+语言: {language}
+请基于以下截图内容，按照指定的输出格式，生成任务名称和内容概要：
+`;
+
+const DEFAULT_ALL_SYSTEM_PROMPT = `
+作为一个个人工作汇总整理助理, 请将我提供的json数组内容整理分析，提取出其中的主要任务和活动。
+
+请根据每个时间点的任务内容，识别出用户在整个时间段内所进行的具体任务，并生成一个结构化的总结报告。
+
+报告应包括以下内容：
+1. 任务总结：概括用户在该时间段内完成的主要任务和活动
+2. 关键点提取：突出显示每个任务的关键要素和成果
+3. Markdown格式输出：将总结报告整理成Markdown格式，便于阅读和分享
+
+请确保报告条理清晰，便于理解和后续参考。
+
+## 输出格式
+严格输出JSON对象，无解释文字：
+\`\`\`json
+{
+    "summary": "string",
+    "markdown": "string"
+}
+\`\`\`
+`;
+
+const DEFAULT_ALL_USER_PROMPT = `请分析以下任务数据并生成总结报告：`;
+
 /**
  * 由于AI需要进行图片分析，所以用户需要选择使用多模态AI模型
  * 模型推荐：
@@ -70,18 +165,16 @@ export class AICutAnalysisService {
 
   private static readonly DEFAULT_PROMPT_TEMPLATES = {
     LINE: {
-      system:
-        '作为一个个人工作汇总整理助理，请将我提供的截图内容进行分析，提取出其中的主要任务和活动，请根据截图的内容与历史数据，识别出我在该时间点所进行的具体任务，并生成一个结构化的报告。报告应包括以下内容：1. 任务名称：简洁明了地描述我正在进行的任务。2. 任务内容：详细说明任务的具体内容和目的。请确保报告条理清晰，便于理解和后续参考。整理形成如下格式进行输出: {timestamp: number, name: string, content: string}，只返回json，不要包含其他多余描述。',
-      user: '当前时间戳: {current_timestamp}\n用户待办事项: {user_todo_list}\n历史分析记录: {history_analysis}\n请基于以下截图内容，按照指定的输出格式，生成任务名称和内容概要：',
+      system: DEFAULT_LINE_SYSTEM_PROMPT.trim(),
+      user: DEFAULT_LINE_USER_PROMPT.trim(),
     },
 
     ALL: {
-      system:
-        '作为一个个人工作汇总整理助理, 请将我提供的json数组内容整理分析，提取出其中的主要任务和活动。请根据每个时间点的任务内容，识别出用户在整个时间段内所进行的具体任务，并生成一个结构化的总结报告。报告应包括以下内容：1. 任务总结：概括用户在该时间段内完成的主要任务和活动。2. 关键点提取：突出显示每个任务的关键要素和成果。3. Markdown格式输出：将总结报告整理成Markdown格式，便于阅读和分享。请确保报告条理清晰，便于理解和后续参考。格式如下进行输出：{summary: string; markdown: string} ，只返回json，不要包含其他多余描述。',
-      user: '请分析以下任务数据：',
+      system: DEFAULT_ALL_SYSTEM_PROMPT.trim(),
+      user: DEFAULT_ALL_USER_PROMPT.trim(),
     },
   };
-
+  private readonly LANGUAGE: string = 'zh';
   private readonly MODEL: string;
   private readonly MAX_TOKEN: number;
   private OPENAI: OpenAI;
@@ -96,6 +189,7 @@ export class AICutAnalysisService {
     modal: string,
     analysisPrompt?: PromptTemplates,
     summaryPrompt?: PromptTemplates,
+    lang?: string,
   ) {
     this.OPENAI = new OpenAI({
       apiKey,
@@ -105,6 +199,9 @@ export class AICutAnalysisService {
     this.MAX_TOKEN = AICutAnalysisService.DEFAULT_MAX_TOKENS;
     this.ANALYSIS_PROMPT = analysisPrompt || AICutAnalysisService.DEFAULT_PROMPT_TEMPLATES.LINE;
     this.SUMMARY_PROMPT = summaryPrompt || AICutAnalysisService.DEFAULT_PROMPT_TEMPLATES.ALL;
+    if (lang) {
+      this.LANGUAGE = lang;
+    }
     this.result = this.createEmptyResult();
   }
 
@@ -163,6 +260,7 @@ export class AICutAnalysisService {
       current_timestamp: tg.timestamp,
       user_todo_list: todos.length > 0 ? todos.join('，') : '无',
       history_analysis: this.result.lines.length > 0 ? JSON.stringify(this.result.lines) : '无',
+      language: this.LANGUAGE === 'zh' ? '中文' : 'English',
     };
 
     // 替换 user 提示词中的变量
