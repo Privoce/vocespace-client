@@ -110,6 +110,7 @@ export default {
     following: 'Login using the following method',
     out: 'Log out',
     anon: 'Anonymous',
+    guest: "Join as a guest"
   },
   reaction: {
     title: 'Reaction',
