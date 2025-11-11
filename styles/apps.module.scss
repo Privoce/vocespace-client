@@ -206,9 +206,17 @@
   }
   &_content {
     padding: 16px;
-    max-height: calc(86vh - 46px);
+    max-height: calc(86vh - 92px);
     overflow-y: scroll;
     scrollbar-width: thin;
-    height: calc(100% - 32px);
+    height: calc(100% - 92px);
+  }
+  &_subheader {
+    width: 100%;
+    height: fit-content;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 4px;
   }
 }

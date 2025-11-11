@@ -1,5 +1,5 @@
 import { AICutAnalysisRes, AICutAnalysisResLine } from '@/lib/ai/analysis';
-import { Empty, Tooltip } from 'antd';
+import { Button, Empty, Tag, Tooltip } from 'antd';
 import { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import styles from '@/styles/apps.module.scss';
@@ -87,41 +87,6 @@ export function AICutAnalysisMdTabs({
         <div>{t('ai.cut.report')}</div>
         {cutParams.isSelf && (
           <div className={styles.ai_analysis_md_icons}>
-            <Tooltip title={t('ai.cut.start')}>
-              {cutParams.enabled ? (
-                <PauseCircleOutlined
-                  className={styles.ai_analysis_md_header_icon}
-                  onClick={() => {
-                    startOrStopAICutAnalysis &&
-                      startOrStopAICutAnalysis(
-                        false,
-                        cutParams.freq,
-                        cutParams.spent,
-                        cutParams.todo,
-                      );
-                  }}
-                />
-              ) : (
-                <PlayCircleOutlined
-                  className={styles.ai_analysis_md_header_icon}
-                  onClick={() => {
-                    if (!localParticipant.isScreenShareEnabled) {
-                      openAIServiceAskNote && openAIServiceAskNote();
-                      return;
-                    }
-                    if (localParticipant.isScreenShareEnabled) {
-                      startOrStopAICutAnalysis &&
-                        startOrStopAICutAnalysis(
-                          true,
-                          cutParams.freq,
-                          cutParams.spent,
-                          cutParams.todo,
-                        );
-                    }
-                  }}
-                />
-              )}
-            </Tooltip>
             <Tooltip title={t('ai.cut.reload')}>
               <ReloadOutlined
                 className={styles.ai_analysis_md_header_icon}
@@ -141,6 +106,38 @@ export function AICutAnalysisMdTabs({
             </Tooltip>
           </div>
         )}
+      </div>
+      <div className={styles.ai_analysis_md_subheader}>
+        <div>
+          <Tag>Today</Tag>: {new Date().toLocaleDateString()}
+        </div>
+        <Button
+          type="primary"
+          icon={
+            cutParams.enabled ? (
+              <PauseCircleOutlined className={styles.ai_analysis_md_header_icon} />
+            ) : (
+              <PlayCircleOutlined className={styles.ai_analysis_md_header_icon} />
+            )
+          }
+          onClick={() => {
+            if (cutParams.enabled) {
+              startOrStopAICutAnalysis &&
+                startOrStopAICutAnalysis(false, cutParams.freq, cutParams.spent, cutParams.todo);
+            } else {
+              if (!localParticipant.isScreenShareEnabled) {
+                openAIServiceAskNote && openAIServiceAskNote();
+                return;
+              }
+              if (localParticipant.isScreenShareEnabled) {
+                startOrStopAICutAnalysis &&
+                  startOrStopAICutAnalysis(true, cutParams.freq, cutParams.spent, cutParams.todo);
+              }
+            }
+          }}
+        >
+          {t(cutParams.enabled ? 'ai.cut.stop' : 'ai.cut.start')}
+        </Button>
       </div>
       <div className={styles.ai_analysis_md_content}>
         {!md ? (

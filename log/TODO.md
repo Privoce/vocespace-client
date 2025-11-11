@@ -593,11 +593,14 @@ lk load-test \
 - [ ] AI分析开启改为按钮
 - [x] prejoin增加一个平台身份状态验证请求的loading
 - [ ] 用户不选择公开自己的TODO就无需更改状态
-- [ ] 提示词和AI总结的多语言支持
-
+- [ ] 状态的ui部分padding不能被覆盖
+- [x] 提示词和AI总结的多语言支持
+  - [x] 提示词
+  - [ ] AI分析
+- [ ] 分析报告里可以看到截取的图片
 
 --- 平台性功能
 - [ ] 只有注册的用户，才可以建立房间
-- [ ] 右键他人screen时right menu因该显示他人的right menu不是control menu
+- [x] 右键他人screen时right menu因该显示他人的right menu不是control menu
 - [ ] 房主固定 owner -》 设置多个管理员 (5) 管理员可以转让/房主设置
 - [ ] 房间设置的话，默认访客（直接输名字）可以进，然后我们让房间创建者可以选择是否允许访客
