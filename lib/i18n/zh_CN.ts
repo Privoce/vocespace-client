@@ -62,14 +62,18 @@ export default {
       cancel: '取消',
     },
     start_sharing: '开始共享',
+    copy: {
+      success: '已复制到剪贴板',
+      error: '复制失败，请手动复制',
+    },
   },
   ai: {
     cut: {
       report: 'AI分析报告',
-      start: "开启分析",
-      stop: "停止分析",
+      start: '开启分析',
+      stop: '停止分析',
       title: 'AI分析设置',
-      empty: "开启AI分析后，系统将会定时截图并进行分析，帮助您总结空间内容生成报告。",
+      empty: '开启AI分析后，系统将会定时截图并进行分析，帮助您总结空间内容生成报告。',
       freq: '截图频率(分钟)',
       freq_desc:
         '设置AI分析的截图频率，默认为每5分钟截图一次进行分析。若长于5分钟则在5分钟时会进行第一次截图。',
@@ -88,18 +92,19 @@ export default {
       myAnalysis: '我的AI分析报告',
       error: {
         res: '无法获取AI分析结果，请稍后再试。',
-        download: "无法下载Markdown报告，请稍后再试。",
-        reload: "无法更新AI分析结果，请稍后再试。",
-        start: "无法开启AI分析服务，请检查是否已开启屏幕共享权限。",
+        download: '无法下载Markdown报告，请稍后再试。',
+        reload: '无法更新AI分析结果，请稍后再试。',
+        start: '无法开启AI分析服务，请检查是否已开启屏幕共享权限。',
       },
       success: {
-        reload: "AI分析结果已更新",
-        stop: "已停止AI分析服务",
-        start: "AI分析服务已开启",
+        reload: 'AI分析结果已更新',
+        stop: '已停止AI分析服务',
+        start: 'AI分析服务已开启',
       },
-      download: "下载Markdown报告",
-      download_content: "正在为您整理报告内容，这个过程大约需要30秒，请耐心等待并不要关闭当前页面。",
-      reload: "更新报告"
+      download: '下载Markdown报告',
+      download_content:
+        '正在为您整理报告内容，这个过程大约需要30秒，请耐心等待并不要关闭当前页面。',
+      reload: '更新报告',
     },
   },
   reaction: {
@@ -332,6 +337,7 @@ export default {
           title: '团队进度',
           empty: '暂无用户的待办事项',
         },
+        copy: "复制待办",
       },
     },
     record: {

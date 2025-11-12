@@ -63,13 +63,18 @@ export default {
       cancel: 'Cancel',
     },
     start_sharing: 'Start Sharing',
+    copy: {
+      success: 'Copied to clipboard',
+      error: 'Copying failed, please copy manually',
+    },
   },
   ai: {
     cut: {
       report: 'AI Analysis Report',
-      start: "Start Analysis",
-      stop: "Stop Analysis",
-      empty: "Once AI analysis is enabled, the system will periodically take screenshots and analyze them to help you summarize the content of your space and generate reports.",
+      start: 'Start Analysis',
+      stop: 'Stop Analysis',
+      empty:
+        'Once AI analysis is enabled, the system will periodically take screenshots and analyze them to help you summarize the content of your space and generate reports.',
       title: 'AI Analysis Settings',
       freq: 'Screenshot Frequency (minutes)',
       freq_desc:
@@ -110,7 +115,7 @@ export default {
     following: 'Login using the following method',
     out: 'Log out',
     anon: 'Anonymous',
-    guest: "Join as a guest"
+    guest: 'Join as a guest',
   },
   reaction: {
     title: 'Reaction',
@@ -345,6 +350,7 @@ export default {
           title: 'Team Status',
           empty: 'No user todos available',
         },
+        copy: "Copy todo",
       },
     },
     record: {

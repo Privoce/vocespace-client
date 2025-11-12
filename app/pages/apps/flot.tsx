@@ -38,6 +38,7 @@ import { DEFAULT_COLLAPSE_HEADER_STYLES } from '../controls/collapse_tools';
 import { TodoTogether } from './todo_together';
 import { AICutAnalysisMdTabs } from './ai_analysis_md';
 import { AICutAnalysisRes } from '@/lib/ai/analysis';
+import { CopyButton } from '../controls/widgets/copy';
 
 export interface FlotLayoutProps {
   style?: React.CSSProperties;
@@ -56,7 +57,7 @@ export interface FlotLayoutProps {
     todo: boolean,
     reload?: boolean,
   ) => Promise<void>;
-  openAIServiceAskNote?: () => void
+  openAIServiceAskNote?: () => void;
 }
 
 export function FlotLayout({
@@ -127,7 +128,7 @@ export function FlotLayout({
           }}
           type="text"
           style={{ height: '100%', width: '100%' }}
-          icon={<AppstoreOutlined style={{fontSize: 16}} />}
+          icon={<AppstoreOutlined style={{ fontSize: 16 }} />}
         ></Button>
       </Popover>
     </div>
@@ -348,6 +349,13 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
       );
     };
 
+    const getTodoText = (todo: TodoProp) => {
+      return `--- ${new Date().toLocaleDateString()} ---\n${todo.data
+        .map((item, index) => `- [${item.done ? 'x' : ' '}] ${index + 1}. ${item.title}`)
+        .join('\n')}
+      `;
+    };
+
     const createItems = (
       participantId: string,
       timer?: TimerProp,
@@ -428,6 +436,9 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
                           setShowAICutAnalysis(!showAICutAnalysis);
                         }}
                       />
+                    </Tooltip>
+                    <Tooltip title={t('more.app.todo.copy')}>
+                      <CopyButton text={getTodoText(todo)} messageApi={messageApi}></CopyButton>
                     </Tooltip>
                   </>
                 )}
