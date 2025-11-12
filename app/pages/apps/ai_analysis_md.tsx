@@ -32,6 +32,7 @@ export interface AICutAnalysisMdTabsProps {
   spaceInfo: SpaceInfo;
   userId?: string;
   messageApi: MessageInstance;
+  isSelf: boolean;
 }
 
 export function AICutAnalysisMdTabs({
@@ -45,6 +46,7 @@ export function AICutAnalysisMdTabs({
   userId,
   openAIServiceAskNote,
   messageApi,
+  isSelf,
 }: AICutAnalysisMdTabsProps) {
   const { t } = useI18n();
   const { localParticipant } = useLocalParticipant();
@@ -74,7 +76,7 @@ export function AICutAnalysisMdTabs({
 
   const cutParams = useMemo(() => {
     let realUserId = !userId ? localParticipant.identity : userId;
-    let isSelf = localParticipant.identity === realUserId;
+
     const { todo, spent, enabled } = spaceInfo.participants[realUserId]?.ai.cut;
     return {
       freq: spaceInfo.ai.cut.freq,
@@ -83,10 +85,18 @@ export function AICutAnalysisMdTabs({
       isSelf,
       enabled: enabled || false,
     };
-  }, [spaceInfo, userId, localParticipant]);
+  }, [spaceInfo, userId, localParticipant, isSelf]);
 
   return (
-    <div style={{ height: height, width: '720px', marginBottom: 8, backgroundColor: '#1e1e1e', minHeight: "420px" }}>
+    <div
+      style={{
+        height: height,
+        width: '720px',
+        marginBottom: 8,
+        backgroundColor: '#1e1e1e',
+        minHeight: '420px',
+      }}
+    >
       <div className={styles.ai_analysis_md_header}>
         <div>{t('ai.cut.report')}</div>
         {cutParams.isSelf && (
@@ -114,38 +124,40 @@ export function AICutAnalysisMdTabs({
           </div>
         )}
       </div>
-      <div className={styles.ai_analysis_md_subheader}>
-        <div>
-          <Tag>Today</Tag>: {new Date().toLocaleDateString()}
-        </div>
-        <Button
-          type="primary"
-          icon={
-            cutParams.enabled ? (
-              <PauseCircleOutlined className={styles.ai_analysis_md_header_icon} />
-            ) : (
-              <PlayCircleOutlined className={styles.ai_analysis_md_header_icon} />
-            )
-          }
-          onClick={() => {
-            if (cutParams.enabled) {
-              startOrStopAICutAnalysis &&
-                startOrStopAICutAnalysis(false, cutParams.freq, cutParams.spent, cutParams.todo);
-            } else {
-              if (!localParticipant.isScreenShareEnabled) {
-                openAIServiceAskNote && openAIServiceAskNote();
-                return;
-              }
-              if (localParticipant.isScreenShareEnabled) {
-                startOrStopAICutAnalysis &&
-                  startOrStopAICutAnalysis(true, cutParams.freq, cutParams.spent, cutParams.todo);
-              }
+      {isSelf && (
+        <div className={styles.ai_analysis_md_subheader}>
+          <div>
+            <Tag>Today</Tag>: {new Date().toLocaleDateString()}
+          </div>
+          <Button
+            type="primary"
+            icon={
+              cutParams.enabled ? (
+                <PauseCircleOutlined className={styles.ai_analysis_md_header_icon} />
+              ) : (
+                <PlayCircleOutlined className={styles.ai_analysis_md_header_icon} />
+              )
             }
-          }}
-        >
-          {t(cutParams.enabled ? 'ai.cut.stop' : 'ai.cut.start')}
-        </Button>
-      </div>
+            onClick={() => {
+              if (cutParams.enabled) {
+                startOrStopAICutAnalysis &&
+                  startOrStopAICutAnalysis(false, cutParams.freq, cutParams.spent, cutParams.todo);
+              } else {
+                if (!localParticipant.isScreenShareEnabled) {
+                  openAIServiceAskNote && openAIServiceAskNote();
+                  return;
+                }
+                if (localParticipant.isScreenShareEnabled) {
+                  startOrStopAICutAnalysis &&
+                    startOrStopAICutAnalysis(true, cutParams.freq, cutParams.spent, cutParams.todo);
+                }
+              }
+            }}
+          >
+            {t(cutParams.enabled ? 'ai.cut.stop' : 'ai.cut.start')}
+          </Button>
+        </div>
+      )}
       <div className={styles.ai_analysis_md_content}>
         {!md ? (
           <div className={styles.ai_analysis_md_empty}>

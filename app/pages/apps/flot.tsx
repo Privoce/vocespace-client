@@ -37,7 +37,7 @@ import { WsBase } from '@/lib/std/device';
 import { DEFAULT_COLLAPSE_HEADER_STYLES } from '../controls/collapse_tools';
 import { TodoTogether } from './todo_together';
 import { AICutAnalysisMdTabs } from './ai_analysis_md';
-import { AICutAnalysisRes } from '@/lib/ai/analysis';
+import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
 import { CopyButton } from '../controls/widgets/copy';
 import { useRecoilState } from 'recoil';
 
@@ -82,6 +82,20 @@ export function FlotLayout({
   const isSelf = useMemo(() => {
     return localParticipant.identity === targetParticipant.participantId;
   }, [localParticipant.identity, targetParticipant.participantId]);
+  const [remoteAnalysisRes, setRemoteAnalysisRes] = useState<AICutAnalysisRes>(
+    DEFAULT_AI_CUT_ANALYSIS_RES,
+  );
+  const getRemoteAICutAnalysisRes = async (participantId: string) => {
+    if (openApp && participantId && !isSelf) {
+      // 发起请求获取结果
+      const response = await api.ai.getAnalysisRes(space, participantId);
+      if (response.ok) {
+        const { res }: { res: AICutAnalysisRes } = await response.json();
+        return res;
+      }
+    }
+    return DEFAULT_AI_CUT_ANALYSIS_RES;
+  };
 
   return (
     <div style={style} className={styles.flot_layout}>
@@ -92,7 +106,7 @@ export function FlotLayout({
           <div className={styles.flot_app_content}>
             {containerHeight > 0 && showAICutAnalysis && (
               <AICutAnalysisMdTabs
-                result={aiCutAnalysisRes}
+                result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
                 reloadResult={reloadResult}
                 height={containerHeight - 8}
                 showSettings={showAICutAnalysisSettings}
@@ -101,6 +115,7 @@ export function FlotLayout({
                 startOrStopAICutAnalysis={startOrStopAICutAnalysis}
                 openAIServiceAskNote={openAIServiceAskNote}
                 messageApi={messageApi}
+                isSelf={isSelf}
               ></AICutAnalysisMdTabs>
             )}
             <FlotAppItem
@@ -132,12 +147,16 @@ export function FlotLayout({
         }}
       >
         <Button
-          onClick={() => {
+          onClick={async () => {
             setTargetParticipant({
               participantId: localParticipant.identity,
               participantName: localParticipant.name,
               auth: 'write',
             });
+            if (!openApp && targetParticipant.participantId && !isSelf) {
+              const res = await getRemoteAICutAnalysisRes(targetParticipant.participantId);
+              setRemoteAnalysisRes(res);
+            }
             setOpenApp(!openApp);
           }}
           type="text"
@@ -234,30 +253,6 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
       }
     }, [onHeightChange]);
 
-    // 初始化远程用户的 activeKeys
-    // useEffect(() => {
-    //   const remoteParticipantKeys = Object.keys(spaceInfo.participants).filter((k) => {
-    //     return k !== localParticipant.identity;
-    //   });
-
-    //   setActiveKeys((prev) => {
-    //     const newMap = new Map(prev);
-
-    //     remoteParticipantKeys.forEach((participantId) => {
-    //       const participant = spaceInfo.participants[participantId];
-    //       if (participant?.sync && !newMap.has(participantId)) {
-    //         const keys: AppKey[] = [];
-    //         if (participant.appDatas?.timer) keys.push('timer');
-    //         if (participant.appDatas?.countdown) keys.push('countdown');
-    //         if (participant.appDatas?.todo) keys.push('todo');
-    //         newMap.set(participantId, keys);
-    //       }
-    //     });
-
-    //     return newMap;
-    //   });
-    // }, [spaceInfo.participants, localParticipant.identity]);
-
     const itemStyle: React.CSSProperties = {
       marginBottom: 8,
       background: token.colorFillAlter,
@@ -269,12 +264,6 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
       return spaceInfo.participants[participantId]?.appDatas || {};
     }, [spaceInfo, participantId]);
 
-    // const selfAuth = useMemo(() => {
-    //   if (spaceInfo.participants[localParticipant.identity]) {
-    //     return spaceInfo.participants[localParticipant.identity].auth;
-    //   }
-    //   return 'read';
-    // }, [spaceInfo.participants]);
     // 只有本地用户才有upload方法 ------------------------------------------------------------------
     const upload = async (key: AppKey, data: SpaceTimer | SpaceCountdown | SpaceTodo) => {
       const response = await api.uploadSpaceApp(space, participantId, key, data);
