@@ -7,6 +7,7 @@ import { AppCountdown } from './countdown';
 import { AppTodo } from './todo_list';
 import { MessageInstance } from 'antd/es/message/interface';
 import {
+  AppstoreOutlined,
   EyeInvisibleOutlined,
   EyeOutlined,
   ProfileOutlined,
@@ -126,7 +127,7 @@ export function FlotLayout({
           }}
           type="text"
           style={{ height: '100%', width: '100%' }}
-          icon={<SvgResource type="app" svgSize={16}></SvgResource>}
+          icon={<AppstoreOutlined style={{fontSize: 16}} />}
         ></Button>
       </Popover>
     </div>

@@ -598,9 +598,13 @@ lk load-test \
   - [x] 提示词
   - [x] AI分析
 - [ ] 分析报告里可以看到截取的图片
+- [ ] AI 分析/TODO List复制粘贴按钮
+- [ ] 自己和他人的Flot的出入口保持一致，只更改target Participant
+- [x] Flot icon 更改为和 FlotCollectionApp icon 相同
 
 --- 平台性功能
 - [ ] 只有注册的用户，才可以建立房间
 - [x] 右键他人screen时right menu因该显示他人的right menu不是control menu
 - [ ] 房主固定 owner -》 设置多个管理员 (5) 管理员可以转让/房主设置
 - [ ] 房间设置的话，默认访客（直接输名字）可以进，然后我们让房间创建者可以选择是否允许访客
+- [ ] widget可以在平台页可见
