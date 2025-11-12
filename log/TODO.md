@@ -601,7 +601,7 @@ lk load-test \
 - [x] AI 分析/TODO List复制粘贴按钮
   - [x] AI
   - [x] TODO
-- [ ] 自己和他人的Flot的出入口保持一致，只更改target Participant
+- [x] 自己和他人的Flot的出入口保持一致，只更改target Participant
 - [x] Flot icon 更改为和 FlotCollectionApp icon 相同
 
 --- 平台性功能

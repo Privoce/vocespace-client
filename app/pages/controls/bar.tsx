@@ -30,6 +30,7 @@ import { Settings, SettingsExports, TabKey } from './settings/settings';
 import { useRecoilState, waitForAll } from 'recoil';
 import {
   chatMsgState,
+  RemoteTargetApp,
   socket,
   userState,
   virtualMaskState,
@@ -396,6 +397,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [selectedParticipant, setSelectedParticipant] = React.useState<Participant | null>(null);
     const [username, setUsername] = React.useState<string>('');
     const [openNameModal, setOpenNameModal] = React.useState(false);
+    const [remoteApp, setRemoteApp] = useRecoilState(RemoteTargetApp);
     // const [openAppModal, setOpenAppModal] = React.useState(false);
     const participantList = React.useMemo(() => {
       return Object.entries(spaceInfo.participants);
@@ -509,6 +511,11 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
 
     const onClickApp = async () => {
       if (!space) return;
+      setRemoteApp({
+        participantId: space.localParticipant.identity,
+        participantName: space.localParticipant.name,
+        auth: 'write',
+      });
       setOpenApp(true);
     };
 

@@ -1,5 +1,16 @@
 import { SvgResource } from '@/app/resources/svg';
-import { Button, Collapse, CollapseProps, Popover, Tabs, TabsProps, theme, Tooltip } from 'antd';
+import {
+  Button,
+  Col,
+  Collapse,
+  CollapseProps,
+  Popover,
+  Row,
+  Tabs,
+  TabsProps,
+  theme,
+  Tooltip,
+} from 'antd';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import styles from '@/styles/apps.module.scss';
 import { AppTimer } from './timer';
@@ -40,6 +51,7 @@ import { AICutAnalysisMdTabs } from './ai_analysis_md';
 import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
 import { CopyButton } from '../controls/widgets/copy';
 import { useRecoilState } from 'recoil';
+import { isMobile } from '@/lib/std';
 
 export interface FlotLayoutProps {
   style?: React.CSSProperties;
@@ -85,6 +97,46 @@ export function FlotLayout({
   const [remoteAnalysisRes, setRemoteAnalysisRes] = useState<AICutAnalysisRes>(
     DEFAULT_AI_CUT_ANALYSIS_RES,
   );
+
+  // phone: window.innerWidth <= 728,
+  // pad: window.innerWidth > 728 && window.innerWidth <= 1024,
+  // desktop: window.innerWidth > 1024
+  const layoutType: {
+    span1: number;
+    span2: number;
+    ty: 'phone' | 'desktop' | 'pad';
+  } = useMemo(() => {
+    if (window.innerWidth <= 728) {
+      return {
+        span1: 24,
+        span2: 24,
+        ty: 'phone',
+      };
+    } else if (window.innerWidth > 728 && window.innerWidth <= 1024) {
+      return {
+        span1: 12,
+        span2: 12,
+        ty: 'pad',
+      };
+    } else {
+      return {
+        span1: 16,
+        span2: 8,
+        ty: 'desktop',
+      };
+    }
+  }, [window.innerWidth]);
+
+  const contentWidth = useMemo(() => {
+    if (layoutType.ty === 'desktop') {
+      return 1080;
+    } else if (layoutType.ty === 'pad') {
+      return 780;
+    } else {
+      return 'calc(100vw - 48px)';
+    }
+  }, [layoutType]);
+
   const getRemoteAICutAnalysisRes = async (participantId: string) => {
     if (openApp && participantId && !isSelf) {
       // 发起请求获取结果
@@ -103,39 +155,65 @@ export function FlotLayout({
         open={openApp}
         placement="leftTop"
         content={
-          <div className={styles.flot_app_content}>
-            {containerHeight > 0 && showAICutAnalysis && (
-              <AICutAnalysisMdTabs
-                result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
-                reloadResult={reloadResult}
-                height={containerHeight - 8}
-                showSettings={showAICutAnalysisSettings}
-                setFlotAppOpen={setOpenApp}
-                spaceInfo={spaceInfo}
-                startOrStopAICutAnalysis={startOrStopAICutAnalysis}
-                openAIServiceAskNote={openAIServiceAskNote}
-                messageApi={messageApi}
-                isSelf={isSelf}
-              ></AICutAnalysisMdTabs>
+          <Row gutter={8}>
+            {layoutType.ty !== 'phone' && (
+              <Col span={layoutType.span1}>
+                {containerHeight > 0 && showAICutAnalysis && (
+                  <AICutAnalysisMdTabs
+                    result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
+                    reloadResult={reloadResult}
+                    showSettings={showAICutAnalysisSettings}
+                    setFlotAppOpen={setOpenApp}
+                    spaceInfo={spaceInfo}
+                    startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+                    openAIServiceAskNote={openAIServiceAskNote}
+                    messageApi={messageApi}
+                    isSelf={isSelf}
+                    style={{
+                      height: containerHeight - 8,
+                      width: '100%',
+                    }}
+                  ></AICutAnalysisMdTabs>
+                )}
+              </Col>
             )}
-            <FlotAppItem
-              ref={flotAppItemRef}
-              messageApi={messageApi}
-              apps={spaceInfo.apps}
-              space={space}
-              spaceInfo={spaceInfo}
-              onHeightChange={setContainerHeight}
-              showAICutAnalysis={showAICutAnalysis}
-              setShowAICutAnalysis={setShowAICutAnalysis}
-              participantId={targetParticipant.participantId || localParticipant.identity}
-              isSelf={isSelf}
-            />
-          </div>
+            <Col span={layoutType.span2}>
+              <FlotAppItem
+                ref={flotAppItemRef}
+                messageApi={messageApi}
+                apps={spaceInfo.apps}
+                space={space}
+                spaceInfo={spaceInfo}
+                onHeightChange={setContainerHeight}
+                showAICutAnalysis={showAICutAnalysis}
+                setShowAICutAnalysis={setShowAICutAnalysis}
+                participantId={targetParticipant.participantId || localParticipant.identity}
+                isSelf={isSelf}
+              />
+              {layoutType.ty === 'phone' && containerHeight > 0 && showAICutAnalysis && (
+                <AICutAnalysisMdTabs
+                  result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
+                  reloadResult={reloadResult}
+                  showSettings={showAICutAnalysisSettings}
+                  setFlotAppOpen={setOpenApp}
+                  spaceInfo={spaceInfo}
+                  startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+                  openAIServiceAskNote={openAIServiceAskNote}
+                  messageApi={messageApi}
+                  isSelf={isSelf}
+                  style={{
+                    height: containerHeight - 8,
+                    width: '100%',
+                  }}
+                ></AICutAnalysisMdTabs>
+              )}
+            </Col>
+          </Row>
         }
         styles={{
           body: {
             background: '#1a1a1a',
-            width: 'fit-content',
+            width: contentWidth,
             maxHeight: '86vh',
             height: 'fit-content',
             overflowY: 'scroll',

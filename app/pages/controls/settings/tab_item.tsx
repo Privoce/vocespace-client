@@ -1,6 +1,8 @@
-import { SvgResource, SvgType } from "@/app/resources/svg";
+import { SvgResource, SvgType } from '@/app/resources/svg';
+import { isMobile } from '@/lib/std';
 
 export function TabItem({ type, label }: { type: SvgType; label: string }) {
+  const isPhone = isMobile();
   const tabStyles = {
     display: 'inline-flex',
     alignItems: 'center',
@@ -13,7 +15,7 @@ export function TabItem({ type, label }: { type: SvgType; label: string }) {
   return (
     <div style={tabStyles}>
       <SvgResource type={type} svgSize={14}></SvgResource>
-      {label}
+      {!isPhone && label}
     </div>
   );
 }

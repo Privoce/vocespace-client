@@ -14,11 +14,12 @@ import { SpaceInfo } from '@/lib/std/space';
 import { useLocalParticipant } from '@livekit/components-react';
 import { CopyButton } from '../controls/widgets/copy';
 import { MessageInstance } from 'antd/es/message/interface';
+import { isMobile } from '@/lib/std';
 
 export interface AICutAnalysisMdTabsProps {
   result?: AICutAnalysisRes;
   reloadResult?: () => Promise<void>;
-  height: number;
+  style: React.CSSProperties;
   showSettings?: (open: boolean) => void;
   setFlotAppOpen?: (open: boolean) => void;
   startOrStopAICutAnalysis?: (
@@ -36,7 +37,7 @@ export interface AICutAnalysisMdTabsProps {
 }
 
 export function AICutAnalysisMdTabs({
-  height,
+  style,
   showSettings,
   result,
   reloadResult,
@@ -90,8 +91,7 @@ export function AICutAnalysisMdTabs({
   return (
     <div
       style={{
-        height: height,
-        width: '720px',
+        ...style,
         marginBottom: 8,
         backgroundColor: '#1e1e1e',
         minHeight: '420px',
