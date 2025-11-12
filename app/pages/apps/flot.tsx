@@ -129,9 +129,9 @@ export function FlotLayout({
 
   const contentWidth = useMemo(() => {
     if (layoutType.ty === 'desktop') {
-      return 1080;
+      return 1108;
     } else if (layoutType.ty === 'pad') {
-      return 780;
+      return 788;
     } else {
       return 'calc(100vw - 48px)';
     }
@@ -170,7 +170,7 @@ export function FlotLayout({
                     messageApi={messageApi}
                     isSelf={isSelf}
                     style={{
-                      height: containerHeight - 8,
+                      height: containerHeight,
                       width: '100%',
                     }}
                   ></AICutAnalysisMdTabs>
@@ -202,7 +202,7 @@ export function FlotLayout({
                   messageApi={messageApi}
                   isSelf={isSelf}
                   style={{
-                    height: containerHeight - 8,
+                    height: containerHeight,
                     width: '100%',
                   }}
                 ></AICutAnalysisMdTabs>
@@ -217,7 +217,9 @@ export function FlotLayout({
             maxHeight: '86vh',
             height: 'fit-content',
             overflowY: 'scroll',
+            overflowX: 'hidden',
             paddingRight: 0,
+            paddingLeft: 8,
             paddingBottom: 0,
             scrollbarWidth: 'thin',
             scrollbarColor: '#888 transparent',
