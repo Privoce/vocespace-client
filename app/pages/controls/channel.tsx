@@ -66,7 +66,7 @@ interface ChannelProps {
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
-  showSingleFlotApp: () => void;
+  showFlotApp: () => void;
   config: VocespaceConfig;
 }
 
@@ -93,7 +93,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       updateSettings,
       toRenameSettings,
       setUserStatus,
-      showSingleFlotApp,
+      showFlotApp,
     }: ChannelProps,
     ref,
   ) => {
@@ -565,7 +565,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             updateSettings={updateSettings}
             toRenameSettings={toRenameSettings}
             setUserStatus={setUserStatus}
-            showSingleFlotApp={showSingleFlotApp}
+            showFlotApp={showFlotApp}
           ></ParticipantTileMini>
         </GLayout>
       );
@@ -599,7 +599,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
               updateSettings={updateSettings}
               toRenameSettings={toRenameSettings}
               setUserStatus={setUserStatus}
-              showSingleFlotApp={showSingleFlotApp}
+              showFlotApp={showFlotApp}
             ></ParticipantTileMini>
           </GLayout>
         );

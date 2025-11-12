@@ -75,7 +75,7 @@ export const ParticipantItem: (
       space,
       updateSettings,
       toRenameSettings,
-      showSingleFlotApp,
+      showFlotApp,
       selfRoom,
     }: ParticipantItemProps,
     ref,
@@ -594,7 +594,7 @@ export const ParticipantItem: (
     }, [trackReference, localParticipant.identity]);
 
     const showApp = () => {
-      showSingleFlotApp(
+      showFlotApp(
         trackReference.participant.identity,
         trackReference.participant.name,
         currentParticipant.auth,

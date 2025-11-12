@@ -12,6 +12,8 @@ import {
 import { useI18n } from '@/lib/i18n/i18n';
 import { SpaceInfo } from '@/lib/std/space';
 import { useLocalParticipant } from '@livekit/components-react';
+import { CopyButton } from '../controls/widgets/copy';
+import { MessageInstance } from 'antd/es/message/interface';
 
 export interface AICutAnalysisMdTabsProps {
   result?: AICutAnalysisRes;
@@ -29,6 +31,7 @@ export interface AICutAnalysisMdTabsProps {
   openAIServiceAskNote?: () => void;
   spaceInfo: SpaceInfo;
   userId?: string;
+  messageApi: MessageInstance;
 }
 
 export function AICutAnalysisMdTabs({
@@ -41,6 +44,7 @@ export function AICutAnalysisMdTabs({
   spaceInfo,
   userId,
   openAIServiceAskNote,
+  messageApi,
 }: AICutAnalysisMdTabsProps) {
   const { t } = useI18n();
   const { localParticipant } = useLocalParticipant();
@@ -82,7 +86,7 @@ export function AICutAnalysisMdTabs({
   }, [spaceInfo, userId, localParticipant]);
 
   return (
-    <div style={{ height: height, width: '720px', marginBottom: 8, backgroundColor: '#1e1e1e' }}>
+    <div style={{ height: height, width: '720px', marginBottom: 8, backgroundColor: '#1e1e1e', minHeight: "420px" }}>
       <div className={styles.ai_analysis_md_header}>
         <div>{t('ai.cut.report')}</div>
         {cutParams.isSelf && (
@@ -103,6 +107,9 @@ export function AICutAnalysisMdTabs({
                   showSettings && showSettings(true);
                 }}
               />
+            </Tooltip>
+            <Tooltip title={t('ai.cut.copy')}>
+              <CopyButton text={md} messageApi={messageApi}></CopyButton>
             </Tooltip>
           </div>
         )}

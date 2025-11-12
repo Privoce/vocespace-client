@@ -67,7 +67,6 @@ import { Channel, ChannelExports } from './channel';
 import { AppAuth, AppKey, PARTICIPANT_SETTINGS_KEY, SpaceInfo } from '@/lib/std/space';
 import { FlotLayout } from '../apps/flot';
 import { api } from '@/lib/api';
-import { SingleFlotLayout } from '../apps/single_flot';
 import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
 import { VocespaceConfig } from '@/lib/std/conf';
 import { acceptRaise, RaiseHandler, rejectRaise } from './widgets/raise';
@@ -123,8 +122,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         space?.localParticipant?.identity || '', // 参与者 ID
       );
     const [openApp, setOpenApp] = useState<boolean>(false);
-    const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
-    const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
+    // const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
+    // const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
     const isActive = true;
     const aiCutServiceRef = React.useRef<AICutService>(new AICutService());
     const [noteStateForAICutService, setNoteStateForAICutService] = useState({
@@ -136,18 +135,14 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       DEFAULT_AI_CUT_ANALYSIS_RES,
     );
     const aiCutAnalysisIntervalId = useRef<NodeJS.Timeout | null>(null);
-    const showSingleFlotApp = (id?: string, participantName?: string, auth?: AppAuth) => {
+    const showFlotApp = (id?: string, participantName?: string, auth?: AppAuth) => {
       setRemoteApp({
         participantId: id,
         participantName,
         auth: auth || 'read',
       });
 
-      if (id !== space?.localParticipant.identity) {
-        setOpenSingleApp(!openSingleApp);
-      } else {
-        setOpenApp(!openApp);
-      }
+      setOpenApp(!openApp);
     };
     const reloadResult = async () => {
       const response = await api.ai.getAnalysisRes(space!.name, space!.localParticipant.identity);
@@ -1123,7 +1118,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           ></FlotLayout>
         )}
         {/* 右侧单应用浮窗，悬浮态，用于当用户点击自己视图头上角图标进行显示 */}
-        {space && (
+        {/* {space && (
           <SingleFlotLayout
             space={space.name}
             style={{ position: 'absolute', top: '100px', right: '0px', zIndex: 1001 }}
@@ -1134,7 +1129,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             appKey={targetAppKey}
             setOpenApp={setOpenSingleApp}
           ></SingleFlotLayout>
-        )}
+        )} */}
         {/* 左侧侧边栏 */}
         {space && (
           <Channel
@@ -1157,7 +1152,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             updateSettings={updateSettings}
             toRenameSettings={toSettingGeneral}
             setUserStatus={setUserStatus}
-            showSingleFlotApp={showSingleFlotApp}
+            showFlotApp={showFlotApp}
           ></Channel>
         )}
         {/* 主视口 */}
@@ -1189,7 +1184,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                         setUserStatus={setUserStatus}
                         updateSettings={updateSettings}
                         toRenameSettings={toSettingGeneral}
-                        showSingleFlotApp={showSingleFlotApp}
+                        showFlotApp={showFlotApp}
                         selfRoom={selfRoom}
                       ></ParticipantItem>
                     </GridLayout>
@@ -1207,7 +1202,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                           setUserStatus={setUserStatus}
                           updateSettings={updateSettings}
                           toRenameSettings={toSettingGeneral}
-                          showSingleFlotApp={showSingleFlotApp}
+                          showFlotApp={showFlotApp}
                           selfRoom={selfRoom}
                         ></ParticipantItem>
                       </CarouselLayout>
@@ -1223,7 +1218,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                           isFocus={isFocus}
                           updateSettings={updateSettings}
                           toRenameSettings={toSettingGeneral}
-                          showSingleFlotApp={showSingleFlotApp}
+                          showFlotApp={showFlotApp}
                           selfRoom={selfRoom}
                         ></ParticipantItem>
                       )}

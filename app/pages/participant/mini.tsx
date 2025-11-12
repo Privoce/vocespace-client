@@ -49,7 +49,7 @@ export interface ParticipantTileMiniProps extends ParticipantTileProps {
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
-  showSingleFlotApp: (id?: string, participantName?: string, auth?: AppAuth) => void;
+  showFlotApp: (id?: string, participantName?: string, auth?: AppAuth) => void;
 }
 
 export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMiniProps>(
@@ -61,7 +61,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       updateSettings,
       toRenameSettings,
       setUserStatus,
-      showSingleFlotApp,
+      showFlotApp,
     }: ParticipantTileMiniProps,
     ref,
   ) => {
@@ -197,7 +197,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
     };
 
     const showApp = () => {
-      showSingleFlotApp(
+      showFlotApp(
         trackReference.participant.identity,
         trackReference.participant.name,
         currentParticipant.auth!,
