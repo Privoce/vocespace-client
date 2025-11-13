@@ -1,3 +1,4 @@
+import { Extraction } from '../ai/analysis';
 import { CutScreenShot } from '../ai/cut';
 import { connect_endpoint } from '../std';
 
@@ -6,7 +7,10 @@ export interface AnalysisRequestBody {
   userId: string;
   screenShot: CutScreenShot;
   todos: string[];
+  freq: number;
   lang: string;
+  duration: boolean;
+  extraction: Extraction;
 }
 
 const BASE_URL = connect_endpoint('/api/ai');
@@ -19,26 +23,14 @@ const BASE_URL = connect_endpoint('/api/ai');
  * @param todos: 用户的待办事项列表，AI可以依靠这些待办事项来生成更符合用户需求的分析结果
  * @returns
  */
-const analysis = async (
-  spaceName: string,
-  userId: string,
-  screenShot: CutScreenShot,
-  todos: string[],
-  lang: string,
-) => {
+const analysis = async (params: AnalysisRequestBody) => {
   const url = new URL(BASE_URL, window.location.origin);
   return await fetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({
-      spaceName,
-      userId,
-      screenShot,
-      todos,
-      lang,
-    } as AnalysisRequestBody),
+    body: JSON.stringify(params),
   });
 };
 

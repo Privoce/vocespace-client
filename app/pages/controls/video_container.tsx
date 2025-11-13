@@ -64,7 +64,13 @@ import {
 import { Button } from 'antd';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { Channel, ChannelExports } from './channel';
-import { AppAuth, AppKey, PARTICIPANT_SETTINGS_KEY, SpaceInfo } from '@/lib/std/space';
+import {
+  AICutParticipantConf,
+  AppAuth,
+  AppKey,
+  PARTICIPANT_SETTINGS_KEY,
+  SpaceInfo,
+} from '@/lib/std/space';
 import { FlotLayout } from '../apps/flot';
 import { api } from '@/lib/api';
 import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
@@ -72,7 +78,7 @@ import { VocespaceConfig } from '@/lib/std/conf';
 import { acceptRaise, RaiseHandler, rejectRaise } from './widgets/raise';
 import { audio } from '@/lib/audio';
 import { AICutService } from '@/lib/ai/cut';
-import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
+import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES, Extraction } from '@/lib/ai/analysis';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -168,23 +174,28 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     };
     // 开启或关闭AI截屏服务 --------------------------------------------------------
     const startOrStopAICutAnalysis = useCallback(
-      async (enabled: boolean, freq: number, spent: boolean, todo: boolean, reload?: boolean) => {
+      async (freq: number, conf: AICutParticipantConf, reload?: boolean) => {
         if (!space || !space.localParticipant) return;
-        if (enabled) {
+        if (conf.enabled) {
           await aiCutServiceRef.current.start(
             freq,
-            spent,
+            conf.spent,
             space.localParticipant,
             reload,
             async (lastScreenShot) => {
               if (space && space.localParticipant) {
-                const response = await api.ai.analysis(
-                  space.name,
-                  space.localParticipant.identity,
-                  lastScreenShot,
-                  todo ? uState.appDatas.todo?.items.map((item) => item.title) || [] : [],
-                  locale,
-                );
+                const response = await api.ai.analysis({
+                  spaceName: space.name,
+                  userId: space.localParticipant.identity,
+                  screenShot: lastScreenShot,
+                  duration: conf.duration,
+                  todos: conf.todo
+                    ? uState.appDatas.todo?.items.map((item) => item.title) || []
+                    : [],
+                  freq: freq,
+                  lang: locale,
+                  extraction: conf.extraction,
+                });
 
                 if (!response.ok) {
                   messageApi.warning(t('ai.cut.error.start'));
@@ -193,8 +204,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   await updateSettings({
                     ai: {
                       cut: {
-                        spent,
-                        todo,
+                        ...conf,
                         enabled: false,
                       },
                     },
@@ -224,11 +234,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
         await updateSettings({
           ai: {
-            cut: {
-              spent,
-              todo,
-              enabled,
-            },
+            cut: { ...conf },
           },
         });
         socket.emit('update_user_status', {
@@ -286,12 +292,10 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
     useEffect(() => {
       if (noteStateForAICutService.noteClosed) {
-        startOrStopAICutAnalysis(
-          noteStateForAICutService.openAIService,
-          settings.ai.cut.freq,
-          uState.ai.cut.spent,
-          uState.ai.cut.todo,
-        );
+        startOrStopAICutAnalysis(settings.ai.cut.freq, {
+          ...uState.ai.cut,
+          enabled: noteStateForAICutService.openAIService,
+        });
       }
     }, [noteStateForAICutService.noteClosed, noteStateForAICutService.openAIService]);
 
@@ -1119,19 +1123,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             cutInstance={aiCutServiceRef.current}
           ></FlotLayout>
         )}
-        {/* 右侧单应用浮窗，悬浮态，用于当用户点击自己视图头上角图标进行显示 */}
-        {/* {space && (
-          <SingleFlotLayout
-            space={space.name}
-            style={{ position: 'absolute', top: '100px', right: '0px', zIndex: 1001 }}
-            messageApi={messageApi}
-            openApp={openSingleApp}
-            setOpen={setOpenSingleApp}
-            spaceInfo={settings}
-            appKey={targetAppKey}
-            setOpenApp={setOpenSingleApp}
-          ></SingleFlotLayout>
-        )} */}
         {/* 左侧侧边栏 */}
         {space && (
           <Channel

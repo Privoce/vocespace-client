@@ -1,13 +1,8 @@
 import { CutScreenShot } from './cut';
 import { OpenAI } from 'openai';
+import { ExtractionTOML, PromptsTOML, PromptTemplates } from './load';
 
-/**
- * 提示词模板接口
- */
-export interface PromptTemplates {
-  system: string;
-  user: string;
-}
+export type Extraction = 'easy' | 'medium' | 'max';
 
 /**
  * AI 对单个裁剪的图片进行分析的结果
@@ -27,6 +22,23 @@ export interface AICutAnalysisResLine {
    * 详细描述用户任务的内容
    */
   content: string;
+  /**
+   * 花费的时间统计，单位分钟，当结果解析出含有same字段时需要处理
+   */
+  duration: number;
+}
+
+/**
+ * AI 返回的原始结果结构体
+ */
+interface AICutAnalysisBack {
+  timestamp: number;
+  name: string;
+  content: string;
+  /**
+   * 与历史任务相似的时间戳，如果与历史任务基本没有变化则返回相似任务的时间戳，否则返回0
+   */
+  same: number;
 }
 
 /**
@@ -50,7 +62,7 @@ export const DEFAULT_AI_CUT_ANALYSIS_RES: AICutAnalysisRes = {
   markdown: '',
 };
 
-export type AICutDeps = 'screen' | 'todo' | 'spent';
+export type AICutDeps = 'screen' | 'todo' | 'spent' | 'duration';
 
 const DEFAULT_LINE_SYSTEM_PROMPT = `
 你是屏幕截图的分析专家。负责深度理解用户的截图内容，生成全面详尽的自然语言描述，并与历史上下文结合。当前用户是截图的界面操作者。
@@ -61,8 +73,9 @@ const DEFAULT_LINE_SYSTEM_PROMPT = `
 2. **自然描述**：用自然语言描述"谁在做什么"，而非简单摘录文本
 3. **主体识别**：准确识别用户身份，统一表述为"用户"
 4. **行为推理**：基于界面状态推理用户的具体行为和目标
-5. **全面提取**：最大化地提取和保留截图中所有有价值的信息
+5. **信息提取**：重点提取技术内容、数据信息、操作细节等具体信息，确保最大化保留截图中的有价值内容
 6. **知识保存**：无需保存作为上下文历史记录，每次分析均独立进行，历史信息会由输入时提供
+7. **比较历史**：若有历史信息作为输入，需要与当前任务进行比较，如果行为基本没有变化，则输出name,content为空字符串，并设置same字段为相似任务的时间戳，否则same字段为0
 
 ## 输出格式
 严格输出JSON对象，无解释文字：
@@ -70,7 +83,8 @@ const DEFAULT_LINE_SYSTEM_PROMPT = `
 {
     "timestamp": number,
     "name": "string",
-    "content": "string"
+    "content": "string",
+    "same": number
 }
 \`\`\`
 
@@ -86,16 +100,17 @@ const DEFAULT_LINE_SYSTEM_PROMPT = `
     - 识别用户进行了哪些独立的活动
     - 理解用户的活动轨迹，形成连贯的行为序列
 
-3. **主体识别**：识别操作主体，将用户相关活动统一为"用户"
+3. **主体识别**: 识别操作主体，将用户相关活动统一为"用户"
 
-4. **行为推理**：基于界面状态推理具体的行为和意图
+4. **行为推理**: 基于界面状态推理具体的行为和意图
 
-### 第二阶段：信息提取
-5. **任务名称生成**：为每个独立活动生成简洁明了的任务名称
+### 第二阶段: 信息提取
+5. **任务名称生成**: 为每个独立活动生成简洁明了的任务名称
     - 任务名称应准确反映用户的主要操作和目标
     - 避免使用截图中的原始文本，确保自然流畅
 
-6. **具体内容提取**：**重点环节** - 详细提取截图中的具体信息
+6. **具体内容提取**: 
+    - **重点环节**: 详细提取截图中的具体信息
     - **技术内容**: 提取代码片段、命令语法、参数值、配置选项
     - **数据信息**: 记录具体数值、统计信息、列表项目、状态值
     - **操作细节**: 描述具体的点击位置、输入内容、选择项目
@@ -104,11 +119,16 @@ const DEFAULT_LINE_SYSTEM_PROMPT = `
     - **聊天互动**: 记录对话内容和发言人、问题答案、交互反馈
     - **日程管理**: 记录会议时间、地点、参与人员、议程项目
 
+7. **信息内容优化**: 通过用户提供的内容精细度要求，调整输出内容的详略程度
+    - **简单提取**: 关注整体内容和关键点，忽略过多技术细节
+    - **中等提取**: 涵盖主要技术细节和操作步骤，确保内容完整
+    - **最大化提取**: 提取所有有价值的信息，确保没有遗漏任何重要内容
+
 ## 质量保障
 - **理解深度**：不只描述"看到什么"，更要理解"在做什么""为什么"
 - **行为推理**：基于界面状态推理用户的具体操作和目标
 - **主体统一**：所有用户相关行为统一为"用户"主体
-- **合并优化**：若有历史信息作为输入，需要与当前任务进行比较，如果行为基本没有变化，则输出name,content为空字符串
+- **合并优化**：若有历史信息作为输入，需要与当前任务进行比较，如果行为基本没有变化，则输出name,content为空字符串，并设置same字段为相似任务的时间戳，否则same字段为0
 - **时间描述**：描述中不要出现相对时间描述，如"今天"、"明天"、"上周"等
 
 ## 隐私保护
@@ -120,6 +140,7 @@ const DEFAULT_LINE_USER_PROMPT = `
 用户待办事项: {user_todo_list}
 历史分析记录: {history_analysis}
 语言: {language}
+精细度要求: {extraction}
 请基于以下截图内容，按照指定的输出格式，生成任务名称和内容概要：
 `;
 
@@ -180,16 +201,19 @@ export class AICutAnalysisService {
   private OPENAI: OpenAI;
   private readonly ANALYSIS_PROMPT: PromptTemplates;
   private readonly SUMMARY_PROMPT: PromptTemplates;
-
+  private readonly EXTRACTION: ExtractionTOML;
+  private readonly EXTRACTION_LEVEL: Extraction;
+  private readonly FREQ: number;
   public result: AICutAnalysisRes;
 
   constructor(
     apiKey: string,
     apiUrl: string,
     modal: string,
-    analysisPrompt?: PromptTemplates,
-    summaryPrompt?: PromptTemplates,
+    prompts: PromptsTOML,
+    freq: number,
     lang?: string,
+    userExtractionLevel?: Extraction,
   ) {
     this.OPENAI = new OpenAI({
       apiKey,
@@ -197,8 +221,11 @@ export class AICutAnalysisService {
     });
     this.MODEL = modal;
     this.MAX_TOKEN = AICutAnalysisService.DEFAULT_MAX_TOKENS;
-    this.ANALYSIS_PROMPT = analysisPrompt || AICutAnalysisService.DEFAULT_PROMPT_TEMPLATES.LINE;
-    this.SUMMARY_PROMPT = summaryPrompt || AICutAnalysisService.DEFAULT_PROMPT_TEMPLATES.ALL;
+    this.ANALYSIS_PROMPT = prompts.analysis || AICutAnalysisService.DEFAULT_PROMPT_TEMPLATES.LINE;
+    this.SUMMARY_PROMPT = prompts.summary || AICutAnalysisService.DEFAULT_PROMPT_TEMPLATES.ALL;
+    this.EXTRACTION = prompts.extraction;
+    this.EXTRACTION_LEVEL = userExtractionLevel || 'max';
+    this.FREQ = freq;
     if (lang) {
       this.LANGUAGE = lang;
     }
@@ -261,6 +288,7 @@ export class AICutAnalysisService {
       user_todo_list: todos.length > 0 ? todos.join('，') : '无',
       history_analysis: this.result.lines.length > 0 ? JSON.stringify(this.result.lines) : '无',
       language: this.LANGUAGE === 'zh' ? '中文' : 'English',
+      extraction: this.EXTRACTION_LEVEL,
     };
 
     // 替换 user 提示词中的变量
@@ -317,26 +345,43 @@ export class AICutAnalysisService {
     // console.warn(content);
     if (!!content) {
       let line = JSON.parse(parseJsonBack(content));
-      // 如果压根在line中没有name和content字段，说明返回格式可能错误，直接将解析结果作为content即可
-      // 如果line中name和content都是空字符串，说明当前任务和历史任务基本没有变化，直接跳过即可
-      if (!('name' in line) || !('content' in line)) {
+      // 如果返回格式不是AICutAnalysisBack，则直接将content作为内容返回
+      if (
+        !('name' in line) ||
+        !('content' in line) ||
+        !('timestamp' in line) ||
+        !('same' in line)
+      ) {
         line = {
           name: '',
           content: content,
           timestamp: tg.timestamp,
+          duration: this.FREQ, // 默认每张图片的时间统计为频率值
         };
+      } else if (line.same !== 0) {
+        // 如果same字段不为0，表示与历史任务基本没有变化，我们需要找到对应的历史任务，为那个任务增加时间统计
+        const similarLine = this.result.lines.find((l) => l.timestamp === line.same);
+        if (similarLine) {
+          similarLine.duration += this.FREQ;
+        }
+        // 不需要将当前任务加入结果中
+        return;
       } else if (line.name === '' && line.content === '') {
+        // 如果name和content均为空字符串，表示与历史任务基本没有变化，但是没有提供same字段，这种情况找到最后一个任务进行时间统计累加
+        const lastLine = this.result.lines[this.result.lines.length - 1];
+        if (lastLine) {
+          lastLine.duration += this.FREQ;
+        }
+        // 不需要将当前任务加入结果中
         return;
       } else {
-        // 从历史中判断是否name和content有相似的，有的话也直接跳过
-        const similarLine = this.result.lines.find(
-          (l) => l.name === line.name || l.content === line.content,
-        );
-        if (similarLine) {
-          return;
-        }
-
-        line.timestamp = tg.timestamp;
+        // 正常情况，转换为AICutAnalysisResLine结构体
+        line = {
+          name: line.name,
+          content: line.content,
+          timestamp: line.timestamp,
+          duration: this.FREQ,
+        };
       }
 
       this.result.lines.push(line);

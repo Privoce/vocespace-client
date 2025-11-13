@@ -1,6 +1,7 @@
 import dayjs, { Dayjs } from 'dayjs';
 import { DEFAULT_USER_DEFINE_STATUS, UserDefineStatus, UserStatus } from '.';
 import { ModelBg, ModelRole } from './virtual';
+import { Extraction } from '../ai/analysis';
 
 /**
  * Child room information
@@ -23,6 +24,26 @@ export interface ChildRoom {
    * is private room or not
    */
   isPrivate: boolean;
+}
+
+export interface AICutParticipantConf {
+  enabled: boolean;
+  /**
+   * 是否需要在任务栏显示分析时间
+   */
+  spent: boolean;
+  /**
+   * 是否需要进行时间统计
+   */
+  duration: boolean;
+  /**
+   * 是否要结合待办事项进行分析
+   */
+  todo: boolean;
+  /**
+   * 提取内容配置的精细度
+   */
+  extraction: Extraction;
 }
 
 /**
@@ -110,17 +131,7 @@ export interface ParticipantSettings {
     /**
      * AI截图分析功能
      */
-    cut: {
-      enabled: boolean;
-      /**
-       * 是否需要在任务栏显示分析时间
-       */
-      spent: boolean;
-      /**
-       * 是否要结合待办事项进行分析
-       */
-      todo: boolean;
-    };
+    cut: AICutParticipantConf;
   };
   /**
    * 是否在线，如果用户在线则新用户如果重名无法加入，如果不在线则允许重名加入
@@ -355,7 +366,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
-  version: '0.4.2',
+  version: '0.4.4',
   name: '',
   volume: 100,
   blur: 0.0,
@@ -379,6 +390,8 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
       enabled: true,
       spent: false,
       todo: true,
+      duration: false,
+      extraction: 'medium',
     },
   },
   online: true,

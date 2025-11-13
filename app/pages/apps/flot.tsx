@@ -1,13 +1,4 @@
-import {
-  Button,
-  Col,
-  Collapse,
-  CollapseProps,
-  Popover,
-  Row,
-  theme,
-  Tooltip,
-} from 'antd';
+import { Button, Col, Collapse, CollapseProps, Popover, Row, theme, Tooltip } from 'antd';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import styles from '@/styles/apps.module.scss';
 import { AppTimer } from './timer';
@@ -22,6 +13,7 @@ import {
 } from '@ant-design/icons';
 import { useI18n } from '@/lib/i18n/i18n';
 import {
+  AICutParticipantConf,
   AppAuth,
   AppKey,
   castCountdown,
@@ -44,7 +36,7 @@ import { WsBase } from '@/lib/std/device';
 import { DEFAULT_COLLAPSE_HEADER_STYLES } from '../controls/collapse_tools';
 import { TodoTogether } from './todo_together';
 import { AICutAnalysisMdTabs } from './ai_analysis_md';
-import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
+import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES, Extraction } from '@/lib/ai/analysis';
 import { CopyButton } from '../controls/widgets/copy';
 import { useRecoilState } from 'recoil';
 import { AICutService } from '@/lib/ai/cut';
@@ -60,10 +52,8 @@ export interface FlotLayoutProps {
   aiCutAnalysisRes?: AICutAnalysisRes;
   reloadResult?: () => Promise<void>;
   startOrStopAICutAnalysis?: (
-    open: boolean,
     freq: number,
-    spent: boolean,
-    todo: boolean,
+    conf: AICutParticipantConf,
     reload?: boolean,
   ) => Promise<void>;
   openAIServiceAskNote?: () => void;
@@ -178,6 +168,7 @@ export function FlotLayout({
                       width: '100%',
                     }}
                     cutInstance={cutInstance}
+                    userId={targetParticipant.participantId || localParticipant.identity}
                   ></AICutAnalysisMdTabs>
                 )}
               </Col>
@@ -211,6 +202,7 @@ export function FlotLayout({
                     width: '100%',
                   }}
                   cutInstance={cutInstance}
+                  userId={targetParticipant.participantId || localParticipant.identity}
                 ></AICutAnalysisMdTabs>
               )}
             </Col>

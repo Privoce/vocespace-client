@@ -69,6 +69,17 @@ export default {
   },
   ai: {
     cut: {
+      time: {
+        start: "开始时间",
+        duration: "持续时间(分钟)",
+      },
+      extraction: {
+        title: '提取精细度',
+        desc: '设置AI分析的提取精细度，精细度越高，提取的信息越详细，对于非专业场景或不需要过于详细信息的用户，可选择中等或简单精细度。',
+        easy: '简单',
+        medium: '中等',
+        max: '精细',
+      },
       report: 'AI分析报告',
       start: '开启分析',
       stop: '停止分析',
@@ -87,6 +98,7 @@ export default {
       share_screen: '共享屏幕',
       share_todo: '待办事项',
       share_time: '工作时间',
+      share_timeStatistic: '时间统计',
       open: '开启AI分析服务',
       freq_analysis: 'AI分析频率(分钟)',
       myAnalysis: '我的AI分析报告',
@@ -337,7 +349,7 @@ export default {
           title: '团队进度',
           empty: '暂无用户的待办事项',
         },
-        copy: "复制待办",
+        copy: '复制待办',
       },
     },
     record: {

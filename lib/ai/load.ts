@@ -1,6 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as TOML from '@iarna/toml';
+import { Extraction } from './analysis';
 
 /**
  * 提示词模板接口
@@ -16,18 +17,28 @@ export interface PromptTemplates {
   user: string;
 }
 
+export interface ExtractionTOML {
+  easy: string;
+  medium: string;
+  max: string;
+}
+
 /**
  * TOML 配置接口
  */
-interface PromptsConfig {
+export interface PromptsTOML {
   /**
    * 分析提示词配置
    */
   analysis: PromptTemplates;
   /**
-   * 总结提示词配置（可选）
+   * 总结提示词配置
    */
-  summary?: PromptTemplates;
+  summary: PromptTemplates;
+  /**
+   * 结构化提取级别
+   */
+  extraction: ExtractionTOML;
 }
 
 /**
@@ -35,26 +46,21 @@ interface PromptsConfig {
  * @param filePath TOML 文件路径（相对于项目根目录）
  * @returns 提示词配置对象
  */
-export function loadPromptsFromToml(filePath: string): {
-  analysisPrompt: PromptTemplates;
-  summaryPrompt?: PromptTemplates;
-} {
+export function loadPromptsFromToml(filePath: string): PromptsTOML {
   try {
     const fullPath = path.join(process.cwd(), filePath);
     const tomlContent = fs.readFileSync(fullPath, 'utf-8');
-    const config = TOML.parse(tomlContent) as unknown as PromptsConfig;
-
+    const config = TOML.parse(tomlContent) as unknown as PromptsTOML;
     return {
-      analysisPrompt: {
+      analysis: {
         system: config.analysis.system,
         user: config.analysis.user,
       },
-      summaryPrompt: config.summary
-        ? {
-            system: config.summary.system,
-            user: config.summary.user,
-          }
-        : undefined,
+      summary: {
+        system: config.summary.system,
+        user: config.summary.user,
+      },
+      extraction: config.extraction,
     };
   } catch (error) {
     console.error('Failed to load prompts from TOML:', error);
@@ -65,10 +71,7 @@ export function loadPromptsFromToml(filePath: string): {
 /**
  * 获取默认的提示词配置
  */
-export function getDefaultPrompts(lang?: string): {
-  analysisPrompt: PromptTemplates;
-  summaryPrompt?: PromptTemplates;
-} {
+export function getDefaultPrompts(lang?: string): PromptsTOML {
   if (!lang || !['en', 'zh'].includes(lang)) {
     return getDefaultPrompts('zh');
   }

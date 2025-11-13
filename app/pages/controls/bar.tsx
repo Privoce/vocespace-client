@@ -35,7 +35,7 @@ import {
   userState,
   virtualMaskState,
 } from '@/app/[spaceName]/PageClientImpl';
-import { getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { isMobile as is_moblie, UserStatus } from '@/lib/std';
 import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';
 import { ChatToggle } from './toggles/chat_toggle';
@@ -49,7 +49,7 @@ import equal from 'fast-deep-equal';
 import { Reaction } from './widgets/reaction';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { AICutService } from '@/lib/ai/cut';
-import { AICutAnalysisService, AICutDeps, downloadMarkdown } from '@/lib/ai/analysis';
+import { AICutAnalysisService, AICutDeps, downloadMarkdown, Extraction } from '@/lib/ai/analysis';
 import { InfoCircleFilled } from '@ant-design/icons';
 
 /** @public */
@@ -86,10 +86,8 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   setOpenApp: (open: boolean) => void;
   toRenameSettings: () => void;
   startOrStopAICutAnalysis: (
-    open: boolean,
     freq: number,
-    spent: boolean,
-    todo: boolean,
+    conf: AICutParticipantConf,
     reload?: boolean,
   ) => Promise<void>;
   openAIServiceAskNote: () => void;
@@ -522,6 +520,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     // ai -----------------------------------------------------------------------------------------
     const [isServiceOpen, setIsServiceOpen] = React.useState(false);
     const [aiCutDeps, setAICutDeps] = React.useState<AICutDeps[]>(['screen', 'todo']);
+    const [extraction, setExtraction] = React.useState<Extraction>('medium');
     const [cutFreq, setCutFreq] = React.useState(3);
     const onClickAI = async () => {
       setAICutModalOpen(true);
@@ -533,16 +532,20 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         space.localParticipant &&
         spaceInfo.participants[space.localParticipant.identity]
       ) {
-        const { spent, todo } = spaceInfo.participants[space.localParticipant.identity]?.ai.cut;
+        const { spent, todo, extraction, duration } =
+          spaceInfo.participants[space.localParticipant.identity]?.ai.cut;
         const deps: AICutDeps[] = ['screen'];
         if (spent) {
           deps.push('spent');
+        }
+        if (duration) {
+          deps.push('duration');
         }
         if (todo) {
           deps.push('todo');
         }
         setAICutDeps(deps);
-
+        setExtraction(extraction);
         setIsServiceOpen(
           spaceInfo.participants[space.localParticipant.identity]?.ai.cut.enabled || false,
         );
@@ -556,6 +559,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         { label: t('ai.cut.share_screen'), value: 'screen' },
         { label: t('ai.cut.share_todo'), value: 'todo' },
         { label: t('ai.cut.share_time'), value: 'spent' },
+        { label: t('ai.cut.share_timeStatistic'), value: 'duration' },
       ];
     }, [t]);
 
@@ -592,6 +596,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       }
       const includeSpent = aiCutDeps.includes('spent');
       const includeTodo = aiCutDeps.includes('todo');
+      const includeTimeStatistic = aiCutDeps.includes('duration');
       let reload = true;
       // 判断，如果spent, todo的选中状态或cutFreq与之前不同则需要reload
       const { spent, todo } = spaceInfo.participants[space!.localParticipant.identity]?.ai.cut;
@@ -599,7 +604,17 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         reload = false;
       }
 
-      await startOrStopAICutAnalysis(isServiceOpen, cutFreq, includeSpent, includeTodo, reload);
+      await startOrStopAICutAnalysis(
+        cutFreq,
+        {
+          enabled: isServiceOpen,
+          spent: includeSpent,
+          duration: includeTimeStatistic,
+          todo: includeTodo,
+          extraction,
+        },
+        reload,
+      );
     };
 
     React.useImperativeHandle(
@@ -956,6 +971,24 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                   options={aiCutOptions}
                   onChange={aiCutOptionsChange}
                 />
+              </div>
+              <div className={styles.ai_cut_line}>
+                <span> {t('ai.cut.extraction.title')}</span>
+                <Tooltip title={t('ai.cut.extraction.desc')} trigger={['hover']}>
+                  <InfoCircleFilled></InfoCircleFilled>
+                </Tooltip>
+              </div>
+              <div style={{ width: '100%' }}>
+                <Radio.Group
+                  size="large"
+                  block
+                  value={extraction}
+                  onChange={(e) => setExtraction(e.target.value)}
+                >
+                  <Radio.Button value="easy">{t('ai.cut.extraction.easy')}</Radio.Button>
+                  <Radio.Button value="medium">{t('ai.cut.extraction.medium')}</Radio.Button>
+                  <Radio.Button value="max">{t('ai.cut.extraction.max')}</Radio.Button>
+                </Radio.Group>
               </div>
             </div>
           )}

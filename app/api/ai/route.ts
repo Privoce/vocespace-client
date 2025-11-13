@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '../conf/conf';
 import { AnalysisRequestBody } from '@/lib/api/ai';
-import { AICutAnalysisService } from '@/lib/ai/analysis';
+import { AICutAnalysisService, Extraction } from '@/lib/ai/analysis';
 import { getDefaultPrompts } from '@/lib/ai/load';
 
 const { ai } = getConfig();
@@ -88,7 +88,9 @@ export async function GET(request: NextRequest) {
 const getOrCreateUserService = (
   spaceName: string,
   userId: string,
+  freq: number,
   lang: string,
+  extractionLevel?: Extraction,
 ): AICutAnalysisService => {
   let spaceServices = AI_CUT_ANALYSIS_SERVICES.get(spaceName);
 
@@ -103,9 +105,14 @@ const getOrCreateUserService = (
       ai!.apiKey,
       ai!.apiUrl,
       ai!.model,
-      promptsConfig.analysisPrompt,
-      promptsConfig.summaryPrompt,
+      {
+        analysis: promptsConfig.analysis,
+        summary: promptsConfig.summary,
+        extraction: promptsConfig.extraction,
+      },
+      freq,
       lang,
+      extractionLevel,
     );
     spaceServices.set(userId, userService);
   }
@@ -119,10 +126,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { spaceName, userId, screenShot, todos, lang }: AnalysisRequestBody =
+    const { spaceName, userId, screenShot, todos, lang, extraction, freq }: AnalysisRequestBody =
       await request.json();
     // 获取或创建用户服务实例
-    const targetService = getOrCreateUserService(spaceName, userId, lang);
+    const targetService = getOrCreateUserService(spaceName, userId, freq, lang, extraction);
     // 进行分析
     await targetService.doAnalysisLine(screenShot, todos);
     return NextResponse.json({ success: true });

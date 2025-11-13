@@ -70,6 +70,17 @@ export default {
   },
   ai: {
     cut: {
+       time: {
+        start: "Start Time",
+        duration: "Duration (minutes)",
+      },
+      extraction: {
+        title: 'Extraction granularity',
+        desc: 'Sets the extraction granularity of AI analysis. The higher the granularity, the more detailed the extracted information. For non-professional scenarios or users who do not require overly detailed information, medium or easy can be selected.',
+        easy: 'Easy',
+        medium: 'Medium',
+        max: 'Max',
+      },
       report: 'AI Analysis Report',
       start: 'Start Analysis',
       stop: 'Stop Analysis',
@@ -90,6 +101,7 @@ export default {
       share_screen: 'Share Screen',
       share_todo: 'To-do List',
       share_time: 'Time Spent',
+      share_timeStatistic: 'Duration',
       open: 'Enable AI analysis service',
       freq_analysis: 'AI analysis frequency (minutes)',
       myAnalysis: 'My AI analysis report',
@@ -350,7 +362,7 @@ export default {
           title: 'Team Status',
           empty: 'No user todos available',
         },
-        copy: "Copy todo",
+        copy: 'Copy todo',
       },
     },
     record: {

@@ -10,13 +10,11 @@ import {
   SettingOutlined,
 } from '@ant-design/icons';
 import { useI18n } from '@/lib/i18n/i18n';
-import { SpaceInfo } from '@/lib/std/space';
+import { AICutParticipantConf, SpaceInfo } from '@/lib/std/space';
 import { useLocalParticipant } from '@livekit/components-react';
 import { CopyButton } from '../controls/widgets/copy';
 import { MessageInstance } from 'antd/es/message/interface';
 import { AICutService } from '@/lib/ai/cut';
-import rehypeRaw from 'rehype-raw';
-import remarkGfm from 'remark-gfm';
 
 export interface AICutAnalysisMdTabsProps {
   result?: AICutAnalysisRes;
@@ -25,15 +23,13 @@ export interface AICutAnalysisMdTabsProps {
   showSettings?: (open: boolean) => void;
   setFlotAppOpen?: (open: boolean) => void;
   startOrStopAICutAnalysis?: (
-    open: boolean,
     freq: number,
-    spent: boolean,
-    todo: boolean,
+    conf: AICutParticipantConf,
     reload?: boolean,
   ) => Promise<void>;
   openAIServiceAskNote?: () => void;
   spaceInfo: SpaceInfo;
-  userId?: string;
+  userId: string;
   messageApi: MessageInstance;
   isSelf: boolean;
   // 需要裁剪服务的实例
@@ -72,9 +68,17 @@ export function AICutAnalysisMdTabs({
         timestamp: line.timestamp,
         content: line.content,
         screenshot: cutScreenShot?.data,
+        duration: line.duration, // 如果用户启用了时间统计功能，需要显示
       };
     });
   }, [result, cutInstance]);
+
+  const showTime = useMemo(() => {
+    return {
+      spent: spaceInfo.participants[userId]?.ai.cut.spent,
+      statistic: spaceInfo.participants[userId]?.ai.cut.duration,
+    };
+  }, [spaceInfo, userId]);
 
   // 纯文本 markdown，用于复制
   const md = useMemo(() => {
@@ -110,13 +114,16 @@ export function AICutAnalysisMdTabs({
   const cutParams = useMemo(() => {
     let realUserId = !userId ? localParticipant.identity : userId;
 
-    const { todo, spent, enabled } = spaceInfo.participants[realUserId]?.ai.cut;
+    const { todo, spent, enabled, extraction, duration } =
+      spaceInfo.participants[realUserId]?.ai.cut;
     return {
       freq: spaceInfo.ai.cut.freq,
       spent: spent || false,
       todo: todo || false,
+      extraction,
       isSelf,
       enabled: enabled || false,
+      duration,
     };
   }, [spaceInfo, userId, localParticipant, isSelf]);
 
@@ -171,7 +178,13 @@ export function AICutAnalysisMdTabs({
             onClick={() => {
               if (cutParams.enabled) {
                 startOrStopAICutAnalysis &&
-                  startOrStopAICutAnalysis(false, cutParams.freq, cutParams.spent, cutParams.todo);
+                  startOrStopAICutAnalysis(cutParams.freq, {
+                    enabled: false,
+                    spent: cutParams.spent,
+                    todo: cutParams.todo,
+                    extraction: cutParams.extraction,
+                    duration: cutParams.duration,
+                  });
               } else {
                 if (!localParticipant.isScreenShareEnabled) {
                   openAIServiceAskNote && openAIServiceAskNote();
@@ -179,7 +192,13 @@ export function AICutAnalysisMdTabs({
                 }
                 if (localParticipant.isScreenShareEnabled) {
                   startOrStopAICutAnalysis &&
-                    startOrStopAICutAnalysis(true, cutParams.freq, cutParams.spent, cutParams.todo);
+                    startOrStopAICutAnalysis(cutParams.freq, {
+                      enabled: true,
+                      spent: cutParams.spent,
+                      todo: cutParams.todo,
+                      extraction: cutParams.extraction,
+                      duration: cutParams.duration,
+                    });
                 }
               }
             }}
@@ -203,10 +222,28 @@ export function AICutAnalysisMdTabs({
                     {section.name}
                   </h2>
                 )}
-                <p style={{ color: '#888', fontSize: '12px', marginBottom: '16px' }}>
-                  {new Date(section.timestamp).toLocaleString()}
-                </p>
-
+                {(showTime.spent || showTime.statistic) && (
+                  <p
+                    style={{
+                      color: '#888',
+                      fontSize: '12px',
+                      marginBottom: '8px',
+                      display: 'flex',
+                      gap: '12px',
+                    }}
+                  >
+                    {showTime.spent && (
+                      <span>
+                        {`${t('ai.cut.time.start')}: ${new Date(
+                          section.timestamp,
+                        ).toLocaleString()}`}
+                      </span>
+                    )}
+                    {showTime.statistic && (
+                      <span>{`${t('ai.cut.time.duration')}: ${section.duration}`}</span>
+                    )}
+                  </p>
+                )}
                 {/* 内容（markdown 渲染） */}
                 <div style={{ marginBottom: '16px' }}>
                   <ReactMarkdown>{section.content}</ReactMarkdown>
