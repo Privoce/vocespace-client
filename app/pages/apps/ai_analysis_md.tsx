@@ -89,7 +89,9 @@ export function AICutAnalysisMdTabs({
       .map((section) => {
         const title =
           (section.name ? `## ${section.name}` : '') +
-          ` (${new Date(section.timestamp * 1000).toLocaleString()})\n\n`;
+          ` (start: ${new Date(section.timestamp).toLocaleString()} duration: ${
+            section.duration
+          })\n\n`;
         return (
           title +
           section.content +
