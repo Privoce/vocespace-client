@@ -413,7 +413,7 @@
 
 .status_tag {
   overflow: hidden;
-  text-overflow: clip;
+  text-overflow: ellipsis;
   white-space: nowrap;
   width: 100%;
   text-align: start;
@@ -428,13 +428,11 @@
   justify-content: flex-start;
   cursor: pointer;
   &_title{
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    height: 100%;
     flex: 1;
     min-width: 0;
     overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
   & > span {
     margin-right: 4px;

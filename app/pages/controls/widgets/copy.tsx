@@ -1,25 +1,27 @@
 import { useI18n } from '@/lib/i18n/i18n';
 import { CopyOutlined } from '@ant-design/icons';
+import { Tooltip } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
 
 export interface CopyButtonProps {
   text: string;
   messageApi: MessageInstance;
+  onExtraCopy?: () => void;
 }
 
 /**
  * A button component that copies the provided text to the clipboard when clicked.
- * - in todo list: 
+ * - in todo list:
  * ```
  * --- 2025/01/01 ---  ----> date header
  * - [ ] 1. todo1  ----> undone
  * - [x] 2. todo2  ----> done
  * - [ ] 3. todo3
  * ```
- * @param param0 
- * @returns 
+ * @param param0
+ * @returns
  */
-export function CopyButton({ text, messageApi }: CopyButtonProps) {
+export function CopyButton({ text, messageApi, onExtraCopy }: CopyButtonProps) {
   const { t } = useI18n();
 
   const copyToClipboard = async () => {
@@ -32,12 +34,15 @@ export function CopyButton({ text, messageApi }: CopyButtonProps) {
   };
 
   return (
-    <CopyOutlined
-      style={{ fontSize: 16, cursor: 'pointer' }}
-      onClick={(e) => {
-        e.stopPropagation();
-        copyToClipboard();
-      }}
-    ></CopyOutlined>
+    <Tooltip title={t('more.app.todo.copy')}>
+      <CopyOutlined
+        style={{ fontSize: 16, cursor: 'pointer' }}
+        onClick={(e) => {
+          e.stopPropagation();
+          copyToClipboard();
+          onExtraCopy && onExtraCopy();
+        }}
+      ></CopyOutlined>
+    </Tooltip>
   );
 }

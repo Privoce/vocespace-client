@@ -164,6 +164,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       toRenameSettings,
       setUserStatus,
       settings,
+      disabled: trackReference.participant.identity !== localParticipant.identity,
     });
     // 构建WaveHand消息 --------------------------------------------------------------
     const buildWsWave = (): WsWave => {

@@ -46,6 +46,7 @@ export interface UseStatusInfoProps {
   setUserStatus: (status: UserStatus | string) => Promise<void>;
   settings: SpaceInfo;
   trackReference: TrackReferenceOrPlaceholder;
+  disabled?: boolean;
 }
 /**
  * ## 用户状态信息钩子
@@ -57,6 +58,7 @@ export function useStatusInfo({
   t,
   setUserStatus,
   settings,
+  disabled=false,
   trackReference,
 }: UseStatusInfoProps) {
   const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
@@ -134,6 +136,7 @@ export function useStatusInfo({
           menu={{
             items: stateItems,
           }}
+          disabled={disabled}
         >
           <Tooltip placement="right" title={item.title}>
             <div className={styles.status_tag}>

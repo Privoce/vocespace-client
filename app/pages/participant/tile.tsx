@@ -414,6 +414,7 @@ export const ParticipantItem: (
       toRenameSettings: toSettings,
       t,
       setUserStatus,
+      disabled: trackReference.participant.identity !== localParticipant.identity,
     });
     // 使用ws向服务器发送消息，告诉某个人打招呼
     const wsWave = useMemo(() => {

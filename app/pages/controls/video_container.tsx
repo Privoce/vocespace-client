@@ -1115,6 +1115,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             aiCutAnalysisRes={aiCutAnalysisRes}
             startOrStopAICutAnalysis={startOrStopAICutAnalysis}
             openAIServiceAskNote={openAIServiceAskNote}
+            cutInstance={aiCutServiceRef.current}
           ></FlotLayout>
         )}
         {/* 右侧单应用浮窗，悬浮态，用于当用户点击自己视图头上角图标进行显示 */}

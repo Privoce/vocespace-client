@@ -14,7 +14,9 @@ import { SpaceInfo } from '@/lib/std/space';
 import { useLocalParticipant } from '@livekit/components-react';
 import { CopyButton } from '../controls/widgets/copy';
 import { MessageInstance } from 'antd/es/message/interface';
-import { isMobile } from '@/lib/std';
+import { AICutService } from '@/lib/ai/cut';
+import rehypeRaw from 'rehype-raw';
+import remarkGfm from 'remark-gfm';
 
 export interface AICutAnalysisMdTabsProps {
   result?: AICutAnalysisRes;
@@ -34,6 +36,8 @@ export interface AICutAnalysisMdTabsProps {
   userId?: string;
   messageApi: MessageInstance;
   isSelf: boolean;
+  // 需要裁剪服务的实例
+  cutInstance: AICutService;
 }
 
 export function AICutAnalysisMdTabs({
@@ -48,32 +52,60 @@ export function AICutAnalysisMdTabs({
   openAIServiceAskNote,
   messageApi,
   isSelf,
+  cutInstance,
 }: AICutAnalysisMdTabsProps) {
   const { t } = useI18n();
   const { localParticipant } = useLocalParticipant();
-  // 真正的 md 内容
-  const md = useMemo(() => {
-    if (!result) return '';
+  // 生成结构化的内容，而不是纯 markdown 字符串
+  const contentSections = useMemo(() => {
+    if (!result) return [];
 
-    if (result.markdown) {
-      return result.markdown;
-    }
-
-    // 处理嵌套的 lines 数组结构
     const flattenedLines = result.lines.flat();
-    console.warn(result);
-    const markdown = flattenedLines
-      .map((line: AICutAnalysisResLine) => {
-        // 如果有 name，作为标题显示
-        const title =
-          (line.name ? `## ${line.name}` : '') +
-          `(${new Date(line.timestamp).toLocaleString()})\n\n`;
-        return title + line.content;
-      })
-      .join('\n\n');
 
-    return markdown;
-  }, [result]);
+    return flattenedLines.map((line: AICutAnalysisResLine) => {
+      const cutScreenShot = cutInstance
+        .getScreenshots()
+        .find((shot) => shot.timestamp === line.timestamp);
+
+      return {
+        name: line.name,
+        timestamp: line.timestamp,
+        content: line.content,
+        screenshot: cutScreenShot?.data,
+      };
+    });
+  }, [result, cutInstance]);
+
+  // 纯文本 markdown，用于复制
+  const md = useMemo(() => {
+    // 复制就不需要考虑图片问题，采用纯文本方式，图片则使用download方式下载到用户Downloads目录中即可，但需要修改图片的命名
+    if (contentSections.length === 0) return 'empty';
+
+    let mdRes = contentSections
+      .map((section) => {
+        const title =
+          (section.name ? `## ${section.name}` : '') +
+          ` (${new Date(section.timestamp * 1000).toLocaleString()})\n\n`;
+        return (
+          title +
+          section.content +
+          (section.screenshot
+            ? `\n\n![${section.timestamp}](replace/to/download/screenshot_${section.timestamp}.jpg)`
+            : '')
+        );
+      })
+      .join('\n\n---\n\n');
+
+    return mdRes;
+  }, [contentSections]);
+
+  const downloadImgs = () => {
+    contentSections.forEach((section) => {
+      if (section.screenshot) {
+        cutInstance.downloadTargetScreenshot(section.timestamp);
+      }
+    });
+  };
 
   const cutParams = useMemo(() => {
     let realUserId = !userId ? localParticipant.identity : userId;
@@ -118,9 +150,7 @@ export function AICutAnalysisMdTabs({
                 }}
               />
             </Tooltip>
-            <Tooltip title={t('ai.cut.copy')}>
-              <CopyButton text={md} messageApi={messageApi}></CopyButton>
-            </Tooltip>
+            <CopyButton text={md} messageApi={messageApi} onExtraCopy={downloadImgs}></CopyButton>
           </div>
         )}
       </div>
@@ -159,12 +189,51 @@ export function AICutAnalysisMdTabs({
         </div>
       )}
       <div className={styles.ai_analysis_md_content}>
-        {!md ? (
+        {contentSections.length === 0 ? (
           <div className={styles.ai_analysis_md_empty}>
             <Empty description={t('ai.cut.empty')} image={Empty.PRESENTED_IMAGE_SIMPLE} />
           </div>
         ) : (
-          <ReactMarkdown>{md}</ReactMarkdown>
+          <div>
+            {contentSections.map((section, index) => (
+              <div key={index} style={{ marginBottom: '32px' }}>
+                {/* 标题和时间戳 */}
+                {section.name && (
+                  <h2 style={{ color: '#fff', fontSize: '18px', marginBottom: '8px' }}>
+                    {section.name}
+                  </h2>
+                )}
+                <p style={{ color: '#888', fontSize: '12px', marginBottom: '16px' }}>
+                  {new Date(section.timestamp).toLocaleString()}
+                </p>
+
+                {/* 内容（markdown 渲染） */}
+                <div style={{ marginBottom: '16px' }}>
+                  <ReactMarkdown>{section.content}</ReactMarkdown>
+                </div>
+
+                {/* 截图（直接渲染 img 标签） */}
+                {section.screenshot && (
+                  <img
+                    src={section.screenshot}
+                    alt="screenshot"
+                    style={{
+                      maxWidth: '320px',
+                      height: 'auto',
+                      borderRadius: '8px',
+                      marginTop: '4px',
+                      border: '1px solid #444',
+                    }}
+                  />
+                )}
+
+                {/* 分隔线 */}
+                {index < contentSections.length - 1 && (
+                  <hr style={{ border: 'none', borderTop: '1px solid #333', margin: '24px 0' }} />
+                )}
+              </div>
+            ))}
+          </div>
         )}
       </div>
     </div>

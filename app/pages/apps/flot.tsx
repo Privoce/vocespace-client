@@ -1,4 +1,3 @@
-import { SvgResource } from '@/app/resources/svg';
 import {
   Button,
   Col,
@@ -6,8 +5,6 @@ import {
   CollapseProps,
   Popover,
   Row,
-  Tabs,
-  TabsProps,
   theme,
   Tooltip,
 } from 'antd';
@@ -22,7 +19,6 @@ import {
   EyeInvisibleOutlined,
   EyeOutlined,
   ProfileOutlined,
-  RobotOutlined,
 } from '@ant-design/icons';
 import { useI18n } from '@/lib/i18n/i18n';
 import {
@@ -51,7 +47,7 @@ import { AICutAnalysisMdTabs } from './ai_analysis_md';
 import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
 import { CopyButton } from '../controls/widgets/copy';
 import { useRecoilState } from 'recoil';
-import { isMobile } from '@/lib/std';
+import { AICutService } from '@/lib/ai/cut';
 
 export interface FlotLayoutProps {
   style?: React.CSSProperties;
@@ -71,6 +67,7 @@ export interface FlotLayoutProps {
     reload?: boolean,
   ) => Promise<void>;
   openAIServiceAskNote?: () => void;
+  cutInstance: AICutService;
 }
 
 export function FlotLayout({
@@ -85,6 +82,7 @@ export function FlotLayout({
   startOrStopAICutAnalysis,
   openAIServiceAskNote,
   aiCutAnalysisRes,
+  cutInstance,
 }: FlotLayoutProps) {
   const flotAppItemRef = useRef<FlotAppExports>(null);
   const [containerHeight, setContainerHeight] = useState<number>(0);
@@ -138,7 +136,7 @@ export function FlotLayout({
   }, [layoutType]);
 
   const getRemoteAICutAnalysisRes = async (participantId: string) => {
-    if (openApp && participantId && !isSelf) {
+    if (participantId && !isSelf) {
       // 发起请求获取结果
       const response = await api.ai.getAnalysisRes(space, participantId);
       if (response.ok) {
@@ -148,6 +146,12 @@ export function FlotLayout({
     }
     return DEFAULT_AI_CUT_ANALYSIS_RES;
   };
+
+  useEffect(() => {
+    if (!isSelf && targetParticipant.participantId) {
+      getRemoteAICutAnalysisRes(targetParticipant.participantId);
+    }
+  }, [isSelf, targetParticipant]);
 
   return (
     <div style={style} className={styles.flot_layout}>
@@ -173,6 +177,7 @@ export function FlotLayout({
                       height: containerHeight,
                       width: '100%',
                     }}
+                    cutInstance={cutInstance}
                   ></AICutAnalysisMdTabs>
                 )}
               </Col>
@@ -205,6 +210,7 @@ export function FlotLayout({
                     height: containerHeight,
                     width: '100%',
                   }}
+                  cutInstance={cutInstance}
                 ></AICutAnalysisMdTabs>
               )}
             </Col>
@@ -233,10 +239,6 @@ export function FlotLayout({
               participantName: localParticipant.name,
               auth: 'write',
             });
-            if (!openApp && targetParticipant.participantId && !isSelf) {
-              const res = await getRemoteAICutAnalysisRes(targetParticipant.participantId);
-              setRemoteAnalysisRes(res);
-            }
             setOpenApp(!openApp);
           }}
           type="text"
@@ -511,7 +513,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
                         }}
                       />
                     </Tooltip>
-                    <Tooltip title={t('more.ai.cut')}>
+                    {/* <Tooltip title={t('more.ai.cut')}>
                       <RobotOutlined
                         disabled={!spaceInfo.participants[participantId]?.ai.cut}
                         onClick={(e) => {
@@ -519,10 +521,9 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
                           setShowAICutAnalysis(!showAICutAnalysis);
                         }}
                       />
-                    </Tooltip>
-                    <Tooltip title={t('more.app.todo.copy')}>
-                      <CopyButton text={getTodoText(todo)} messageApi={messageApi}></CopyButton>
-                    </Tooltip>
+                    </Tooltip> */}
+
+                    <CopyButton text={getTodoText(todo)} messageApi={messageApi}></CopyButton>
                   </>
                 )}
               </div>
@@ -616,16 +617,14 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
             auth,
           };
         }
-        if (castedTodo) {
-          todo = {
-            data: castedTodo,
-            setData: async (data) => {
-              // update the todo data
-              console.warn(data);
-            },
-            auth,
-          };
-        }
+        todo = {
+          data: castedTodo || [],
+          setData: async (data) => {
+            // update the todo data
+            console.warn(data);
+          },
+          auth,
+        };
       }
       const items = createItems(participantId, timer, countdown, todo, isSelf);
       return (

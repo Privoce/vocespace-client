@@ -39,6 +39,8 @@
     "react-markdown": "^10.1.0",
     "react-notion-x": "^7.4.2",
     "recoil": "^0.7.7",
+    "rehype-raw": "^7.0.0",
+    "remark-gfm": "^4.0.1",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "stripe": "^18.1.0",

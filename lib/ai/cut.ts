@@ -164,8 +164,20 @@ export class AICutService {
     this.screenshots.forEach((screenshot, index) => {
       const a = document.createElement('a');
       a.href = screenshot.data;
-      a.download = `${screenshot.timestamp}_${index + 1}.png`;
+      a.download = `${screenshot.timestamp}_${index + 1}.jpg`;
       a.click();
     });
+  }
+
+  downloadTargetScreenshot(timestamp: number) {
+    const target = this.screenshots.find((shot) => shot.timestamp === timestamp);
+    if (target) {
+      const a = document.createElement('a');
+      a.href = target.data;
+      a.download = `screenshot_${target.timestamp}.jpg`;
+      a.click();
+    } else {
+      console.warn('No screenshot found for timestamp:', timestamp);
+    }
   }
 }
