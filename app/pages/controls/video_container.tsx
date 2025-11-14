@@ -1163,9 +1163,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               // onPinChange={handleFocusStateChange}
               onWidgetChange={widgetUpdate}
             >
-              <div className="lk-video-conference-inner" style={{ alignItems: 'space-between' }}>
+              <div className="lk-video-conference-inner" style={{ alignItems: 'space-between', height: "100dvh" }}>
                 {!focusTrack ? (
-                  <div className="lk-grid-layout-wrapper">
+                  <div className="lk-grid-layout-wrapper" >
                     <GridLayout tracks={tracks}>
                       <ParticipantItem
                         space={space}
