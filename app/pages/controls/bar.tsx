@@ -36,7 +36,7 @@ import {
   virtualMaskState,
 } from '@/app/[spaceName]/PageClientImpl';
 import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
-import { isMobile as is_moblie, UserStatus } from '@/lib/std';
+import { isMobile as is_moblie, isIos, UserStatus } from '@/lib/std';
 import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';
 import { ChatToggle } from './toggles/chat_toggle';
 import { MoreButton } from './toggles/more_button';
@@ -625,7 +625,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         {...htmlProps}
         className={styles.controls}
         style={{
-          marginBottom: isMobile ? '62px' : 'auto',
+          marginBottom: isMobile ? (isIos() ? '92px' : '64px') : 'auto',
         }}
       >
         {contextHolder}

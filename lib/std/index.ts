@@ -87,6 +87,15 @@ export function is_web(): boolean {
   return typeof window !== 'undefined';
 }
 
+export function isIos(): boolean {
+  if (!is_web()) return false;
+
+  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+
+  // iOS detection from: http://stackoverflow.com/a/9039885/177710
+  return /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+}
+
 export function isMobile(): boolean {
   if (!is_web()) return false;
 

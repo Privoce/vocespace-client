@@ -1157,7 +1157,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             width: collapsed ? (isActive ? 'calc(100vw - 28px)' : '100vw') : 'calc(100vw - 280px)',
           }}
         >
-          {is_web() && space && (
+          {space && (
             <LayoutContextProvider
               value={layoutContext}
               // onPinChange={handleFocusStateChange}

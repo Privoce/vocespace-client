@@ -48,6 +48,7 @@ import {
   UpdateRoomBody,
 } from '@/lib/api/channel';
 import { getConfig } from '../conf/conf';
+import { platformAPI } from '@/lib/api/platform';
 
 const { LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL } = process.env;
 
@@ -1183,6 +1184,13 @@ export async function POST(request: NextRequest) {
       } else {
         // 更新todo
         spaceInfo.participants[participantId].appDatas.todo = data as SpaceTodo;
+        // 将用户的数据传到平台接口进行同步和保存
+        const pResponse = await platformAPI.todo.updateTodo(participantId, data as SpaceTodo);
+        // 平台虽然失败但不能影响用户的使用
+        if (!pResponse.ok) {
+          console.error('Failed to sync todo to platform for participant:', participantId);
+        }
+
         if ((data as SpaceTodo).items.length > 0) {
           let currentTodo = (data as SpaceTodo).items.find((t) => {
             // 需要找到第一个未完成的(done为undefined)
