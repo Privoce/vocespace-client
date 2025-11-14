@@ -9,7 +9,6 @@ export interface AnalysisRequestBody {
   todos: string[];
   freq: number;
   lang: string;
-  duration: boolean;
   extraction: Extraction;
 }
 

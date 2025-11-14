@@ -188,7 +188,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   spaceName: space.name,
                   userId: space.localParticipant.identity,
                   screenShot: lastScreenShot,
-                  duration: conf.duration,
                   todos: conf.todo
                     ? uState.appDatas.todo?.items.map((item) => item.title) || []
                     : [],

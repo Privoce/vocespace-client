@@ -597,7 +597,7 @@ lk load-test \
 - [x] 提示词和AI总结的多语言支持
   - [x] 提示词
   - [x] AI分析
-- [ ] 分析报告里可以看到截取的图片
+- [x] 分析报告里可以看到截取的图片
 - [x] AI 分析/TODO List复制粘贴按钮
   - [x] AI
   - [x] TODO
@@ -613,7 +613,12 @@ lk load-test \
 - [x] AI分析是否可以更精简些，时间调为某段时间在进行某任务，而不是时间戳
   - [x] 精简度调节
   - [x] 时间统计，加在选项里，如果用户开启则增加时间统计部分
-
+  - [x] 截图可以多加几张如果任务重复
+  - [x] TODO总结去除footer中的按钮，点击x关闭
+  - [ ] 合并Duration和Time Spent
+  - [ ] 在团队中增加AI分析的flot的入口
+  - [ ] AI关闭后再启动会导致时间不累加
+  - [ ] 优化时间累加
 --- 平台性功能
 - [ ] 只有注册的用户，才可以建立房间
 - [x] 右键他人screen时right menu因该显示他人的right menu不是control menu
@@ -623,3 +628,4 @@ lk load-test \
 - [ ] AI分析数据在平台上
   - [ ] widget可以在平台页可见
   - [ ] 平台需要能提供存储todo的数据库接口
+- [ ]login增加init from从vocespace.com进入进行登陆后直接跳转自己的space

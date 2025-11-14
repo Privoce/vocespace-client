@@ -630,7 +630,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
           items={items}
         />
       );
-    }, [spaceInfo, participantId, activeKeys, isSelf]);
+    }, [spaceInfo, participantId, activeKeys, isSelf, showExport]);
 
     useImperativeHandle(ref, () => ({
       clientHeight: containerRef.current?.clientHeight,

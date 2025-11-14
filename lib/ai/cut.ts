@@ -106,9 +106,20 @@ export class AICutService {
     }
 
     if (this.isRunning) {
-      console.warn('AI Cut Service is already running');
-      return;
+      // 如果传入的参数确实有变化，则重新启动
+      if (
+        this.freq !== freq ||
+        this.timeline !== timeline ||
+        this.localParicipant !== localParicipant
+      ) {
+        this.stop();
+        this.clearScreenshots();
+      } else {
+        console.warn('AI Cut Service is already running');
+        return;
+      }
     }
+    
     this.localParicipant = localParicipant;
     this.freq = freq;
     this.timeline = timeline;

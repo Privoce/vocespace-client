@@ -29,13 +29,9 @@ export interface ChildRoom {
 export interface AICutParticipantConf {
   enabled: boolean;
   /**
-   * 是否需要在任务栏显示分析时间
+   * 是否需要在任务栏显示分析时间以及需要进行时间统计
    */
   spent: boolean;
-  /**
-   * 是否需要进行时间统计
-   */
-  duration: boolean;
   /**
    * 是否要结合待办事项进行分析
    */
@@ -390,7 +386,6 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
       enabled: true,
       spent: false,
       todo: true,
-      duration: false,
       extraction: 'medium',
     },
   },

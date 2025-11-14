@@ -76,7 +76,6 @@ export function AICutAnalysisMdTabs({
   const showTime = useMemo(() => {
     return {
       spent: spaceInfo.participants[userId]?.ai.cut.spent,
-      statistic: spaceInfo.participants[userId]?.ai.cut.duration,
     };
   }, [spaceInfo, userId]);
 
@@ -116,8 +115,7 @@ export function AICutAnalysisMdTabs({
   const cutParams = useMemo(() => {
     let realUserId = !userId ? localParticipant.identity : userId;
 
-    const { todo, spent, enabled, extraction, duration } =
-      spaceInfo.participants[realUserId]?.ai.cut;
+    const { todo, spent, enabled, extraction } = spaceInfo.participants[realUserId]?.ai.cut;
     return {
       freq: spaceInfo.ai.cut.freq,
       spent: spent || false,
@@ -125,7 +123,6 @@ export function AICutAnalysisMdTabs({
       extraction,
       isSelf,
       enabled: enabled || false,
-      duration,
     };
   }, [spaceInfo, userId, localParticipant, isSelf]);
 
@@ -185,7 +182,6 @@ export function AICutAnalysisMdTabs({
                     spent: cutParams.spent,
                     todo: cutParams.todo,
                     extraction: cutParams.extraction,
-                    duration: cutParams.duration,
                   });
               } else {
                 if (!localParticipant.isScreenShareEnabled) {
@@ -199,7 +195,6 @@ export function AICutAnalysisMdTabs({
                       spent: cutParams.spent,
                       todo: cutParams.todo,
                       extraction: cutParams.extraction,
-                      duration: cutParams.duration,
                     });
                 }
               }
@@ -224,7 +219,7 @@ export function AICutAnalysisMdTabs({
                     {section.name}
                   </h2>
                 )}
-                {(showTime.spent || showTime.statistic) && (
+                {showTime.spent && (
                   <p
                     style={{
                       color: '#888',
@@ -234,16 +229,10 @@ export function AICutAnalysisMdTabs({
                       gap: '12px',
                     }}
                   >
-                    {showTime.spent && (
-                      <span>
-                        {`${t('ai.cut.time.start')}: ${new Date(
-                          section.timestamp,
-                        ).toLocaleString()}`}
-                      </span>
-                    )}
-                    {showTime.statistic && (
-                      <span>{`${t('ai.cut.time.duration')}: ${section.duration}`}</span>
-                    )}
+                    <span>
+                      {`${t('ai.cut.time.start')}: ${new Date(section.timestamp).toLocaleString()}`}
+                    </span>
+                    <span>{`${t('ai.cut.time.duration')}: ${section.duration}`}</span>
                   </p>
                 )}
                 {/* 内容（markdown 渲染） */}

@@ -532,14 +532,11 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         space.localParticipant &&
         spaceInfo.participants[space.localParticipant.identity]
       ) {
-        const { spent, todo, extraction, duration } =
+        const { spent, todo, extraction } =
           spaceInfo.participants[space.localParticipant.identity]?.ai.cut;
         const deps: AICutDeps[] = ['screen'];
         if (spent) {
           deps.push('spent');
-        }
-        if (duration) {
-          deps.push('duration');
         }
         if (todo) {
           deps.push('todo');
@@ -559,7 +556,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         { label: t('ai.cut.share_screen'), value: 'screen' },
         { label: t('ai.cut.share_todo'), value: 'todo' },
         { label: t('ai.cut.share_time'), value: 'spent' },
-        { label: t('ai.cut.share_timeStatistic'), value: 'duration' },
       ];
     }, [t]);
 
@@ -596,7 +592,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       }
       const includeSpent = aiCutDeps.includes('spent');
       const includeTodo = aiCutDeps.includes('todo');
-      const includeTimeStatistic = aiCutDeps.includes('duration');
       let reload = true;
       // 判断，如果spent, todo的选中状态或cutFreq与之前不同则需要reload
       const { spent, todo } = spaceInfo.participants[space!.localParticipant.identity]?.ai.cut;
@@ -609,7 +604,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         {
           enabled: isServiceOpen,
           spent: includeSpent,
-          duration: includeTimeStatistic,
           todo: includeTodo,
           extraction,
         },

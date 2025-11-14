@@ -273,14 +273,7 @@ export function AppTodo({
         width={600}
         open={showExport}
         title={localParticipant.name || localParticipant.identity}
-        cancelText={t('common.cancel')}
-        okText={t('common.close')}
-        onCancel={() => {
-          setShowExport(false);
-        }}
-        onOk={() => {
-          setShowExport(false);
-        }}
+        footer={null}
       >
         <ExportTodoHistroy items={historyItems} appData={appData}></ExportTodoHistroy>
       </Modal>
