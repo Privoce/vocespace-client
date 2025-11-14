@@ -133,6 +133,7 @@ export function AICutAnalysisMdTabs({
         marginBottom: 8,
         backgroundColor: '#1e1e1e',
         minHeight: '420px',
+        maxHeight: "100%"
       }}
     >
       <div className={styles.ai_analysis_md_header}>

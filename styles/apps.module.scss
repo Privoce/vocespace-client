@@ -206,7 +206,7 @@
   }
   &_content {
     padding: 16px;
-    max-height: calc(86vh - 92px);
+    // max-height: calc(86vh - 92px);
     overflow-y: scroll;
     scrollbar-width: thin;
     height: calc(100% - 92px);

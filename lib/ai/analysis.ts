@@ -375,7 +375,11 @@ export class AICutAnalysisService {
         // 不需要将当前任务加入结果中
         return;
       } else {
-        // 正常情况，转换为AICutAnalysisResLine结构体
+        // 正常情况, 我们依然需要尝试从历史中查看是否有高度相似的任务，如果有则进行时间统计累加
+        let similar = compareSimilarLine(line, this.result.lines, this.FREQ);
+        if (similar) return;
+
+        //转换为AICutAnalysisResLine结构体
         line = {
           name: line.name,
           content: line.content,
@@ -455,4 +459,41 @@ export const downloadMarkdown = (md: string) => {
 export const parseJsonBack = (jsonCode: string): string => {
   // return jsonCode.replace(/^[\s\S]*?```json/, '').replace(/```[\s\S]*?$/, '');
   return jsonCode.replace(/^[\s\S]*?```(?:json|markdown)?/, '').replace(/```[\s\S]*?$/, '');
+};
+
+const stringSimilarity = (str1: string, str2: string): number => {
+  if (str1 === str2) return 1.0;
+  const len1 = str1.length;
+  const len2 = str2.length;
+  const maxLen = Math.max(len1, len2);
+  if (maxLen === 0) return 1.0;
+
+  let sameCharCount = 0;
+  const minLen = Math.min(len1, len2);
+  for (let i = 0; i < minLen; i++) {
+    if (str1[i] === str2[i]) {
+      sameCharCount++;
+    }
+  }
+
+  return sameCharCount / maxLen;
+};
+
+const compareSimilarLine = (
+  line: AICutAnalysisBack,
+  historyLines: AICutAnalysisResLine[],
+  freq: number,
+): boolean => {
+  const threshold = 0.8; // 相似度阈值，可以根据需要调整
+
+  for (const histLine of historyLines) {
+    const nameSimilarity = stringSimilarity(line.name, histLine.name);
+    const contentSimilarity = stringSimilarity(line.content, histLine.content);
+    if (nameSimilarity >= threshold && contentSimilarity >= threshold) {
+      // 找到相似的历史任务，进行时间统计累加
+      histLine.duration += freq;
+      return true;
+    }
+  }
+  return false;
 };
