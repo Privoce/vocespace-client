@@ -10,6 +10,7 @@ export interface AnalysisRequestBody {
   freq: number;
   lang: string;
   extraction: Extraction;
+  isAuth: boolean;
 }
 
 const BASE_URL = connect_endpoint('/api/ai');

@@ -367,7 +367,7 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   volume: 100,
   blur: 0.0,
   screenBlur: 0.0,
-  status: UserStatus.Online,
+  status: "settings.general.status.online",
   socketId: '',
   startAt: 0,
   virtual: {

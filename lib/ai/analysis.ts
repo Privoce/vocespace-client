@@ -205,6 +205,7 @@ export class AICutAnalysisService {
   private readonly EXTRACTION_LEVEL: Extraction;
   private readonly FREQ: number;
   public result: AICutAnalysisRes;
+  public isAuth: boolean = false;
 
   constructor(
     apiKey: string,
@@ -214,6 +215,7 @@ export class AICutAnalysisService {
     freq: number,
     lang?: string,
     userExtractionLevel?: Extraction,
+    isAuth = false,
   ) {
     this.OPENAI = new OpenAI({
       apiKey,
@@ -229,6 +231,7 @@ export class AICutAnalysisService {
     if (lang) {
       this.LANGUAGE = lang;
     }
+    this.isAuth = isAuth;
     this.result = this.createEmptyResult();
   }
 
@@ -338,13 +341,20 @@ export class AICutAnalysisService {
    * 调用AI服务对单张图片进行分析
    * @param tg 截图数据
    */
-  async doAnalysisLine(tg: CutScreenShot, todos: string[]): Promise<void> {
+  async doAnalysisLine(
+    tg: CutScreenShot,
+    todos: string[],
+  ): Promise<{
+    timestamp: number;
+    isNewTask: boolean;
+  }> {
     const messages = this.buildImageAnalysisMessage(tg, todos);
     const data = await this.makeAIRequest(messages);
     const content = data.choices?.[0]?.message?.content;
     // console.warn(content);
     if (!!content) {
       let line = JSON.parse(parseJsonBack(content));
+      console.warn(line);
       // 如果返回格式不是AICutAnalysisBack，则直接将content作为内容返回
       if (
         !('name' in line) ||
@@ -365,7 +375,10 @@ export class AICutAnalysisService {
           similarLine.duration += this.FREQ;
         }
         // 不需要将当前任务加入结果中
-        return;
+        return {
+          timestamp: tg.timestamp,
+          isNewTask: false,
+        };
       } else if (line.name === '' && line.content === '') {
         // 如果name和content均为空字符串，表示与历史任务基本没有变化，但是没有提供same字段，这种情况找到最后一个任务进行时间统计累加
         const lastLine = this.result.lines[this.result.lines.length - 1];
@@ -373,11 +386,14 @@ export class AICutAnalysisService {
           lastLine.duration += this.FREQ;
         }
         // 不需要将当前任务加入结果中
-        return;
+        return {
+          timestamp: tg.timestamp,
+          isNewTask: false,
+        };
       } else {
         // 正常情况, 我们依然需要尝试从历史中查看是否有高度相似的任务，如果有则进行时间统计累加
         let similar = compareSimilarLine(line, this.result.lines, this.FREQ);
-        if (similar) return;
+        if (similar) return { timestamp: tg.timestamp, isNewTask: false };
 
         //转换为AICutAnalysisResLine结构体
         line = {
@@ -389,7 +405,13 @@ export class AICutAnalysisService {
       }
 
       this.result.lines.push(line);
+      return {
+        timestamp: tg.timestamp,
+        isNewTask: true,
+      };
     }
+
+    throw new Error('AI analysis returned empty content');
   }
 
   /**

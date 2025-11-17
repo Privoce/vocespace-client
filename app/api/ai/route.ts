@@ -4,6 +4,7 @@ import { getConfig } from '../conf/conf';
 import { AnalysisRequestBody } from '@/lib/api/ai';
 import { AICutAnalysisService, Extraction } from '@/lib/ai/analysis';
 import { getDefaultPrompts } from '@/lib/ai/load';
+import { platformAPI } from '@/lib/api/platform';
 
 const { ai } = getConfig();
 
@@ -91,6 +92,7 @@ const getOrCreateUserService = (
   freq: number,
   lang: string,
   extractionLevel?: Extraction,
+  isAuth = false,
 ): AICutAnalysisService => {
   let spaceServices = AI_CUT_ANALYSIS_SERVICES.get(spaceName);
 
@@ -113,6 +115,7 @@ const getOrCreateUserService = (
       freq,
       lang,
       extractionLevel,
+      isAuth,
     );
     spaceServices.set(userId, userService);
   }
@@ -126,12 +129,42 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { spaceName, userId, screenShot, todos, lang, extraction, freq }: AnalysisRequestBody =
-      await request.json();
+    const {
+      spaceName,
+      userId,
+      screenShot,
+      todos,
+      lang,
+      extraction,
+      freq,
+      isAuth,
+    }: AnalysisRequestBody = await request.json();
     // 获取或创建用户服务实例
-    const targetService = getOrCreateUserService(spaceName, userId, freq, lang, extraction);
+    const targetService = getOrCreateUserService(spaceName, userId, freq, lang, extraction, isAuth);
     // 进行分析
-    await targetService.doAnalysisLine(screenShot, todos);
+    const { isNewTask, timestamp } = await targetService.doAnalysisLine(screenShot, todos);
+    // 将分析结果存储到平台端
+    // 如果userService是authenticated的，需要上传的到平台端
+    if (targetService.isAuth && timestamp) {
+      let screenShotToSend = isNewTask ? screenShot.data : undefined;
+      try {
+        const res = targetService.getResult();
+        if (res.lines.length !== 0) {
+          const response = await platformAPI.ai.updateAIAnalysis(
+            userId,
+            timestamp,
+            res,
+            screenShotToSend,
+          );
+          if (!response.ok) {
+            console.error('上传AI分析结果到平台端失败，响应状态码:', response.status);
+          }
+        }
+      } catch (e) {
+        console.error('上传AI分析结果到平台端失败:', e);
+      }
+    }
+
     return NextResponse.json({ success: true });
   } catch (e) {
     console.error('POST request error:', e);

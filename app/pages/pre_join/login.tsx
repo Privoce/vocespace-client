@@ -1,7 +1,7 @@
 'use client';
 
 import { SvgResource } from '@/app/resources/svg';
-import { api } from '@/lib/api';
+
 import { PUserInfo } from '@/lib/hooks/platform';
 import { useI18n } from '@/lib/i18n/i18n';
 import { VOCESPACE_PLATFORM_USER_ID } from '@/lib/std/space';
@@ -9,7 +9,7 @@ import styles from '@/styles/pre_join.module.scss';
 import { MailOutlined, UserOutlined } from '@ant-design/icons';
 import { Avatar, Button, Divider, Dropdown } from 'antd';
 import { ItemType } from 'antd/es/menu/interface';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 
 export function LoginButtons({ space }: { space: string }) {
   const { t } = useI18n();

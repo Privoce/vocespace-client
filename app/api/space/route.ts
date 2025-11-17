@@ -1185,10 +1185,14 @@ export async function POST(request: NextRequest) {
         // 更新todo
         spaceInfo.participants[participantId].appDatas.todo = data as SpaceTodo;
         // 将用户的数据传到平台接口进行同步和保存
-        const pResponse = await platformAPI.todo.updateTodo(participantId, data as SpaceTodo);
-        // 平台虽然失败但不能影响用户的使用
-        if (!pResponse.ok) {
-          console.error('Failed to sync todo to platform for participant:', participantId);
+        try {
+          const pResponse = await platformAPI.todo.updateTodo(participantId, data as SpaceTodo);
+          // 平台虽然失败但不能影响用户的使用
+          if (!pResponse.ok) {
+            console.error('Failed to sync todo to platform for participant:', participantId);
+          }
+        } catch (e) {
+          console.error('Error syncing todo to platform for participant:', participantId, e);
         }
 
         if ((data as SpaceTodo).items.length > 0) {

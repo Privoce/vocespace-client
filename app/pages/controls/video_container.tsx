@@ -1,4 +1,4 @@
-import { getServerIp, is_web, isMobile, src, UserDefineStatus, UserStatus } from '@/lib/std';
+import { getServerIp, is_web, isAuth, isMobile, src, UserDefineStatus, UserStatus } from '@/lib/std';
 import {
   CarouselLayout,
   ConnectionStateToast,
@@ -70,6 +70,7 @@ import {
   AppKey,
   PARTICIPANT_SETTINGS_KEY,
   SpaceInfo,
+  VOCESPACE_PLATFORM_USER_ID,
 } from '@/lib/std/space';
 import { FlotLayout } from '../apps/flot';
 import { api } from '@/lib/api';
@@ -194,6 +195,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   freq: freq,
                   lang: locale,
                   extraction: conf.extraction,
+                  isAuth: isAuth(space.localParticipant.identity),
                 });
 
                 if (!response.ok) {

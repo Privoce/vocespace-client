@@ -2,6 +2,8 @@ import os from 'os';
 import clsx from 'clsx';
 import { Trans } from '../i18n/i18n';
 import { GetProp, UploadProps } from 'antd';
+import { VOCESPACE_PLATFORM_USER_ID } from './space';
+import { PUserInfo } from '../hooks/platform';
 /**
  * Option<T>
  *
@@ -296,4 +298,13 @@ export enum CreateSpaceError {
 
 export const ERROR_CODE = {
   createSpace: CreateSpaceError,
+};
+
+export const isAuth = (uid: string): boolean => {
+  const authUserStr = localStorage.getItem(VOCESPACE_PLATFORM_USER_ID);
+  if (authUserStr) {
+    const authUser = JSON.parse(authUserStr) as PUserInfo;
+    return authUser.userId === uid;
+  }
+  return false;
 };
