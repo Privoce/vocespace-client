@@ -23,6 +23,7 @@ import { useLocalParticipant } from '@livekit/components-react';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { api } from '@/lib/api';
 import { WsBase } from '@/lib/std/device';
+import { isAuth } from '@/lib/std';
 
 export interface AppDrawerProps {
   open: boolean;
@@ -43,7 +44,7 @@ export function AppDrawer({ open, setOpen, messageApi, spaceInfo, space }: AppDr
 
   const upload = async (key: AppKey, data: SpaceTimer | SpaceCountdown | SpaceTodo) => {
     let participantId = localParticipant.identity;
-    const response = await api.uploadSpaceApp(space, participantId, key, data);
+    const response = await api.uploadSpaceApp(space, participantId, key, data, isAuth(participantId));
     if (response.ok) {
       socket.emit('update_user_status', {
         space,
