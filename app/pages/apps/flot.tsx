@@ -140,7 +140,11 @@ export function FlotLayout({
 
   useEffect(() => {
     if (!isSelf && targetParticipant.participantId) {
-      getRemoteAICutAnalysisRes(targetParticipant.participantId);
+        console.warn('Fetching remote AI Cut Analysis Result for', targetParticipant.participantId);
+      getRemoteAICutAnalysisRes(targetParticipant.participantId).then((res) => {
+          console.warn(res);
+        setRemoteAnalysisRes(res);
+      });
     }
   }, [isSelf, targetParticipant]);
 
