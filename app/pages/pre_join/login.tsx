@@ -19,7 +19,7 @@ export function LoginButtons({ space }: { space: string }) {
       `https://home.vocespace.com/auth/login?from=vocespace&spaceName=${space}&auth=${
         google ? 'google' : 'email'
       }`,
-      '_blank',
+      '_self',
     );
   };
 
@@ -59,9 +59,8 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
           key: 'logout',
           label: t('login.out'),
           onClick: () => {
-            window.open(`https://home.vocespace.com/auth/user/${userId}`, '_blank');
             localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
-            window.location.reload();
+            window.open(`https://home.vocespace.com/auth/user/${userId}?logout=true`, '_self');
           },
         },
       ];
@@ -79,9 +78,9 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
         onClick={(e) => {
           e.preventDefault();
           if (!userId) {
-            window.open(`https://home.vocespace.com/auth/login`, '_blank');
+            window.open(`https://home.vocespace.com/auth/login`, '_self');
           } else {
-            window.open(`https://home.vocespace.com/auth/user/${userId}`, '_blank');
+            window.open(`https://home.vocespace.com/auth/user/${userId}`, '_self');
           }
         }}
       >

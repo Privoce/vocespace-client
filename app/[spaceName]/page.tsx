@@ -55,18 +55,22 @@ export default function Page({
         const response = await api.getUserMeta(parsedInfo.userId);
 
         if (response.ok) {
-          const data: PUserMeta = await response.json();
-          const updatedInfo = {
-            ...parsedInfo,
-            username: data.username,
-            avatar: data.avatar,
-          };
-          setUserInfo(updatedInfo);
-          // 更新本地存储
-          localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(updatedInfo));
-        } else {
-          setUserInfo(parsedInfo);
+          const { data, online }: { data: PUserMeta; online: boolean } = await response.json();
+          if (online) {
+            const updatedInfo = {
+              ...parsedInfo,
+              username: data.username,
+              avatar: data.avatar,
+            };
+            setUserInfo(updatedInfo);
+            // 更新本地存储
+            localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(updatedInfo));
+            return;
+          }
         }
+        // 用户不在线，清除本地存储
+        localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
+        setUserInfo({} as LoginStateBtnProps);
       } catch (error) {
         console.error('Failed to parse stored user info:', error);
         setUserInfo({} as LoginStateBtnProps);

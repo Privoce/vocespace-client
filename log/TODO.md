@@ -619,6 +619,10 @@ lk load-test \
   - [ ] 在团队中增加AI分析的flot的入口 
   - [ ] AI关闭后再启动会导致时间不累加 (历史会清理，导致时间重置)
   - [ ] 优化时间累加
+
+- [x] 登陆使用_self
+- [x] 修复TODO总结弹窗无法关闭
+
 --- 平台性功能
 - [ ] 只有注册的用户，才可以建立房间
 - [x] 右键他人screen时right menu因该显示他人的right menu不是control menu
@@ -640,3 +644,8 @@ lk load-test \
 - [x] login增加init from从vocespace.com进入进行登陆后直接跳转自己的space
 - [x] email注册失败，google登陆错误
 - [x] 修复退出登陆无法回到登陆页
+- [x] 平台退出和会议端一起退出登陆
+- [x] 会议端退出登陆接口返回登陆页(api)
+- [x] 从会议端使用Google登陆参数会丢失（from="google"）
+- [ ] 增加settings页面 参考github settings
+- [x] Quickly create new space -> create new space

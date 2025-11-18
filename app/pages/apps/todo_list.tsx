@@ -274,6 +274,7 @@ export function AppTodo({
         open={showExport}
         title={localParticipant.name || localParticipant.identity}
         footer={null}
+        onCancel={() => setShowExport(false)}
       >
         <ExportTodoHistroy items={historyItems} appData={appData}></ExportTodoHistroy>
       </Modal>

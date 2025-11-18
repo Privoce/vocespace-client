@@ -341,6 +341,7 @@ export interface UploadSpaceAppBody {
   participantId: string;
   data: SpaceTimer | SpaceCountdown | SpaceTodo;
   ty: AppKey;
+  isAuth: boolean;
 }
 
 export const uploadSpaceApp = async (
@@ -348,6 +349,7 @@ export const uploadSpaceApp = async (
   participantId: string,
   ty: AppKey,
   data: SpaceTimer | SpaceCountdown | SpaceTodo,
+  isAuth: boolean,
 ) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('apps', 'upload');
@@ -359,6 +361,7 @@ export const uploadSpaceApp = async (
       data,
       participantId,
       ty,
+      isAuth,
     } as UploadSpaceAppBody),
   });
 };

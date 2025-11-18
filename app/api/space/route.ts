@@ -1172,7 +1172,8 @@ export async function POST(request: NextRequest) {
     }
     // 用户上传App到Space中 ------------------------------------------------------------------
     if (spaceAppsAPIType === 'upload') {
-      const { spaceName, data, ty, participantId }: UploadSpaceAppBody = await request.json();
+      const { spaceName, data, ty, participantId, isAuth }: UploadSpaceAppBody =
+        await request.json();
       const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
       if (!spaceInfo) {
         return NextResponse.json({ error: 'Space not found' }, { status: 404 });
@@ -1185,14 +1186,16 @@ export async function POST(request: NextRequest) {
         // 更新todo
         spaceInfo.participants[participantId].appDatas.todo = data as SpaceTodo;
         // 将用户的数据传到平台接口进行同步和保存
-        try {
-          const pResponse = await platformAPI.todo.updateTodo(participantId, data as SpaceTodo);
-          // 平台虽然失败但不能影响用户的使用
-          if (!pResponse.ok) {
-            console.error('Failed to sync todo to platform for participant:', participantId);
+        if (isAuth) {
+          try {
+            const pResponse = await platformAPI.todo.updateTodo(participantId, data as SpaceTodo);
+            // 平台虽然失败但不能影响用户的使用
+            if (!pResponse.ok) {
+              console.error('Failed to sync todo to platform for participant:', participantId);
+            }
+          } catch (e) {
+            console.error('Error syncing todo to platform for participant:', participantId, e);
           }
-        } catch (e) {
-          console.error('Error syncing todo to platform for participant:', participantId, e);
         }
 
         if ((data as SpaceTodo).items.length > 0) {

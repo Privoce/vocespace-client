@@ -40,6 +40,7 @@ import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES, Extraction } from '@/lib
 import { CopyButton } from '../controls/widgets/copy';
 import { useRecoilState } from 'recoil';
 import { AICutService } from '@/lib/ai/cut';
+import { isAuth } from '@/lib/std';
 
 export interface FlotLayoutProps {
   style?: React.CSSProperties;
@@ -340,7 +341,13 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
 
     // 只有本地用户才有upload方法 ------------------------------------------------------------------
     const upload = async (key: AppKey, data: SpaceTimer | SpaceCountdown | SpaceTodo) => {
-      const response = await api.uploadSpaceApp(space, participantId, key, data);
+      const response = await api.uploadSpaceApp(
+        space,
+        participantId,
+        key,
+        data,
+        isAuth(participantId),
+      );
       if (response.ok) {
         socket.emit('update_user_status', {
           space,

@@ -354,7 +354,7 @@ export class AICutAnalysisService {
     // console.warn(content);
     if (!!content) {
       let line = JSON.parse(parseJsonBack(content));
-      console.warn(line);
+      // console.warn(line);
       // 如果返回格式不是AICutAnalysisBack，则直接将content作为内容返回
       if (
         !('name' in line) ||
