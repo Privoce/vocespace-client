@@ -96,7 +96,7 @@ export function PreJoin({
     return spaceParams.username || userChoices.username || '';
   });
   const [messageApi, contextHolder] = message.useMessage();
-  
+
   // Save user choices to persistent storage ---------------------------------------------------------
   React.useEffect(() => {
     saveAudioInputEnabled(audioEnabled);
@@ -120,7 +120,6 @@ export function PreJoin({
   //   }, 500);
   // }, []);
   // 如果 spaceParams 有变化，需要loading 状态
-
 
   // 监听 spaceParams 变化，确保参数更新时重新设置用户信息
   useEffect(() => {
@@ -305,8 +304,19 @@ export function PreJoin({
   };
 
   const showLoginBtn = useMemo(() => {
-    return !spaceParams.userId
+    return !spaceParams.userId;
   }, [spaceParams]);
+
+  useEffect(() => {
+    if (device.volume !== volume) {
+      setVolume(device.volume);
+    }
+    if (device.blur !== blur) {
+      setBlur(device.blur);
+      setVideoBlur(device.blur);
+    }
+  }, [device, volume, blur]);
+
   return (
     <div className={styles.view}>
       {contextHolder}
@@ -436,7 +446,6 @@ export function PreJoin({
               min={0.0}
               max={1.0}
               step={0.01}
-              defaultValue={0.15}
               value={blur}
               onChange={(e) => {
                 setBlur(e);
@@ -445,9 +454,7 @@ export function PreJoin({
               }}
             ></Slider>
           </div>
-          {
-            showLoginBtn &&  <LoginButtons space={spaceParams.spaceName}></LoginButtons>
-          }
+          {showLoginBtn && <LoginButtons space={spaceParams.spaceName}></LoginButtons>}
           <Input
             ref={inputRef}
             size="large"
@@ -470,7 +477,6 @@ export function PreJoin({
           >
             {joinLabel}
           </button>
-         
         </div>
       )}
       <LoginStateBtn

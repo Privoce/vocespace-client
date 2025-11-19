@@ -631,18 +631,18 @@ lk load-test \
 - [ ] 房主固定 owner -》 设置多个管理员 (5) 管理员可以转让/房主设置
 - [ ] 房间设置的话，默认访客（直接输名字）可以进，然后我们让房间创建者可以选择是否允许访客
 - [ ] 平台用户信息在用户登陆之后需要能嵌入到会议中，使用iframe
-- [ ] AI分析数据在平台上
-  - [ ] widget可以在平台页可见
+- [x] AI分析数据在平台上
+  - [x] widget可以在平台页可见
   - [x] 平台需要能提供存储todo的数据库接口
     - [x] 平台接口
     - [x] 客户端接口
     - [x] 数据库
     - [x] 界面
-  - [ ] 平台需要能提供存储ai分析的数据库接口
+  - [x] 平台需要能提供存储ai分析的数据库接口
     - [x] 平台接口
     - [x] 数据库
-    - [ ] 界面
-    - [ ] 客户端接口
+    - [x] 界面
+    - [x] 客户端接口
 - [x] login增加init from从vocespace.com进入进行登陆后直接跳转自己的space
 - [x] email注册失败，google登陆错误
 - [x] 修复退出登陆无法回到登陆页
@@ -652,5 +652,5 @@ lk load-test \
 - [x] 增加settings页面 参考github settings
 - [x] Quickly create new space -> create new space
 - [ ] 平台增加用户设置的字段
-- [ ] 本地设置被覆盖了 bug
+- [x] 本地设置被覆盖了 bug
 - [x] 增加from参数允许space.voce.chat进行登陆

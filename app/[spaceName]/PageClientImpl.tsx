@@ -220,6 +220,7 @@ export function PageClientImpl(props: {
         localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
         return;
       }
+      setUState(storedSettings);
     }
     const reloadRoom = localStorage.getItem('reload');
     if (reloadRoom) {
