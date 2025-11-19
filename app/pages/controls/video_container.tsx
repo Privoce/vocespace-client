@@ -1,4 +1,12 @@
-import { getServerIp, is_web, isAuth, isMobile, src, UserDefineStatus, UserStatus } from '@/lib/std';
+import {
+  getServerIp,
+  is_web,
+  isAuth,
+  isMobile,
+  src,
+  UserDefineStatus,
+  UserStatus,
+} from '@/lib/std';
 import {
   CarouselLayout,
   ConnectionStateToast,
@@ -72,7 +80,7 @@ import {
   SpaceInfo,
   VOCESPACE_PLATFORM_USER_ID,
 } from '@/lib/std/space';
-import { FlotLayout } from '../apps/flot';
+import { FlotButton, FlotLayout } from '../apps/flot';
 import { api } from '@/lib/api';
 import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
 import { VocespaceConfig } from '@/lib/std/conf';
@@ -1109,6 +1117,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       <div className="video_container_wrapper" style={{ position: 'relative' }}>
         {/* 右侧应用浮窗，悬浮态 */}
         {showFlot && space && settings.participants[space.localParticipant.identity] && (
+          <FlotButton
+            openApp={openApp}
+            setOpenApp={setOpenApp}
+            style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
+          ></FlotButton>
+        )}
+        {showFlot && space && settings.participants[space.localParticipant.identity] && (
           <FlotLayout
             space={space.name}
             style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
@@ -1165,9 +1180,12 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               // onPinChange={handleFocusStateChange}
               onWidgetChange={widgetUpdate}
             >
-              <div className="lk-video-conference-inner" style={{ alignItems: 'space-between', height: "100dvh" }}>
+              <div
+                className="lk-video-conference-inner"
+                style={{ alignItems: 'space-between', height: '100dvh' }}
+              >
                 {!focusTrack ? (
-                  <div className="lk-grid-layout-wrapper" >
+                  <div className="lk-grid-layout-wrapper">
                     <GridLayout tracks={tracks}>
                       <ParticipantItem
                         space={space}

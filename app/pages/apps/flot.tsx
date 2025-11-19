@@ -1,4 +1,15 @@
-import { Button, Col, Collapse, CollapseProps, Popover, Row, theme, Tooltip } from 'antd';
+import {
+  Button,
+  Col,
+  Collapse,
+  CollapseProps,
+  Drawer,
+  Modal,
+  Popover,
+  Row,
+  theme,
+  Tooltip,
+} from 'antd';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import styles from '@/styles/apps.module.scss';
 import { AppTimer } from './timer';
@@ -41,6 +52,44 @@ import { CopyButton } from '../controls/widgets/copy';
 import { useRecoilState } from 'recoil';
 import { AICutService } from '@/lib/ai/cut';
 import { isAuth } from '@/lib/std';
+import { DEFAULT_DRAWER_PROP, DrawerCloser, DrawerHeader } from '../controls/drawer_tools';
+
+export interface FlotButtonProps {
+  style?: React.CSSProperties;
+  openApp: boolean;
+  setOpenApp: (open: boolean) => void;
+}
+
+export function FlotButton({ style, openApp, setOpenApp }: FlotButtonProps) {
+  const { localParticipant } = useLocalParticipant();
+  const [targetParticipant, setTargetParticipant] = useRecoilState(RemoteTargetApp);
+
+  return (
+    <Button
+      onClick={async () => {
+        if (!openApp && targetParticipant.participantId !== localParticipant.identity) {
+          setTargetParticipant({
+            participantId: localParticipant.identity,
+            participantName: localParticipant.name,
+            auth: 'write',
+          });
+        }
+        setOpenApp(!openApp);
+      }}
+      type="text"
+      style={{
+        height: 'fit-content',
+        width: 'fit-content',
+        padding: '12px 2px',
+        backgroundColor: '#00000050',
+        borderRadius: '24px',
+        color: '#fff',
+        ...style,
+      }}
+      icon={<AppstoreOutlined style={{ fontSize: 16 }} />}
+    ></Button>
+  );
+}
 
 export interface FlotLayoutProps {
   style?: React.CSSProperties;
@@ -116,15 +165,15 @@ export function FlotLayout({
     }
   }, [window.innerWidth]);
 
-  const contentWidth = useMemo(() => {
-    if (layoutType.ty === 'desktop') {
-      return 1108;
-    } else if (layoutType.ty === 'pad') {
-      return 788;
-    } else {
-      return 'calc(100vw - 48px)';
-    }
-  }, [layoutType]);
+  // const contentWidth = useMemo(() => {
+  //   if (layoutType.ty === 'desktop') {
+  //     return 1108;
+  //   } else if (layoutType.ty === 'pad') {
+  //     return 788;
+  //   } else {
+  //     return 'calc(100vw - 48px)';
+  //   }
+  // }, [layoutType]);
 
   const getRemoteAICutAnalysisRes = async (participantId: string) => {
     if (participantId && !isSelf) {
@@ -140,110 +189,97 @@ export function FlotLayout({
 
   useEffect(() => {
     if (!isSelf && targetParticipant.participantId) {
-        console.warn('Fetching remote AI Cut Analysis Result for', targetParticipant.participantId);
+      console.warn('Fetching remote AI Cut Analysis Result for', targetParticipant.participantId);
       getRemoteAICutAnalysisRes(targetParticipant.participantId).then((res) => {
-          console.warn(res);
+        console.warn(res);
         setRemoteAnalysisRes(res);
       });
     }
   }, [isSelf, targetParticipant]);
 
   return (
-    <div style={style} className={styles.flot_layout}>
-      <Popover
-        open={openApp}
-        placement="leftTop"
-        content={
-          <Row gutter={8}>
-            {layoutType.ty !== 'phone' && (
-              <Col span={layoutType.span1}>
-                {containerHeight > 0 && showAICutAnalysis && (
-                  <AICutAnalysisMdTabs
-                    result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
-                    reloadResult={reloadResult}
-                    showSettings={showAICutAnalysisSettings}
-                    setFlotAppOpen={setOpenApp}
-                    spaceInfo={spaceInfo}
-                    startOrStopAICutAnalysis={startOrStopAICutAnalysis}
-                    openAIServiceAskNote={openAIServiceAskNote}
-                    messageApi={messageApi}
-                    isSelf={isSelf}
-                    style={{
-                      height: containerHeight,
-                      width: '100%',
-                    }}
-                    cutInstance={cutInstance}
-                    userId={targetParticipant.participantId || localParticipant.identity}
-                  ></AICutAnalysisMdTabs>
-                )}
-              </Col>
-            )}
-            <Col span={layoutType.span2}>
-              <FlotAppItem
-                ref={flotAppItemRef}
-                messageApi={messageApi}
-                apps={spaceInfo.apps}
-                space={space}
+    <Drawer
+      {...DEFAULT_DRAWER_PROP}
+      open={openApp}
+      onClose={() => setOpenApp(false)}
+      title={<DrawerHeader title={'Widgets'}></DrawerHeader>}
+      extra={DrawerCloser({
+        on_clicked: () => {
+          setOpenApp(false);
+        },
+      })}
+      width={1168}
+      styles={{
+        body: {
+          padding: "0 24px",
+        },
+      }}
+    >
+      <Row gutter={8} style={{height: "100%"}}>
+        {layoutType.ty !== 'phone' && (
+          <Col span={layoutType.span1}>
+            {showAICutAnalysis && (
+              <AICutAnalysisMdTabs
+                result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
+                reloadResult={reloadResult}
+                showSettings={showAICutAnalysisSettings}
+                setFlotAppOpen={setOpenApp}
                 spaceInfo={spaceInfo}
-                onHeightChange={setContainerHeight}
-                showAICutAnalysis={showAICutAnalysis}
-                setShowAICutAnalysis={setShowAICutAnalysis}
-                participantId={targetParticipant.participantId || localParticipant.identity}
+                startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+                openAIServiceAskNote={openAIServiceAskNote}
+                messageApi={messageApi}
                 isSelf={isSelf}
-              />
-              {layoutType.ty === 'phone' && containerHeight > 0 && showAICutAnalysis && (
-                <AICutAnalysisMdTabs
-                  result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
-                  reloadResult={reloadResult}
-                  showSettings={showAICutAnalysisSettings}
-                  setFlotAppOpen={setOpenApp}
-                  spaceInfo={spaceInfo}
-                  startOrStopAICutAnalysis={startOrStopAICutAnalysis}
-                  openAIServiceAskNote={openAIServiceAskNote}
-                  messageApi={messageApi}
-                  isSelf={isSelf}
-                  style={{
-                    height: containerHeight,
-                    width: '100%',
-                  }}
-                  cutInstance={cutInstance}
-                  userId={targetParticipant.participantId || localParticipant.identity}
-                ></AICutAnalysisMdTabs>
-              )}
-            </Col>
-          </Row>
-        }
-        styles={{
-          body: {
-            background: '#1a1a1a',
-            width: contentWidth,
-            maxHeight: '86vh',
-            height: 'fit-content',
-            overflowY: 'scroll',
-            overflowX: 'hidden',
-            paddingRight: 0,
-            paddingLeft: 8,
-            paddingBottom: 0,
-            scrollbarWidth: 'thin',
-            scrollbarColor: '#888 transparent',
-          },
-        }}
-      >
-        <Button
-          onClick={async () => {
-            setTargetParticipant({
-              participantId: localParticipant.identity,
-              participantName: localParticipant.name,
-              auth: 'write',
-            });
-            setOpenApp(!openApp);
-          }}
-          type="text"
-          style={{ height: '100%', width: '100%' }}
-          icon={<AppstoreOutlined style={{ fontSize: 16 }} />}
-        ></Button>
-      </Popover>
-    </div>
+                style={{
+                  height: "100%",
+                  width: '100%',
+                }}
+                cutInstance={cutInstance}
+                userId={targetParticipant.participantId || localParticipant.identity}
+              ></AICutAnalysisMdTabs>
+            )}
+          </Col>
+        )}
+        <Col span={layoutType.span2} style={{
+          height: "100%",
+          scrollbarWidth: "thin",
+          overflowY: "scroll",
+          overflowX: "hidden",
+          
+        }}>
+          <FlotAppItem
+            ref={flotAppItemRef}
+            messageApi={messageApi}
+            apps={spaceInfo.apps}
+            space={space}
+            spaceInfo={spaceInfo}
+            onHeightChange={setContainerHeight}
+            showAICutAnalysis={showAICutAnalysis}
+            setShowAICutAnalysis={setShowAICutAnalysis}
+            participantId={targetParticipant.participantId || localParticipant.identity}
+            isSelf={isSelf}
+          />
+          {layoutType.ty === 'phone'  && showAICutAnalysis && (
+            <AICutAnalysisMdTabs
+              result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
+              reloadResult={reloadResult}
+              showSettings={showAICutAnalysisSettings}
+              setFlotAppOpen={setOpenApp}
+              spaceInfo={spaceInfo}
+              startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+              openAIServiceAskNote={openAIServiceAskNote}
+              messageApi={messageApi}
+              isSelf={isSelf}
+              style={{
+                height: "100%",
+                width: '100%',
+              }}
+              cutInstance={cutInstance}
+              userId={targetParticipant.participantId || localParticipant.identity}
+            ></AICutAnalysisMdTabs>
+          )}
+        </Col>
+      </Row>
+    </Drawer>
   );
 }
 
