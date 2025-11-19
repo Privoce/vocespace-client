@@ -623,7 +623,7 @@ lk load-test \
 - [x] 登陆使用_self
 - [x] 修复TODO总结弹窗无法关闭
 - [x] 可以看到正在记录的用户的分析（不包含图片）（暂时效果）
-- [ ] flot popover -> modal
+- [x] flot popover -> modal
 
 --- 平台性功能
 - [ ] 只有注册的用户，才可以建立房间

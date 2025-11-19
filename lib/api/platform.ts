@@ -1,7 +1,9 @@
+import dayjs from 'dayjs';
 import { AICutAnalysisRes } from '../ai/analysis';
-import { SpaceTodo, TodoItem } from '../std/space';
+import { SpaceTodo, todayTimeStamp, TodoItem } from '../std/space';
 
-const PLATFORM_URL = "https://home.vocespace.com/api";
+
+const PLATFORM_URL = 'https://home.vocespace.com/api';
 // const PLATFORM_URL = 'http://localhost:3001/api';
 
 export interface PlatformTodos {
@@ -20,12 +22,10 @@ export interface PlatformTodos {
 }
 
 const castToPlatformTodo = (todos: SpaceTodo, uid: string): PlatformTodos => {
-  const date = new Date(todos.timestamp);
-  date.setHours(0, 0, 0, 0); // 设置为当天的00:00:00
   return {
     id: uid,
     items: todos.items,
-    date: date.getTime().toString(),
+    date: todayTimeStamp(todos.timestamp).toString(),
   };
 };
 /**
@@ -47,6 +47,15 @@ const updateTodo = async (uid: string, todos: SpaceTodo) => {
       todo: platformTodo,
     }),
   });
+};
+
+/**
+ * 获取平台端的todo数据 获取所有todo数据
+ */
+const getTodos = async (uid: string) => {
+  const url = new URL(PLATFORM_URL + '/todos');
+  url.searchParams.append('uid', uid);
+  return await fetch(url.toString());
 };
 
 /**
@@ -80,9 +89,16 @@ const updateAIAnalysis = async (
   });
 };
 
+export interface PlatformTodos {
+  id: string;
+  items: TodoItem[];
+  date: string;
+}
+
 export const platformAPI = {
   todo: {
     updateTodo,
+    getTodos,
   },
   ai: {
     updateAIAnalysis,

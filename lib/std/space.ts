@@ -1,5 +1,5 @@
 import dayjs, { Dayjs } from 'dayjs';
-import { DEFAULT_USER_DEFINE_STATUS, UserDefineStatus, UserStatus } from '.';
+import { UserStatus } from '.';
 import { ModelBg, ModelRole } from './virtual';
 import { Extraction } from '../ai/analysis';
 
@@ -281,6 +281,16 @@ export interface SpaceTodo {
   timestamp: number;
 }
 
+export const todayTimeStamp = (timestamp?: number): number => {
+  const date = timestamp ? dayjs(timestamp) : dayjs();
+  return date.startOf('day').valueOf();
+};
+
+export const DEFAULT_TODOS: SpaceTodo = {
+  items: [],
+  timestamp: todayTimeStamp(),
+};
+
 export interface SpaceTimer extends Timer {
   timestamp: number;
 }
@@ -367,7 +377,7 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   volume: 100,
   blur: 0.0,
   screenBlur: 0.0,
-  status: "settings.general.status.online",
+  status: 'settings.general.status.online',
   socketId: '',
   startAt: 0,
   virtual: {

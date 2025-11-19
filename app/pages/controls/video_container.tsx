@@ -76,8 +76,11 @@ import {
   AICutParticipantConf,
   AppAuth,
   AppKey,
+  DEFAULT_TODOS,
   PARTICIPANT_SETTINGS_KEY,
   SpaceInfo,
+  todayTimeStamp,
+  TodoItem,
   VOCESPACE_PLATFORM_USER_ID,
 } from '@/lib/std/space';
 import { FlotButton, FlotLayout } from '../apps/flot';
@@ -88,6 +91,7 @@ import { acceptRaise, RaiseHandler, rejectRaise } from './widgets/raise';
 import { audio } from '@/lib/audio';
 import { AICutService } from '@/lib/ai/cut';
 import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES, Extraction } from '@/lib/ai/analysis';
+import { platformAPI, PlatformTodos } from '@/lib/api/platform';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -331,7 +335,33 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         setInit(true);
       });
 
+      // 从平台端获取数据 ai总结/todos ---------------------------------------------------------------
+      const fetchPlatformData = async () => {
+        // todos ----
+        if (isAuth(space.localParticipant.identity)) {
+          const response = await platformAPI.todo.getTodos(space.localParticipant.identity);
+          if (response.ok) {
+            const { todos }: { todos: PlatformTodos[] } = await response.json();
+            const items: TodoItem[] = [];
+            todos.forEach((todoData) => {
+              todoData.items.forEach((item) => {
+                items.push(item);
+              });
+            });
+
+            // 更新本地数据
+            return {
+              timestamp: todayTimeStamp(),
+              items
+            };
+          }
+        }
+
+        return DEFAULT_TODOS;
+      };
+
       const syncSettings = async () => {
+        const todos = await fetchPlatformData();
         // 将当前参与者的基础设置发送到服务器 ----------------------------------------------------------
         await updateSettings(
           {
@@ -340,6 +370,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             name: space.localParticipant.name || space.localParticipant.identity,
             startAt: new Date().getTime(),
             online: true,
+            ...(todos ? { appDatas: { ...uState.appDatas, todo: todos } } : uState.appDatas),
           },
           undefined,
           true,
@@ -849,7 +880,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       uState,
       init,
       uLicenseState,
-
       chatMsg,
       socket,
       config,

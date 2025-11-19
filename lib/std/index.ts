@@ -4,6 +4,7 @@ import { Trans } from '../i18n/i18n';
 import { GetProp, UploadProps } from 'antd';
 import { VOCESPACE_PLATFORM_USER_ID } from './space';
 import { PUserInfo } from '../hooks/platform';
+import dayjs from 'dayjs';
 /**
  * Option<T>
  *
@@ -308,3 +309,4 @@ export const isAuth = (uid: string): boolean => {
   }
   return false;
 };
+
