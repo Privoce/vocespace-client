@@ -622,6 +622,8 @@ lk load-test \
 
 - [x] 登陆使用_self
 - [x] 修复TODO总结弹窗无法关闭
+- [x] 可以看到正在记录的用户的分析（不包含图片）（暂时效果）
+- [ ] flot popover -> modal
 
 --- 平台性功能
 - [ ] 只有注册的用户，才可以建立房间
@@ -637,8 +639,8 @@ lk load-test \
     - [x] 数据库
     - [x] 界面
   - [ ] 平台需要能提供存储ai分析的数据库接口
-    - [ ] 平台接口
-    - [ ] 数据库
+    - [x] 平台接口
+    - [x] 数据库
     - [ ] 界面
     - [ ] 客户端接口
 - [x] login增加init from从vocespace.com进入进行登陆后直接跳转自己的space
@@ -647,5 +649,8 @@ lk load-test \
 - [x] 平台退出和会议端一起退出登陆
 - [x] 会议端退出登陆接口返回登陆页(api)
 - [x] 从会议端使用Google登陆参数会丢失（from="google"）
-- [ ] 增加settings页面 参考github settings
+- [x] 增加settings页面 参考github settings
 - [x] Quickly create new space -> create new space
+- [ ] 平台增加用户设置的字段
+- [ ] 本地设置被覆盖了 bug
+- [x] 增加from参数允许space.voce.chat进行登陆

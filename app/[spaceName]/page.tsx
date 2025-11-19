@@ -20,7 +20,9 @@ export default function Page({
     codec?: string;
     username?: string;
     userId?: string;
-    auth?: 'vocespace' | 'google';
+    // 这里目的是为了标识返回的url，不是为了区分登录方式，从vocespace.com就是vocespace，从space.voce.chat就是space，暂时没有特殊意义
+    // 即使没有这个参数也不会影响功能
+    auth?: 'vocespace' | 'space';
   };
 }) {
   const [loading, setLoading] = React.useState(true);

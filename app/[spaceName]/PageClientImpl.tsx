@@ -112,7 +112,7 @@ export function PageClientImpl(props: {
   codec: VideoCodec;
   username?: string;
   userId?: string;
-  auth?: 'google' | 'vocespace';
+  auth?: 'space' | 'vocespace';
   avatar?: string;
   loading: boolean;
   setLoading: (loading: boolean) => void;

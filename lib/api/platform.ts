@@ -1,8 +1,8 @@
 import { AICutAnalysisRes } from '../ai/analysis';
 import { SpaceTodo, TodoItem } from '../std/space';
 
-// const PLATFORM_URL = "https://home.vocespace.com/api";
-const PLATFORM_URL = 'http://localhost:3001/api';
+const PLATFORM_URL = "https://home.vocespace.com/api";
+// const PLATFORM_URL = 'http://localhost:3001/api';
 
 export interface PlatformTodos {
   /**
