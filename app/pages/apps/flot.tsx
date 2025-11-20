@@ -33,11 +33,13 @@ import {
   Countdown,
   DEFAULT_COUNTDOWN,
   DEFAULT_TIMER,
+  sortTodos,
   SpaceCountdown,
   SpaceInfo,
   SpaceTimer,
   SpaceTodo,
   Timer,
+  todayTimeStamp,
   TodoItem,
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
@@ -211,11 +213,11 @@ export function FlotLayout({
       width={1168}
       styles={{
         body: {
-          padding: "0 24px",
+          padding: '0 24px',
         },
       }}
     >
-      <Row gutter={8} style={{height: "100%"}}>
+      <Row gutter={8} style={{ height: '100%' }}>
         {layoutType.ty !== 'phone' && (
           <Col span={layoutType.span1}>
             {showAICutAnalysis && (
@@ -230,7 +232,7 @@ export function FlotLayout({
                 messageApi={messageApi}
                 isSelf={isSelf}
                 style={{
-                  height: "100%",
+                  height: '100%',
                   width: '100%',
                 }}
                 cutInstance={cutInstance}
@@ -239,13 +241,15 @@ export function FlotLayout({
             )}
           </Col>
         )}
-        <Col span={layoutType.span2} style={{
-          height: "100%",
-          scrollbarWidth: "thin",
-          overflowY: "scroll",
-          overflowX: "hidden",
-          
-        }}>
+        <Col
+          span={layoutType.span2}
+          style={{
+            height: '100%',
+            scrollbarWidth: 'thin',
+            overflowY: 'scroll',
+            overflowX: 'hidden',
+          }}
+        >
           <FlotAppItem
             ref={flotAppItemRef}
             messageApi={messageApi}
@@ -258,7 +262,7 @@ export function FlotLayout({
             participantId={targetParticipant.participantId || localParticipant.identity}
             isSelf={isSelf}
           />
-          {layoutType.ty === 'phone'  && showAICutAnalysis && (
+          {layoutType.ty === 'phone' && showAICutAnalysis && (
             <AICutAnalysisMdTabs
               result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
               reloadResult={reloadResult}
@@ -270,7 +274,7 @@ export function FlotLayout({
               messageApi={messageApi}
               isSelf={isSelf}
               style={{
-                height: "100%",
+                height: '100%',
                 width: '100%',
               }}
               cutInstance={cutInstance}
@@ -307,8 +311,8 @@ export interface CountdownProp {
   auth: AppAuth;
 }
 export interface TodoProp {
-  data: TodoItem[];
-  setData: (data: TodoItem[]) => Promise<void>;
+  data: SpaceTodo[];
+  setData: (data: SpaceTodo) => Promise<void>;
   auth: AppAuth;
 }
 
@@ -418,11 +422,8 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
       } as SpaceCountdown);
     };
 
-    const setSelfTodoData = async (todo: TodoItem[]) => {
-      await upload('todo', {
-        items: todo,
-        timestamp: Date.now(),
-      } as SpaceTodo);
+    const setSelfTodoData = async (todo: SpaceTodo) => {
+      await upload('todo', todo);
     };
 
     const updateAppSync = async (key: AppKey) => {
@@ -437,8 +438,8 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
       }
     };
 
-    const exportTodo = (data: TodoItem[]) => {
-      if (data.length === 0) {
+    const exportTodo = (dataLength: number) => {
+      if (dataLength === 0) {
         messageApi.info(t('more.app.todo.unexport'));
       } else {
         setShowExport(true);
@@ -474,10 +475,14 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
     };
 
     const getTodoText = (todo: TodoProp) => {
-      return `--- ${new Date().toLocaleDateString()} ---\n${todo.data
-        .map((item, index) => `- [${item.done ? 'x' : ' '}] ${index + 1}. ${item.title}`)
-        .join('\n')}
+      return todo.data
+        .map((item) => {
+          return `--- ${new Date(item.date).toLocaleDateString()} ---\n${item.items
+            .map((item, index) => `- [${item.done ? 'x' : ' '}] ${index + 1}. ${item.title}`)
+            .join('\n')}
       `;
+        })
+        .join('\n\n');
     };
 
     const createItems = (
@@ -548,7 +553,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
                       <ProfileOutlined
                         onClick={(e) => {
                           e.stopPropagation();
-                          exportTodo(todo.data);
+                          exportTodo(todo.data.length);
                         }}
                       />
                     </Tooltip>
@@ -627,7 +632,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
 
         if (apps.includes('todo')) {
           todo = {
-            data: castTodo(appData.todo) || [],
+            data: sortTodos(appData.todo || []),
             setData: setSelfTodoData,
             auth: 'write',
           };
@@ -635,7 +640,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
       } else {
         let castedTimer = castTimer(participant.appDatas.timer);
         let castedCountdown = castCountdown(participant.appDatas.countdown);
-        let castedTodo = castTodo(participant.appDatas.todo);
+        let castedTodo = sortTodos(participant.appDatas.todo || []);
         let auth = participant.auth;
         if (castedTimer) {
           timer = {

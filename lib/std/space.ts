@@ -106,7 +106,7 @@ export interface ParticipantSettings {
     /**
      * 待办事项应用数据
      */
-    todo?: SpaceTodo;
+    todo?: SpaceTodo[];
     /**
      * 计时器应用数据
      */
@@ -278,8 +278,41 @@ export interface SpaceTodo {
   /**
    * 上传时间戳，表示用户上传到空间的时间
    */
-  timestamp: number;
+  date: number;
 }
+
+export const sortTodos = (todos: SpaceTodo[]): SpaceTodo[] => {
+  if (todos.length === 0) return [];
+
+  // 创建深拷贝以避免修改只读对象
+  const sortedTodos = todos.map((todo) => {
+    // 对items进行排序：未完成的排在前面，相同完成状态按id（时间戳）排序
+    const sortedItems = [...todo.items].sort((a, b) => {
+      if ((!a.done && !b.done) || (a.done && b.done)) {
+        // 都未完成或都已完成，按id排序（新的在前面）
+        return Number(b.id) - Number(a.id);
+      }
+      if (a.done && !b.done) {
+        // a已完成，b未完成，b排前面
+        return 1;
+      }
+      if (!a.done && b.done) {
+        // a未完成，b已完成，a排前面
+        return -1;
+      }
+
+      return 0;
+    });
+
+    return {
+      ...todo,
+      items: sortedItems,
+    };
+  });
+
+  // 按照date进行排序，最新的在前面
+  return sortedTodos.sort((a, b) => b.date - a.date);
+};
 
 export const todayTimeStamp = (timestamp?: number): number => {
   const date = timestamp ? dayjs(timestamp) : dayjs();
@@ -288,7 +321,7 @@ export const todayTimeStamp = (timestamp?: number): number => {
 
 export const DEFAULT_TODOS: SpaceTodo = {
   items: [],
-  timestamp: todayTimeStamp(),
+  date: todayTimeStamp(),
 };
 
 export interface SpaceTimer extends Timer {

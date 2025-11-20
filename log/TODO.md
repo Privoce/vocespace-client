@@ -654,3 +654,6 @@ lk load-test \
 - [ ] 平台增加用户设置的字段
 - [x] 本地设置被覆盖了 bug
 - [x] 增加from参数允许space.voce.chat进行登陆
+- [x] 升序排列待办
+- [x] 点击pagination时todo会重复增加
+- [x] todo list可以查询历史，使用分割线分割

@@ -1,4 +1,4 @@
-import { SpaceInfo, TodoItem } from '@/lib/std/space';
+import { SpaceInfo, SpaceTodo, TodoItem } from '@/lib/std/space';
 import { useI18n } from '@/lib/i18n/i18n';
 import { Collapse, Progress, Empty, Card, List } from 'antd';
 import { AppTodo } from './todo_list';
@@ -18,6 +18,7 @@ interface ParticipantTodoSummary {
   completedCount: number;
   totalCount: number;
   firstTodoTitle?: string;
+  todos: SpaceTodo[];
 }
 
 export function TodoTogether({ spaceInfo, messageApi }: TodoTogetherProps) {
@@ -32,7 +33,7 @@ export function TodoTogether({ spaceInfo, messageApi }: TodoTogetherProps) {
         //   return todoItems && todoItems.length > 0;
         // })
         .map(([participantId, participant]) => {
-          const todoData = participant.appDatas?.todo?.items || [];
+          const todoData = participant.appDatas?.todo?.map((item) => item.items).flat() || [];
           const visibleTodos = todoData.filter((item) => item.visible !== false);
           const completedCount = todoData.filter((item) => item.done).length;
           const firstTodo = visibleTodos[0];
@@ -44,6 +45,7 @@ export function TodoTogether({ spaceInfo, messageApi }: TodoTogetherProps) {
             completedCount,
             totalCount: todoData.length,
             firstTodoTitle: firstTodo?.title,
+            todos: participant.appDatas?.todo || [],
           };
         })
         .sort((a, b) => a.name.localeCompare(b.name))
@@ -109,7 +111,7 @@ export function TodoTogether({ spaceInfo, messageApi }: TodoTogetherProps) {
                   padding: '0 18px 0 0',
                 }}
                 messageApi={messageApi}
-                appData={summary.todoData}
+                appData={summary.todos}
                 setAppData={async () => {}} // 只读模式，不允许修改
                 auth="read" // 设置为只读权限
                 showExport={false}

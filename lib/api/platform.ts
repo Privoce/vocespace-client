@@ -3,8 +3,8 @@ import { AICutAnalysisRes } from '../ai/analysis';
 import { SpaceTodo, todayTimeStamp, TodoItem } from '../std/space';
 
 
-const PLATFORM_URL = 'https://home.vocespace.com/api';
-// const PLATFORM_URL = 'http://localhost:3001/api';
+// const PLATFORM_URL = 'https://home.vocespace.com/api';
+const PLATFORM_URL = 'http://localhost:3001/api';
 
 export interface PlatformTodos {
   /**
@@ -25,7 +25,7 @@ const castToPlatformTodo = (todos: SpaceTodo, uid: string): PlatformTodos => {
   return {
     id: uid,
     items: todos.items,
-    date: todayTimeStamp(todos.timestamp).toString(),
+    date: todayTimeStamp(todos.date).toString(),
   };
 };
 /**

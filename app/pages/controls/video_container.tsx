@@ -79,6 +79,7 @@ import {
   DEFAULT_TODOS,
   PARTICIPANT_SETTINGS_KEY,
   SpaceInfo,
+  SpaceTodo,
   todayTimeStamp,
   TodoItem,
   VOCESPACE_PLATFORM_USER_ID,
@@ -197,13 +198,20 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             reload,
             async (lastScreenShot) => {
               if (space && space.localParticipant) {
+                let todos: string[] = [];
+                if (conf.todo) {
+                  todos =
+                    uState.appDatas.todo
+                      ?.map((todo) => todo.items.filter((item) => !item.done))
+                      .flat()
+                      .map((item) => item.title) || [];
+                }
+
                 const response = await api.ai.analysis({
                   spaceName: space.name,
                   userId: space.localParticipant.identity,
                   screenShot: lastScreenShot,
-                  todos: conf.todo
-                    ? uState.appDatas.todo?.items.map((item) => item.title) || []
-                    : [],
+                  todos,
                   freq: freq,
                   lang: locale,
                   extraction: conf.extraction,
@@ -342,22 +350,19 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           const response = await platformAPI.todo.getTodos(space.localParticipant.identity);
           if (response.ok) {
             const { todos }: { todos: PlatformTodos[] } = await response.json();
-            const items: TodoItem[] = [];
-            todos.forEach((todoData) => {
-              todoData.items.forEach((item) => {
-                items.push(item);
-              });
+            const items: SpaceTodo[] = todos.map((todo) => {
+              return {
+                items: todo.items,
+                date: Number(todo.date),
+              };
             });
 
             // 更新本地数据
-            return {
-              timestamp: todayTimeStamp(),
-              items
-            };
+            return items;
           }
         }
 
-        return DEFAULT_TODOS;
+        return [];
       };
 
       const syncSettings = async () => {

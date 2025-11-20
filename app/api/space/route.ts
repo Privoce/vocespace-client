@@ -1184,7 +1184,28 @@ export async function POST(request: NextRequest) {
         spaceInfo.participants[participantId].appDatas.countdown = data as SpaceCountdown;
       } else {
         // 更新todo
-        spaceInfo.participants[participantId].appDatas.todo = data as SpaceTodo;
+        let targetUpdateTodo = spaceInfo.participants[participantId].appDatas.todo?.find((item) => {
+          return item.date === (data as SpaceTodo).date;
+        });
+        if (!targetUpdateTodo) {
+          // 如果没有找到则添加一个新的
+          if (!spaceInfo.participants[participantId].appDatas.todo) {
+            spaceInfo.participants[participantId].appDatas.todo = [];
+          }
+          spaceInfo.participants[participantId].appDatas.todo.push(data as SpaceTodo);
+        } else {
+          // 更新spaceInfo
+          spaceInfo.participants[participantId].appDatas.todo = spaceInfo.participants[
+            participantId
+          ].appDatas.todo?.map((item) => {
+            if (item.date === (data as SpaceTodo).date) {
+              return data as SpaceTodo;
+            } else {
+              return item;
+            }
+          });
+        }
+
         // 将用户的数据传到平台接口进行同步和保存
         if (isAuth) {
           try {

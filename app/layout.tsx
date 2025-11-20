@@ -206,6 +206,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             colorBorderBg: '#1E1E1E',
             nodeSelectedBg: '#1E1E1E',
           },
+          Divider: {
+            colorSplit: '#333',
+          },
         },
       }}
     >
