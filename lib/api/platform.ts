@@ -120,7 +120,7 @@ export const convertPlatformToACARes = (platform: PlarformAICutAnalysis): AICutA
   return {
     markdown: '',
     summary: '',
-    lines: platform.result,
+    lines: platform?.result || [],
   };
 };
 
