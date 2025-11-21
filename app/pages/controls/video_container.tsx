@@ -1,12 +1,4 @@
-import {
-  getServerIp,
-  is_web,
-  isAuth,
-  isMobile,
-  src,
-  UserDefineStatus,
-  UserStatus,
-} from '@/lib/std';
+import { isMobile, src, UserDefineStatus, UserStatus } from '@/lib/std';
 import {
   CarouselLayout,
   ConnectionStateToast,
@@ -75,14 +67,9 @@ import { Channel, ChannelExports } from './channel';
 import {
   AICutParticipantConf,
   AppAuth,
-  AppKey,
-  DEFAULT_TODOS,
   PARTICIPANT_SETTINGS_KEY,
-  SpaceInfo,
   SpaceTodo,
   todayTimeStamp,
-  TodoItem,
-  VOCESPACE_PLATFORM_USER_ID,
 } from '@/lib/std/space';
 import { FlotButton, FlotLayout } from '../apps/flot';
 import { api } from '@/lib/api';
@@ -92,7 +79,12 @@ import { acceptRaise, RaiseHandler, rejectRaise } from './widgets/raise';
 import { audio } from '@/lib/audio';
 import { AICutService } from '@/lib/ai/cut';
 import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES, Extraction } from '@/lib/ai/analysis';
-import { platformAPI, PlatformTodos } from '@/lib/api/platform';
+import {
+  convertPlatformToACARes,
+  PlarformAICutAnalysis,
+  platformAPI,
+  PlatformTodos,
+} from '@/lib/api/platform';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -215,7 +207,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   freq: freq,
                   lang: locale,
                   extraction: conf.extraction,
-                  isAuth: isAuth(space.localParticipant.identity),
+                  isAuth: uState.isAuth,
                 });
 
                 if (!response.ok) {
@@ -262,7 +254,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           space: space.name,
         } as WsBase);
       },
-      [space, settings.ai.cut, uState.ai.cut, t, updateSettings, aiCutAnalysisIntervalId, locale],
+      [space, settings.ai.cut, uState, t, updateSettings, aiCutAnalysisIntervalId, locale],
     );
 
     const openAIServiceAskNote = () => {
@@ -344,10 +336,19 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       });
 
       // 从平台端获取数据 ai总结/todos ---------------------------------------------------------------
-      const fetchPlatformData = async () => {
+      const fetchPlatformData = async (isAuth: boolean) => {
         // todos ----
-        if (isAuth(space.localParticipant.identity)) {
-          const response = await platformAPI.todo.getTodos(space.localParticipant.identity);
+        let identity = space.localParticipant.identity;
+        if (isAuth) {
+          const aiResponse = await platformAPI.ai.getAIAnalysis(identity, todayTimeStamp());
+          const response = await platformAPI.todo.getTodos(identity);
+          if (aiResponse.ok) {
+            const { data }: { data: PlarformAICutAnalysis } = await aiResponse.json();
+            setAICutAnalysisRes(convertPlatformToACARes(data));
+          } else {
+            setAICutAnalysisRes(DEFAULT_AI_CUT_ANALYSIS_RES);
+          }
+
           if (response.ok) {
             const { todos }: { todos: PlatformTodos[] } = await response.json();
             const items: SpaceTodo[] = todos.map((todo) => {
@@ -366,7 +367,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       };
 
       const syncSettings = async () => {
-        const todos = await fetchPlatformData();
+        let isAuth = await platformAPI.isAuth(space.localParticipant.identity);
+        const todos = await fetchPlatformData(isAuth);
         // 将当前参与者的基础设置发送到服务器 ----------------------------------------------------------
         await updateSettings(
           {
@@ -376,6 +378,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             startAt: new Date().getTime(),
             online: true,
             ...(todos ? { appDatas: { ...uState.appDatas, todo: todos } } : uState.appDatas),
+            isAuth,
           },
           undefined,
           true,
@@ -1161,7 +1164,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         {showFlot && space && settings.participants[space.localParticipant.identity] && (
           <FlotLayout
             space={space.name}
-            style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
             messageApi={messageApi}
             openApp={openApp}
             spaceInfo={settings}

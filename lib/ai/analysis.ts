@@ -291,7 +291,7 @@ export class AICutAnalysisService {
       user_todo_list: todos.length > 0 ? todos.join('，') : '无',
       history_analysis: this.result.lines.length > 0 ? JSON.stringify(this.result.lines) : '无',
       language: this.LANGUAGE === 'zh' ? '中文' : 'English',
-      extraction: this.EXTRACTION_LEVEL,
+      extraction: this.EXTRACTION[this.EXTRACTION_LEVEL] || this.EXTRACTION.max,
     };
 
     // 替换 user 提示词中的变量

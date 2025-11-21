@@ -1,7 +1,6 @@
 import dayjs from 'dayjs';
-import { AICutAnalysisRes } from '../ai/analysis';
+import { AICutAnalysisRes, AICutAnalysisResLine } from '../ai/analysis';
 import { SpaceTodo, todayTimeStamp, TodoItem } from '../std/space';
-
 
 const PLATFORM_URL = 'https://home.vocespace.com/api';
 // const PLATFORM_URL = 'http://localhost:3001/api';
@@ -58,6 +57,13 @@ const getTodos = async (uid: string) => {
   return await fetch(url.toString());
 };
 
+const getAIAnalysis = async (uid: string, date: number) => {
+  const url = new URL(PLATFORM_URL + '/ai');
+  url.searchParams.append('uid', uid);
+  url.searchParams.append('date', date.toString());
+  return await fetch(url.toString());
+};
+
 /**
  * 向平台端更新AI分析数据
  * 这个接口只能在server端调用，客户端每次请求分析完后调用此接口进行数据存储
@@ -95,12 +101,48 @@ export interface PlatformTodos {
   date: string;
 }
 
+export interface PlarformAICutAnalysis {
+  /**
+   * user auth id
+   */
+  id: string;
+  /**
+   * 时间戳，用户区分每天的分析结果，使用当天00:00:00的时间戳显示
+   */
+  date: string;
+  /**
+   * jsonb 存储AICutAnalysisRes结果
+   */
+  result: AICutAnalysisResLine[]; // JSON.stringify(AICutAnalysisResLine[])
+}
+
+export const convertPlatformToACARes = (platform: PlarformAICutAnalysis): AICutAnalysisRes => {
+  return {
+    markdown: '',
+    summary: '',
+    lines: platform.result,
+  };
+};
+
+const isAuth = async (uid: string): Promise<boolean> => {
+  const url = new URL(PLATFORM_URL + '/user');
+  url.searchParams.append('uid', uid);
+  const res = await fetch(url.toString());
+  if (res.ok) {
+    const { exist }: { exist: boolean } = await res.json();
+    return exist;
+  }
+  return false;
+};
+
 export const platformAPI = {
   todo: {
     updateTodo,
     getTodos,
   },
   ai: {
+    getAIAnalysis,
     updateAIAnalysis,
   },
+  isAuth,
 };

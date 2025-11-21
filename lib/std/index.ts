@@ -301,12 +301,4 @@ export const ERROR_CODE = {
   createSpace: CreateSpaceError,
 };
 
-export const isAuth = (uid: string): boolean => {
-  const authUserStr = localStorage.getItem(VOCESPACE_PLATFORM_USER_ID);
-  if (authUserStr) {
-    const authUser = JSON.parse(authUserStr) as PUserInfo;
-    return authUser.userId === uid;
-  }
-  return false;
-};
 

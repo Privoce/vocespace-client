@@ -1,8 +1,9 @@
-import dayjs, { Dayjs } from 'dayjs';
 import { UserStatus } from '.';
 import { ModelBg, ModelRole } from './virtual';
 import { Extraction } from '../ai/analysis';
-
+import dayjs, { Dayjs } from "dayjs";
+import utc from "dayjs/plugin/utc";
+dayjs.extend(utc);
 /**
  * Child room information
  */
@@ -133,6 +134,10 @@ export interface ParticipantSettings {
    * 是否在线，如果用户在线则新用户如果重名无法加入，如果不在线则允许重名加入
    */
   online: boolean;
+  /**
+   * 是否认证通过
+   */
+  isAuth: boolean;
 }
 
 export interface SpaceTimeRecord {
@@ -315,7 +320,7 @@ export const sortTodos = (todos: SpaceTodo[]): SpaceTodo[] => {
 };
 
 export const todayTimeStamp = (timestamp?: number): number => {
-  const date = timestamp ? dayjs(timestamp) : dayjs();
+  const date = timestamp ? dayjs.utc(timestamp) : dayjs.utc();
   return date.startOf('day').valueOf();
 };
 
@@ -405,7 +410,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
-  version: '0.4.6',
+  version: '0.4.7',
   name: '',
   volume: 100,
   blur: 0.0,
@@ -433,6 +438,7 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
     },
   },
   online: true,
+  isAuth: false,
 };
 
 /**

@@ -34,7 +34,12 @@ export interface AICutAnalysisMdTabsProps {
   isSelf: boolean;
   // 需要裁剪服务的实例
   cutInstance: AICutService;
+  isAuthed: boolean;
 }
+
+const storageUrl = (path: string) => {
+  return `https://ngzobewgavfuvkrhhnou.supabase.co/storage/v1/object/public/ai_analysis/public/${path}.jpg`;
+};
 
 export function AICutAnalysisMdTabs({
   style,
@@ -49,6 +54,7 @@ export function AICutAnalysisMdTabs({
   messageApi,
   isSelf,
   cutInstance,
+  isAuthed,
 }: AICutAnalysisMdTabsProps) {
   const { t } = useI18n();
   const { localParticipant } = useLocalParticipant();
@@ -78,6 +84,8 @@ export function AICutAnalysisMdTabs({
       spent: spaceInfo.participants[userId]?.ai.cut.spent,
     };
   }, [spaceInfo, userId]);
+
+
 
   // 纯文本 markdown，用于复制
   const md = useMemo(() => {
@@ -133,7 +141,7 @@ export function AICutAnalysisMdTabs({
         marginBottom: 8,
         backgroundColor: '#1e1e1e',
         minHeight: '420px',
-        maxHeight: "100%"
+        maxHeight: 'calc(100vh - 60px)',
       }}
     >
       <div className={styles.ai_analysis_md_header}>
@@ -242,7 +250,7 @@ export function AICutAnalysisMdTabs({
                 </div>
 
                 {/* 截图（直接渲染 img 标签） */}
-                {section.screenshot && (
+                {section.screenshot ? (
                   <img
                     src={section.screenshot}
                     alt="screenshot"
@@ -254,6 +262,20 @@ export function AICutAnalysisMdTabs({
                       border: '1px solid #444',
                     }}
                   />
+                ) : isAuthed ? (
+                  <img
+                    src={storageUrl(`${userId}_${section.timestamp}`)}
+                    alt="screenshot"
+                    style={{
+                      maxWidth: '320px',
+                      height: 'auto',
+                      borderRadius: '8px',
+                      marginTop: '4px',
+                      border: '1px solid #444',
+                    }}
+                  />
+                ) : (
+                  <></>
                 )}
 
                 {/* 分隔线 */}

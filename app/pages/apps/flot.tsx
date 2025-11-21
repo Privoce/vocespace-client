@@ -1,15 +1,4 @@
-import {
-  Button,
-  Col,
-  Collapse,
-  CollapseProps,
-  Drawer,
-  Modal,
-  Popover,
-  Row,
-  theme,
-  Tooltip,
-} from 'antd';
+import { Button, Col, Collapse, CollapseProps, Drawer, Row, theme, Tooltip } from 'antd';
 import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import styles from '@/styles/apps.module.scss';
 import { AppTimer } from './timer';
@@ -29,7 +18,6 @@ import {
   AppKey,
   castCountdown,
   castTimer,
-  castTodo,
   Countdown,
   DEFAULT_COUNTDOWN,
   DEFAULT_TIMER,
@@ -40,7 +28,6 @@ import {
   SpaceTodo,
   Timer,
   todayTimeStamp,
-  TodoItem,
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
 import { useLocalParticipant } from '@livekit/components-react';
@@ -49,12 +36,12 @@ import { WsBase } from '@/lib/std/device';
 import { DEFAULT_COLLAPSE_HEADER_STYLES } from '../controls/collapse_tools';
 import { TodoTogether } from './todo_together';
 import { AICutAnalysisMdTabs } from './ai_analysis_md';
-import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES, Extraction } from '@/lib/ai/analysis';
+import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
 import { CopyButton } from '../controls/widgets/copy';
 import { useRecoilState } from 'recoil';
 import { AICutService } from '@/lib/ai/cut';
-import { isAuth } from '@/lib/std';
 import { DEFAULT_DRAWER_PROP, DrawerCloser, DrawerHeader } from '../controls/drawer_tools';
+import { convertPlatformToACARes, PlarformAICutAnalysis, platformAPI } from '@/lib/api/platform';
 
 export interface FlotButtonProps {
   style?: React.CSSProperties;
@@ -94,7 +81,6 @@ export function FlotButton({ style, openApp, setOpenApp }: FlotButtonProps) {
 }
 
 export interface FlotLayoutProps {
-  style?: React.CSSProperties;
   messageApi: MessageInstance;
   openApp: boolean;
   setOpenApp: (open: boolean) => void;
@@ -113,7 +99,6 @@ export interface FlotLayoutProps {
 }
 
 export function FlotLayout({
-  style,
   messageApi,
   openApp,
   spaceInfo,
@@ -167,23 +152,28 @@ export function FlotLayout({
     }
   }, [window.innerWidth]);
 
-  // const contentWidth = useMemo(() => {
-  //   if (layoutType.ty === 'desktop') {
-  //     return 1108;
-  //   } else if (layoutType.ty === 'pad') {
-  //     return 788;
-  //   } else {
-  //     return 'calc(100vw - 48px)';
-  //   }
-  // }, [layoutType]);
-
   const getRemoteAICutAnalysisRes = async (participantId: string) => {
     if (participantId && !isSelf) {
       // 发起请求获取结果
-      const response = await api.ai.getAnalysisRes(space, participantId);
-      if (response.ok) {
-        const { res }: { res: AICutAnalysisRes } = await response.json();
-        return res;
+      if (
+        targetParticipant.participantId &&
+        spaceInfo.participants[targetParticipant.participantId]?.isAuth
+      ) {
+        // 如果是认证用户则从平台获取
+        const aiResponse = await platformAPI.ai.getAIAnalysis(
+          targetParticipant.participantId,
+          todayTimeStamp(),
+        );
+        if (aiResponse.ok) {
+          const { data }: { data: PlarformAICutAnalysis } = await aiResponse.json();
+          return convertPlatformToACARes(data);
+        }
+      } else {
+        const response = await api.ai.getAnalysisRes(space, participantId);
+        if (response.ok) {
+          const { res }: { res: AICutAnalysisRes } = await response.json();
+          return res;
+        }
       }
     }
     return DEFAULT_AI_CUT_ANALYSIS_RES;
@@ -193,11 +183,10 @@ export function FlotLayout({
     if (!isSelf && targetParticipant.participantId) {
       console.warn('Fetching remote AI Cut Analysis Result for', targetParticipant.participantId);
       getRemoteAICutAnalysisRes(targetParticipant.participantId).then((res) => {
-        console.warn(res);
         setRemoteAnalysisRes(res);
       });
     }
-  }, [isSelf, targetParticipant]);
+  }, [isSelf, targetParticipant, spaceInfo.participants]);
 
   return (
     <Drawer
@@ -214,6 +203,7 @@ export function FlotLayout({
       styles={{
         body: {
           padding: '0 24px',
+          overflow: 'hidden',
         },
       }}
     >
@@ -235,6 +225,7 @@ export function FlotLayout({
                   height: '100%',
                   width: '100%',
                 }}
+                isAuthed={spaceInfo.participants[targetParticipant.participantId || localParticipant.identity]?.isAuth}
                 cutInstance={cutInstance}
                 userId={targetParticipant.participantId || localParticipant.identity}
               ></AICutAnalysisMdTabs>
@@ -257,8 +248,6 @@ export function FlotLayout({
             space={space}
             spaceInfo={spaceInfo}
             onHeightChange={setContainerHeight}
-            showAICutAnalysis={showAICutAnalysis}
-            setShowAICutAnalysis={setShowAICutAnalysis}
             participantId={targetParticipant.participantId || localParticipant.identity}
             isSelf={isSelf}
           />
@@ -277,6 +266,7 @@ export function FlotLayout({
                 height: '100%',
                 width: '100%',
               }}
+              isAuthed={spaceInfo.participants[targetParticipant.participantId || localParticipant.identity]?.isAuth}
               cutInstance={cutInstance}
               userId={targetParticipant.participantId || localParticipant.identity}
             ></AICutAnalysisMdTabs>
@@ -293,8 +283,6 @@ interface FlotAppItemProps {
   space: string;
   spaceInfo: SpaceInfo;
   onHeightChange?: (height: number) => void;
-  setShowAICutAnalysis: (show: boolean) => void;
-  showAICutAnalysis: boolean;
   isSelf: boolean;
   participantId: string;
 }
@@ -324,17 +312,7 @@ export interface FlotAppExports {
 
 const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
   (
-    {
-      messageApi,
-      apps,
-      space,
-      spaceInfo,
-      onHeightChange,
-      setShowAICutAnalysis,
-      showAICutAnalysis,
-      isSelf,
-      participantId,
-    }: FlotAppItemProps,
+    { messageApi, apps, space, spaceInfo, onHeightChange, isSelf, participantId }: FlotAppItemProps,
     ref,
   ) => {
     const [activeKeys, setActiveKeys] = useState<(AppKey | 'together')[]>(DEFAULT_KEYS);
@@ -390,7 +368,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
         participantId,
         key,
         data,
-        isAuth(participantId),
+        spaceInfo.participants[participantId]?.isAuth,
       );
       if (response.ok) {
         socket.emit('update_user_status', {
