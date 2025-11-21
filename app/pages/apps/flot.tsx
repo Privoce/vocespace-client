@@ -425,11 +425,19 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
     };
 
     const showSyncIcon = (isSelf: boolean, key: AppKey) => {
-      return !isSelf ? (
-        <span></span>
-      ) : (
+      if (!isSelf) {
+        return <span></span>;
+      }
+
+      // 安全检查：确保参与者和 sync 属性存在
+      const participant = spaceInfo.participants[participantId];
+      if (!participant || !participant.sync) {
+        return <span></span>;
+      }
+
+      return (
         <>
-          {spaceInfo.participants[participantId].sync.includes(key) ? (
+          {participant.sync.includes(key) ? (
             <Tooltip title={t('more.app.settings.sync.desc_priv')}>
               <EyeOutlined
                 onClick={(e) => {
