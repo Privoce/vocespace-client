@@ -1,5 +1,5 @@
 import { AICutAnalysisRes, AICutAnalysisResLine } from '@/lib/ai/analysis';
-import { Button, Empty, Tag, Tooltip } from 'antd';
+import { Button, Empty, Image, Tag, Tooltip } from 'antd';
 import { useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import styles from '@/styles/apps.module.scss';
@@ -251,7 +251,7 @@ export function AICutAnalysisMdTabs({
 
                 {/* 截图（直接渲染 img 标签） */}
                 {section.screenshot ? (
-                  <img
+                  <Image
                     src={section.screenshot}
                     alt="screenshot"
                     style={{
@@ -263,7 +263,7 @@ export function AICutAnalysisMdTabs({
                     }}
                   />
                 ) : isAuthed ? (
-                  <img
+                  <Image
                     src={storageUrl(`${userId}_${section.timestamp}`)}
                     alt="screenshot"
                     style={{

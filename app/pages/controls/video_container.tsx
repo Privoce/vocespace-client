@@ -296,12 +296,12 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     // 监控AI截屏服务状态 --------------------------------------------------------
     // 用户需要确保至少开启屏幕共享，如果关闭则需要提示用户，如果用户确定关闭则要停止AI截屏服务
     // 手机无需AI分享分析提示
-    // useEffect(() => {
-    //   // 完成初始化并没有询问过用户时显示弹窗并询问
-    //   if (!init && !noteStateForAICutService.hasAsked && uState.ai.cut.enabled && !isMobile()) {
-    //     openAIServiceAskNote();
-    //   }
-    // }, [init, noteStateForAICutService, uState.ai.cut.enabled]);
+    useEffect(() => {
+      // 完成初始化并没有询问过用户时显示弹窗并询问
+      if (!init && !noteStateForAICutService.hasAsked && !isMobile()) {
+        openAIServiceAskNote();
+      }
+    }, [init, noteStateForAICutService.hasAsked]);
 
     useEffect(() => {
       if (noteStateForAICutService.noteClosed) {
@@ -461,9 +461,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             socket.emit('update_user_status', {
               space: space.name,
             } as WsBase);
-            if (!isMobile() && uState.ai.cut.enabled) {
-              openAIServiceAskNote();
-            }
           });
           setInit(false);
         });
@@ -766,6 +763,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       socket.on('chat_msg_response', (msg: ChatMsgItem) => {
         if (msg.roomName === space.name) {
           setChatMsg((prev) => {
+            if (controlsRef.current && controlsRef.current.isChatOpen) {
+              return {
+                unhandled: 0,
+                msgs: [...prev.msgs, msg],
+              };
+            }
+
             return {
               unhandled: prev.unhandled + 1,
               msgs: [...prev.msgs, msg],
@@ -894,6 +898,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       chatMsg,
       socket,
       config,
+      controlsRef,
     ]);
 
     const selfRoom = useMemo(() => {

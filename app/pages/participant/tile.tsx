@@ -675,10 +675,16 @@ export const ParticipantItem: (
                           <ParticipantName />
                         </>
                       ) : (
-                        <>
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-start',
+                          }}
+                        >
                           <ScreenShareIcon style={{ marginRight: '0.25rem' }} />
                           <ParticipantName>&apos;s screen</ParticipantName>
-                        </>
+                        </div>
                       )}
                     </div>
                   </Tooltip>

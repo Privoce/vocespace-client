@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useLocalParticipant } from '@livekit/components-react';
 import { Button, Drawer, Image, Input, Popover, Upload } from 'antd';
-import type { GetProp, UploadProps } from 'antd';
 import { pictureCallback, SvgResource } from '@/app/resources/svg';
 import styles from '@/styles/chat.module.scss';
 import { useI18n } from '@/lib/i18n/i18n';
