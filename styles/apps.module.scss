@@ -220,3 +220,11 @@
     padding: 8px 4px;
   }
 }
+
+.todo_export {
+  height: fit-content;
+  max-height: 60vh;
+  width: 100%;
+  overflow-y: scroll;
+  scrollbar-width: thin;
+}

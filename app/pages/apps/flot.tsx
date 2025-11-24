@@ -42,6 +42,7 @@ import { useRecoilState } from 'recoil';
 import { AICutService } from '@/lib/ai/cut';
 import { DEFAULT_DRAWER_PROP, DrawerCloser, DrawerHeader } from '../controls/drawer_tools';
 import { convertPlatformToACARes, PlarformAICutAnalysis, platformAPI } from '@/lib/api/platform';
+import { SvgResource } from '@/app/resources/svg';
 
 export interface FlotButtonProps {
   style?: React.CSSProperties;
@@ -188,12 +189,39 @@ export function FlotLayout({
     }
   }, [isSelf, targetParticipant, spaceInfo.participants]);
 
+  const toPersonalPlatform = () => {
+    if (spaceInfo.participants[localParticipant.identity]?.isAuth) {
+      let url = `https://home.vocespace.com/ai/${localParticipant.identity}`;
+      window.open(url, '_blank');
+    }
+  };
+
   return (
     <Drawer
       {...DEFAULT_DRAWER_PROP}
       open={openApp}
       onClose={() => setOpenApp(false)}
-      title={<DrawerHeader title={'Widgets'}></DrawerHeader>}
+      title={
+        <DrawerHeader
+          title={'Widgets'}
+          icon={
+            spaceInfo.participants[localParticipant.identity]?.isAuth ? (
+              <span
+                style={{
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  height: '100%',
+                }}
+                onClick={toPersonalPlatform}
+              >
+                <SvgResource type="share" svgSize={16}></SvgResource>
+              </span>
+            ) : undefined
+          }
+        ></DrawerHeader>
+      }
       extra={DrawerCloser({
         on_clicked: () => {
           setOpenApp(false);
@@ -225,7 +253,11 @@ export function FlotLayout({
                   height: '100%',
                   width: '100%',
                 }}
-                isAuthed={spaceInfo.participants[targetParticipant.participantId || localParticipant.identity]?.isAuth}
+                isAuthed={
+                  spaceInfo.participants[
+                    targetParticipant.participantId || localParticipant.identity
+                  ]?.isAuth
+                }
                 cutInstance={cutInstance}
                 userId={targetParticipant.participantId || localParticipant.identity}
               ></AICutAnalysisMdTabs>
@@ -266,7 +298,10 @@ export function FlotLayout({
                 height: '100%',
                 width: '100%',
               }}
-              isAuthed={spaceInfo.participants[targetParticipant.participantId || localParticipant.identity]?.isAuth}
+              isAuthed={
+                spaceInfo.participants[targetParticipant.participantId || localParticipant.identity]
+                  ?.isAuth
+              }
               cutInstance={cutInstance}
               userId={targetParticipant.participantId || localParticipant.identity}
             ></AICutAnalysisMdTabs>

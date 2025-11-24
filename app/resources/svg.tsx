@@ -51,7 +51,8 @@ export type SvgType =
   | 'public'
   | 'app'
   | 'google'
-  | 'notion';
+  | 'notion'
+  | 'share';
 
 export interface SvgResourceProps {
   type: SvgType;
@@ -1204,6 +1205,38 @@ export function SvgResource({ type, svgSize = 24, color = '#ffffff' }: SvgResour
             d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"
           ></path>
           <path fill="none" d="M0 0h48v48H0z"></path>
+        </svg>
+      );
+    case 'share':
+      return (
+        <svg
+          width={svgSize}
+          height={svgSize}
+          viewBox="0 0 48 48"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M28 6H42V20"
+            stroke={color}
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M42 29.4737V39C42 40.6569 40.6569 42 39 42H9C7.34315 42 6 40.6569 6 39V9C6 7.34315 7.34315 6 9 6L18 6"
+            stroke={color}
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+          <path
+            d="M25.7998 22.1999L41.0998 6.8999"
+            stroke={color}
+            strokeWidth="4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
         </svg>
       );
   }

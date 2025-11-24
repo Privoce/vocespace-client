@@ -177,13 +177,17 @@ export function AppTodo({
       >
         <div className={styles.todo_list_wrapper}>
           <List
-            pagination={{
-              position: 'bottom',
-              align: 'end',
-              pageSize: 1,
-              size: 'small',
-              simple: { readOnly: true },
-            }}
+            pagination={
+              appData.length > 0
+                ? {
+                    position: 'bottom',
+                    align: 'end',
+                    pageSize: 1,
+                    size: 'small',
+                    simple: { readOnly: true },
+                  }
+                : undefined
+            }
             bordered={false}
             split={false}
             locale={{
@@ -363,22 +367,24 @@ export function ExportTodoHistroy({
 
   return (
     <>
-      <Descriptions
-        bordered
-        items={items}
-        column={1}
-        styles={{
-          label: {
-            color: '#8c8c8c',
-            fontWeight: 700,
-            backgroundColor: '#1a1a1a',
-          },
-          content: {
-            backgroundColor: '#1E1E1E',
-            color: '#8c8c8c',
-          },
-        }}
-      />
+      <div className={styles.todo_export}>
+        <Descriptions
+          bordered
+          items={items}
+          column={1}
+          styles={{
+            label: {
+              color: '#8c8c8c',
+              fontWeight: 700,
+              backgroundColor: '#1a1a1a',
+            },
+            content: {
+              backgroundColor: '#1E1E1E',
+              color: '#8c8c8c',
+            },
+          }}
+        />
+      </div>
       <div style={{ marginTop: 16 }}>
         <div style={{ display: 'inline-flex', justifyContent: 'space-between', width: '100%' }}>
           <span>Start: {new Date(start).toLocaleString()}</span>
