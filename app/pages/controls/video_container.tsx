@@ -1156,12 +1156,41 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       return !isMobile() ? true : collapsed;
     }, [collapsed]);
 
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // 如果拖拽的文件数量大于0，则表示是文件拖拽，如果文件拖拽就需要让<Controls />组件开启聊天的Drawer
+      if (e.dataTransfer.files.length > 0) {
+        if (controlsRef.current) {
+          controlsRef.current.setChatOpen(true);
+        }
+      }
+    };
+    const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (controlsRef.current) {
+        controlsRef.current.setChatOpen(true);
+      }
+    };
+
     useImperativeHandle(ref, () => ({
       clearRoom: () => clearRoom(),
     }));
 
     return (
-      <div className="video_container_wrapper" style={{ position: 'relative' }}>
+      <div
+        className="video_container_wrapper"
+        style={{ position: 'relative' }}
+        onDragEnter={handleDrag}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
         {/* 右侧应用浮窗，悬浮态 */}
         {showFlot && space && settings.participants[space.localParticipant.identity] && (
           <FlotButton

@@ -97,6 +97,7 @@ export interface ControlBarExport {
   openSettings: (key: TabKey, isDefineStatus?: boolean) => void;
   showAICutAnalysisSettings: (open: boolean) => void;
   isChatOpen: boolean;
+  setChatOpen: (open: boolean) => void;
 }
 
 /**
@@ -619,6 +620,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           openSettings,
           showAICutAnalysisSettings: setAICutModalOpen,
           isChatOpen: chatOpen, // 使用 chatOpen 而不是 isChatOpen，因为 chatOpen 是实际控制聊天窗口的状态
+          setChatOpen,
         } as ControlBarExport),
     );
     // 当是手机的情况下需要适当增加marginBottom，因为手机端自带的Tabbar会遮挡
