@@ -21,6 +21,8 @@ import {
   Countdown,
   DEFAULT_COUNTDOWN,
   DEFAULT_TIMER,
+  ParticipantSettings,
+  RecordSettings,
   sortTodos,
   SpaceCountdown,
   SpaceInfo,
@@ -41,7 +43,12 @@ import { CopyButton } from '../controls/widgets/copy';
 import { useRecoilState } from 'recoil';
 import { AICutService } from '@/lib/ai/cut';
 import { DEFAULT_DRAWER_PROP, DrawerCloser, DrawerHeader } from '../controls/drawer_tools';
-import { convertPlatformToACARes, PlarformAICutAnalysis, platformAPI } from '@/lib/api/platform';
+import {
+  convertPlatformToACARes,
+  PlarformAICutAnalysis,
+  platformAPI,
+  PlatformTodos,
+} from '@/lib/api/platform';
 import { SvgResource } from '@/app/resources/svg';
 
 export interface FlotButtonProps {
@@ -97,6 +104,11 @@ export interface FlotLayoutProps {
   ) => Promise<void>;
   openAIServiceAskNote?: () => void;
   cutInstance: AICutService;
+  updateSettings: (
+    newSettings: Partial<ParticipantSettings>,
+    record?: RecordSettings,
+    init?: boolean,
+  ) => Promise<boolean | undefined>;
 }
 
 export function FlotLayout({
@@ -111,12 +123,14 @@ export function FlotLayout({
   openAIServiceAskNote,
   aiCutAnalysisRes,
   cutInstance,
+  updateSettings,
 }: FlotLayoutProps) {
   const flotAppItemRef = useRef<FlotAppExports>(null);
   const [containerHeight, setContainerHeight] = useState<number>(0);
   const [showAICutAnalysis, setShowAICutAnalysis] = useState<boolean>(true);
   const { localParticipant } = useLocalParticipant();
   const [targetParticipant, setTargetParticipant] = useRecoilState(RemoteTargetApp);
+  const [fetchData, setFetchData] = useState<boolean>(false);
   const isSelf = useMemo(() => {
     return localParticipant.identity === targetParticipant.participantId;
   }, [localParticipant.identity, targetParticipant.participantId]);
@@ -195,6 +209,53 @@ export function FlotLayout({
       window.open(url, '_blank');
     }
   };
+
+  const fetchTodo = async (participantId: string) => {
+    // 当前只先请求TODO数据
+    const response = await platformAPI.todo.getTodos(participantId);
+    if (response.ok) {
+      const { todos }: { todos: PlatformTodos[] } = await response.json();
+      const items: SpaceTodo[] = todos.map((todo) => {
+        return {
+          items: todo.items,
+          date: Number(todo.date),
+        };
+      });
+      let appDatas = spaceInfo.participants[participantId]?.appDatas || {};
+      appDatas = {
+        ...appDatas,
+        todo: sortTodos(items),
+      };
+      await updateSettings({
+        appDatas,
+      });
+      socket.emit('update_user_status', {
+        space: space,
+      } as WsBase);
+    }
+  };
+
+  // 每次打开Drawer，如果是认证过的用户都需要去平台端请求最新的AI分析结果和TODO数据
+  useEffect(() => {
+    if (
+      targetParticipant.participantId &&
+      spaceInfo.participants[targetParticipant.participantId]?.isAuth &&
+      fetchData 
+    ) {
+      console.warn('Fetching platform data for', targetParticipant.participantId);
+      fetchTodo(targetParticipant.participantId).then(()=>{
+        setFetchData(false);
+      });
+      
+    }
+  }, [spaceInfo.participants, targetParticipant.participantId, fetchData]);
+  // 每次openApp为true就重置fetchData
+  useEffect(() => {
+    if (openApp) {
+      console.warn('Resetting fetchData to false');
+      setFetchData(true);
+    }
+  }, [openApp]);
 
   return (
     <Drawer

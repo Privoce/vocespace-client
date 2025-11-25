@@ -1212,6 +1212,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             startOrStopAICutAnalysis={startOrStopAICutAnalysis}
             openAIServiceAskNote={openAIServiceAskNote}
             cutInstance={aiCutServiceRef.current}
+            updateSettings={updateSettings}
           ></FlotLayout>
         )}
         {/* 左侧侧边栏 */}

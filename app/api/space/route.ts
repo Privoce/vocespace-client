@@ -694,6 +694,15 @@ class SpaceManager {
           if (init) {
             // 这里说明房间存在而且且用户也存在，说明用户可能是重连或房间是持久化的，我们无需大范围数据更新，只需要更新
             // 用户的最基础设置即可
+            // 由于todo数据连接了平台端数据，所以这里需要更改为平台端的todo数据，但只有在isAuth为true时才更新
+            let appDatas = participant.appDatas;
+            if (pData.isAuth) {
+              appDatas = {
+                ...appDatas,
+                todo: pData.appDatas.todo,
+              };
+            }
+
             spaceInfo.participants[participantId] = {
               ...participant,
               name: pData.name,
@@ -704,6 +713,8 @@ class SpaceManager {
               socketId: pData.socketId,
               startAt: participant.startAt,
               online: true,
+              appDatas,
+              isAuth: pData.isAuth,
             };
             return await this.setSpaceInfo(room, spaceInfo);
           }
