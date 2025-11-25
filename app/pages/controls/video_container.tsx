@@ -1091,6 +1091,22 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const toSettingGeneral = (isDefineStatus?: boolean) => {
       controlsRef.current?.openSettings('general', isDefineStatus);
     };
+    // [room update handler] --------------------------------------------------------------------------------------
+    const handleUpdateRoom = async () => {
+      await fetchSettings();
+      // 需要更新用户视图Layout，因为发现在focus layout下切换房间会导致视图没有更新，依然看到上一个房间的视图
+      if (focusTrack) {
+        layoutContext.pin.dispatch?.({ msg: 'clear_pin' });
+      }
+
+      // 通知其他参与者更新用户状态
+      if (space) {
+        socket.emit('update_user_status', {
+          space: space.name,
+        } as WsBase);
+      }
+    };
+
     // [user status] ------------------------------------------------------------------------------------------
     const setUserStatus = async (status: UserStatus | string) => {
       let newStatus = {
@@ -1223,12 +1239,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             space={space}
             localParticipantId={space.localParticipant.identity}
             settings={settings}
-            onUpdate={async () => {
-              await fetchSettings();
-              socket.emit('update_user_status', {
-                space: space.name,
-              } as WsBase);
-            }}
+            onUpdate={handleUpdateRoom}
             tracks={originTracks}
             collapsed={collapsed}
             setCollapsed={setCollapsed}

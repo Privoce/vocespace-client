@@ -240,19 +240,16 @@ export function FlotLayout({
     if (
       targetParticipant.participantId &&
       spaceInfo.participants[targetParticipant.participantId]?.isAuth &&
-      fetchData 
+      fetchData
     ) {
-      console.warn('Fetching platform data for', targetParticipant.participantId);
-      fetchTodo(targetParticipant.participantId).then(()=>{
+      fetchTodo(targetParticipant.participantId).then(() => {
         setFetchData(false);
       });
-      
     }
   }, [spaceInfo.participants, targetParticipant.participantId, fetchData]);
   // 每次openApp为true就重置fetchData
   useEffect(() => {
     if (openApp) {
-      console.warn('Resetting fetchData to false');
       setFetchData(true);
     }
   }, [openApp]);

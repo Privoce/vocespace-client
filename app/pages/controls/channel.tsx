@@ -36,9 +36,9 @@ import {
   MenuUnfoldOutlined,
   PlusCircleOutlined,
 } from '@ant-design/icons';
-import { GridLayout, TrackReferenceOrPlaceholder } from '@livekit/components-react';
+import { TrackReferenceOrPlaceholder } from '@livekit/components-react';
 import { MessageInstance } from 'antd/es/message/interface';
-import { AppKey, ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { ParticipantTileMini } from '../participant/mini';
 import { GLayout } from '../layout/grid';
 import { CheckboxGroupProps } from 'antd/es/checkbox';

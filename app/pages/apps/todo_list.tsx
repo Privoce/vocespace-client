@@ -354,9 +354,9 @@ export function ExportTodoHistroy({
     let end = Number(endItem[0].id);
     // 计算已完成任务数
     let completedCount = appData.flatMap((todo) => todo.items).filter((item) => item.done).length;
-
+    let allCount = appData.flatMap((todo) => todo.items).length;
     // 计算完成百分比
-    let percent = Math.round((completedCount / appData.length) * 100);
+    let percent = Math.round((completedCount / allCount) * 100);
 
     return {
       start,
