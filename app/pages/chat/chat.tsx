@@ -415,10 +415,10 @@ function ChatMsgItemCmp({ isLocal, msg, downloadFile, isImg }: ChatMsgItemProps)
     return urlRegex.test(text);
   };
 
-  const { link, linkPreview } = useLinkPreview({
-    text: msg.message || undefined,
-    isLocal,
-  });
+  // const { link, linkPreview } = useLinkPreview({
+  //   text: msg.message || undefined,
+  //   isLocal,
+  // });
 
   const mixLinkText = (originText: string, previewLink?: string) => {
     // URL 正则表达式，匹配 http 和 https 链接
@@ -497,7 +497,7 @@ function ChatMsgItemCmp({ isLocal, msg, downloadFile, isImg }: ChatMsgItemProps)
               >
                 {mixLinkText(msg.message || '')}
               </div>
-              {msg.message && containsUrl(msg.message) && linkPreview}
+              {/* {msg.message && containsUrl(msg.message) && linkPreview} */}
             </div>
           ) : (
             <Popover

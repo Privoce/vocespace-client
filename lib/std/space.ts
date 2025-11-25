@@ -138,6 +138,7 @@ export interface ParticipantSettings {
    * 是否认证通过
    */
   isAuth: boolean;
+
 }
 
 export interface SpaceTimeRecord {
@@ -410,7 +411,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
-  version: '0.4.7',
+  version: '0.4.8',
   name: '',
   volume: 100,
   blur: 0.0,

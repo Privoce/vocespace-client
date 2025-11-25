@@ -899,6 +899,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       socket,
       config,
       controlsRef,
+      locale,
     ]);
 
     const selfRoom = useMemo(() => {
