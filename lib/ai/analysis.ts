@@ -483,35 +483,118 @@ export const parseJsonBack = (jsonCode: string): string => {
   return jsonCode.replace(/^[\s\S]*?```(?:json|markdown)?/, '').replace(/```[\s\S]*?$/, '');
 };
 
-const stringSimilarity = (str1: string, str2: string): number => {
-  if (str1 === str2) return 1.0;
+/**
+ * 计算两个字符串之间的 Levenshtein 编辑距离
+ * @param str1 第一个字符串
+ * @param str2 第二个字符串
+ * @returns 编辑距离值
+ */
+const levenshteinDistance = (str1: string, str2: string): number => {
   const len1 = str1.length;
   const len2 = str2.length;
-  const maxLen = Math.max(len1, len2);
-  if (maxLen === 0) return 1.0;
+  const dp: number[][] = Array(len1 + 1)
+    .fill(null)
+    .map(() => Array(len2 + 1).fill(0));
 
-  let sameCharCount = 0;
-  const minLen = Math.min(len1, len2);
-  for (let i = 0; i < minLen; i++) {
-    if (str1[i] === str2[i]) {
-      sameCharCount++;
+  for (let i = 0; i <= len1; i++) dp[i][0] = i;
+  for (let j = 0; j <= len2; j++) dp[0][j] = j;
+
+  for (let i = 1; i <= len1; i++) {
+    for (let j = 1; j <= len2; j++) {
+      if (str1[i - 1] === str2[j - 1]) {
+        dp[i][j] = dp[i - 1][j - 1];
+      } else {
+        dp[i][j] = Math.min(
+          dp[i - 1][j] + 1, // 删除
+          dp[i][j - 1] + 1, // 插入
+          dp[i - 1][j - 1] + 1, // 替换
+        );
+      }
     }
   }
 
-  return sameCharCount / maxLen;
+  return dp[len1][len2];
 };
 
+/**
+ * 基于 Levenshtein 编辑距离计算相似度
+ * @param str1 第一个字符串
+ * @param str2 第二个字符串
+ * @returns 相似度值 (0-1)
+ */
+const levenshteinSimilarity = (str1: string, str2: string): number => {
+  if (str1 === str2) return 1.0;
+  const maxLen = Math.max(str1.length, str2.length);
+  if (maxLen === 0) return 1.0;
+
+  const distance = levenshteinDistance(str1, str2);
+  return 1 - distance / maxLen;
+};
+
+/**
+ * 基于关键词匹配计算相似度
+ * @param str1 第一个字符串
+ * @param str2 第二个字符串
+ * @returns 相似度值 (0-1)
+ */
+const keywordSimilarity = (str1: string, str2: string): number => {
+  // 常见停用词
+  const commonWords = ['用户', '正在', '的', '了', '和', '与', '以', '项目', '文件'];
+
+  const extractKeywords = (str: string): string[] => {
+    // 简单分词：提取中文、英文单词和数字
+    const words = str.match(/[\u4e00-\u9fa5]+|[a-zA-Z]+|\d+/g) || [];
+    return words.filter((w) => w.length > 1 && !commonWords.includes(w));
+  };
+
+  const keywords1 = extractKeywords(str1);
+  const keywords2 = extractKeywords(str2);
+
+  if (keywords1.length === 0 && keywords2.length === 0) return 1.0;
+  if (keywords1.length === 0 || keywords2.length === 0) return 0.0;
+
+  // 计算 Jaccard 相似度
+  const intersection = keywords1.filter((k) => keywords2.includes(k));
+  const union = [...new Set([...keywords1, ...keywords2])];
+
+  return intersection.length / union.length;
+};
+
+/**
+ * 混合相似度算法：结合编辑距离和关键词匹配
+ * @param str1 第一个字符串
+ * @param str2 第二个字符串
+ * @returns 相似度值 (0-1)
+ */
+const hybridSimilarity = (str1: string, str2: string): number => {
+  const levSim = levenshteinSimilarity(str1, str2);
+  const keySim = keywordSimilarity(str1, str2);
+
+  // 加权平均：编辑距离 40%，关键词匹配 60%
+  return levSim * 0.4 + keySim * 0.6;
+};
+
+/**
+ * 比较新任务与历史任务的相似度，如果相似则累加时间
+ * @param line 新的任务行
+ * @param historyLines 历史任务列表
+ * @param freq 频率（分钟）
+ * @returns 是否找到相似任务
+ */
 const compareSimilarLine = (
   line: AICutAnalysisBack,
   historyLines: AICutAnalysisResLine[],
   freq: number,
 ): boolean => {
-  const threshold = 0.8; // 相似度阈值，可以根据需要调整
+  // 为 name 和 content 设置不同的阈值
+  const nameThreshold = 0.6; // 名称相似度阈值 60%
+  const contentThreshold = 0.5; // 内容相似度阈值 50%
 
   for (const histLine of historyLines) {
-    const nameSimilarity = stringSimilarity(line.name, histLine.name);
-    const contentSimilarity = stringSimilarity(line.content, histLine.content);
-    if (nameSimilarity >= threshold && contentSimilarity >= threshold) {
+    const nameSimilarity = hybridSimilarity(line.name, histLine.name);
+    const contentSimilarity = hybridSimilarity(line.content, histLine.content);
+
+    if (nameSimilarity >= nameThreshold && contentSimilarity >= contentThreshold) {
       // 找到相似的历史任务，进行时间统计累加
       histLine.duration += freq;
       return true;
