@@ -141,7 +141,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [noteStateForAICutService, setNoteStateForAICutService] = useState({
       openAIService: false,
       noteClosed: false,
-      hasAsked: !settings.ai.cut.enabled, // 如果设置中enabled为true表示需要询问，否则不需要询问
+      hasAsked: !settings?.ai?.cut?.enabled || false, // 如果设置中enabled为true表示需要询问，否则不需要询问
     });
     const [aiCutAnalysisRes, setAICutAnalysisRes] = useState<AICutAnalysisRes>(
       DEFAULT_AI_CUT_ANALYSIS_RES,
@@ -308,10 +308,16 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     // 手机无需AI分享分析提示
     useEffect(() => {
       // 完成初始化并没有询问过用户时显示弹窗并询问
-      if (!init && !noteStateForAICutService.hasAsked && !isMobile()) {
+      if (
+        !init &&
+        (settings.ai.cut.enabled === undefined
+          ? !noteStateForAICutService.hasAsked
+          : !settings.ai.cut.enabled) &&
+        !isMobile()
+      ) {
         openAIServiceAskNote();
       }
-    }, [init, noteStateForAICutService.hasAsked]);
+    }, [init, noteStateForAICutService.hasAsked, settings.ai.cut.enabled]);
 
     useEffect(() => {
       if (noteStateForAICutService.noteClosed) {
