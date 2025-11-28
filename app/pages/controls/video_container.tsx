@@ -237,6 +237,16 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               messageApi.warning(t('ai.cut.error.start'));
             },
           );
+          // 如果已有定时器，先清除，避免重复创建多个定时器
+          if (aiCutAnalysisIntervalId.current) {
+            try {
+              clearInterval(aiCutAnalysisIntervalId.current as unknown as number);
+            } catch (e) {
+              // ignore
+            }
+            aiCutAnalysisIntervalId.current = null;
+          }
+
           aiCutAnalysisIntervalId.current = setInterval(async () => {
             await reloadResult();
           }, (freq + 2) * 60 * 1000); //增加2分钟的缓冲时间
@@ -888,6 +898,21 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         space.off(RoomEvent.ParticipantConnected, onParticipantConnected);
         space.off(ParticipantEvent.TrackMuted, onTrackHandler);
         space.off(RoomEvent.ParticipantDisconnected, onParticipantDisConnected);
+        // 组件卸载时，确保停止 AI 截屏服务并清除定时器
+        try {
+          aiCutServiceRef.current?.stop();
+          aiCutServiceRef.current?.clearScreenshots();
+        } catch (e) {
+          // ignore
+        }
+        if (aiCutAnalysisIntervalId.current) {
+          try {
+            clearInterval(aiCutAnalysisIntervalId.current as unknown as number);
+          } catch (e) {
+            // ignore
+          }
+          aiCutAnalysisIntervalId.current = null;
+        }
       };
     }, [
       space?.state,

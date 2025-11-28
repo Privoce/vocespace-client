@@ -414,7 +414,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
-  version: '0.4.8',
+  version: '0.4.9',
   name: '',
   volume: 100,
   blur: 0.0,
