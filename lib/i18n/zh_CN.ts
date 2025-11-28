@@ -33,7 +33,9 @@ export default {
     },
     chat: '聊天',
     chat_placeholder: '请输入消息',
+    chat_drag_file_here: '将文件拖放到此处',
     send: '发送',
+    sending: '发送中',
     send_file_or: '是否发送文件？',
     leave: '离开',
     share_screen: '共享屏幕',
@@ -47,9 +49,141 @@ export default {
     high_quality_desc:
       '开启后，视频，音频和屏幕分享将以固定的分辨率以及更高的质量传输，但可能会增加带宽使用和延迟。',
     socket_reconnect: '正在重新连接...',
+    create_own_space: '创建自己的 VoceSpace',
+    create_space: {
+      jump: '跳转到您的 VoceSpace?',
+      success: '创建空间成功',
+      error: {
+        unknown: '创建空间失败，请稍后再试或手动创建',
+        param: '缺少必要参数，创建空间失败',
+        exist: '空间已存在，请检查是否已经创建过或手动创建以访问',
+      },
+      ok: '跳转',
+      cancel: '取消',
+    },
+    start_sharing: '开始共享',
+    copy: {
+      success: '已复制到剪贴板',
+      error: '复制失败，请手动复制',
+    },
+  },
+  ai: {
+    cut: {
+      time: {
+        start: "开始时间",
+        duration: "持续时间(分钟)",
+      },
+      extraction: {
+        title: '提取精细度',
+        desc: '设置AI分析的提取精细度，精细度越高，提取的信息越详细，对于非专业场景或不需要过于详细信息的用户，可选择中等或简单精细度。',
+        easy: '简单',
+        medium: '中等',
+        max: '精细',
+      },
+      report: 'AI分析报告',
+      start: '开启分析',
+      stop: '停止分析',
+      title: 'AI分析设置',
+      empty: '开启AI分析后，系统将会定时截图并进行分析，帮助您总结空间内容生成报告。',
+      freq: '截图频率(分钟)',
+      freq_desc:
+        '设置AI分析的截图频率，默认为每5分钟截图一次进行分析。若长于5分钟则在5分钟时会进行第一次截图。',
+      ask_permission: '您的AI助手需要捕捉屏幕截图，请选择需要进行分析的窗口。',
+      choose: '选择屏幕',
+      not_now: '稍后再说',
+      ask_permission_title: '屏幕共享权限',
+      source_dep: 'AI 工作日志源数据',
+      source_dep_desc:
+        '选择用于AI分析的屏幕共享源数据。您可以选择共享整屏幕、工作待办、花费时间。选择合适的源数据有助于提高AI分析的准确性和相关性。',
+      share_screen: '共享屏幕',
+      share_todo: '待办事项',
+      share_time: '工作时间',
+      share_timeStatistic: '时间统计',
+      open: '开启AI分析服务',
+      freq_analysis: 'AI分析频率(分钟)',
+      myAnalysis: '我的AI分析报告',
+      error: {
+        res: '无法获取AI分析结果，请稍后再试。',
+        download: '无法下载Markdown报告，请稍后再试。',
+        reload: '无法更新AI分析结果，请稍后再试。',
+        start: '无法开启AI分析服务，请检查是否已开启屏幕共享权限。',
+      },
+      success: {
+        reload: 'AI分析结果已更新',
+        stop: '已停止AI分析服务',
+        start: 'AI分析服务已开启',
+      },
+      download: '下载Markdown报告',
+      download_content:
+        '正在为您整理报告内容，这个过程大约需要30秒，请耐心等待并不要关闭当前页面。',
+      reload: '更新报告',
+    },
+  },
+  reaction: {
+    title: '反应',
   },
   recording: {
     title: '录制记录',
+    empty: '暂无录制记录',
+    fresh: '刷新',
+    search: {
+      success: '查找录制文件成功',
+      error: '查找录制文件为空，请检查房间名是否正确，房间内可能没有录制视频文件或已经删除',
+    },
+    try_s3: {
+      unavailible: 'S3服务未配置或环境变量未设置',
+      init: 'S3服务环境变量获取成功',
+      connected: '已连接到S3服务',
+      connect_error: '无法连接到S3服务，当前可能访问了本地服务，请检查配置或联系管理员',
+      connecting: '正在连接S3服务...',
+      enving: '获取环境变量中...',
+      unconnect: '无法连接到S3服务',
+    },
+    copy: {
+      title: '复制链接',
+      success: '下载链接已复制到剪贴板',
+      error: '复制链接失败，请手动复制',
+    },
+    get_download_link: {
+      success: '获取下载链接成功',
+      error: '获取下载链接失败，请稍后再试',
+    },
+    delete: {
+      title: '删除',
+      confirm: {
+        title: '确定删除',
+        content: ['确定要删除录制文件', '吗？此操作不可恢复。'],
+        ok: '删除',
+        cancel: '取消',
+      },
+      success: '删除成功',
+      error: '删除失败，请稍后再试',
+    },
+    download: {
+      title: '下载',
+      success: '下载链接获取成功，文件正在下载...',
+      error: '下载链接获取失败，请稍后重试或联系管理员进行下载',
+    },
+    table: {
+      file: '文件名',
+      opt: '操作',
+      size: '文件大小',
+      last_modified: '最后修改',
+      ty: '类型',
+      ty_json: '记录文件',
+      ty_video: '视频文件',
+    },
+    pagation: {
+      total: '共',
+      num: '条',
+      now: '第',
+    },
+  },
+  login: {
+    following: '使用以下方式登陆',
+    out: '退出登录',
+    anon: '匿名用户',
+    guest: '以访客身份加入',
   },
   channel: {
     menu: {
@@ -133,8 +267,27 @@ export default {
   more: {
     title: '更多',
     channel: '频道',
+    platform: '个人主页',
+    ai: {
+      cut: 'AI分析',
+      desc: '定时截图并进行AI分析，帮助您总结空间内容生成报告',
+    },
     app: {
       title: '应用',
+      raise: {
+        cancel: '取消举手',
+        title: '举手',
+        receive: '发起了举手请求，请处理！',
+        handle: {
+          title: '处理请求',
+          accept: '允许',
+          accept_desc: '允许该用户发言，并通知其可以发言。',
+          reject: '拒绝',
+          reject_desc: '拒绝该用户发言，通知该用户并取消举手状态。',
+          rejected: '很抱歉，您的发言请求已被拒绝。',
+          accepted: '您已被允许发言，请开始您的发言。',
+        },
+      },
       upload: {
         to_space: '上传应用到空间',
         history: '上传历史',
@@ -190,7 +343,13 @@ export default {
         delete: '删除待办成功',
         undone: '未完成',
         done: '已完成',
-        unexport: "当前待办为空，无法导出"
+        unexport: '当前待办为空，无法导出',
+        complete: '已完成的事项',
+        together: {
+          title: '团队进度',
+          empty: '暂无用户的待办事项',
+        },
+        copy: '复制待办',
       },
     },
     record: {
@@ -212,6 +371,7 @@ export default {
       manage: '管理成员',
       search: '搜索成员',
       manager: '主持人',
+      wave: '打招呼',
       invite: {
         title: '邀请成员',
         web: '浏览器中',
@@ -273,6 +433,29 @@ export default {
   },
   settings: {
     title: '设置',
+    ai: {
+      title: 'AI',
+      desc: "配置AI分析服务的相关参数，以启用AI分析功能。",
+      model: "模型名称(多模态模型)",
+      model_desc: '选择用于AI分析的语言模型，模型名称需支持多模态输入（图像+文本），以便处理截图并生成分析报告。',
+      key: "API密钥",
+      url: "API地址",
+      recommand: [
+        "我们推荐使用以下多模态模型以获得更好的AI分析效果：",
+        "1. GPT-4V",
+        "2. Claude-3-vision",
+        "3. Gemini-Pro-Vision",
+        "4. Qwen3",
+        "5. 豆包(Doubao)"
+      ],
+      enabled: "AI询问弹窗",
+      update: {
+        save: "保存AI配置",
+        success: 'AI配置更新成功',
+        error: 'AI配置更新失败，请稍后再试。',
+        incomplete: '请完整填写AI配置参数，确保模型名称，API地址和API密钥均已填写。',
+      }
+    },
     general: {
       title: '常规',
       username: '用户名',
@@ -280,7 +463,7 @@ export default {
       share_audio: '共享音频',
       prompt_sound: '进入提示音',
       persistence: {
-        title: '持久化空间',
+        title: '持久化空间和用户历史数据',
         success: '设置当前空间持久化成功',
         error: '设置当前空间持久化失败',
       },
@@ -315,6 +498,8 @@ export default {
         busy_desc: '忙碌中，用户的视频将进行模糊处理, 音频将静音',
         offline: '离开',
         offline_desc: '离开, 用户的视频和音频都将关闭',
+        working: '工作中',
+        working_desc: '依赖待办自动生成当前工作状态',
         define: {
           title: '自定义状态',
           name: '状态名称',
@@ -335,10 +520,11 @@ export default {
       signed: '是否已签名',
       domains: '允许的域名',
       limit: '证书限制',
+      person: '人数限制',
       created_at: '创建时间',
       expires_at: '过期时间',
       value: '证书值',
-      renew: '续订/更新证书',
+      renew: '购买证书',
       update: '手动更新',
       input: '请输入证书',
       gift: {
@@ -351,6 +537,9 @@ export default {
       meeting: '订阅会议',
       buy: '购买证书',
       invalid: '证书无效或已过期，请检查证书是否正确。',
+      invalid_domain: '当前域名不在证书允许的域名列表中，请联系管理员检查服务器域名配置是否正确。',
+      default_license:
+        '为保证您的使用，当前系统已为您加载默认证书，默认证书仅支持5人以下的临时房间使用，若需要更多用户名额，请购买专业版证书。',
       update_success: '证书更新成功',
       circle_ip:
         '当前您的IP地址为回环地址/私有地址，不建议您为此地址购买证书。请使用公网IP地址购买证书。若需要为私有地址购买证书并支持服务，请联系Wechat: Privoce。',
@@ -415,6 +604,9 @@ export default {
       remove_participant: '您已被房间主持人移除房间',
       req_record: '请求进行录制',
       recording: "房间在10s后将开启录制，若您不希望被录制，可点击'离开房间'按钮退出。",
+      file: {
+        upload_cancelled: '文件上传已取消',
+      },
     },
     error: {
       conf_load: '配置加载失败，请检查vocespace.conf.json文件是否存在',
@@ -458,6 +650,7 @@ export default {
       file: {
         upload: '文件上传失败',
         download: '文件下载失败',
+        too_large: '文件过大，最大支持:',
       },
     },
     request: {
@@ -523,6 +716,9 @@ export default {
         },
         lang: '语言修改成功',
         transfer: '您已成功被转让为房间主持人',
+      },
+      file: {
+        upload: '文件上传成功',
       },
     },
   },

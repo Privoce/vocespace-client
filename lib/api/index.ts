@@ -1,11 +1,13 @@
+import { ai } from './ai';
 import { createRoom, deleteRoom, joinRoom, leaveRoom, updateRoom } from './channel';
-import { fetchLinkPreview, getChatMsg } from './chat';
-import { getConf, reloadConf } from './conf';
+import { fetchLinkPreview, getChatMsg, uploadFile } from './chat';
+import { getConf, reloadConf, reloadLicense, updateAIConf } from './conf';
 import { checkLicenseByIP, getLicenseByIP } from './license';
 import { sendRecordRequest, updateRecord } from './record';
 import {
   allSpaceInfos,
   checkUsername,
+  createSpace,
   defineUserStatus,
   deleteSpaceParticipant,
   getSpaceInfo,
@@ -20,11 +22,15 @@ import {
   updateSpaceAppSync,
   updateSpaceParticipant,
   uploadSpaceApp,
+  getUserMeta,
+  updateSpaceInfo
 } from './space';
 
 export const api = {
   // ---- space api --------
   joinSpace,
+  updateSpaceInfo,
+  createSpace,
   allSpaceInfos,
   historySpaceInfos,
   getUniqueUsername,
@@ -43,6 +49,7 @@ export const api = {
   // ---- chat api --------
   fetchLinkPreview,
   getChatMsg,
+  uploadFile,
   // ---- license api --------
   getLicenseByIP,
   checkLicenseByIP,
@@ -56,5 +63,10 @@ export const api = {
   joinRoom,
   updateRoom,
   getConf,
+  updateAIConf,
   reloadConf,
+  reloadLicense,
+  // ---- platform api --------
+  getUserMeta,
+  ai
 };

@@ -8,6 +8,8 @@ import styles from '@/styles/controls.module.scss';
 import { ControlType, WsBase, WsControlParticipant, WsInviteDevice, WsTo } from '@/lib/std/device';
 import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { src } from '@/lib/std';
+import { usePlatformUserInfo } from '@/lib/hooks/platform';
+import { HomeOutlined } from '@ant-design/icons';
 
 export interface ControlRKeyMenuProps {
   disabled?: boolean;
@@ -42,6 +44,7 @@ export interface UseControlRKeyMenuProps {
   setUsername: (username: string) => void;
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
+  isSelf: boolean;
 }
 
 export function useControlRKeyMenu({
@@ -53,6 +56,7 @@ export function useControlRKeyMenu({
   setUsername,
   updateSettings,
   toRenameSettings,
+  isSelf,
 }: UseControlRKeyMenuProps) {
   const { t } = useI18n();
   // 必要的状态和Owner的确定 -------------------------------------------------------------------
@@ -65,6 +69,7 @@ export function useControlRKeyMenu({
   const isOwner = useMemo(() => {
     return spaceInfo.ownerId === space?.localParticipant.identity;
   }, [spaceInfo.ownerId, space?.localParticipant.identity]);
+  const { platUser } = usePlatformUserInfo({ uid: space?.localParticipant.identity! });
 
   // 处理音量、模糊视频和模糊屏幕的调整------------------------------------------------------------
   const handleAdjustment = async (
@@ -86,6 +91,7 @@ export function useControlRKeyMenu({
             screenBlur: blurScreen,
           });
         }
+        console.warn('handle self');
         socket.emit('update_user_status', {
           space: space.name,
         } as WsBase);
@@ -185,7 +191,7 @@ export function useControlRKeyMenu({
                   }}
                 >
                   <Slider
-                    disabled={!isOwner}
+                    disabled={!isSelf}
                     min={0.0}
                     max={100.0}
                     step={1.0}
@@ -195,7 +201,7 @@ export function useControlRKeyMenu({
                     }}
                     onChangeComplete={(e) => {
                       setVolume(e);
-                      handleAdjustment('control.volume');
+                      handleAdjustment('control.volume', true);
                     }}
                   ></Slider>
                 </div>
@@ -219,7 +225,7 @@ export function useControlRKeyMenu({
                   }}
                 >
                   <Slider
-                    disabled={!isOwner}
+                    disabled={!isSelf}
                     min={0.0}
                     max={1.0}
                     step={0.05}
@@ -229,7 +235,7 @@ export function useControlRKeyMenu({
                     }}
                     onChangeComplete={(e) => {
                       setBlurVideo(e);
-                      handleAdjustment('control.blur_video');
+                      handleAdjustment('control.blur_video', true);
                     }}
                   ></Slider>
                 </div>
@@ -253,7 +259,7 @@ export function useControlRKeyMenu({
                   }}
                 >
                   <Slider
-                    disabled={!isOwner}
+                    disabled={!isSelf}
                     min={0.0}
                     max={1.0}
                     step={0.05}
@@ -263,7 +269,7 @@ export function useControlRKeyMenu({
                     }}
                     onChangeComplete={(e) => {
                       setBlurScreen(e);
-                      handleAdjustment('control.blur_screen');
+                      handleAdjustment('control.blur_screen', true);
                     }}
                   ></Slider>
                 </div>
@@ -287,10 +293,19 @@ export function useControlRKeyMenu({
             ),
             icon: <SvgResource type="leave" svgSize={16} />,
           },
+          ...(platUser
+            ? [
+                {
+                  key: 'safe.platform',
+                  label: <span>{t('more.platform')}</span>,
+                  icon: <HomeOutlined style={{fontSize: 16}}></HomeOutlined>
+                },
+              ]
+            : []),
         ],
       },
     ];
-  }, [isCamDisabled, isMicDisabled, isOwner, isScreenShareDisabled, volume, blurVideo, blurScreen]);
+  }, [isCamDisabled, isMicDisabled, isScreenShareDisabled, volume, blurVideo, blurScreen, isSelf]);
   // 右键他人的菜单选项 -------------------------------------------------------------
   const optItems: MenuProps['items'] = useMemo(() => {
     const controlItems: MenuProps['items'] = [
@@ -540,6 +555,12 @@ export function useControlRKeyMenu({
           });
           break;
         }
+        case 'safe.platform': {
+          if (platUser && platUser.userId) {
+            window.open(`https://home.vocespace.com/auth/user/${platUser.userId}`, '_blank');
+          }
+          break;
+        }
         case 'control.change_name': {
           toRenameSettings();
           break;
@@ -578,7 +599,7 @@ export function useControlRKeyMenu({
         socket.emit('invite_device', {
           ...wsTo,
           device,
-          isOpen
+          isOpen,
         } as WsInviteDevice);
       };
 

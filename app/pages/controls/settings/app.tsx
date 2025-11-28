@@ -53,7 +53,7 @@ export function AppSettings({
         checked: spaceInfo.apps.includes('todo'),
       },
     ];
-  }, [spaceInfo.apps]);
+  }, [spaceInfo.apps, t]);
 
   const onChange = async (e: CheckboxChangeEvent, value: AppKey) => {
     const { checked } = e.target;

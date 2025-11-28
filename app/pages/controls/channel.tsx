@@ -27,6 +27,7 @@ import {
   Radio,
   Tag,
   theme,
+  Tooltip,
 } from 'antd';
 
 import {
@@ -35,9 +36,9 @@ import {
   MenuUnfoldOutlined,
   PlusCircleOutlined,
 } from '@ant-design/icons';
-import { GridLayout, TrackReferenceOrPlaceholder } from '@livekit/components-react';
+import { TrackReferenceOrPlaceholder } from '@livekit/components-react';
 import { MessageInstance } from 'antd/es/message/interface';
-import { AppKey, ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { ParticipantTileMini } from '../participant/mini';
 import { GLayout } from '../layout/grid';
 import { CheckboxGroupProps } from 'antd/es/checkbox';
@@ -46,8 +47,10 @@ import { WsJoinRoom, WsRemove, WsSender } from '@/lib/std/device';
 import { api } from '@/lib/api';
 import { UpdateRoomParam, UpdateRoomType } from '@/lib/api/channel';
 import { Room } from 'livekit-client';
-import { isMobile as is_mobile, UserStatus } from '@/lib/std';
+import { CreateSpaceError, isMobile as is_mobile, UserStatus } from '@/lib/std';
 import { DEFAULT_DRAWER_PROP } from './drawer_tools';
+import { VocespaceConfig } from '@/lib/std/conf';
+import { audio } from '@/lib/audio';
 
 interface ChannelProps {
   // roomName: string;
@@ -63,7 +66,8 @@ interface ChannelProps {
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
-  showSingleFlotApp: (appKey: AppKey) => void;
+  showFlotApp: () => void;
+  config: VocespaceConfig;
 }
 
 export interface ChannelExports {
@@ -77,6 +81,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
   (
     {
       space,
+      config,
       settings,
       messageApi,
       localParticipantId,
@@ -88,7 +93,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       updateSettings,
       toRenameSettings,
       setUserStatus,
-      showSingleFlotApp,
+      showFlotApp,
     }: ChannelProps,
     ref,
   ) => {
@@ -142,7 +147,6 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
         for (const child of settings.children) {
           newRooms.push(child.name);
           if (!child.isPrivate) {
-            console.warn('public room auto expand', child.name);
             setSubActiveKey((prev) => [...prev, child.name]);
             continue;
           }
@@ -161,8 +165,13 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
     }, [settings.children, localParticipantId, subRoomsTmp]);
 
     const allParticipants = useMemo(() => {
-      // console.warn(Object.keys(settings.participants).length, settings.participants);
-      return Object.keys(settings.participants);
+      // return Object.keys(settings.participants);
+      // 只返回在线的参与者
+      return Object.entries(settings.participants)
+        .filter(([_, p]) => {
+          return p.online;
+        })
+        .map(([pid, _]) => pid);
     }, [settings]);
 
     const wsSender = useMemo(() => {
@@ -202,7 +211,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
 
     useEffect(() => {
       // 监听加入私密房间的socket事件 --------------------------------------------------------------------------
-      socket.on('join_privacy_room_response', (msg: WsJoinRoom) => {
+      socket.on('join_privacy_room_response', async (msg: WsJoinRoom) => {
         if (msg.space === space.name && msg.receiverId === localParticipantId) {
           if (!joinModalOpen) {
             if (msg.confirm === false) {
@@ -215,6 +224,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
               //同意加入
               agreeJoinRoom(msg.childRoom);
             } else {
+              await audio.wave();
               setJoinParticipant({
                 id: msg.senderId,
                 name: msg.senderName,
@@ -513,6 +523,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       {
         key: 'leave',
         label: t('channel.menu.leave'),
+        disabled: selfRoomName !== selectedRoom?.name,
         onClick: async () => await leaveChildRoom(),
       },
     ];
@@ -554,7 +565,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             updateSettings={updateSettings}
             toRenameSettings={toRenameSettings}
             setUserStatus={setUserStatus}
-            showSingleFlotApp={showSingleFlotApp}
+            showFlotApp={showFlotApp}
           ></ParticipantTileMini>
         </GLayout>
       );
@@ -588,7 +599,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
               updateSettings={updateSettings}
               toRenameSettings={toRenameSettings}
               setUserStatus={setUserStatus}
-              showSingleFlotApp={showSingleFlotApp}
+              showFlotApp={showFlotApp}
             ></ParticipantTileMini>
           </GLayout>
         );
@@ -635,7 +646,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             >
               <div className={styles.room_header_wrapper_title}>
                 <div
-                  className={styles.room_header_wrapper_title}
+                  className={styles.room_header_wrapper_title_name}
                   onClick={() => {
                     setSubActiveKey((prev) => {
                       const newActiveKey = [...prev];
@@ -649,11 +660,16 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                   }}
                 >
                   {room.isPrivate ? (
-                    <LockOutlined />
+                    <LockOutlined style={{ fontSize: 16 }} />
                   ) : (
                     <SvgResource type="public" svgSize={16} color="#aaa"></SvgResource>
                   )}
-                  {room.name}
+                  <div
+                    className={styles.room_header_wrapper_title_name_title}
+                    style={{ width: room.participants.length > 0 ? '100px' : 'calc(100% - 24px)' }}
+                  >
+                    {room.name}
+                  </div>
                 </div>
                 {room.participants.length > 0 && (
                   <Tag
@@ -809,6 +825,40 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
         },
       ];
     }, [mainContext, subChildren, childRooms, subActiveKey, mainJoinVis]);
+
+    /**
+     * 创建属于自己的空间, 直接使用 api.createSpace，将当前用户作为空间的拥有者，在数据层创建，不跳转
+     */
+    const createOwnSpace = async () => {
+      let ownSpace = settings.participants[localParticipantId].name;
+      const response = await api.createSpace(ownSpace);
+      if (response.ok) {
+        const { success, error }: { success?: boolean; error?: CreateSpaceError } =
+          await response.json();
+        if (success) {
+          // 新建标签页进行跳转
+          Modal.success({
+            title: t('common.create_space.success'),
+            content: `${t('common.create_space.jump')} ${config.serverUrl}/${ownSpace}`,
+            okText: t('common.create_space.ok'),
+            onOk: () => {
+              window.open(`/${ownSpace}`, '_blank');
+            },
+            cancelText: t('common.create_space.cancel'),
+          });
+        } else {
+          messageApi.error({
+            content: t(error as string),
+            duration: 3,
+          });
+        }
+      } else {
+        messageApi.error({
+          content: t('common.create_space.error.unknown'),
+          duration: 3,
+        });
+      }
+    };
 
     useImperativeHandle(ref, () => ({
       join: joinChildRoom,
@@ -1007,6 +1057,14 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                 <div className={styles.roomInfo}>
                   {/* <SvgResource.Hash className={styles.roomIcon} /> */}
                   <span className={styles.roomName}>{space.name}</span>
+                  <Tooltip title={t('common.create_own_space')} placement="right">
+                    <Button
+                      size="small"
+                      type="text"
+                      icon={<PlusCircleOutlined></PlusCircleOutlined>}
+                      onClick={createOwnSpace}
+                    ></Button>
+                  </Tooltip>
                 </div>
                 <div className={styles.headerActions}>
                   <Tag color="#22CCEE">

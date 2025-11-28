@@ -33,23 +33,167 @@ export default {
     },
     chat: 'Chat',
     chat_placeholder: 'Please enter a message',
+    chat_drag_file_here: 'Drag file here',
     send: 'Send',
+    sending: 'Sending',
     send_file_or: 'Do you want to send this file?',
     leave: 'Leave',
     share_screen: 'Share Screen',
     stop_share: 'Stop Share Screen',
     wave_msg: 'sent you a reminder!',
     full_user:
-      'The room user has exceeded the limit and cannot join. You can join other rooms or inform the builder to upgrade your license to obtain more user slots.',
-    open: 'Open',
-    close: 'Close',
+      'The room user has exceeded thene limit and cannot join. You can join other rooms or inform the builder to upgrade your license to obtain more user slots.',
+    open: 'ON',
+    close: 'OFF',
     high_quality: 'Lossless mode',
     high_quality_desc:
       'When enabled, video, audio, and screen sharing will be transmitted at a fixed resolution and higher quality, but may increase bandwidth usage and latency.',
     socket_reconnect: 'Reconnecting...',
+    create_own_space: 'Create your own VoceSpace',
+    create_space: {
+      jump: 'Jump to your Vocespace?',
+      success: 'Create space successfully',
+      error: {
+        unknown: 'Create space failed, please try again later or create manually',
+        param: 'Required parameters missing, space creation failed',
+        exist:
+          'The space already exists. Please check whether it has been created or manually create it to access it',
+      },
+      ok: 'Jump',
+      cancel: 'Cancel',
+    },
+    start_sharing: 'Start Sharing',
+    copy: {
+      success: 'Copied to clipboard',
+      error: 'Copying failed, please copy manually',
+    },
+  },
+  ai: {
+    cut: {
+      time: {
+        start: 'Start Time',
+        duration: 'Duration (minutes)',
+      },
+      extraction: {
+        title: 'Extraction granularity',
+        desc: 'Sets the extraction granularity of AI analysis. The higher the granularity, the more detailed the extracted information. For non-professional scenarios or users who do not require overly detailed information, medium or easy can be selected.',
+        easy: 'Easy',
+        medium: 'Medium',
+        max: 'Max',
+      },
+      report: 'AI Analysis Report',
+      start: 'Start Analysis',
+      stop: 'Stop Analysis',
+      empty:
+        'Once AI analysis is enabled, the system will periodically take screenshots and analyze them to help you summarize the content of your space and generate reports.',
+      title: 'AI Analysis Settings',
+      freq: 'Screenshot Frequency (minutes)',
+      freq_desc:
+        'Sets the screenshot frequency for AI analysis. The default is to take a screenshot every 5 minutes for analysis. If it takes longer than 5 minutes, the first screenshot will be taken at the 5-minute mark.',
+      ask_permission:
+        'Your AI worklog will capture screen activity. Please share the screen or window of your task.',
+      ask_permission_title: 'Screen Sharing Permission',
+      choose: 'Choose Screen',
+      not_now: 'Not now',
+      source_dep: 'AI Work Log Source Data',
+      source_dep_desc:
+        'Select the screen sharing source data to use for AI analysis. You can choose to share the entire screen, work to-dos, or time spent. Choosing appropriate source data helps improve the accuracy and relevance of AI analysis.',
+      share_screen: 'Share Screen',
+      share_todo: 'To-do List',
+      share_time: 'Time Spent',
+      share_timeStatistic: 'Duration',
+      open: 'Enable AI analysis service',
+      freq_analysis: 'AI analysis frequency (minutes)',
+      myAnalysis: 'My AI analysis report',
+      error: {
+        res: 'Unable to retrieve AI analysis results, please try again later.',
+        download: 'Unable to download Markdown report, please try again later.',
+        reload: 'Unable to update AI analysis results, please try again later.',
+        start:
+          'Unable to start AI analysis service, please check if screen sharing permission is enabled.',
+      },
+      success: {
+        reload: 'AI analysis results updated',
+        stop: 'AI analysis service stopped',
+        start: 'AI analysis service started',
+      },
+      download: 'Download Markdown report',
+      download_content:
+        'Preparing report content for you, this process will take approximately 30 seconds, please wait patiently and do not close the current page.',
+      reload: 'Update report',
+    },
+  },
+  login: {
+    following: 'Login using the following method',
+    out: 'Log out',
+    anon: 'Anonymous',
+    guest: 'Join as a guest',
+  },
+  reaction: {
+    title: 'Reaction',
   },
   recording: {
-    title: 'Recording',
+    title: 'Recording Record',
+    empty: 'No recording record yet',
+    fresh: 'Refresh',
+    search: {
+      success: 'Successfully searched for recording files',
+      error:
+        'No recording files found. Please check if the room name is correct. The room may not have any recorded video files or may have been deleted.',
+    },
+    try_s3: {
+      unavailable: 'The S3 service is not configured or the environment variables are not set',
+      init: 'Successfully retrieved the S3 service environment variables',
+      connected: 'Connected to the S3 service',
+      connect_error:
+        'Unable to connect to the S3 service. You may be accessing a local service. Please check the configuration or contact the administrator.',
+      connecting: 'Connecting to the S3 service...',
+      enving: 'Getting environment variables...',
+      unconnect: 'Unable to connect to the S3 service',
+    },
+    copy: {
+      title: 'Copy Link',
+      success: 'Download link copied to clipboard',
+      error: 'Copy link failed, please copy manually',
+    },
+    get_download_link: {
+      success: 'Get download link successfully',
+      error: 'Get download link failed, please try again later',
+    },
+    delete: {
+      title: 'Delete',
+      confirm: {
+        title: 'Confirm to delete',
+        content: [
+          'Are you sure you want to delete the recording file',
+          '? This operation cannot be undone.',
+        ],
+        ok: 'Delete',
+        cancel: 'Cancel',
+      },
+      success: 'Deleted successfully',
+      error: 'Delete failed, please try again later',
+    },
+    download: {
+      title: 'Download',
+      success: 'Download link successfully obtained, file downloading...',
+      error:
+        'Download link failed to obtain, please try again later or contact the administrator to download',
+    },
+    table: {
+      file: 'File name',
+      opt: 'Operation',
+      size: 'File size',
+      last_modified: 'Last modified',
+      ty: 'Type',
+      ty_json: 'Record file',
+      ty_video: 'Video file',
+    },
+    pagation: {
+      total: 'Total',
+      num: 'Items',
+      now: 'Number',
+    },
   },
   channel: {
     menu: {
@@ -135,8 +279,28 @@ export default {
   more: {
     title: 'More',
     channel: 'Channel',
+    platform: 'Homepage',
+    ai: {
+      cut: 'AI Analysis',
+      desc: "Timed screenshots and AI analysis help you summarize your space's content and generate reports.",
+    },
     app: {
       title: 'Application',
+      raise: {
+        cancel: 'Cancel Raise Hand',
+        title: 'Raise Hand',
+        receive: 'raised hand, please handle it!',
+        handle: {
+          title: 'Handling Request',
+          accept: 'Allow',
+          accept_desc: 'Allow the user to speak and notify them that they can speak.',
+          reject: 'Reject',
+          reject_desc:
+            "Reject the user's ability to speak, notify them, and cancel their raised hand status.",
+          rejected: 'Sorry, your request to speak has been rejected.',
+          accepted: 'You have been allowed to speak. Please begin your speech.',
+        },
+      },
       upload: {
         to_space: 'Upload application to space',
         history: 'Upload history',
@@ -192,7 +356,13 @@ export default {
         delete: 'Todo deleted successfully',
         undone: 'Undone',
         done: 'Done',
-        unexport: "Current todo is empty, cannot export"
+        unexport: 'Current todo is empty, cannot export',
+        complete: 'Completed Tasks',
+        together: {
+          title: 'Team Status',
+          empty: 'No user todos available',
+        },
+        copy: 'Copy todo',
       },
     },
     record: {
@@ -215,6 +385,7 @@ export default {
       manage: 'Manage Participants',
       search: 'Search Participants',
       manager: 'host',
+      wave: 'Send Greeting',
       invite: {
         title: 'Invite Participants',
         web: 'in Browser',
@@ -279,6 +450,31 @@ export default {
   },
   settings: {
     title: 'Settings',
+    ai: {
+      title: 'AI',
+      desc: 'Configure the relevant parameters of the AI ​​analysis service to enable AI analysis functions.',
+      model: 'Model name (multimodal model)',
+      model_desc:
+        'Select the language model for AI analysis. The model name must support multimodal input (image + text) to process screenshots and generate analysis reports.',
+      key: 'API key',
+      url: 'API address',
+      recommand: [
+        'We recommend using the following multimodal models for better AI analysis results:',
+        '1. GPT-4V',
+        '2. Claude-3-vision',
+        '3. Gemini-Pro-Vision',
+        '4. Qwen3',
+        '5. Doubao',
+      ],
+      enabled: 'AI inquiry pop-up',
+      update: {
+        save: 'Save AI configuration',
+        success: 'AI configuration update successful',
+        error: 'AI configuration update failed, please try again later. ',
+        incomplete:
+          'Please fill in the AI ​​configuration parameters completely, ensuring that the model name, API address, and API key are all entered.',
+      },
+    },
     general: {
       title: 'General',
       username: 'Username',
@@ -286,7 +482,7 @@ export default {
       share_audio: 'Share Screen Audio',
       prompt_sound: 'Enter Prompt Sound',
       persistence: {
-        title: 'Persistent Space',
+        title: 'Auto-save Rooms and Members History Data',
         success: 'Successfully set the current space to persistent',
         error: 'Failed to set the current space to persistent',
       },
@@ -314,7 +510,7 @@ export default {
         },
       },
       status: {
-        title: 'Status',
+        title: 'State',
         online: 'Online',
         online_desc: "Online, user's video and audio will work normally",
         leisure: 'Leisure',
@@ -323,6 +519,8 @@ export default {
         busy_desc: "Busy, user's video will be blurred, audio will be muted",
         offline: 'Away',
         offline_desc: "Away, user's video and audio will be turned off",
+        working: 'Working',
+        working_desc: 'Dependency todo auto generates current work status',
         define: {
           title: 'Custom state',
           name: 'State name',
@@ -341,14 +539,14 @@ export default {
         title: 'Custom Status',
         name: 'Status Name',
         desc: 'Status Description',
-        icon: 'Status Icon',
+        icon: 'State Icon',
         placeholder: {
-          name: 'Please enter status name',
-          desc: 'Please enter status description',
+          name: 'Please enter state name',
+          desc: 'Please enter state description',
         },
-        save: 'Save Status',
-        success: 'Status saved successfully',
-        fail: 'Failed to save status',
+        save: 'Save State',
+        success: 'State saved successfully',
+        fail: 'Failed to save state',
       },
     },
     license: {
@@ -356,6 +554,7 @@ export default {
       signed: 'Signed',
       domains: 'Domains',
       limit: 'Limit',
+      person: 'Person Limit',
       created_at: 'Created At',
       expires_at: 'Expires At',
       value: 'License Value',
@@ -372,6 +571,10 @@ export default {
       meeting: 'Subscribe to a meeting',
       buy: 'Purchase a certificate',
       invalid: 'The certificate is invalid or expired. Please check if it is correct.',
+      invalid_domain:
+        'The current domain is not in the list of allowed domains for the certificate. Please contact the administrator to check the server domain configuration.',
+      default_license:
+        'To ensure your use, the current system has loaded a default certificate for you. The default certificate only supports temporary rooms with less than 5 people. If you need more user places, please purchase a professional certificate.',
       update_success: 'The certificate was updated successfully',
       circle_ip:
         'Your current IP address is a loopback address/private address, and we do not recommend purchasing a license for this address. Please purchase a license using a public IP address. If you need to purchase licenses and support services for private addresses, please contact WeChat: Privose.',
@@ -389,7 +592,7 @@ export default {
       device: 'Video Device',
     },
     virtual: {
-      title: 'Virtual Role',
+      title: 'Video Preview',
       tab: {
         model: 'Model',
         background: 'Background',
@@ -435,6 +638,9 @@ export default {
       invite_device: 'Inviting you to enable:',
       remove_participant: 'You have been removed from the room by the room host',
       req_record: 'Request to start recording',
+      file: {
+        upload_cancelled: 'File upload cancelled',
+      },
     },
     error: {
       conf_load:
@@ -483,6 +689,7 @@ export default {
       file: {
         upload: 'File upload failed',
         download: 'File download failed',
+        too_large: 'File too large, maximum supported:',
       },
     },
     request: {
@@ -550,6 +757,9 @@ export default {
         },
         lang: 'Language changed successfully',
         transfer: 'You are now the host',
+      },
+      file: {
+        upload: 'File uploaded successfully',
       },
     },
   },

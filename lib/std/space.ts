@@ -1,7 +1,9 @@
-import dayjs, { Dayjs } from 'dayjs';
-import { UserDefineStatus, UserStatus } from '.';
+import { UserStatus } from '.';
 import { ModelBg, ModelRole } from './virtual';
-
+import { Extraction } from '../ai/analysis';
+import dayjs, { Dayjs } from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(utc);
 /**
  * Child room information
  */
@@ -23,6 +25,22 @@ export interface ChildRoom {
    * is private room or not
    */
   isPrivate: boolean;
+}
+
+export interface AICutParticipantConf {
+  enabled: boolean;
+  /**
+   * 是否需要在任务栏显示分析时间以及需要进行时间统计
+   */
+  spent: boolean;
+  /**
+   * 是否要结合待办事项进行分析
+   */
+  todo: boolean;
+  /**
+   * 提取内容配置的精细度
+   */
+  extraction: Extraction;
 }
 
 /**
@@ -89,7 +107,7 @@ export interface ParticipantSettings {
     /**
      * 待办事项应用数据
      */
-    todo?: SpaceTodo;
+    todo?: SpaceTodo[];
     /**
      * 计时器应用数据
      */
@@ -99,6 +117,27 @@ export interface ParticipantSettings {
      */
     countdown?: SpaceCountdown;
   };
+  /**
+   * 当前是否请求举手
+   */
+  raiseHand: boolean;
+  /**
+   * ai相关的功能设置
+   */
+  ai: {
+    /**
+     * AI截图分析功能
+     */
+    cut: AICutParticipantConf;
+  };
+  /**
+   * 是否在线，如果用户在线则新用户如果重名无法加入，如果不在线则允许重名加入
+   */
+  online: boolean;
+  /**
+   * 是否认证通过
+   */
+  isAuth: boolean;
 }
 
 export interface SpaceTimeRecord {
@@ -128,8 +167,17 @@ export interface SpaceDateRecords {
 }
 
 export interface RecordSettings {
+  /**
+   * egress 服务ID for LiveKit
+   */
   egressId?: string;
+  /**
+   * 录制文件存储路径
+   */
   filePath?: string;
+  /**
+   * 录制是否开启
+   */
   active: boolean;
 }
 
@@ -146,15 +194,22 @@ export interface SpaceInfoMap {
   [spaceId: string]: SpaceInfo;
 }
 
+export interface SpaceAIConf {
+  cut: {
+    enabled: boolean;
+    freq: number; // 截图频率，单位分钟
+  };
+}
+
 export interface SpaceInfo {
   participants: {
     [participantId: string]: ParticipantSettings;
   };
-  /**
-   * 用户自定义状态列表，这会保存任意在空间的参与者设置过的自定义状态
-   * 主要用于在空间内的用户自定义状态选择
-   */
-  status?: UserDefineStatus[];
+  // /**
+  //  * 用户自定义状态列表，这会保存任意在空间的参与者设置过的自定义状态
+  //  * 主要用于在空间内的用户自定义状态选择
+  //  */ @deprecated 由用户内部维护
+  // status?: UserDefineStatus[];
   /**
    * 空间主持人ID
    */
@@ -179,12 +234,27 @@ export interface SpaceInfo {
    * - true: 持久化空间，空间内的数据会持久化，应用数据也会保存
    */
   persistence: boolean;
+  ai: SpaceAIConf;
 }
 
 export interface TodoItem {
   id: string;
+  /**
+   * 任务
+   */
   title: string;
-  done?: number
+  /**
+   * 完成时间戳，如果未完成则没有该字段
+   */
+  done?: number;
+  /**
+   * 是否显示
+   * - 当用户删除任务时，会检查done字段，如果有则表示任务已完成，设置visible为false而不是删除
+   * - 如果没有done字段，则表示任务未完成，直接删除
+   * - 这样做的目的是为了防止用户误操作删除了已完成的任务，导致数据丢失
+   * - 用户可以通过导出功能导出已完成的任务
+   */
+  visible: boolean;
 }
 
 export interface Timer {
@@ -216,8 +286,51 @@ export interface SpaceTodo {
   /**
    * 上传时间戳，表示用户上传到空间的时间
    */
-  timestamp: number;
+  date: number;
 }
+
+export const sortTodos = (todos: SpaceTodo[]): SpaceTodo[] => {
+  if (todos.length === 0) return [];
+
+  // 创建深拷贝以避免修改只读对象
+  const sortedTodos = todos.map((todo) => {
+    // 对items进行排序：未完成的排在前面，相同完成状态按id（时间戳）排序
+    const sortedItems = [...todo.items].sort((a, b) => {
+      if ((!a.done && !b.done) || (a.done && b.done)) {
+        // 都未完成或都已完成，按id排序（新的在前面）
+        return Number(b.id) - Number(a.id);
+      }
+      if (a.done && !b.done) {
+        // a已完成，b未完成，b排前面
+        return 1;
+      }
+      if (!a.done && b.done) {
+        // a未完成，b已完成，a排前面
+        return -1;
+      }
+
+      return 0;
+    });
+
+    return {
+      ...todo,
+      items: sortedItems,
+    };
+  });
+
+  // 按照date进行排序，最新的在前面
+  return sortedTodos.sort((a, b) => b.date - a.date);
+};
+
+export const todayTimeStamp = (timestamp?: number): number => {
+  const date = timestamp ? dayjs.utc(timestamp) : dayjs.utc();
+  return date.startOf('day').valueOf();
+};
+
+export const DEFAULT_TODOS: SpaceTodo = {
+  items: [],
+  date: todayTimeStamp(),
+};
 
 export interface SpaceTimer extends Timer {
   timestamp: number;
@@ -253,6 +366,7 @@ export const castTodo = (todo?: SpaceTodo): TodoItem[] | undefined => {
     id: item.id,
     title: item.title,
     done: item.done,
+    visible: item.visible,
   }));
 };
 
@@ -273,20 +387,39 @@ export const DEFAULT_COUNTDOWN: Countdown = {
 export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
   participants: {},
   ownerId: '',
-  persistence: false,
+  persistence: true,
   record: { active: false },
   startAt,
-  children: [],
+  children: [
+    {
+      name: 'Meeting Room',
+      participants: [],
+      ownerId: 'system',
+      isPrivate: false,
+    },
+    {
+      name: '☕️ Coffee Break',
+      participants: [],
+      ownerId: 'system',
+      isPrivate: false,
+    },
+  ],
   apps: ['todo', 'countdown'],
+  ai: {
+    cut: {
+      enabled: true,
+      freq: 5,
+    },
+  },
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
-  version: '0.3.0',
+  version: '0.4.9',
   name: '',
   volume: 100,
   blur: 0.0,
   screenBlur: 0.0,
-  status: UserStatus.Online,
+  status: 'settings.general.status.online',
   socketId: '',
   startAt: 0,
   virtual: {
@@ -299,9 +432,52 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   sync: ['todo'], // 默认同步待办事项
   auth: 'read',
   appDatas: {},
+  raiseHand: false,
+  ai: {
+    cut: {
+      enabled: true,
+      spent: false,
+      todo: true,
+      extraction: 'medium',
+    },
+  },
+  online: true,
+  isAuth: false,
 };
 
 /**
  * key in localStorage
  */
 export const PARTICIPANT_SETTINGS_KEY = 'vocespace_participant_settings';
+/**
+ * 来自 Vocespace 平台的用户ID 标识，用于标识用户是否为匿名用户
+ */
+export const VOCESPACE_PLATFORM_USER_ID = 'vocespace_platform_user_id';
+
+export interface SettingState {
+  volume: number;
+  blur: number;
+  screenBlur: number;
+  virtual: {
+    enabled: boolean;
+    role: ModelRole;
+    bg: ModelBg;
+  };
+  openShareAudio: boolean;
+  openPromptSound: boolean;
+}
+
+export const getState = (uState: ParticipantSettings): SettingState => {
+  return {
+    volume: uState.volume,
+    blur: uState.blur,
+    screenBlur: uState.screenBlur,
+    virtual: {
+      enabled: uState.virtual.enabled,
+      role: uState.virtual.role,
+      bg: uState.virtual.bg,
+    },
+    openShareAudio: uState.openShareAudio,
+    openPromptSound: uState.openPromptSound,
+  };
+};

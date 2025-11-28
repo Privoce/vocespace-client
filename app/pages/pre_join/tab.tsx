@@ -129,7 +129,7 @@ export function MeetingTab({ hq, setHq }: MeetingTabProps) {
           ></Checkbox>
           <label htmlFor="use-e2ee">{t('msg.info.enabled_e2ee')}</label>
         </div>
-        {e2ee && (
+        {/* {e2ee && (
           <div
             style={{
               display: 'inline-flex',
@@ -149,7 +149,7 @@ export function MeetingTab({ hq, setHq }: MeetingTabProps) {
               onChange={(ev) => setSharedPassphrase(ev.target.value)}
             />
           </div>
-        )}
+        )} */}
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
           <Checkbox id="use-hq" checked={hq} onChange={(ev) => setHq(ev.target.checked)}></Checkbox>
 

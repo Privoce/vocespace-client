@@ -4,6 +4,9 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { useMemo, useState } from 'react';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
 import { ViewAdjusts } from '@/lib/std/window';
+import { usePlatformUserInfo } from '@/lib/hooks/platform';
+import { useLocalParticipant } from '@livekit/components-react';
+import { HomeOutlined, RobotOutlined } from '@ant-design/icons';
 
 export interface MoreButtonProps {
   showText?: boolean;
@@ -14,6 +17,7 @@ export interface MoreButtonProps {
   onClickManage?: () => Promise<void>;
   onClickRecord?: () => Promise<void>;
   onClickApp?: () => Promise<void>;
+  onClickAI?: () => Promise<void>;
   controlWidth: number;
   chat?: {
     visible: boolean;
@@ -37,6 +41,7 @@ export function MoreButtonInner({
   onClickRecord,
   onSettingOpen,
   onClickApp,
+  onClickAI,
   isRecording,
   controlWidth,
   chat,
@@ -49,6 +54,10 @@ export function MoreButtonInner({
   const showTextOrHide = useMemo(() => {
     return ViewAdjusts(controlWidth).w720 ? false : showText;
   }, [controlWidth]);
+
+  const { localParticipant } = useLocalParticipant();
+
+  const { platUser } = usePlatformUserInfo({ uid: localParticipant.identity });
 
   const onClickChatMsg = () => {
     if (chat && chat.visible) {
@@ -74,6 +83,12 @@ export function MoreButtonInner({
         key: 'record',
         icon: <SvgResource type="record" svgSize={16} color={isRecording ? '#FF0000' : '#fff'} />,
       },
+      // 定时截图进行AI分析功能
+      {
+        label: <div>{t('more.ai.cut')}</div>,
+        key: 'ai_cut',
+        icon: <RobotOutlined style={{ fontSize: 16 }}></RobotOutlined>,
+      },
       // 参与者管理功能
       {
         label: <div style={{ marginLeft: '8px' }}>{t('more.participant.title')}</div>,
@@ -85,6 +100,15 @@ export function MoreButtonInner({
         key: 'setting',
         icon: <SvgResource type="setting" svgSize={16} />,
       },
+      ...(platUser
+        ? [
+            {
+              label: <div>{t('more.platform')}</div>,
+              key: 'platform_user',
+              icon: <HomeOutlined style={{ fontSize: 16 }} />,
+            },
+          ]
+        : []),
     ];
     if (chat && chat.visible) {
       moreItems.push({
@@ -99,7 +123,7 @@ export function MoreButtonInner({
       });
     }
     return moreItems;
-  }, [isRecording, chat]);
+  }, [isRecording, chat, t]);
 
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
@@ -131,6 +155,17 @@ export function MoreButtonInner({
         break;
       case 'chat':
         onClickChatMsg();
+        break;
+      case 'platform_user':
+        if (platUser && platUser.userId) {
+          window.open(`https://home.vocespace.com/auth/user/${platUser.userId}`, '_blank');
+        }
+        break;
+      case "ai_cut":
+        // Handle AI cut action
+        if (onClickAI) {
+          await onClickAI();
+        }
         break;
       default:
         break;

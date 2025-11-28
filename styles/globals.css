@@ -12,8 +12,8 @@ html {
 html,
 body {
   overflow: hidden;
-  width: 100%;
-  height: 100%;
+  width: 100dvw;
+  height: 100dvh;
   margin: 0px;
 }
 
@@ -222,4 +222,8 @@ h2 a {
 .ant-tabs-content-holder {
   overflow-y: scroll;
   scrollbar-width: none;
+}
+
+:where(.css-dev-only-do-not-override-w30lry).ant-list .ant-list-pagination {
+  margin-block-start: 12px !important;
 }

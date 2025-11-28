@@ -32,20 +32,17 @@ import io from 'socket.io-client';
 import { ChatMsgItem } from '@/lib/std/chat';
 import {
   AppAuth,
-  Countdown,
-  DEFAULT_COUNTDOWN,
   DEFAULT_PARTICIPANT_SETTINGS,
-  DEFAULT_TIMER,
   PARTICIPANT_SETTINGS_KEY,
   ParticipantSettings,
-  Timer,
-  TodoItem,
+  VOCESPACE_PLATFORM_USER_ID,
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
-import { WsBase, WsMouseMove, WsTo } from '@/lib/std/device';
+import { WsBase, WsTo } from '@/lib/std/device';
 import { createRTCQulity, DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
+import { DEFAULT_LICENSE } from '@/lib/std/license';
 
 const TURN_CREDENTIAL = process.env.TURN_CREDENTIAL ?? '';
 const TURN_USERNAME = process.env.TURN_USERNAME ?? '';
@@ -75,13 +72,9 @@ export const roomStatusState = atom({
 export const licenseState = atom({
   key: 'licenseState',
   default: {
-    id: undefined,
-    email: undefined,
-    domains: '*',
-    created_at: 1747742400,
-    expires_at: 1779278400,
-    value: 'vocespace_pro__KUgwpDrr-g3iXIX41rTrSCsWAcn9UFX8dOYMr0gAARQ',
-    ilimit: 'Free',
+    ...DEFAULT_LICENSE,
+    isAnalysis: false,
+    personLimit: 5,
   },
 });
 
@@ -103,22 +96,12 @@ export const chatMsgState = atom({
   },
 });
 
-// export const AppsDataState = atom({
-//   key: 'AppsDataState',
-//   default: {
-//     todo: [] as TodoItem[],
-//     timer: DEFAULT_TIMER,
-//     countdown: DEFAULT_COUNTDOWN,
-//   },
-// });
-
-export const SingleAppDataState = atom({
-  key: 'SingleAppDataState',
+export const RemoteTargetApp = atom({
+  key: 'RemoteTargetApp',
   default: {
     participantId: undefined as string | undefined,
     participantName: undefined as string | undefined,
     auth: 'read' as AppAuth,
-    targetApp: undefined as Timer | Countdown | TodoItem[] | undefined,
   },
 });
 
@@ -127,6 +110,12 @@ export function PageClientImpl(props: {
   region?: string;
   hq: boolean;
   codec: VideoCodec;
+  username?: string;
+  userId?: string;
+  auth?: 'space' | 'vocespace';
+  avatar?: string;
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
 }) {
   const { t } = useI18n();
   const [uState, setUState] = useRecoilState(userState);
@@ -156,41 +145,27 @@ export function PageClientImpl(props: {
     undefined,
   );
 
-  const handlePreJoinSubmit = React.useCallback(async (values: LocalUserChoices) => {
-    setPreJoinChoices(values);
-    const connectionDetailsResp = await api.joinSpace(
-      props.spaceName,
-      values.username,
-      props.region,
-    );
-    const connectionDetailsData = await connectionDetailsResp.json();
-    setConnectionDetails(connectionDetailsData);
-  }, []);
-  const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
-
-  // 从localStorage中获取用户设置 --------------------------------------------------------------------
-  useEffect(() => {
-    const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
-    if (storedSettingsStr) {
-      const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
-      if (storedSettings?.version !== '0.3.0') {
-        // 版本不匹配/不存在，直接删除
-        localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
-        return;
-      } else {
-        setUState(storedSettings);
+  const handlePreJoinSubmit = React.useCallback(
+    async (values: LocalUserChoices) => {
+      setPreJoinChoices(values);
+      const connectionDetailsResp = await api.joinSpace(
+        props.spaceName,
+        values.username,
+        props.region,
+        props.userId,
+      );
+      const connectionDetailsData = await connectionDetailsResp.json();
+      setConnectionDetails(connectionDetailsData);
+      if (props.userId && props.username && props.auth) {
+        // 设置登陆状态：需要在localStorage中存储来自平台提供的用户id即可，因为id才是真正的唯一标识
+        // localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, props.userId);
+        // 去除url参数
+        router.replace(`/${props.spaceName}`);
       }
-    } else {
-      // 没有则存到localStorage中
-      localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
-    }
-
-    return () => {
-      // 在组件卸载时将用户设置存储到localStorage中，保证用户设置的持久化
-      localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
-    };
-  }, []);
-
+    },
+    [props],
+  );
+  const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
   // 配置数据 ----------------------------------------------------------------------------------------
   const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
   const [loadConfig, setLoadConfig] = useState(false);
@@ -212,10 +187,50 @@ export function PageClientImpl(props: {
     }
   }, [loadConfig]);
 
+  // 平台直接加入房间逻辑 --------------------------------------------------------------------------------
+  // const directJoinFromPlatform = async () => {
+  //   let { userId, username, auth, spaceName } = props;
+  //   console.warn('userId, username, auth, spaceName', userId, username, auth, spaceName);
+  //   if (userId && username && auth && spaceName) {
+  //     const finalUserChoices = {
+  //       username,
+  //       videoEnabled: false,
+  //       audioEnabled: false,
+  //       videoDeviceId: '',
+  //       audioDeviceId: '',
+  //     } as LocalUserChoices;
+
+  //     setPreJoinChoices(finalUserChoices);
+  //     const connectionDetailsResp = await api.joinSpace(spaceName, username, props.region, userId);
+  //     const connectionDetailsData = await connectionDetailsResp.json();
+  //     setConnectionDetails(connectionDetailsData);
+  //     // 去除url参数
+  //     router.replace(`/${spaceName}`);
+  //   }
+  // };
+
   // 当localStorage中有reload这个标志时，需要重登陆
   useEffect(() => {
+    const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
+    if (storedSettingsStr) {
+      const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
+      if (storedSettings?.version !== '0.4.9') {
+        // 版本不匹配/不存在，直接删除
+        localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
+        localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
+        return;
+      }
+      setUState(storedSettings);
+    }
     const reloadRoom = localStorage.getItem('reload');
     if (reloadRoom) {
+      if (storedSettingsStr) {
+        const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
+        setUState(storedSettings);
+      } else {
+        // 没有则存到localStorage中
+        localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
+      }
       setIsReload(true);
       messageApi.loading(t('settings.general.conf.reloading'));
       localStorage.removeItem('reload');
@@ -233,8 +248,17 @@ export function PageClientImpl(props: {
         // router.push(`/${reloadRoom}`);
       }, 5000);
     }
-  }, []);
 
+    // 直接加入房间逻辑
+    // directJoinFromPlatform();
+
+    return () => {
+      // 在组件卸载时将用户设置存储到localStorage中，保证用户设置的持久化
+      if (isReload) {
+        localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
+      }
+    };
+  }, []);
   return (
     <main data-lk-theme="default" style={{ height: '100%' }}>
       {contextHolder}
@@ -249,6 +273,15 @@ export function PageClientImpl(props: {
             micLabel={t('common.device.microphone')}
             camLabel={t('common.device.camera')}
             userLabel={t('common.username')}
+            spaceParams={{
+              spaceName: props.spaceName,
+              username: props.username,
+              userId: props.userId,
+              auth: props.auth,
+              avatar: props.avatar,
+            }}
+            loading={props.loading}
+            setLoading={props.setLoading}
           />
         </div>
       ) : (
@@ -286,7 +319,7 @@ function VideoConferenceComponent(props: {
   const e2eeEnabled = !!(e2eePassphrase && worker);
   const keyProvider = new ExternalE2EEKeyProvider();
   const [e2eeSetupComplete, setE2eeSetupComplete] = React.useState(false);
-
+  const [roomState, setRoomState] = useRecoilState(roomStatusState);
   const [permissionOpened, setPermissionOpened] = useState(false);
   const [permissionModalVisible, setPermissionModalVisible] = useState(false);
   const [permissionRequested, setPermissionRequested] = useState(false);
@@ -325,9 +358,7 @@ function VideoConferenceComponent(props: {
           maxFramerate: props.config.maxFramerate ?? 30, // 30fps
           priority: 'medium',
         },
-        screenShareSimulcastLayers: props.options.hq
-          ? [resolutions[0], resolutions[1]]
-          : [resolutions[1], resolutions[2]],
+        screenShareSimulcastLayers: resolutions,
       },
       audioCaptureDefaults: {
         deviceId: props.userChoices.audioDeviceId ?? undefined,
@@ -389,6 +420,7 @@ function VideoConferenceComponent(props: {
 
   const router = useRouter();
   const handleOnLeave = React.useCallback(async () => {
+    setRoomState([]);
     socket.emit('mouse_remove', {
       space: room.name,
       senderName: room.localParticipant.name || room.localParticipant.identity,
@@ -535,6 +567,7 @@ function VideoConferenceComponent(props: {
           messageApi={props.messageApi}
           noteApi={props.notApi}
           setPermissionDevice={setPermissionDevice}
+          config={props.config}
         ></VideoContainer>
         {/* <DebugMode /> */}
         <RecordingIndicator />

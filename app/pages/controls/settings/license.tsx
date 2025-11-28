@@ -1,28 +1,66 @@
-import { licenseState } from '@/app/rooms/[spaceName]/PageClientImpl';
+import { licenseState, socket } from '@/app/[spaceName]/PageClientImpl';
 import { useI18n } from '@/lib/i18n/i18n';
 import styles from '@/styles/controls.module.scss';
-import { Button, Input, Modal, Radio, RadioChangeEvent } from 'antd';
+import { Button, Descriptions, Input, Modal, Radio, RadioChangeEvent, Tag } from 'antd';
 import { CheckboxGroupProps } from 'antd/es/checkbox';
 import TextArea from 'antd/es/input/TextArea';
 import { MessageInstance } from 'antd/es/message/interface';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useRecoilState } from 'recoil';
 import { Calendly } from '../widgets/calendly';
-import { getServerIp } from '@/lib/std';
 import { api } from '@/lib/api';
+import {
+  analyzeLicense,
+  getLicensePersonLimit,
+  LicenseStatus,
+  licenseStatus,
+  validLicenseDomain,
+} from '@/lib/std/license';
+import { PresetStatusColorType } from 'antd/es/_util/colors';
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ExclamationCircleOutlined,
+} from '@ant-design/icons';
+import { DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
+import { WsBase } from '@/lib/std/device';
 
 type ModelKey = 'update' | 'renew' | 'server';
 type OptionValue = 'renew' | 'custom';
-const IP = process.env.SERVER_NAME ?? getServerIp() ?? 'localhost';
-export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) {
+
+export function LicenseControl({
+  messageApi,
+  space,
+}: {
+  messageApi: MessageInstance;
+  space: string;
+}) {
   const { t } = useI18n();
   const [userLicense, setUserLicense] = useRecoilState(licenseState);
-  const [ipAddress, setIpAddress] = useState(IP);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [calendlyOpen, setCalendlyOpen] = useState(false);
   const [key, setKey] = useState<ModelKey>('renew');
   const [value, setValue] = useState<OptionValue>('renew');
   const [licenseValue, setLicenseValue] = useState<string>('');
+  const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
+  const [ipAddress, setIpAddress] = useState<string | undefined>(undefined);
+  const getConfig = async () => {
+    const response = await api.getConf();
+    if (response.ok) {
+      const configData: VocespaceConfig = await response.json();
+      setConfig(configData);
+      setIpAddress(configData.serverUrl);
+    } else {
+      console.error(t('msg.error.conf_load'));
+    }
+  };
+
+  useEffect(() => {
+    if (!ipAddress) {
+      getConfig();
+    }
+  }, [ipAddress]);
+
   const okText = useMemo(() => {
     if (key === 'renew') {
       if (value === 'renew') {
@@ -54,7 +92,7 @@ export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) 
     } else {
       // 请求 在space.voce.chat/api/webhook?session_ip=IP, 让官方服务器通过stripe的api获取用户的session
       // 然后用户侧获取到session.url进行跳转
-      const response = await api.getLicenseByIP(IP);
+      const response = await api.getLicenseByIP(config.serverUrl);
       if (response.ok) {
         const { url } = await response.json();
         if (url) {
@@ -80,58 +118,64 @@ export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) 
   const items = useMemo(() => {
     let items = [
       {
-        key: t('settings.license.signed'),
-        value: userLicense?.id ? 'Yes' : userLicense.ilimit == 'Free' ? 'Yes' : 'No',
+        key: 1,
+        label: t('settings.license.signed'),
+        children: userLicense.isAnalysis ? 'Yes' : 'No',
       },
       {
-        key: t('settings.license.domains'),
-        value: userLicense.domains,
+        key: 2,
+        label: t('settings.license.domains'),
+        children: userLicense.domains,
       },
       {
-        key: t('settings.license.limit'),
-        value: userLicense.ilimit,
+        key: 3,
+        label: t('settings.license.limit'),
+        children: userLicense.limit,
       },
       {
-        key: t('settings.license.created_at'),
-        value: fmtDate(new Date(userLicense.created_at * 1000)),
+        key: 4,
+        label: t('settings.license.person'),
+        children: getLicensePersonLimit(userLicense.limit, userLicense.isTmp).toString(),
       },
       {
-        key: t('settings.license.expires_at'),
-        value: fmtDate(new Date(userLicense.expires_at * 1000)),
+        key: 5,
+        label: t('settings.license.created_at'),
+        children: fmtDate(new Date(userLicense.created_at * 1000)),
       },
       {
-        key: t('settings.license.value'),
-        value: userLicense.value,
+        key: 6,
+        label: t('settings.license.expires_at'),
+        children: fmtDate(new Date(userLicense.expires_at * 1000)),
+      },
+      {
+        key: 7,
+        label: t('settings.license.value'),
+        children: userLicense.value,
       },
     ];
     const now_timestamp = new Date().getTime();
     const valid = userLicense.value !== '' && userLicense.expires_at < now_timestamp;
-    const validStyles = valid
-      ? {}
-      : {
-          border: '2px solid #f00',
-          backgroundColor: '#fdd',
-        };
-
-    const validTextStyles = valid
-      ? {}
-      : {
-          color: '#f00',
-        };
-
+    const status = licenseStatus(userLicense);
+    const { color, text: statusText, icon: statusIcon } = licenseStatusTag(status);
     return (
-      <div className={styles.license_wrapper} style={validStyles}>
-        {items.map((item, index) => (
-          <div key={index} style={{ width: '100%' }}>
-            <div className={styles.license_wrapper_title} style={validTextStyles}>
-              {item.key}
-            </div>
-            <div className={styles.license_wrapper_content}>{item.value}</div>
-          </div>
-        ))}
-      </div>
+      <Descriptions
+        title={
+          <>
+            <span>{t('settings.license.title')}</span>
+            <Tag style={{ marginLeft: 16 }} color={color} icon={statusIcon}>
+              {statusText}
+            </Tag>
+          </>
+        }
+        bordered
+        column={1}
+        styles={{
+          label: { color: valid ? '#8c8c8c' : '#fdd', minWidth: '120px' },
+        }}
+        items={items}
+      />
     );
-  }, [userLicense]);
+  }, [userLicense, t]);
 
   const options: CheckboxGroupProps<string>['options'] = [
     {
@@ -163,37 +207,51 @@ export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) 
         return;
       }
     } else if (key === 'update') {
-      // if update should store check from server and then store in local storage
-      const url = `https://space.voce.chat/api/license/${licenseValue}`;
-      const response = await fetch(url, {
-        method: 'GET',
-      });
+      // 使用本地校验的方式验证证书合理性
+      let isDefault = false;
 
-      if (response.ok) {
-        const data = await response.json();
-        console.warn('license data', data);
-        if (data.code && data.code != 200) {
-          messageApi.error({
-            content: t('settings.license.invalid'),
-            duration: 2,
-          });
-        } else {
-          // update license
-          setUserLicense(data);
-          // set into local storage
-          window.localStorage.setItem('license', data.value);
-          setIsModalOpen(false);
-          setLicenseValue('');
-          messageApi.success({
-            content: t('settings.license.update_success'),
-            duration: 2,
-          });
-        }
-      } else {
-        // can not get license, means license is not valid
+      let validatedLicense = analyzeLicense(licenseValue, (_e) => {
+        isDefault = true;
         messageApi.error({
-          content: t('settings.license.invalid'),
+          content: t('settings.license.invalid') + t('settings.license.default_license'),
+          duration: 8,
+        });
+        return;
+      });
+      if (!isDefault) {
+        if (!validLicenseDomain(validatedLicense.domains, config.serverUrl)) {
+          messageApi.error({
+            content: t('settings.license.invalid_domain'),
+            duration: 3,
+          });
+          return;
+        }
+      }
+
+      const response = await api.reloadLicense(licenseValue);
+      if (response.ok) {
+        setUserLicense({
+          ...validatedLicense,
+          isAnalysis: true,
+          personLimit: getLicensePersonLimit(validatedLicense.limit, validatedLicense.isTmp),
+        });
+        setIsModalOpen(false);
+        setLicenseValue('');
+        messageApi.success({
+          content: t('settings.license.update_success'),
           duration: 2,
+        });
+        setTimeout(() => {
+          // socket 通知所有其他设备需要重新加载(包括自己)
+          socket.emit('reload_env', {
+            space,
+          } as WsBase);
+        }, 2000);
+      } else {
+        const { error } = await response.json();
+        messageApi.error({
+          content: error || t('settings.license.invalid'),
+          duration: 4,
         });
       }
     } else {
@@ -206,8 +264,12 @@ export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) 
   };
 
   const isCircleIp = useMemo(() => {
-    return IP === 'localhost' || IP.startsWith('192.168.');
-  }, [IP]);
+    return (
+      config.serverUrl === 'localhost' ||
+      config.serverUrl.startsWith('192.168.') ||
+      config.serverUrl === '127.0.0.1'
+    );
+  }, [config.serverUrl]);
 
   return (
     <div>
@@ -282,9 +344,6 @@ export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) 
           </>
         )}
       </Modal>
-      <div className={styles.setting_box}>
-        <h3>{t('settings.license.title')}</h3>
-      </div>
       {items}
       <div className={styles.setting_box} style={{ gap: '8px', display: 'flex' }}>
         <Button
@@ -309,7 +368,46 @@ export function LicenseControl({ messageApi }: { messageApi: MessageInstance }) 
       <div className={styles.gift_box}>
         <h2>{t('settings.license.gift.title')}</h2>
         <div>{t('settings.license.gift.desc')}</div>
+        <img
+          src="https://static.readdy.ai/image/736cb33f85ee328c22e5d7e17bec9c40/1e18fe5f59b60ead0da50d1d023aab98.png"
+          style={{ width: '120px', margin: '8px 0' }}
+        ></img>
       </div>
     </div>
   );
 }
+
+export const licenseStatusTag = (
+  status: LicenseStatus,
+): {
+  color: PresetStatusColorType;
+  text: string;
+  icon: React.ReactNode;
+} => {
+  switch (status) {
+    case LicenseStatus.Expired:
+      return {
+        color: 'error',
+        text: 'Expired',
+        icon: <CloseCircleOutlined />,
+      };
+    case LicenseStatus.Valid:
+      return {
+        color: 'success',
+        text: 'Valid',
+        icon: <CheckCircleOutlined />,
+      };
+    case LicenseStatus.Tmp:
+      return {
+        color: 'warning',
+        text: 'Temporary',
+        icon: <ExclamationCircleOutlined />,
+      };
+    default:
+      return {
+        color: 'error',
+        text: 'Expired',
+        icon: <CloseCircleOutlined />,
+      };
+  }
+};

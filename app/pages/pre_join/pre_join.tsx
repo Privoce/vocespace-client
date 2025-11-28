@@ -9,7 +9,7 @@ import {
   usePreviewTracks,
 } from '@livekit/components-react';
 import styles from '@/styles/pre_join.module.scss';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { facingModeFromLocalTrack, LocalAudioTrack, LocalVideoTrack, Track } from 'livekit-client';
 import { Input, InputRef, message, Skeleton, Slider, Space, Spin } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
@@ -21,10 +21,20 @@ import { useVideoBlur } from '@/lib/std/device';
 import { LangSelect } from '@/app/pages/controls/selects/lang_select';
 import { ulid } from 'ulid';
 import { api } from '@/lib/api';
+import { LoginButtons, LoginStateBtn } from './login';
 
 export interface PreJoinPropsExt extends PreJoinProps {
   hq?: boolean;
   setHq?: (hq: boolean) => void;
+  spaceParams: {
+    userId?: string;
+    spaceName: string;
+    username?: string;
+    auth?: 'space' | 'vocespace';
+    avatar?: string;
+  };
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
 }
 
 /**
@@ -53,8 +63,13 @@ export function PreJoin({
   joinLabel,
   hq,
   setHq,
+  spaceParams,
+  loading,
+  setLoading,
 }: PreJoinPropsExt) {
   const { t } = useI18n();
+  // 调试：打印 spaceParams 来检查参数是否正确传递
+  // console.log('PreJoin spaceParams:', spaceParams);
   // user choices -------------------------------------------------------------------------------------
   const {
     userChoices: initialUserChoices,
@@ -74,9 +89,14 @@ export function PreJoin({
   const [videoEnabled, setVideoEnabled] = React.useState<boolean>(userChoices.videoEnabled);
   const [audioDeviceId, setAudioDeviceId] = React.useState<string>(userChoices.audioDeviceId);
   const [videoDeviceId, setVideoDeviceId] = React.useState<string>(userChoices.videoDeviceId);
-  const [username, setUsername] = React.useState(userChoices.username);
+  // 确保优先使用URL参数中的username
+  const [username, setUsername] = React.useState(() => {
+    // console.log('Initial username logic - spaceParams.username:', spaceParams.username);
+    // console.log('Initial username logic - userChoices.username:', userChoices.username);
+    return spaceParams.username || userChoices.username || '';
+  });
   const [messageApi, contextHolder] = message.useMessage();
-  const [loading, setLoading] = React.useState(true);
+
   // Save user choices to persistent storage ---------------------------------------------------------
   React.useEffect(() => {
     saveAudioInputEnabled(audioEnabled);
@@ -94,11 +114,49 @@ export function PreJoin({
     saveUsername(username);
   }, [username, saveUsername]);
 
+  // useEffect(() => {
+  //   setTimeout(() => {
+  //     setLoading(false);
+  //   }, 500);
+  // }, []);
+  // 如果 spaceParams 有变化，需要loading 状态
+
+  // 监听 spaceParams 变化，确保参数更新时重新设置用户信息
   useEffect(() => {
-    setTimeout(() => {
-      setLoading(false);
-    }, 500);
-  }, []);
+    // console.log('spaceParams changed:', spaceParams);
+    if (spaceParams.username && spaceParams.username !== username) {
+      // console.log('Updating username from spaceParams:', spaceParams.username);
+      setUsername(spaceParams.username);
+    }
+  }, [spaceParams.username, spaceParams.userId, spaceParams.auth]);
+
+  useEffect(() => {
+    const checkDevices = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const hasCamera = devices.some((device) => device.kind === 'videoinput');
+        const hasMicrophone = devices.some((device) => device.kind === 'audioinput');
+
+        // 如果没有对应设备，自动禁用
+        if (!hasCamera && videoEnabled) {
+          setVideoEnabled(false);
+        }
+        if (!hasMicrophone && audioEnabled) {
+          setAudioEnabled(false);
+        }
+      } catch (error) {
+        console.error('device check fail:', error);
+        // 检测失败时禁用所有设备
+        setVideoEnabled(false);
+        setAudioEnabled(false);
+      }
+    };
+
+    if (loading === false) {
+      // 只在加载完成后检测
+      checkDevices();
+    }
+  }, [loading]);
 
   // Preview tracks -----------------------------------------------------------------------------------
   const tracks = usePreviewTracks(
@@ -202,7 +260,7 @@ export function PreJoin({
       }
     } else {
       // 虽然用户名不为空，但依然需要验证是否唯一
-      const response = await api.checkUsername(spaceName, username);
+      const response = await api.checkUsername(spaceName, username, spaceParams.userId);
       if (response.ok) {
         const { success } = await response.json();
         if (!success) {
@@ -244,6 +302,21 @@ export function PreJoin({
       setPlay(false);
     }
   };
+
+  const showLoginBtn = useMemo(() => {
+    return !spaceParams.userId;
+  }, [spaceParams]);
+
+  useEffect(() => {
+    if (device.volume !== volume) {
+      setVolume(device.volume);
+    }
+    if (device.blur !== blur) {
+      setBlur(device.blur);
+      setVideoBlur(device.blur);
+    }
+  }, [device, volume, blur]);
+
   return (
     <div className={styles.view}>
       {contextHolder}
@@ -373,7 +446,6 @@ export function PreJoin({
               min={0.0}
               max={1.0}
               step={0.01}
-              defaultValue={0.15}
               value={blur}
               onChange={(e) => {
                 setBlur(e);
@@ -382,6 +454,7 @@ export function PreJoin({
               }}
             ></Slider>
           </div>
+          {showLoginBtn && <LoginButtons space={spaceParams.spaceName}></LoginButtons>}
           <Input
             ref={inputRef}
             size="large"
@@ -406,6 +479,12 @@ export function PreJoin({
           </button>
         </div>
       )}
+      <LoginStateBtn
+        userId={spaceParams.userId}
+        username={spaceParams.username}
+        auth={spaceParams.auth}
+        avatar={spaceParams.avatar}
+      />
     </div>
   );
 }

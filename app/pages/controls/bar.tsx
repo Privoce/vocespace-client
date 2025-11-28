@@ -9,29 +9,48 @@ import {
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { Drawer, Input, message, Modal } from 'antd';
+import {
+  Button,
+  Checkbox,
+  CheckboxOptionType,
+  Drawer,
+  GetProp,
+  Input,
+  message,
+  Modal,
+  notification,
+  Radio,
+  Slider,
+  Tooltip,
+} from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
 import { Settings, SettingsExports, TabKey } from './settings/settings';
-import { useRecoilState } from 'recoil';
+import { useRecoilState, waitForAll } from 'recoil';
 import {
   chatMsgState,
+  RemoteTargetApp,
   socket,
   userState,
   virtualMaskState,
-} from '@/app/rooms/[spaceName]/PageClientImpl';
-import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
-import { isMobile as is_moblie, UserStatus } from '@/lib/std';
+} from '@/app/[spaceName]/PageClientImpl';
+import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { isMobile as is_moblie, isIos, UserStatus } from '@/lib/std';
 import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';
 import { ChatToggle } from './toggles/chat_toggle';
 import { MoreButton } from './toggles/more_button';
 import { ControlType, WsBase, WsControlParticipant, WsTo } from '@/lib/std/device';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from './drawer_tools';
-import { AppDrawer } from '../apps/app_drawer';
 import { ParticipantManage } from '../participant/manage';
 import { api } from '@/lib/api';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
+import equal from 'fast-deep-equal';
+import { Reaction } from './widgets/reaction';
+import { ChatMsgItem } from '@/lib/std/chat';
+import { AICutService } from '@/lib/ai/cut';
+import { AICutAnalysisService, AICutDeps, downloadMarkdown, Extraction } from '@/lib/ai/analysis';
+import { InfoCircleFilled } from '@ant-design/icons';
 
 /** @public */
 export type ControlBarControls = {
@@ -66,10 +85,19 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   openApp: boolean;
   setOpenApp: (open: boolean) => void;
   toRenameSettings: () => void;
+  startOrStopAICutAnalysis: (
+    freq: number,
+    conf: AICutParticipantConf,
+    reload?: boolean,
+  ) => Promise<void>;
+  openAIServiceAskNote: () => void;
 }
 
 export interface ControlBarExport {
-  openSettings: (key: TabKey) => void;
+  openSettings: (key: TabKey, isDefineStatus?: boolean) => void;
+  showAICutAnalysisSettings: (open: boolean) => void;
+  isChatOpen: boolean;
+  setChatOpen: (open: boolean) => void;
 }
 
 /**
@@ -106,6 +134,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       openApp,
       setOpenApp,
       toRenameSettings,
+      startOrStopAICutAnalysis,
+      openAIServiceAskNote,
       ...props
     }: ControlBarProps,
     ref,
@@ -118,6 +148,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const enhanceChatRef = React.useRef<EnhancedChatExports>(null);
     const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
     const controlLeftRef = React.useRef<HTMLDivElement>(null);
+    const [aiCutModalOpen, setAICutModalOpen] = React.useState(false);
+    const aiCutServiceRef = React.useRef<AICutService>(new AICutService());
     const [controlWidth, setControlWidth] = React.useState(
       controlLeftRef.current ? controlLeftRef.current.clientWidth : window.innerWidth,
     );
@@ -240,11 +272,14 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           messageApi.error(t('msg.error.user.username.change'));
         }
         // 更新其他设置 ------------------------------------------------
-        await updateSettings(settingsRef.current.state);
-        // 通知socket，进行状态的更新 -----------------------------------
-        socket.emit('update_user_status', {
-          space: space.name,
-        } as WsBase);
+        // await updateSettings(settingsRef.current.state);
+        if (!equal(getState(uState), settingsRef.current.state)) {
+          await updateSettings(settingsRef.current.state);
+          // 通知socket，进行状态的更新 -----------------------------------
+          socket.emit('update_user_status', {
+            space: space.name,
+          } as WsBase);
+        }
         socket.emit('reload_virtual', {
           identity: space.localParticipant.identity,
           roomId: space.name,
@@ -255,33 +290,104 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     };
 
     // 打开设置面板 -----------------------------------------------------------
-    const openSettings = async (tab: TabKey) => {
+    const openSettings = async (tab: TabKey, isDefineStatus?: boolean) => {
       setKey(tab);
       setSettingVis(true);
       if (settingsRef.current && tab === 'video') {
         await settingsRef.current.startVideo();
       }
+      if (isDefineStatus) {
+        if (settingsRef.current) {
+          settingsRef.current.setAppendStatus(true);
+        } else {
+          let finish = false;
+          const interval = setInterval(() => {
+            if (settingsRef.current && !finish) {
+              settingsRef.current.setAppendStatus(true);
+              finish = true;
+              clearInterval(interval);
+            }
+          }, 300);
+        }
+      }
     };
-
-    React.useImperativeHandle(
-      ref,
-      () =>
-        ({
-          openSettings,
-        } as ControlBarExport),
-    );
 
     // [chat] -----------------------------------------------------------------------------------------------------
     const [chatOpen, setChatOpen] = React.useState(false);
     const onChatClose = () => {
       setChatOpen(false);
     };
-    const sendFileConfirm = (onOk: () => Promise<void>) => {
-      Modal.confirm({
+    const sendFileConfirm = (onOk: (abortController?: AbortController) => Promise<ChatMsgItem>) => {
+      const modal = Modal.confirm({
         title: t('common.send'),
         content: t('common.send_file_or'),
-        onOk,
+        okText: t('common.send'),
+        cancelText: t('common.cancel'),
+        onOk: async () => {
+          modal.destroy();
+          await sendingFile(onOk);
+        },
       });
+    };
+
+    const sendingFile = async (
+      onOk: (abortController?: AbortController) => Promise<ChatMsgItem>,
+    ) => {
+      // 创建 AbortController 来控制上传取消
+      const abortController = new AbortController();
+      let isUploading = false;
+
+      const sending = Modal.confirm({
+        title: t('common.send'),
+        content: t('common.sending'),
+        okText: (
+          <Button type="primary" loading>
+            {t('common.sending')}
+          </Button>
+        ),
+        cancelText: t('common.cancel'),
+        onCancel: () => {
+          // 如果正在上传，则中断上传
+          if (isUploading) {
+            abortController.abort();
+            messageApi.info({
+              content: t('msg.info.file.upload_cancelled'),
+              duration: 2,
+            });
+          }
+        },
+      });
+
+      try {
+        isUploading = true;
+        // 传递 abortController 给上传函数
+        const fileMessage = await onOk(abortController);
+        isUploading = false;
+
+        if (fileMessage) {
+          sending.destroy();
+          socket.emit('chat_file', fileMessage);
+          messageApi.success({
+            content: t('msg.success.file.upload'),
+            duration: 2,
+          });
+        }
+      } catch (error: any) {
+        isUploading = false;
+        sending.destroy();
+
+        if (error.name === 'AbortError') {
+          // 用户取消了上传
+          console.log('Upload cancelled by user');
+        } else {
+          // 其他错误
+          // messageApi.error({
+          //   content: `${t('msg.error.file.upload')}: ${error.message}`,
+          //   duration: 3,
+          // });
+          console.error(error);
+        }
+      }
     };
 
     // [more] -----------------------------------------------------------------------------------------------------
@@ -291,6 +397,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [selectedParticipant, setSelectedParticipant] = React.useState<Participant | null>(null);
     const [username, setUsername] = React.useState<string>('');
     const [openNameModal, setOpenNameModal] = React.useState(false);
+    const [remoteApp, setRemoteApp] = useRecoilState(RemoteTargetApp);
     // const [openAppModal, setOpenAppModal] = React.useState(false);
     const participantList = React.useMemo(() => {
       return Object.entries(spaceInfo.participants);
@@ -404,17 +511,130 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
 
     const onClickApp = async () => {
       if (!space) return;
-
-      // 打开Notion应用
+      setRemoteApp({
+        participantId: space.localParticipant.identity,
+        participantName: space.localParticipant.name,
+        auth: 'write',
+      });
       setOpenApp(true);
     };
+
+    // ai -----------------------------------------------------------------------------------------
+    const [isServiceOpen, setIsServiceOpen] = React.useState(false);
+    const [aiCutDeps, setAICutDeps] = React.useState<AICutDeps[]>(['screen', 'todo']);
+    const [extraction, setExtraction] = React.useState<Extraction>('medium');
+    const [cutFreq, setCutFreq] = React.useState(3);
+    const onClickAI = async () => {
+      setAICutModalOpen(true);
+    };
+
+    React.useEffect(() => {
+      if (
+        space &&
+        space.localParticipant &&
+        spaceInfo.participants[space.localParticipant.identity]
+      ) {
+        const { spent, todo, extraction } =
+          spaceInfo.participants[space.localParticipant.identity]?.ai.cut;
+        const deps: AICutDeps[] = ['screen'];
+        if (spent) {
+          deps.push('spent');
+        }
+        if (todo) {
+          deps.push('todo');
+        }
+        setAICutDeps(deps);
+        setExtraction(extraction);
+        setIsServiceOpen(
+          spaceInfo.participants[space.localParticipant.identity]?.ai.cut.enabled || false,
+        );
+
+        setCutFreq(spaceInfo.ai.cut.freq || 3);
+      }
+    }, [space, spaceInfo]);
+
+    const aiCutOptions: CheckboxOptionType<AICutDeps>[] = React.useMemo(() => {
+      return [
+        { label: t('ai.cut.share_screen'), value: 'screen' },
+        { label: t('ai.cut.share_todo'), value: 'todo' },
+        { label: t('ai.cut.share_time'), value: 'spent' },
+      ];
+    }, [t]);
+
+    const aiCutOptionsChange: GetProp<typeof Checkbox.Group, 'onChange'> = async (
+      checkedValues,
+    ) => {
+      setAICutDeps(checkedValues as AICutDeps[]);
+    };
+
+    const saveAICutServiceSettings = async () => {
+      const response = await api.updateSpaceInfo(space!.name, {
+        ai: {
+          cut: {
+            ...spaceInfo.ai.cut,
+            freq: cutFreq,
+          },
+        },
+      });
+
+      if (!response.ok) {
+        let { error } = await response.json();
+        messageApi.error(error);
+        setAICutModalOpen(false);
+        return;
+      }
+      // await updateSettings({
+      //   ai: {
+      //     cut: {
+      //       enabled: isServiceOpen,
+      //       todo: aiCutDeps.includes('todo'),
+      //       spent: aiCutDeps.includes('spent'),
+      //     },
+      //   },
+      // });
+
+      setAICutModalOpen(false);
+      if (space && !space.localParticipant.isScreenShareEnabled && isServiceOpen) {
+        openAIServiceAskNote();
+      }
+      const includeSpent = aiCutDeps.includes('spent');
+      const includeTodo = aiCutDeps.includes('todo');
+      let reload = true;
+      // 判断，如果spent, todo的选中状态或cutFreq与之前不同则需要reload
+      const { spent, todo } = spaceInfo.participants[space!.localParticipant.identity]?.ai.cut;
+      if (spent === includeSpent && todo === includeTodo && spaceInfo.ai.cut.freq === cutFreq) {
+        reload = false;
+      }
+
+      await startOrStopAICutAnalysis(
+        cutFreq,
+        {
+          enabled: isServiceOpen,
+          spent: includeSpent,
+          todo: includeTodo,
+          extraction,
+        },
+        reload,
+      );
+    };
+
+    React.useImperativeHandle(
+      ref,
+      () =>
+        ({
+          openSettings,
+          showAICutAnalysisSettings: setAICutModalOpen,
+          isChatOpen: chatOpen, // 使用 chatOpen 而不是 isChatOpen，因为 chatOpen 是实际控制聊天窗口的状态
+          setChatOpen,
+        } as ControlBarExport),
+    );
     // 当是手机的情况下需要适当增加marginBottom，因为手机端自带的Tabbar会遮挡
     return (
       <div
         {...htmlProps}
         className={styles.controls}
         style={{
-          marginBottom: isMobile ? '46px' : 'auto',
+          marginBottom: 'auto',
         }}
       >
         {contextHolder}
@@ -491,6 +711,15 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                 (isScreenShareEnabled ? t('common.stop_share') : t('common.share_screen'))}
             </TrackToggle>
           )}
+          {space && spaceInfo.participants && visibleControls.microphone && (
+            <Reaction
+              updateSettings={updateSettings}
+              space={space.name}
+              size={controlSize}
+              controlWidth={controlWidth}
+              spaceInfo={spaceInfo}
+            ></Reaction>
+          )}
           {visibleControls.chat && !isMobile && (
             <ChatToggle
               controlWidth={controlWidth}
@@ -510,6 +739,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               onSettingOpen={async () => {
                 setSettingVis(true);
               }}
+              onClickAI={onClickAI}
               onClickRecord={onClickRecord}
               onClickManage={fetchSettings}
               onClickApp={onClickApp}
@@ -690,16 +920,84 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             <div>{isOwner ? t('more.record.desc') : t('more.record.request')}</div>
           )}
         </Modal>
-        {/* ---------------- app drawer ------------------------------------------------------- */}
-        {spaceInfo && space && (
-          <AppDrawer
-            open={openApp}
-            setOpen={setOpenApp}
-            messageApi={messageApi}
-            spaceInfo={spaceInfo}
-            space={space.name}
-          ></AppDrawer>
-        )}
+        {/* -------------------- ai cut modal --------------------------------------------------- */}
+        <Modal
+          open={aiCutModalOpen}
+          title={t('ai.cut.title')}
+          footer={null}
+          okText={aiCutServiceRef.current.isRunning ? t('common.close') : t('common.open')}
+          cancelText={t('common.cancel')}
+          onCancel={saveAICutServiceSettings}
+        >
+          <div>{t('more.ai.desc')}</div>
+          <div className={styles.ai_cut_line}>
+            <div className={styles.ai_cut_line}>
+              <span> {t('ai.cut.open')}</span>
+            </div>
+            <div style={{ width: '100%' }}>
+              {space && (
+                <Radio.Group
+                  size="large"
+                  block
+                  value={isServiceOpen}
+                  onChange={(e) => setIsServiceOpen(e.target.value)}
+                >
+                  <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+                  <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+                </Radio.Group>
+              )}
+            </div>
+          </div>
+          {space?.localParticipant.identity === spaceInfo.ownerId && isServiceOpen && (
+            <>
+              {' '}
+              <div className={styles.ai_cut_line}>
+                <span> {t('ai.cut.freq')}</span>
+                <Tooltip title={t('ai.cut.freq_desc')} trigger={['hover']}>
+                  <InfoCircleFilled></InfoCircleFilled>
+                </Tooltip>
+              </div>{' '}
+              <Slider min={1} max={15} value={cutFreq} onChange={(v) => setCutFreq(v)} step={0.5} />
+            </>
+          )}
+          {isServiceOpen && (
+            <div className={styles.ai_cut_line}>
+              <div className={styles.ai_cut_line}>
+                <span> {t('ai.cut.source_dep')}</span>
+                <Tooltip title={t('ai.cut.source_dep_desc')} trigger={['hover']}>
+                  <InfoCircleFilled></InfoCircleFilled>
+                </Tooltip>
+              </div>
+              <div style={{ width: '100%' }}>
+                <Checkbox.Group
+                  value={aiCutDeps}
+                  options={aiCutOptions}
+                  onChange={aiCutOptionsChange}
+                />
+              </div>
+              <div className={styles.ai_cut_line}>
+                <span> {t('ai.cut.extraction.title')}</span>
+                <Tooltip title={t('ai.cut.extraction.desc')} trigger={['hover']}>
+                  <InfoCircleFilled></InfoCircleFilled>
+                </Tooltip>
+              </div>
+              <div style={{ width: '100%' }}>
+                <Radio.Group
+                  size="large"
+                  block
+                  value={extraction}
+                  onChange={(e) => setExtraction(e.target.value)}
+                >
+                  <Radio.Button value="easy">{t('ai.cut.extraction.easy')}</Radio.Button>
+                  <Radio.Button value="medium">{t('ai.cut.extraction.medium')}</Radio.Button>
+                  <Radio.Button value="max">{t('ai.cut.extraction.max')}</Radio.Button>
+                </Radio.Group>
+              </div>
+            </div>
+          )}
+
+          {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
+        </Modal>
       </div>
     );
   },

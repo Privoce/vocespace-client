@@ -6,9 +6,11 @@ import {
   ParticipantSettings,
   RecordSettings,
   SpaceCountdown,
+  SpaceInfo,
   SpaceTimer,
   SpaceTodo,
 } from '../std/space';
+import { ai } from './ai';
 
 const SPACE_API = connect_endpoint('/api/space');
 
@@ -17,14 +19,30 @@ const SPACE_API = connect_endpoint('/api/space');
  * @param spaceName 空间名称
  * @param username 用户名
  * @param region 可选的区域
+ * @param auth 可选的身份认证ID
  */
-export const joinSpace = async (spaceName: string, username: string, region?: string) => {
+export const joinSpace = async (
+  spaceName: string,
+  username: string,
+  region?: string,
+  auth?: string,
+) => {
   const url = new URL(connect_endpoint('/api/connection-details'), window.location.origin);
   url.searchParams.append('spaceName', spaceName);
   url.searchParams.append('participantName', username);
+  if (auth) {
+    url.searchParams.append('auth', auth);
+  }
   if (region) {
     url.searchParams.append('region', region);
   }
+  return await fetch(url.toString());
+};
+
+export const createSpace = async (username: string) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('space', 'create');
+  url.searchParams.append('owner', username);
   return await fetch(url.toString());
 };
 
@@ -36,6 +54,20 @@ export const allSpaceInfos = async () => {
   url.searchParams.append('all', 'true');
   url.searchParams.append('detail', 'true');
   return await fetch(url.toString());
+};
+
+export const updateSpaceInfo = async (spaceName: string, info: Partial<SpaceInfo>) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('space', 'true');
+  url.searchParams.append('update', 'true');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      spaceName,
+      info,
+    }),
+  });
 };
 
 /**
@@ -59,6 +91,7 @@ export const getUniqueUsername = async (spaceName: string) => {
 export interface CheckNameBody {
   spaceName: string;
   participantName: string;
+  participantId?: string;
 }
 
 /**
@@ -66,7 +99,11 @@ export interface CheckNameBody {
  * @param spaceName 空间名称
  * @param participantName 用户名称
  */
-export const checkUsername = async (spaceName: string, participantName: string) => {
+export const checkUsername = async (
+  spaceName: string,
+  participantName: string,
+  participantId?: string,
+) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('nameCheck', 'true');
   return await fetch(url.toString(), {
@@ -75,23 +112,28 @@ export const checkUsername = async (spaceName: string, participantName: string) 
     body: JSON.stringify({
       spaceName,
       participantName,
+      participantId,
     } as CheckNameBody),
   });
 };
 
 export interface DefineUserStatusBody {
   spaceName: string;
-  status: UserDefineStatus;
+  participantId: string;
+  status: string;
 }
 
 export interface DefineUserStatusResponse {
   success: boolean;
-  status?: UserDefineStatus[];
   spaceName?: string;
   error?: any;
 }
 
-export const defineUserStatus = async (spaceName: string, status: UserDefineStatus) => {
+export const defineUserStatus = async (
+  spaceName: string,
+  participantId: string,
+  status: string,
+) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('status', 'true');
   return await fetch(url.toString(), {
@@ -101,6 +143,7 @@ export const defineUserStatus = async (spaceName: string, status: UserDefineStat
     },
     body: JSON.stringify({
       spaceName,
+      participantId,
       status,
     } as DefineUserStatusBody),
   });
@@ -165,6 +208,7 @@ export interface UpdateSpaceParticipantBody {
   participantId: string;
   settings: ParticipantSettings;
   record?: RecordSettings;
+  init?: boolean;
 }
 
 /**
@@ -175,6 +219,7 @@ export const updateSpaceParticipant = async (
   participantId: string,
   settings: Partial<ParticipantSettings>,
   record?: RecordSettings,
+  init = false,
 ) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('participant', 'update');
@@ -187,6 +232,7 @@ export const updateSpaceParticipant = async (
       participantId,
       settings,
       record,
+      init,
     } as UpdateSpaceParticipantBody),
   });
 };
@@ -220,7 +266,7 @@ export interface UpdateSpaceAppSyncBody {
 export const updateSpaceAppSync = async (
   spaceName: string,
   participantId: string,
-  sync: AppKey
+  sync: AppKey,
 ) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('apps', 'sync');
@@ -260,6 +306,8 @@ export const updateSpaceAppAuth = async (
 };
 
 export const leaveSpace = async (spaceName: string, removeId: string, socket: Socket) => {
+  // 离开前先去删除AI分析服务实例, 无需管是否返回成功，因为返回失败，说明服务本来就不存在
+  const _ = await ai.stop(spaceName, removeId);
   const response = await deleteSpaceParticipant(spaceName, removeId);
   if (!response.ok) {
     // console.error('Failed to leave space:', spaceName, 'with ID:', removeId);
@@ -293,6 +341,7 @@ export interface UploadSpaceAppBody {
   participantId: string;
   data: SpaceTimer | SpaceCountdown | SpaceTodo;
   ty: AppKey;
+  isAuth: boolean;
 }
 
 export const uploadSpaceApp = async (
@@ -300,6 +349,7 @@ export const uploadSpaceApp = async (
   participantId: string,
   ty: AppKey,
   data: SpaceTimer | SpaceCountdown | SpaceTodo,
+  isAuth: boolean,
 ) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('apps', 'upload');
@@ -311,6 +361,14 @@ export const uploadSpaceApp = async (
       data,
       participantId,
       ty,
+      isAuth,
     } as UploadSpaceAppBody),
   });
+};
+
+export const getUserMeta = async (userId: string | undefined) => {
+  // const url = new URL('http://localhost:3000/api/vocespace'); // 开发环境测试用
+  const url = new URL('https://home.vocespace.com/api/vocespace'); // 生产环境使用
+  url.searchParams.append('userId', userId || '');
+  return await fetch(url.toString());
 };

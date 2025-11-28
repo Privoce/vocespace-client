@@ -71,7 +71,7 @@ export function useSpaceInfo(spaceName: string, participantId: string) {
 
   // 更新当前参与者设置
   const updateSettings = useCallback(
-    async (newSettings: Partial<ParticipantSettings>, record?: RecordSettings) => {
+    async (newSettings: Partial<ParticipantSettings>, record?: RecordSettings, init = false) => {
       if (!spaceName || !participantId) return;
       try {
         const response = await api.updateSpaceParticipant(
@@ -79,6 +79,7 @@ export function useSpaceInfo(spaceName: string, participantId: string) {
           participantId,
           newSettings,
           record,
+          init,
         );
         if (!response.ok) {
           throw new Error(`Failed to update settings: ${response.status}`);

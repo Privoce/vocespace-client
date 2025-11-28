@@ -33,6 +33,10 @@
   }
   &_list_wrapper {
     margin: 8px 0;
+    width: 100%;
+    flex: 1;
+    height: calc(100% - 46px);
+    min-height: calc(50vh - 46px);
   }
   &_add_wrapper {
     gap: 8px;
@@ -40,6 +44,13 @@
     display: inline-flex;
     align-items: center;
     justify-content: flex-start;
+  }
+  &_add_input {
+    transition: all 0.2s ease;
+    outline: 0px solid transparent;
+    &:hover {
+      outline: 1px solid #22ccee;
+    }
   }
 }
 
@@ -92,4 +103,134 @@
     flex-wrap: wrap;
     background-color: transparent;
   }
+  &_header {
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: space-between;
+    width: 100%;
+    &_icons {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      width: fit-content;
+      height: 100%;
+      justify-content: flex-end;
+    }
+  }
+}
+
+// Todo Together 样式
+.todo_together_wrapper {
+  width: 100%;
+  max-height: 58vh;
+  overflow-y: scroll;
+  scrollbar-width: thin;
+}
+
+.todo_together_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 4px;
+  width: 100%;
+  font-size: 14px;
+}
+
+.todo_together_user_info {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  width: 100%;
+  height: fit-content;
+  justify-content: flex-start;
+  gap: 12px;
+}
+
+.todo_together_summary {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 0px;
+  flex-wrap: wrap;
+  width: 100%;
+}
+
+.flot_app {
+  margin: 0;
+  padding: 0;
+  &_header {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    padding-right: 4px;
+    padding-bottom: 4px;
+    width: 100%;
+  }
+  &_content {
+    flex-wrap: wrap;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+    height: fit-content;
+    width: 100%;
+  }
+
+  &_item {
+    width: 360px;
+  }
+}
+
+.ai_analysis_md {
+  &_icons {
+    display: inline-flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+  }
+  &_empty {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  &_header {
+    height: 32px;
+    width: 100%;
+    padding: 4px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #333;
+    display: inline-flex;
+    align-items: center;
+    justify-content: space-between;
+    &_icon {
+      cursor: pointer;
+    }
+  }
+  &_content {
+    padding: 16px;
+    // max-height: calc(86vh - 92px);
+    overflow-y: scroll;
+    scrollbar-width: thin;
+    height: calc(100% - 92px);
+  }
+  &_subheader {
+    width: 100%;
+    height: fit-content;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 4px;
+  }
+}
+
+.todo_export {
+  height: fit-content;
+  max-height: 60vh;
+  width: 100%;
+  overflow-y: scroll;
+  scrollbar-width: thin;
 }

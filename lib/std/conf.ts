@@ -1,8 +1,8 @@
 // 用来读取vocespace.conf.json这个配置文件
 // 这个配置文件的位置在项目根目录下
 // 只会在服务器端使用
-import { SliderMarks } from 'antd/es/slider';
 import { VideoCodec, VideoPreset } from 'livekit-client';
+import { DEFAULT_LICENSE } from './license';
 
 export interface TurnConf {
   credential: string;
@@ -42,6 +42,13 @@ export interface RTCConf {
   priority: RTCPriorityType;
 }
 
+export interface AIConf {
+  enabled: boolean;
+  apiKey: string;
+  apiUrl: string;
+  model: string;
+  maxTokens?: number;
+}
 export interface VocespaceConfig {
   livekit: LivekitConf;
   codec?: VideoCodec;
@@ -49,7 +56,13 @@ export interface VocespaceConfig {
   maxBitrate?: number;
   maxFramerate?: number;
   priority?: RTCPriorityType;
+  /**
+   * redis configuration for presence and other features
+   */
   redis: RedisConf;
+  /**
+   * s3 storage for recording and snapshots configuration
+   */
   s3?: S3Conf;
   /**
    * 服务器的主机地址，这可以用来检测你的令牌是否有效
@@ -59,7 +72,27 @@ export interface VocespaceConfig {
    * **无需加上 http:// 或 https:// 前缀，也无需端口号**
    */
   serverUrl: string;
+  /**
+   * host token for dashboard resolution control
+   * 默认值: vocespace_privoce
+   * 通过这个令牌，你可以在仪表盘中控制房间的分辨率
+   */
   hostToken: string;
+  license: string;
+  /**
+   * AI 配置项，当前用于AI进行会议截图内容分析
+   * 由于AI需要进行图片分析，所以用户需要选择使用多模态AI模型
+   * 模型推荐：
+   * | 模型名称                           | 所属公司      | 支持模态        | 主要特点                    |
+   * | --------------------------------- | --------- | ----------- | ----------------------- |
+   * | GPT-4V / GPT-4o                   | OpenAI    | 文本、图像、音频    | 综合能力强，图像理解和文本生成表现优异     |
+   * | Claude 3.5 Sonnet                 | Anthropic | 文本、图像       | 编程与推理能力强，适用于逻辑性图像任务     |
+   * | Gemini 1.5 Pro / Gemini 2.0 Flash | Google    | 文本、图像、音频、视频 | 支持长视频理解，多媒体处理能力强        |
+   * | Qwen2.5-VL-72B                    | 阿里巴巴      | 文本、图像、视频    | 中文理解能力强，视觉问答表现突出        |
+   * | 文心一言多模态版                     | 百度        | 文本、图像、语音    | 中文本土化优化，适合中文多媒体内容处理     |
+   * | 混元Vision                         | 腾讯        | 文本、图像       | 中文任务优化，SuperCLUE-V测评中领先 |
+   */
+  ai?: AIConf;
 }
 
 // 2k, 30fps, 3Mbps
@@ -83,6 +116,7 @@ export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig = {
   },
   serverUrl: 'localhost',
   hostToken: 'vocespace_privoce',
+  license: DEFAULT_LICENSE.value,
 };
 
 const RTCVideoPresets = (options: {

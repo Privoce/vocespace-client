@@ -179,9 +179,23 @@ app.prepare().then(() => {
     socket.on('wave', (msg) => {
       socket.to(msg.socketId).emit('wave_response', msg);
     });
-    socket.on('raise_hand', (msg) => {
-      // 广播给处了自己外所有人
-      socket.broadcast.emit('raise_hand_response', msg);
+    socket.on('raise', (msg) => {
+      // 广播所有人除了自己
+      socket.broadcast.emit('raise_response', msg);
+    });
+    // [socket: accept raise hand event to other user] -------------------------------------------------------------------
+    // - on: "raise_accept"
+    // - emit: "raise_accept_response"
+    // - msg: { room: string, senderId: string, senderName: string, receiverId: string, socketId: string } see [`std::WsTo`]
+    socket.on('raise_accept', (msg) => {
+      socket.to(msg.socketId).emit('raise_accept_response', msg);
+    });
+    // [socket: cancel raise hand event to other user] -------------------------------------------------------------------
+    // - on: "raise_cancel"
+    // - emit: "raise_cancel_response"
+    // - msg: { room: string, senderId: string, senderName: string, receiverId: string, socketId: string } see [`std::WsTo`]
+    socket.on('raise_cancel', (msg) => {
+      socket.to(msg.socketId).emit('raise_cancel_response', msg);
     });
     // [socket: remove participant event] -------------------------------------------------------------------------------
     // - on: "remove_participant"
@@ -264,51 +278,54 @@ app.prepare().then(() => {
     socket.on('chat_file', async (msg) => {
       try {
         const { file, sender, roomName, timestamp } = msg;
-        const fileId = Date.now().toString();
-        const fileExt = path.extname(file.name);
-        const fileName = `${fileId}${fileExt}`;
-        const dirPath = path.join(uploadDir, roomName);
-        if (!fs.existsSync(dirPath)) {
-          fs.mkdirSync(dirPath, { recursive: true });
+        let fileMessage = msg;
+        if (!file.url) {
+          const fileId = Date.now().toString();
+          const fileExt = path.extname(file.name);
+          const fileName = `${fileId}${fileExt}`;
+          const dirPath = path.join(uploadDir, roomName);
+          if (!fs.existsSync(dirPath)) {
+            fs.mkdirSync(dirPath, { recursive: true });
+          }
+
+          const filePath = path.join(uploadDir, roomName, fileName);
+          console.log('filePath', filePath);
+          // 处理文件数据
+          let fileData;
+          if (file.data.startsWith('data:')) {
+            // 处理 base64 数据
+            const base64Data = file.data.split(',')[1];
+            fileData = Buffer.from(base64Data, 'base64');
+          } else {
+            // 处理二进制数据
+            fileData = Buffer.from(file.data);
+          }
+
+          // 保存文件
+          fs.writeFileSync(filePath, fileData);
+
+          // 文件URL (根据实际部署情况调整)
+          const fileUrl = `${basePath}/uploads/${roomName}/${fileName}`;
+
+          // 广播文件消息
+          fileMessage = {
+            id: fileId,
+            sender: {
+              id: sender.id,
+              name: sender.name,
+            },
+            roomName,
+            message: `文件: ${file.name}`,
+            timestamp: timestamp || Date.now(),
+            type: 'file',
+            file: {
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              url: fileUrl,
+            },
+          };
         }
-
-        const filePath = path.join(uploadDir, roomName, fileName);
-        console.log('filePath', filePath);
-        // 处理文件数据
-        let fileData;
-        if (file.data.startsWith('data:')) {
-          // 处理 base64 数据
-          const base64Data = file.data.split(',')[1];
-          fileData = Buffer.from(base64Data, 'base64');
-        } else {
-          // 处理二进制数据
-          fileData = Buffer.from(file.data);
-        }
-
-        // 保存文件
-        fs.writeFileSync(filePath, fileData);
-
-        // 文件URL (根据实际部署情况调整)
-        const fileUrl = `${basePath}/uploads/${roomName}/${fileName}`;
-
-        // 广播文件消息
-        const fileMessage = {
-          id: fileId,
-          sender: {
-            id: sender.id,
-            name: sender.name,
-          },
-          roomName,
-          message: `文件: ${file.name}`,
-          timestamp: timestamp || Date.now(),
-          type: 'file',
-          file: {
-            name: file.name,
-            size: file.size,
-            type: file.type,
-            url: fileUrl,
-          },
-        };
         // store in redis
         ChatManager.setChatMessage(roomName, fileMessage);
         io.emit('chat_file_response', fileMessage);

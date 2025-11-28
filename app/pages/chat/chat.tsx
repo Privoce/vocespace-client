@@ -1,7 +1,6 @@
 import * as React from 'react';
 import { useLocalParticipant } from '@livekit/components-react';
 import { Button, Drawer, Image, Input, Popover, Upload } from 'antd';
-import type { GetProp, UploadProps } from 'antd';
 import { pictureCallback, SvgResource } from '@/app/resources/svg';
 import styles from '@/styles/chat.module.scss';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -9,20 +8,21 @@ import { ulid } from 'ulid';
 import { Room } from 'livekit-client';
 import { chatMsgState, socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { MessageInstance } from 'antd/es/message/interface';
-import { LinkPreview } from './link_preview';
+import { useLinkPreview } from './link_preview';
 import Dragger from 'antd/es/upload/Dragger';
 import { useRecoilState } from 'recoil';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from '../controls/drawer_tools';
-
-type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
+import { SnippetsOutlined } from '@ant-design/icons';
+import { api } from '@/lib/api';
+import { FileType } from '@/lib/std';
 
 export interface EnhancedChatProps {
   open: boolean;
   setOpen: (open: boolean) => void;
   onClose: () => void;
   space: Room;
-  sendFileConfirm: (onOk: () => Promise<void>) => void;
+  sendFileConfirm: (onOk: (abortController?: AbortController) => Promise<ChatMsgItem>) => void;
   messageApi: MessageInstance;
 }
 
@@ -39,6 +39,43 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
     const [unhandleMsgCount, setUnhandleMsgCount] = React.useState(0);
     // 添加输入法组合状态跟踪
     const [isComposing, setIsComposing] = React.useState(false);
+    const [dragOver, setDragOver] = React.useState(false);
+    const dragCounterRef = React.useRef(0);
+
+    // 处理拖拽事件
+    const handleDragEnter = (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounterRef.current++;
+
+      // 检查是否拖拽的是文件
+      if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
+        setDragOver(true);
+      }
+    };
+
+    const handleDragLeave = (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounterRef.current--;
+
+      if (dragCounterRef.current <= 0) {
+        dragCounterRef.current = 0;
+        setDragOver(false);
+      }
+    };
+
+    const handleDragOver = (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDrop = (e: React.DragEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounterRef.current = 0;
+      setDragOver(false);
+    };
 
     React.useEffect(() => {
       if (open) {
@@ -86,47 +123,110 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
 
     // [upload] ----------------------------------------------------------------------------------
     const handleBeforeUpload = (file: FileType) => {
-      sendFileConfirm(async () => {
-        const reader = new FileReader();
-        try {
-          reader.onload = (e) => {
-            const fileData = e.target?.result;
-            // 更新本地消息记录
-            const fileMessage: ChatMsgItem = {
-              sender: {
-                id: localParticipant.identity,
-                name: localParticipant.name || localParticipant.identity,
-              },
-              message: null,
-              type: 'file',
-              roomName: space.name,
-              file: {
-                name: file.name,
-                size: file.size,
-                type: file.type,
-                data: fileData,
-              },
-              timestamp: Date.now(),
-            };
+      // 检查文件大小限制（建议限制为 10MB）
+      const maxFileSize = 100 * 1024 * 1024; // 100MB
+      if (file.size > maxFileSize) {
+        messageApi.error({
+          content: t('msg.error.file.too_large') + ' 100MB',
+          duration: 3,
+        });
+        return false;
+      }
 
-            // 发送文件消息
-            socket.emit('chat_file', fileMessage);
-          };
-          if (file.size < 5 * 1024 * 1024) {
-            // 小于5MB的文件
-            reader.readAsDataURL(file);
+      sendFileConfirm(async (abortController?: AbortController): Promise<ChatMsgItem> => {
+        try {
+          // 对于大文件，使用分块上传或直接上传到服务器
+          if (file.size > 1 * 1024 * 1024) {
+            // 大于1MB的文件
+            return await handleLargeFileUpload(file, abortController);
           } else {
-            reader.readAsArrayBuffer(file);
+            // 小文件直接通过 Socket 发送
+            return await handleSmallFileUpload(file);
           }
         } catch (e) {
           messageApi.error({
             content: `${t('msg.error.file.upload')}: ${e}`,
-            duration: 1,
+            duration: 3,
           });
-          console.error('Error reading file:', e);
+          console.error('Error uploading file:', e);
+          return Promise.reject(e);
         }
       });
       return false; // 阻止自动上传
+    };
+
+    // 处理小文件上传（通过 Socket）
+    const handleSmallFileUpload = async (file: FileType): Promise<ChatMsgItem> => {
+      return new Promise<ChatMsgItem>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const fileData = e.target?.result;
+          console.log('Small file upload:', file.size, file.name, file.type);
+
+          const fileMessage: ChatMsgItem = {
+            sender: {
+              id: localParticipant.identity,
+              name: localParticipant.name || localParticipant.identity,
+            },
+            message: null,
+            type: 'file',
+            roomName: space.name,
+            file: {
+              name: file.name,
+              size: file.size,
+              type: file.type,
+              data: fileData,
+            },
+            timestamp: Date.now(),
+          };
+
+          // 发送文件消息
+          // socket.emit('chat_file', fileMessage);
+          resolve(fileMessage);
+        };
+        reader.onerror = () => {
+          reject(new Error('Failed to read file'));
+        };
+        reader.readAsDataURL(file);
+      });
+    };
+
+    // 处理大文件上传（通过 HTTP API）
+    const handleLargeFileUpload = async (file: FileType, abortController?: AbortController): Promise<ChatMsgItem> => {
+      try {
+        const response = await api.uploadFile(file, space.name, localParticipant, abortController);
+
+        if (!response.ok) {
+          throw new Error(`Upload failed: ${response.statusText}`);
+        }
+
+        const result = await response.json();
+        console.log('Large file upload success:', result);
+
+        // 创建文件消息，使用服务器返回的 URL
+        let timestamp = Date.now();
+        const fileMessage: ChatMsgItem = {
+          id: timestamp.toString(),
+          sender: {
+            id: localParticipant.identity,
+            name: localParticipant.name || localParticipant.identity,
+          },
+          message: `file: ${file.name}`,
+          type: 'file',
+          roomName: space.name,
+          file: {
+            name: file.name,
+            size: file.size,
+            type: file.type,
+            url: result.fileUrl, // 使用文件服务 API
+          },
+          timestamp,
+        };
+        return fileMessage;
+      } catch (error) {
+        console.error('Large file upload failed:', error);
+        throw error;
+      }
     };
 
     const scrollToBottom = () => {
@@ -239,23 +339,37 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
           },
         }}
       >
-        <Dragger
+        <div
           className={styles.msg}
-          style={{ border: 'none' }}
-          multiple={false}
-          name="file"
-          beforeUpload={handleBeforeUpload}
-          showUploadList={false}
-          openFileDialogOnClick={false}
+          onDragEnter={handleDragEnter}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+          onDrop={handleDrop}
         >
-          <ul ref={ulRef} className={styles.msg_list}>
-            {msgList}
-            <div ref={bottomRef} style={{ height: '1px', visibility: 'hidden' }} />
-          </ul>
-        </Dragger>
+          <div className={styles.msg_drag_area} style={{ display: dragOver ? 'flex' : 'none' }}>
+            <SnippetsOutlined />
+            <span>{t('common.chat_drag_file_here')}</span>
+          </div>
+          <Dragger
+            style={{
+              cursor: 'default',
+              border: dragOver ? '1px dashed #22ccee' : '1px dashed transparent',
+            }}
+            multiple={false}
+            name="file"
+            beforeUpload={handleBeforeUpload}
+            showUploadList={false}
+            openFileDialogOnClick={false}
+          >
+            <ul ref={ulRef} className={styles.msg_list}>
+              {msgList}
+              <div ref={bottomRef} style={{ height: '1px', visibility: 'hidden' }} />
+            </ul>
+          </Dragger>
+        </div>
 
         <div className={styles.tool}>
-          <Upload beforeUpload={handleBeforeUpload} showUploadList={false}>
+          <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="*">
             <Button shape="circle" style={{ background: 'transparent', border: 'none' }}>
               <SvgResource type="add" svgSize={18} color="#fff" />
             </Button>
@@ -301,13 +415,70 @@ function ChatMsgItemCmp({ isLocal, msg, downloadFile, isImg }: ChatMsgItemProps)
     return urlRegex.test(text);
   };
 
-  const LinkPreviewCmp = React.useMemo(() => {
-    return msg.type === 'text' && msg.message && containsUrl(msg.message) ? (
-      <LinkPreview text={msg.message}></LinkPreview>
-    ) : (
-      <></>
-    );
-  }, [msg.message]);
+  // const { link, linkPreview } = useLinkPreview({
+  //   text: msg.message || undefined,
+  //   isLocal,
+  // });
+
+  const mixLinkText = (originText: string, previewLink?: string) => {
+    // URL 正则表达式，匹配 http 和 https 链接
+    const urlRegex =
+      /https?:\/\/[\w\-_]+(\.[\w\-_]+)+(?:[\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/gi;
+
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+    let match;
+    let linkIndex = 0;
+
+    // 重置正则表达式的 lastIndex
+    urlRegex.lastIndex = 0;
+
+    while ((match = urlRegex.exec(originText)) !== null) {
+      const url = match[0];
+      const startIndex = match.index;
+
+      // 添加链接前的普通文本
+      if (startIndex > lastIndex) {
+        const textBefore = originText.substring(lastIndex, startIndex);
+        parts.push(<span key={`text-${linkIndex}-before`}>{textBefore}</span>);
+      }
+
+      // 添加链接
+      parts.push(
+        <a
+          key={`link-${linkIndex}`}
+          href={url}
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{
+            color: '#22CCEE',
+            textDecoration: 'underline',
+          }}
+          onClick={(e) => {
+            e.stopPropagation(); // 防止冒泡
+          }}
+        >
+          {url}
+        </a>,
+      );
+
+      lastIndex = startIndex + url.length;
+      linkIndex++;
+    }
+
+    // 添加最后剩余的普通文本
+    if (lastIndex < originText.length) {
+      const textAfter = originText.substring(lastIndex);
+      parts.push(<span key={`text-${linkIndex}-after`}>{textAfter}</span>);
+    }
+
+    // 如果没有找到任何链接，返回原始文本
+    if (parts.length === 0) {
+      return originText;
+    }
+
+    return <>{parts}</>;
+  };
 
   return (
     <li className={liClass}>
@@ -324,9 +495,9 @@ function ChatMsgItemCmp({ isLocal, msg, downloadFile, isImg }: ChatMsgItemProps)
                   textAlign: 'left',
                 }}
               >
-                {msg.message}
+                {mixLinkText(msg.message || '')}
               </div>
-              {LinkPreviewCmp}
+              {/* {msg.message && containsUrl(msg.message) && linkPreview} */}
             </div>
           ) : (
             <Popover

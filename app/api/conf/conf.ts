@@ -20,16 +20,29 @@ export const setConfigEnv = (
   success: boolean;
   error?: Error;
 } => {
+  // 更新vocespace.conf.json
+  let config: VocespaceConfig = getConfig();
+  config.resolution = env.resolution;
+  config.maxBitrate = env.maxBitrate;
+  config.maxFramerate = env.maxFramerate;
+  config.codec = env.codec;
+  // 设置到文件中
+  return writeBackConfig(config);
+};
+
+export const setConfigLicense = (license: string): { success: boolean; error?: Error } => {
+  // 更新vocespace.conf.json
+  let config: VocespaceConfig = getConfig();
+  config.license = license;
+  // 设置到文件中
+  return writeBackConfig(config);
+};
+
+export const writeBackConfig = (config: VocespaceConfig): { success: boolean; error?: Error } => {
   try {
-    // 更新vocespace.conf.json
-    let config: VocespaceConfig = getConfig();
-    config.resolution = env.resolution;
-    config.maxBitrate = env.maxBitrate;
-    config.maxFramerate = env.maxFramerate;
-    config.codec = env.codec;
-    // 设置到文件中
     const configPath = join(process.cwd(), 'vocespace.conf.json');
     writeFileSync(configPath, JSON.stringify(config));
+    setStoredConf(config);
     return {
       success: true,
     };
@@ -37,8 +50,22 @@ export const setConfigEnv = (
     console.error(e);
     return {
       success: false,
-      error: e instanceof Error ? e : new Error('can not update env'),
+      error: e instanceof Error ? e : new Error('can not write back config'),
     };
+  }
+};
+
+export interface AllowConfig {
+  license?: string;
+  rtc?: RTCConf;
+}
+
+export const setConfig = (allowConfig: AllowConfig) => {
+  if (allowConfig.license) {
+    setConfigLicense(allowConfig.license);
+  }
+  if (allowConfig.rtc) {
+    setConfigEnv(allowConfig.rtc);
   }
 };
 

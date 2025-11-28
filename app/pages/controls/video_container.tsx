@@ -1,4 +1,4 @@
-import { getServerIp, is_web, isMobile, src, UserDefineStatus, UserStatus } from '@/lib/std';
+import { isMobile, src, UserDefineStatus, UserStatus } from '@/lib/std';
 import {
   CarouselLayout,
   ConnectionStateToast,
@@ -21,16 +21,19 @@ import {
   Participant,
   ParticipantEvent,
   ParticipantTrackPermission,
+  Room,
   RoomEvent,
   Track,
   TrackPublication,
 } from 'livekit-client';
 import React, {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { ControlBarExport, Controls } from './bar';
@@ -40,42 +43,60 @@ import { useSpaceInfo } from '@/lib/hooks/space';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { useI18n } from '@/lib/i18n/i18n';
-import { ModelBg, ModelRole } from '@/lib/std/virtual';
 import {
   chatMsgState,
   licenseState,
+  RemoteTargetApp,
   roomStatusState,
   socket,
   userState,
-} from '@/app/rooms/[spaceName]/PageClientImpl';
-import { useRouter } from 'next/navigation';
+} from '@/app/[spaceName]/PageClientImpl';
 import {
   ControlType,
   WsBase,
   WsControlParticipant,
   WsInviteDevice,
   WsParticipant,
+  WsSender,
   WsTo,
   WsWave,
 } from '@/lib/std/device';
 import { Button } from 'antd';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { Channel, ChannelExports } from './channel';
-import { AppKey, PARTICIPANT_SETTINGS_KEY } from '@/lib/std/space';
-import { FlotLayout } from '../apps/flot';
+import {
+  AICutParticipantConf,
+  AppAuth,
+  PARTICIPANT_SETTINGS_KEY,
+  SpaceTodo,
+  todayTimeStamp,
+} from '@/lib/std/space';
+import { FlotButton, FlotLayout } from '../apps/flot';
 import { api } from '@/lib/api';
-import { SingleFlotLayout } from '../apps/single_flot';
+import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
+import { VocespaceConfig } from '@/lib/std/conf';
+import { acceptRaise, RaiseHandler, rejectRaise } from './widgets/raise';
+import { audio } from '@/lib/audio';
+import { AICutService } from '@/lib/ai/cut';
+import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES, Extraction } from '@/lib/ai/analysis';
+import {
+  convertPlatformToACARes,
+  PlarformAICutAnalysis,
+  platformAPI,
+  PlatformTodos,
+} from '@/lib/api/platform';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
   noteApi: NotificationInstance;
   setPermissionDevice: (device: Track.Source) => void;
+  config: VocespaceConfig;
 }
 
 export interface VideoContainerExports {
   clearRoom: () => Promise<void>;
 }
-const IP = process.env.SERVER_NAME ?? getServerIp() ?? 'localhost';
+
 export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerProps>(
   (
     {
@@ -86,13 +107,14 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       noteApi,
       messageApi,
       setPermissionDevice,
+      config,
       ...props
     }: VideoContainerProps,
     ref,
   ) => {
     const space = useMaybeRoomContext();
     const [init, setInit] = useState(true);
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
     const [uState, setUState] = useRecoilState(userState);
     const [collapsed, setCollapsed] = useState(isMobile());
     const [uLicenseState, setULicenseState] = useRecoilState(licenseState);
@@ -105,21 +127,206 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
     const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
     const channelRef = React.useRef<ChannelExports>(null);
-    const router = useRouter();
+    const [remoteApp, setRemoteApp] = useRecoilState(RemoteTargetApp);
     const { settings, updateSettings, fetchSettings, clearSettings, updateOwnerId, updateRecord } =
       useSpaceInfo(
         space?.name || '', // 房间 ID
         space?.localParticipant?.identity || '', // 参与者 ID
       );
     const [openApp, setOpenApp] = useState<boolean>(false);
-    const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
-    const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
+    // const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
+    // const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
     const isActive = true;
+    const aiCutServiceRef = React.useRef<AICutService>(new AICutService());
+    const [noteStateForAICutService, setNoteStateForAICutService] = useState({
+      openAIService: false,
+      noteClosed: false,
+      hasAsked: !settings?.ai?.cut?.enabled || false, // 如果设置中enabled为true表示需要询问，否则不需要询问
+    });
+    const [aiCutAnalysisRes, setAICutAnalysisRes] = useState<AICutAnalysisRes>(
+      DEFAULT_AI_CUT_ANALYSIS_RES,
+    );
+    const aiCutAnalysisIntervalId = useRef<NodeJS.Timeout | null>(null);
+    const showFlotApp = (id?: string, participantName?: string, auth?: AppAuth) => {
+      setRemoteApp({
+        participantId: id,
+        participantName,
+        auth: auth || 'read',
+      });
 
-    const showSingleFlotApp = (appKey: AppKey) => {
-      setTargetAppKey(appKey);
-      setOpenSingleApp(!openSingleApp);
+      setOpenApp(!openApp);
     };
+    const reloadResult = async () => {
+      const response = await api.ai.getAnalysisRes(space!.name, space!.localParticipant.identity);
+      if (response.ok) {
+        const { res }: { res: AICutAnalysisRes } = await response.json();
+        setAICutAnalysisRes(res);
+        messageApi.success(t('ai.cut.success.reload'));
+      } else {
+        messageApi.error(t('ai.cut.error.reload'));
+      }
+    };
+    const stopAICutService = async (space: Room) => {
+      aiCutServiceRef.current.stop();
+      aiCutServiceRef.current.clearScreenshots();
+      if (aiCutAnalysisIntervalId.current) {
+        clearInterval(aiCutAnalysisIntervalId.current);
+        aiCutAnalysisIntervalId.current = null;
+      }
+      const response = await api.ai.stop(space.name, space.localParticipant.identity);
+      if (response.ok) {
+        // messageApi.success(t('ai.cut.success.stop'));
+      }
+    };
+    // 开启或关闭AI截屏服务 --------------------------------------------------------
+    const startOrStopAICutAnalysis = useCallback(
+      async (freq: number, conf: AICutParticipantConf, reload?: boolean) => {
+        if (!space || !space.localParticipant) return;
+        if (conf.enabled) {
+          await aiCutServiceRef.current.start(
+            freq,
+            conf.spent,
+            space.localParticipant,
+            reload,
+            async (lastScreenShot) => {
+              if (space && space.localParticipant) {
+                let todos: string[] = [];
+                if (conf.todo) {
+                  todos =
+                    uState.appDatas.todo
+                      ?.map((todo) => todo.items.filter((item) => !item.done))
+                      .flat()
+                      .map((item) => item.title) || [];
+                }
+
+                const response = await api.ai.analysis({
+                  spaceName: space.name,
+                  userId: space.localParticipant.identity,
+                  screenShot: lastScreenShot,
+                  todos,
+                  freq: freq,
+                  lang: locale,
+                  extraction: conf.extraction,
+                  isAuth: uState.isAuth,
+                });
+
+                if (!response.ok) {
+                  messageApi.warning(t('ai.cut.error.start'));
+                  // 停止AI截屏服务
+                  stopAICutService(space);
+                  await updateSettings({
+                    ai: {
+                      cut: {
+                        ...conf,
+                        enabled: false,
+                      },
+                    },
+                  });
+                  socket.emit('update_user_status', {
+                    space: space.name,
+                  } as WsBase);
+                  return;
+                }
+              }
+            },
+            () => {
+              messageApi.success(t('ai.cut.success.start'));
+            },
+            (e) => {
+              console.error('Failed to start AI Cut Service:', e);
+              messageApi.warning(t('ai.cut.error.start'));
+            },
+          );
+          // 如果已有定时器，先清除，避免重复创建多个定时器
+          if (aiCutAnalysisIntervalId.current) {
+            try {
+              clearInterval(aiCutAnalysisIntervalId.current as unknown as number);
+            } catch (e) {
+              // ignore
+            }
+            aiCutAnalysisIntervalId.current = null;
+          }
+
+          aiCutAnalysisIntervalId.current = setInterval(async () => {
+            await reloadResult();
+          }, (freq + 2) * 60 * 1000); //增加2分钟的缓冲时间
+        } else {
+          // 停止截图服务并停止AI分析
+          stopAICutService(space);
+        }
+
+        await updateSettings({
+          ai: {
+            cut: { ...conf },
+          },
+        });
+        socket.emit('update_user_status', {
+          space: space.name,
+        } as WsBase);
+      },
+      [space, settings.ai.cut, uState, t, updateSettings, aiCutAnalysisIntervalId, locale],
+    );
+
+    const openAIServiceAskNote = () => {
+      // 提示用户开启屏幕共享权限, 关闭后判断开启还是关闭AI服务
+      noteApi.open({
+        message: t('ai.cut.ask_permission_title'),
+        description: t('ai.cut.ask_permission'),
+        duration: 10,
+        onClose: async () => {
+          // 用户关闭弹窗或超时关闭，默认不开启AI服务
+          setNoteStateForAICutService({
+            openAIService: false,
+            noteClosed: true,
+            hasAsked: true,
+          });
+        },
+        actions: (
+          <div style={{ display: 'inline-flex', gap: 16 }}>
+            <Button
+              type="primary"
+              onClick={() => {
+                // 用户选择开启屏幕共享和AI服务
+                space?.localParticipant.setScreenShareEnabled(true);
+                setNoteStateForAICutService({
+                  hasAsked: true,
+                  openAIService: true,
+                  noteClosed: true,
+                });
+                noteApi.destroy();
+              }}
+            >
+              {t('common.start_sharing')}
+            </Button>
+          </div>
+        ),
+      });
+    };
+
+    // 监控AI截屏服务状态 --------------------------------------------------------
+    // 用户需要确保至少开启屏幕共享，如果关闭则需要提示用户，如果用户确定关闭则要停止AI截屏服务
+    // 手机无需AI分享分析提示
+    useEffect(() => {
+      // 完成初始化并没有询问过用户时显示弹窗并询问
+      if (
+        !init &&
+        (settings.ai.cut.enabled === undefined
+          ? !noteStateForAICutService.hasAsked
+          : !settings.ai.cut.enabled) &&
+        !isMobile()
+      ) {
+        openAIServiceAskNote();
+      }
+    }, [init, noteStateForAICutService.hasAsked, settings.ai.cut.enabled]);
+
+    useEffect(() => {
+      if (noteStateForAICutService.noteClosed) {
+        startOrStopAICutAnalysis(settings.ai.cut.freq, {
+          ...uState.ai.cut,
+          enabled: noteStateForAICutService.openAIService,
+        });
+      }
+    }, [noteStateForAICutService.noteClosed, noteStateForAICutService.openAIService]);
 
     useEffect(() => {
       if (!space) return;
@@ -144,15 +351,55 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         setInit(true);
       });
 
+      // 从平台端获取数据 ai总结/todos ---------------------------------------------------------------
+      const fetchPlatformData = async (isAuth: boolean) => {
+        // todos ----
+        let identity = space.localParticipant.identity;
+        if (isAuth) {
+          const aiResponse = await platformAPI.ai.getAIAnalysis(identity, todayTimeStamp());
+          const response = await platformAPI.todo.getTodos(identity);
+          if (aiResponse.ok) {
+            const { data }: { data: PlarformAICutAnalysis } = await aiResponse.json();
+            setAICutAnalysisRes(convertPlatformToACARes(data));
+          } else {
+            setAICutAnalysisRes(DEFAULT_AI_CUT_ANALYSIS_RES);
+          }
+
+          if (response.ok) {
+            const { todos }: { todos: PlatformTodos[] } = await response.json();
+            const items: SpaceTodo[] = todos.map((todo) => {
+              return {
+                items: todo.items,
+                date: Number(todo.date),
+              };
+            });
+
+            // 更新本地数据
+            return items;
+          }
+        }
+
+        return [];
+      };
+
       const syncSettings = async () => {
+        let isAuth = await platformAPI.isAuth(space.localParticipant.identity);
+        const todos = await fetchPlatformData(isAuth);
         // 将当前参与者的基础设置发送到服务器 ----------------------------------------------------------
-        await updateSettings({
-          ...uState,
-          socketId: socket.id,
-          name: space.localParticipant.name || space.localParticipant.identity,
-          startAt: new Date().getTime(),
-        });
-        console.warn(uState);
+        await updateSettings(
+          {
+            ...uState,
+            socketId: socket.id,
+            name: space.localParticipant.name || space.localParticipant.identity,
+            startAt: new Date().getTime(),
+            online: true,
+            ...(todos ? { appDatas: { ...uState.appDatas, todo: todos } } : uState.appDatas),
+            isAuth,
+          },
+          undefined,
+          true,
+        );
+
         const roomName = `${space.localParticipant.name}'s room`;
 
         // 为新加入的参与者创建一个自己的私人房间
@@ -191,16 +438,48 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         }
       };
 
+      // 从config中获取license进行校验 -------------------------------------------------------------------
+      const validLicense = async () => {
+        if (!uLicenseState.isAnalysis) {
+          const license = analyzeLicense(config.license, (_e) => {
+            messageApi.error({
+              content: t('settings.license.invalid') + t('settings.license.default_license'),
+              duration: 8,
+            });
+          });
+          if (!validLicenseDomain(license.domains, config.serverUrl)) {
+            messageApi.error(t('settings.license.invalid_domain'));
+            space.disconnect(true);
+            return;
+          }
+
+          setULicenseState({
+            ...license,
+            isAnalysis: true,
+            personLimit: getLicensePersonLimit(license.limit, license.isTmp),
+          });
+        }
+      };
+
       if (init) {
-        // 获取历史聊天记录
-        fetchChatMsg();
-        syncSettings().then(() => {
-          // 新的用户更新到服务器之后，需要给每个参与者发送一个websocket事件，通知他们更新用户状态
-          socket.emit('update_user_status', {
-            space: space.name,
-          } as WsBase);
+        // 重置AI截图询问状态，允许在新会话中重新询问
+        setNoteStateForAICutService({
+          openAIService: false,
+          noteClosed: false,
+          hasAsked: false,
         });
-        setInit(false);
+
+        // 获取历史聊天记录
+        validLicense().then(() => {
+          fetchChatMsg();
+          syncSettings().then(() => {
+            // 新的用户更新到服务器之后，需要给每个参与者发送一个websocket事件，通知他们更新用户状态
+            socket.emit('update_user_status', {
+              space: space.name,
+            } as WsBase);
+          });
+          setInit(false);
+        });
       }
 
       // 重写初始化用户 -----------------------------------------------------------------------------
@@ -211,43 +490,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         }
       });
 
-      // license 检测 -----------------------------------------------------------------------------
-      const checkLicense = async () => {
-        const response = await api.checkLicenseByIP(IP);
-        if (response.ok) {
-          const { id, email, domains, created_at, expires_at, ilimit, value } =
-            await response.json();
-          setULicenseState((prev) => ({
-            ...prev,
-            id,
-            email,
-            domains,
-            created_at,
-            expires_at,
-            ilimit,
-            value,
-          }));
-        }
-      };
-
-      if (uLicenseState.value !== '') {
-        if (!(IP === 'localhost' || IP.startsWith('192.168.'))) {
-          checkLicense();
-        }
-      } else {
-        let value = window.localStorage.getItem('license');
-        if (value && value !== '') {
-          setULicenseState((prev) => ({
-            ...prev,
-            value,
-          }));
-        }
-      }
-
       // 监听服务器的提醒事件的响应 -------------------------------------------------------------------
       socket.on('wave_response', (msg: WsWave) => {
         if (msg.receiverId === space.localParticipant.identity && msg.space === space.name) {
-          console.warn(msg);
           waveAudioRef.current?.play();
           let actions = undefined;
           if (msg.childRoom || msg.inSpace) {
@@ -274,6 +519,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           noteApi.info({
             message: `${msg.senderName} ${t('common.wave_msg')}`,
             actions,
+            duration: 10,
           });
         }
       });
@@ -289,15 +535,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
       // 房间事件监听器 --------------------------------------------------------------------------------
       const onParticipantConnected = async (participant: Participant) => {
-        // 通过许可证判断人数，free为5人，pro为20人，若超过则拒绝加入并给出提示
-        let user_limit = 5;
-        if (uLicenseState.id && uLicenseState.value! == '') {
-          if (uLicenseState.ilimit === 'pro') {
-            user_limit = 20;
-          }
-        }
-
-        if (space.remoteParticipants.size > user_limit) {
+        // 通过许可证判断人数
+        if (space.remoteParticipants.size >= uLicenseState.personLimit - 1) {
           if (space.localParticipant.identity === participant.identity) {
             messageApi.error({
               content: t('common.full_user'),
@@ -540,6 +779,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       socket.on('chat_msg_response', (msg: ChatMsgItem) => {
         if (msg.roomName === space.name) {
           setChatMsg((prev) => {
+            if (controlsRef.current && controlsRef.current.isChatOpen) {
+              return {
+                unhandled: 0,
+                msgs: [...prev.msgs, msg],
+              };
+            }
+
             return {
               unhandled: prev.unhandled + 1,
               msgs: [...prev.msgs, msg],
@@ -549,12 +795,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       });
 
       socket.on('chat_file_response', (msg: ChatMsgItem) => {
+        console.warn(msg);
         if (msg.roomName === space.name) {
           setChatMsg((prev) => {
             // 使用函数式更新来获取最新的 messages 状态
             const existingFile = prev.msgs.find((m) => m.id === msg.id);
             if (!existingFile) {
-              let isOthers = msg.id !== space.localParticipant.identity;
+              let isOthers = msg.sender.id !== space.localParticipant.identity;
               return {
                 unhandled: prev.unhandled + (isOthers ? 1 : 0),
                 msgs: [...prev.msgs, msg],
@@ -571,6 +818,67 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         // 在localstorage中添加一个reload标记，这样退出之后如果有这个标记就可以自动重载
         localStorage.setItem('reload', space.name);
         space.disconnect(true);
+      });
+
+      // raise hand socket event ----------------------------------------------
+      socket.on('raise_response', async (msg: WsSender) => {
+        if (msg.space === space.name) {
+          if (
+            space.localParticipant.identity === settings.ownerId &&
+            msg.senderId !== space.localParticipant.identity
+          ) {
+            await audio.raise();
+
+            const wsTo: WsTo = {
+              space: space.name,
+              senderId: space.localParticipant.identity,
+              senderName: space.localParticipant.name || space.localParticipant.identity,
+              receiverId: msg.senderId,
+              socketId: msg.senderSocketId!, // 这里一定是有这个senderSocketId的
+            };
+
+            noteApi?.info({
+              message: `${msg.senderName} ${t('more.app.raise.receive')}`,
+              duration: 5,
+              actions: (
+                <RaiseHandler
+                  onAccept={() => acceptRaise(wsTo)}
+                  onReject={() => rejectRaise(wsTo)}
+                />
+              ),
+            });
+          }
+        }
+      });
+
+      const raiseHandle = async (msg: WsTo, isReject: boolean) => {
+        if (msg.space === space.name && msg.receiverId === space.localParticipant.identity) {
+          let msg = t('more.app.raise.handle.accepted');
+          if (isReject) msg = t('more.app.raise.handle.rejected');
+          messageApi.warning(msg);
+
+          await updateSettings({
+            raiseHand: false,
+          });
+
+          socket.emit('update_user_status', {
+            space: space.name,
+          } as WsBase);
+        }
+      };
+
+      // cancel raise hand socket event ----------------------------------------------
+      socket.on('raise_cancel_response', async (msg: WsTo) => {
+        await raiseHandle(msg, true);
+      });
+
+      // accept raise hand socket event ----------------------------------------------
+      socket.on('raise_accept_response', async (msg: WsTo) => {
+        await raiseHandle(msg, false);
+        // 为用户打开麦克风
+        if (!space.localParticipant.isMicrophoneEnabled) {
+          await space.localParticipant.setMicrophoneEnabled(true);
+        }
       });
 
       return () => {
@@ -590,11 +898,40 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         socket.off('re_init_response');
         socket.off('connect');
         socket.off('reload_env_response');
+        socket.off('raise_response');
+        socket.off('raise_cancel_response');
+        socket.off('raise_accept_response');
         space.off(RoomEvent.ParticipantConnected, onParticipantConnected);
         space.off(ParticipantEvent.TrackMuted, onTrackHandler);
         space.off(RoomEvent.ParticipantDisconnected, onParticipantDisConnected);
+        // 组件卸载时，确保停止 AI 截屏服务并清除定时器
+        try {
+          aiCutServiceRef.current?.stop();
+          aiCutServiceRef.current?.clearScreenshots();
+        } catch (e) {
+          // ignore
+        }
+        if (aiCutAnalysisIntervalId.current) {
+          try {
+            clearInterval(aiCutAnalysisIntervalId.current as unknown as number);
+          } catch (e) {
+            // ignore
+          }
+          aiCutAnalysisIntervalId.current = null;
+        }
       };
-    }, [space?.state, space?.localParticipant, uState, init, uLicenseState, IP, chatMsg, socket]);
+    }, [
+      space?.state,
+      space?.localParticipant,
+      uState,
+      init,
+      uLicenseState,
+      chatMsg,
+      socket,
+      config,
+      controlsRef,
+      locale,
+    ]);
 
     const selfRoom = useMemo(() => {
       if (!space || space.state !== ConnectionState.Connected) return;
@@ -624,7 +961,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     useLayoutEffect(() => {
       if (!settings || !space || space.state !== ConnectionState.Connected) return;
       if (!freshPermission) return;
-      console.warn('freshPermission', freshPermission);
       // 发送一次fetchSettings请求，确保settings是最新的
       fetchSettings();
     }, [settings, space, freshPermission]);
@@ -699,17 +1035,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           return newState;
         });
       }
-      // 同步settings中的房间的状态到uRoomStatusState中 ----------------------------------------
-      if (settings.status && settings.status.length > 0) {
-        setURoomStatusState((prev) => {
-          const newState = [...prev];
-          if (prev !== settings!.status!) {
-            return settings!.status!;
-          }
-          return newState;
-        });
-      }
-    }, [space, settings, uRoomStatusState]);
+    }, [space, settings]);
 
     const [widgetState, setWidgetState] = React.useState<WidgetState>({
       showChat: false,
@@ -793,9 +1119,25 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       tracks,
     ]);
 
-    const toSettingGeneral = () => {
-      controlsRef.current?.openSettings('general');
+    const toSettingGeneral = (isDefineStatus?: boolean) => {
+      controlsRef.current?.openSettings('general', isDefineStatus);
     };
+    // [room update handler] --------------------------------------------------------------------------------------
+    const handleUpdateRoom = async () => {
+      await fetchSettings();
+      // 需要更新用户视图Layout，因为发现在focus layout下切换房间会导致视图没有更新，依然看到上一个房间的视图
+      if (focusTrack) {
+        layoutContext.pin.dispatch?.({ msg: 'clear_pin' });
+      }
+
+      // 通知其他参与者更新用户状态
+      if (space) {
+        socket.emit('update_user_status', {
+          space: space.name,
+        } as WsBase);
+      }
+    };
+
     // [user status] ------------------------------------------------------------------------------------------
     const setUserStatus = async (status: UserStatus | string) => {
       let newStatus = {
@@ -861,47 +1203,74 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       return !isMobile() ? true : collapsed;
     }, [collapsed]);
 
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // 如果拖拽的文件数量大于0，则表示是文件拖拽，如果文件拖拽就需要让<Controls />组件开启聊天的Drawer
+      if (e.dataTransfer.files.length > 0) {
+        if (controlsRef.current) {
+          controlsRef.current.setChatOpen(true);
+        }
+      }
+    };
+    const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (controlsRef.current) {
+        controlsRef.current.setChatOpen(true);
+      }
+    };
+
     useImperativeHandle(ref, () => ({
       clearRoom: () => clearRoom(),
     }));
 
     return (
-      <div className="video_container_wrapper" style={{ position: 'relative' }}>
+      <div
+        className="video_container_wrapper"
+        style={{ position: 'relative' }}
+        onDragEnter={handleDrag}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
         {/* 右侧应用浮窗，悬浮态 */}
-        {showFlot && space && settings && (
+        {showFlot && space && settings.participants[space.localParticipant.identity] && (
+          <FlotButton
+            openApp={openApp}
+            setOpenApp={setOpenApp}
+            style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
+          ></FlotButton>
+        )}
+        {showFlot && space && settings.participants[space.localParticipant.identity] && (
           <FlotLayout
             space={space.name}
-            style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
             messageApi={messageApi}
             openApp={openApp}
             spaceInfo={settings}
+            setOpenApp={setOpenApp}
+            showAICutAnalysisSettings={controlsRef.current?.showAICutAnalysisSettings}
+            reloadResult={reloadResult}
+            aiCutAnalysisRes={aiCutAnalysisRes}
+            startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+            openAIServiceAskNote={openAIServiceAskNote}
+            cutInstance={aiCutServiceRef.current}
+            updateSettings={updateSettings}
           ></FlotLayout>
-        )}
-        {/* 右侧单应用浮窗，悬浮态，用于当用户点击自己视图头上角图标进行显示 */}
-        {space && (
-          <SingleFlotLayout
-            space={space.name}
-            style={{ position: 'absolute', top: '100px', right: '0px', zIndex: 1001 }}
-            messageApi={messageApi}
-            openApp={openSingleApp}
-            setOpen={setOpenSingleApp}
-            spaceInfo={settings}
-            appKey={targetAppKey}
-          ></SingleFlotLayout>
         )}
         {/* 左侧侧边栏 */}
         {space && (
           <Channel
             ref={channelRef}
+            config={config}
             space={space}
             localParticipantId={space.localParticipant.identity}
             settings={settings}
-            onUpdate={async () => {
-              await fetchSettings();
-              socket.emit('update_user_status', {
-                space: space.name,
-              } as WsBase);
-            }}
+            onUpdate={handleUpdateRoom}
             tracks={originTracks}
             collapsed={collapsed}
             setCollapsed={setCollapsed}
@@ -910,7 +1279,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             updateSettings={updateSettings}
             toRenameSettings={toSettingGeneral}
             setUserStatus={setUserStatus}
-            showSingleFlotApp={showSingleFlotApp}
+            showFlotApp={showFlotApp}
           ></Channel>
         )}
         {/* 主视口 */}
@@ -923,13 +1292,16 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             width: collapsed ? (isActive ? 'calc(100vw - 28px)' : '100vw') : 'calc(100vw - 280px)',
           }}
         >
-          {is_web() && space && (
+          {space && (
             <LayoutContextProvider
               value={layoutContext}
               // onPinChange={handleFocusStateChange}
               onWidgetChange={widgetUpdate}
             >
-              <div className="lk-video-conference-inner" style={{ alignItems: 'space-between' }}>
+              <div
+                className="lk-video-conference-inner"
+                style={{ alignItems: 'space-between', height: '100dvh' }}
+              >
                 {!focusTrack ? (
                   <div className="lk-grid-layout-wrapper">
                     <GridLayout tracks={tracks}>
@@ -938,10 +1310,11 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                         settings={settings}
                         toSettings={toSettingGeneral}
                         messageApi={messageApi}
+                        noteApi={noteApi}
                         setUserStatus={setUserStatus}
                         updateSettings={updateSettings}
                         toRenameSettings={toSettingGeneral}
-                        showSingleFlotApp={showSingleFlotApp}
+                        showFlotApp={showFlotApp}
                         selfRoom={selfRoom}
                       ></ParticipantItem>
                     </GridLayout>
@@ -955,10 +1328,11 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                           settings={settings}
                           toSettings={toSettingGeneral}
                           messageApi={messageApi}
+                          noteApi={noteApi}
                           setUserStatus={setUserStatus}
                           updateSettings={updateSettings}
                           toRenameSettings={toSettingGeneral}
-                          showSingleFlotApp={showSingleFlotApp}
+                          showFlotApp={showFlotApp}
                           selfRoom={selfRoom}
                         ></ParticipantItem>
                       </CarouselLayout>
@@ -970,10 +1344,11 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                           toSettings={toSettingGeneral}
                           trackRef={focusTrack}
                           messageApi={messageApi}
+                          noteApi={noteApi}
                           isFocus={isFocus}
                           updateSettings={updateSettings}
                           toRenameSettings={toSettingGeneral}
-                          showSingleFlotApp={showSingleFlotApp}
+                          showFlotApp={showFlotApp}
                           selfRoom={selfRoom}
                         ></ParticipantItem>
                       )}
@@ -992,8 +1367,10 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   collapsed={collapsed}
                   setCollapsed={setCollapsed}
                   openApp={openApp}
-                  toRenameSettings={toSettingGeneral}
                   setOpenApp={setOpenApp}
+                  toRenameSettings={toSettingGeneral}
+                  startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+                  openAIServiceAskNote={openAIServiceAskNote}
                 ></Controls>
               </div>
               {SettingsComponent && (

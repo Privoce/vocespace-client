@@ -1,5 +1,10 @@
 import os from 'os';
 import clsx from 'clsx';
+import { Trans } from '../i18n/i18n';
+import { GetProp, UploadProps } from 'antd';
+import { VOCESPACE_PLATFORM_USER_ID } from './space';
+import { PUserInfo } from '../hooks/platform';
+import dayjs from 'dayjs';
 /**
  * Option<T>
  *
@@ -16,6 +21,28 @@ export interface Size {
   height: string;
   width: string;
 }
+export enum UserStatus {
+  Online = 'settings.general.status.online',
+  Leisure = 'settings.general.status.leisure',
+  Busy = 'settings.general.status.busy',
+  Offline = 'settings.general.status.offline',
+  Working = 'settings.general.status.working',
+}
+
+export const TransIfSystemStatus = (t: Trans, state: string): string => {
+  switch (state) {
+    case UserStatus.Online:
+      return `🟢 ${t('settings.general.status.online')}`;
+    case UserStatus.Offline:
+      return t('settings.general.status.offline');
+    case UserStatus.Busy:
+      return t('settings.general.status.busy');
+    case UserStatus.Leisure:
+      return t('settings.general.status.leisure');
+    default:
+      return state || '';
+  }
+};
 
 export interface SizeNum {
   height: number;
@@ -29,69 +56,89 @@ export interface UserItemProp {
 
 export interface UserDefineStatus {
   id: string;
+  /**
+   * 创建者
+   */
   creator: {
     name: string;
     id: string;
   };
-  name: string;
-  desc: string;
-  icon: {
-    key: string;
-    color: string;
-  };
+  /**
+   * 状态名称
+   */
+  title: string;
   volume: number;
   blur: number;
   screenBlur: number;
 }
 
-// export type UserStatus = 'success' | 'processing' | 'default' | 'error' | 'warning';
-
-export enum UserStatus {
-  Online = 'online',
-  Leisure = 'leisure',
-  Busy = 'busy',
-  Offline = 'offline',
-}
+export const DEFAULT_USER_DEFINE_STATUS: UserDefineStatus[] = [
+  {
+    id: UserStatus.Working,
+    creator: {
+      name: 'system',
+      id: 'system',
+    },
+    title: 'settings.general.status.working',
+    volume: 100,
+    blur: 0,
+    screenBlur: 0,
+  },
+];
 
 export function is_web(): boolean {
   return typeof window !== 'undefined';
 }
 
+export function isIos(): boolean {
+  if (!is_web()) return false;
+
+  const userAgent = navigator.userAgent || navigator.vendor || (window as any).opera;
+
+  // iOS detection from: http://stackoverflow.com/a/9039885/177710
+  return /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
+}
+
 export function isMobile(): boolean {
   if (!is_web()) return false;
-  
+
   // 检查用户代理字符串
   const userAgent = navigator.userAgent.toLowerCase();
   const mobileKeywords = [
-    'mobile', 'android', 'iphone', 'ipad', 'ipod', 
-    'blackberry', 'windows phone', 'opera mini'
+    'mobile',
+    'android',
+    'iphone',
+    'ipad',
+    'ipod',
+    'blackberry',
+    'windows phone',
+    'opera mini',
   ];
-  
-  const isMobileUserAgent = mobileKeywords.some(keyword => 
-    userAgent.includes(keyword)
-  );
-  
+
+  const isMobileUserAgent = mobileKeywords.some((keyword) => userAgent.includes(keyword));
+
   // 检查触摸屏支持
-  const hasTouchScreen = 'ontouchstart' in window || 
-    navigator.maxTouchPoints > 0 || 
+  const hasTouchScreen =
+    'ontouchstart' in window ||
+    navigator.maxTouchPoints > 0 ||
     (navigator as any).msMaxTouchPoints > 0;
-  
+
   // 检查屏幕尺寸 (小于768px认为是移动设备)
   const isSmallScreen = window.innerWidth < 768;
-  
+
   return isMobileUserAgent || (hasTouchScreen && isSmallScreen);
 }
 
 export function isTablet(): boolean {
   if (!is_web()) return false;
-  
+
   const userAgent = navigator.userAgent.toLowerCase();
-  const isTabletUserAgent = userAgent.includes('ipad') || 
-    (userAgent.includes('android') && !userAgent.includes('mobile'));
-  
+  const isTabletUserAgent =
+    userAgent.includes('ipad') || (userAgent.includes('android') && !userAgent.includes('mobile'));
+
   const hasTouchScreen = 'ontouchstart' in window;
   const isTabletScreen = window.innerWidth >= 768 && window.innerWidth <= 1024;
-  
+
   return isTabletUserAgent || (hasTouchScreen && isTabletScreen);
 }
 
@@ -242,3 +289,16 @@ export const isUndefinedString = (value: string | undefined): boolean => {
 export const isUndefinedNumber = (value: number | undefined): boolean => {
   return value === undefined || isNaN(value);
 };
+
+export type FileType = Parameters<GetProp<UploadProps, 'beforeUpload'>>[0];
+
+export enum CreateSpaceError {
+  ParamLack = 'common.create_space.error.param',
+  SpaceExist = 'common.create_space.error.exist',
+}
+
+export const ERROR_CODE = {
+  createSpace: CreateSpaceError,
+};
+
+

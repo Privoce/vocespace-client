@@ -1,9 +1,9 @@
-import { Button, Tabs, TabsProps, Tag, Tooltip } from 'antd';
-import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { Button, Tabs, TabsProps, Tag } from 'antd';
+import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { MessageInstance } from 'antd/es/message/interface';
 import { ModelBg, ModelRole } from '@/lib/std/virtual';
 import { useI18n } from '@/lib/i18n/i18n';
-import { UserStatus } from '@/lib/std';
+import { isMobile, UserStatus } from '@/lib/std';
 import { useRecoilState } from 'recoil';
 import { userState } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { LocalParticipant } from 'livekit-client';
@@ -19,7 +19,8 @@ import { RecordData, RecordResponse, useRecordingEnv } from '@/lib/std/recording
 import { ulid } from 'ulid';
 import { ReloadOutlined } from '@ant-design/icons';
 import { AppSettings } from './app';
-import { SpaceInfo } from '@/lib/std/space';
+import { SettingState, SpaceInfo } from '@/lib/std/space';
+import { AISettings } from './ai';
 
 export interface SettingsProps {
   username: string;
@@ -39,18 +40,8 @@ export interface SettingsExports {
   username: string;
   removeVideo: () => void;
   startVideo: () => Promise<void>;
-  state: {
-    volume: number;
-    blur: number;
-    screenBlur: number;
-    virtual: {
-      enabled: boolean;
-      role: ModelRole;
-      bg: ModelBg;
-    };
-    openShareAudio: boolean;
-    openPromptSound: boolean;
-  };
+  setAppendStatus: (append: boolean) => void;
+  state: SettingState;
 }
 
 export type TabKey =
@@ -61,7 +52,8 @@ export type TabKey =
   | 'about_us'
   | 'app'
   | 'recording'
-  | 'license';
+  | 'license'
+  | 'ai';
 
 export const Settings = forwardRef<SettingsExports, SettingsProps>(
   (
@@ -107,27 +99,25 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
           }));
 
           setRecordsData(formattedRecords);
-          messageApi.success('查找录制文件成功');
+          messageApi.success(t('recording.search.success'));
           return;
         } else {
-          messageApi.error(
-            '查找录制文件为空，请检查房间名是否正确，房间内可能没有录制视频文件或已经删除',
-          );
+          messageApi.error(t('recording.search.error'));
           setRecordsData([]);
         }
       }
     };
 
-    useEffect(() => {
-      setVolume(uState.volume);
-      setVideoBlur(uState.blur);
-      setScreenBlur(uState.screenBlur);
-      setVirtualEnabled(uState.virtual.enabled);
-      setModelRole(uState.virtual.role);
-      setModelBg(uState.virtual.bg);
-      setOpenShareAudio(uState.openShareAudio);
-      setOpenPromptSound(uState.openPromptSound);
-    }, [uState]);
+    // useEffect(() => {
+    //   setVolume(uState.volume);
+    //   setVideoBlur(uState.blur);
+    //   setScreenBlur(uState.screenBlur);
+    //   setVirtualEnabled(uState.virtual.enabled);
+    //   setModelRole(uState.virtual.role);
+    //   setModelBg(uState.virtual.bg);
+    //   setOpenShareAudio(uState.openShareAudio);
+    //   setOpenPromptSound(uState.openPromptSound);
+    // }, [uState]);
 
     const items: TabsProps['items'] = [
       {
@@ -139,14 +129,24 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
             localParticipant={localParticipant}
             messageApi={messageApi}
             appendStatus={appendStatus}
-            setAppendStatus={setAppendStatus}
-            setUserStatus={setUserStatus}
             username={username}
             setUsername={setUsername}
             openPromptSound={openPromptSound}
             setOpenPromptSound={setOpenPromptSound}
             spaceInfo={spaceInfo}
           ></GeneralSettings>
+        ),
+      },
+      {
+        key: 'ai',
+        label: <TabItem type="ai" svgSize={16} label={t('settings.ai.title')}></TabItem>,
+        children: (
+          <AISettings
+            space={space}
+            messageApi={messageApi}
+            spaceInfo={spaceInfo}
+            localParticipant={localParticipant}
+          ></AISettings>
         ),
       },
       {
@@ -211,11 +211,9 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
               }}
             >
               <Tag color="#22ccee">{isConnected}</Tag>
-              <Tooltip title="刷新数据">
-                <Button size="small" icon={<ReloadOutlined />} onClick={searchRoomRecords}>
-                  刷新
-                </Button>
-              </Tooltip>
+              <Button size="small" icon={<ReloadOutlined />} onClick={searchRoomRecords}>
+                {t('recording.fresh')}
+              </Button>
             </div>
             <RecordingTable
               messageApi={messageApi}
@@ -231,7 +229,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
       {
         key: 'license',
         label: <TabItem type="license" label={t('settings.license.title')}></TabItem>,
-        children: <LicenseControl messageApi={messageApi}></LicenseControl>,
+        children: <LicenseControl messageApi={messageApi} space={space}></LicenseControl>,
       },
       {
         key: 'about_us',
@@ -253,6 +251,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
           await virtualSettingsRef.current.startVideo();
         }
       },
+      setAppendStatus,
       state: {
         volume,
         blur: videoBlur,

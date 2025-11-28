@@ -1,5 +1,11 @@
 // /app/api/space/route.ts
-import { isUndefinedString, UserDefineStatus } from '@/lib/std';
+import {
+  DEFAULT_USER_DEFINE_STATUS,
+  ERROR_CODE,
+  isUndefinedString,
+  UserDefineStatus,
+  UserStatus,
+} from '@/lib/std';
 import { NextRequest, NextResponse } from 'next/server';
 import Redis from 'ioredis';
 import { ChatMsgItem } from '@/lib/std/chat';
@@ -42,6 +48,7 @@ import {
   UpdateRoomBody,
 } from '@/lib/api/channel';
 import { getConfig } from '../conf/conf';
+import { platformAPI } from '@/lib/api/platform';
 
 const { LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL } = process.env;
 
@@ -427,7 +434,8 @@ class SpaceManager {
       if (!redisClient) {
         throw new Error('Redis client is not initialized or disabled.');
       }
-      // 获取空间的使用情况，如果没有则创建一个新的记录，如果有则需要进行判断更新
+
+      // 获取空间的使用情况，如果没有则创建一个新的记录
       let record = await this.getSpaceDateRecord(space);
       if (!record) {
         // 没有记录，表示房间第一次创建，需要创建一个新的纪录
@@ -438,44 +446,16 @@ class SpaceManager {
               end: timeRecord.end,
             },
           ],
-          participants,
+          participants: participants || {},
         } as SpaceDateRecord;
       } else {
+        // 处理房间级别的时间记录
         if (!participants) {
-          // 如果有记录，需要根据timeRecord进行判断，如果传入的start和记录的start相同，表示删除房间，那么更新end
-          let startRecord = record.space.find((r) => r.start === timeRecord.start);
-          if (startRecord) {
-            // 如果已经存在记录，则更新结束时间戳
-            startRecord.end = timeRecord.end || Date.now();
-            // 接下来还需要遍历所有的用户，如果发现没有end时间戳的记录也进行更新
-            let participants = Object.keys(record.participants);
-            participants.forEach((p) => {
-              let userRecord = record?.participants[p];
-              if (userRecord) {
-                userRecord.forEach((r) => {
-                  if (!r.end) {
-                    r.end = timeRecord.end || Date.now();
-                  }
-                });
-              }
-            });
-          } else {
-            // 如果不存在记录，则添加新的记录
-            record.space.push({
-              start: timeRecord.start,
-              end: timeRecord.end,
-            });
-          }
+          // 房间级别操作（创建/删除房间）
+          await this.updateSpaceTimeRecord(record, timeRecord);
         } else {
-          // 有用户记录，这里即使有也是只有1条，更新用户的结束时间戳
-          let userRecord = record?.participants[Object.keys(record.participants)[0]];
-          if (userRecord) {
-            userRecord.forEach((r) => {
-              if (!r.end) {
-                r.end = timeRecord.end || Date.now();
-              }
-            });
-          }
+          // 用户级别操作（加入/离开房间）
+          await this.updateParticipantTimeRecord(record, participants);
         }
       }
 
@@ -487,6 +467,68 @@ class SpaceManager {
       console.error('Error setting room date records:', error);
       return false;
     }
+  }
+  // 更新房间级别的时间记录 ----------------------------------------------------------------
+  private static updateSpaceTimeRecord(record: SpaceDateRecord, timeRecord: SpaceTimeRecord): void {
+    const existingRecord = record.space.find((r) => r.start === timeRecord.start);
+
+    if (existingRecord) {
+      // 如果已经存在记录，表示房间结束，更新结束时间戳
+      existingRecord.end = timeRecord.end || Date.now();
+
+      // 同时更新所有没有结束时间戳的用户记录
+      Object.keys(record.participants).forEach((participantName) => {
+        const userRecords = record.participants[participantName];
+        if (userRecords) {
+          userRecords.forEach((userRecord) => {
+            if (!userRecord.end) {
+              userRecord.end = timeRecord.end || Date.now();
+            }
+          });
+        }
+      });
+    } else {
+      // 如果不存在记录，表示房间开始，添加新的记录
+      record.space.push({
+        start: timeRecord.start,
+        end: timeRecord.end,
+      });
+    }
+  }
+
+  // 更新用户级别的时间记录 ----------------------------------------------------------------
+  private static updateParticipantTimeRecord(
+    record: SpaceDateRecord,
+    participants: { [name: string]: SpaceTimeRecord[] },
+  ): void {
+    Object.entries(participants).forEach(([participantName, timeRecords]) => {
+      if (!record.participants[participantName]) {
+        // 用户首次加入，直接设置记录
+        record.participants[participantName] = timeRecords;
+      } else {
+        // 用户已存在，需要更新记录
+        const existingRecords = record.participants[participantName];
+        const newTimeRecord = timeRecords[0]; // 新传入的时间记录
+
+        if (newTimeRecord.end) {
+          // 如果新记录有结束时间，表示用户离开
+          const unfinishedRecord = existingRecords.find((r) => !r.end);
+          if (unfinishedRecord) {
+            unfinishedRecord.end = newTimeRecord.end;
+          }
+        } else if (newTimeRecord.start) {
+          // 如果新记录只有开始时间，表示用户加入
+          // 检查是否有未结束的记录，如果没有才添加新记录
+          const hasUnfinishedRecord = existingRecords.some((r) => !r.end);
+          if (!hasUnfinishedRecord) {
+            existingRecords.push({
+              start: newTimeRecord.start,
+              end: newTimeRecord.end,
+            });
+          }
+        }
+      }
+    });
   }
 
   // 获取空间的使用情况 --------------------------------------------------------------------
@@ -615,6 +657,7 @@ class SpaceManager {
     room: string,
     participantId: string,
     pData: ParticipantSettings,
+    init = false,
   ): Promise<boolean> {
     try {
       if (!redisClient) {
@@ -647,8 +690,37 @@ class SpaceManager {
               [pData.name]: [{ start: startAt }],
             },
           );
+        } else {
+          if (init) {
+            // 这里说明房间存在而且且用户也存在，说明用户可能是重连或房间是持久化的，我们无需大范围数据更新，只需要更新
+            // 用户的最基础设置即可
+            // 由于todo数据连接了平台端数据，所以这里需要更改为平台端的todo数据，但只有在isAuth为true时才更新
+            let appDatas = participant.appDatas;
+            if (pData.isAuth) {
+              appDatas = {
+                ...appDatas,
+                todo: pData.appDatas.todo,
+              };
+            }
+
+            spaceInfo.participants[participantId] = {
+              ...participant,
+              name: pData.name,
+              volume: pData.volume,
+              version: pData.version,
+              blur: pData.blur,
+              screenBlur: pData.screenBlur,
+              socketId: pData.socketId,
+              startAt: participant.startAt,
+              online: true,
+              appDatas,
+              isAuth: pData.isAuth,
+            };
+            return await this.setSpaceInfo(room, spaceInfo);
+          }
         }
       }
+
       // 更新参与者数据
       spaceInfo.participants[participantId] = {
         ...spaceInfo.participants[participantId],
@@ -768,7 +840,12 @@ class SpaceManager {
       let participantName = spaceInfo.participants[participantId].name;
       let participantStartAt = spaceInfo.participants[participantId].startAt;
       // 删除参与者
-      delete spaceInfo.participants[participantId];
+      if (!spaceInfo.persistence) {
+        delete spaceInfo.participants[participantId];
+      } else {
+        // 将这个用户的在线状态设置为false
+        spaceInfo.participants[participantId].online = false;
+      }
       // 先设置回去, 以防transferOwner读取脏数据
       await this.setSpaceInfo(room, spaceInfo);
       // 用户离开需要更新用户的end记录
@@ -779,6 +856,13 @@ class SpaceManager {
           [participantName]: [{ start: participantStartAt, end: Date.now() }],
         },
       );
+      // 如果是持久化房间，删除参与者操作到此为止
+      if (spaceInfo.persistence) {
+        return {
+          success: true,
+          clearAll: false,
+        };
+      }
 
       // 判断这个参与者是否是主持人，如果是则进行转让，转给第一个参与者， 如果没有参与者直接删除房间
       if (Object.keys(spaceInfo.participants).length === 0) {
@@ -815,10 +899,11 @@ class SpaceManager {
       };
     }
   }
-  // 定义(添加)房间的状态 --------------------------------------------------------------
+  // 定义(添加)用户的状态 --------------------------------------------------------------
   static async defineStatus(
     spaceName: string,
-    status: UserDefineStatus,
+    participantId: string,
+    status: string,
   ): Promise<{
     success: boolean;
     error?: any;
@@ -832,17 +917,14 @@ class SpaceManager {
       if (!spaceInfo) {
         throw new Error('Room not found');
       }
-      // 房间存在，需要检查是否已经存在同名状态
-      if (!spaceInfo.status) {
-        spaceInfo.status = [status];
+      // 房间存在，获取用户进行状态更新
+      let participant = spaceInfo.participants[participantId];
+      if (!participant) {
+        throw new Error('Participant not found');
       } else {
-        const isExist = spaceInfo.status.some((s) => s.name === status.name);
-        if (isExist) {
-          throw new Error('Status already exists');
-        } else {
-          spaceInfo.status.push(status);
-        }
+        spaceInfo.participants[participantId].status = status;
       }
+
       await this.setSpaceInfo(spaceName, spaceInfo);
       return {
         success: true,
@@ -864,18 +946,17 @@ class SpaceManager {
       let spaceInfo = await this.getSpaceInfo(room);
       let startAt = Date.now();
       if (!spaceInfo) {
-        // spaceInfo = {
-        //   participants: {},
-        //   ownerId: '',
-        //   record: { active: false },
-        //   startAt,
-        //   children: [],
-        // };
         spaceInfo = DEFAULT_SPACE_INFO(startAt);
       }
 
       // 获取所有参与者的名字
       const participants = Object.values(spaceInfo.participants);
+
+      if (participants.length === 0) {
+        // 没有参与者，直接返回第一个用户（管理员）
+        return 'Admin';
+      }
+
       let usedUserNames: number[] = [];
       participants.forEach((participant) => {
         if (participant.name.startsWith('User')) {
@@ -902,19 +983,9 @@ class SpaceManager {
 
       const availableUserName = `User ${suffix_str}`;
 
-      // 这里还需要设置到房间的使用记录中
-      await this.setSpaceDateRecords(
-        room,
-        { start: startAt },
-        {
-          [availableUserName]: [{ start: startAt }],
-        },
-      );
-
       return availableUserName;
     } catch (error) {
-      console.error('Error generating user name:', error);
-      return 'User 01'; // 默认返回第一个用户
+      return 'Admin'; // 默认返回第一个用户(管理员)
     }
   }
   // 更新录制设置 -------------------------------------------------------
@@ -961,6 +1032,29 @@ export async function GET(request: NextRequest) {
   const isTimeRecord = request.nextUrl.searchParams.get('timeRecord') === 'true';
   const isChat = request.nextUrl.searchParams.get('chat') === 'true';
   const isHistory = request.nextUrl.searchParams.get('history') === 'true';
+  const isCreateSpace = request.nextUrl.searchParams.get('space') === 'create';
+  // 创建一个新的空间 -------------------------------------------------------------------------------
+  if (isCreateSpace) {
+    const spaceOwner = request.nextUrl.searchParams.get('owner');
+    const ownerId = request.nextUrl.searchParams.get('ownerId');
+    if (!spaceOwner) {
+      return NextResponse.json({ error: ERROR_CODE.createSpace.ParamLack }, { status: 200 });
+    } else {
+      // 如果有spaceName这个参数则使用这个作为空间名字，否则使用owner作为空间名字
+      let realSpaceName = spaceName || spaceOwner;
+      const spaceInfo = await SpaceManager.getSpaceInfo(realSpaceName);
+      if (spaceInfo) {
+        return NextResponse.json({ error: ERROR_CODE.createSpace.SpaceExist }, { status: 200 });
+      }
+      const newSpaceInfo = {
+        ...DEFAULT_SPACE_INFO(Date.now()),
+        ownerId: ownerId || `${spaceOwner}__${spaceOwner}`,
+      } as SpaceInfo;
+
+      await SpaceManager.setSpaceInfo(realSpaceName, newSpaceInfo);
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+  }
   // 获取某个空间的聊天记录 --------------------------------------------------------------------------
   if (isChat && isHistory && spaceName) {
     const chatMessages = await SpaceManager.getChatMessages(spaceName);
@@ -1029,6 +1123,26 @@ export async function POST(request: NextRequest) {
     const isSpace = request.nextUrl.searchParams.get('space') === 'true';
     const spaceAppsAPIType = request.nextUrl.searchParams.get('apps');
     const isUpdateSpacePersistence = request.nextUrl.searchParams.get('persistence') === 'update';
+    const isUpdate = request.nextUrl.searchParams.get('update') === 'true';
+    // 是否更新空间相关设置 -----------------------------------------------------------------------------
+    if (isUpdate && isSpace) {
+      const { spaceName, info }: { spaceName: string; info: Partial<SpaceInfo> } =
+        await request.json();
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      const updatedSpaceInfo = {
+        ...spaceInfo,
+        ...info,
+      };
+      const success = await SpaceManager.setSpaceInfo(spaceName, updatedSpaceInfo);
+      if (!success) {
+        return NextResponse.json({ error: 'Failed to update space settings' }, { status: 500 });
+      }
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+
     // 用户应用是否同步 -----------------------------------------------------------------------
     if (spaceAppsAPIType === 'sync') {
       const { spaceName, participantId, sync }: UpdateSpaceAppSyncBody = await request.json();
@@ -1069,7 +1183,8 @@ export async function POST(request: NextRequest) {
     }
     // 用户上传App到Space中 ------------------------------------------------------------------
     if (spaceAppsAPIType === 'upload') {
-      const { spaceName, data, ty, participantId }: UploadSpaceAppBody = await request.json();
+      const { spaceName, data, ty, participantId, isAuth }: UploadSpaceAppBody =
+        await request.json();
       const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
       if (!spaceInfo) {
         return NextResponse.json({ error: 'Space not found' }, { status: 404 });
@@ -1079,7 +1194,59 @@ export async function POST(request: NextRequest) {
       } else if (ty === 'countdown') {
         spaceInfo.participants[participantId].appDatas.countdown = data as SpaceCountdown;
       } else {
-        spaceInfo.participants[participantId].appDatas.todo = data as SpaceTodo;
+        // 更新todo
+        let targetUpdateTodo = spaceInfo.participants[participantId].appDatas.todo?.find((item) => {
+          return item.date === (data as SpaceTodo).date;
+        });
+        if (!targetUpdateTodo) {
+          // 如果没有找到则添加一个新的
+          if (!spaceInfo.participants[participantId].appDatas.todo) {
+            spaceInfo.participants[participantId].appDatas.todo = [];
+          }
+          spaceInfo.participants[participantId].appDatas.todo.push(data as SpaceTodo);
+        } else {
+          // 更新spaceInfo
+          spaceInfo.participants[participantId].appDatas.todo = spaceInfo.participants[
+            participantId
+          ].appDatas.todo?.map((item) => {
+            if (item.date === (data as SpaceTodo).date) {
+              return data as SpaceTodo;
+            } else {
+              return item;
+            }
+          });
+        }
+
+        // 将用户的数据传到平台接口进行同步和保存
+        if (isAuth) {
+          try {
+            const pResponse = await platformAPI.todo.updateTodo(participantId, data as SpaceTodo);
+            // 平台虽然失败但不能影响用户的使用
+            if (!pResponse.ok) {
+              console.error('Failed to sync todo to platform for participant:', participantId);
+            }
+          } catch (e) {
+            console.error('Error syncing todo to platform for participant:', participantId, e);
+          }
+        }
+
+        if ((data as SpaceTodo).items.length > 0) {
+          let currentTodo = (data as SpaceTodo).items.find((t) => {
+            // 需要找到第一个未完成的(done为undefined)
+            return !t.done;
+          });
+
+          if (!currentTodo) {
+            // 如果没有，则取最后一个
+            currentTodo = (data as SpaceTodo).items[(data as SpaceTodo).items.length - 1];
+          }
+          // 当todo有更新时，我们需要将用户的状态修改为`🖥️ ${todo.title}`
+          // ⚠️当用户不选择公开todo时不要修改
+          let targetParticipant = spaceInfo.participants[participantId];
+          if (targetParticipant.sync.includes('todo')) {
+            targetParticipant.status = `🖥️ ${currentTodo.title}`;
+          }
+        }
       }
       const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
       return NextResponse.json({ success }, { status: 200 });
@@ -1123,22 +1290,27 @@ export async function POST(request: NextRequest) {
 
     // 处理用户唯一名 -------------------------------------------------------------------------
     if (isNameCheck) {
-      const { spaceName, participantName }: CheckNameBody = await request.json();
+      const { spaceName, participantName, participantId }: CheckNameBody = await request.json();
       // 获取房间设置
       const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
       if (!spaceInfo) {
         // 房间不存在说明是第一次创建
         return NextResponse.json({ success: true, name: participantName }, { status: 200 });
       } else {
-        const pid = `${participantName}__${spaceName}`;
+        const pid = participantId || `${participantName}__${spaceName}`;
         const participantSettings = spaceInfo.participants[pid];
         if (participantSettings) {
-          console.warn(pid);
-          // 有参与者
-          return NextResponse.json(
-            { success: false, error: 'Participant name already exists' },
-            { status: 200 },
-          );
+          // 有参与者，判断当前参与者的online状态，如果为false，说明是重连，可以直接使用该名字
+          if (participantSettings.online) {
+            // 在线状态，那么不允许使用该名字
+            return NextResponse.json(
+              { success: false, error: 'Participant name already exists' },
+              { status: 200 },
+            );
+          } else {
+            // 离线状态，允许使用该名字
+            return NextResponse.json({ success: true, name: participantName }, { status: 200 });
+          }
         }
       }
     }
@@ -1191,9 +1363,14 @@ export async function POST(request: NextRequest) {
     }
     // 更新参与者设置 ---------------------------------------------------------------------------
     if (isUpdateParticipant && isSpace) {
-      const { spaceName, settings, participantId }: UpdateSpaceParticipantBody =
+      const { spaceName, settings, participantId, init }: UpdateSpaceParticipantBody =
         await request.json();
-      const success = await SpaceManager.updateParticipant(spaceName, participantId, settings);
+      const success = await SpaceManager.updateParticipant(
+        spaceName,
+        participantId,
+        settings,
+        init,
+      );
       return NextResponse.json({ success }, { status: 200 });
     }
 
@@ -1266,22 +1443,19 @@ export async function PUT(request: NextRequest) {
   }
   // 用户自定义状态 -------------------------------------------------------------------------------------
   if (isDefineStatus) {
-    const { spaceName, status }: DefineUserStatusBody = await request.json();
+    const { spaceName, participantId, status }: DefineUserStatusBody = await request.json();
     if (!spaceName || !status) {
       return NextResponse.json({ error: 'Space name and status are required' }, { status: 400 });
     }
-    const { success, error } = await SpaceManager.defineStatus(spaceName, status);
+    const { success, error } = await SpaceManager.defineStatus(spaceName, participantId, status);
     if (success) {
-      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
-      return NextResponse.json(
-        { success: true, status: spaceInfo?.status, spaceName } as DefineUserStatusResponse,
-        { status: 200 },
-      );
+      return NextResponse.json({ success: true, spaceName } as DefineUserStatusResponse, {
+        status: 200,
+      });
     } else {
       return NextResponse.json(
         {
           error,
-          status: [status],
         } as DefineUserStatusResponse,
         {
           status: 500,
@@ -1462,6 +1636,11 @@ const userHeartbeat = async () => {
     });
     // 处理情况1 --------------------------------------------------------------------------------------------
     if (inRedisNotInLK.length > 0) {
+      // 检查房间是否为持久化房间
+      if (redisRoom.persistence) {
+        console.warn(`Skipping participant removal for persistent room: ${room.name}`);
+        continue; // 跳过持久化房间的参与者清理
+      }
       for (const participantId of inRedisNotInLK) {
         await SpaceManager.removeParticipant(room.name, participantId);
       }
