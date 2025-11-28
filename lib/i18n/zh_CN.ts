@@ -433,6 +433,29 @@ export default {
   },
   settings: {
     title: '设置',
+    ai: {
+      title: 'AI',
+      desc: "配置AI分析服务的相关参数，以启用AI分析功能。",
+      model: "模型名称(多模态模型)",
+      model_desc: '选择用于AI分析的语言模型，模型名称需支持多模态输入（图像+文本），以便处理截图并生成分析报告。',
+      key: "API密钥",
+      url: "API地址",
+      recommand: [
+        "我们推荐使用以下多模态模型以获得更好的AI分析效果：",
+        "1. GPT-4V",
+        "2. Claude-3-vision",
+        "3. Gemini-Pro-Vision",
+        "4. Qwen3",
+        "5. 豆包(Doubao)"
+      ],
+      enabled: "AI询问弹窗",
+      update: {
+        save: "保存AI配置",
+        success: 'AI配置更新成功',
+        error: 'AI配置更新失败，请稍后再试。',
+        incomplete: '请完整填写AI配置参数，确保模型名称，API地址和API密钥均已填写。',
+      }
+    },
     general: {
       title: '常规',
       username: '用户名',

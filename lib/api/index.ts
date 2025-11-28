@@ -1,7 +1,7 @@
 import { ai } from './ai';
 import { createRoom, deleteRoom, joinRoom, leaveRoom, updateRoom } from './channel';
 import { fetchLinkPreview, getChatMsg, uploadFile } from './chat';
-import { getConf, reloadConf, reloadLicense } from './conf';
+import { getConf, reloadConf, reloadLicense, updateAIConf } from './conf';
 import { checkLicenseByIP, getLicenseByIP } from './license';
 import { sendRecordRequest, updateRecord } from './record';
 import {
@@ -63,6 +63,7 @@ export const api = {
   joinRoom,
   updateRoom,
   getConf,
+  updateAIConf,
   reloadConf,
   reloadLicense,
   // ---- platform api --------

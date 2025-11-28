@@ -42,6 +42,13 @@ export interface RTCConf {
   priority: RTCPriorityType;
 }
 
+export interface AIConf {
+  enabled: boolean;
+  apiKey: string;
+  apiUrl: string;
+  model: string;
+  maxTokens?: number;
+}
 export interface VocespaceConfig {
   livekit: LivekitConf;
   codec?: VideoCodec;
@@ -85,13 +92,7 @@ export interface VocespaceConfig {
    * | 文心一言多模态版                     | 百度        | 文本、图像、语音    | 中文本土化优化，适合中文多媒体内容处理     |
    * | 混元Vision                         | 腾讯        | 文本、图像       | 中文任务优化，SuperCLUE-V测评中领先 |
    */
-  ai?: {
-    enabled: boolean;
-    apiKey: string;
-    apiUrl: string;
-    model: string;
-    maxTokens: number;
-  };
+  ai?: AIConf;
 }
 
 // 2k, 30fps, 3Mbps

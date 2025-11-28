@@ -70,9 +70,9 @@ export default {
   },
   ai: {
     cut: {
-       time: {
-        start: "Start Time",
-        duration: "Duration (minutes)",
+      time: {
+        start: 'Start Time',
+        duration: 'Duration (minutes)',
       },
       extraction: {
         title: 'Extraction granularity',
@@ -450,6 +450,31 @@ export default {
   },
   settings: {
     title: 'Settings',
+    ai: {
+      title: 'AI',
+      desc: 'Configure the relevant parameters of the AI ​​analysis service to enable AI analysis functions.',
+      model: 'Model name (multimodal model)',
+      model_desc:
+        'Select the language model for AI analysis. The model name must support multimodal input (image + text) to process screenshots and generate analysis reports.',
+      key: 'API key',
+      url: 'API address',
+      recommand: [
+        'We recommend using the following multimodal models for better AI analysis results:',
+        '1. GPT-4V',
+        '2. Claude-3-vision',
+        '3. Gemini-Pro-Vision',
+        '4. Qwen3',
+        '5. Doubao',
+      ],
+      enabled: 'AI inquiry pop-up',
+      update: {
+        save: 'Save AI configuration',
+        success: 'AI configuration update successful',
+        error: 'AI configuration update failed, please try again later. ',
+        incomplete:
+          'Please fill in the AI ​​configuration parameters completely, ensuring that the model name, API address, and API key are all entered.',
+      },
+    },
     general: {
       title: 'General',
       username: 'Username',

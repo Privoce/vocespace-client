@@ -20,6 +20,7 @@ import { ulid } from 'ulid';
 import { ReloadOutlined } from '@ant-design/icons';
 import { AppSettings } from './app';
 import { SettingState, SpaceInfo } from '@/lib/std/space';
+import { AISettings } from './ai';
 
 export interface SettingsProps {
   username: string;
@@ -51,7 +52,8 @@ export type TabKey =
   | 'about_us'
   | 'app'
   | 'recording'
-  | 'license';
+  | 'license'
+  | 'ai';
 
 export const Settings = forwardRef<SettingsExports, SettingsProps>(
   (
@@ -133,6 +135,18 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
             setOpenPromptSound={setOpenPromptSound}
             spaceInfo={spaceInfo}
           ></GeneralSettings>
+        ),
+      },
+      {
+        key: 'ai',
+        label: <TabItem type="ai" svgSize={16} label={t('settings.ai.title')}></TabItem>,
+        children: (
+          <AISettings
+            space={space}
+            messageApi={messageApi}
+            spaceInfo={spaceInfo}
+            localParticipant={localParticipant}
+          ></AISettings>
         ),
       },
       {

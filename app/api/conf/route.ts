@@ -1,7 +1,7 @@
 // 获取动态配置
 import { NextRequest, NextResponse } from 'next/server';
-import { getConfig, setStoredConf, setConfigEnv, setConfigLicense } from './conf';
-import { RTCConf } from '@/lib/std/conf';
+import { getConfig, setStoredConf, setConfigEnv, setConfigLicense, writeBackConfig } from './conf';
+import { AIConf, RTCConf } from '@/lib/std/conf';
 
 export async function GET(_request: NextRequest) {
   let config = getConfig();
@@ -11,6 +11,29 @@ export async function GET(_request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const isUpdateLicense = request.nextUrl.searchParams.get('license');
+  const isUpdateAI = request.nextUrl.searchParams.get('ai');
+  if (isUpdateAI) {
+    const { aiConf }: { aiConf: AIConf } = await request.json();
+    const conf = getConfig();
+    conf.ai = aiConf;
+    try {
+      const { success, error } = writeBackConfig(conf);
+      if (!success) {
+        throw error;
+      }
+
+    } catch (e) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'can not update ai config',
+        },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json({ success: true }, { status: 200 });
+  }
+
   if (isUpdateLicense) {
     const { license } = await request.json();
     if (!license || license.trim() === '') {

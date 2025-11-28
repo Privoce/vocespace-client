@@ -18,6 +18,7 @@ import { MessageInstance } from 'antd/es/message/interface';
 import { AppAuth, sortTodos, SpaceTodo, todayTimeStamp, TodoItem } from '@/lib/std/space';
 import { useLocalParticipant } from '@livekit/components-react';
 import { CardSize } from 'antd/es/card/Card';
+import dayjs from 'dayjs';
 
 export interface AppTodoProps {
   messageApi: MessageInstance;
@@ -215,7 +216,7 @@ export function AppTodo({
               >
                 {appData.length > 0 && (
                   <Divider style={{ fontSize: 12, margin: '2px 0' }}>
-                    {new Date(sitem.date).toLocaleDateString()}
+                    {dayjs.utc(sitem.date).format('YYYY/MM/DD')}
                   </Divider>
                 )}
                 <List

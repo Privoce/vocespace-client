@@ -1,8 +1,8 @@
 import { UserStatus } from '.';
 import { ModelBg, ModelRole } from './virtual';
 import { Extraction } from '../ai/analysis';
-import dayjs, { Dayjs } from "dayjs";
-import utc from "dayjs/plugin/utc";
+import dayjs, { Dayjs } from 'dayjs';
+import utc from 'dayjs/plugin/utc';
 dayjs.extend(utc);
 /**
  * Child room information
@@ -138,7 +138,6 @@ export interface ParticipantSettings {
    * 是否认证通过
    */
   isAuth: boolean;
-
 }
 
 export interface SpaceTimeRecord {
@@ -195,6 +194,13 @@ export interface SpaceInfoMap {
   [spaceId: string]: SpaceInfo;
 }
 
+export interface SpaceAIConf {
+  cut: {
+    enabled: boolean;
+    freq: number; // 截图频率，单位分钟
+  };
+}
+
 export interface SpaceInfo {
   participants: {
     [participantId: string]: ParticipantSettings;
@@ -228,11 +234,7 @@ export interface SpaceInfo {
    * - true: 持久化空间，空间内的数据会持久化，应用数据也会保存
    */
   persistence: boolean;
-  ai: {
-    cut: {
-      freq: number; // 截图频率，单位分钟
-    };
-  };
+  ai: SpaceAIConf;
 }
 
 export interface TodoItem {
@@ -405,6 +407,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
   apps: ['todo', 'countdown'],
   ai: {
     cut: {
+      enabled: true,
       freq: 5,
     },
   },

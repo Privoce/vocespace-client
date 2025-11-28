@@ -569,7 +569,12 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
 
     const saveAICutServiceSettings = async () => {
       const response = await api.updateSpaceInfo(space!.name, {
-        ai: { cut: { freq: cutFreq } },
+        ai: {
+          cut: {
+            ...spaceInfo.ai.cut,
+            freq: cutFreq,
+          },
+        },
       });
 
       if (!response.ok) {

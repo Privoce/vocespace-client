@@ -141,7 +141,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [noteStateForAICutService, setNoteStateForAICutService] = useState({
       openAIService: false,
       noteClosed: false,
-      hasAsked: false, // 添加标记表示是否已经询问过用户
+      hasAsked: !settings.ai.cut.enabled, // 如果设置中enabled为true表示需要询问，否则不需要询问
     });
     const [aiCutAnalysisRes, setAICutAnalysisRes] = useState<AICutAnalysisRes>(
       DEFAULT_AI_CUT_ANALYSIS_RES,
