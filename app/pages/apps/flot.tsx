@@ -573,51 +573,6 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
     ): CollapseProps['items'] => {
       let items: CollapseProps['items'] = [];
 
-      if (timer) {
-        items.push({
-          key: 'timer',
-          label: (
-            <div className={styles.flot_header}>
-              {t('more.app.timer.title')}
-              {showSyncIcon(isSelf, 'timer')}
-            </div>
-          ),
-          children: (
-            <AppTimer
-              size="small"
-              appData={timer.data}
-              setAppData={timer.setData}
-              auth={timer.auth}
-            ></AppTimer>
-          ),
-          style: itemStyle,
-          styles: DEFAULT_COLLAPSE_HEADER_STYLES,
-        });
-      }
-
-      if (countdown) {
-        items.push({
-          key: 'countdown',
-          label: (
-            <div className={styles.flot_header}>
-              {t('more.app.countdown.title')}
-              {showSyncIcon(isSelf, 'countdown')}
-            </div>
-          ),
-          children: (
-            <AppCountdown
-              messageApi={messageApi}
-              size="small"
-              appData={countdown.data}
-              setAppData={countdown.setData}
-              auth={countdown.auth}
-            />
-          ),
-          style: itemStyle,
-          styles: DEFAULT_COLLAPSE_HEADER_STYLES,
-        });
-      }
-
       if (todo) {
         items.push({
           key: 'todo',
@@ -677,6 +632,51 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
             </div>
           ),
           children: <TodoTogether spaceInfo={spaceInfo} messageApi={messageApi}></TodoTogether>,
+          style: itemStyle,
+          styles: DEFAULT_COLLAPSE_HEADER_STYLES,
+        });
+      }
+
+      if (timer) {
+        items.push({
+          key: 'timer',
+          label: (
+            <div className={styles.flot_header}>
+              {t('more.app.timer.title')}
+              {showSyncIcon(isSelf, 'timer')}
+            </div>
+          ),
+          children: (
+            <AppTimer
+              size="small"
+              appData={timer.data}
+              setAppData={timer.setData}
+              auth={timer.auth}
+            ></AppTimer>
+          ),
+          style: itemStyle,
+          styles: DEFAULT_COLLAPSE_HEADER_STYLES,
+        });
+      }
+
+      if (countdown) {
+        items.push({
+          key: 'countdown',
+          label: (
+            <div className={styles.flot_header}>
+              {t('more.app.countdown.title')}
+              {showSyncIcon(isSelf, 'countdown')}
+            </div>
+          ),
+          children: (
+            <AppCountdown
+              messageApi={messageApi}
+              size="small"
+              appData={countdown.data}
+              setAppData={countdown.setData}
+              auth={countdown.auth}
+            />
+          ),
           style: itemStyle,
           styles: DEFAULT_COLLAPSE_HEADER_STYLES,
         });

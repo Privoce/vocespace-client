@@ -12,7 +12,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 export interface AISettingProps {
   space: string;
-
   spaceInfo: SpaceInfo;
   localParticipant: LocalParticipant;
   messageApi: MessageInstance;

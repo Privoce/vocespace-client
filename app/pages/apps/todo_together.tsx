@@ -5,6 +5,7 @@ import { AppTodo } from './todo_list';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useMemo } from 'react';
 import styles from '@/styles/apps.module.scss';
+import { SvgResource } from '@/app/resources/svg';
 
 export interface TodoTogetherProps {
   spaceInfo: SpaceInfo;
@@ -19,37 +20,37 @@ interface ParticipantTodoSummary {
   totalCount: number;
   firstTodoTitle?: string;
   todos: SpaceTodo[];
+  isAuth: boolean;
 }
 
 export function TodoTogether({ spaceInfo, messageApi }: TodoTogetherProps) {
   const { t } = useI18n();
 
+  const linkToUserAIPage = (participantId: string) => {
+    window.open(`https://home.vocespace.com/ai/${participantId}`, '_blank');
+  };
+
   // 处理参与者的todo数据
   const participantSummaries: ParticipantTodoSummary[] = useMemo(() => {
-    return (
-      Object.entries(spaceInfo.participants)
-        // .filter(([_, participant]) => {
-        //   const todoItems = participant.appDatas?.todo?.items;
-        //   return todoItems && todoItems.length > 0;
-        // })
-        .map(([participantId, participant]) => {
-          const todoData = participant.appDatas?.todo?.map((item) => item.items).flat() || [];
-          const visibleTodos = todoData.filter((item) => item.visible !== false);
-          const completedCount = todoData.filter((item) => item.done).length;
-          const firstTodo = visibleTodos[0];
+    return Object.entries(spaceInfo.participants)
+      .map(([participantId, participant]) => {
+        const todoData = participant.appDatas?.todo?.map((item) => item.items).flat() || [];
+        const visibleTodos = todoData.filter((item) => item.visible !== false);
+        const completedCount = todoData.filter((item) => item.done).length;
+        const firstTodo = visibleTodos[0];
 
-          return {
-            participantId,
-            name: participant.name,
-            todoData: visibleTodos,
-            completedCount,
-            totalCount: todoData.length,
-            firstTodoTitle: firstTodo?.title,
-            todos: participant.appDatas?.todo || [],
-          };
-        })
-        .sort((a, b) => a.name.localeCompare(b.name))
-    ); // 按名字排序
+        return {
+          participantId,
+          name: participant.name,
+          todoData: visibleTodos,
+          completedCount,
+          totalCount: todoData.length,
+          firstTodoTitle: firstTodo?.title,
+          todos: participant.appDatas?.todo || [],
+          isAuth: participant.isAuth,
+        };
+      })
+      .sort((a, b) => a.name.localeCompare(b.name)); // 按名字排序
   }, [spaceInfo.participants]);
 
   // 生成每个参与者的Collapse项目
@@ -65,6 +66,15 @@ export function TodoTogether({ spaceInfo, messageApi }: TodoTogetherProps) {
             <div className={styles.todo_together_user_info}>
               {/* <UserOutlined style={{ marginRight: 8, color: '#22CCEE' }} /> */}
               <span style={{ fontWeight: 'bold', color: '#fff' }}>{summary.name}</span>
+              {summary.isAuth && (
+                <span onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  linkToUserAIPage(summary.participantId)
+                }}>
+                  <SvgResource type="share" svgSize={14}></SvgResource>
+                </span>
+              )}
             </div>
             <div className={styles.todo_together_summary}>
               <div

@@ -174,7 +174,19 @@ export function AppTodo({
       <Card
         style={{ width: '100%', padding: 0 }}
         size={size}
-        styles={{ body: { padding: size == 'small' ? 4 : 12, ...bodyStyle } }}
+        styles={{
+          body: {
+            padding: size == 'small' ? 4 : 12,
+            height: 'fit-content',
+            minHeight: '50vh',
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'space-between',
+            justifyContent: 'center',
+            alignContent: 'space-between',
+            ...bodyStyle,
+          },
+        }}
       >
         <div className={styles.todo_list_wrapper}>
           <List

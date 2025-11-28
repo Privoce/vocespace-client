@@ -33,6 +33,10 @@
   }
   &_list_wrapper {
     margin: 8px 0;
+    width: 100%;
+    flex: 1;
+    height: calc(100% - 46px);
+    min-height: calc(50vh - 46px);
   }
   &_add_wrapper {
     gap: 8px;
@@ -141,6 +145,8 @@
   flex-shrink: 0;
   width: 100%;
   height: fit-content;
+  justify-content: flex-start;
+  gap: 12px;
 }
 
 .todo_together_summary {
