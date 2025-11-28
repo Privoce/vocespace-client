@@ -5,9 +5,9 @@ import { PageClientImpl } from './PageClientImpl';
 import { isVideoCodec } from '@/lib/types';
 import { RecoilRoot } from 'recoil';
 import { VOCESPACE_PLATFORM_USER_ID } from '@/lib/std/space';
-import { LoginStateBtnProps } from '../pages/pre_join/login';
 import { PUserInfo, PUserMeta } from '@/lib/hooks/platform';
 import { api } from '@/lib/api';
+import { LoginStateBtnProps } from '@/app/pages/pre_join/login';
 
 export default function Page({
   params,

@@ -33,7 +33,7 @@ import {
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
 import { useLocalParticipant } from '@livekit/components-react';
-import { RemoteTargetApp, socket } from '@/app/[spaceName]/PageClientImpl';
+import { RemoteTargetApp, socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
 import { DEFAULT_COLLAPSE_HEADER_STYLES } from '../controls/collapse_tools';
 import { TodoTogether } from './todo_together';

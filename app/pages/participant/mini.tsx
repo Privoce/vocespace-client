@@ -31,7 +31,7 @@ import {
 } from '@/lib/std/space';
 import { useVideoBlur, WsBase, WsSender, WsWave } from '@/lib/std/device';
 import { useRecoilState } from 'recoil';
-import { RemoteTargetApp, socket } from '@/app/[spaceName]/PageClientImpl';
+import { RemoteTargetApp, socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { UserStatus } from '@/lib/std';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { StatusInfo, useStatusInfo } from './status_info';

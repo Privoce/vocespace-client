@@ -20,7 +20,7 @@
 // } from '@/lib/std/space';
 // // import { AppHistory } from './history';
 // import { useLocalParticipant } from '@livekit/components-react';
-// import { socket } from '@/app/[spaceName]/PageClientImpl';
+// import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 // import { api } from '@/lib/api';
 // import { WsBase } from '@/lib/std/device';
 // import { isAuth } from '@/lib/std';

@@ -8,7 +8,7 @@ import { RaiseKeeper } from './raise';
 import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { useLocalParticipant } from '@livekit/components-react';
 import { WsBase, WsTo } from '@/lib/std/device';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { audio } from '@/lib/audio';
 
 export interface ReactionProps {

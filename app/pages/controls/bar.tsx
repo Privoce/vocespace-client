@@ -34,7 +34,7 @@ import {
   socket,
   userState,
   virtualMaskState,
-} from '@/app/[spaceName]/PageClientImpl';
+} from '@/app/rooms/[spaceName]/PageClientImpl';
 import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { isMobile as is_moblie, isIos, UserStatus } from '@/lib/std';
 import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';

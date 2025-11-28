@@ -22,7 +22,7 @@
 // import { AppCountdown } from './countdown';
 // import { AppTodo } from './todo_list';
 // import { useRecoilState } from 'recoil';
-// import { RemoteTargetApp, socket } from '@/app/[spaceName]/PageClientImpl';
+// import { RemoteTargetApp, socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 // import { useLocalParticipant } from '@livekit/components-react';
 // import { Participant } from 'livekit-client';
 // import { useI18n } from '@/lib/i18n/i18n';

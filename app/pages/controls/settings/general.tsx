@@ -8,7 +8,7 @@ import { TransIfSystemStatus, UserStatus } from '@/lib/std';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
 import { SpaceInfo } from '@/lib/std/space';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
 import { DefineUserStatusResponse } from '@/lib/api/space';
 export interface GeneralSettingsProps {
