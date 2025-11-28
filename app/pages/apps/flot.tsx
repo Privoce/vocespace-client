@@ -195,8 +195,12 @@ export function FlotLayout({
   };
 
   useEffect(() => {
-    if (!isSelf && targetParticipant.participantId) {
-      console.warn('Fetching remote AI Cut Analysis Result for', targetParticipant.participantId);
+    if (
+      !isSelf &&
+      targetParticipant.participantId &&
+      spaceInfo.participants[targetParticipant.participantId].isAuth
+    ) {
+      // console.warn('Fetching remote AI Cut Analysis Result for', targetParticipant.participantId);
       getRemoteAICutAnalysisRes(targetParticipant.participantId).then((res) => {
         setRemoteAnalysisRes(res);
       });
@@ -226,9 +230,12 @@ export function FlotLayout({
         ...appDatas,
         todo: sortTodos(items),
       };
-      await updateSettings({
-        appDatas,
-      });
+      // 只有自己才需要更新
+      if (participantId === localParticipant.identity) {
+        await updateSettings({
+          appDatas,
+        });
+      }
       socket.emit('update_user_status', {
         space: space,
       } as WsBase);
