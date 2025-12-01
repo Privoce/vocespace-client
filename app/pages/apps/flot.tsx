@@ -184,7 +184,11 @@ export function FlotLayout({
           return convertPlatformToACARes(data);
         }
       } else {
-        const response = await api.ai.getAnalysisRes(space, participantId);
+        const response = await api.ai.getAnalysisRes(
+          space,
+          participantId,
+          spaceInfo.participants[participantId].isAuth,
+        );
         if (response.ok) {
           const { res }: { res: AICutAnalysisRes } = await response.json();
           return res;

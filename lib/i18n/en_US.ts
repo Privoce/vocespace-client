@@ -643,6 +643,12 @@ export default {
       },
     },
     error: {
+      client: {
+        title: 'Client Error',
+        sub: 'Client encountered an error, please check the console logs for more details. Please contact the administrator.',
+        back: 'Back',
+        connect: "Email: han@privoce.com"
+      },
       conf_load:
         'Configuration loading failed, please check whether the vocespace.conf.json file exists',
       record: {
