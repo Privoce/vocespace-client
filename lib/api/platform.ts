@@ -57,6 +57,12 @@ const getTodos = async (uid: string) => {
   return await fetch(url.toString());
 };
 
+/**
+ * 从平台端获取AI分析数据
+ * @param uid 
+ * @param date 
+ * @returns { data }: { data: PlarformAICutAnalysis }
+ */
 const getAIAnalysis = async (uid: string, date: number) => {
   const url = new URL(PLATFORM_URL + '/ai');
   url.searchParams.append('uid', uid);

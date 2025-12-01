@@ -609,6 +609,12 @@ export default {
       },
     },
     error: {
+      client: {
+        title: "客户端错误",
+        sub: "客户端遇到错误，请检查控制台日志了解详细信息并联系管理员。",
+        back: "返回",
+        connect: "微信: Privoce"
+      },
       conf_load: '配置加载失败，请检查vocespace.conf.json文件是否存在',
       record: {
         copy: '录制链接复制失败',

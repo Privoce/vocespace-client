@@ -4,7 +4,8 @@ import { getConfig } from '../conf/conf';
 import { AnalysisRequestBody } from '@/lib/api/ai';
 import { AICutAnalysisService, Extraction } from '@/lib/ai/analysis';
 import { getDefaultPrompts } from '@/lib/ai/load';
-import { platformAPI } from '@/lib/api/platform';
+import { convertPlatformToACARes, PlarformAICutAnalysis, platformAPI } from '@/lib/api/platform';
+import { todayTimeStamp } from '@/lib/std/space';
 
 const { ai } = getConfig();
 
@@ -51,11 +52,22 @@ export async function GET(request: NextRequest) {
     const action = request.nextUrl.searchParams.get('action')!;
     const spaceName = request.nextUrl.searchParams.get('spaceName')!;
     const userId = request.nextUrl.searchParams.get('userId')!;
+    const isAuth = request.nextUrl.searchParams.get('isAuth') === 'true';
 
     const userService = getUserService(spaceName, userId);
     if (!userService) {
       if (action === 'stop') {
         return NextResponse.json({ md: '', success: true });
+      } else if (action === 'result' && isAuth) {
+        // 从平台获取历史分析结果
+        const response = await platformAPI.ai.getAIAnalysis(userId, todayTimeStamp());
+        if (response.ok) {
+          const { data }: { data: PlarformAICutAnalysis } = await response.json();
+          const res = convertPlatformToACARes(data);
+          return NextResponse.json({ res });
+        } else {
+          return createErrorResponse('No AI analysis result found for this user.');
+        }
       }
       return createErrorResponse('No AI analysis service found for this user.');
     }
@@ -86,14 +98,14 @@ export async function GET(request: NextRequest) {
 }
 
 // 提取获取或创建用户服务的逻辑
-const getOrCreateUserService = (
+const getOrCreateUserService = async (
   spaceName: string,
   userId: string,
   freq: number,
   lang: string,
   extractionLevel?: Extraction,
   isAuth = false,
-): AICutAnalysisService => {
+): Promise<AICutAnalysisService> => {
   let spaceServices = AI_CUT_ANALYSIS_SERVICES.get(spaceName);
 
   if (!spaceServices) {
@@ -117,6 +129,16 @@ const getOrCreateUserService = (
       extractionLevel,
       isAuth,
     );
+    // 尝试从平台获取历史分析结果，如果有的话设置到服务中
+    if (isAuth) {
+      const response = await platformAPI.ai.getAIAnalysis(userId, todayTimeStamp());
+      if (response.ok) {
+        const { data }: { data: PlarformAICutAnalysis } = await response.json();
+        const res = convertPlatformToACARes(data);
+        userService.result = res;
+      }
+    }
+
     spaceServices.set(userId, userService);
   }
 
@@ -140,7 +162,14 @@ export async function POST(request: NextRequest) {
       isAuth,
     }: AnalysisRequestBody = await request.json();
     // 获取或创建用户服务实例
-    const targetService = getOrCreateUserService(spaceName, userId, freq, lang, extraction, isAuth);
+    const targetService = await getOrCreateUserService(
+      spaceName,
+      userId,
+      freq,
+      lang,
+      extraction,
+      isAuth,
+    );
     // 进行分析
     const { isNewTask, timestamp } = await targetService.doAnalysisLine(screenShot, todos);
     // 将分析结果存储到平台端

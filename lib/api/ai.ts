@@ -40,7 +40,7 @@ const analysis = async (params: AnalysisRequestBody) => {
  * @param userId
  */
 const stop = async (spaceName: string, userId: string) => {
-  return await unifiedGet(spaceName, userId, 'stop');
+  return await unifiedGet(spaceName, userId, 'stop', false);
 };
 
 /**
@@ -51,8 +51,8 @@ const stop = async (spaceName: string, userId: string) => {
  * @param userId
  * @returns
  */
-const downloadMarkdown = async (spaceName: string, userId: string) => {
-  return await unifiedGet(spaceName, userId, 'md');
+const downloadMarkdown = async (spaceName: string, userId: string, isAuth: boolean) => {
+  return await unifiedGet(spaceName, userId, 'md', isAuth);
 };
 
 /**
@@ -63,19 +63,21 @@ const downloadMarkdown = async (spaceName: string, userId: string) => {
  * @param userId
  * @returns `{res: AICutAnalysisRes}`
  */
-const getAnalysisRes = async (spaceName: string, userId: string) => {
-  return await unifiedGet(spaceName, userId, 'result');
+const getAnalysisRes = async (spaceName: string, userId: string, isAuth: boolean) => {
+  return await unifiedGet(spaceName, userId, 'result', isAuth);
 };
 
 const unifiedGet = async (
   spaceName: string,
   userId: string,
   action: 'stop' | 'md' | 'result',
+  isAuth: boolean,
 ): Promise<any> => {
   const url = new URL(BASE_URL, window.location.origin);
   url.searchParams.append('action', action);
   url.searchParams.append('spaceName', spaceName);
   url.searchParams.append('userId', userId);
+  url.searchParams.append('isAuth', isAuth ? 'true' : 'false');
   return await fetch(url.toString());
 };
 

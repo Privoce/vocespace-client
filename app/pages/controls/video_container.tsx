@@ -157,7 +157,11 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       setOpenApp(!openApp);
     };
     const reloadResult = async () => {
-      const response = await api.ai.getAnalysisRes(space!.name, space!.localParticipant.identity);
+      const response = await api.ai.getAnalysisRes(
+        space!.name,
+        space!.localParticipant.identity,
+        settings.participants[space?.localParticipant.identity!]?.isAuth || false,
+      );
       if (response.ok) {
         const { res }: { res: AICutAnalysisRes } = await response.json();
         setAICutAnalysisRes(res);
@@ -264,7 +268,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           space: space.name,
         } as WsBase);
       },
-      [space, settings.ai.cut, uState, t, updateSettings, aiCutAnalysisIntervalId, locale],
+      [space, settings, uState, t, updateSettings, aiCutAnalysisIntervalId, locale],
     );
 
     const openAIServiceAskNote = () => {
@@ -904,21 +908,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         space.off(RoomEvent.ParticipantConnected, onParticipantConnected);
         space.off(ParticipantEvent.TrackMuted, onTrackHandler);
         space.off(RoomEvent.ParticipantDisconnected, onParticipantDisConnected);
-        // 组件卸载时，确保停止 AI 截屏服务并清除定时器
-        try {
-          aiCutServiceRef.current?.stop();
-          aiCutServiceRef.current?.clearScreenshots();
-        } catch (e) {
-          // ignore
-        }
-        if (aiCutAnalysisIntervalId.current) {
-          try {
-            clearInterval(aiCutAnalysisIntervalId.current as unknown as number);
-          } catch (e) {
-            // ignore
-          }
-          aiCutAnalysisIntervalId.current = null;
-        }
       };
     }, [
       space?.state,
