@@ -342,6 +342,7 @@ export interface UploadSpaceAppBody {
   data: SpaceTimer | SpaceCountdown | SpaceTodo;
   ty: AppKey;
   isAuth: boolean;
+  deleteId?: string;
 }
 
 export const uploadSpaceApp = async (
@@ -361,6 +362,30 @@ export const uploadSpaceApp = async (
       data,
       participantId,
       ty,
+      isAuth,
+    } as UploadSpaceAppBody),
+  });
+};
+
+export const deleteTodo = async (
+  spaceName: string,
+  participantId: string,
+  data: SpaceTodo,
+  deleteId: string,
+  isAuth: boolean,
+) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('apps', 'upload');
+  url.searchParams.append('delete', 'true');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      spaceName,
+      deleteId,
+      data,
+      participantId,
+      ty: 'todo',
       isAuth,
     } as UploadSpaceAppBody),
   });

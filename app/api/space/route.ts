@@ -1183,7 +1183,8 @@ export async function POST(request: NextRequest) {
     }
     // 用户上传App到Space中 ------------------------------------------------------------------
     if (spaceAppsAPIType === 'upload') {
-      const { spaceName, data, ty, participantId, isAuth }: UploadSpaceAppBody =
+      const isDelete = request.nextUrl.searchParams.get('delete') === 'true';
+      const { spaceName, data, ty, participantId, isAuth, deleteId }: UploadSpaceAppBody =
         await request.json();
       const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
       if (!spaceInfo) {
@@ -1219,14 +1220,23 @@ export async function POST(request: NextRequest) {
 
         // 将用户的数据传到平台接口进行同步和保存
         if (isAuth) {
-          try {
-            const pResponse = await platformAPI.todo.updateTodo(participantId, data as SpaceTodo);
-            // 平台虽然失败但不能影响用户的使用
+          if (isDelete) {
+            // 删除todo
+            const date = (data as SpaceTodo).date;
+            const pResponse = await platformAPI.todo.deleteTodo(participantId, date, deleteId!);
             if (!pResponse.ok) {
               console.error('Failed to sync todo to platform for participant:', participantId);
             }
-          } catch (e) {
-            console.error('Error syncing todo to platform for participant:', participantId, e);
+          } else {
+            try {
+              const pResponse = await platformAPI.todo.updateTodo(participantId, data as SpaceTodo);
+              // 平台虽然失败但不能影响用户的使用
+              if (!pResponse.ok) {
+                console.error('Failed to sync todo to platform for participant:', participantId);
+              }
+            } catch (e) {
+              console.error('Error syncing todo to platform for participant:', participantId, e);
+            }
           }
         }
 

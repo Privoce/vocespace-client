@@ -70,8 +70,8 @@ export default {
   ai: {
     cut: {
       time: {
-        start: "开始时间",
-        duration: "持续时间(分钟)",
+        start: '开始时间',
+        duration: '持续时间(分钟)',
       },
       extraction: {
         title: '提取精细度',
@@ -350,6 +350,9 @@ export default {
           empty: '暂无用户的待办事项',
         },
         copy: '复制待办',
+        today_done: '今日已完成',
+        history: '历史待办',
+        today_empty: '今日暂无已完成的待办事项',
       },
     },
     record: {
@@ -435,26 +438,27 @@ export default {
     title: '设置',
     ai: {
       title: 'AI',
-      desc: "配置AI分析服务的相关参数，以启用AI分析功能。",
-      model: "模型名称(多模态模型)",
-      model_desc: '选择用于AI分析的语言模型，模型名称需支持多模态输入（图像+文本），以便处理截图并生成分析报告。',
-      key: "API密钥",
-      url: "API地址",
+      desc: '配置AI分析服务的相关参数，以启用AI分析功能。',
+      model: '模型名称(多模态模型)',
+      model_desc:
+        '选择用于AI分析的语言模型，模型名称需支持多模态输入（图像+文本），以便处理截图并生成分析报告。',
+      key: 'API密钥',
+      url: 'API地址',
       recommand: [
-        "我们推荐使用以下多模态模型以获得更好的AI分析效果：",
-        "1. GPT-4V",
-        "2. Claude-3-vision",
-        "3. Gemini-Pro-Vision",
-        "4. Qwen3",
-        "5. 豆包(Doubao)"
+        '我们推荐使用以下多模态模型以获得更好的AI分析效果：',
+        '1. GPT-4V',
+        '2. Claude-3-vision',
+        '3. Gemini-Pro-Vision',
+        '4. Qwen3',
+        '5. 豆包(Doubao)',
       ],
-      enabled: "AI询问弹窗",
+      enabled: 'AI询问弹窗',
       update: {
-        save: "保存AI配置",
+        save: '保存AI配置',
         success: 'AI配置更新成功',
         error: 'AI配置更新失败，请稍后再试。',
         incomplete: '请完整填写AI配置参数，确保模型名称，API地址和API密钥均已填写。',
-      }
+      },
     },
     general: {
       title: '常规',
@@ -610,10 +614,10 @@ export default {
     },
     error: {
       client: {
-        title: "客户端错误",
-        sub: "客户端遇到错误，请检查控制台日志了解详细信息并联系管理员。",
-        back: "返回",
-        connect: "微信: Privoce"
+        title: '客户端错误',
+        sub: '客户端遇到错误，请检查控制台日志了解详细信息并联系管理员。',
+        back: '返回',
+        connect: '微信: Privoce',
       },
       conf_load: '配置加载失败，请检查vocespace.conf.json文件是否存在',
       record: {

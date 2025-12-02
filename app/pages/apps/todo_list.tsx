@@ -18,9 +18,15 @@ import { MessageInstance } from 'antd/es/message/interface';
 import { AppAuth, sortTodos, SpaceTodo, todayTimeStamp, TodoItem } from '@/lib/std/space';
 import { useLocalParticipant } from '@livekit/components-react';
 import { CardSize } from 'antd/es/card/Card';
-import dayjs from 'dayjs';
+import dayjs, { extend } from 'dayjs';
+import { api } from '@/lib/api';
+import { WsBase } from '@/lib/std/device';
+import { socket } from '@/app/[spaceName]/PageClientImpl';
 
 export interface AppTodoProps {
+  space: string;
+  participantId: string;
+  isAuth: boolean;
   messageApi: MessageInstance;
   appData: SpaceTodo[];
   setAppData: (data: SpaceTodo) => Promise<void>;
@@ -31,7 +37,20 @@ export interface AppTodoProps {
   bodyStyle?: React.CSSProperties;
 }
 
+export const inToday = (timestamp: number): boolean => {
+  const todayStart = todayTimeStamp();
+  const tomorrowStart = todayStart + 24 * 60 * 60 * 1000;
+  return timestamp >= todayStart && timestamp < tomorrowStart;
+};
+
+interface TodoNode extends TodoItem {
+  from: number;
+}
+
 export function AppTodo({
+  space,
+  participantId,
+  isAuth,
   messageApi,
   appData,
   setAppData,
@@ -49,21 +68,77 @@ export function AppTodo({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
   const { localParticipant } = useLocalParticipant();
-  const toggleTodo = async (sItem: SpaceTodo, id: string) => {
-    let data = {
-      ...sItem,
-      items: sItem.items.map((item) => {
-        if (item.id === id) {
-          if (!item.done) {
-            return { ...item, done: Date.now() };
-          } else {
-            return { ...item, done: undefined };
-          }
+  // 添加输入法组合状态跟踪
+  const [isComposing, setIsComposing] = useState(false);
+  const { todoList, todoListChecked } = useMemo(() => {
+    // console.warn("Rendering todoTree with todos:", todos);
+    const expandList: TodoNode[] = [];
+    const checkedList: TodoNode[] = [];
+    appData.forEach((todoGroup) => {
+      todoGroup.items.forEach((todo) => {
+        const todoNode: TodoNode = {
+          ...todo,
+          from: todoGroup.date,
+        };
+
+        expandList.push(todoNode);
+
+        if (todo.done && inToday(todo.done)) {
+          checkedList.push(todoNode);
         }
-        return item;
+      });
+    });
+    // 需要按照日期进行排序
+    return {
+      todoList: expandList.sort((a, b) => {
+        const dateA = new Date(Number(a.id)).getTime();
+        const dateB = new Date(Number(b.id)).getTime();
+        return dateB - dateA; // 降序排列
       }),
+      // 只返回今天完成的任务
+      todoListChecked: checkedList,
     };
-    await setAppData(data);
+  }, [appData]);
+
+  // const toggleTodo = async (item: TodoItem) => {
+  //   let data = {
+  //     ...sItem,
+  //     items: sItem.items.map((item) => {
+  //       if (item.id === id) {
+  //         if (!item.done) {
+  //           return { ...item, done: Date.now() };
+  //         } else {
+  //           return { ...item, done: undefined };
+  //         }
+  //       }
+  //       return item;
+  //     }),
+  //   };
+  //   await setAppData(data);
+  // };
+
+  const toggleTodo = async (v: boolean, item: TodoNode) => {
+    if (v) {
+      item.done = new Date().getTime();
+    } else {
+      // 去除done字段
+      delete item.done;
+    }
+
+    const updatedTodo = appData.find((st) => st.date === item.from);
+    if (updatedTodo) {
+      // 如果有找到对应的SpaceTodo，更新其中的items
+      updatedTodo.items = updatedTodo.items.map((todo) => {
+        if (todo.id === item.id) {
+          return item;
+        }
+        return todo;
+      });
+
+      await setAppData(updatedTodo);
+    } else {
+      messageApi.error(t('more.app.upload.error'));
+    }
   };
 
   const startEditing = (item: TodoItem) => {
@@ -73,16 +148,18 @@ export function AppTodo({
     }
   };
 
-  const saveEdit = async (sItem: SpaceTodo) => {
+  const saveEdit = async (item: TodoNode) => {
     if (editingId && editingValue.trim() !== '') {
-      const data = {
-        ...sItem,
-        items: sItem.items.map((item) => {
-          return item.id === editingId ? { ...item, title: editingValue.trim() } : item;
-        }),
-      };
+      const upadtedTodo = appData.find((st) => st.date === item.from);
+      if (!upadtedTodo) {
+        messageApi.error(t('more.app.upload.error'));
+        return;
+      }
+      upadtedTodo.items = upadtedTodo.items.map((todo) => {
+        return todo.id === editingId ? { ...todo, title: editingValue.trim() } : todo;
+      });
 
-      await setAppData(data);
+      await setAppData(upadtedTodo);
     }
     setEditingId(null);
     setEditingValue('');
@@ -93,6 +170,8 @@ export function AppTodo({
     setEditingValue('');
   };
   const addTodo = async () => {
+    if (isComposing) return; // 如果正在进行输入法组合，忽略回车事件
+
     if (!newTodo || newTodo.trim() === '') {
       messageApi.error(t('more.app.todo.empty_value'));
       return;
@@ -136,26 +215,39 @@ export function AppTodo({
     return items;
   }, [appData]);
   /**
-   * 删除待办事项 (需要判断item中的done字段)
-   * - done字段有值表示已完成，则是将其中的visible字段设置为false
-   * - done字段无值表示未完成，则是直接删除该条目
+   * 删除待办事项
    */
-  const deleteTodo = async (sItem: SpaceTodo, item: TodoItem) => {
-    if (!item.done) {
-      await setAppData({
-        ...sItem,
-        items: sItem.items.filter((todo) => todo.id !== item.id),
-      } as SpaceTodo);
+  const deleteTodo = async (item: TodoNode) => {
+    const updatedTodo = appData.find((st) => st.date === item.from);
+    if (!updatedTodo) {
+      messageApi.error(t('more.app.upload.error'));
+      return;
+    }
+
+    // 从对应的SpaceTodo中删除该待办事项
+    // await setAppData({
+    //   ...updatedTodo,
+    //   items: updatedTodo.items.filter((todo) => todo.id !== item.id),
+    // } as SpaceTodo, true);
+
+    const response = await api.deleteTodo(
+      space,
+      participantId,
+      {
+        ...updatedTodo,
+        items: updatedTodo.items.filter((todo) => todo.id !== item.id),
+      } as SpaceTodo,
+      item.id,
+      isAuth,
+    );
+
+    if (response.ok) {
+      socket.emit('update_user_status', {
+        space,
+      } as WsBase);
       messageApi.success(t('more.app.todo.delete'));
     } else {
-      const items = sItem.items.map((todo) => {
-        return todo.id === item.id ? { ...todo, visible: false } : todo;
-      });
-      await setAppData({
-        ...sItem,
-        items,
-      } as SpaceTodo);
-      messageApi.success(t('more.app.todo.delete'));
+      messageApi.error(t('more.app.upload.error'));
     }
   };
 
@@ -189,13 +281,52 @@ export function AppTodo({
         }}
       >
         <div className={styles.todo_list_wrapper}>
+          <Divider style={{ fontSize: 12, margin: '0 0 8px 0' }}>
+            {t('more.app.todo.today_done')}
+          </Divider>
+          <List
+            pagination={
+              todoListChecked.length > 4
+                ? {
+                    position: 'bottom',
+                    align: 'end',
+                    pageSize: 4,
+                    size: 'small',
+                    simple: { readOnly: true },
+                  }
+                : undefined
+            }
+            bordered={false}
+            split={false}
+            locale={{
+              emptyText: (
+                <p
+                  style={{
+                    color: '#8c8c8c',
+                    fontSize: size === 'small' ? 12 : 14,
+                  }}
+                >
+                  {t('more.app.todo.today_empty')}
+                </p>
+              ),
+            }}
+            dataSource={todoListChecked}
+            renderItem={(item) => (
+              <List.Item style={{ border: 'none' }}>
+                <Checkbox checked disabled>
+                  {item.title}
+                </Checkbox>
+              </List.Item>
+            )}
+          ></List>
+          <Divider style={{ fontSize: 12, margin: '8px 0' }}>{t('more.app.todo.history')}</Divider>
           <List
             pagination={
               appData.length > 0
                 ? {
                     position: 'bottom',
                     align: 'end',
-                    pageSize: 1,
+                    pageSize: 6,
                     size: 'small',
                     simple: { readOnly: true },
                   }
@@ -215,94 +346,71 @@ export function AppTodo({
                 </p>
               ),
             }}
-            // dataSource={todos}
-            dataSource={appData}
-            renderItem={(sitem) => (
+            dataSource={todoList}
+            renderItem={(item) => (
               <List.Item
                 style={{
                   display: 'flex',
                   alignItems: 'flex-start',
                   justifyContent: 'center',
                   flexWrap: 'wrap',
+                  border: 'none',
                 }}
               >
-                {appData.length > 0 && (
-                  <Divider style={{ fontSize: 12, margin: '2px 0' }}>
-                    {dayjs.utc(sitem.date).format('YYYY/MM/DD')}
-                  </Divider>
-                )}
-                <List
-                  // pagination={{
-                  //   position: 'bottom',
-                  //   align: 'end',
-                  //   pageSize: 6,
-                  //   size: 'small',
-                  //   simple: { readOnly: true },
-                  // }}
-                  style={{ width: '100%' }}
-                  bordered={false}
-                  split={false}
-                  // dataSource={sitem.items.filter((item) => item.visible)}
-                  dataSource={sitem.items}
-                  renderItem={(item, index) => (
-                    <List.Item style={{ border: 'none' }}>
+                <div
+                  className={styles.todo_item}
+                  style={{
+                    fontSize: size === 'small' ? 12 : 14,
+                    height: size === 'small' ? 28 : 32,
+                  }}
+                >
+                  <Checkbox
+                    onChange={async (e) => await toggleTodo(e.target.checked, item)}
+                    checked={Boolean(item.done)}
+                    disabled={disabled}
+                  ></Checkbox>
+                  <div style={{ marginLeft: '8px', flex: 1 }}>
+                    {editingId === item.id ? (
+                      <Input
+                        value={editingValue}
+                        styles={{ input: { fontSize: size === 'small' ? 12 : 14 } }}
+                        size="small"
+                        autoFocus
+                        onChange={(e) => setEditingValue(e.target.value)}
+                        onBlur={() => saveEdit(item)}
+                        onPressEnter={() => saveEdit(item)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Escape') {
+                            cancelEdit();
+                          }
+                        }}
+                      />
+                    ) : (
                       <div
-                        className={styles.todo_item}
+                        onClick={() => startEditing(item)}
                         style={{
-                          fontSize: size === 'small' ? 12 : 14,
-                          height: size === 'small' ? 28 : 32,
+                          textDecoration: item.done ? 'line-through' : 'none',
+                          cursor: disabled ? 'default' : 'pointer',
+                          color: '#fff',
                         }}
                       >
-                        <Checkbox
-                          onChange={() => toggleTodo(sitem, item.id)}
-                          checked={Boolean(item.done)}
-                          disabled={disabled}
-                        ></Checkbox>
-                        <div style={{ marginLeft: '8px', flex: 1 }}>
-                          {editingId === item.id ? (
-                            <Input
-                              value={editingValue}
-                              styles={{ input: { fontSize: size === 'small' ? 12 : 14 } }}
-                              size="small"
-                              autoFocus
-                              onChange={(e) => setEditingValue(e.target.value)}
-                              onBlur={() => saveEdit(sitem)}
-                              onPressEnter={() => saveEdit(sitem)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Escape') {
-                                  cancelEdit();
-                                }
-                              }}
-                            />
-                          ) : (
-                            <div
-                              onClick={() => startEditing(item)}
-                              style={{
-                                textDecoration: item.done ? 'line-through' : 'none',
-                                cursor: disabled ? 'default' : 'pointer',
-                                color: '#fff',
-                              }}
-                            >
-                              {item.title}
-                            </div>
-                          )}
-                        </div>
-                        <Button
-                          disabled={disabled}
-                          type="text"
-                          onClick={() => deleteTodo(sitem, item)}
-                          size={convertToBtnSize(size)}
-                        >
-                          <SvgResource
-                            type="close"
-                            svgSize={12}
-                            color={disabled ? '#666' : '#8c8c8c'}
-                          ></SvgResource>
-                        </Button>
+                        {item.title}
                       </div>
-                    </List.Item>
-                  )}
-                ></List>
+                    )}
+                  </div>
+                  <Button
+                    disabled={disabled}
+                    type="text"
+                    onClick={() => deleteTodo(item)}
+                    size={convertToBtnSize(size)}
+                  >
+                    <SvgResource
+                      type="close"
+                      svgSize={12}
+                      color={disabled ? '#666' : '#8c8c8c'}
+                    ></SvgResource>
+                  </Button>
+                </div>
               </List.Item>
             )}
           ></List>
@@ -310,6 +418,8 @@ export function AppTodo({
         {!disabled && (
           <div className={styles.todo_add_wrapper}>
             <Input
+              onCompositionStart={() => setIsComposing(true)}
+              onCompositionEnd={() => setIsComposing(false)}
               className={styles.todo_add_input}
               placeholder={t('more.app.todo.add')}
               width={'100%'}

@@ -212,8 +212,9 @@ export function FlotLayout({
   }, [isSelf, targetParticipant, spaceInfo.participants]);
 
   const toPersonalPlatform = () => {
-    if (spaceInfo.participants[localParticipant.identity]?.isAuth) {
-      let url = `https://home.vocespace.com/ai/${localParticipant.identity}`;
+    let id = targetParticipant.participantId || localParticipant.identity;
+    if (spaceInfo.participants[id]?.isAuth) {
+      let url = `https://home.vocespace.com/ai/${id}`;
       window.open(url, '_blank');
     }
   };
@@ -274,7 +275,8 @@ export function FlotLayout({
         <DrawerHeader
           title={'Widgets'}
           icon={
-            spaceInfo.participants[localParticipant.identity]?.isAuth ? (
+            spaceInfo.participants[targetParticipant.participantId || localParticipant.identity]
+              ?.isAuth ? (
               <span
                 style={{
                   cursor: 'pointer',
@@ -620,6 +622,9 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
           ),
           children: (
             <AppTodo
+              space={space}
+              participantId={participantId}
+              isAuth={spaceInfo.participants[participantId]?.isAuth || false}
               messageApi={messageApi}
               appData={todo.data}
               setAppData={todo.setData}

@@ -48,6 +48,19 @@ const updateTodo = async (uid: string, todos: SpaceTodo) => {
   });
 };
 
+const deleteTodo = async (uid: string, date: number, todoId: string) => {
+  const url = new URL(PLATFORM_URL + '/todos');
+  url.searchParams.append('uid', uid);
+  url.searchParams.append('date', date.toString());
+  url.searchParams.append('todoId', todoId);
+  return await fetch(url.toString(), {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+};
+
 /**
  * 获取平台端的todo数据 获取所有todo数据
  */
@@ -59,8 +72,8 @@ const getTodos = async (uid: string) => {
 
 /**
  * 从平台端获取AI分析数据
- * @param uid 
- * @param date 
+ * @param uid
+ * @param date
  * @returns { data }: { data: PlarformAICutAnalysis }
  */
 const getAIAnalysis = async (uid: string, date: number) => {
@@ -145,6 +158,7 @@ export const platformAPI = {
   todo: {
     updateTodo,
     getTodos,
+    deleteTodo
   },
   ai: {
     getAIAnalysis,

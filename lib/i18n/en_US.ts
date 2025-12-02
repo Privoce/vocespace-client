@@ -363,6 +363,9 @@ export default {
           empty: 'No user todos available',
         },
         copy: 'Copy todo',
+        today_done: 'Today Completed',
+        history: 'History Todos',
+        today_empty: 'No todos completed today, keep going!',
       },
     },
     record: {
