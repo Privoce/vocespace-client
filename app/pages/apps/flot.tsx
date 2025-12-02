@@ -647,7 +647,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
               {t('more.app.todo.together.title')}
             </div>
           ),
-          children: <TodoTogether spaceInfo={spaceInfo} messageApi={messageApi}></TodoTogether>,
+          children: <TodoTogether spaceInfo={spaceInfo} messageApi={messageApi} space={space}></TodoTogether>,
           style: itemStyle,
           styles: DEFAULT_COLLAPSE_HEADER_STYLES,
         });
