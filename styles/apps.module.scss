@@ -25,18 +25,18 @@
 
 .todo {
   &_item {
-    margin: 4px 0;
     justify-content: space-between;
     display: inline-flex;
     align-items: center;
     width: 100%;
+    min-height: 32px;
   }
   &_list_wrapper {
     margin: 8px 0;
     width: 100%;
     flex: 1;
     height: calc(100% - 46px);
-    min-height: calc(50vh - 46px);
+    // min-height: calc(50vh - 46px);
   }
   &_add_wrapper {
     gap: 8px;

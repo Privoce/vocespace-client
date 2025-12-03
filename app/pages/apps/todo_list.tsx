@@ -270,7 +270,6 @@ export function AppTodo({
           body: {
             padding: size == 'small' ? 4 : 12,
             height: 'fit-content',
-            minHeight: '50vh',
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'space-between',
@@ -286,11 +285,11 @@ export function AppTodo({
           </Divider>
           <List
             pagination={
-              todoListChecked.length > 4
+              todoListChecked.length > 6
                 ? {
                     position: 'bottom',
                     align: 'end',
-                    pageSize: 4,
+                    pageSize: 6,
                     size: 'small',
                     simple: { readOnly: true },
                   }
@@ -313,9 +312,11 @@ export function AppTodo({
             dataSource={todoListChecked}
             renderItem={(item) => (
               <List.Item style={{ border: 'none' }}>
-                <Checkbox checked disabled>
-                  {item.title}
-                </Checkbox>
+                <div className={styles.todo_item}>
+                  <Checkbox checked disabled>
+                    {item.title}
+                  </Checkbox>
+                </div>
               </List.Item>
             )}
           ></List>
@@ -361,7 +362,7 @@ export function AppTodo({
                   className={styles.todo_item}
                   style={{
                     fontSize: size === 'small' ? 12 : 14,
-                    height: size === 'small' ? 28 : 32,
+                    // height: size === 'small' ? 28 : 32,
                   }}
                 >
                   <Checkbox

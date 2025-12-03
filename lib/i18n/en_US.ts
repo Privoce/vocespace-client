@@ -348,9 +348,9 @@ export default {
       },
       todo: {
         title: 'Todo',
-        add: 'Add todo',
+        add: 'Add task',
         placeholder: 'Please enter todo',
-        empty: 'No todo, enter todo below and click the add button to create a new todo',
+        empty: 'No tasks available, please create new tasks below',
         create: 'Create todo',
         empty_value: 'Todo cannot be empty',
         delete: 'Todo deleted successfully',
@@ -360,12 +360,12 @@ export default {
         complete: 'Completed Tasks',
         together: {
           title: 'Team Status',
-          empty: 'No user todos available',
+          empty: 'No user task available',
         },
         copy: 'Copy todo',
-        today_done: 'Today Completed',
-        history: 'History Todos',
-        today_empty: 'No todos completed today, keep going!',
+        today_done: 'Completed today',
+        history: 'Current list',
+        today_empty: 'No task completed today, keep going!',
       },
     },
     record: {
@@ -650,7 +650,7 @@ export default {
         title: 'Client Error',
         sub: 'Client encountered an error, please check the console logs for more details. Please contact the administrator.',
         back: 'Back',
-        connect: "Email: han@privoce.com"
+        connect: 'Email: han@privoce.com',
       },
       conf_load:
         'Configuration loading failed, please check whether the vocespace.conf.json file exists',
@@ -769,6 +769,64 @@ export default {
       },
       file: {
         upload: 'File uploaded successfully',
+      },
+    },
+  },
+  dashboard: {
+    common: {
+      day: 'Day',
+      week: 'Week',
+      month: 'Month',
+      year: 'Year',
+      total: 'Total',
+      during: 'Duration',
+    },
+    conf: {
+      resolution: 'Configure global graphics quality',
+      verify: 'Verify',
+      close: 'Close',
+      placeholder: 'Please enter administrator token',
+      error: {
+        verify: 'Administrator token error, please try again',
+        not_loaded:
+          'Configuration not loaded or unable to obtain configuration, please try again later',
+      },
+      success: {
+        update: 'Configuration updated',
+      },
+    },
+    count: {
+      room: 'Rooms',
+      participant: 'All users',
+      online_participant: 'Online users',
+      platform: 'Platform users',
+      opt: 'Operation',
+      refresh: 'Refresh data',
+      global_conf: 'Configure Image Quality (Global)',
+      history: {
+        title: 'Historical Room Statistics',
+        day: 'Daily Ranking',
+        week: 'Weekly Ranking',
+        month: 'Monthly Ranking',
+        table: {
+          room: 'Room Name',
+          total: 'Total Duration',
+          today: "Today's Duration",
+        },
+        empty: 'No Records',
+      },
+    },
+    active: {
+      empty_room: 'No Active Rooms',
+      title: 'Current Active Users',
+      table: {
+        participant: 'User',
+        state: 'Status',
+        volume: 'Volume',
+        blur: 'Video Blur',
+        screen_blur: 'Screen Blur',
+        is_auth: 'Authenticated',
+        during: 'Online Duration',
       },
     },
   },
