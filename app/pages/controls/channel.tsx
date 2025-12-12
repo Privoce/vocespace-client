@@ -694,22 +694,24 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                 visibility: roomJoinVis === index ? 'visible' : 'hidden',
               }}
             >
-              <button
-                onClick={() => {
-                  addIntoRoom(room);
-                  // 移动设备上点击后立即隐藏按钮并清除延迟
-                  if (isMobile) {
-                    if (hideTimeoutRef.current) {
-                      clearTimeout(hideTimeoutRef.current);
+              {(settings.participants[localParticipantId]?.isAuth || false) && (
+                <button
+                  onClick={() => {
+                    addIntoRoom(room);
+                    // 移动设备上点击后立即隐藏按钮并清除延迟
+                    if (isMobile) {
+                      if (hideTimeoutRef.current) {
+                        clearTimeout(hideTimeoutRef.current);
+                      }
+                      setRoomJoinVis(null);
                     }
-                    setRoomJoinVis(null);
-                  }
-                }}
-                className="vocespace_button"
-              >
-                <PlusCircleOutlined />
-                {t('channel.menu.join')}
-              </button>
+                  }}
+                  className="vocespace_button"
+                >
+                  <PlusCircleOutlined />
+                  {t('channel.menu.join')}
+                </button>
+              )}
             </div>
           </div>
         ),
@@ -768,22 +770,24 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                   visibility: mainJoinVis,
                 }}
               >
-                <button
-                  onClick={() => {
-                    joinMainRoom();
-                    // 移动设备上点击后立即隐藏按钮并清除延迟
-                    if (isMobile) {
-                      if (mainHideTimeoutRef.current) {
-                        clearTimeout(mainHideTimeoutRef.current);
+                {(settings.participants[localParticipantId]?.isAuth || false) && (
+                  <button
+                    onClick={() => {
+                      joinMainRoom();
+                      // 移动设备上点击后立即隐藏按钮并清除延迟
+                      if (isMobile) {
+                        if (mainHideTimeoutRef.current) {
+                          clearTimeout(mainHideTimeoutRef.current);
+                        }
+                        setMainJoinVis('hidden');
                       }
-                      setMainJoinVis('hidden');
-                    }
-                  }}
-                  className="vocespace_button"
-                >
-                  <PlusCircleOutlined />
-                  {t('channel.menu.join')}
-                </button>
+                    }}
+                    className="vocespace_button"
+                  >
+                    <PlusCircleOutlined />
+                    {t('channel.menu.join')}
+                  </button>
+                )}
               </div>
             </div>
           ),

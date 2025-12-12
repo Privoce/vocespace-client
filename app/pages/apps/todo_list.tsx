@@ -64,6 +64,7 @@ export function AppTodo({
   const disabled = useMemo(() => {
     return auth !== 'write';
   }, [auth]);
+  const [historyPageSize, setHistoryPageSize] = useState<number>(6);
   const [newTodo, setNewTodo] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
@@ -291,6 +292,7 @@ export function AppTodo({
                     align: 'end',
                     pageSize: 6,
                     size: 'small',
+                    showSizeChanger: false,
                     simple: { readOnly: true },
                   }
                 : undefined
@@ -327,8 +329,12 @@ export function AppTodo({
                 ? {
                     position: 'bottom',
                     align: 'end',
-                    pageSize: 6,
+                    pageSize: historyPageSize,
                     size: 'small',
+                    pageSizeOptions: [ '6', '10', '15'],
+                    onShowSizeChange: (_current, size) => {
+                      setHistoryPageSize(size);
+                    },
                     simple: { readOnly: true },
                   }
                 : undefined
