@@ -215,6 +215,17 @@ export interface SpaceInfo {
    */
   ownerId: string;
   /**
+   * 空间管理员ID列表，空间管理员可获得owner同等权限但无法对owner进行管理
+   * owner可以将其他用户设置为管理员，每个空间最多5个管理员，管理员可以转让自己的身份
+   * 管理员只能管理空间用户，无法删除空间，但可以更改空间设置
+   */
+  managers: string[];
+  /**
+   * 是否允许访客加入
+   * 若为false，则只有认证用户才能加入空间
+   */
+  allowGuest: boolean;
+  /**
    * 录制设置
    */
   record: RecordSettings;
@@ -234,6 +245,9 @@ export interface SpaceInfo {
    * - true: 持久化空间，空间内的数据会持久化，应用数据也会保存
    */
   persistence: boolean;
+  /**
+   * 空间的AI相关配置
+   */
   ai: SpaceAIConf;
 }
 
@@ -389,6 +403,8 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
   ownerId: '',
   persistence: true,
   record: { active: false },
+  managers: [],
+  allowGuest: true,
   startAt,
   children: [
     {

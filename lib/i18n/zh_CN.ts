@@ -1,5 +1,8 @@
 export default {
   common: {
+    guest: {
+      not_allow: "很抱歉，当前空间不允许访客加入，请登陆",
+    },
     confirm: '确认',
     cancel: '取消',
     alert: '提示',
@@ -490,6 +493,11 @@ export default {
           high: '高清',
           hd: '超清',
           ultra: '极致',
+        },
+        allow_guest: {
+          title:'允许访客加入',
+          success: "修改访客加入设置成功",
+          error: "设置当前空间访客加入失败",
         },
       },
       status: {

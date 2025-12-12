@@ -1,5 +1,8 @@
 export default {
   common: {
+    guest: {
+      not_allow: "Sorry, the current space does not allow guests to join. Please Login!",
+    },
     confirm: 'Confirm',
     cancel: 'Cancel',
     alert: 'Alert',
@@ -510,6 +513,11 @@ export default {
           high: 'High',
           hd: 'HD',
           ultra: 'Ultra',
+        },
+        allow_guest: {
+          title: 'Allow Guest to Join',
+          success: 'Guest join settings modified successfully',
+          error: 'Failed to set guest access for the current space',
         },
       },
       status: {

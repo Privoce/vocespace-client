@@ -26,6 +26,7 @@ import { RoomServiceClient } from 'livekit-server-sdk';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsParticipant } from '@/lib/std/device';
 import {
+  AllowGuestBody,
   CheckNameBody,
   DefineUserStatusBody,
   DefineUserStatusResponse,
@@ -1124,6 +1125,25 @@ export async function POST(request: NextRequest) {
     const spaceAppsAPIType = request.nextUrl.searchParams.get('apps');
     const isUpdateSpacePersistence = request.nextUrl.searchParams.get('persistence') === 'update';
     const isUpdate = request.nextUrl.searchParams.get('update') === 'true';
+    const isUpdateAllowGuest = request.nextUrl.searchParams.get('allowGuest') === 'update';
+    // 更新空间是否允许游客加入 -----------------------------------------------------------------------------
+    if (isSpace && isUpdateAllowGuest) {
+      const { spaceName, allowGuest }: AllowGuestBody = await request.json();
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      spaceInfo.allowGuest = allowGuest;
+      const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+      if (!success) {
+        return NextResponse.json(
+          { error: 'Failed to update allow guest setting' },
+          { status: 500 },
+        );
+      }
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+
     // 是否更新空间相关设置 -----------------------------------------------------------------------------
     if (isUpdate && isSpace) {
       const { spaceName, info }: { spaceName: string; info: Partial<SpaceInfo> } =

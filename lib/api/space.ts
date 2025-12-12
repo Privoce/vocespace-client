@@ -336,6 +336,22 @@ export const persistentSpace = async (spaceName: string, persistence: boolean) =
   });
 };
 
+export interface AllowGuestBody {
+  spaceName: string;
+  allowGuest: boolean;
+}
+
+export const allowGuest = async (spaceName: string, allowGuest: boolean) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('space', 'true');
+  url.searchParams.append('allowGuest', 'update');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ spaceName, allowGuest } as AllowGuestBody),
+  });
+};
+
 export interface UploadSpaceAppBody {
   spaceName: string;
   participantId: string;

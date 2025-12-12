@@ -37,6 +37,7 @@ export function GeneralSettings({
   const { t } = useI18n();
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const [persistence, setPersistence] = useState(spaceInfo.persistence);
+  const [allowGuest, setAllowGuest] = useState(spaceInfo.allowGuest);
   const [state, setState] = useState('');
   const StateInputRef = useRef<InputRef>(null);
   useEffect(() => {
@@ -57,6 +58,15 @@ export function GeneralSettings({
       messageApi.success(t('settings.general.persistence.success'));
     } else {
       messageApi.error(t('settings.general.persistence.error'));
+    }
+  };
+
+  const setSpaceAllowGuest = async (allowGuest: boolean) => {
+    const response = await api.allowGuest(space, allowGuest);
+    if (response.ok) {
+      messageApi.success(t('settings.general.conf.allow_guest.success'));
+    } else {
+      messageApi.error(t('settings.general.conf.allow_guest.error'));
     }
   };
 
@@ -167,6 +177,19 @@ export function GeneralSettings({
             onChange={async (e) => {
               setPersistence(e.target.value);
               await setSpacePersistence(e.target.value);
+            }}
+          >
+            <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+            <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+          </Radio.Group>
+          <div className={styles.common_space}>{t('settings.general.conf.allow_guest.title')}:</div>
+          <Radio.Group
+            size="large"
+            block
+            value={allowGuest}
+            onChange={async (e) => {
+              setAllowGuest(e.target.value);
+              await setSpaceAllowGuest(e.target.value);
             }}
           >
             <Radio.Button value={true}>{t('common.open')}</Radio.Button>

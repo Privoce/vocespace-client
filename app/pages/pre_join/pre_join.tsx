@@ -22,6 +22,7 @@ import { LangSelect } from '@/app/pages/controls/selects/lang_select';
 import { ulid } from 'ulid';
 import { api } from '@/lib/api';
 import { LoginButtons, LoginStateBtn } from './login';
+import { SpaceInfo, VOCESPACE_PLATFORM_USER_ID } from '@/lib/std/space';
 
 export interface PreJoinPropsExt extends PreJoinProps {
   hq?: boolean;
@@ -270,6 +271,19 @@ export function PreJoin({
           return;
         }
       }
+    }
+
+    // 加入空间前还需要确定当前空间是否允许游客加入
+    const response = await api.getSpaceInfo(spaceName);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch settings: ${response.status}`);
+    }
+    const { settings: spaceInfo }: { settings?: SpaceInfo } = await response.json();
+    const userType = showLoginBtn ? 'guest' : 'user';
+    // 有房间且房间不允许游客加入
+    if (spaceInfo && !spaceInfo.allowGuest && userType === 'guest') {
+      messageApi.error(t('common.guest.not_allow'));
+      return;
     }
 
     if (typeof onSubmit === 'function') {

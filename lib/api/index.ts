@@ -24,7 +24,8 @@ import {
   uploadSpaceApp,
   getUserMeta,
   updateSpaceInfo,
-  deleteTodo
+  deleteTodo,
+  allowGuest
 } from './space';
 
 export const api = {
@@ -44,6 +45,7 @@ export const api = {
   updateSpaceApps,
   leaveSpace,
   persistentSpace,
+  allowGuest,
   uploadSpaceApp,
   updateSpaceAppSync,
   updateSpaceAppAuth,
