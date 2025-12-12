@@ -2,6 +2,7 @@
 
 import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/i18n';
+import { isSpaceManager } from '@/lib/std';
 import { DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
 import { SpaceInfo } from '@/lib/std/space';
 import styles from '@/styles/controls.module.scss';
@@ -42,7 +43,7 @@ export function AISettings({ spaceInfo, localParticipant, messageApi, space }: A
   }, []);
 
   const isOwner = useMemo(() => {
-    return localParticipant.identity === spaceInfo.ownerId;
+    return isSpaceManager(spaceInfo, localParticipant.identity || '').ty === "Owner";
   }, [localParticipant, spaceInfo]);
 
   const isUpdate = useMemo(() => {

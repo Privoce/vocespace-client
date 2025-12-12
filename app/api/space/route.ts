@@ -32,6 +32,7 @@ import {
   DefineUserStatusResponse,
   DeleteSpaceParticipantBody,
   PersistentSpaceBody,
+  SetManagerBody,
   UpdateOwnerIdBody,
   UpdateSpaceAppAuthBody,
   UpdateSpaceAppsBody,
@@ -1126,6 +1127,35 @@ export async function POST(request: NextRequest) {
     const isUpdateSpacePersistence = request.nextUrl.searchParams.get('persistence') === 'update';
     const isUpdate = request.nextUrl.searchParams.get('update') === 'true';
     const isUpdateAllowGuest = request.nextUrl.searchParams.get('allowGuest') === 'update';
+    const isSetManager = request.nextUrl.searchParams.get('manager') === 'set';
+
+    // 设置空间管理员（单个） -----------------------------------------------------------------------------
+    if (isSpace && isSetManager) {
+      const { spaceName, ownerId, pid, isManager }: SetManagerBody = await request.json();
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      if (ownerId !== spaceInfo.ownerId) {
+        return NextResponse.json({ error: 'Owner is not the space' }, { status: 403 });
+      }
+      // 检测当前空间的用户中是否有这个ID, 并且不能设置自己为管理员，当然如果发现我们都认为前端传错了数据，不返回失败，不处理就行
+      if (spaceInfo.participants[pid] && ownerId !== pid) {
+        if (isManager && !spaceInfo.managers.includes(pid)) {
+          // 成功设置当前用户为管理员
+          spaceInfo.managers.push(pid);
+        } else if (!isManager && spaceInfo.managers.includes(pid)) {
+          // 要把这个用户移出管理员列表
+          spaceInfo.managers = spaceInfo.managers.filter((id) => id !== pid);
+        } else {
+          // - 不是管理员也不需要设置为管理员（前端传错数据）
+          // - 是管理员又要设置为管理员
+        }
+      }
+
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+
     // 更新空间是否允许游客加入 -----------------------------------------------------------------------------
     if (isSpace && isUpdateAllowGuest) {
       const { spaceName, allowGuest }: AllowGuestBody = await request.json();

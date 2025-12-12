@@ -24,6 +24,9 @@ import {
 } from '@ant-design/icons';
 import { DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
 import { WsBase } from '@/lib/std/device';
+import { isSpaceManager } from '@/lib/std';
+import { SpaceInfo } from '@/lib/std/space';
+import { LocalParticipant } from 'livekit-client';
 
 type ModelKey = 'update' | 'renew' | 'server';
 type OptionValue = 'renew' | 'custom';
@@ -31,9 +34,13 @@ type OptionValue = 'renew' | 'custom';
 export function LicenseControl({
   messageApi,
   space,
+  spaceInfo,
+  localParticipant,
 }: {
   messageApi: MessageInstance;
   space: string;
+  spaceInfo: SpaceInfo;
+  localParticipant: LocalParticipant;
 }) {
   const { t } = useI18n();
   const [userLicense, setUserLicense] = useRecoilState(licenseState);
@@ -44,6 +51,10 @@ export function LicenseControl({
   const [licenseValue, setLicenseValue] = useState<string>('');
   const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
   const [ipAddress, setIpAddress] = useState<string | undefined>(undefined);
+  const isOwner = useMemo(() => {
+    return isSpaceManager(spaceInfo, localParticipant.identity).ty === 'Owner';
+  }, [spaceInfo, localParticipant]);
+
   const getConfig = async () => {
     const response = await api.getConf();
     if (response.ok) {
@@ -345,26 +356,29 @@ export function LicenseControl({
         )}
       </Modal>
       {items}
-      <div className={styles.setting_box} style={{ gap: '8px', display: 'flex' }}>
-        <Button
-          type="primary"
-          onClick={() => {
-            setIsModalOpen(true);
-            setKey('renew');
-          }}
-        >
-          {t('settings.license.renew')}
-        </Button>
-        <Button
-          type="default"
-          onClick={() => {
-            setIsModalOpen(true);
-            setKey('update');
-          }}
-        >
-          {t('settings.license.update')}
-        </Button>
-      </div>
+      {isOwner && (
+        <div className={styles.setting_box} style={{ gap: '8px', display: 'flex' }}>
+          <Button
+            type="primary"
+            onClick={() => {
+              setIsModalOpen(true);
+              setKey('renew');
+            }}
+          >
+            {t('settings.license.renew')}
+          </Button>
+          <Button
+            type="default"
+            onClick={() => {
+              setIsModalOpen(true);
+              setKey('update');
+            }}
+          >
+            {t('settings.license.update')}
+          </Button>
+        </div>
+      )}
+
       <div className={styles.gift_box}>
         <h2>{t('settings.license.gift.title')}</h2>
         <div>{t('settings.license.gift.desc')}</div>

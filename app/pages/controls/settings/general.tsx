@@ -42,7 +42,7 @@ export function GeneralSettings({
   const StateInputRef = useRef<InputRef>(null);
   useEffect(() => {
     setIsOwner(localParticipant.identity === spaceInfo.ownerId);
-    setState(TransIfSystemStatus(t, spaceInfo.participants[localParticipant.identity].status));
+    setState(TransIfSystemStatus(t, spaceInfo.participants[localParticipant.identity]?.status || UserStatus.Online));
   }, [localParticipant.identity, spaceInfo]);
 
   // 当appendStatus为true时自动聚焦状态输入框

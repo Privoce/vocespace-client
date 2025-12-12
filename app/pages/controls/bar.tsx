@@ -36,7 +36,7 @@ import {
   virtualMaskState,
 } from '@/app/[spaceName]/PageClientImpl';
 import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
-import { isMobile as is_moblie, isIos, UserStatus } from '@/lib/std';
+import { isMobile as is_moblie, isIos, isSpaceManager, UserStatus } from '@/lib/std';
 import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';
 import { ChatToggle } from './toggles/chat_toggle';
 import { MoreButton } from './toggles/more_button';
@@ -402,8 +402,9 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const participantList = React.useMemo(() => {
       return Object.entries(spaceInfo.participants);
     }, [spaceInfo]);
-    const isOwner = React.useMemo(() => {
-      return spaceInfo.ownerId === space?.localParticipant.identity;
+    const isManager = React.useMemo(() => {
+      // return spaceInfo.ownerId === space?.localParticipant.identity;
+      return isSpaceManager(spaceInfo, space?.localParticipant.identity || '').isManager;
     }, [spaceInfo.ownerId, space?.localParticipant.identity]);
 
     // [record] -----------------------------------------------------------------------------------------------------
@@ -414,7 +415,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     }, [spaceInfo.record]);
 
     const onClickRecord = async () => {
-      if (!space && isOwner) return;
+      if (!space && isManager) return;
 
       if (!isRecording) {
         setOpenRecordModal(true);
@@ -443,7 +444,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const startRecord = async () => {
       if (isRecording || !space) return;
 
-      if (isOwner) {
+      if (isManager) {
         // host request to start recording
         const response = await api.sendRecordRequest({
           spaceName: space.name,
@@ -906,7 +907,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           okText={
             isDownload
               ? t('more.record.to_download')
-              : isOwner
+              : isManager
               ? t('more.record.confirm')
               : t('more.record.confirm_request')
           }
@@ -917,7 +918,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           {isDownload ? (
             <div>{t('more.record.download_msg')}</div>
           ) : (
-            <div>{isOwner ? t('more.record.desc') : t('more.record.request')}</div>
+            <div>{isManager ? t('more.record.desc') : t('more.record.request')}</div>
           )}
         </Modal>
         {/* -------------------- ai cut modal --------------------------------------------------- */}

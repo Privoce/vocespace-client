@@ -413,3 +413,38 @@ export const getUserMeta = async (userId: string | undefined) => {
   url.searchParams.append('userId', userId || '');
   return await fetch(url.toString());
 };
+
+export interface SetManagerBody {
+  spaceName: string;
+  ownerId: string;
+  pid: string;
+  isManager: boolean;
+}
+
+/**
+ * 房主设置管理员
+ * @param spaceName 空间名
+ * @param ownerId 空间拥有者的ID
+ * @param pid 管理者ID
+ * @param isManager 是否设置为管理员
+ */
+export const setManager = async (
+  spaceName: string,
+  ownerId: string,
+  pid: string,
+  isManager: boolean,
+) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('manager', 'set');
+  url.searchParams.append('space', 'true');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      spaceName,
+      ownerId,
+      pid,
+      isManager,
+    } as SetManagerBody),
+  });
+};
