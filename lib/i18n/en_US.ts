@@ -1,7 +1,7 @@
 export default {
   common: {
     guest: {
-      not_allow: "Sorry, the current space does not allow guests to join. Please Login!",
+      not_allow: 'Sorry, the current space does not allow guests to join. Please Login!',
     },
     confirm: 'Confirm',
     cancel: 'Cancel',
@@ -390,7 +390,8 @@ export default {
       title: 'Participants',
       manage: 'Manage Participants',
       search: 'Search Participants',
-      manager: 'host',
+      manager: 'Manager',
+      host: 'Host',
       wave: 'Send Greeting',
       invite: {
         title: 'Invite Participants',
@@ -424,6 +425,9 @@ export default {
         control: {
           title: 'Participant Control',
           trans: 'Transfer Room Host',
+          trans_manager: 'Transfer Manager',
+          set_manager: 'Set Manager',
+          remove_manager: 'Remove Manager',
           change_name: 'Change Name',
           mute: {
             audio: 'Mute Microphone',
@@ -697,6 +701,7 @@ export default {
         permission: 'Failed to request permission.',
       },
       user: {
+        manager_limit: 'The number of managers has reached the limit, no more managers can be set.',
         username: {
           change: 'Username changed failed',
           request: 'Failed to request username',
@@ -773,7 +778,8 @@ export default {
           change: 'Username changed successfully',
         },
         lang: 'Language changed successfully',
-        transfer: 'You are now the host',
+        transfer: 'You have been successfully transferred',
+        set_manager: 'You have been set as a manager',
       },
       file: {
         upload: 'File uploaded successfully',

@@ -128,11 +128,17 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
     const channelRef = React.useRef<ChannelExports>(null);
     const [remoteApp, setRemoteApp] = useRecoilState(RemoteTargetApp);
-    const { settings, updateSettings, fetchSettings, clearSettings, updateOwnerId, updateRecord } =
-      useSpaceInfo(
-        space?.name || '', // 房间 ID
-        space?.localParticipant?.identity || '', // 参与者 ID
-      );
+    const {
+      settings,
+      updateSettings,
+      fetchSettings,
+      clearSettings,
+      transOrSetOwnerManager,
+      updateRecord,
+    } = useSpaceInfo(
+      space?.name || '', // 房间 ID
+      space?.localParticipant?.identity || '', // 参与者 ID
+    );
     const [openApp, setOpenApp] = useState<boolean>(false);
     // const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
     // const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
@@ -690,13 +696,38 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               break;
             }
             case ControlType.Transfer: {
-              const success = await updateOwnerId(space.localParticipant.identity);
+              const success = await transOrSetOwnerManager(
+                msg.senderId,
+                space.localParticipant.identity,
+                true,
+              );
               if (success) {
+                // 更新视图
+                layoutContext.pin.dispatch?.({ msg: 'clear_pin' });
                 messageApi.success(t('msg.success.user.transfer'));
               }
               socket.emit('update_user_status', {
                 space: space.name,
               } as WsBase);
+              break;
+            }
+            case ControlType.setManager: {
+              if (settings.managers.length < 5) {
+                const success = await transOrSetOwnerManager(
+                  msg.senderId,
+                  space.localParticipant.identity,
+                  false,
+                );
+                if (success) {
+                  layoutContext.pin.dispatch?.({ msg: 'clear_pin' });
+                  messageApi.success(t('msg.success.user.set_manager'));
+                }
+                socket.emit('update_user_status', {
+                  space: space.name,
+                } as WsBase);
+              } else {
+                messageApi.error(t('msg.error.user.manager_limit'));
+              }
               break;
             }
             case ControlType.Volume: {

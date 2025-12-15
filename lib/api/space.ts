@@ -211,6 +211,37 @@ export interface UpdateSpaceParticipantBody {
   init?: boolean;
 }
 
+export interface TransOrSetOMBody {
+  spaceName: string;
+  participantId: string;
+  replacedId: string;
+  isTransfer: boolean;
+}
+
+/**
+ * 转让/设置房间主持人或管理员(根据当前用户身份决定)
+ */
+export const transOrSetOwnerManager = async (
+  spaceName: string,
+  participantId: string,
+  replacedId: string,
+  isTransfer: boolean
+) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append("transfer", isTransfer ? "true" : "false");
+  url.searchParams.append('space', 'true');
+  url.searchParams.append('auth', 'manage');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      spaceName,
+      participantId,
+      replacedId,
+    } as TransOrSetOMBody),
+  });
+}
+
 /**
  * 更新空间参与者的设置
  */
@@ -414,37 +445,3 @@ export const getUserMeta = async (userId: string | undefined) => {
   return await fetch(url.toString());
 };
 
-export interface SetManagerBody {
-  spaceName: string;
-  ownerId: string;
-  pid: string;
-  isManager: boolean;
-}
-
-/**
- * 房主设置管理员
- * @param spaceName 空间名
- * @param ownerId 空间拥有者的ID
- * @param pid 管理者ID
- * @param isManager 是否设置为管理员
- */
-export const setManager = async (
-  spaceName: string,
-  ownerId: string,
-  pid: string,
-  isManager: boolean,
-) => {
-  const url = new URL(SPACE_API, window.location.origin);
-  url.searchParams.append('manager', 'set');
-  url.searchParams.append('space', 'true');
-  return await fetch(url.toString(), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      spaceName,
-      ownerId,
-      pid,
-      isManager,
-    } as SetManagerBody),
-  });
-};

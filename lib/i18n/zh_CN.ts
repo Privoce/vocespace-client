@@ -1,7 +1,7 @@
 export default {
   common: {
     guest: {
-      not_allow: "很抱歉，当前空间不允许访客加入，请登陆",
+      not_allow: '很抱歉，当前空间不允许访客加入，请登陆',
     },
     confirm: '确认',
     cancel: '取消',
@@ -376,7 +376,8 @@ export default {
       title: '成员',
       manage: '管理成员',
       search: '搜索成员',
-      manager: '主持人',
+      manager: '管理员',
+      host: "房主",
       wave: '打招呼',
       invite: {
         title: '邀请成员',
@@ -407,6 +408,9 @@ export default {
         control: {
           title: '成员控制',
           trans: '转让房间主持人',
+          trans_manager: '转让管理员',
+          set_manager: '设置管理员',
+          remove_manager: '移除管理员',
           change_name: '修改名称',
           mute: {
             audio: '静音音频',
@@ -495,9 +499,9 @@ export default {
           ultra: '极致',
         },
         allow_guest: {
-          title:'允许访客加入',
-          success: "修改访客加入设置成功",
-          error: "设置当前空间访客加入失败",
+          title: '允许访客加入',
+          success: '修改访客加入设置成功',
+          error: '设置当前空间访客加入失败',
         },
       },
       status: {
@@ -659,6 +663,7 @@ export default {
         permission: '请求权限失败。',
       },
       user: {
+        manager_limit: '管理员数量已达上限，无法设置更多管理员。',
         username: {
           change: '用户名修改失败',
           request: '请求用户名失败',
@@ -733,7 +738,8 @@ export default {
           change: '用户名修改成功',
         },
         lang: '语言修改成功',
-        transfer: '您已成功被转让为房间主持人',
+        transfer: '您已成功被转让身份',
+        set_manager: "您你被设置为管理员身份",
       },
       file: {
         upload: '文件上传成功',

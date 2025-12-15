@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import styles from '@/styles/controls.module.scss';
 import { ControlType, WsBase, WsControlParticipant, WsInviteDevice, WsTo } from '@/lib/std/device';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { src } from '@/lib/std';
+import { isSpaceManager, src } from '@/lib/std';
 import { usePlatformUserInfo } from '@/lib/hooks/platform';
 import { HomeOutlined } from '@ant-design/icons';
 
@@ -66,8 +66,11 @@ export function useControlRKeyMenu({
   const [volume, setVolume] = useState(0.0);
   const [blurVideo, setBlurVideo] = useState(0.0);
   const [blurScreen, setBlurScreen] = useState(0.0);
-  const isOwner = useMemo(() => {
-    return spaceInfo.ownerId === space?.localParticipant.identity;
+  // const isOwner = useMemo(() => {
+  //   return spaceInfo.ownerId === space?.localParticipant.identity;
+  // }, [spaceInfo.ownerId, space?.localParticipant.identity]);
+  const userAuth = useMemo(() => {
+    return isSpaceManager(spaceInfo, space?.localParticipant.identity || '');
   }, [spaceInfo.ownerId, space?.localParticipant.identity]);
   const { platUser } = usePlatformUserInfo({ uid: space?.localParticipant.identity! });
 
@@ -97,7 +100,7 @@ export function useControlRKeyMenu({
         } as WsBase);
       }
     } else {
-      if (space?.localParticipant && selectedParticipant && isOwner) {
+      if (space?.localParticipant && selectedParticipant && userAuth.isManager) {
         let wsTo = {
           space: space.name,
           senderName: space.localParticipant.name,
@@ -298,7 +301,7 @@ export function useControlRKeyMenu({
                 {
                   key: 'safe.platform',
                   label: <span>{t('more.platform')}</span>,
-                  icon: <HomeOutlined style={{fontSize: 16}}></HomeOutlined>
+                  icon: <HomeOutlined style={{ fontSize: 16 }}></HomeOutlined>,
                 },
               ]
             : []),
@@ -324,7 +327,7 @@ export function useControlRKeyMenu({
               }}
             >
               <Slider
-                disabled={!isOwner}
+                disabled={!userAuth.isManager}
                 min={0.0}
                 max={100.0}
                 step={1.0}
@@ -340,7 +343,7 @@ export function useControlRKeyMenu({
             </div>
           </div>
         ),
-        disabled: !isOwner,
+        disabled: !userAuth.isManager,
       },
       {
         key: 'control.blur_video',
@@ -359,7 +362,7 @@ export function useControlRKeyMenu({
               }}
             >
               <Slider
-                disabled={!isOwner}
+                disabled={!userAuth.isManager}
                 min={0.0}
                 max={1.0}
                 step={0.05}
@@ -375,7 +378,7 @@ export function useControlRKeyMenu({
             </div>
           </div>
         ),
-        disabled: !isOwner,
+        disabled: !userAuth.isManager,
       },
       {
         key: 'control.blur_screen',
@@ -394,7 +397,7 @@ export function useControlRKeyMenu({
               }}
             >
               <Slider
-                disabled={!isOwner}
+                disabled={!userAuth.isManager}
                 min={0.0}
                 max={1.0}
                 step={0.05}
@@ -410,27 +413,48 @@ export function useControlRKeyMenu({
             </div>
           </div>
         ),
-        disabled: !isOwner,
+        disabled: !userAuth.isManager,
       },
     ];
 
-    const otherItems: MenuProps['items'] = isOwner
+    // 如果selectParticipant是Owner，就不能转让管理员权限
+    const managerItems = [];
+
+    if (spaceInfo.ownerId !== selectedParticipant?.identity) {
+      managerItems.push({
+        key: 'control.trans',
+        label: (
+          <span style={{ marginLeft: '8px' }}>
+            {userAuth.ty === 'Owner'
+              ? t('more.participant.set.control.trans')
+              : t('more.participant.set.control.trans_manager')}
+          </span>
+        ),
+        icon: <SvgResource type="switch" svgSize={16} />,
+        disabled: !userAuth.isManager,
+      });
+      managerItems.push({
+        key: 'control.setManager',
+        label: (
+          <span style={{ marginLeft: '8px' }}>
+            {spaceInfo.managers.includes(selectedParticipant?.identity || '')
+              ? t('more.participant.set.control.remove_manager')
+              : t('more.participant.set.control.set_manager')}
+          </span>
+        ),
+        icon: <SvgResource type="manager" svgSize={16} />,
+        disabled: userAuth.ty !== 'Owner',
+      });
+    }
+
+    const otherItems: MenuProps['items'] = userAuth.isManager
       ? [
           {
             label: t('more.participant.set.control.title'),
             key: 'control',
             type: 'group',
             children: [
-              {
-                key: 'control.trans',
-                label: (
-                  <span style={{ marginLeft: '8px' }}>
-                    {t('more.participant.set.control.trans')}
-                  </span>
-                ),
-                icon: <SvgResource type="switch" svgSize={16} />,
-                disabled: !isOwner,
-              },
+              ...managerItems,
               {
                 key: 'control.change_name',
                 label: (
@@ -439,7 +463,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="user" svgSize={16} />,
-                disabled: !isOwner,
+                disabled: !userAuth.isManager,
               },
               {
                 key: 'control.mute_audio',
@@ -449,7 +473,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="audio_close" svgSize={16} />,
-                disabled: !isOwner ? true : !isMicDisabled,
+                disabled: !userAuth.isManager ? true : !isMicDisabled,
               },
               {
                 key: 'control.mute_video',
@@ -459,7 +483,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="video_close" svgSize={16} />,
-                disabled: !isOwner ? true : !isCamDisabled,
+                disabled: !userAuth.isManager ? true : !isCamDisabled,
               },
               {
                 key: 'control.mute_screen',
@@ -469,7 +493,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="screen_close" svgSize={16} />,
-                disabled: !isOwner ? true : !isScreenShareDisabled,
+                disabled: !userAuth.isManager ? true : !isScreenShareDisabled,
               },
               ...controlItems,
             ],
@@ -487,7 +511,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="leave" svgSize={16} />,
-                disabled: !isOwner,
+                disabled: !userAuth.isManager,
               },
             ],
           },
@@ -538,7 +562,17 @@ export function useControlRKeyMenu({
       },
       ...otherItems,
     ];
-  }, [isCamDisabled, isMicDisabled, isOwner, isScreenShareDisabled, volume, blurVideo, blurScreen]);
+  }, [
+    isCamDisabled,
+    isMicDisabled,
+    userAuth,
+    isScreenShareDisabled,
+    volume,
+    blurVideo,
+    blurScreen,
+    spaceInfo,
+    selectedParticipant,
+  ]);
   // 处理自己的菜单点击事件 -------------------------------------------------------------
   const handleSelfOptClick: MenuProps['onClick'] = (e) => {
     if (space?.localParticipant) {
@@ -678,6 +712,13 @@ export function useControlRKeyMenu({
           } as WsControlParticipant);
           break;
         }
+        case 'control.setManager': {
+          socket.emit('control_participant', {
+            ...wsTo,
+            type: ControlType.setManager,
+          } as WsControlParticipant);
+          break;
+        }
         default:
           break;
       }
@@ -704,6 +745,6 @@ export function useControlRKeyMenu({
     handleSelfOptClick,
     handleOptClick,
     optOpen,
-    isOwner,
+    userAuth,
   };
 }

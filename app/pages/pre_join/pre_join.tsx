@@ -280,8 +280,9 @@ export function PreJoin({
     }
     const { settings: spaceInfo }: { settings?: SpaceInfo } = await response.json();
     const userType = showLoginBtn ? 'guest' : 'user';
+    let allowGuest = spaceInfo?.allowGuest || true
     // 有房间且房间不允许游客加入
-    if (spaceInfo && !spaceInfo.allowGuest && userType === 'guest') {
+    if (spaceInfo && !allowGuest && userType === 'guest') {
       messageApi.error(t('common.guest.not_allow'));
       return;
     }

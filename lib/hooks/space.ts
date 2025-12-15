@@ -50,21 +50,17 @@ export function useSpaceInfo(spaceName: string, participantId: string) {
     },
     [participantId, spaceName],
   );
-  // 转让或设置房间的主持人
-  const updateOwnerId = useCallback(
-    async (replacedId?: string) => {
-      const response = await api.updateOwnerId(spaceName, replacedId || participantId);
-      if (!response.ok) {
-        return false;
-      }
 
-      const { ownerId } = await response.json();
-      setSettings((prevSettings) => ({
-        ...prevSettings,
-        ownerId: ownerId || prevSettings.ownerId,
-      }));
-
-      return true;
+  // 转让/设置房间主持人或管理员(根据当前用户身份决定)
+  const transOrSetOwnerManager = useCallback(
+    async (originId: string, replacedId?: string, isTransfer = true) => {
+      const response = await api.transOrSetOwnerManager(
+        spaceName,
+        originId,
+        replacedId || participantId,
+        isTransfer,
+      );
+      return response.ok;
     },
     [participantId, spaceName],
   );
@@ -118,7 +114,7 @@ export function useSpaceInfo(spaceName: string, participantId: string) {
     updateSettings,
     fetchSettings,
     clearSettings,
-    updateOwnerId,
+    transOrSetOwnerManager,
     updateRecord,
   };
 }

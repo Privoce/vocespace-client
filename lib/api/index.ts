@@ -25,7 +25,8 @@ import {
   getUserMeta,
   updateSpaceInfo,
   deleteTodo,
-  allowGuest
+  allowGuest,
+  transOrSetOwnerManager
 } from './space';
 
 export const api = {
@@ -50,6 +51,7 @@ export const api = {
   updateSpaceAppSync,
   updateSpaceAppAuth,
   deleteTodo,
+  transOrSetOwnerManager,
   // ---- chat api --------
   fetchLinkPreview,
   getChatMsg,

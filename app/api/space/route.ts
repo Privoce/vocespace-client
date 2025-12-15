@@ -32,7 +32,7 @@ import {
   DefineUserStatusResponse,
   DeleteSpaceParticipantBody,
   PersistentSpaceBody,
-  SetManagerBody,
+  TransOrSetOMBody,
   UpdateOwnerIdBody,
   UpdateSpaceAppAuthBody,
   UpdateSpaceAppsBody,
@@ -1127,30 +1127,54 @@ export async function POST(request: NextRequest) {
     const isUpdateSpacePersistence = request.nextUrl.searchParams.get('persistence') === 'update';
     const isUpdate = request.nextUrl.searchParams.get('update') === 'true';
     const isUpdateAllowGuest = request.nextUrl.searchParams.get('allowGuest') === 'update';
-    const isSetManager = request.nextUrl.searchParams.get('manager') === 'set';
-
-    // 设置空间管理员（单个） -----------------------------------------------------------------------------
-    if (isSpace && isSetManager) {
-      const { spaceName, ownerId, pid, isManager }: SetManagerBody = await request.json();
+    const isTransfer = request.nextUrl.searchParams.get('transfer') === 'true';
+    const isAuthManage = request.nextUrl.searchParams.get('auth') === 'manage';
+    // 用户身份处理 -----------------------------------------------------------------------------
+    if (isSpace && isAuthManage) {
+      const { spaceName, participantId, replacedId }: TransOrSetOMBody = await request.json();
       const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
       if (!spaceInfo) {
         return NextResponse.json({ error: 'Space not found' }, { status: 404 });
       }
-      if (ownerId !== spaceInfo.ownerId) {
-        return NextResponse.json({ error: 'Owner is not the space' }, { status: 403 });
+      // 先确定participantId的是否在当前的space中
+      if (spaceInfo.participants[participantId] === undefined) {
+        return NextResponse.json({ error: 'Participant not in space' }, { status: 403 });
       }
-      // 检测当前空间的用户中是否有这个ID, 并且不能设置自己为管理员，当然如果发现我们都认为前端传错了数据，不返回失败，不处理就行
-      if (spaceInfo.participants[pid] && ownerId !== pid) {
-        if (isManager && !spaceInfo.managers.includes(pid)) {
-          // 成功设置当前用户为管理员
-          spaceInfo.managers.push(pid);
-        } else if (!isManager && spaceInfo.managers.includes(pid)) {
-          // 要把这个用户移出管理员列表
-          spaceInfo.managers = spaceInfo.managers.filter((id) => id !== pid);
+
+      if (spaceInfo.participants[replacedId] === undefined) {
+        return NextResponse.json({ error: 'Replaced participant not in space' }, { status: 403 });
+      }
+
+      const isOwner = spaceInfo.ownerId === participantId;
+
+      if (isTransfer) {
+        // 转让身份（Owner/Manager），如果当前用户是Owner则转让Owner，如果是Manager则转让Manager
+        if (isOwner) {
+          spaceInfo.ownerId = replacedId;
         } else {
-          // - 不是管理员也不需要设置为管理员（前端传错数据）
-          // - 是管理员又要设置为管理员
+          // 删除管理员列表中的当前用户，并添加新的管理员
+          spaceInfo.managers = spaceInfo.managers.filter((id) => id !== participantId);
+          if (!spaceInfo.managers.includes(replacedId)) {
+            spaceInfo.managers.push(replacedId);
+          }
         }
+      } else {
+        // 设置管理员, 只有Owner才有权限设置管理员
+        if (!isOwner) {
+          return NextResponse.json({ error: 'Only owner can set manager' }, { status: 403 });
+        }
+        // 设置管理员，管理员最多5个
+        if (spaceInfo.managers.length < 5) {
+          if (!spaceInfo.managers.includes(replacedId)) {
+            spaceInfo.managers.push(replacedId);
+          }
+        } else {
+          return NextResponse.json({ error: 'Manager limit reached' }, { status: 403 });
+        }
+      }
+      const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+      if (!success) {
+        return NextResponse.json({ error: 'Failed to update space managers' }, { status: 500 });
       }
 
       return NextResponse.json({ success: true }, { status: 200 });

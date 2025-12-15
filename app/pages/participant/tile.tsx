@@ -32,7 +32,7 @@ import {
 import styles from '@/styles/controls.module.scss';
 import { SvgResource, SvgType } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
-import { randomColor } from '@/lib/std';
+import { isSpaceManager, randomColor } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
 import {
   AppKey,
@@ -173,6 +173,10 @@ export const ParticipantItem: (
     const currentParticipant: ParticipantSettings | undefined = useMemo(() => {
       return settings.participants[trackReference.participant.identity];
     }, [settings.participants, trackReference.participant.identity]);
+
+    const userType = useMemo(() => {
+      return isSpaceManager(settings, trackReference.participant.identity).ty;
+    }, [settings, trackReference.participant.identity]);
 
     useEffect(() => {
       if (settings.participants && Object.keys(settings.participants).length > 0) {
@@ -672,7 +676,16 @@ export const ParticipantItem: (
                             }}
                             show={'muted'}
                           ></TrackMutedIndicator>
-                          <ParticipantName />
+                          <ParticipantName
+                            style={{
+                              color:
+                                userType === 'Owner'
+                                  ? '#22CCEE'
+                                  : userType === 'Manager'
+                                  ? '#FFDB5D'
+                                  : '#FFFFFF',
+                            }}
+                          />
                         </>
                       ) : (
                         <div
