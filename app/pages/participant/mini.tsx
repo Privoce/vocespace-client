@@ -29,6 +29,7 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { AppFlotIconCollect } from '../apps/app_pin';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { Tooltip } from 'antd';
+import { SvgResource } from '@/app/resources/svg';
 
 export interface ParticipantTileMiniProps extends ParticipantTileProps {
   settings: SpaceInfo;
@@ -298,17 +299,24 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                             }}
                             show={'muted'}
                           ></TrackMutedIndicator>
+
                           <Tooltip title={trackReference.participant.name} placement="right">
-                            <ParticipantName
-                              style={{
-                                color:
-                                  userType === 'Owner'
-                                    ? '#22CCEE'
-                                    : userType === 'Manager'
-                                    ? '#FFDB5D'
-                                    : '#FFFFFF',
-                              }}
-                            />
+                            <div style={{display: "flex", alignItems: "center"}}>
+                              <div style={{ marginRight: 4 }}>
+                              {userType === 'Owner' ? (
+                                <SvgResource type="host" color="#FFAA33" svgSize={18}></SvgResource>
+                              ) : userType === 'Manager' ? (
+                                <SvgResource
+                                  type="manager"
+                                  color="#FFAA33"
+                                  svgSize={18}
+                                ></SvgResource>
+                              ) : (
+                                <></>
+                              )}
+                            </div>
+                            <ParticipantName />
+                            </div>
                           </Tooltip>
                         </>
                       ) : (

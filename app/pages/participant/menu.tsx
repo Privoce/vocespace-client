@@ -442,7 +442,7 @@ export function useControlRKeyMenu({
               : t('more.participant.set.control.set_manager')}
           </span>
         ),
-        icon: <SvgResource type="manager" svgSize={16} />,
+        icon: <SvgResource type="manager" svgSize={16} color="#FFAA33" />,
         disabled: userAuth.ty !== 'Owner',
       });
     }

@@ -676,16 +676,21 @@ export const ParticipantItem: (
                             }}
                             show={'muted'}
                           ></TrackMutedIndicator>
-                          <ParticipantName
-                            style={{
-                              color:
-                                userType === 'Owner'
-                                  ? '#22CCEE'
-                                  : userType === 'Manager'
-                                  ? '#FFDB5D'
-                                  : '#FFFFFF',
-                            }}
-                          />
+
+                          <div style={{ marginRight: 4 }}>
+                            {userType === 'Owner' ? (
+                              <SvgResource type="host" color="#FFAA33" svgSize={18}></SvgResource>
+                            ) : userType === 'Manager' ? (
+                              <SvgResource
+                                type="manager"
+                                color="#FFAA33"
+                                svgSize={18}
+                              ></SvgResource>
+                            ) : (
+                              <></>
+                            )}
+                          </div>
+                          <ParticipantName />
                         </>
                       ) : (
                         <div

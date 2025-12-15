@@ -324,6 +324,7 @@ export function AppTodo({
           ></List>
           <Divider style={{ fontSize: 12, margin: '8px 0' }}>{t('more.app.todo.history')}</Divider>
           <List
+            className={styles.todo_history_list}
             pagination={
               appData.length > 0
                 ? {
@@ -331,7 +332,7 @@ export function AppTodo({
                     align: 'end',
                     pageSize: historyPageSize,
                     size: 'small',
-                    pageSizeOptions: [ '6', '10', '15'],
+                    pageSizeOptions: ['6', '10', '15'],
                     onShowSizeChange: (_current, size) => {
                       setHistoryPageSize(size);
                     },

@@ -227,3 +227,23 @@ h2 a {
 :where(.css-dev-only-do-not-override-w30lry).ant-list .ant-list-pagination {
   margin-block-start: 12px !important;
 }
+
+:where(.css-dev-only-do-not-override-afko2).ant-select-outlined:not(.ant-select-customize-input)
+  .ant-select-selector {
+  border: 1px solid #8c8c8c !important;
+}
+
+:where(.css-dev-only-do-not-override-afko2).ant-select-outlined:not(.ant-select-customize-input)
+  .ant-select-selector:hover {
+  border: 1px solid #22ccee !important;
+}
+
+:where(.css-dev-only-do-not-override-afko2).ant-select-outlined:not(.ant-select-customize-input)
+  .ant-select-selector:focus {
+  border: 1px solid #22ccee !important;
+}
+
+:where(.css-dev-only-do-not-override-afko2).ant-select-outlined:not(.ant-select-customize-input)
+  .ant-select-selector:active {
+  border: 1px solid #22ccee !important;
+}
