@@ -49,7 +49,7 @@ import { UpdateRoomParam, UpdateRoomType } from '@/lib/api/channel';
 import { Room } from 'livekit-client';
 import { CreateSpaceError, isMobile as is_mobile, UserStatus } from '@/lib/std';
 import { DEFAULT_DRAWER_PROP } from './drawer_tools';
-import { VocespaceConfig } from '@/lib/std/conf';
+import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 import { audio } from '@/lib/audio';
 
 interface ChannelProps {
@@ -67,7 +67,7 @@ interface ChannelProps {
   toRenameSettings: () => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
   showFlotApp: () => void;
-  config: VocespaceConfig;
+  config: ReadableConf;
 }
 
 export interface ChannelExports {

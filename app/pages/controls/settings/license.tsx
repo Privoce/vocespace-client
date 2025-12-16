@@ -22,7 +22,7 @@ import {
   CloseCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
-import { DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
+import { DEFAULT_VOCESPACE_CONFIG, ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 import { WsBase } from '@/lib/std/device';
 import { isSpaceManager } from '@/lib/std';
 import { SpaceInfo } from '@/lib/std/space';
@@ -58,7 +58,7 @@ export function LicenseControl({
   const getConfig = async () => {
     const response = await api.getConf();
     if (response.ok) {
-      const configData: VocespaceConfig = await response.json();
+      const configData: ReadableConf = await response.json();
       setConfig(configData);
       setIpAddress(configData.serverUrl);
     } else {

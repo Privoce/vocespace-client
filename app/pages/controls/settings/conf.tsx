@@ -4,10 +4,10 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { useEffect, useRef, useState } from 'react';
 import {
   countLevelByConf,
+  ReadableConf,
   RTCConf,
   rtcLevelToNumber,
   rtcNumberToConf,
-  VocespaceConfig,
 } from '@/lib/std/conf';
 import { api } from '@/lib/api';
 import { isUndefinedNumber, isUndefinedString } from '@/lib/std';
@@ -217,11 +217,11 @@ export function ConfQulity({ isOwner, messageApi, space, onReload }: ConfQulityP
 }
 
 export function useVoceSpaceConf() {
-  const [conf, setConf] = useState<VocespaceConfig | null>(null);
+  const [conf, setConf] = useState<ReadableConf | null>(null);
   const getConf = async () => {
     const response = await api.getConf();
     if (response.ok) {
-      setConf((await response.json()) as VocespaceConfig);
+      setConf((await response.json()) as ReadableConf);
     }
   };
   return { conf, getConf, setConf };
@@ -238,7 +238,7 @@ export function useRTCConf({ onError, onSuccess }: UseRTCConfProps) {
   const getRTCConf = async () => {
     const response = await api.getConf();
     if (response.ok) {
-      const { resolution, maxBitrate, maxFramerate, priority, codec }: VocespaceConfig =
+      const { resolution, maxBitrate, maxFramerate, priority, codec }: ReadableConf =
         await response.json();
       if (
         isUndefinedString(resolution) ||

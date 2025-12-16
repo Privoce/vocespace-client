@@ -74,7 +74,7 @@ import {
 import { FlotButton, FlotLayout } from '../apps/flot';
 import { api } from '@/lib/api';
 import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
-import { VocespaceConfig } from '@/lib/std/conf';
+import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 import { acceptRaise, RaiseHandler, rejectRaise } from './widgets/raise';
 import { audio } from '@/lib/audio';
 import { AICutService } from '@/lib/ai/cut';
@@ -90,7 +90,7 @@ export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
   noteApi: NotificationInstance;
   setPermissionDevice: (device: Track.Source) => void;
-  config: VocespaceConfig;
+  config: ReadableConf;
 }
 
 export interface VideoContainerExports {

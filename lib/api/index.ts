@@ -1,7 +1,7 @@
 import { ai } from './ai';
 import { createRoom, deleteRoom, joinRoom, leaveRoom, updateRoom } from './channel';
 import { fetchLinkPreview, getChatMsg, uploadFile } from './chat';
-import { getConf, reloadConf, reloadLicense, updateAIConf } from './conf';
+import { checkHostToken, getConf, reloadConf, reloadLicense, updateAIConf } from './conf';
 import { checkLicenseByIP, getLicenseByIP } from './license';
 import { sendRecordRequest, updateRecord } from './record';
 import {
@@ -52,6 +52,7 @@ export const api = {
   updateSpaceAppAuth,
   deleteTodo,
   transOrSetOwnerManager,
+  checkHostToken,
   // ---- chat api --------
   fetchLinkPreview,
   getChatMsg,

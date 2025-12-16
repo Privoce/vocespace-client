@@ -49,6 +49,22 @@ export interface AIConf {
   model: string;
   maxTokens?: number;
 }
+
+/**
+ * 可以被前端读取的配置项，不包含敏感信息
+ */
+export interface ReadableConf {
+  livekit: LivekitConf;
+  codec?: VideoCodec;
+  resolution?: Resolution;
+  maxBitrate?: number;
+  maxFramerate?: number;
+  priority?: RTCPriorityType;
+  serverUrl: string;
+  license: string;
+  ai?: AIConf; // 必须传递hostToken给后端校验成功才能传递这个配置
+}
+
 export interface VocespaceConfig {
   livekit: LivekitConf;
   codec?: VideoCodec;
@@ -95,8 +111,51 @@ export interface VocespaceConfig {
   ai?: AIConf;
 }
 
+export const mergeConf = (oldConf: VocespaceConfig, newConf: ReadableConf): VocespaceConfig => {
+  return {
+    ...oldConf,
+    ...newConf,
+    livekit: {
+      ...oldConf.livekit,
+      ...newConf.livekit,
+    },
+    redis: oldConf.redis,
+    s3: oldConf.s3,
+    ai: {
+      ...oldConf.ai!,
+      ...(newConf.ai ? newConf.ai : oldConf.ai),
+    },
+  };
+};
+
+/**
+ * 清理配置中的敏感信息，只留下可读的配置项
+ * 需要验证传入的hostToken，如果正确则可以传递AI配置
+ * @param conf
+ */
+export const clearReadableConf = (
+  conf: VocespaceConfig,
+  hostToken?: string | null,
+): ReadableConf => {
+  const readableConf: ReadableConf = {
+    livekit: conf.livekit,
+    codec: conf.codec,
+    resolution: conf.resolution,
+    maxBitrate: conf.maxBitrate,
+    maxFramerate: conf.maxFramerate,
+    priority: conf.priority,
+    serverUrl: conf.serverUrl,
+    license: conf.license,
+  };
+  // 如果hostToken正确，则传递AI配置
+  if (hostToken && hostToken === conf.hostToken && conf.ai) {
+    readableConf.ai = conf.ai;
+  }
+  return readableConf;
+};
+
 // 2k, 30fps, 3Mbps
-export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig = {
+export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig | ReadableConf = {
   livekit: {
     key: 'apikey',
     secret: 'secret',
@@ -115,7 +174,7 @@ export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig = {
     db: 0,
   },
   serverUrl: 'localhost',
-  hostToken: 'vocespace_privoce',
+  // hostToken: 'vocespace_privoce',
   license: DEFAULT_LICENSE.value,
 };
 

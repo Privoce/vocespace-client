@@ -39,7 +39,7 @@ import {
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
 import { WsBase, WsTo } from '@/lib/std/device';
-import { createRTCQulity, DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
+import { createRTCQulity, DEFAULT_VOCESPACE_CONFIG, ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { DEFAULT_LICENSE } from '@/lib/std/license';
@@ -173,7 +173,7 @@ export function PageClientImpl(props: {
   const getConfig = async () => {
     const response = await api.getConf();
     if (response.ok) {
-      const configData: VocespaceConfig = await response.json();
+      const configData: ReadableConf = await response.json();
       setConfig(configData);
       setLoadConfig(true);
     } else {
@@ -305,7 +305,7 @@ function VideoConferenceComponent(props: {
     hq: boolean;
     codec: VideoCodec;
   };
-  config: VocespaceConfig;
+  config: ReadableConf;
   messageApi: MessageInstance;
   notApi: NotificationInstance;
 }) {

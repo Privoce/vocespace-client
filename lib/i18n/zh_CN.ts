@@ -466,6 +466,13 @@ export default {
         error: 'AI配置更新失败，请稍后再试。',
         incomplete: '请完整填写AI配置参数，确保模型名称，API地址和API密钥均已填写。',
       },
+      precheck: {
+        desc: '要修改AI设置需要先输入host token进行验证，若您不知道host token，请联系软件部署者获取。',
+        placeholder: "请输入host token",
+        check: "验证",
+        error: '验证失败，请检查后重新输入。',
+        success: '验证成功，您现在可以修改AI设置。',
+      }
     },
     general: {
       title: '常规',
