@@ -484,6 +484,13 @@ export default {
         incomplete:
           'Please fill in the AI ​​configuration parameters completely, ensuring that the model name, API address, and API key are all entered.',
       },
+      precheck: {
+        desc: 'To modify AI settings, you need to enter a host token for verification. If you do not know your host token, please contact the software deployer to obtain it.',
+        placeholder: 'Please enter your host token',
+        check: 'Verify',
+        error: 'Verification failed. Please check and re-enter.',
+        success: 'Verification successful. You can now modify AI settings.',
+      },
     },
     general: {
       title: 'General',
