@@ -26,6 +26,7 @@ import { RTCConf } from '@/lib/std/conf';
 import { ParticipantSettings, SpaceDateRecords, SpaceInfo, SpaceInfoMap } from '@/lib/std/space';
 import { useI18n } from '@/lib/i18n/i18n';
 import { LangSelect } from '../pages/controls/selects/lang_select';
+import { UserStatus } from '@/lib/std';
 
 const { Title } = Typography;
 
@@ -94,7 +95,7 @@ export default function Dashboard() {
   const [openConf, setOpenConf] = useState(false);
   const [isHostManager, setIsHostManager] = useState(false);
   const [hostToken, setHostToken] = useState('');
-  const { conf, getConf } = useVoceSpaceConf();
+  const { conf, getConf, checkHostToken } = useVoceSpaceConf();
 
   // 根据 Space 分组数据
   const groupedSpacesData = useMemo(() => {
@@ -150,7 +151,7 @@ export default function Dashboard() {
                   virtualEnabled: participant.virtual?.enabled || false,
                   during: countDuring(participant.startAt),
                   online: participant.online,
-                  isAuth: participant.isAuth
+                  isAuth: participant.isAuth,
                 });
               },
             );
@@ -383,12 +384,13 @@ export default function Dashboard() {
       dataIndex: 'status',
       key: 'status',
       width: 120,
-      render: (status: string) => <Tag color="blue">{status}</Tag>,
+      render: (status: string) => <Tag color="blue">{status === UserStatus.Online ? 'Online' : status}</Tag>,
     },
     {
       title: (
         <div className={styles.table_header}>
-          <SvgResource type="volume" svgSize={16} color="#ffffff"></SvgResource>{t('dashboard.active.table.volume')}
+          <SvgResource type="volume" svgSize={16} color="#ffffff"></SvgResource>
+          {t('dashboard.active.table.volume')}
         </div>
       ),
       dataIndex: 'volume',
@@ -403,7 +405,8 @@ export default function Dashboard() {
     {
       title: (
         <div className={styles.table_header}>
-          <SvgResource type="blur" svgSize={16} color="#ffffff"></SvgResource>{t('dashboard.active.table.blur')}
+          <SvgResource type="blur" svgSize={16} color="#ffffff"></SvgResource>
+          {t('dashboard.active.table.blur')}
         </div>
       ),
       dataIndex: 'blur',
@@ -522,17 +525,13 @@ export default function Dashboard() {
   const weeklyColumns = createLeaderboardColumns(t('dashboard.common.week'));
   const monthlyColumns = createLeaderboardColumns(t('dashboard.common.month'));
 
-  const confirmConfHandle = () => {
+  const confirmConfHandle = async () => {
     if (!isHostManager) {
-      // 验证hostToken
-      if (conf) {
-        if (hostToken === conf.hostToken) {
-          setIsHostManager(true);
-        } else {
-          messageApi.error(t('dashboard.conf.error.verify'));
-        }
+      const success = await checkHostToken(hostToken);
+      if (success) {
+        setIsHostManager(true);
       } else {
-        messageApi.error(t('dashboard.conf.error.not_loaded'));
+        messageApi.error(t('dashboard.conf.error.verify'));
       }
     } else {
       // 当修改后
@@ -543,9 +542,11 @@ export default function Dashboard() {
   };
 
   return (
-    <div className={styles.container} style={{position: "relative"}}>
+    <div className={styles.container} style={{ position: 'relative' }}>
       {contextHolder}
-      <div style={{position: "absolute", right:24, top: 16}}><LangSelect></LangSelect></div>
+      <div style={{ position: 'absolute', right: 24, top: 16 }}>
+        <LangSelect></LangSelect>
+      </div>
       <div style={{ marginBottom: 24 }}>
         <Title level={2}>VoceSpace Dashboard</Title>
         <Row gutter={16} style={{ marginBottom: 24 }}>

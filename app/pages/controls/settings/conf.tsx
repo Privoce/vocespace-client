@@ -218,13 +218,22 @@ export function ConfQulity({ isOwner, messageApi, space, onReload }: ConfQulityP
 
 export function useVoceSpaceConf() {
   const [conf, setConf] = useState<ReadableConf | null>(null);
-  const getConf = async () => {
-    const response = await api.getConf();
+  const getConf = async (hostToken?: string) => {
+    const response = await api.getConf(hostToken);
     if (response.ok) {
       setConf((await response.json()) as ReadableConf);
     }
   };
-  return { conf, getConf, setConf };
+  const checkHostToken = async (hostToken: string) => {
+    const response = await api.checkHostToken(hostToken);
+    if (response.ok) {
+      const { success } = await response.json();
+      return success;
+    }
+    return false;
+  };
+
+  return { conf, getConf, setConf, checkHostToken };
 }
 
 export interface UseRTCConfProps {
