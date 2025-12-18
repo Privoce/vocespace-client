@@ -171,11 +171,11 @@ export async function POST(request: NextRequest) {
       isAuth,
     );
     // 进行分析
-    const { isNewTask, timestamp } = await targetService.doAnalysisLine(screenShot, todos);
+    const { isNewTask, timestamp, update } = await targetService.doAnalysisLine(screenShot, todos);
     // 将分析结果存储到平台端
     // 如果userService是authenticated的，需要上传的到平台端
-    if (targetService.isAuth && timestamp) {
-      let screenShotToSend = isNewTask ? screenShot.data : undefined;
+    if (targetService.isAuth && update) {
+      let screenShotToSend = update ? screenShot.data : undefined;
       try {
         const res = targetService.getResult();
         if (res.lines.length !== 0) {

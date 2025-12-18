@@ -41,6 +41,15 @@ const storageUrl = (path: string) => {
   return `https://ngzobewgavfuvkrhhnou.supabase.co/storage/v1/object/public/ai_analysis/public/${path}.jpg`;
 };
 
+interface Section {
+  name: string;
+  timestamp: number;
+  content: string;
+  screenshot?: string;
+  sameshot?: string;
+  duration?: number;
+}
+
 export function AICutAnalysisMdTabs({
   style,
   showSettings,
@@ -59,21 +68,24 @@ export function AICutAnalysisMdTabs({
   const { t } = useI18n();
   const { localParticipant } = useLocalParticipant();
   // 生成结构化的内容，而不是纯 markdown 字符串
-  const contentSections = useMemo(() => {
+  const contentSections: Section[] = useMemo(() => {
     if (!result) return [];
 
     const flattenedLines = result.lines.flat();
-
+    console.warn('flattenedLines', flattenedLines);
     return flattenedLines.map((line: AICutAnalysisResLine) => {
-      const cutScreenShot = cutInstance
-        .getScreenshots()
-        .find((shot) => shot.timestamp === line.timestamp);
+      const screenShots = cutInstance.getScreenshots();
+      const cutScreenShot = screenShots.find((shot) => shot.timestamp === line.timestamp);
+      const sameScreenShot = line.same
+        ? screenShots.find((shot) => shot.timestamp === line.same)?.data || line.same.toString()
+        : undefined;
 
       return {
         name: line.name,
         timestamp: line.timestamp,
         content: line.content,
         screenshot: cutScreenShot?.data,
+        sameshot: sameScreenShot,
         duration: line.duration, // 如果用户启用了时间统计功能，需要显示
       };
     });
@@ -84,8 +96,6 @@ export function AICutAnalysisMdTabs({
       spent: spaceInfo.participants[userId]?.ai.cut.spent,
     };
   }, [spaceInfo, userId]);
-
-
 
   // 纯文本 markdown，用于复制
   const md = useMemo(() => {
@@ -250,34 +260,7 @@ export function AICutAnalysisMdTabs({
                 </div>
 
                 {/* 截图（直接渲染 img 标签） */}
-                {section.screenshot ? (
-                  <Image
-                    src={section.screenshot}
-                    alt="screenshot"
-                    style={{
-                      maxWidth: '320px',
-                      height: 'auto',
-                      borderRadius: '8px',
-                      marginTop: '4px',
-                      border: '1px solid #444',
-                    }}
-                  />
-                ) : isAuthed ? (
-                  <Image
-                    src={storageUrl(`${userId}_${section.timestamp}`)}
-                    alt="screenshot"
-                    style={{
-                      maxWidth: '320px',
-                      height: 'auto',
-                      borderRadius: '8px',
-                      marginTop: '4px',
-                      border: '1px solid #444',
-                    }}
-                  />
-                ) : (
-                  <></>
-                )}
-
+                <ScreenShot section={section} isAuthed={isAuthed} userId={userId} />
                 {/* 分隔线 */}
                 {index < contentSections.length - 1 && (
                   <hr style={{ border: 'none', borderTop: '1px solid #333', margin: '24px 0' }} />
@@ -288,5 +271,56 @@ export function AICutAnalysisMdTabs({
         )}
       </div>
     </div>
+  );
+}
+
+function ScreenShot({
+  section,
+  isAuthed,
+  userId,
+}: {
+  section: Section;
+  isAuthed: boolean;
+  userId: string;
+}) {
+  return (
+    <div className={styles.ai_analysis_md_screenshot}>
+      {section.screenshot ? (
+        <ScreenShotImage src={section.screenshot}></ScreenShotImage>
+      ) : isAuthed ? (
+        <ScreenShotImage src={storageUrl(`${userId}_${section.timestamp}`)}></ScreenShotImage>
+      ) : (
+        <></>
+      )}
+
+      {section.sameshot ? (
+        isAuthed ? (
+          <ScreenShotImage src={storageUrl(`${userId}_${section.sameshot}`)}></ScreenShotImage>
+        ) : (
+          <ScreenShotImage src={section.sameshot}></ScreenShotImage>
+        )
+      ) : (
+        <></>
+      )}
+    </div>
+  );
+}
+
+function ScreenShotImage({ src }: { src?: string }) {
+  if (!src) {
+    return <></>;
+  }
+  return (
+    <Image
+      src={src}
+      alt="screenshot"
+      style={{
+        flex: "1",
+        maxWidth: '320px',
+        height: 'auto',
+        borderRadius: '8px',
+        border: '1px solid #444',
+      }}
+    />
   );
 }

@@ -26,6 +26,11 @@ export interface AICutAnalysisResLine {
    * 花费的时间统计，单位分钟，当结果解析出含有same字段时需要处理
    */
   duration: number;
+  /**
+   * 与历史任务相似的时间戳，当AICutAnalysisBack.same字段不为0时会将本次的timestamp作为相似任务的时间戳
+   * 这样就可以获取了第二张图片的时间戳信息了
+   */
+  same?: number;
 }
 
 /**
@@ -347,6 +352,7 @@ export class AICutAnalysisService {
   ): Promise<{
     timestamp: number;
     isNewTask: boolean;
+    update: boolean;
   }> {
     const messages = this.buildImageAnalysisMessage(tg, todos);
     const data = await this.makeAIRequest(messages);
@@ -369,31 +375,45 @@ export class AICutAnalysisService {
           duration: this.FREQ, // 默认每张图片的时间统计为频率值
         };
       } else if (line.same !== 0) {
+        let update = false;
         // 如果same字段不为0，表示与历史任务基本没有变化，我们需要找到对应的历史任务，为那个任务增加时间统计
         const similarLine = this.result.lines.find((l) => l.timestamp === line.same);
         if (similarLine) {
           similarLine.duration += this.FREQ;
+          if (!similarLine.same) {
+            update = true;
+            similarLine.same = tg.timestamp;
+          }
         }
         // 不需要将当前任务加入结果中
         return {
           timestamp: tg.timestamp,
           isNewTask: false,
+          update,
         };
       } else if (line.name === '' && line.content === '') {
+        let update = false;
         // 如果name和content均为空字符串，表示与历史任务基本没有变化，但是没有提供same字段，这种情况找到最后一个任务进行时间统计累加
         const lastLine = this.result.lines[this.result.lines.length - 1];
         if (lastLine) {
           lastLine.duration += this.FREQ;
+          if (!lastLine.same) {
+            update = true;
+            lastLine.same = tg.timestamp;
+          }
         }
         // 不需要将当前任务加入结果中
         return {
           timestamp: tg.timestamp,
           isNewTask: false,
+          update,
         };
       } else {
         // 正常情况, 我们依然需要尝试从历史中查看是否有高度相似的任务，如果有则进行时间统计累加
-        let similar = compareSimilarLine(line, this.result.lines, this.FREQ);
-        if (similar) return { timestamp: tg.timestamp, isNewTask: false };
+        let { update, similar } = compareSimilarLine(line, this.result.lines, this.FREQ);
+        if (similar) {
+          return { timestamp: tg.timestamp, isNewTask: false, update };
+        }
 
         //转换为AICutAnalysisResLine结构体
         line = {
@@ -408,6 +428,7 @@ export class AICutAnalysisService {
       return {
         timestamp: tg.timestamp,
         isNewTask: true,
+        update: true,
       };
     }
 
@@ -589,7 +610,10 @@ const compareSimilarLine = (
   line: AICutAnalysisBack,
   historyLines: AICutAnalysisResLine[],
   freq: number,
-): boolean => {
+): {
+  update: boolean;
+  similar: boolean;
+} => {
   // 为 name 和 content 设置不同的阈值
   const nameThreshold = 0.6; // 名称相似度阈值 60%
   const contentThreshold = 0.5; // 内容相似度阈值 50%
@@ -601,8 +625,14 @@ const compareSimilarLine = (
     if (nameSimilarity >= nameThreshold && contentSimilarity >= contentThreshold) {
       // 找到相似的历史任务，进行时间统计累加
       histLine.duration += freq;
-      return true;
+      // 查看是否有same字段，如果没有则设置为当前时间戳
+      let update = false;
+      if (!histLine.same) {
+        update = true;
+        histLine.same = line.timestamp;
+      }
+      return { update, similar: true };
     }
   }
-  return false;
+  return { update: true, similar: false };
 };
