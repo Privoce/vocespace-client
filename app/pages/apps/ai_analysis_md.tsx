@@ -72,7 +72,6 @@ export function AICutAnalysisMdTabs({
     if (!result) return [];
 
     const flattenedLines = result.lines.flat();
-    console.warn('flattenedLines', flattenedLines);
     return flattenedLines.map((line: AICutAnalysisResLine) => {
       const screenShots = cutInstance.getScreenshots();
       const cutScreenShot = screenShots.find((shot) => shot.timestamp === line.timestamp);
