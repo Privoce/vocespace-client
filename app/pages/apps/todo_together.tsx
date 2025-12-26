@@ -89,6 +89,7 @@ export function TodoTogether({ spaceInfo, messageApi, space }: TodoTogetherProps
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   width: '100%',
+                  maxWidth: "290px"
                 }}
               >
                 {summary.firstTodoTitle || t('more.app.todo.together.empty')}

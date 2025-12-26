@@ -293,10 +293,12 @@ function ScreenShot({
       )}
 
       {section.sameshot ? (
-        isAuthed ? (
+        section.sameshot.startsWith('data:') ? (
+          <ScreenShotImage src={section.sameshot}></ScreenShotImage>
+        ) : isAuthed ? (
           <ScreenShotImage src={storageUrl(`${userId}_${section.sameshot}`)}></ScreenShotImage>
         ) : (
-          <ScreenShotImage src={section.sameshot}></ScreenShotImage>
+          <></>
         )
       ) : (
         <></>
@@ -314,7 +316,7 @@ function ScreenShotImage({ src }: { src?: string }) {
       src={src}
       alt="screenshot"
       style={{
-        flex: "1",
+        flex: '1',
         maxWidth: '320px',
         height: 'auto',
         borderRadius: '8px',
