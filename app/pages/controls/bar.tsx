@@ -473,7 +473,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             space: space.name,
           });
         }
-        console.warn(spaceInfo);
+        // console.warn(spaceInfo);
       } else {
         // participant request to start recording
         socket.emit('req_record', {
@@ -798,14 +798,13 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           <div className={styles.setting_container}>
             {space && (
               <Settings
+                updateSettings={updateSettings}
                 ref={settingsRef}
                 close={settingVis}
                 messageApi={messageApi}
                 space={space.name}
                 username={userChoices.username}
                 tab={{ key, setKey }}
-                // saveChanges={saveChanges}
-                setUserStatus={setUserStatus}
                 localParticipant={space.localParticipant}
                 spaceInfo={spaceInfo}
               ></Settings>

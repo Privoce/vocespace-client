@@ -19,7 +19,7 @@ import { RecordData, RecordResponse, useRecordingEnv } from '@/lib/std/recording
 import { ulid } from 'ulid';
 import { ReloadOutlined } from '@ant-design/icons';
 import { AppSettings } from './app';
-import { SettingState, SpaceInfo } from '@/lib/std/space';
+import { ParticipantSettings, SettingState, SpaceInfo } from '@/lib/std/space';
 import { AISettings } from './ai';
 
 export interface SettingsProps {
@@ -30,10 +30,10 @@ export interface SettingsProps {
     setKey: (e: TabKey) => void;
   };
   messageApi: MessageInstance;
-  setUserStatus?: (status: UserStatus | string) => Promise<void>;
   space: string;
   localParticipant: LocalParticipant;
   spaceInfo: SpaceInfo;
+  updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
 }
 
 export interface SettingsExports {
@@ -61,9 +61,8 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
       close,
       username: uname,
       tab: { key, setKey },
-      // saveChanges,
+      updateSettings,
       messageApi,
-      setUserStatus,
       space,
       localParticipant,
       spaceInfo,
@@ -146,6 +145,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
             messageApi={messageApi}
             spaceInfo={spaceInfo}
             localParticipant={localParticipant}
+            updateSettings={updateSettings}
           ></AISettings>
         ),
       },
