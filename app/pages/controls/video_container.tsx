@@ -218,6 +218,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   lang: locale,
                   extraction: conf.extraction,
                   isAuth: uState.isAuth,
+                  blur: conf.blur,
                 });
 
                 if (!response.ok) {

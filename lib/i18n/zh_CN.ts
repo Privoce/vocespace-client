@@ -70,8 +70,17 @@ export default {
       error: '复制失败，请手动复制',
     },
   },
+  work: {
+    title: '工作模式设置',
+    start: '开始工作',
+    desc: '开启工作模式后，系统会请求开启您的屏幕共享，应用工作设置并通过AI结合待办事项进行工作分析和记录，帮助您更好地进行工作管理。',
+  },
   ai: {
     cut: {
+      blur: {
+        title: '截图模糊度',
+        desc: '设置AI分析截图的模糊度，模糊度越高，截图内容越模糊，保护隐私性越强，模糊度不会影响AI分析，只会应用在云端保存和他人查看时的截图效果。',
+      },
       time: {
         start: '开始时间',
         duration: '持续时间(分钟)',
@@ -377,7 +386,7 @@ export default {
       manage: '管理成员',
       search: '搜索成员',
       manager: '管理员',
-      host: "房主",
+      host: '房主',
       wave: '打招呼',
       invite: {
         title: '邀请成员',
@@ -468,11 +477,11 @@ export default {
       },
       precheck: {
         desc: '要修改AI设置需要先输入host token进行验证，若您不知道host token，请联系软件部署者获取。',
-        placeholder: "请输入host token",
-        check: "验证",
+        placeholder: '请输入host token',
+        check: '验证',
         error: '验证失败，请检查后重新输入。',
         success: '验证成功，您现在可以修改AI设置。',
-      }
+      },
     },
     general: {
       title: '常规',
@@ -746,7 +755,7 @@ export default {
         },
         lang: '语言修改成功',
         transfer: '您已成功被转让身份',
-        set_manager: "您你被设置为管理员身份",
+        set_manager: '您你被设置为管理员身份',
       },
       file: {
         upload: '文件上传成功',

@@ -51,6 +51,7 @@ import { ChatMsgItem } from '@/lib/std/chat';
 import { AICutService } from '@/lib/ai/cut';
 import { AICutAnalysisService, AICutDeps, downloadMarkdown, Extraction } from '@/lib/ai/analysis';
 import { InfoCircleFilled } from '@ant-design/icons';
+import { Work, WorkModal } from './widgets/work';
 
 /** @public */
 export type ControlBarControls = {
@@ -525,6 +526,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [aiCutDeps, setAICutDeps] = React.useState<AICutDeps[]>(['screen', 'todo']);
     const [extraction, setExtraction] = React.useState<Extraction>('medium');
     const [cutFreq, setCutFreq] = React.useState(3);
+    const [cutBlur, setCutBlur] = React.useState(0.15);
     const onClickAI = async () => {
       setAICutModalOpen(true);
     };
@@ -549,7 +551,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         setIsServiceOpen(
           spaceInfo.participants[space.localParticipant.identity]?.ai.cut.enabled || false,
         );
-
+        setCutBlur(spaceInfo.participants[space.localParticipant.identity]?.ai.cut.blur || 0.15);
         setCutFreq(spaceInfo.ai.cut.freq || 3);
       }
     }, [space, spaceInfo]);
@@ -614,10 +616,15 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           spent: includeSpent,
           todo: includeTodo,
           extraction,
+          blur: cutBlur,
         },
         reload,
       );
     };
+
+    // --- work -----------------------------------------------------------------------------------------
+    const [workModalOpen, setWorkModalOpen] = React.useState(false);
+    const [isStartWork, setIsStartWork] = React.useState(false);
 
     React.useImperativeHandle(
       ref,
@@ -713,13 +720,23 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             </TrackToggle>
           )}
           {space && spaceInfo.participants && visibleControls.microphone && (
-            <Reaction
-              updateSettings={updateSettings}
-              space={space.name}
+            // <Reaction
+            //   updateSettings={updateSettings}
+            //   space={space.name}
+            //   size={controlSize}
+            //   controlWidth={controlWidth}
+            //   spaceInfo={spaceInfo}
+            // ></Reaction>
+
+            <Work
+              setOpenModal={setWorkModalOpen}
+              showText={showText}
               size={controlSize}
               controlWidth={controlWidth}
               spaceInfo={spaceInfo}
-            ></Reaction>
+              space={space.name}
+              updateSettings={updateSettings}
+            ></Work>
           )}
           {visibleControls.chat && !isMobile && (
             <ChatToggle
@@ -993,11 +1010,35 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                   <Radio.Button value="max">{t('ai.cut.extraction.max')}</Radio.Button>
                 </Radio.Group>
               </div>
+              <div className={styles.ai_cut_line}>
+                <span> {t('ai.cut.blur.title')}</span>
+                <Tooltip title={t('ai.cut.blur.desc')} trigger={['hover']}>
+                  <InfoCircleFilled></InfoCircleFilled>
+                </Tooltip>
+              </div>
+              <div style={{ width: '100%' }}>
+                <Slider
+                  min={0}
+                  max={1}
+                  step={0.01}
+                  value={cutBlur}
+                  onChange={(v) => setCutBlur(v)}
+                />
+              </div>
             </div>
           )}
 
           {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
         </Modal>
+        {/* ------------------ work ----------------------------------------------------- */}
+        {space && (
+          <WorkModal
+            open={workModalOpen}
+            setOpen={setWorkModalOpen}
+            isStartWork={isStartWork}
+            setIsStartWork={setIsStartWork}
+          ></WorkModal>
+        )}
       </div>
     );
   },

@@ -6,6 +6,7 @@ import { AICutAnalysisService, Extraction } from '@/lib/ai/analysis';
 import { getDefaultPrompts } from '@/lib/ai/load';
 import { convertPlatformToACARes, PlarformAICutAnalysis, platformAPI } from '@/lib/api/platform';
 import { todayTimeStamp } from '@/lib/std/space';
+import { blurBase64Image } from '@/lib/std/blur';
 
 const { ai } = getConfig();
 
@@ -160,6 +161,7 @@ export async function POST(request: NextRequest) {
       extraction,
       freq,
       isAuth,
+      blur,
     }: AnalysisRequestBody = await request.json();
     // 获取或创建用户服务实例
     const targetService = await getOrCreateUserService(
@@ -176,6 +178,10 @@ export async function POST(request: NextRequest) {
     // 如果userService是authenticated的，需要上传的到平台端
     if (targetService.isAuth && update) {
       let screenShotToSend = update ? screenShot.data : undefined;
+      // 如果需要模糊处理，则对图片进行模糊
+      if (screenShotToSend && blur && blur > 0) {
+        screenShotToSend = await blurBase64Image(screenShotToSend, blur);
+      }
       try {
         const res = targetService.getResult();
         if (res.lines.length !== 0) {

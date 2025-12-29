@@ -132,7 +132,7 @@ export function AICutAnalysisMdTabs({
   const cutParams = useMemo(() => {
     let realUserId = !userId ? localParticipant.identity : userId;
 
-    const { todo, spent, enabled, extraction } = spaceInfo.participants[realUserId]?.ai.cut;
+    const { todo, spent, enabled, extraction, blur } = spaceInfo.participants[realUserId]?.ai.cut;
     return {
       freq: spaceInfo.ai.cut.freq,
       spent: spent || false,
@@ -140,6 +140,7 @@ export function AICutAnalysisMdTabs({
       extraction,
       isSelf,
       enabled: enabled || false,
+      blur 
     };
   }, [spaceInfo, userId, localParticipant, isSelf]);
 
@@ -200,6 +201,7 @@ export function AICutAnalysisMdTabs({
                     spent: cutParams.spent,
                     todo: cutParams.todo,
                     extraction: cutParams.extraction,
+                    blur: cutParams.blur
                   });
               } else {
                 if (!localParticipant.isScreenShareEnabled) {
@@ -213,6 +215,7 @@ export function AICutAnalysisMdTabs({
                       spent: cutParams.spent,
                       todo: cutParams.todo,
                       extraction: cutParams.extraction,
+                      blur: cutParams.blur
                     });
                 }
               }

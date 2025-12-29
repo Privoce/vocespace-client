@@ -41,6 +41,13 @@ export interface AICutParticipantConf {
    * 提取内容配置的精细度
    */
   extraction: Extraction;
+  /**
+   * AI截图保存到云端的模糊度，取值0~1，值越大表示越模糊
+   * 对于隐私保护要求较高的用户，可以设置较高的模糊度
+   * 在看板上，会使用blur值来模糊图片，自己可以下载清晰图片，但别人使用看板查看时会被模糊
+   * 在云端则直接保存模糊后的图片
+   */
+  blur: number;
 }
 
 /**
@@ -218,7 +225,7 @@ export interface SpaceInfo {
    * 空间管理员ID列表，空间管理员可获得owner同等权限但无法对owner进行管理
    * owner可以将其他用户设置为管理员，每个空间最多5个管理员，管理员可以转让自己的身份
    * 管理员只能管理空间用户，无法删除空间，但可以更改部分空间设置
-   * 
+   *
    * 管理员可以管理用户的权限和应用：
    *  - 帮助修改用户的名称
    *  - 关闭/开启用户的麦克风和摄像头
@@ -227,9 +234,9 @@ export interface SpaceInfo {
    *  - 删除用户子房间
    *  - 设置用户声音/虚化
    *  - 强制用户离开空间
-   * 
+   *
    *  ---
-   * 
+   *
    * 管理员无法进行以下操作：
    *  - 删除空间
    *  - 转让空间所有权
@@ -474,6 +481,7 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
       spent: false,
       todo: true,
       extraction: 'medium',
+      blur: 0.15,
     },
   },
   online: true,
