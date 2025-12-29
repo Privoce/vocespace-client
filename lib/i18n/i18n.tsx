@@ -2,6 +2,7 @@
 
 import en from './en_US';
 import zh from './zh_CN';
+import ru from './ru_RU';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 // 定义翻译类型
@@ -20,6 +21,7 @@ const I18nContext = createContext<I18nContextType | undefined>(undefined);
 const translations = {
   en,
   zh,
+  ru,
 };
 
 interface I18nProviderProps {
@@ -28,10 +30,22 @@ interface I18nProviderProps {
 }
 
 export function I18nProvider({ children, initialLocale = 'en' }: I18nProviderProps) {
-  const [locale, setLocale] = useState(initialLocale);
+  const [locale, setLocale] = useState(() => {
+    return initialLocale;
+  });
 
   // 从 URL 或浏览器语言获取初始语言
   useEffect(() => {
+    // 首先尝试从localStorage中获取语言
+    if (typeof window !== 'undefined') {
+      const storedLocale = localStorage.getItem('locale');
+      if (storedLocale) {
+        setLocale(storedLocale);
+        return;
+      }
+    }
+
+    // 如果没有存储的语言，尝试从浏览器语言获取
     const browserLocale = navigator.language.split('-')[0];
     if (Object.keys(translations).includes(browserLocale)) {
       setLocale(browserLocale);
@@ -84,5 +98,9 @@ export const langOptions = [
   {
     value: 'zh',
     label: '简体中文',
+  },
+  {
+    value: 'ru',
+    label: 'Русский',
   },
 ];
