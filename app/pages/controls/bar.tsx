@@ -9,25 +9,12 @@ import {
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import {
-  Button,
-  Checkbox,
-  CheckboxOptionType,
-  Drawer,
-  GetProp,
-  Input,
-  message,
-  Modal,
-  notification,
-  Radio,
-  Slider,
-  Tooltip,
-} from 'antd';
+import { Button, Drawer, Input, message, Modal } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
 import { Settings, SettingsExports, TabKey } from './settings/settings';
-import { useRecoilState, waitForAll } from 'recoil';
+import { useRecoilState } from 'recoil';
 import {
   chatMsgState,
   RemoteTargetApp,
@@ -36,7 +23,7 @@ import {
   virtualMaskState,
 } from '@/app/[spaceName]/PageClientImpl';
 import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
-import { isMobile as is_moblie, isIos, isSpaceManager, UserStatus } from '@/lib/std';
+import { isMobile as is_moblie, isSpaceManager, UserStatus } from '@/lib/std';
 import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';
 import { ChatToggle } from './toggles/chat_toggle';
 import { MoreButton } from './toggles/more_button';
@@ -46,12 +33,10 @@ import { ParticipantManage } from '../participant/manage';
 import { api } from '@/lib/api';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
 import equal from 'fast-deep-equal';
-import { Reaction } from './widgets/reaction';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { AICutService } from '@/lib/ai/cut';
-import { AICutAnalysisService, AICutDeps, downloadMarkdown, Extraction } from '@/lib/ai/analysis';
-import { InfoCircleFilled } from '@ant-design/icons';
 import { Work, WorkModal } from './widgets/work';
+import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/ai';
 
 /** @public */
 export type ControlBarControls = {
@@ -522,52 +507,26 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     };
 
     // ai -----------------------------------------------------------------------------------------
-    const [isServiceOpen, setIsServiceOpen] = React.useState(false);
-    const [aiCutDeps, setAICutDeps] = React.useState<AICutDeps[]>(['screen', 'todo']);
-    const [extraction, setExtraction] = React.useState<Extraction>('medium');
-    const [cutFreq, setCutFreq] = React.useState(3);
-    const [cutBlur, setCutBlur] = React.useState(0.15);
+    const {
+      aiCutDeps,
+      setAICutDeps,
+      extraction,
+      setExtraction,
+      cutFreq,
+      setCutFreq,
+      cutBlur,
+      setCutBlur,
+      isServiceOpen,
+      setIsServiceOpen,
+      aiCutOptions,
+      aiCutOptionsChange,
+    } = useAICutAnalysisSettings({
+      space,
+      spaceInfo,
+    });
+
     const onClickAI = async () => {
       setAICutModalOpen(true);
-    };
-
-    React.useEffect(() => {
-      if (
-        space &&
-        space.localParticipant &&
-        spaceInfo.participants[space.localParticipant.identity]
-      ) {
-        const { spent, todo, extraction } =
-          spaceInfo.participants[space.localParticipant.identity]?.ai.cut;
-        const deps: AICutDeps[] = ['screen'];
-        if (spent) {
-          deps.push('spent');
-        }
-        if (todo) {
-          deps.push('todo');
-        }
-        setAICutDeps(deps);
-        setExtraction(extraction);
-        setIsServiceOpen(
-          spaceInfo.participants[space.localParticipant.identity]?.ai.cut.enabled || false,
-        );
-        setCutBlur(spaceInfo.participants[space.localParticipant.identity]?.ai.cut.blur || 0.15);
-        setCutFreq(spaceInfo.ai.cut.freq || 3);
-      }
-    }, [space, spaceInfo]);
-
-    const aiCutOptions: CheckboxOptionType<AICutDeps>[] = React.useMemo(() => {
-      return [
-        { label: t('ai.cut.share_screen'), value: 'screen' },
-        { label: t('ai.cut.share_todo'), value: 'todo' },
-        { label: t('ai.cut.share_time'), value: 'spent' },
-      ];
-    }, [t]);
-
-    const aiCutOptionsChange: GetProp<typeof Checkbox.Group, 'onChange'> = async (
-      checkedValues,
-    ) => {
-      setAICutDeps(checkedValues as AICutDeps[]);
     };
 
     const saveAICutServiceSettings = async () => {
@@ -819,7 +778,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                 ref={settingsRef}
                 close={settingVis}
                 messageApi={messageApi}
-                space={space.name}
+                space={space}
                 username={userChoices.username}
                 tab={{ key, setKey }}
                 localParticipant={space.localParticipant}
@@ -946,88 +905,22 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           cancelText={t('common.cancel')}
           onCancel={saveAICutServiceSettings}
         >
-          <div>{t('more.ai.desc')}</div>
-          <div className={styles.ai_cut_line}>
-            <div className={styles.ai_cut_line}>
-              <span> {t('ai.cut.open')}</span>
-            </div>
-            <div style={{ width: '100%' }}>
-              {space && (
-                <Radio.Group
-                  size="large"
-                  block
-                  value={isServiceOpen}
-                  onChange={(e) => setIsServiceOpen(e.target.value)}
-                >
-                  <Radio.Button value={true}>{t('common.open')}</Radio.Button>
-                  <Radio.Button value={false}>{t('common.close')}</Radio.Button>
-                </Radio.Group>
-              )}
-            </div>
-          </div>
-          {space?.localParticipant.identity === spaceInfo.ownerId && isServiceOpen && (
-            <>
-              {' '}
-              <div className={styles.ai_cut_line}>
-                <span> {t('ai.cut.freq')}</span>
-                <Tooltip title={t('ai.cut.freq_desc')} trigger={['hover']}>
-                  <InfoCircleFilled></InfoCircleFilled>
-                </Tooltip>
-              </div>{' '}
-              <Slider min={1} max={15} value={cutFreq} onChange={(v) => setCutFreq(v)} step={0.5} />
-            </>
-          )}
-          {isServiceOpen && (
-            <div className={styles.ai_cut_line}>
-              <div className={styles.ai_cut_line}>
-                <span> {t('ai.cut.source_dep')}</span>
-                <Tooltip title={t('ai.cut.source_dep_desc')} trigger={['hover']}>
-                  <InfoCircleFilled></InfoCircleFilled>
-                </Tooltip>
-              </div>
-              <div style={{ width: '100%' }}>
-                <Checkbox.Group
-                  value={aiCutDeps}
-                  options={aiCutOptions}
-                  onChange={aiCutOptionsChange}
-                />
-              </div>
-              <div className={styles.ai_cut_line}>
-                <span> {t('ai.cut.extraction.title')}</span>
-                <Tooltip title={t('ai.cut.extraction.desc')} trigger={['hover']}>
-                  <InfoCircleFilled></InfoCircleFilled>
-                </Tooltip>
-              </div>
-              <div style={{ width: '100%' }}>
-                <Radio.Group
-                  size="large"
-                  block
-                  value={extraction}
-                  onChange={(e) => setExtraction(e.target.value)}
-                >
-                  <Radio.Button value="easy">{t('ai.cut.extraction.easy')}</Radio.Button>
-                  <Radio.Button value="medium">{t('ai.cut.extraction.medium')}</Radio.Button>
-                  <Radio.Button value="max">{t('ai.cut.extraction.max')}</Radio.Button>
-                </Radio.Group>
-              </div>
-              <div className={styles.ai_cut_line}>
-                <span> {t('ai.cut.blur.title')}</span>
-                <Tooltip title={t('ai.cut.blur.desc')} trigger={['hover']}>
-                  <InfoCircleFilled></InfoCircleFilled>
-                </Tooltip>
-              </div>
-              <div style={{ width: '100%' }}>
-                <Slider
-                  min={0}
-                  max={1}
-                  step={0.01}
-                  value={cutBlur}
-                  onChange={(v) => setCutBlur(v)}
-                />
-              </div>
-            </div>
-          )}
-
+          <AICutAnalysisSettingsPanel
+            space={space}
+            spaceInfo={spaceInfo}
+            aiCutDeps={aiCutDeps}
+            setAICutDeps={setAICutDeps}
+            extraction={extraction}
+            setExtraction={setExtraction}
+            cutFreq={cutFreq}
+            setCutFreq={setCutFreq}
+            cutBlur={cutBlur}
+            setCutBlur={setCutBlur}
+            isServiceOpen={isServiceOpen}
+            setIsServiceOpen={setIsServiceOpen}
+            aiCutOptions={aiCutOptions}
+            aiCutOptionsChange={aiCutOptionsChange}
+          ></AICutAnalysisSettingsPanel>
           {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
         </Modal>
         {/* ------------------ work ----------------------------------------------------- */}

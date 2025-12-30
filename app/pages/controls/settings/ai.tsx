@@ -1,20 +1,20 @@
 'use client';
 
-import { AICutDeps, Extraction } from '@/lib/ai/analysis';
+import { AICutDeps } from '@/lib/ai/analysis';
 import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/i18n';
 import { isSpaceManager } from '@/lib/std';
-import { DEFAULT_VOCESPACE_CONFIG, ReadableConf, VocespaceConfig } from '@/lib/std/conf';
+import { DEFAULT_VOCESPACE_CONFIG, ReadableConf } from '@/lib/std/conf';
 import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import styles from '@/styles/controls.module.scss';
-import { InfoCircleFilled } from '@ant-design/icons';
-import { Button, Checkbox, CheckboxOptionType, GetProp, Input, Radio, Slider, Tooltip } from 'antd';
+import { Button, Input, Radio } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
-import { LocalParticipant } from 'livekit-client';
+import { LocalParticipant, Room } from 'livekit-client';
 import { useEffect, useMemo, useState } from 'react';
+import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from '../widgets/ai';
 
 export interface AISettingProps {
-  space: string;
+  space: Room;
   spaceInfo: SpaceInfo;
   localParticipant: LocalParticipant;
   messageApi: MessageInstance;
@@ -35,39 +35,23 @@ export function AISettings({
   const [url, setUrl] = useState<string>('');
   const [apiKey, setApiKey] = useState<string>('');
   const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
-  const [enabled, setEnabled] = useState<boolean>(spaceInfo.ai.cut.enabled);
-  const [cutFreq, setCutFreq] = useState<number>(spaceInfo.ai.cut.freq || 3);
-  const [aiCutDeps, setAICutDeps] = useState<AICutDeps[]>(['screen', 'todo']);
-  const [extraction, setExtraction] = useState<Extraction>(
-    spaceInfo.participants[localParticipant.identity].ai.cut.extraction || 'medium',
-  );
-  const aiCutOptions: CheckboxOptionType<AICutDeps>[] = useMemo(() => {
-    return [
-      { label: t('ai.cut.share_screen'), value: 'screen' },
-      { label: t('ai.cut.share_todo'), value: 'todo' },
-      { label: t('ai.cut.share_time'), value: 'spent' },
-    ];
-  }, [t]);
-
-  const aiCutOptionsChange: GetProp<typeof Checkbox.Group, 'onChange'> = async (checkedValues) => {
-    setAICutDeps(checkedValues as AICutDeps[]);
-  };
-
-  useEffect(() => {
-    if (space && localParticipant.identity && spaceInfo.participants[localParticipant.identity]) {
-      const { spent, todo, extraction } = spaceInfo.participants[localParticipant.identity]?.ai.cut;
-      const deps: AICutDeps[] = ['screen'];
-      if (spent) {
-        deps.push('spent');
-      }
-      if (todo) {
-        deps.push('todo');
-      }
-      setAICutDeps(deps);
-      setExtraction(extraction);
-      setCutFreq(spaceInfo.ai.cut.freq || 3);
-    }
-  }, [space, spaceInfo]);
+  const {
+    aiCutDeps,
+    setAICutDeps,
+    extraction,
+    setExtraction,
+    cutFreq,
+    setCutFreq,
+    cutBlur,
+    setCutBlur,
+    isServiceOpen: enabled,
+    setIsServiceOpen,
+    aiCutOptions,
+    aiCutOptionsChange,
+  } = useAICutAnalysisSettings({
+    space,
+    spaceInfo,
+  });
 
   const getConfig = async (preCheck: boolean, hostToken: string) => {
     if (preCheck && hostToken.trim() !== '') {
@@ -119,7 +103,7 @@ export function AISettings({
         }
       }
       if (spaceInfo.ai.cut.enabled !== enabled) {
-        const spaceResponse = await api.updateSpaceInfo(space, {
+        const spaceResponse = await api.updateSpaceInfo(space.name, {
           ai: {
             cut: {
               ...spaceInfo.ai.cut,
@@ -157,7 +141,7 @@ export function AISettings({
 
   const saveAICutSettings = async () => {
     if (cutFreq !== spaceInfo.ai.cut.freq) {
-      const response = await api.updateSpaceInfo(space, {
+      const response = await api.updateSpaceInfo(space.name, {
         ai: {
           cut: {
             ...spaceInfo.ai.cut,
@@ -186,6 +170,7 @@ export function AISettings({
             extraction: extraction,
             spent: aiCutDeps.includes('spent'),
             todo: aiCutDeps.includes('todo'),
+            blur: cutBlur,
           },
         },
       });
@@ -202,47 +187,25 @@ export function AISettings({
   return (
     <div className={`${styles.setting_box} ${styles.scroll_box}`}>
       <div className={styles.common_space}>{t('settings.ai.desc')}</div>
-      {localParticipant.identity === spaceInfo.ownerId && (
-        <>
-          <div className={styles.ai_cut_line}>
-            <span> {t('ai.cut.freq')}</span>
-            <Tooltip title={t('ai.cut.freq_desc')} trigger={['hover']}>
-              <InfoCircleFilled></InfoCircleFilled>
-            </Tooltip>
-          </div>{' '}
-          <Slider min={1} max={15} value={cutFreq} onChange={(v) => setCutFreq(v)} step={0.5} />
-        </>
-      )}
 
-      <div className={styles.ai_cut_line}>
-        <div className={styles.ai_cut_line}>
-          <span> {t('ai.cut.source_dep')}</span>
-          <Tooltip title={t('ai.cut.source_dep_desc')} trigger={['hover']}>
-            <InfoCircleFilled></InfoCircleFilled>
-          </Tooltip>
-        </div>
-        <div style={{ width: '100%' }}>
-          <Checkbox.Group value={aiCutDeps} options={aiCutOptions} onChange={aiCutOptionsChange} />
-        </div>
-        <div className={styles.ai_cut_line}>
-          <span> {t('ai.cut.extraction.title')}</span>
-          <Tooltip title={t('ai.cut.extraction.desc')} trigger={['hover']}>
-            <InfoCircleFilled></InfoCircleFilled>
-          </Tooltip>
-        </div>
-        <div style={{ width: '100%' }}>
-          <Radio.Group
-            size="large"
-            block
-            value={extraction}
-            onChange={(e) => setExtraction(e.target.value)}
-          >
-            <Radio.Button value="easy">{t('ai.cut.extraction.easy')}</Radio.Button>
-            <Radio.Button value="medium">{t('ai.cut.extraction.medium')}</Radio.Button>
-            <Radio.Button value="max">{t('ai.cut.extraction.max')}</Radio.Button>
-          </Radio.Group>
-        </div>
-      </div>
+      <AICutAnalysisSettingsPanel
+        space={space}
+        spaceInfo={spaceInfo}
+        aiCutDeps={aiCutDeps}
+        setAICutDeps={setAICutDeps}
+        extraction={extraction}
+        setExtraction={setExtraction}
+        cutFreq={cutFreq}
+        setCutFreq={setCutFreq}
+        cutBlur={cutBlur}
+        setCutBlur={setCutBlur}
+        isServiceOpen={enabled}
+        setIsServiceOpen={setIsServiceOpen}
+        aiCutOptions={aiCutOptions}
+        aiCutOptionsChange={aiCutOptionsChange}
+        isPanel={false}
+      ></AICutAnalysisSettingsPanel>
+
       <div className={styles.common_space}>
         <Button
           type="primary"
@@ -298,7 +261,7 @@ export function AISettings({
                 size="large"
                 block
                 value={enabled}
-                onChange={(e) => setEnabled(e.target.value)}
+                onChange={(e) => setIsServiceOpen(e.target.value)}
               >
                 <Radio.Button value={true}>{t('common.open')}</Radio.Button>
                 <Radio.Button value={false}>{t('common.close')}</Radio.Button>

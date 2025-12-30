@@ -42,12 +42,11 @@ export interface AICutParticipantConf {
    */
   extraction: Extraction;
   /**
-   * AI截图保存到云端的模糊度，取值0~1，值越大表示越模糊
-   * 对于隐私保护要求较高的用户，可以设置较高的模糊度
+   * AI截图保存到云端的模糊度，使用布尔值表示，false表示不模糊，true表示模糊，模糊只应用5%的模糊效果
    * 在看板上，会使用blur值来模糊图片，自己可以下载清晰图片，但别人使用看板查看时会被模糊
    * 在云端则直接保存模糊后的图片
    */
-  blur: number;
+  blur: boolean
 }
 
 /**
@@ -481,7 +480,7 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
       spent: false,
       todo: true,
       extraction: 'medium',
-      blur: 0.15,
+      blur: false,
     },
   },
   online: true,

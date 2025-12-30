@@ -11,7 +11,7 @@ export interface AnalysisRequestBody {
   lang: string;
   extraction: Extraction;
   isAuth: boolean;
-  blur: number; // 0-1 的模糊度值，0 表示不模糊，1 表示最大模糊
+  blur: boolean;
 }
 
 const BASE_URL = connect_endpoint('/api/ai');

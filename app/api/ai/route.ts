@@ -179,8 +179,8 @@ export async function POST(request: NextRequest) {
     if (targetService.isAuth && update) {
       let screenShotToSend = update ? screenShot.data : undefined;
       // 如果需要模糊处理，则对图片进行模糊
-      if (screenShotToSend && blur && blur > 0) {
-        screenShotToSend = await blurBase64Image(screenShotToSend, blur);
+      if (screenShotToSend && blur ) {
+        screenShotToSend = await blurBase64Image(screenShotToSend, 0.05);
       }
       try {
         const res = targetService.getResult();

@@ -6,7 +6,7 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { isMobile, UserStatus } from '@/lib/std';
 import { useRecoilState } from 'recoil';
 import { userState } from '@/app/[spaceName]/PageClientImpl';
-import { LocalParticipant } from 'livekit-client';
+import { LocalParticipant, Room } from 'livekit-client';
 import { LicenseControl } from './license';
 import { AudioSettings } from './audio';
 import { GeneralSettings } from './general';
@@ -30,7 +30,7 @@ export interface SettingsProps {
     setKey: (e: TabKey) => void;
   };
   messageApi: MessageInstance;
-  space: string;
+  space: Room;
   localParticipant: LocalParticipant;
   spaceInfo: SpaceInfo;
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
@@ -124,7 +124,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
         label: <TabItem type="setting" label={t('settings.general.title')}></TabItem>,
         children: (
           <GeneralSettings
-            space={space}
+            space={space.name}
             localParticipant={localParticipant}
             messageApi={messageApi}
             appendStatus={appendStatus}
@@ -178,7 +178,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
               setEnabled: setVirtualEnabled,
               compare,
               setCompare,
-              space,
+              space: space.name,
               localParticipant,
             }}
           ></VideoSettings>
@@ -191,7 +191,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
           <AppSettings
             spaceInfo={spaceInfo}
             localParticipant={localParticipant}
-            spaceName={space}
+            spaceName={space.name}
             messageApi={messageApi}
           ></AppSettings>
         ),
@@ -218,7 +218,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
             <RecordingTable
               messageApi={messageApi}
               env={env}
-              currentRoom={space}
+              currentRoom={space.name}
               recordsData={recordsData}
               setRecordsData={setRecordsData}
               expandable={true}
@@ -232,7 +232,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
         children: (
           <LicenseControl
             messageApi={messageApi}
-            space={space}
+            space={space.name}
             spaceInfo={spaceInfo}
             localParticipant={localParticipant}
           ></LicenseControl>

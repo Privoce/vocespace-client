@@ -1,6 +1,6 @@
 import { AICutAnalysisRes, AICutAnalysisResLine } from '@/lib/ai/analysis';
 import { Button, Empty, Image, Tag, Tooltip } from 'antd';
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
 import styles from '@/styles/apps.module.scss';
 import {
@@ -140,7 +140,7 @@ export function AICutAnalysisMdTabs({
       extraction,
       isSelf,
       enabled: enabled || false,
-      blur 
+      blur,
     };
   }, [spaceInfo, userId, localParticipant, isSelf]);
 
@@ -201,7 +201,7 @@ export function AICutAnalysisMdTabs({
                     spent: cutParams.spent,
                     todo: cutParams.todo,
                     extraction: cutParams.extraction,
-                    blur: cutParams.blur
+                    blur: cutParams.blur,
                   });
               } else {
                 if (!localParticipant.isScreenShareEnabled) {
@@ -215,7 +215,7 @@ export function AICutAnalysisMdTabs({
                       spent: cutParams.spent,
                       todo: cutParams.todo,
                       extraction: cutParams.extraction,
-                      blur: cutParams.blur
+                      blur: cutParams.blur,
                     });
                 }
               }
@@ -262,7 +262,12 @@ export function AICutAnalysisMdTabs({
                 </div>
 
                 {/* 截图（直接渲染 img 标签） */}
-                <ScreenShot section={section} isAuthed={isAuthed} userId={userId} />
+                <ScreenShot
+                  section={section}
+                  isAuthed={isAuthed}
+                  userId={userId}
+                  blur={spaceInfo.participants[userId]?.ai.cut.blur || false}
+                />
                 {/* 分隔线 */}
                 {index < contentSections.length - 1 && (
                   <hr style={{ border: 'none', borderTop: '1px solid #333', margin: '24px 0' }} />
@@ -280,15 +285,17 @@ function ScreenShot({
   section,
   isAuthed,
   userId,
+  blur,
 }: {
   section: Section;
   isAuthed: boolean;
   userId: string;
+  blur: boolean;
 }) {
   return (
     <div className={styles.ai_analysis_md_screenshot}>
       {section.screenshot ? (
-        <ScreenShotImage src={section.screenshot}></ScreenShotImage>
+        <ScreenShotImage src={section.screenshot} blur={blur}></ScreenShotImage>
       ) : isAuthed ? (
         <ScreenShotImage src={storageUrl(`${userId}_${section.timestamp}`)}></ScreenShotImage>
       ) : (
@@ -297,7 +304,7 @@ function ScreenShot({
 
       {section.sameshot ? (
         section.sameshot.startsWith('data:') ? (
-          <ScreenShotImage src={section.sameshot}></ScreenShotImage>
+          <ScreenShotImage src={section.sameshot} blur={blur}></ScreenShotImage>
         ) : isAuthed ? (
           <ScreenShotImage src={storageUrl(`${userId}_${section.sameshot}`)}></ScreenShotImage>
         ) : (
@@ -310,7 +317,16 @@ function ScreenShot({
   );
 }
 
-function ScreenShotImage({ src }: { src?: string }) {
+function ScreenShotImage({ src, blur = false }: { src?: string; blur?: boolean }) {
+  // blur是true就是5%的模糊效果
+  const blurValue = useMemo(() => {
+    if (!blur) {
+      return 0;
+    } else {
+      return 320 * 0.05; // 通过像素计算得到模糊值
+    }
+  }, [blur]);
+
   if (!src) {
     return <></>;
   }
@@ -324,6 +340,7 @@ function ScreenShotImage({ src }: { src?: string }) {
         height: 'auto',
         borderRadius: '8px',
         border: '1px solid #444',
+        filter: blur ? `blur(${blurValue * 100}px)` : 'none',
       }}
     />
   );
