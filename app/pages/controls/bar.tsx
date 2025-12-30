@@ -37,6 +37,7 @@ import { ChatMsgItem } from '@/lib/std/chat';
 import { AICutService } from '@/lib/ai/cut';
 import { Work, WorkModal } from './widgets/work';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/ai';
+import { DEFAULT_WINDOW_ADJUST_WIDTH } from '@/lib/std/window';
 
 /** @public */
 export type ControlBarControls = {
@@ -166,7 +167,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         setIsChatOpen(layoutContext?.widget.state?.showChat);
       }
     }, [layoutContext?.widget.state?.showChat]);
-    const isTooLittleSpace = useMediaQuery(`(max-width: ${isChatOpen ? 1000 : 720}px)`);
+    const isTooLittleSpace = useMediaQuery(`(max-width: ${isChatOpen ? 1000 : DEFAULT_WINDOW_ADJUST_WIDTH}px)`);
 
     const defaultVariation = isTooLittleSpace ? 'minimal' : 'verbose';
     variation ??= defaultVariation;
@@ -192,7 +193,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       [variation],
     );
     const showText = React.useMemo(() => {
-      if (controlWidth < 720) {
+      if (controlWidth < DEFAULT_WINDOW_ADJUST_WIDTH) {
         return false;
       } else {
         return variation === 'textOnly' || variation === 'verbose';

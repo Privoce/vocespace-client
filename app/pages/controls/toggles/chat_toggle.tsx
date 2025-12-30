@@ -30,7 +30,7 @@ export function ChatToggle({
     setIsDot(false);
   };
   const showTextOrHide = useMemo(() => {
-    return ViewAdjusts(controlWidth).w720 ? false : showText;
+    return ViewAdjusts(controlWidth).w960 ? false : showText;
   }, [controlWidth]);
 
   return (

@@ -71,8 +71,17 @@ export default {
       error: 'Copying failed, please copy manually',
     },
   },
+  work: {
+    title: 'Work Mode',
+    start: 'Start Working',
+    desc: 'After enabling work mode, the system will request to start your screen sharing, apply work settings, and use AI combined with to-do items for work analysis and recording to help you better manage your work.',
+  },
   ai: {
     cut: {
+      blur: {
+        title: 'Screenshot Blur',
+        desc: 'Sets the final display blur level of AI analysis screenshots. The blur level does not affect AI analysis and is only applied to screenshots saved in the cloud and viewed by others.',
+      },
       time: {
         start: 'Start Time',
         duration: 'Duration (minutes)',

@@ -52,7 +52,7 @@ export function MoreButtonInner({
   const { t } = useI18n();
 
   const showTextOrHide = useMemo(() => {
-    return ViewAdjusts(controlWidth).w720 ? false : showText;
+    return ViewAdjusts(controlWidth).w960 ? false : showText;
   }, [controlWidth]);
 
   const { localParticipant } = useLocalParticipant();

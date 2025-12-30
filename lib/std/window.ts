@@ -48,3 +48,5 @@ export const ViewAdjusts = (view: number) => {
     w1920: isAdjustWindowWhen(1920, view),
   };
 };
+
+export const DEFAULT_WINDOW_ADJUST_WIDTH = 960;

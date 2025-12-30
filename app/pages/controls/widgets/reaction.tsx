@@ -31,7 +31,7 @@ export function Reaction({
   const { t } = useI18n();
   const { localParticipant } = useLocalParticipant();
   const showTextOrHide = useMemo(() => {
-    return ViewAdjusts(controlWidth).w720 ? false : showText;
+    return ViewAdjusts(controlWidth).w960 ? false : showText;
   }, [controlWidth]);
 
   /**
