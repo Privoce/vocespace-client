@@ -71,7 +71,7 @@ import {
   SpaceTodo,
   todayTimeStamp,
 } from '@/lib/std/space';
-import { FlotButton, FlotLayout } from '../apps/flot';
+import { FlotButton, FlotLayout, FlotLayoutExports } from '../apps/flot';
 import { api } from '@/lib/api';
 import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
 import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
@@ -113,6 +113,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     ref,
   ) => {
     const space = useMaybeRoomContext();
+    const FlotLayoutRef = useRef<FlotLayoutExports>(null);
     const [init, setInit] = useState(true);
     const { t, locale } = useI18n();
     const [uState, setUState] = useRecoilState(userState);
@@ -1269,7 +1270,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         )}
         {showFlot && space && settings.participants[space.localParticipant.identity] && (
           <FlotLayout
-            space={space.name}
+            ref={FlotLayoutRef}
+            space={space.name}  
             messageApi={messageApi}
             openApp={openApp}
             spaceInfo={settings}
@@ -1392,6 +1394,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   toRenameSettings={toSettingGeneral}
                   startOrStopAICutAnalysis={startOrStopAICutAnalysis}
                   openAIServiceAskNote={openAIServiceAskNote}
+                  downloadAIMdReport={FlotLayoutRef.current?.downloadAIMdReport}
                 ></Controls>
               </div>
               {SettingsComponent && (

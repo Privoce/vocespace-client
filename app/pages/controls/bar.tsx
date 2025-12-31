@@ -35,7 +35,7 @@ import { SizeType } from 'antd/es/config-provider/SizeContext';
 import equal from 'fast-deep-equal';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { AICutService } from '@/lib/ai/cut';
-import { Work, WorkModal } from './widgets/work';
+import { useWork, Work, WorkModal } from './widgets/work';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/ai';
 import { DEFAULT_WINDOW_ADJUST_WIDTH } from '@/lib/std/window';
 
@@ -78,6 +78,7 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
     reload?: boolean,
   ) => Promise<void>;
   openAIServiceAskNote: () => void;
+  downloadAIMdReport?: () => Promise<void>;
 }
 
 export interface ControlBarExport {
@@ -123,6 +124,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       toRenameSettings,
       startOrStopAICutAnalysis,
       openAIServiceAskNote,
+      downloadAIMdReport,
       ...props
     }: ControlBarProps,
     ref,
@@ -167,7 +169,9 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         setIsChatOpen(layoutContext?.widget.state?.showChat);
       }
     }, [layoutContext?.widget.state?.showChat]);
-    const isTooLittleSpace = useMediaQuery(`(max-width: ${isChatOpen ? 1000 : DEFAULT_WINDOW_ADJUST_WIDTH}px)`);
+    const isTooLittleSpace = useMediaQuery(
+      `(max-width: ${isChatOpen ? 1000 : DEFAULT_WINDOW_ADJUST_WIDTH}px)`,
+    );
 
     const defaultVariation = isTooLittleSpace ? 'minimal' : 'verbose';
     variation ??= defaultVariation;
@@ -583,8 +587,29 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     };
 
     // --- work -----------------------------------------------------------------------------------------
-    const [workModalOpen, setWorkModalOpen] = React.useState(false);
-    const [isStartWork, setIsStartWork] = React.useState(false);
+    const {
+      openModal: workModalOpen,
+      setOpenModal: setWorkModalOpen,
+      enabled: workEnabled,
+      setEnabeled: setWorkEnabled,
+      isUseAI,
+      setIsUseAI,
+      isSync,
+      setIsSync,
+      videoBlur,
+      setVideoBlur,
+      screenBlur,
+      setScreenBlur,
+      handleWorkMode,
+      startOrStopWork,
+    } = useWork({
+      space,
+      spaceInfo,
+      messageApi,
+      startOrStopAICutAnalysis,
+      openAIServiceAskNote,
+      downloadAIMdReport,
+    });
 
     React.useImperativeHandle(
       ref,
@@ -689,13 +714,15 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             // ></Reaction>
 
             <Work
+              isStartWork={workEnabled}
+              setIsStartWork={setWorkEnabled}
               setOpenModal={setWorkModalOpen}
               showText={showText}
               size={controlSize}
               controlWidth={controlWidth}
               spaceInfo={spaceInfo}
               space={space.name}
-              updateSettings={updateSettings}
+              startOrStopWork={startOrStopWork}
             ></Work>
           )}
           {visibleControls.chat && !isMobile && (
@@ -927,10 +954,21 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         {/* ------------------ work ----------------------------------------------------- */}
         {space && (
           <WorkModal
+            space={space}
+            spaceInfo={spaceInfo}
             open={workModalOpen}
             setOpen={setWorkModalOpen}
-            isStartWork={isStartWork}
-            setIsStartWork={setIsStartWork}
+            isStartWork={workEnabled}
+            setIsStartWork={setWorkEnabled}
+            isUseAI={isUseAI}
+            setIsUseAI={setIsUseAI}
+            isSync={isSync}
+            setIsSync={setIsSync}
+            videoBlur={videoBlur}
+            setVideoBlur={setVideoBlur}
+            screenBlur={screenBlur}
+            setScreenBlur={setScreenBlur}
+            handleWorkMode={handleWorkMode}
           ></WorkModal>
         )}
       </div>

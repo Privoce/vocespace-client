@@ -46,8 +46,37 @@ export interface AICutParticipantConf {
    * 在看板上，会使用blur值来模糊图片，自己可以下载清晰图片，但别人使用看板查看时会被模糊
    * 在云端则直接保存模糊后的图片
    */
-  blur: boolean
+  blur: boolean;
 }
+
+/**
+ * Work mode related configuration for participants
+ * 工作模式相关配置
+ * - enabled: 是否开启工作模式
+ * - videoBlur: 视频模糊度
+ * - screenBlur: 屏幕分享模糊度
+ * 其中 videoBlur 和 screenBlur 用于存储用户在开启工作模式前的模糊度设置，用于关闭工作模式时恢复
+ */
+export interface ParticipantWorkConf {
+  /**
+   * 是否开启工作模式, 在space中表示空间是否开启工作模式（目前没有作用）
+   */
+  enabled: boolean;
+  /**
+   * 视频模糊度, 在这里是存储用户原先的模糊度设置
+   */
+  videoBlur: number;
+  /**
+   * 屏幕分享模糊度，在这里是存储用户原先的模糊度设置
+   */
+  screenBlur: number;
+}
+
+export const DEFAULT_PARTICIPANT_WORK_CONF: ParticipantWorkConf = {
+  enabled: false,
+  videoBlur: 0.0,
+  screenBlur: 0.0,
+};
 
 /**
  * Participant settings in Space
@@ -144,6 +173,10 @@ export interface ParticipantSettings {
    * 是否认证通过
    */
   isAuth: boolean;
+  /**
+   * 是否开启了工作模式
+   */
+  work: ParticipantWorkConf;
 }
 
 export interface SpaceTimeRecord {
@@ -206,6 +239,29 @@ export interface SpaceAIConf {
     freq: number; // 截图频率，单位分钟
   };
 }
+
+/**
+ * 工作模式相关配置
+ */
+export interface SpaceWorkConf extends ParticipantWorkConf {
+  /**
+   * 是否开启AI分析，开启后每个开始工作模式的用户都会自动启动AI分析
+   * 当然，用户可以选择开启后手动关闭AI分析
+   */
+  useAI: boolean;
+  /**
+   * 同步的配置项
+   * - 视频模糊度
+   * - 屏幕分享模糊度
+   */
+  sync: boolean;
+}
+
+export const DEFAULT_SPACE_WORK_CONF: SpaceWorkConf = {
+  ...DEFAULT_PARTICIPANT_WORK_CONF,
+  useAI: true,
+  sync: true,
+};
 
 export interface SpaceInfo {
   participants: {
@@ -274,6 +330,11 @@ export interface SpaceInfo {
    * 空间的AI相关配置
    */
   ai: SpaceAIConf;
+  /**
+   * 工作模式相关配置
+   *
+   */
+  work: SpaceWorkConf;
 }
 
 export interface TodoItem {
@@ -452,10 +513,11 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
       freq: 5,
     },
   },
+  work: DEFAULT_SPACE_WORK_CONF,
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
-  version: '0.4.10',
+  version: '0.5.0',
   name: '',
   volume: 100,
   blur: 0.0,
@@ -485,6 +547,7 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   },
   online: true,
   isAuth: false,
+  work: DEFAULT_PARTICIPANT_WORK_CONF,
 };
 
 /**

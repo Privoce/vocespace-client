@@ -2,11 +2,16 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { CopyOutlined } from '@ant-design/icons';
 import { Tooltip } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
+import { forwardRef, useImperativeHandle } from 'react';
 
 export interface CopyButtonProps {
   text: string;
   messageApi: MessageInstance;
   onExtraCopy?: () => void;
+}
+
+export interface CopyButtonExports {
+  copyToClipboard: () => Promise<void>;
 }
 
 /**
@@ -21,28 +26,34 @@ export interface CopyButtonProps {
  * @param param0
  * @returns
  */
-export function CopyButton({ text, messageApi, onExtraCopy }: CopyButtonProps) {
-  const { t } = useI18n();
+export const CopyButton = forwardRef<CopyButtonExports, CopyButtonProps>(
+  ({ text, messageApi, onExtraCopy }: CopyButtonProps, ref) => {
+    const { t } = useI18n();
 
-  const copyToClipboard = async () => {
-    try {
-      await navigator.clipboard.writeText(text);
-      messageApi.success(t('common.copy.success'));
-    } catch (e) {
-      messageApi.error(t('common.copy.error'));
-    }
-  };
+    const copyToClipboard = async () => {
+      try {
+        await navigator.clipboard.writeText(text);
+        messageApi.success(t('common.copy.success'));
+      } catch (e) {
+        messageApi.error(t('common.copy.error'));
+      }
+    };
 
-  return (
-    <Tooltip title={t('more.app.todo.copy')}>
-      <CopyOutlined
-        style={{ fontSize: 16, cursor: 'pointer' }}
-        onClick={(e) => {
-          e.stopPropagation();
-          copyToClipboard();
-          onExtraCopy && onExtraCopy();
-        }}
-      ></CopyOutlined>
-    </Tooltip>
-  );
-}
+    useImperativeHandle(ref, () => ({
+      copyToClipboard,
+    }));
+
+    return (
+      <Tooltip title={t('more.app.todo.copy')}>
+        <CopyOutlined
+          style={{ fontSize: 16, cursor: 'pointer' }}
+          onClick={(e) => {
+            e.stopPropagation();
+            copyToClipboard();
+            onExtraCopy && onExtraCopy();
+          }}
+        ></CopyOutlined>
+      </Tooltip>
+    );
+  },
+);

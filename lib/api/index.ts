@@ -26,7 +26,8 @@ import {
   updateSpaceInfo,
   deleteTodo,
   allowGuest,
-  transOrSetOwnerManager
+  transOrSetOwnerManager,
+  handleWorkMode
 } from './space';
 
 export const api = {
@@ -53,6 +54,7 @@ export const api = {
   deleteTodo,
   transOrSetOwnerManager,
   checkHostToken,
+  handleWorkMode,
   // ---- chat api --------
   fetchLinkPreview,
   getChatMsg,

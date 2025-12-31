@@ -21,6 +21,7 @@ import {
   SpaceTimer,
   SpaceCountdown,
   SpaceTodo,
+  DEFAULT_PARTICIPANT_WORK_CONF,
 } from '@/lib/std/space';
 import { RoomServiceClient } from 'livekit-server-sdk';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
@@ -39,6 +40,7 @@ import {
   UpdateSpaceAppSyncBody,
   UpdateSpaceParticipantBody,
   UploadSpaceAppBody,
+  WorkModeBody,
 } from '@/lib/api/space';
 import { UpdateRecordBody } from '@/lib/api/record';
 import {
@@ -1129,6 +1131,48 @@ export async function POST(request: NextRequest) {
     const isUpdateAllowGuest = request.nextUrl.searchParams.get('allowGuest') === 'update';
     const isTransfer = request.nextUrl.searchParams.get('transfer') === 'true';
     const isAuthManage = request.nextUrl.searchParams.get('auth') === 'manage';
+    const mode = request.nextUrl.searchParams.get('mode');
+    // 开启/关闭 工作模式 -------------------------------------------------------------------------
+    if (mode === 'work') {
+      const { spaceName, participantId, workType }: WorkModeBody = await request.json();
+      // 获取空间信息和用户信息
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      const participant = spaceInfo.participants[participantId];
+      if (!participant) {
+        return NextResponse.json({ error: 'Participant not found' }, { status: 404 });
+      }
+      // 先检测当前用户的work和传入的workType是否一致，如果一致则直接返回成功，因为已经是这个状态了
+      if (workType === participant.work.enabled) {
+        return NextResponse.json({ success: true, workType }, { status: 200 });
+      }
+
+      // 如果是关闭工作模式
+      // 通过用户的work结构中的配置还原用户的视频模糊度和屏幕模糊度，并设置enabled字段为false
+      if (!workType) {
+        participant.blur = participant.work.videoBlur;
+        participant.screenBlur = participant.work.screenBlur;
+        // 将work结构设置为DEFAULT
+        participant.work = DEFAULT_PARTICIPANT_WORK_CONF;
+        await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+        return NextResponse.json({ success: true, workType }, { status: 200 });
+      } else {
+        // 如果是开启工作模式
+        // 将当前用户的work结构中的enabled字段设置为true，并根据配置设置用户的视频模糊度和屏幕模糊度
+        participant.work.enabled = true;
+        participant.work.videoBlur = participant.blur;
+        participant.work.screenBlur = participant.screenBlur;
+        // 设置用户的视频模糊度和屏幕模糊度为工作模式下的配置
+        if (spaceInfo.work.sync) {
+          participant.blur = spaceInfo.work.videoBlur;
+          participant.screenBlur = spaceInfo.work.screenBlur;
+        }
+        await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+        return NextResponse.json({ success: true, workType }, { status: 200 });
+      }
+    }
     // 用户身份处理 -----------------------------------------------------------------------------
     if (isSpace && isAuthManage) {
       const { spaceName, participantId, replacedId }: TransOrSetOMBody = await request.json();

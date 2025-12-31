@@ -225,10 +225,10 @@ export const transOrSetOwnerManager = async (
   spaceName: string,
   participantId: string,
   replacedId: string,
-  isTransfer: boolean
+  isTransfer: boolean,
 ) => {
   const url = new URL(SPACE_API, window.location.origin);
-  url.searchParams.append("transfer", isTransfer ? "true" : "false");
+  url.searchParams.append('transfer', isTransfer ? 'true' : 'false');
   url.searchParams.append('space', 'true');
   url.searchParams.append('auth', 'manage');
   return await fetch(url.toString(), {
@@ -240,7 +240,7 @@ export const transOrSetOwnerManager = async (
       replacedId,
     } as TransOrSetOMBody),
   });
-}
+};
 
 /**
  * 更新空间参与者的设置
@@ -445,3 +445,28 @@ export const getUserMeta = async (userId: string | undefined) => {
   return await fetch(url.toString());
 };
 
+
+export interface WorkModeBody {
+  spaceName: string;
+  participantId: string;
+  workType: boolean;
+}
+
+export const handleWorkMode = async (
+  spaceName: string,
+  participantId: string,
+  workType: boolean,
+) => {
+  const url = new URL(SPACE_API, window.location.origin);
+
+  url.searchParams.append('mode', 'work');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      spaceName,
+      participantId,
+      workType,
+    } as WorkModeBody),
+  });
+};

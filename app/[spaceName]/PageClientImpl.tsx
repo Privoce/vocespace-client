@@ -214,7 +214,7 @@ export function PageClientImpl(props: {
     const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
     if (storedSettingsStr) {
       const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
-      if (storedSettings?.version !== '0.4.10') {
+      if (storedSettings?.version !== '0.5.0') {
         // 版本不匹配/不存在，直接删除
         localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
         localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
