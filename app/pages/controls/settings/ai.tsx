@@ -12,6 +12,8 @@ import { MessageInstance } from 'antd/es/message/interface';
 import { LocalParticipant, Room } from 'livekit-client';
 import { useEffect, useMemo, useState } from 'react';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from '../widgets/ai';
+import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { WsBase } from '@/lib/std/device';
 
 export interface AISettingProps {
   space: Room;
@@ -140,11 +142,11 @@ export function AISettings({
   };
 
   const saveAICutSettings = async () => {
-    if (cutFreq !== spaceInfo.ai.cut.freq) {
+    if (cutFreq !== spaceInfo.ai.cut.freq || enabled !== spaceInfo.ai.cut.enabled) {
       const response = await api.updateSpaceInfo(space.name, {
         ai: {
           cut: {
-            ...spaceInfo.ai.cut,
+            enabled: enabled,
             freq: cutFreq,
           },
         },
@@ -182,6 +184,10 @@ export function AISettings({
     }
 
     messageApi.success(t('settings.ai.update.success'));
+
+    socket.emit('update_user_status', {
+      space: space.name,
+    } as WsBase);
   };
 
   return (

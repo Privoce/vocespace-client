@@ -258,6 +258,9 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           await space.localParticipant?.setMetadata(JSON.stringify({ name: newName }));
           await space.localParticipant.setName(newName);
           messageApi.success(t('msg.success.user.username.change'));
+          await updateSettings({
+            name: newName,
+          });
         } else if (newName == (space.localParticipant?.name || space.localParticipant.identity)) {
         } else {
           messageApi.error(t('msg.error.user.username.change'));
@@ -704,7 +707,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                 (isScreenShareEnabled ? t('common.stop_share') : t('common.share_screen'))}
             </TrackToggle>
           )}
-          {space && spaceInfo.participants && visibleControls.microphone && (
+          {space && visibleControls.microphone && spaceInfo.ai.cut.enabled && (
             // <Reaction
             //   updateSettings={updateSettings}
             //   space={space.name}
@@ -969,6 +972,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             screenBlur={screenBlur}
             setScreenBlur={setScreenBlur}
             handleWorkMode={handleWorkMode}
+            updateSettings={updateSettings}
           ></WorkModal>
         )}
       </div>

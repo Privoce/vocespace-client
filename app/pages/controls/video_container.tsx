@@ -322,9 +322,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       // 完成初始化并没有询问过用户时显示弹窗并询问
       if (
         !init &&
-        (settings.ai.cut.enabled === undefined
-          ? !noteStateForAICutService.hasAsked
-          : !settings.ai.cut.enabled) &&
+        (settings.ai.cut.enabled === undefined ? !noteStateForAICutService.hasAsked : false) &&
         !isMobile()
       ) {
         openAIServiceAskNote();
@@ -1271,7 +1269,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         {showFlot && space && settings.participants[space.localParticipant.identity] && (
           <FlotLayout
             ref={FlotLayoutRef}
-            space={space.name}  
+            space={space.name}
             messageApi={messageApi}
             openApp={openApp}
             spaceInfo={settings}

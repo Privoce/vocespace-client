@@ -68,7 +68,8 @@ export const useAICutAnalysisSettings = ({
       setAICutDeps(deps);
       setExtraction(extraction);
       setIsServiceOpen(
-        spaceInfo.participants[space.localParticipant.identity]?.ai.cut.enabled || false,
+        // spaceInfo.participants[space.localParticipant.identity]?.ai.cut.enabled || false,
+        spaceInfo.ai.cut.enabled || false,
       );
       setCutBlur(blur);
       setCutFreq(spaceInfo.ai.cut.freq || 3);
@@ -123,7 +124,7 @@ export function AICutAnalysisSettingsPanel({
   return (
     <div>
       <div>{t('more.ai.desc')}</div>
-      {isPanel && (
+      {!isPanel && (
         <div className={styles.ai_cut_line}>
           <div className={styles.ai_cut_line}>
             <span> {t('ai.cut.open')}</span>
@@ -143,6 +144,8 @@ export function AICutAnalysisSettingsPanel({
           </div>
         </div>
       )}
+
+
       {space?.localParticipant.identity === spaceInfo.ownerId && showSettings && (
         <>
           {' '}

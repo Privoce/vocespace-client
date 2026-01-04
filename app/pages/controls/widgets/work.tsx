@@ -14,6 +14,7 @@ import { MessageInstance } from 'antd/es/message/interface';
 import equal from 'fast-deep-equal';
 import { isSpaceManager } from '@/lib/std';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './ai';
 
 export interface UseWorkProps {
   spaceInfo: SpaceInfo;
@@ -125,43 +126,48 @@ export const useWork = ({
     } as WsBase);
   };
 
-  const handleWorkMode = useCallback(async () => {
-    if (!space) return;
+  const handleWorkMode = useCallback(
+    async (startWork?: boolean) => {
+      if (!space) return;
 
-    const work = {
+      let enabledWork = startWork === undefined ? enabled : startWork;
+
+      const work = {
+        enabled: enabledWork,
+        useAI: isUseAI,
+        sync: isSync,
+        videoBlur,
+        screenBlur,
+      };
+
+      // 检查是否有更改
+      if (!equal(spaceInfo.work, work)) {
+        const response = await api.updateSpaceInfo(space.name, {
+          work,
+        });
+
+        if (!response.ok) {
+          messageApi.error(t('work.save.error'));
+          return;
+        }
+        messageApi.success(t('work.save.success'));
+      }
+      // 处理工作模式的开启和关闭
+      await startOrStopWork(enabledWork);
+    },
+    [
       enabled,
-      useAI: isUseAI,
-      sync: isSync,
+      isUseAI,
+      isSync,
       videoBlur,
       screenBlur,
-    };
-
-    // 检查是否有更改
-    if (!equal(spaceInfo.work, work)) {
-      const response = await api.updateSpaceInfo(space.name, {
-        work,
-      });
-
-      if (!response.ok) {
-        messageApi.error(t('work.save.error'));
-        return;
-      }
-      messageApi.success(t('work.save.success'));
-    }
-    // 处理工作模式的开启和关闭
-    await startOrStopWork(enabled);
-  }, [
-    enabled,
-    isUseAI,
-    isSync,
-    videoBlur,
-    screenBlur,
-    space,
-    spaceInfo,
-    messageApi,
-    t,
-    startOrStopWork,
-  ]);
+      space,
+      spaceInfo,
+      messageApi,
+      t,
+      startOrStopWork,
+    ],
+  );
 
   return {
     openModal,
@@ -203,6 +209,10 @@ export function Work({
   isStartWork,
   setIsStartWork,
 }: WorkProps) {
+  if (!spaceInfo.ai.cut.enabled) {
+    return <></>;
+  }
+
   const { t } = useI18n();
   const { localParticipant } = useLocalParticipant();
   const showTextOrHide = useMemo(() => {
@@ -268,7 +278,8 @@ export interface WorkModalProps {
   screenBlur: number;
   setScreenBlur: (value: number) => void;
   spaceInfo: SpaceInfo;
-  handleWorkMode: () => Promise<void>;
+  handleWorkMode: (start?: boolean) => Promise<void>;
+  updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
 }
 
 export function WorkModal({
@@ -287,17 +298,82 @@ export function WorkModal({
   space,
   spaceInfo,
   handleWorkMode,
+  updateSettings,
 }: WorkModalProps) {
   const { t } = useI18n();
 
+  const {
+    aiCutDeps,
+    setAICutDeps,
+    extraction,
+    setExtraction,
+    cutFreq,
+    setCutFreq,
+    cutBlur,
+    setCutBlur,
+    isServiceOpen,
+    setIsServiceOpen,
+    aiCutOptions,
+    aiCutOptionsChange,
+  } = useAICutAnalysisSettings({
+    space,
+    spaceInfo,
+  });
+
   const isManager = useMemo(() => {
-    return isSpaceManager(spaceInfo, space?.localParticipant.identity || '');
+    return isSpaceManager(spaceInfo, space?.localParticipant.identity || '').isManager;
   }, [space, spaceInfo]);
+
+  const saveAICutSettings = async () => {
+    if (!space) return;
+
+    if (cutFreq !== spaceInfo.ai.cut.freq) {
+      const response = await api.updateSpaceInfo(space.name, {
+        ai: {
+          cut: {
+            ...spaceInfo.ai.cut,
+            freq: cutFreq,
+          },
+        },
+      });
+
+      if (!response.ok) {
+        let { error } = await response.json();
+        throw new Error(error);
+      }
+    }
+    if (
+      spaceInfo.participants[space.localParticipant.identity].ai.cut.extraction !== extraction ||
+      spaceInfo.participants[space.localParticipant.identity].ai.cut.spent !==
+        aiCutDeps.includes('spent') ||
+      spaceInfo.participants[space.localParticipant.identity].ai.cut.todo !==
+        aiCutDeps.includes('todo')
+    ) {
+      const update = await updateSettings({
+        ai: {
+          cut: {
+            ...spaceInfo.participants[space.localParticipant.identity].ai.cut,
+            extraction: extraction,
+            spent: aiCutDeps.includes('spent'),
+            todo: aiCutDeps.includes('todo'),
+            blur: cutBlur,
+          },
+        },
+      });
+
+      if (!update) {
+        throw new Error(t('settings.ai.update.error'));
+      }
+    }
+  };
 
   // 保存并关闭, 检测如果有更改则保存
   const saveAndClose = async () => {
+    setIsStartWork(true);
+
     try {
-      let _ = await handleWorkMode();
+      let _res1 = await saveAICutSettings();
+      let _res2 = await handleWorkMode(true);
     } catch (error) {
       console.error(error);
     } finally {
@@ -309,28 +385,32 @@ export function WorkModal({
     <Modal
       open={open}
       title={t('work.title')}
-      footer={null}
-      okText={''}
+      okText={t('common.open')}
       cancelText={t('common.cancel')}
-      onCancel={saveAndClose}
+      onOk={saveAndClose}
+      onCancel={() => setOpen(false)}
+      centered
     >
       <div className={styles.work}>
         <div>{t('work.desc')}</div>
         <div className={styles.work_line}>
-          <div className={styles.work_line}>
-            <span> {t('work.start')}</span>
-          </div>
-          <div style={{ width: '100%' }}>
-            <Radio.Group
-              size="large"
-              block
-              value={isStartWork}
-              onChange={(e) => setIsStartWork(e.target.value)}
-            >
-              <Radio.Button value={true}>{t('common.open')}</Radio.Button>
-              <Radio.Button value={false}>{t('common.close')}</Radio.Button>
-            </Radio.Group>
-          </div>
+          <AICutAnalysisSettingsPanel
+            space={space}
+            spaceInfo={spaceInfo}
+            aiCutDeps={aiCutDeps}
+            setAICutDeps={setAICutDeps}
+            extraction={extraction}
+            setExtraction={setExtraction}
+            cutFreq={cutFreq}
+            setCutFreq={setCutFreq}
+            cutBlur={cutBlur}
+            setCutBlur={setCutBlur}
+            isServiceOpen={isServiceOpen}
+            setIsServiceOpen={setIsServiceOpen}
+            aiCutOptions={aiCutOptions}
+            aiCutOptionsChange={aiCutOptionsChange}
+          ></AICutAnalysisSettingsPanel>
+
           {isManager && (
             <>
               <div className={styles.work_line}>
@@ -347,10 +427,11 @@ export function WorkModal({
                   <Radio.Button value={false}>{t('common.close')}</Radio.Button>
                 </Radio.Group>
               </div>
-              <div className={styles.work_line}>
+
+              {/* <div className={styles.work_line}>
                 <span> {t('work.sync')}</span>
-              </div>
-              <div style={{ width: '100%' }}>
+              </div> */}
+              {/* <div style={{ width: '100%' }}>
                 <Radio.Group
                   size="large"
                   block
@@ -360,7 +441,7 @@ export function WorkModal({
                   <Radio.Button value={true}>{t('common.open')}</Radio.Button>
                   <Radio.Button value={false}>{t('common.close')}</Radio.Button>
                 </Radio.Group>
-              </div>
+              </div> */}
               <div className={styles.work_line}>
                 <span> {t('more.participant.set.control.blur.video')}</span>
               </div>

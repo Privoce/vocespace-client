@@ -83,12 +83,6 @@ export function MoreButtonInner({
         key: 'record',
         icon: <SvgResource type="record" svgSize={16} color={isRecording ? '#FF0000' : '#fff'} />,
       },
-      // 定时截图进行AI分析功能
-      {
-        label: <div>{t('more.ai.cut')}</div>,
-        key: 'ai_cut',
-        icon: <RobotOutlined style={{ fontSize: 16 }}></RobotOutlined>,
-      },
       // 参与者管理功能
       {
         label: <div style={{ marginLeft: '8px' }}>{t('more.participant.title')}</div>,
@@ -159,12 +153,6 @@ export function MoreButtonInner({
       case 'platform_user':
         if (platUser && platUser.userId) {
           window.open(`https://home.vocespace.com/auth/user/${platUser.userId}`, '_blank');
-        }
-        break;
-      case "ai_cut":
-        // Handle AI cut action
-        if (onClickAI) {
-          await onClickAI();
         }
         break;
       default:
