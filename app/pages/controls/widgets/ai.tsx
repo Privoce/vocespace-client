@@ -96,6 +96,7 @@ export interface AICutAnalysisSettingsPanelProps extends UseAICutAnalysisSetting
   space?: Room;
   spaceInfo: SpaceInfo;
   isPanel?: boolean;
+  isManager: boolean;
 }
 
 export function AICutAnalysisSettingsPanel({
@@ -114,6 +115,7 @@ export function AICutAnalysisSettingsPanel({
   aiCutOptions,
   aiCutOptionsChange,
   isPanel = true,
+  isManager,
 }: AICutAnalysisSettingsPanelProps) {
   const { t } = useI18n();
 
@@ -124,7 +126,7 @@ export function AICutAnalysisSettingsPanel({
   return (
     <div>
       <div>{t('more.ai.desc')}</div>
-      {!isPanel && (
+      {!isPanel && isManager && (
         <div className={styles.ai_cut_line}>
           <div className={styles.ai_cut_line}>
             <span> {t('ai.cut.open')}</span>

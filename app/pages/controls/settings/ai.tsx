@@ -210,6 +210,7 @@ export function AISettings({
         aiCutOptions={aiCutOptions}
         aiCutOptionsChange={aiCutOptionsChange}
         isPanel={false}
+        isManager={isOwner}
       ></AICutAnalysisSettingsPanel>
 
       <div className={styles.common_space}>
