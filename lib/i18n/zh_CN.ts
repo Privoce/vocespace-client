@@ -37,6 +37,8 @@ export default {
     chat: '聊天',
     chat_placeholder: '请输入消息',
     chat_drag_file_here: '将文件拖放到此处',
+    files: "文件",
+    upload: "上传",
     send: '发送',
     sending: '发送中',
     send_file_or: '是否发送文件？',

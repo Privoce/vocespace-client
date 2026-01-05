@@ -37,6 +37,8 @@ export default {
     chat: 'Chat',
     chat_placeholder: 'Please enter a message',
     chat_drag_file_here: 'Drag file here',
+    files: 'Files',
+    upload: 'Upload',
     send: 'Send',
     sending: 'Sending',
     send_file_or: 'Do you want to send this file?',
@@ -73,8 +75,27 @@ export default {
   },
   work: {
     title: 'Work Mode',
-    start: 'Start Working',
-    desc: 'After enabling work mode, the system will request to start your screen sharing, apply work settings, and use AI combined with to-do items for work analysis and recording to help you better manage your work.',
+    start: 'Start Work',
+    close: 'End Work',
+    desc: 'After enabling work mode, the system will request you to enable screen sharing, apply work settings, and use AI to analyze and record work based on to-do items, helping you better manage your work.',
+    use_ai: 'Enable AI Analysis',
+    sync: 'Synchronize Configuration',
+    sync_desc:
+      'As an administrator/host, you can synchronize the following settings to all members who have enabled work mode.',
+    save: {
+      success: 'Work mode settings saved successfully',
+      error: 'Work mode settings saved failed, please try again later.',
+    },
+    mode: {
+      start: {
+        success: 'Work mode enabled',
+        error: 'Failed to enable work mode, please try again later.',
+      },
+      stop: {
+        success: 'Work mode disabled',
+        error: 'Failed to disable work mode, please try again later.',
+      },
+    },
   },
   ai: {
     cut: {

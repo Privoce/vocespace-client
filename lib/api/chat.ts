@@ -43,3 +43,44 @@ export const uploadFile = async (
     signal: abortController?.signal, // 添加取消信号
   });
 };
+
+/**
+ * 处理文件系统操作
+ * - rm: 删除文件
+ * - download: 下载文件
+ * - ls: 列出所有文件
+ * - rm -a: 删除所有文件
+ */
+export type HandleFileSystemType = 'rm' | 'download' | 'ls' | 'rm -a';
+
+export interface HandleFileSystemBody {
+  spaceName: string;
+  ty: HandleFileSystemType;
+  fileName?: string;
+}
+
+/**
+ * 处理文件系统操作
+ * @param spaceName 
+ * @param ty 
+ * @param fileName 
+ * @returns 
+ * 1. ls: `{files: string[]}`
+ * 2. rm, rm -a: `{success: true}`
+ * 3. download: `{fileUrl: string}`
+ */
+export const handleFileSystem = async (
+  spaceName: string,
+  ty: HandleFileSystemType,
+  fileName?: string,
+) =>  {
+  const url = new URL(connect_endpoint('/api/upload'), window.location.origin);
+  url.searchParams.append('action', 'fs');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ spaceName, ty, fileName }),
+  });
+};

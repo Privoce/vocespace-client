@@ -1,6 +1,6 @@
 import { ai } from './ai';
 import { createRoom, deleteRoom, joinRoom, leaveRoom, updateRoom } from './channel';
-import { fetchLinkPreview, getChatMsg, uploadFile } from './chat';
+import { fetchLinkPreview, getChatMsg, uploadFile, handleFileSystem } from './chat';
 import { checkHostToken, getConf, reloadConf, reloadLicense, updateAIConf } from './conf';
 import { checkLicenseByIP, getLicenseByIP } from './license';
 import { sendRecordRequest, updateRecord } from './record';
@@ -59,6 +59,7 @@ export const api = {
   fetchLinkPreview,
   getChatMsg,
   uploadFile,
+  handleFileSystem,
   // ---- license api --------
   getLicenseByIP,
   checkLicenseByIP,
