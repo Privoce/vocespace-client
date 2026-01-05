@@ -227,8 +227,11 @@
 .files_grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-  gap: 20px;
+  gap: 16px;
   padding: 8px;
+  overflow-y: auto;
+  max-height: 600px;
+  scrollbar-width: thin;
 }
 
 .file_item {
@@ -240,7 +243,6 @@
   padding: 12px;
   border-radius: 8px;
   transition: all 0.2s ease;
-  
   &:hover {
     background-color: rgba(255, 255, 255, 0.05);
   }
@@ -259,7 +261,7 @@
 .video_wrapper {
   width: 80px;
   height: 80px;
-  
+
   video {
     width: 100%;
     height: 100%;

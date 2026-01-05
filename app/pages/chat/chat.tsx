@@ -424,6 +424,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
           title={t('common.files')}
           footer={null}
           onCancel={() => setFsModal(false)}
+          width={640}
         >
           <FS space={space} files={files} onFresh={openLocalFileSystem}></FS>
         </Modal>
