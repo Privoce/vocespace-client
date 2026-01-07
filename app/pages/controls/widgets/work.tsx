@@ -409,6 +409,7 @@ export function WorkModal({
             setIsServiceOpen={setIsServiceOpen}
             aiCutOptions={aiCutOptions}
             aiCutOptionsChange={aiCutOptionsChange}
+            isManager={isManager}
           ></AICutAnalysisSettingsPanel>
 
           {isManager && (

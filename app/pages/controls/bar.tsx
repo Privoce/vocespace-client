@@ -38,6 +38,7 @@ import { AICutService } from '@/lib/ai/cut';
 import { useWork, Work, WorkModal } from './widgets/work';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/ai';
 import { DEFAULT_WINDOW_ADJUST_WIDTH } from '@/lib/std/window';
+import { FullScreenBtn, FullScreenBtnExports } from './widgets/full_screen';
 
 /** @public */
 export type ControlBarControls = {
@@ -79,6 +80,8 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   ) => Promise<void>;
   openAIServiceAskNote: () => void;
   downloadAIMdReport?: () => Promise<void>;
+  isFullScreen: boolean;
+  setIsFullScreen: (isFullScreen: boolean) => void;
 }
 
 export interface ControlBarExport {
@@ -125,11 +128,14 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       startOrStopAICutAnalysis,
       openAIServiceAskNote,
       downloadAIMdReport,
+      isFullScreen,
+      setIsFullScreen,
       ...props
     }: ControlBarProps,
     ref,
   ) => {
     const { t } = useI18n();
+    const FullScreenBtnRef = React.useRef<FullScreenBtnExports>(null);
     const [isChatOpen, setIsChatOpen] = React.useState(false);
     const [settingVis, setSettingVis] = React.useState(false);
     const layoutContext = useMaybeLayoutContext();
@@ -642,6 +648,14 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           }}
         >
           {visibleControls.microphone && (
+            <FullScreenBtn
+              ref={FullScreenBtnRef}
+              setCollapsed={setCollapsed}
+              isFullScreen={isFullScreen}
+              setIsFullScreen={setIsFullScreen}
+            ></FullScreenBtn>
+          )}
+          {visibleControls.microphone && (
             <div className="lk-button-group">
               <TrackToggle
                 style={{ height: 46, padding: controlSize === 'small' ? 7 : 15 }}
@@ -951,6 +965,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             setIsServiceOpen={setIsServiceOpen}
             aiCutOptions={aiCutOptions}
             aiCutOptionsChange={aiCutOptionsChange}
+            isManager={isManager}
           ></AICutAnalysisSettingsPanel>
           {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
         </Modal>

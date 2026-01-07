@@ -85,6 +85,7 @@ import {
   platformAPI,
   PlatformTodos,
 } from '@/lib/api/platform';
+import { useFullScreenBtn } from './widgets/full_screen';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -116,6 +117,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const FlotLayoutRef = useRef<FlotLayoutExports>(null);
     const [init, setInit] = useState(true);
     const { t, locale } = useI18n();
+    const { setIsFullScreen, isFullScreen } = useFullScreenBtn();
     const [uState, setUState] = useRecoilState(userState);
     const [collapsed, setCollapsed] = useState(isMobile());
     const [uLicenseState, setULicenseState] = useRecoilState(licenseState);
@@ -1342,38 +1344,55 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   </div>
                 ) : (
                   <div className="lk-focus-layout-wrapper">
-                    <FocusLayoutContainer>
-                      <CarouselLayout tracks={carouselTracks}>
-                        <ParticipantItem
-                          space={space}
-                          settings={settings}
-                          toSettings={toSettingGeneral}
-                          messageApi={messageApi}
-                          noteApi={noteApi}
-                          setUserStatus={setUserStatus}
-                          updateSettings={updateSettings}
-                          toRenameSettings={toSettingGeneral}
-                          showFlotApp={showFlotApp}
-                          selfRoom={selfRoom}
-                        ></ParticipantItem>
-                      </CarouselLayout>
-                      {focusTrack && (
-                        <ParticipantItem
-                          space={space}
-                          setUserStatus={setUserStatus}
-                          settings={settings}
-                          toSettings={toSettingGeneral}
-                          trackRef={focusTrack}
-                          messageApi={messageApi}
-                          noteApi={noteApi}
-                          isFocus={isFocus}
-                          updateSettings={updateSettings}
-                          toRenameSettings={toSettingGeneral}
-                          showFlotApp={showFlotApp}
-                          selfRoom={selfRoom}
-                        ></ParticipantItem>
-                      )}
-                    </FocusLayoutContainer>
+                    {isFullScreen ? (
+                      <ParticipantItem
+                        space={space}
+                        setUserStatus={setUserStatus}
+                        settings={settings}
+                        toSettings={toSettingGeneral}
+                        trackRef={focusTrack}
+                        messageApi={messageApi}
+                        noteApi={noteApi}
+                        isFocus={isFocus}
+                        updateSettings={updateSettings}
+                        toRenameSettings={toSettingGeneral}
+                        showFlotApp={showFlotApp}
+                        selfRoom={selfRoom}
+                      ></ParticipantItem>
+                    ) : (
+                      <FocusLayoutContainer>
+                        <CarouselLayout tracks={carouselTracks}>
+                          <ParticipantItem
+                            space={space}
+                            settings={settings}
+                            toSettings={toSettingGeneral}
+                            messageApi={messageApi}
+                            noteApi={noteApi}
+                            setUserStatus={setUserStatus}
+                            updateSettings={updateSettings}
+                            toRenameSettings={toSettingGeneral}
+                            showFlotApp={showFlotApp}
+                            selfRoom={selfRoom}
+                          ></ParticipantItem>
+                        </CarouselLayout>
+                        {focusTrack && (
+                          <ParticipantItem
+                            space={space}
+                            setUserStatus={setUserStatus}
+                            settings={settings}
+                            toSettings={toSettingGeneral}
+                            trackRef={focusTrack}
+                            messageApi={messageApi}
+                            noteApi={noteApi}
+                            isFocus={isFocus}
+                            updateSettings={updateSettings}
+                            toRenameSettings={toSettingGeneral}
+                            showFlotApp={showFlotApp}
+                            selfRoom={selfRoom}
+                          ></ParticipantItem>
+                        )}
+                      </FocusLayoutContainer>
+                    )}
                   </div>
                 )}
                 <Controls
@@ -1393,6 +1412,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   startOrStopAICutAnalysis={startOrStopAICutAnalysis}
                   openAIServiceAskNote={openAIServiceAskNote}
                   downloadAIMdReport={FlotLayoutRef.current?.downloadAIMdReport}
+                  isFullScreen={isFullScreen}
+                  setIsFullScreen={setIsFullScreen}
                 ></Controls>
               </div>
               {SettingsComponent && (
