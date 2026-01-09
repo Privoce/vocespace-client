@@ -637,6 +637,7 @@ export const ParticipantItem: (
                 maxWidth: '44%',
                 overflow: 'hidden',
                 padding: 4,
+                height: 24,
                 backgroundColor: '#00000080',
                 display: 'flex',
                 borderRadius: 4,
@@ -713,7 +714,7 @@ export const ParticipantItem: (
             </div>
             <div
               className="lk-participant-metadata"
-              style={{ zIndex: 4, right: 4, left: 'unset', width: 'fit-content', maxWidth: '48%' }}
+              style={{ zIndex: 4, right: 4, left: 'unset', width: 'fit-content', maxWidth: '48%'}}
             >
               {space.state !== ConnectionState.Connecting && userStatusDisply.tag}
             </div>

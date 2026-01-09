@@ -60,7 +60,11 @@ export function useSpaceInfo(spaceName: string, participantId: string) {
         replacedId || participantId,
         isTransfer,
       );
-      return response.ok;
+      if (response.ok) {
+        return (await response.json()) as { success: boolean; isRemove?: boolean };
+      } else {
+        return { success: false } as { success: boolean; isRemove?: boolean };
+      }
     },
     [participantId, spaceName],
   );

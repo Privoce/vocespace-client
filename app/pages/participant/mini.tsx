@@ -259,6 +259,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                 backgroundColor: '#00000080',
                 display: 'flex',
                 borderRadius: 4,
+                height: 24,
               }}
             >
               <StatusInfo

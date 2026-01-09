@@ -1175,6 +1175,7 @@ export async function POST(request: NextRequest) {
     }
     // 用户身份处理 -----------------------------------------------------------------------------
     if (isSpace && isAuthManage) {
+      let isRemove = false;
       const { spaceName, participantId, replacedId }: TransOrSetOMBody = await request.json();
       const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
       if (!spaceInfo) {
@@ -1211,6 +1212,10 @@ export async function POST(request: NextRequest) {
         if (spaceInfo.managers.length < 5) {
           if (!spaceInfo.managers.includes(replacedId)) {
             spaceInfo.managers.push(replacedId);
+          } else {
+            // 如果已经是管理，则说明是要移除管理员
+            spaceInfo.managers = spaceInfo.managers.filter((id) => id !== replacedId);
+            isRemove = true;
           }
         } else {
           return NextResponse.json({ error: 'Manager limit reached' }, { status: 403 });
@@ -1221,7 +1226,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to update space managers' }, { status: 500 });
       }
 
-      return NextResponse.json({ success: true }, { status: 200 });
+      return NextResponse.json({ success: true, isRemove }, { status: 200 });
     }
 
     // 更新空间是否允许游客加入 -----------------------------------------------------------------------------

@@ -817,6 +817,7 @@ export default {
         lang: 'Language changed successfully',
         transfer: 'You have been successfully transferred',
         set_manager: 'You have been set as a manager',
+        remove_manager: 'Your manager status has been removed',
       },
       file: {
         upload: 'File uploaded successfully',

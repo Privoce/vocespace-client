@@ -776,6 +776,7 @@ export default {
         lang: '语言修改成功',
         transfer: '您已成功被转让身份',
         set_manager: '您你被设置为管理员身份',
+        remove_manager: '您的管理员身份已被移除',
       },
       file: {
         upload: '文件上传成功',

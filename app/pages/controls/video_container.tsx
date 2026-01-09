@@ -715,14 +715,18 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             }
             case ControlType.setManager: {
               if (settings.managers.length < 5) {
-                const success = await transOrSetOwnerManager(
+                const {success, isRemove} = await transOrSetOwnerManager(
                   msg.senderId,
                   space.localParticipant.identity,
                   false,
                 );
                 if (success) {
                   layoutContext.pin.dispatch?.({ msg: 'clear_pin' });
-                  messageApi.success(t('msg.success.user.set_manager'));
+                  if (isRemove) {
+                     messageApi.success(t('msg.success.user.remove_manager'));
+                  }else{
+                     messageApi.success(t('msg.success.user.set_manager'));
+                  }
                 }
                 socket.emit('update_user_status', {
                   space: space.name,
