@@ -29,7 +29,13 @@ export function ControlRKeyMenu({
   const trigger: ('click' | 'contextMenu' | 'hover')[] = isRKey ? ['contextMenu'] : ['click'];
 
   return (
-    <Dropdown disabled={disabled} trigger={trigger} menu={menu} onOpenChange={onOpenChange}>
+    <Dropdown
+      disabled={disabled}
+      trigger={trigger}
+      menu={menu}
+      onOpenChange={onOpenChange}
+      className='vocespace_full_size'
+    >
       {children}
     </Dropdown>
   );

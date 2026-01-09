@@ -30,8 +30,9 @@ import { AppFlotIconCollect } from '../apps/app_pin';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { Tooltip } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
+import { FullScreenBtnProps } from '../controls/widgets/full_screen';
 
-export interface ParticipantTileMiniProps extends ParticipantTileProps {
+export interface ParticipantTileMiniProps extends ParticipantTileProps, FullScreenBtnProps {
   settings: SpaceInfo;
   /**
    * host room name
@@ -53,6 +54,9 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       toRenameSettings,
       setUserStatus,
       showFlotApp,
+      isFullScreen,
+      setIsFullScreen,
+      setCollapsed,
     }: ParticipantTileMiniProps,
     ref,
   ) => {
@@ -302,21 +306,25 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                           ></TrackMutedIndicator>
 
                           <Tooltip title={trackReference.participant.name} placement="right">
-                            <div style={{display: "flex", alignItems: "center"}}>
+                            <div style={{ display: 'flex', alignItems: 'center' }}>
                               <div style={{ marginRight: 4 }}>
-                              {userType === 'Owner' ? (
-                                <SvgResource type="host" color="#FFAA33" svgSize={18}></SvgResource>
-                              ) : userType === 'Manager' ? (
-                                <SvgResource
-                                  type="manager"
-                                  color="#FFAA33"
-                                  svgSize={18}
-                                ></SvgResource>
-                              ) : (
-                                <></>
-                              )}
-                            </div>
-                            <ParticipantName />
+                                {userType === 'Owner' ? (
+                                  <SvgResource
+                                    type="host"
+                                    color="#FFAA33"
+                                    svgSize={18}
+                                  ></SvgResource>
+                                ) : userType === 'Manager' ? (
+                                  <SvgResource
+                                    type="manager"
+                                    color="#FFAA33"
+                                    svgSize={18}
+                                  ></SvgResource>
+                                ) : (
+                                  <></>
+                                )}
+                              </div>
+                              <ParticipantName />
                             </div>
                           </Tooltip>
                         </>
@@ -359,22 +367,24 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
               setIsKeepRaise={setIsKeepRaise}
             />
 
-            {trackReference.source !== Track.Source.ScreenShare && (
-              <AppFlotIconCollect
-                style={{
-                  right: '0px',
-                  backgroundColor: 'transparent',
-                  padding: 0,
-                  zIndex: 111,
-                  height: 'fit-content',
-                  width: 'fit-content',
-                  fontSize: 16,
-                }}
-                contextUndefined={false}
-                showApp={showApp}
-                participant={currentParticipant}
-              ></AppFlotIconCollect>
-            )}
+            <AppFlotIconCollect
+              style={{
+                right: '0px',
+                backgroundColor: 'transparent',
+                padding: 0,
+                zIndex: 111,
+                height: 'fit-content',
+                width: 'fit-content',
+                fontSize: 16,
+              }}
+              contextUndefined={false}
+              showApp={showApp}
+              participant={currentParticipant}
+              isFullScreen={isFullScreen}
+              setIsFullScreen={setIsFullScreen}
+              setCollapsed={setCollapsed}
+              trackReference={trackReference}
+            ></AppFlotIconCollect>
           </ParticipantTile>
         }
       />

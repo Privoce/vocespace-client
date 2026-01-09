@@ -715,7 +715,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             }
             case ControlType.setManager: {
               if (settings.managers.length < 5) {
-                const {success, isRemove} = await transOrSetOwnerManager(
+                const { success, isRemove } = await transOrSetOwnerManager(
                   msg.senderId,
                   space.localParticipant.identity,
                   false,
@@ -723,9 +723,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                 if (success) {
                   layoutContext.pin.dispatch?.({ msg: 'clear_pin' });
                   if (isRemove) {
-                     messageApi.success(t('msg.success.user.remove_manager'));
-                  }else{
-                     messageApi.success(t('msg.success.user.set_manager'));
+                    messageApi.success(t('msg.success.user.remove_manager'));
+                  } else {
+                    messageApi.success(t('msg.success.user.set_manager'));
                   }
                 }
                 socket.emit('update_user_status', {
@@ -1307,6 +1307,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             toRenameSettings={toSettingGeneral}
             setUserStatus={setUserStatus}
             showFlotApp={showFlotApp}
+            isFullScreen={isFullScreen}
+            setIsFullScreen={setIsFullScreen}
           ></Channel>
         )}
         {/* 主视口 */}
@@ -1343,6 +1345,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                         toRenameSettings={toSettingGeneral}
                         showFlotApp={showFlotApp}
                         selfRoom={selfRoom}
+                        setIsFullScreen={setIsFullScreen}
+                        isFullScreen={isFullScreen}
+                        setCollapsed={setCollapsed}
                       ></ParticipantItem>
                     </GridLayout>
                   </div>
@@ -1362,6 +1367,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                         toRenameSettings={toSettingGeneral}
                         showFlotApp={showFlotApp}
                         selfRoom={selfRoom}
+                        isFullScreen={isFullScreen}
+                        setIsFullScreen={setIsFullScreen}
+                        setCollapsed={setCollapsed}
                       ></ParticipantItem>
                     ) : (
                       <FocusLayoutContainer>
@@ -1377,6 +1385,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                             toRenameSettings={toSettingGeneral}
                             showFlotApp={showFlotApp}
                             selfRoom={selfRoom}
+                            isFullScreen={isFullScreen}
+                            setIsFullScreen={setIsFullScreen}
+                            setCollapsed={setCollapsed}
                           ></ParticipantItem>
                         </CarouselLayout>
                         {focusTrack && (
@@ -1393,6 +1404,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                             toRenameSettings={toSettingGeneral}
                             showFlotApp={showFlotApp}
                             selfRoom={selfRoom}
+                            isFullScreen={isFullScreen}
+                            setIsFullScreen={setIsFullScreen}
+                            setCollapsed={setCollapsed}
                           ></ParticipantItem>
                         )}
                       </FocusLayoutContainer>
@@ -1416,8 +1430,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   startOrStopAICutAnalysis={startOrStopAICutAnalysis}
                   openAIServiceAskNote={openAIServiceAskNote}
                   downloadAIMdReport={FlotLayoutRef.current?.downloadAIMdReport}
-                  isFullScreen={isFullScreen}
-                  setIsFullScreen={setIsFullScreen}
                 ></Controls>
               </div>
               {SettingsComponent && (

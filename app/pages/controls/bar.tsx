@@ -23,7 +23,7 @@ import {
   virtualMaskState,
 } from '@/app/[spaceName]/PageClientImpl';
 import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
-import { isMobile as is_moblie, isSpaceManager, UserStatus } from '@/lib/std';
+import { isMobile as is_mobile, isSpaceManager, UserStatus } from '@/lib/std';
 import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';
 import { ChatToggle } from './toggles/chat_toggle';
 import { MoreButton } from './toggles/more_button';
@@ -38,7 +38,6 @@ import { AICutService } from '@/lib/ai/cut';
 import { useWork, Work, WorkModal } from './widgets/work';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/ai';
 import { DEFAULT_WINDOW_ADJUST_WIDTH } from '@/lib/std/window';
-import { FullScreenBtn, FullScreenBtnExports } from './widgets/full_screen';
 
 /** @public */
 export type ControlBarControls = {
@@ -80,8 +79,6 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   ) => Promise<void>;
   openAIServiceAskNote: () => void;
   downloadAIMdReport?: () => Promise<void>;
-  isFullScreen: boolean;
-  setIsFullScreen: (isFullScreen: boolean) => void;
 }
 
 export interface ControlBarExport {
@@ -128,14 +125,11 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       startOrStopAICutAnalysis,
       openAIServiceAskNote,
       downloadAIMdReport,
-      isFullScreen,
-      setIsFullScreen,
       ...props
     }: ControlBarProps,
     ref,
   ) => {
     const { t } = useI18n();
-    const FullScreenBtnRef = React.useRef<FullScreenBtnExports>(null);
     const [isChatOpen, setIsChatOpen] = React.useState(false);
     const [settingVis, setSettingVis] = React.useState(false);
     const layoutContext = useMaybeLayoutContext();
@@ -149,7 +143,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       controlLeftRef.current ? controlLeftRef.current.clientWidth : window.innerWidth,
     );
     const isMobile = React.useMemo(() => {
-      return is_moblie();
+      return is_mobile();
     }, []);
 
     const controlSize = React.useMemo(() => {
@@ -647,14 +641,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             width: isMobile ? 'calc(100% - 64px)' : 'calc(100% - 100px)',
           }}
         >
-          {visibleControls.microphone && (
-            <FullScreenBtn
-              ref={FullScreenBtnRef}
-              setCollapsed={setCollapsed}
-              isFullScreen={isFullScreen}
-              setIsFullScreen={setIsFullScreen}
-            ></FullScreenBtn>
-          )}
           {visibleControls.microphone && (
             <div className="lk-button-group">
               <TrackToggle

@@ -1,5 +1,6 @@
 export default {
   common: {
+    full_screen: 'Full Screen',
     guest: {
       not_allow: 'Sorry, the current space does not allow guests to join. Please Login!',
     },
@@ -75,7 +76,7 @@ export default {
   },
   work: {
     title: 'Work Mode',
-    start: 'Start Work',
+    start: 'Start Working',
     close: 'End Work',
     desc: 'After enabling work mode, the system will request you to enable screen sharing, apply work settings, and use AI to analyze and record work based on to-do items, helping you better manage your work.',
     use_ai: 'Enable AI Analysis',

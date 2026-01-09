@@ -51,8 +51,9 @@ import { CreateSpaceError, isMobile as is_mobile, UserStatus } from '@/lib/std';
 import { DEFAULT_DRAWER_PROP } from './drawer_tools';
 import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 import { audio } from '@/lib/audio';
+import { FullScreenBtnProps } from './widgets/full_screen';
 
-interface ChannelProps {
+interface ChannelProps extends FullScreenBtnProps {
   // roomName: string;
   space: Room;
   messageApi: MessageInstance;
@@ -94,6 +95,8 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       toRenameSettings,
       setUserStatus,
       showFlotApp,
+      isFullScreen,
+      setIsFullScreen,
     }: ChannelProps,
     ref,
   ) => {
@@ -566,6 +569,9 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             toRenameSettings={toRenameSettings}
             setUserStatus={setUserStatus}
             showFlotApp={showFlotApp}
+            isFullScreen={isFullScreen}
+            setIsFullScreen={setIsFullScreen}
+            setCollapsed={setCollapsed}
           ></ParticipantTileMini>
         </GLayout>
       );
@@ -600,6 +606,9 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
               toRenameSettings={toRenameSettings}
               setUserStatus={setUserStatus}
               showFlotApp={showFlotApp}
+              isFullScreen={isFullScreen}
+              setIsFullScreen={setIsFullScreen}
+              setCollapsed={setCollapsed}
             ></ParticipantTileMini>
           </GLayout>
         );

@@ -1,5 +1,6 @@
 export default {
   common: {
+    full_screen: "全屏",
     guest: {
       not_allow: '很抱歉，当前空间不允许访客加入，请登陆',
     },

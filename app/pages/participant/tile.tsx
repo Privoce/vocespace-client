@@ -51,8 +51,9 @@ import { RaiseHand, RaiseHandler } from '../controls/widgets/raise';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { Button, Tag, Tooltip } from 'antd';
+import { FullScreenBtnProps } from '../controls/widgets/full_screen';
 
-export interface ParticipantItemProps extends ParticipantTileMiniProps {
+export interface ParticipantItemProps extends ParticipantTileMiniProps, FullScreenBtnProps {
   toSettings?: (isDefineStatus?: boolean) => void;
   messageApi: MessageInstance;
   noteApi?: NotificationInstance;
@@ -77,6 +78,9 @@ export const ParticipantItem: (
       toRenameSettings,
       showFlotApp,
       selfRoom,
+      isFullScreen,
+      setIsFullScreen,
+      setCollapsed,
     }: ParticipantItemProps,
     ref,
   ) {
@@ -714,7 +718,7 @@ export const ParticipantItem: (
             </div>
             <div
               className="lk-participant-metadata"
-              style={{ zIndex: 4, right: 4, left: 'unset', width: 'fit-content', maxWidth: '48%'}}
+              style={{ zIndex: 4, right: 4, left: 'unset', width: 'fit-content', maxWidth: '48%' }}
             >
               {space.state !== ConnectionState.Connecting && userStatusDisply.tag}
             </div>
@@ -727,12 +731,14 @@ export const ParticipantItem: (
                 localParticipant={localParticipant}
               />
             )}
-            {trackReference.source !== Track.Source.ScreenShare && (
-              <AppFlotIconCollect
+             <AppFlotIconCollect
                 showApp={showApp}
                 participant={currentParticipant}
+                isFullScreen={isFullScreen}
+                setIsFullScreen={setIsFullScreen}
+                setCollapsed={setCollapsed}
+                trackReference={trackReference}
               ></AppFlotIconCollect>
-            )}
           </ParticipantTile>
         }
       ></ControlRKeyMenu>
