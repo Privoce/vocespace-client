@@ -24,7 +24,11 @@ export interface UseWorkProps {
     conf: AICutParticipantConf,
     reload?: boolean,
   ) => Promise<void>;
-  openAIServiceAskNote: () => void;
+  openAIService: (value: {
+    openAIService: boolean;
+    noteClosed: boolean;
+    hasAsked: boolean;
+  }) => void;
   messageApi: MessageInstance;
   downloadAIMdReport?: () => Promise<void>;
 }
@@ -33,7 +37,7 @@ export const useWork = ({
   spaceInfo,
   space,
   startOrStopAICutAnalysis,
-  openAIServiceAskNote,
+  openAIService,
   messageApi,
   downloadAIMdReport,
 }: UseWorkProps) => {
@@ -78,7 +82,7 @@ export const useWork = ({
         if (isUseAI) {
           if (enabled && !space.localParticipant.isScreenShareEnabled) {
             // 没开启屏幕共享，但开启了AI，说明出现了问题，提示用户开启屏幕共享
-            openAIServiceAskNote();
+            space?.localParticipant.setScreenShareEnabled(true);
           } else if (!enabled && space.localParticipant.isScreenShareEnabled) {
             // 没开启AI，但开启了屏幕共享，需要开启AI
             await startOrStopAICutAnalysis(spaceInfo.ai.cut.freq, {
@@ -90,7 +94,12 @@ export const useWork = ({
             });
           } else if (!enabled && !space.localParticipant.isScreenShareEnabled) {
             // 没开启AI，也没开启屏幕共享，需要两个都开启
-            openAIServiceAskNote();
+            space?.localParticipant.setScreenShareEnabled(true);
+            openAIService({
+              hasAsked: true,
+              openAIService: true,
+              noteClosed: true,
+            });
           } else {
             // 开启AI且屏幕共享，或者不开就不用管了
           }
@@ -385,7 +394,7 @@ export function WorkModal({
     <Modal
       open={open}
       title={t('work.title')}
-      okText={t('common.open')}
+      okText={t('settings.device.screen.title')}
       cancelText={t('common.cancel')}
       onOk={saveAndClose}
       onCancel={() => setOpen(false)}

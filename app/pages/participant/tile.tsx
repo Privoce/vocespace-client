@@ -1,8 +1,7 @@
 import { isTrackReferencePlaceholder } from '@/app/pages/controls/video_container';
-import { MouseMove, useVideoBlur, WsBase, WsMouseMove, WsSender, WsWave } from '@/lib/std/device';
+import { MouseMove, useVideoBlur, WsBase, WsMouseMove, WsWave } from '@/lib/std/device';
 import {
   AudioTrack,
-  ConnectionQualityIndicator,
   isTrackReference,
   LockLockedIcon,
   ParticipantName,
@@ -30,27 +29,18 @@ import {
   virtualMaskState,
 } from '@/app/[spaceName]/PageClientImpl';
 import styles from '@/styles/controls.module.scss';
-import { SvgResource, SvgType } from '@/app/resources/svg';
+import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { isSpaceManager, randomColor } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
-import {
-  AppKey,
-  castCountdown,
-  castTimer,
-  castTodo,
-  ChildRoom,
-  ParticipantSettings,
-} from '@/lib/std/space';
-import { WaveHand } from '../controls/widgets/wave';
+import { ChildRoom, ParticipantSettings } from '@/lib/std/space';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { AppFlotIconCollect } from '../apps/app_pin';
 import { ParticipantTileMiniProps } from './mini';
-import { RaiseHand, RaiseHandler } from '../controls/widgets/raise';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
-import { Button, Tag, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
 import { FullScreenBtnProps } from '../controls/widgets/full_screen';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps, FullScreenBtnProps {
@@ -731,14 +721,14 @@ export const ParticipantItem: (
                 localParticipant={localParticipant}
               />
             )}
-             <AppFlotIconCollect
-                showApp={showApp}
-                participant={currentParticipant}
-                isFullScreen={isFullScreen}
-                setIsFullScreen={setIsFullScreen}
-                setCollapsed={setCollapsed}
-                trackReference={trackReference}
-              ></AppFlotIconCollect>
+            <AppFlotIconCollect
+              showApp={showApp}
+              participant={currentParticipant}
+              isFullScreen={isFullScreen}
+              setIsFullScreen={setIsFullScreen}
+              setCollapsed={setCollapsed}
+              trackReference={trackReference}
+            ></AppFlotIconCollect>
           </ParticipantTile>
         }
       ></ControlRKeyMenu>

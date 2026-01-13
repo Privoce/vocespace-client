@@ -79,6 +79,11 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   ) => Promise<void>;
   openAIServiceAskNote: () => void;
   downloadAIMdReport?: () => Promise<void>;
+  setNoteStateForAICutService: (value: {
+    openAIService: boolean;
+    noteClosed: boolean;
+    hasAsked: boolean;
+  }) => void;
 }
 
 export interface ControlBarExport {
@@ -125,6 +130,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       startOrStopAICutAnalysis,
       openAIServiceAskNote,
       downloadAIMdReport,
+      setNoteStateForAICutService,
       ...props
     }: ControlBarProps,
     ref,
@@ -610,7 +616,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       spaceInfo,
       messageApi,
       startOrStopAICutAnalysis,
-      openAIServiceAskNote,
+      openAIService: setNoteStateForAICutService,
       downloadAIMdReport,
     });
 

@@ -78,22 +78,25 @@ export function AppFlotIconCollect({
           contextUndefined={contextUndefined}
         ></AppFlotIcon>
       )}
-      <FullScreenBtn
-        trackReference={trackReference}
-        setCollapsed={setCollapsed}
-        setIsFullScreen={setIsFullScreen}
-        isFullScreen={isFullScreen}
-      ></FullScreenBtn>
+      {trackReference?.source === Track.Source.ScreenShare && (
+        <FullScreenBtn
+          trackReference={trackReference}
+          setCollapsed={setCollapsed}
+          setIsFullScreen={setIsFullScreen}
+          isFullScreen={isFullScreen}
+        ></FullScreenBtn>
+      )}
     </div>
   ) : (
     <div>
-      {' '}
-      <FullScreenBtn
-        trackReference={trackReference}
-        setCollapsed={setCollapsed}
-        setIsFullScreen={setIsFullScreen}
-        isFullScreen={isFullScreen}
-      ></FullScreenBtn>
+      {trackReference?.source === Track.Source.ScreenShare && (
+        <FullScreenBtn
+          trackReference={trackReference}
+          setCollapsed={setCollapsed}
+          setIsFullScreen={setIsFullScreen}
+          isFullScreen={isFullScreen}
+        ></FullScreenBtn>
+      )}
     </div>
   );
 }
