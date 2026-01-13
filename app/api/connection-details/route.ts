@@ -9,6 +9,31 @@ const {
   livekit: { url: LIVEKIT_URL, key: API_KEY, secret: API_SECRET },
 } = getConfig();
 
+interface SohiveTokenRes {
+  /**
+   * 用户ID
+   */
+  id: string;
+  /**
+   * 用户名
+   */
+  username: string;
+  /**
+   * 空间名
+   */
+  space: string;
+  /**
+   * 房间名
+   */
+  room: string;
+  /**
+   * 身份类型，目前只有两种
+   * 1. 客服人员
+   * 2. 顾客
+   */
+  identity: 'assistant' | 'customer';
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Parse query parameters
@@ -18,6 +43,12 @@ export async function GET(request: NextRequest) {
     const region = request.nextUrl.searchParams.get('region');
     // with auth id (from vocespace platform)
     const auth = request.nextUrl.searchParams.get('auth');
+    // special handling for sohive auth: /api/connection-details?auth=sohive&token=xxx
+    // 通过这种方式接入的用户，必须提供 token 参数，通过解析 token 获取用户名和空间名以及房间名，这样用户可以直接进入指定的房间
+    if (auth === 'sohive') {
+      return await sohiveLogin(request);
+    }
+
     const livekitServerUrl = region ? getLiveKitURL(region) : LIVEKIT_URL;
     let randomParticipantPostfix = request.cookies.get(COOKIE_KEY)?.value;
     if (livekitServerUrl === undefined) {
@@ -114,3 +145,48 @@ function getCookieExpirationTime(): string {
   now.setTime(expireTime);
   return now.toUTCString();
 }
+
+const sohiveLogin = async (request: NextRequest) => {
+  const token = request.nextUrl.searchParams.get('token');
+  if (!token) {
+    return new NextResponse('Missing required query parameter: token', { status: 400 });
+  }
+  // decode base64 token
+  const decodedToken = Buffer.from(token, 'base64').toString('utf-8');
+  let sohiveTokenRes: SohiveTokenRes;
+  try {
+    sohiveTokenRes = JSON.parse(decodedToken);
+  } catch (e) {
+    return new NextResponse('Invalid token format', { status: 400 });
+  }
+  // 获取到必要数据之后就可以生成 participant token 继续后续流程
+  const participantToken = await createParticipantToken(
+    {
+      identity: sohiveTokenRes.id,
+      name: sohiveTokenRes.username,
+      metadata: '',
+    },
+    sohiveTokenRes.room,
+    API_KEY,
+    API_SECRET,
+  );
+  const livekitServerUrl = LIVEKIT_URL;
+  // default is undefined
+  let randomParticipantPostfix = request.cookies.get(COOKIE_KEY)?.value;
+  if (livekitServerUrl === undefined) {
+    throw new Error('Invalid region');
+  }
+  // Return connection details
+  const data: ConnectionDetails = {
+    serverUrl: livekitServerUrl,
+    roomName: sohiveTokenRes.room,
+    participantToken: participantToken,
+    participantName: sohiveTokenRes.username,
+  };
+  return new NextResponse(JSON.stringify(data), {
+    headers: {
+      'Content-Type': 'application/json',
+      'Set-Cookie': `${COOKIE_KEY}=${randomParticipantPostfix}; Path=/; HttpOnly; SameSite=Strict; Secure; Expires=${getCookieExpirationTime()}`,
+    },
+  });
+};
