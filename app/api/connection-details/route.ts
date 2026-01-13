@@ -32,6 +32,8 @@ interface SohiveTokenRes {
    * 2. 顾客
    */
   identity: 'assistant' | 'customer';
+  iat: number;
+  exp: number;
 }
 
 export async function GET(request: NextRequest) {
@@ -151,11 +153,35 @@ const sohiveLogin = async (request: NextRequest) => {
   if (!token) {
     return new NextResponse('Missing required query parameter: token', { status: 400 });
   }
-  // decode base64 token
-  const decodedToken = Buffer.from(token, 'base64').toString('utf-8');
+  // token may be either a base64 encoded JSON or a JWT (header.payload.signature)
+  let decodedToken = '';
+  if (token.includes('.')) {
+    // treat as JWT and decode payload (base64url)
+    try {
+      const parts = token.split('.');
+      if (parts.length < 2) throw new Error('Invalid JWT token');
+      let payload = parts[1];
+      // base64url -> base64
+      payload = payload.replace(/-/g, '+').replace(/_/g, '/');
+      // pad with '=' to make length multiple of 4
+      while (payload.length % 4 !== 0) payload += '=';
+      decodedToken = Buffer.from(payload, 'base64').toString('utf-8');
+    } catch (e) {
+      return new NextResponse('Invalid token format', { status: 400 });
+    }
+  } else {
+    // decode base64 token
+    try {
+      decodedToken = Buffer.from(token, 'base64').toString('utf-8');
+    } catch (e) {
+      return new NextResponse('Invalid token format', { status: 400 });
+    }
+  }
+
   let sohiveTokenRes: SohiveTokenRes;
   try {
-    sohiveTokenRes = JSON.parse(decodedToken);
+    const res = JSON.parse(decodedToken);
+    sohiveTokenRes = res;
   } catch (e) {
     return new NextResponse('Invalid token format', { status: 400 });
   }
@@ -166,7 +192,7 @@ const sohiveLogin = async (request: NextRequest) => {
       name: sohiveTokenRes.username,
       metadata: '',
     },
-    sohiveTokenRes.room,
+    sohiveTokenRes.space,
     API_KEY,
     API_SECRET,
   );
@@ -179,13 +205,25 @@ const sohiveLogin = async (request: NextRequest) => {
   // Return connection details
   const data: ConnectionDetails = {
     serverUrl: livekitServerUrl,
-    roomName: sohiveTokenRes.room,
+    roomName: sohiveTokenRes.space,
     participantToken: participantToken,
     participantName: sohiveTokenRes.username,
   };
-  return new NextResponse(JSON.stringify(data), {
+  // return new NextResponse(JSON.stringify(data), {
+  //   headers: {
+  //     'Content-Type': 'application/json',
+  //     'Set-Cookie': `${COOKIE_KEY}=${randomParticipantPostfix}; Path=/; HttpOnly; SameSite=Strict; Secure; Expires=${getCookieExpirationTime()}`,
+  //   },
+  // });
+  // 这里我们就不能去返回了，而是进行重定向到对应的space页面，并携带auth参数，让前端去处理
+  const redirectUrl = new URL(
+    `/${sohiveTokenRes.space}?auth=sohive&room=${sohiveTokenRes.room}&data=${encodeURIComponent(
+      JSON.stringify(data),
+    )}`,
+    request.nextUrl.origin,
+  );
+  return NextResponse.redirect(redirectUrl, {
     headers: {
-      'Content-Type': 'application/json',
       'Set-Cookie': `${COOKIE_KEY}=${randomParticipantPostfix}; Path=/; HttpOnly; SameSite=Strict; Secure; Expires=${getCookieExpirationTime()}`,
     },
   });

@@ -39,7 +39,12 @@ import {
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
 import { WsBase, WsTo } from '@/lib/std/device';
-import { createRTCQulity, DEFAULT_VOCESPACE_CONFIG, ReadableConf, VocespaceConfig } from '@/lib/std/conf';
+import {
+  createRTCQulity,
+  DEFAULT_VOCESPACE_CONFIG,
+  ReadableConf,
+  VocespaceConfig,
+} from '@/lib/std/conf';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { DEFAULT_LICENSE } from '@/lib/std/license';
@@ -112,7 +117,9 @@ export function PageClientImpl(props: {
   codec: VideoCodec;
   username?: string;
   userId?: string;
-  auth?: 'space' | 'vocespace';
+  auth?: 'space' | 'vocespace' | 'sohive';
+  data?: string;
+  room?: string;
   avatar?: string;
   loading: boolean;
   setLoading: (loading: boolean) => void;
@@ -208,6 +215,25 @@ export function PageClientImpl(props: {
   //     router.replace(`/${spaceName}`);
   //   }
   // };
+
+  // 如果携带auth参数并且auth参数为sohive，则表示通过sohive平台接入直接加入房间 ---------------------------------
+  useEffect(() => {
+    console.warn('Checking direct join from platform with props:', props);
+    let { data, auth, spaceName } = props;
+    if (auth === 'sohive' && data) {
+      console.warn('Direct join from sohive with data:', data);
+      const parsedData = JSON.parse(decodeURIComponent(data));
+      setPreJoinChoices({
+        username: parsedData.username,
+        videoEnabled: false,
+        audioEnabled: false,
+        videoDeviceId: '',
+        audioDeviceId: '',
+      });
+      setConnectionDetails(parsedData);
+      router.replace(`/${spaceName}?auth=sohive&room=${props.room}`);
+    }
+  }, []);
 
   // 当localStorage中有reload这个标志时，需要重登陆
   useEffect(() => {

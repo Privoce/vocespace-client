@@ -31,7 +31,7 @@ export interface PreJoinPropsExt extends PreJoinProps {
     userId?: string;
     spaceName: string;
     username?: string;
-    auth?: 'space' | 'vocespace';
+    auth?: 'space' | 'vocespace'|'sohive';
     avatar?: string;
   };
   loading: boolean;

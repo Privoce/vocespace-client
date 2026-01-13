@@ -16,7 +16,7 @@ export interface UsePlatformUserInfoProps {
 export interface PUserInfo {
   userId?: string;
   username?: string;
-  auth?: 'space' | 'vocespace';
+  auth?: 'space' | 'vocespace' | 'sohive';
   avatar?: string;
 }
 

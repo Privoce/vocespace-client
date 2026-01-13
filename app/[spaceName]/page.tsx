@@ -22,7 +22,10 @@ export default function Page({
     userId?: string;
     // 这里目的是为了标识返回的url，不是为了区分登录方式，从vocespace.com就是vocespace，从space.voce.chat就是space，暂时没有特殊意义
     // 即使没有这个参数也不会影响功能
-    auth?: 'vocespace' | 'space';
+    auth?: 'vocespace' | 'space' | 'sohive';
+    // 额外数据参数，目前仅sohive使用
+    data?: string;
+    room?: string;
   };
 }) {
   const [loading, setLoading] = React.useState(true);
@@ -119,10 +122,12 @@ export default function Page({
         codec={codec}
         username={userInfo?.username}
         userId={userInfo?.userId}
-        auth={userInfo?.auth}
+        auth={userInfo?.auth || searchParams.auth}
         avatar={userInfo?.avatar}
         loading={loading}
         setLoading={setLoading}
+        data={searchParams.data}
+        room={searchParams.room}
       />
     </RecoilRoot>
   );
