@@ -855,27 +855,16 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         >
           <div className={styles.invite_container} ref={inviteTextRef}>
             <div className={styles.invite_container_item}>
-              {space?.localParticipant.name} &nbsp;
-              {t('more.participant.invite.texts.0')}
+              {t('more.participant.invite.texts.0')
+                .replace('$user', space?.localParticipant.name || '')
+                .replace('$space', space?.name || '')}
             </div>
             <div className={styles.invite_container_item}>
               <div className={styles.invite_container_item_justify}>
-                {t('more.participant.invite.texts.1')}
-                {t('more.participant.invite.web')}
-                {t('more.participant.invite.add')}
+                {t('more.participant.invite.texts.1').replace('$space', space?.name || '')}
               </div>
               <div>
                 {t('more.participant.invite.link')}: {window.location.href}
-              </div>
-            </div>
-            <div className={styles.invite_container_item}>
-              <div className={styles.invite_container_item_justify}>
-                {t('more.participant.invite.texts.2')}
-                <strong>{`${window.location.href}`}</strong>
-                {t('more.participant.invite.add')}
-              </div>
-              <div>
-                {t('more.participant.invite.room')}: {space?.name}
               </div>
             </div>
           </div>

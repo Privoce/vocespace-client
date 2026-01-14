@@ -1,6 +1,6 @@
 export default {
   common: {
-    full_screen: "全屏",
+    full_screen: '全屏',
     guest: {
       not_allow: '很抱歉，当前空间不允许访客加入，请登陆',
     },
@@ -38,8 +38,8 @@ export default {
     chat: '聊天',
     chat_placeholder: '请输入消息',
     chat_drag_file_here: '将文件拖放到此处',
-    files: "文件",
-    upload: "上传",
+    files: '文件',
+    upload: '上传',
     send: '发送',
     sending: '发送中',
     send_file_or: '是否发送文件？',
@@ -413,7 +413,10 @@ export default {
         title: '邀请成员',
         web: '浏览器中',
         add: '加入 VoceSpace 房间',
-        texts: ['邀请您加入 VoceSpace', '请 点击|复制 以下链接到', '请复制以下房间名称到'],
+        texts: [
+          '$user 邀请您加入[$space]的VoceSpace',
+          '请点击/复制以下链接到浏览器中加入[$space]的VoceSpace',
+        ],
         ok: '复制邀请',
         cancel: '取消',
         link: '链接',

@@ -429,13 +429,12 @@ export default {
         web: 'in Browser',
         add: 'add into VoceSpace Room',
         texts: [
-          'Invite you to join VoceSpace',
-          'Please click|copy the following link to',
-          'Please copy the following room name to',
+          "$user invites you to join [$space]'s VoceSpace",
+          "Please click or copy the following link and join [$space]'s VoceSpace in browser",
         ],
         ok: 'Copy Invite',
         cancel: 'Cancel',
-        link: 'Link',
+        link: 'Join link',
         room: 'Room Name',
       },
       set: {

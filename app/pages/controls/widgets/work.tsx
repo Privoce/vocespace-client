@@ -382,7 +382,9 @@ export function WorkModal({
 
     try {
       let _res1 = await saveAICutSettings();
-      let _res2 = await handleWorkMode(true);
+      setTimeout(async () => {
+        let _res2 = await handleWorkMode(true);
+      }, 1000);
     } catch (error) {
       console.error(error);
     } finally {
