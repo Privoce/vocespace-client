@@ -12,7 +12,7 @@ import { MessageInstance } from 'antd/es/message/interface';
 import { LocalParticipant, Room } from 'livekit-client';
 import { useEffect, useMemo, useState } from 'react';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from '../widgets/ai';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
 
 export interface AISettingProps {

@@ -13,8 +13,8 @@ import { api } from '@/lib/api';
 import { MessageInstance } from 'antd/es/message/interface';
 import equal from 'fast-deep-equal';
 import { isSpaceManager } from '@/lib/std';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './ai';
+import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 
 export interface UseWorkProps {
   spaceInfo: SpaceInfo;
