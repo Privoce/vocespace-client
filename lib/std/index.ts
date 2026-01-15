@@ -2,9 +2,10 @@ import os from 'os';
 import clsx from 'clsx';
 import { Trans } from '../i18n/i18n';
 import { GetProp, UploadProps } from 'antd';
-import { SpaceInfo, VOCESPACE_PLATFORM_USER_ID } from './space';
+import { SpaceInfo, VOCESPACE_PLATFORM_USER } from './space';
 import { PUserInfo } from '../hooks/platform';
 import dayjs from 'dayjs';
+import { VideoCodec } from 'livekit-client';
 /**
  * Option<T>
  *
@@ -346,3 +347,113 @@ export const downloadFile = (url: string, fileName: string) => {
   document.body.appendChild(element);
   element.click();
 };
+
+/**
+ * AuthType 用户认证类型
+ * vocespace: 来自vocespace.com平台登录
+ * space: 来自space.voce.chat平台登录
+ * customer_service: 来自客服系统登录 (目前专为sohive设计)考虑到泛用性，命名为customer_service，可后续扩展
+ * other: 来自其他未知平台登录
+ */
+export type AuthType = 'vocespace' | 'space' | 'customer_service' | 'other';
+
+/**
+ * VoceSpace SearchParams 搜索参数类型
+ *
+ */
+export interface SearchParams {
+  /**
+   * 地区
+   */
+  region?: string;
+  /**
+   * 是否高清
+   */
+  hq?: string;
+  /**
+   * 编码格式
+   */
+  codec?: VideoCodec;
+  // 这里目的是为了标识返回的url，不是为了区分登录方式，从vocespace.com就是vocespace，从space.voce.chat就是space，暂时没有特殊意义
+  // 即使没有这个参数也不会影响功能
+  auth?: AuthType;
+  /**
+   * 携带的token，如果为string，则需要解析成TokenResult类型
+   */
+  token?: string | TokenResult;
+  /**
+   * 外部化子房间名称，用户邀请他人时使用
+   */
+  room?: RoomType;
+}
+
+/**
+ * 可以是具体的房间名
+ * 1. $empty: 任意空房间
+ * 2. string: 其他自定义房间名, 具体房间，用户将直接进入该房间，如果没有则创建该房间
+ * 3. $space: 空间主房间，无需后续进行任何处理，用户将直接进入空间主房间
+ */
+export type RoomType = '$empty' | string | '$space';
+
+/**
+ * IdentityType 用户身份类型
+ * - assistant: 客服人员
+ * - customer: 顾客
+ * - other: 其他身份
+ * - owner: 空间所有者
+ * - manager: 空间管理员
+ * - participant: 空间参与者
+ * - guest: 访客
+ */
+export type IdentityType =
+  | 'assistant'
+  | 'customer'
+  | 'other'
+  | 'owner'
+  | 'manager'
+  | 'participant'
+  | 'guest';
+
+/**
+ * TokenResult 用户Token解析结果，当前仅用于sohive接入，后续可扩展
+ */
+export interface TokenResult {
+  /**
+   * 用户ID
+   */
+  id: string;
+  /**
+   * 用户名
+   */
+  username: string;
+  /**
+   * 头像
+   */
+  avatar?: string;
+  /**
+   * 空间名
+   */
+  space: string;
+  /**
+   * 房间名
+   */
+  room?: RoomType;
+  /**
+   * 身份类型，目前只有两种
+   * 1. 客服人员
+   * 2. 顾客
+   */
+  identity: IdentityType;
+  /**
+   * 是否经过预加入页面进入，如果为true则需要经过预加入页面，false则直接进入
+   */
+  preJoin?: boolean;
+  /**
+   * 签发时间
+   */
+  iat: number;
+  /**
+   * 过期时间
+   */
+  exp: number;
+}

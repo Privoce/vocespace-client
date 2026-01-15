@@ -4,7 +4,7 @@ import { SvgResource } from '@/app/resources/svg';
 
 import { PUserInfo } from '@/lib/hooks/platform';
 import { useI18n } from '@/lib/i18n/i18n';
-import { VOCESPACE_PLATFORM_USER_ID } from '@/lib/std/space';
+import { VOCESPACE_PLATFORM_USER } from '@/lib/std/space';
 import styles from '@/styles/pre_join.module.scss';
 import { MailOutlined, UserOutlined } from '@ant-design/icons';
 import { Avatar, Button, Divider, Dropdown } from 'antd';
@@ -59,7 +59,7 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
           key: 'logout',
           label: t('login.out'),
           onClick: () => {
-            localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
+            localStorage.removeItem(VOCESPACE_PLATFORM_USER);
             window.open(`https://home.vocespace.com/auth/user/${userId}?logout=true`, '_self');
           },
         },

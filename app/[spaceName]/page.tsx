@@ -4,29 +4,18 @@ import * as React from 'react';
 import { PageClientImpl } from './PageClientImpl';
 import { isVideoCodec } from '@/lib/types';
 import { RecoilRoot } from 'recoil';
-import { VOCESPACE_PLATFORM_USER_ID } from '@/lib/std/space';
+import { VOCESPACE_PLATFORM_USER } from '@/lib/std/space';
 import { LoginStateBtnProps } from '../pages/pre_join/login';
 import { PUserInfo, PUserMeta } from '@/lib/hooks/platform';
 import { api } from '@/lib/api';
+import { AuthType, SearchParams } from '@/lib/std';
 
 export default function Page({
   params,
   searchParams,
 }: {
   params: { spaceName: string };
-  searchParams: {
-    region?: string;
-    hq?: string;
-    codec?: string;
-    username?: string;
-    userId?: string;
-    // 这里目的是为了标识返回的url，不是为了区分登录方式，从vocespace.com就是vocespace，从space.voce.chat就是space，暂时没有特殊意义
-    // 即使没有这个参数也不会影响功能
-    auth?: 'vocespace' | 'space' | 'sohive';
-    // 额外数据参数，目前仅sohive使用
-    data?: string;
-    room?: string;
-  };
+  searchParams: SearchParams;
 }) {
   const [loading, setLoading] = React.useState(true);
   const codec =
@@ -51,7 +40,7 @@ export default function Page({
   const checkAndFetchByStored = async () => {
     setLoading(true);
     // 检查是否在客户端环境中
-    const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER_ID);
+    const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER);
     // console.warn('Checking localStorage for user info', storedUserInfo);
     if (storedUserInfo) {
       try {
@@ -69,12 +58,12 @@ export default function Page({
             };
             setUserInfo(updatedInfo);
             // 更新本地存储
-            localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(updatedInfo));
+            localStorage.setItem(VOCESPACE_PLATFORM_USER, JSON.stringify(updatedInfo));
             return;
           }
         }
         // 用户不在线，清除本地存储
-        localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
+        localStorage.removeItem(VOCESPACE_PLATFORM_USER);
         setUserInfo({} as LoginStateBtnProps);
       } catch (error) {
         console.error('Failed to parse stored user info:', error);
@@ -108,7 +97,7 @@ export default function Page({
       // console.log('Saving URL params to localStorage:', newUserInfo);
       setUserInfo(newUserInfo);
       if (typeof window !== 'undefined') {
-        localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, JSON.stringify(newUserInfo));
+        localStorage.setItem(VOCESPACE_PLATFORM_USER, JSON.stringify(newUserInfo));
       }
     }
   }, [searchParams.username, searchParams.userId, searchParams.auth]);

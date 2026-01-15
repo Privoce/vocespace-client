@@ -4,7 +4,8 @@
  */
 
 import { useMemo } from 'react';
-import { VOCESPACE_PLATFORM_USER_ID } from '../std/space';
+import { VOCESPACE_PLATFORM_USER } from '../std/space';
+import { AuthType } from '../std';
 
 export interface UsePlatformUserInfoProps {
   /**
@@ -13,10 +14,13 @@ export interface UsePlatformUserInfoProps {
   uid: string;
 }
 
+/**
+ * PUserInfo 平台用户信息类型
+ */
 export interface PUserInfo {
   userId?: string;
   username?: string;
-  auth?: 'space' | 'vocespace' | 'sohive';
+  auth?: AuthType;
   avatar?: string;
 }
 
@@ -33,7 +37,7 @@ export const usePlatformUserInfo = ({
   uid,
 }: UsePlatformUserInfoProps): UsePlatformUserInfoExports => {
   const platUser: PUserInfo | null = useMemo(() => {
-    const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER_ID);
+    const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER);
     if (storedUserInfo) {
       const parsedInfo = JSON.parse(storedUserInfo) as PUserInfo;
       return parsedInfo.userId === uid ? parsedInfo : null;

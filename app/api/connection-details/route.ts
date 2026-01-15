@@ -23,9 +23,11 @@ interface SohiveTokenRes {
    */
   space: string;
   /**
-   * 房间名
+   * 房间名，可以是具体的房间名称，或者是特殊值 $empty
+   * 具体的房间名会让用户直接进入某个子房间
+   * 如果是$empty，表示用户需要进入任意空房间
    */
-  room: string;
+  room: string | "$empty";
   /**
    * 身份类型，目前只有两种
    * 1. 客服人员

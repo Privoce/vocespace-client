@@ -27,7 +27,7 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { PreJoin } from '@/app/pages/pre_join/pre_join';
 import { atom, useRecoilState } from 'recoil';
-import { UserDefineStatus } from '@/lib/std';
+import { SearchParams, UserDefineStatus } from '@/lib/std';
 import io from 'socket.io-client';
 import { ChatMsgItem } from '@/lib/std/chat';
 import {
@@ -35,7 +35,7 @@ import {
   DEFAULT_PARTICIPANT_SETTINGS,
   PARTICIPANT_SETTINGS_KEY,
   ParticipantSettings,
-  VOCESPACE_PLATFORM_USER_ID,
+  VOCESPACE_PLATFORM_USER,
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
 import { WsBase, WsTo } from '@/lib/std/device';
@@ -110,20 +110,23 @@ export const RemoteTargetApp = atom({
   },
 });
 
-export function PageClientImpl(props: {
+export interface PageClientImplProps extends SearchParams {
   spaceName: string;
-  region?: string;
-  hq: boolean;
-  codec: VideoCodec;
-  username?: string;
-  userId?: string;
-  auth?: 'space' | 'vocespace' | 'sohive';
-  data?: string;
-  room?: string;
-  avatar?: string;
   loading: boolean;
   setLoading: (loading: boolean) => void;
-}) {
+}
+
+export function PageClientImpl({
+  spaceName,
+  loading,
+  setLoading,
+  region,
+  hq,
+  codec,
+  auth,
+  token,
+  room
+}: PageClientImplProps) {
   const { t } = useI18n();
   const [uState, setUState] = useRecoilState(userState);
   const [messageApi, contextHolder] = message.useMessage();
@@ -165,7 +168,7 @@ export function PageClientImpl(props: {
       setConnectionDetails(connectionDetailsData);
       if (props.userId && props.username && props.auth) {
         // 设置登陆状态：需要在localStorage中存储来自平台提供的用户id即可，因为id才是真正的唯一标识
-        // localStorage.setItem(VOCESPACE_PLATFORM_USER_ID, props.userId);
+        // localStorage.setItem(VOCESPACE_PLATFORM_USER, props.userId);
         // 去除url参数
         router.replace(`/${props.spaceName}`);
       }
@@ -243,7 +246,7 @@ export function PageClientImpl(props: {
       if (storedSettings?.version !== '0.5.1') {
         // 版本不匹配/不存在，直接删除
         localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
-        localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
+        localStorage.removeItem(VOCESPACE_PLATFORM_USER);
         return;
       }
       setUState(storedSettings);
