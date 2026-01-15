@@ -9,25 +9,12 @@ import {
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import {
-  Button,
-  Checkbox,
-  CheckboxOptionType,
-  Drawer,
-  GetProp,
-  Input,
-  message,
-  Modal,
-  notification,
-  Radio,
-  Slider,
-  Tooltip,
-} from 'antd';
+import { Button, Drawer, Input, message, Modal } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
 import { Settings, SettingsExports, TabKey } from './settings/settings';
-import { useRecoilState, waitForAll } from 'recoil';
+import { useRecoilState } from 'recoil';
 import {
   chatMsgState,
   RemoteTargetApp,
@@ -36,7 +23,7 @@ import {
   virtualMaskState,
 } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
-import { isMobile as is_moblie, isIos, UserStatus } from '@/lib/std';
+import { isMobile as is_mobile, isSpaceManager, UserStatus } from '@/lib/std';
 import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';
 import { ChatToggle } from './toggles/chat_toggle';
 import { MoreButton } from './toggles/more_button';
@@ -46,11 +33,11 @@ import { ParticipantManage } from '../participant/manage';
 import { api } from '@/lib/api';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
 import equal from 'fast-deep-equal';
-import { Reaction } from './widgets/reaction';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { AICutService } from '@/lib/ai/cut';
-import { AICutAnalysisService, AICutDeps, downloadMarkdown, Extraction } from '@/lib/ai/analysis';
-import { InfoCircleFilled } from '@ant-design/icons';
+import { useWork, Work, WorkModal } from './widgets/work';
+import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/ai';
+import { DEFAULT_WINDOW_ADJUST_WIDTH } from '@/lib/std/window';
 
 /** @public */
 export type ControlBarControls = {
@@ -91,6 +78,12 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
     reload?: boolean,
   ) => Promise<void>;
   openAIServiceAskNote: () => void;
+  downloadAIMdReport?: () => Promise<void>;
+  setNoteStateForAICutService: (value: {
+    openAIService: boolean;
+    noteClosed: boolean;
+    hasAsked: boolean;
+  }) => void;
 }
 
 export interface ControlBarExport {
@@ -136,6 +129,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       toRenameSettings,
       startOrStopAICutAnalysis,
       openAIServiceAskNote,
+      downloadAIMdReport,
+      setNoteStateForAICutService,
       ...props
     }: ControlBarProps,
     ref,
@@ -154,7 +149,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       controlLeftRef.current ? controlLeftRef.current.clientWidth : window.innerWidth,
     );
     const isMobile = React.useMemo(() => {
-      return is_moblie();
+      return is_mobile();
     }, []);
 
     const controlSize = React.useMemo(() => {
@@ -180,7 +175,9 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         setIsChatOpen(layoutContext?.widget.state?.showChat);
       }
     }, [layoutContext?.widget.state?.showChat]);
-    const isTooLittleSpace = useMediaQuery(`(max-width: ${isChatOpen ? 1000 : 720}px)`);
+    const isTooLittleSpace = useMediaQuery(
+      `(max-width: ${isChatOpen ? 1000 : DEFAULT_WINDOW_ADJUST_WIDTH}px)`,
+    );
 
     const defaultVariation = isTooLittleSpace ? 'minimal' : 'verbose';
     variation ??= defaultVariation;
@@ -206,7 +203,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       [variation],
     );
     const showText = React.useMemo(() => {
-      if (controlWidth < 720) {
+      if (controlWidth < DEFAULT_WINDOW_ADJUST_WIDTH) {
         return false;
       } else {
         return variation === 'textOnly' || variation === 'verbose';
@@ -267,6 +264,9 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           await space.localParticipant?.setMetadata(JSON.stringify({ name: newName }));
           await space.localParticipant.setName(newName);
           messageApi.success(t('msg.success.user.username.change'));
+          await updateSettings({
+            name: newName,
+          });
         } else if (newName == (space.localParticipant?.name || space.localParticipant.identity)) {
         } else {
           messageApi.error(t('msg.error.user.username.change'));
@@ -402,8 +402,9 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const participantList = React.useMemo(() => {
       return Object.entries(spaceInfo.participants);
     }, [spaceInfo]);
-    const isOwner = React.useMemo(() => {
-      return spaceInfo.ownerId === space?.localParticipant.identity;
+    const isManager = React.useMemo(() => {
+      // return spaceInfo.ownerId === space?.localParticipant.identity;
+      return isSpaceManager(spaceInfo, space?.localParticipant.identity || '').isManager;
     }, [spaceInfo.ownerId, space?.localParticipant.identity]);
 
     // [record] -----------------------------------------------------------------------------------------------------
@@ -414,7 +415,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     }, [spaceInfo.record]);
 
     const onClickRecord = async () => {
-      if (!space && isOwner) return;
+      if (!space && isManager) return;
 
       if (!isRecording) {
         setOpenRecordModal(true);
@@ -443,7 +444,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const startRecord = async () => {
       if (isRecording || !space) return;
 
-      if (isOwner) {
+      if (isManager) {
         // host request to start recording
         const response = await api.sendRecordRequest({
           spaceName: space.name,
@@ -472,7 +473,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             space: space.name,
           });
         }
-        console.warn(spaceInfo);
+        // console.warn(spaceInfo);
       } else {
         // participant request to start recording
         socket.emit('req_record', {
@@ -520,51 +521,26 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     };
 
     // ai -----------------------------------------------------------------------------------------
-    const [isServiceOpen, setIsServiceOpen] = React.useState(false);
-    const [aiCutDeps, setAICutDeps] = React.useState<AICutDeps[]>(['screen', 'todo']);
-    const [extraction, setExtraction] = React.useState<Extraction>('medium');
-    const [cutFreq, setCutFreq] = React.useState(3);
+    const {
+      aiCutDeps,
+      setAICutDeps,
+      extraction,
+      setExtraction,
+      cutFreq,
+      setCutFreq,
+      cutBlur,
+      setCutBlur,
+      isServiceOpen,
+      setIsServiceOpen,
+      aiCutOptions,
+      aiCutOptionsChange,
+    } = useAICutAnalysisSettings({
+      space,
+      spaceInfo,
+    });
+
     const onClickAI = async () => {
       setAICutModalOpen(true);
-    };
-
-    React.useEffect(() => {
-      if (
-        space &&
-        space.localParticipant &&
-        spaceInfo.participants[space.localParticipant.identity]
-      ) {
-        const { spent, todo, extraction } =
-          spaceInfo.participants[space.localParticipant.identity]?.ai.cut;
-        const deps: AICutDeps[] = ['screen'];
-        if (spent) {
-          deps.push('spent');
-        }
-        if (todo) {
-          deps.push('todo');
-        }
-        setAICutDeps(deps);
-        setExtraction(extraction);
-        setIsServiceOpen(
-          spaceInfo.participants[space.localParticipant.identity]?.ai.cut.enabled || false,
-        );
-
-        setCutFreq(spaceInfo.ai.cut.freq || 3);
-      }
-    }, [space, spaceInfo]);
-
-    const aiCutOptions: CheckboxOptionType<AICutDeps>[] = React.useMemo(() => {
-      return [
-        { label: t('ai.cut.share_screen'), value: 'screen' },
-        { label: t('ai.cut.share_todo'), value: 'todo' },
-        { label: t('ai.cut.share_time'), value: 'spent' },
-      ];
-    }, [t]);
-
-    const aiCutOptionsChange: GetProp<typeof Checkbox.Group, 'onChange'> = async (
-      checkedValues,
-    ) => {
-      setAICutDeps(checkedValues as AICutDeps[]);
     };
 
     const saveAICutServiceSettings = async () => {
@@ -613,10 +589,36 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           spent: includeSpent,
           todo: includeTodo,
           extraction,
+          blur: cutBlur,
         },
         reload,
       );
     };
+
+    // --- work -----------------------------------------------------------------------------------------
+    const {
+      openModal: workModalOpen,
+      setOpenModal: setWorkModalOpen,
+      enabled: workEnabled,
+      setEnabeled: setWorkEnabled,
+      isUseAI,
+      setIsUseAI,
+      isSync,
+      setIsSync,
+      videoBlur,
+      setVideoBlur,
+      screenBlur,
+      setScreenBlur,
+      handleWorkMode,
+      startOrStopWork,
+    } = useWork({
+      space,
+      spaceInfo,
+      messageApi,
+      startOrStopAICutAnalysis,
+      openAIService: setNoteStateForAICutService,
+      downloadAIMdReport,
+    });
 
     React.useImperativeHandle(
       ref,
@@ -711,14 +713,26 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                 (isScreenShareEnabled ? t('common.stop_share') : t('common.share_screen'))}
             </TrackToggle>
           )}
-          {space && spaceInfo.participants && visibleControls.microphone && (
-            <Reaction
-              updateSettings={updateSettings}
-              space={space.name}
+          {space && visibleControls.microphone && spaceInfo.ai.cut.enabled && (
+            // <Reaction
+            //   updateSettings={updateSettings}
+            //   space={space.name}
+            //   size={controlSize}
+            //   controlWidth={controlWidth}
+            //   spaceInfo={spaceInfo}
+            // ></Reaction>
+
+            <Work
+              isStartWork={workEnabled}
+              setIsStartWork={setWorkEnabled}
+              setOpenModal={setWorkModalOpen}
+              showText={showText}
               size={controlSize}
               controlWidth={controlWidth}
               spaceInfo={spaceInfo}
-            ></Reaction>
+              space={space.name}
+              startOrStopWork={startOrStopWork}
+            ></Work>
           )}
           {visibleControls.chat && !isMobile && (
             <ChatToggle
@@ -797,14 +811,13 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           <div className={styles.setting_container}>
             {space && (
               <Settings
+                updateSettings={updateSettings}
                 ref={settingsRef}
                 close={settingVis}
                 messageApi={messageApi}
-                space={space.name}
+                space={space}
                 username={userChoices.username}
                 tab={{ key, setKey }}
-                // saveChanges={saveChanges}
-                setUserStatus={setUserStatus}
                 localParticipant={space.localParticipant}
                 spaceInfo={spaceInfo}
               ></Settings>
@@ -842,27 +855,16 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         >
           <div className={styles.invite_container} ref={inviteTextRef}>
             <div className={styles.invite_container_item}>
-              {space?.localParticipant.name} &nbsp;
-              {t('more.participant.invite.texts.0')}
+              {t('more.participant.invite.texts.0')
+                .replace('$user', space?.localParticipant.name || '')
+                .replace('$space', space?.name || '')}
             </div>
             <div className={styles.invite_container_item}>
               <div className={styles.invite_container_item_justify}>
-                {t('more.participant.invite.texts.1')}
-                {t('more.participant.invite.web')}
-                {t('more.participant.invite.add')}
+                {t('more.participant.invite.texts.1').replace('$space', space?.name || '')}
               </div>
               <div>
                 {t('more.participant.invite.link')}: {window.location.href}
-              </div>
-            </div>
-            <div className={styles.invite_container_item}>
-              <div className={styles.invite_container_item_justify}>
-                {t('more.participant.invite.texts.2')}
-                <strong>{`${window.location.href}`}</strong>
-                {t('more.participant.invite.add')}
-              </div>
-              <div>
-                {t('more.participant.invite.room')}: {space?.name}
               </div>
             </div>
           </div>
@@ -906,7 +908,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           okText={
             isDownload
               ? t('more.record.to_download')
-              : isOwner
+              : isManager
               ? t('more.record.confirm')
               : t('more.record.confirm_request')
           }
@@ -917,7 +919,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           {isDownload ? (
             <div>{t('more.record.download_msg')}</div>
           ) : (
-            <div>{isOwner ? t('more.record.desc') : t('more.record.request')}</div>
+            <div>{isManager ? t('more.record.desc') : t('more.record.request')}</div>
           )}
         </Modal>
         {/* -------------------- ai cut modal --------------------------------------------------- */}
@@ -929,75 +931,46 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           cancelText={t('common.cancel')}
           onCancel={saveAICutServiceSettings}
         >
-          <div>{t('more.ai.desc')}</div>
-          <div className={styles.ai_cut_line}>
-            <div className={styles.ai_cut_line}>
-              <span> {t('ai.cut.open')}</span>
-            </div>
-            <div style={{ width: '100%' }}>
-              {space && (
-                <Radio.Group
-                  size="large"
-                  block
-                  value={isServiceOpen}
-                  onChange={(e) => setIsServiceOpen(e.target.value)}
-                >
-                  <Radio.Button value={true}>{t('common.open')}</Radio.Button>
-                  <Radio.Button value={false}>{t('common.close')}</Radio.Button>
-                </Radio.Group>
-              )}
-            </div>
-          </div>
-          {space?.localParticipant.identity === spaceInfo.ownerId && isServiceOpen && (
-            <>
-              {' '}
-              <div className={styles.ai_cut_line}>
-                <span> {t('ai.cut.freq')}</span>
-                <Tooltip title={t('ai.cut.freq_desc')} trigger={['hover']}>
-                  <InfoCircleFilled></InfoCircleFilled>
-                </Tooltip>
-              </div>{' '}
-              <Slider min={1} max={15} value={cutFreq} onChange={(v) => setCutFreq(v)} step={0.5} />
-            </>
-          )}
-          {isServiceOpen && (
-            <div className={styles.ai_cut_line}>
-              <div className={styles.ai_cut_line}>
-                <span> {t('ai.cut.source_dep')}</span>
-                <Tooltip title={t('ai.cut.source_dep_desc')} trigger={['hover']}>
-                  <InfoCircleFilled></InfoCircleFilled>
-                </Tooltip>
-              </div>
-              <div style={{ width: '100%' }}>
-                <Checkbox.Group
-                  value={aiCutDeps}
-                  options={aiCutOptions}
-                  onChange={aiCutOptionsChange}
-                />
-              </div>
-              <div className={styles.ai_cut_line}>
-                <span> {t('ai.cut.extraction.title')}</span>
-                <Tooltip title={t('ai.cut.extraction.desc')} trigger={['hover']}>
-                  <InfoCircleFilled></InfoCircleFilled>
-                </Tooltip>
-              </div>
-              <div style={{ width: '100%' }}>
-                <Radio.Group
-                  size="large"
-                  block
-                  value={extraction}
-                  onChange={(e) => setExtraction(e.target.value)}
-                >
-                  <Radio.Button value="easy">{t('ai.cut.extraction.easy')}</Radio.Button>
-                  <Radio.Button value="medium">{t('ai.cut.extraction.medium')}</Radio.Button>
-                  <Radio.Button value="max">{t('ai.cut.extraction.max')}</Radio.Button>
-                </Radio.Group>
-              </div>
-            </div>
-          )}
-
+          <AICutAnalysisSettingsPanel
+            space={space}
+            spaceInfo={spaceInfo}
+            aiCutDeps={aiCutDeps}
+            setAICutDeps={setAICutDeps}
+            extraction={extraction}
+            setExtraction={setExtraction}
+            cutFreq={cutFreq}
+            setCutFreq={setCutFreq}
+            cutBlur={cutBlur}
+            setCutBlur={setCutBlur}
+            isServiceOpen={isServiceOpen}
+            setIsServiceOpen={setIsServiceOpen}
+            aiCutOptions={aiCutOptions}
+            aiCutOptionsChange={aiCutOptionsChange}
+            isManager={isManager}
+          ></AICutAnalysisSettingsPanel>
           {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
         </Modal>
+        {/* ------------------ work ----------------------------------------------------- */}
+        {space && (
+          <WorkModal
+            space={space}
+            spaceInfo={spaceInfo}
+            open={workModalOpen}
+            setOpen={setWorkModalOpen}
+            isStartWork={workEnabled}
+            setIsStartWork={setWorkEnabled}
+            isUseAI={isUseAI}
+            setIsUseAI={setIsUseAI}
+            isSync={isSync}
+            setIsSync={setIsSync}
+            videoBlur={videoBlur}
+            setVideoBlur={setVideoBlur}
+            screenBlur={screenBlur}
+            setScreenBlur={setScreenBlur}
+            handleWorkMode={handleWorkMode}
+            updateSettings={updateSettings}
+          ></WorkModal>
+        )}
       </div>
     );
   },

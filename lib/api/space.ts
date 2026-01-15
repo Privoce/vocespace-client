@@ -211,6 +211,37 @@ export interface UpdateSpaceParticipantBody {
   init?: boolean;
 }
 
+export interface TransOrSetOMBody {
+  spaceName: string;
+  participantId: string;
+  replacedId: string;
+  isTransfer: boolean;
+}
+
+/**
+ * 转让/设置房间主持人或管理员(根据当前用户身份决定)
+ */
+export const transOrSetOwnerManager = async (
+  spaceName: string,
+  participantId: string,
+  replacedId: string,
+  isTransfer: boolean,
+) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('transfer', isTransfer ? 'true' : 'false');
+  url.searchParams.append('space', 'true');
+  url.searchParams.append('auth', 'manage');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      spaceName,
+      participantId,
+      replacedId,
+    } as TransOrSetOMBody),
+  });
+};
+
 /**
  * 更新空间参与者的设置
  */
@@ -336,12 +367,29 @@ export const persistentSpace = async (spaceName: string, persistence: boolean) =
   });
 };
 
+export interface AllowGuestBody {
+  spaceName: string;
+  allowGuest: boolean;
+}
+
+export const allowGuest = async (spaceName: string, allowGuest: boolean) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('space', 'true');
+  url.searchParams.append('allowGuest', 'update');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ spaceName, allowGuest } as AllowGuestBody),
+  });
+};
+
 export interface UploadSpaceAppBody {
   spaceName: string;
   participantId: string;
   data: SpaceTimer | SpaceCountdown | SpaceTodo;
   ty: AppKey;
   isAuth: boolean;
+  deleteId?: string;
 }
 
 export const uploadSpaceApp = async (
@@ -366,9 +414,59 @@ export const uploadSpaceApp = async (
   });
 };
 
+export const deleteTodo = async (
+  spaceName: string,
+  participantId: string,
+  data: SpaceTodo,
+  deleteId: string,
+  isAuth: boolean,
+) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('apps', 'upload');
+  url.searchParams.append('delete', 'true');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      spaceName,
+      deleteId,
+      data,
+      participantId,
+      ty: 'todo',
+      isAuth,
+    } as UploadSpaceAppBody),
+  });
+};
+
 export const getUserMeta = async (userId: string | undefined) => {
   // const url = new URL('http://localhost:3000/api/vocespace'); // 开发环境测试用
   const url = new URL('https://home.vocespace.com/api/vocespace'); // 生产环境使用
   url.searchParams.append('userId', userId || '');
   return await fetch(url.toString());
+};
+
+
+export interface WorkModeBody {
+  spaceName: string;
+  participantId: string;
+  workType: boolean;
+}
+
+export const handleWorkMode = async (
+  spaceName: string,
+  participantId: string,
+  workType: boolean,
+) => {
+  const url = new URL(SPACE_API, window.location.origin);
+
+  url.searchParams.append('mode', 'work');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      spaceName,
+      participantId,
+      workType,
+    } as WorkModeBody),
+  });
 };

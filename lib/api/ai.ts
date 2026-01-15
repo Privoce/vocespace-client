@@ -11,6 +11,7 @@ export interface AnalysisRequestBody {
   lang: string;
   extraction: Extraction;
   isAuth: boolean;
+  blur: boolean;
 }
 
 const BASE_URL = connect_endpoint('/api/ai');

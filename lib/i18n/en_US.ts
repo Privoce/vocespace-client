@@ -1,5 +1,9 @@
 export default {
   common: {
+    full_screen: 'Full Screen',
+    guest: {
+      not_allow: 'Sorry, the current space does not allow guests to join. Please Login!',
+    },
     confirm: 'Confirm',
     cancel: 'Cancel',
     alert: 'Alert',
@@ -34,6 +38,8 @@ export default {
     chat: 'Chat',
     chat_placeholder: 'Please enter a message',
     chat_drag_file_here: 'Drag file here',
+    files: 'Files',
+    upload: 'Upload',
     send: 'Send',
     sending: 'Sending',
     send_file_or: 'Do you want to send this file?',
@@ -68,8 +74,36 @@ export default {
       error: 'Copying failed, please copy manually',
     },
   },
+  work: {
+    title: 'Work Mode',
+    start: 'Start Working',
+    close: 'End Work',
+    desc: 'After enabling work mode, the system will request you to enable screen sharing, apply work settings, and use AI to analyze and record work based on to-do items, helping you better manage your work.',
+    use_ai: 'Enable AI Analysis',
+    sync: 'Synchronize Configuration',
+    sync_desc:
+      'As an administrator/host, you can synchronize the following settings to all members who have enabled work mode.',
+    save: {
+      success: 'Work mode settings saved successfully',
+      error: 'Work mode settings saved failed, please try again later.',
+    },
+    mode: {
+      start: {
+        success: 'Work mode enabled',
+        error: 'Failed to enable work mode, please try again later.',
+      },
+      stop: {
+        success: 'Work mode disabled',
+        error: 'Failed to disable work mode, please try again later.',
+      },
+    },
+  },
   ai: {
     cut: {
+      blur: {
+        title: 'Screenshot Blur',
+        desc: 'Sets the final display blur level of AI analysis screenshots. The blur level does not affect AI analysis and is only applied to screenshots saved in the cloud and viewed by others.',
+      },
       time: {
         start: 'Start Time',
         duration: 'Duration (minutes)',
@@ -348,9 +382,9 @@ export default {
       },
       todo: {
         title: 'Todo',
-        add: 'Add todo',
+        add: 'Add task',
         placeholder: 'Please enter todo',
-        empty: 'No todo, enter todo below and click the add button to create a new todo',
+        empty: 'No tasks available, please create new tasks below',
         create: 'Create todo',
         empty_value: 'Todo cannot be empty',
         delete: 'Todo deleted successfully',
@@ -360,9 +394,12 @@ export default {
         complete: 'Completed Tasks',
         together: {
           title: 'Team Status',
-          empty: 'No user todos available',
+          empty: 'No user task available',
         },
         copy: 'Copy todo',
+        today_done: 'Completed today',
+        history: 'Current list',
+        today_empty: 'No task completed today, keep going!',
       },
     },
     record: {
@@ -384,20 +421,20 @@ export default {
       title: 'Participants',
       manage: 'Manage Participants',
       search: 'Search Participants',
-      manager: 'host',
+      manager: 'Manager',
+      host: 'Host',
       wave: 'Send Greeting',
       invite: {
         title: 'Invite Participants',
         web: 'in Browser',
         add: 'add into VoceSpace Room',
         texts: [
-          'Invite you to join VoceSpace',
-          'Please click|copy the following link to',
-          'Please copy the following room name to',
+          "$user invites you to join [$space]'s VoceSpace",
+          "Please click or copy the following link and join [$space]'s VoceSpace in browser",
         ],
         ok: 'Copy Invite',
         cancel: 'Cancel',
-        link: 'Link',
+        link: 'Join link',
         room: 'Room Name',
       },
       set: {
@@ -418,6 +455,9 @@ export default {
         control: {
           title: 'Participant Control',
           trans: 'Transfer Room Host',
+          trans_manager: 'Transfer Manager',
+          set_manager: 'Set Manager',
+          remove_manager: 'Remove Manager',
           change_name: 'Change Name',
           mute: {
             audio: 'Mute Microphone',
@@ -474,6 +514,13 @@ export default {
         incomplete:
           'Please fill in the AI ​​configuration parameters completely, ensuring that the model name, API address, and API key are all entered.',
       },
+      precheck: {
+        desc: 'To modify AI settings, you need to enter a host token for verification. If you do not know your host token, please contact the software deployer to obtain it.',
+        placeholder: 'Please enter your host token',
+        check: 'Verify',
+        error: 'Verification failed. Please check and re-enter.',
+        success: 'Verification successful. You can now modify AI settings.',
+      },
     },
     general: {
       title: 'General',
@@ -507,6 +554,11 @@ export default {
           high: 'High',
           hd: 'HD',
           ultra: 'Ultra',
+        },
+        allow_guest: {
+          title: 'Allow Guest to Join',
+          success: 'Guest join settings modified successfully',
+          error: 'Failed to set guest access for the current space',
         },
       },
       status: {
@@ -647,7 +699,7 @@ export default {
         title: 'Client Error',
         sub: 'Client encountered an error, please check the console logs for more details. Please contact the administrator.',
         back: 'Back',
-        connect: "Email: han@privoce.com"
+        connect: 'Email: han@privoce.com',
       },
       conf_load:
         'Configuration loading failed, please check whether the vocespace.conf.json file exists',
@@ -686,6 +738,7 @@ export default {
         permission: 'Failed to request permission.',
       },
       user: {
+        manager_limit: 'The number of managers has reached the limit, no more managers can be set.',
         username: {
           change: 'Username changed failed',
           request: 'Failed to request username',
@@ -762,10 +815,70 @@ export default {
           change: 'Username changed successfully',
         },
         lang: 'Language changed successfully',
-        transfer: 'You are now the host',
+        transfer: 'You have been successfully transferred',
+        set_manager: 'You have been set as a manager',
+        remove_manager: 'Your manager status has been removed',
       },
       file: {
         upload: 'File uploaded successfully',
+      },
+    },
+  },
+  dashboard: {
+    common: {
+      day: 'Day',
+      week: 'Week',
+      month: 'Month',
+      year: 'Year',
+      total: 'Total',
+      during: 'Duration',
+    },
+    conf: {
+      resolution: 'Configure global graphics quality',
+      verify: 'Verify',
+      close: 'Close',
+      placeholder: 'Please enter administrator token',
+      error: {
+        verify: 'Administrator token error, please try again',
+        not_loaded:
+          'Configuration not loaded or unable to obtain configuration, please try again later',
+      },
+      success: {
+        update: 'Configuration updated',
+      },
+    },
+    count: {
+      room: 'Rooms',
+      participant: 'All users',
+      online_participant: 'Online users',
+      platform: 'Platform users',
+      opt: 'Operation',
+      refresh: 'Refresh data',
+      global_conf: 'Configure Image Quality (Global)',
+      history: {
+        title: 'Historical Room Statistics',
+        day: 'Daily Ranking',
+        week: 'Weekly Ranking',
+        month: 'Monthly Ranking',
+        table: {
+          room: 'Room Name',
+          total: 'Total Duration',
+          today: "Today's Duration",
+        },
+        empty: 'No Records',
+      },
+    },
+    active: {
+      empty_room: 'No Active Rooms',
+      title: 'Current Active Users',
+      table: {
+        participant: 'User',
+        state: 'Status',
+        volume: 'Volume',
+        blur: 'Video Blur',
+        screen_blur: 'Screen Blur',
+        is_auth: 'Authenticated',
+        during: 'Online Duration',
       },
     },
   },

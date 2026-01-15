@@ -2,7 +2,7 @@ import os from 'os';
 import clsx from 'clsx';
 import { Trans } from '../i18n/i18n';
 import { GetProp, UploadProps } from 'antd';
-import { VOCESPACE_PLATFORM_USER_ID } from './space';
+import { SpaceInfo, VOCESPACE_PLATFORM_USER_ID } from './space';
 import { PUserInfo } from '../hooks/platform';
 import dayjs from 'dayjs';
 /**
@@ -301,4 +301,48 @@ export const ERROR_CODE = {
   createSpace: CreateSpaceError,
 };
 
+/**
+ * SpaceParticipantType 空间参与者身份类型
+ * 管理员和Owner的isManager都是true
+ */
+export interface SpaceParticipantType {
+  /**
+   * 是否是管理员或Owner
+   */
+  isManager: boolean;
+  /**
+   * 具体身份
+   */
+  ty: 'Manager' | 'Owner' | 'Participant';
+}
 
+export const isSpaceManager = (spaceInfo: SpaceInfo, pid: string): SpaceParticipantType => {
+  if (pid === spaceInfo.ownerId) {
+    return {
+      isManager: true,
+      ty: 'Owner',
+    };
+  } else if (spaceInfo.managers.includes(pid)) {
+    return {
+      isManager: true,
+      ty: 'Manager',
+    };
+  } else {
+    return {
+      isManager: false,
+      ty: 'Participant',
+    };
+  }
+};
+
+/**
+ * 通过url下载文件
+ * @param url
+ */
+export const downloadFile = (url: string, fileName: string) => {
+  const element = document.createElement('a');
+  element.href = url;
+  element.download = fileName;
+  document.body.appendChild(element);
+  element.click();
+};

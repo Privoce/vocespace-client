@@ -1,8 +1,10 @@
 import { useI18n } from '@/lib/i18n/i18n';
 import { AppKey, ParticipantSettings } from '@/lib/std/space';
 import { AppstoreOutlined } from '@ant-design/icons';
-import { LayoutContext } from '@livekit/components-react';
+import { LayoutContext, TrackReferenceOrPlaceholder } from '@livekit/components-react';
 import { Tooltip } from 'antd';
+import { FullScreenBtn, FullScreenBtnProps } from '../controls/widgets/full_screen';
+import { Track } from 'livekit-client';
 
 export interface AppPinProps {
   appKey: AppKey;
@@ -30,16 +32,15 @@ export function AppFlotIcon({ style, pin, appKey, contextUndefined = true }: App
   }
 }
 
-export function AppFlotPin({
-  pin,
-  style = {
-    width: 'fit-content',
-    padding: 4,
-    backgroundColor: '#00000080',
-    margin: '0 4px',
-    borderRadius: 4,
-  },
-}: AppPinProps) {
+export const APP_FLOT_PIN_STYLE: React.CSSProperties = {
+  width: 'fit-content',
+  padding: 4,
+  backgroundColor: '#00000080',
+  margin: '0 4px',
+  borderRadius: 4,
+};
+
+export function AppFlotPin({ pin, style = APP_FLOT_PIN_STYLE }: AppPinProps) {
   const { t } = useI18n();
   return (
     <Tooltip placement="bottom" title={t(`more.app.title`)}>
@@ -50,11 +51,12 @@ export function AppFlotPin({
   );
 }
 
-export interface AppFlotIconCollectProps {
+export interface AppFlotIconCollectProps extends FullScreenBtnProps {
   showApp: () => void;
   participant?: ParticipantSettings;
   style?: React.CSSProperties;
   contextUndefined?: boolean;
+  trackReference?: TrackReferenceOrPlaceholder;
 }
 
 export function AppFlotIconCollect({
@@ -62,18 +64,39 @@ export function AppFlotIconCollect({
   participant,
   contextUndefined,
   style = { right: '32px', backgroundColor: 'transparent', padding: 0 },
+  setCollapsed,
+  isFullScreen,
+  setIsFullScreen,
+  trackReference,
 }: AppFlotIconCollectProps) {
   return participant && participant.sync ? (
     <div className="lk-focus-toggle-button" style={style}>
-      {participant.sync.length > 0 && (
+      {participant.sync.length > 0 && trackReference?.source !== Track.Source.ScreenShare && (
         <AppFlotIcon
           appKey="todo"
           pin={() => showApp()}
           contextUndefined={contextUndefined}
         ></AppFlotIcon>
       )}
+      {trackReference?.source === Track.Source.ScreenShare && (
+        <FullScreenBtn
+          trackReference={trackReference}
+          setCollapsed={setCollapsed}
+          setIsFullScreen={setIsFullScreen}
+          isFullScreen={isFullScreen}
+        ></FullScreenBtn>
+      )}
     </div>
   ) : (
-    <div></div>
+    <div>
+      {trackReference?.source === Track.Source.ScreenShare && (
+        <FullScreenBtn
+          trackReference={trackReference}
+          setCollapsed={setCollapsed}
+          setIsFullScreen={setIsFullScreen}
+          isFullScreen={isFullScreen}
+        ></FullScreenBtn>
+      )}
+    </div>
   );
 }

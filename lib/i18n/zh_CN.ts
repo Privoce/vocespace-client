@@ -1,5 +1,9 @@
 export default {
   common: {
+    full_screen: '全屏',
+    guest: {
+      not_allow: '很抱歉，当前空间不允许访客加入，请登陆',
+    },
     confirm: '确认',
     cancel: '取消',
     alert: '提示',
@@ -34,6 +38,8 @@ export default {
     chat: '聊天',
     chat_placeholder: '请输入消息',
     chat_drag_file_here: '将文件拖放到此处',
+    files: '文件',
+    upload: '上传',
     send: '发送',
     sending: '发送中',
     send_file_or: '是否发送文件？',
@@ -67,11 +73,38 @@ export default {
       error: '复制失败，请手动复制',
     },
   },
+  work: {
+    title: '工作模式设置',
+    start: '开始工作',
+    close: '结束工作',
+    desc: '开启工作模式后，系统会请求开启您的屏幕共享，应用工作设置并通过AI结合待办事项进行工作分析和记录，帮助您更好地进行工作管理。',
+    use_ai: '开启AI分析',
+    sync: '同步配置',
+    sync_desc: '作为管理员/主持人，您可以将以下设置同步给所有开启工作模式的成员。',
+    save: {
+      success: '工作模式设置保存成功',
+      error: '工作模式设置保存失败，请稍后再试。',
+    },
+    mode: {
+      start: {
+        success: '工作模式已开启',
+        error: '开启工作模式失败，请稍后再试。',
+      },
+      stop: {
+        success: '工作模式已关闭',
+        error: '关闭工作模式失败，请稍后再试。',
+      },
+    },
+  },
   ai: {
     cut: {
+      blur: {
+        title: '截图模糊度',
+        desc: '设置AI分析截图最终显示的模糊度，模糊度不会影响AI分析，只会应用在云端保存和他人查看时的截图效果。',
+      },
       time: {
-        start: "开始时间",
-        duration: "持续时间(分钟)",
+        start: '开始时间',
+        duration: '持续时间(分钟)',
       },
       extraction: {
         title: '提取精细度',
@@ -337,7 +370,7 @@ export default {
         title: '待办事项',
         add: '添加待办',
         placeholder: '请输入待办事项',
-        empty: '暂无待办事项，在下方输入待办并点击添加按钮创建新的待办事项',
+        empty: '暂无待办事项，请在下方创建新的待办事项',
         create: '创建待办',
         empty_value: '待办事项不能为空',
         delete: '删除待办成功',
@@ -350,6 +383,9 @@ export default {
           empty: '暂无用户的待办事项',
         },
         copy: '复制待办',
+        today_done: '今日已完成',
+        history: '待办事项',
+        today_empty: '今日暂无已完成的待办事项',
       },
     },
     record: {
@@ -370,13 +406,17 @@ export default {
       title: '成员',
       manage: '管理成员',
       search: '搜索成员',
-      manager: '主持人',
+      manager: '管理员',
+      host: '房主',
       wave: '打招呼',
       invite: {
         title: '邀请成员',
         web: '浏览器中',
         add: '加入 VoceSpace 房间',
-        texts: ['邀请您加入 VoceSpace', '请 点击|复制 以下链接到', '请复制以下房间名称到'],
+        texts: [
+          '$user 邀请您加入[$space]的VoceSpace',
+          '请点击/复制以下链接到浏览器中加入[$space]的VoceSpace',
+        ],
         ok: '复制邀请',
         cancel: '取消',
         link: '链接',
@@ -401,6 +441,9 @@ export default {
         control: {
           title: '成员控制',
           trans: '转让房间主持人',
+          trans_manager: '转让管理员',
+          set_manager: '设置管理员',
+          remove_manager: '移除管理员',
           change_name: '修改名称',
           mute: {
             audio: '静音音频',
@@ -435,26 +478,34 @@ export default {
     title: '设置',
     ai: {
       title: 'AI',
-      desc: "配置AI分析服务的相关参数，以启用AI分析功能。",
-      model: "模型名称(多模态模型)",
-      model_desc: '选择用于AI分析的语言模型，模型名称需支持多模态输入（图像+文本），以便处理截图并生成分析报告。',
-      key: "API密钥",
-      url: "API地址",
+      desc: '配置AI分析服务的相关参数，以启用AI分析功能。',
+      model: '模型名称(多模态模型)',
+      model_desc:
+        '选择用于AI分析的语言模型，模型名称需支持多模态输入（图像+文本），以便处理截图并生成分析报告。',
+      key: 'API密钥',
+      url: 'API地址',
       recommand: [
-        "我们推荐使用以下多模态模型以获得更好的AI分析效果：",
-        "1. GPT-4V",
-        "2. Claude-3-vision",
-        "3. Gemini-Pro-Vision",
-        "4. Qwen3",
-        "5. 豆包(Doubao)"
+        '我们推荐使用以下多模态模型以获得更好的AI分析效果：',
+        '1. GPT-4V',
+        '2. Claude-3-vision',
+        '3. Gemini-Pro-Vision',
+        '4. Qwen3',
+        '5. 豆包(Doubao)',
       ],
-      enabled: "AI询问弹窗",
+      enabled: 'AI询问弹窗',
       update: {
-        save: "保存AI配置",
+        save: '保存AI配置',
         success: 'AI配置更新成功',
         error: 'AI配置更新失败，请稍后再试。',
         incomplete: '请完整填写AI配置参数，确保模型名称，API地址和API密钥均已填写。',
-      }
+      },
+      precheck: {
+        desc: '要修改AI设置需要先输入host token进行验证，若您不知道host token，请联系软件部署者获取。',
+        placeholder: '请输入host token',
+        check: '验证',
+        error: '验证失败，请检查后重新输入。',
+        success: '验证成功，您现在可以修改AI设置。',
+      },
     },
     general: {
       title: '常规',
@@ -486,6 +537,11 @@ export default {
           high: '高清',
           hd: '超清',
           ultra: '极致',
+        },
+        allow_guest: {
+          title: '允许访客加入',
+          success: '修改访客加入设置成功',
+          error: '设置当前空间访客加入失败',
         },
       },
       status: {
@@ -610,10 +666,10 @@ export default {
     },
     error: {
       client: {
-        title: "客户端错误",
-        sub: "客户端遇到错误，请检查控制台日志了解详细信息并联系管理员。",
-        back: "返回",
-        connect: "微信: Privoce"
+        title: '客户端错误',
+        sub: '客户端遇到错误，请检查控制台日志了解详细信息并联系管理员。',
+        back: '返回',
+        connect: '微信: Privoce',
       },
       conf_load: '配置加载失败，请检查vocespace.conf.json文件是否存在',
       record: {
@@ -647,6 +703,7 @@ export default {
         permission: '请求权限失败。',
       },
       user: {
+        manager_limit: '管理员数量已达上限，无法设置更多管理员。',
         username: {
           change: '用户名修改失败',
           request: '请求用户名失败',
@@ -721,10 +778,69 @@ export default {
           change: '用户名修改成功',
         },
         lang: '语言修改成功',
-        transfer: '您已成功被转让为房间主持人',
+        transfer: '您已成功被转让身份',
+        set_manager: '您你被设置为管理员身份',
+        remove_manager: '您的管理员身份已被移除',
       },
       file: {
         upload: '文件上传成功',
+      },
+    },
+  },
+  dashboard: {
+    common: {
+      day: '日',
+      week: '周',
+      month: '月',
+      year: '年',
+      total: '总',
+      during: '时长',
+    },
+    conf: {
+      resolution: '配置全局画质',
+      verify: '验证',
+      close: '关闭',
+      placeholder: '请输入管理员令牌',
+      error: {
+        verify: '管理员令牌错误，请重试',
+        not_loaded: '配置未加载完成或无法获得配置，请稍后再试',
+      },
+      success: {
+        update: '配置已更新',
+      },
+    },
+    count: {
+      room: '房间数',
+      participant: '所有用户数',
+      online_participant: '在线用户数',
+      platform: '平台用户数',
+      opt: '操作',
+      refresh: '刷新数据',
+      global_conf: '配置画质(全局)',
+      history: {
+        title: '历史房间统计',
+        day: '日榜',
+        week: '周榜',
+        month: '月榜',
+        table: {
+          room: '房间名',
+          total: '总时长',
+          today: '今日使用时长',
+        },
+        empty: '暂无记录',
+      },
+    },
+    active: {
+      empty_room: '暂无活跃房间',
+      title: '当前活跃用户',
+      table: {
+        participant: '用户',
+        state: '状态',
+        volume: '音量',
+        blur: '视频模糊度',
+        screen_blur: '屏幕模糊度',
+        is_auth: '已认证',
+        during: '在线时长',
       },
     },
   },

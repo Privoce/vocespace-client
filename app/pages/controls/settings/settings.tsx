@@ -19,7 +19,7 @@ import { RecordData, RecordResponse, useRecordingEnv } from '@/lib/std/recording
 import { ulid } from 'ulid';
 import { ReloadOutlined } from '@ant-design/icons';
 import { AppSettings } from './app';
-import { SettingState, SpaceInfo } from '@/lib/std/space';
+import { ParticipantSettings, SettingState, SpaceInfo } from '@/lib/std/space';
 import { AISettings } from './ai';
 
 export interface SettingsProps {
@@ -30,10 +30,10 @@ export interface SettingsProps {
     setKey: (e: TabKey) => void;
   };
   messageApi: MessageInstance;
-  setUserStatus?: (status: UserStatus | string) => Promise<void>;
-  space: string;
+  space: Room;
   localParticipant: LocalParticipant;
   spaceInfo: SpaceInfo;
+  updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
 }
 
 export interface SettingsExports {
@@ -61,9 +61,8 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
       close,
       username: uname,
       tab: { key, setKey },
-      // saveChanges,
+      updateSettings,
       messageApi,
-      setUserStatus,
       space,
       localParticipant,
       spaceInfo,
@@ -125,7 +124,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
         label: <TabItem type="setting" label={t('settings.general.title')}></TabItem>,
         children: (
           <GeneralSettings
-            space={space}
+            space={space.name}
             localParticipant={localParticipant}
             messageApi={messageApi}
             appendStatus={appendStatus}
@@ -146,6 +145,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
             messageApi={messageApi}
             spaceInfo={spaceInfo}
             localParticipant={localParticipant}
+            updateSettings={updateSettings}
           ></AISettings>
         ),
       },
@@ -178,7 +178,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
               setEnabled: setVirtualEnabled,
               compare,
               setCompare,
-              space,
+              space: space.name,
               localParticipant,
             }}
           ></VideoSettings>
@@ -191,7 +191,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
           <AppSettings
             spaceInfo={spaceInfo}
             localParticipant={localParticipant}
-            spaceName={space}
+            spaceName={space.name}
             messageApi={messageApi}
           ></AppSettings>
         ),
@@ -218,7 +218,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
             <RecordingTable
               messageApi={messageApi}
               env={env}
-              currentRoom={space}
+              currentRoom={space.name}
               recordsData={recordsData}
               setRecordsData={setRecordsData}
               expandable={true}
@@ -229,7 +229,14 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
       {
         key: 'license',
         label: <TabItem type="license" label={t('settings.license.title')}></TabItem>,
-        children: <LicenseControl messageApi={messageApi} space={space}></LicenseControl>,
+        children: (
+          <LicenseControl
+            messageApi={messageApi}
+            space={space.name}
+            spaceInfo={spaceInfo}
+            localParticipant={localParticipant}
+          ></LicenseControl>
+        ),
       },
       {
         key: 'about_us',

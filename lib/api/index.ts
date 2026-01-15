@@ -1,7 +1,7 @@
 import { ai } from './ai';
 import { createRoom, deleteRoom, joinRoom, leaveRoom, updateRoom } from './channel';
-import { fetchLinkPreview, getChatMsg, uploadFile } from './chat';
-import { getConf, reloadConf, reloadLicense, updateAIConf } from './conf';
+import { fetchLinkPreview, getChatMsg, uploadFile, handleFileSystem } from './chat';
+import { checkHostToken, getConf, reloadConf, reloadLicense, updateAIConf } from './conf';
 import { checkLicenseByIP, getLicenseByIP } from './license';
 import { sendRecordRequest, updateRecord } from './record';
 import {
@@ -23,7 +23,11 @@ import {
   updateSpaceParticipant,
   uploadSpaceApp,
   getUserMeta,
-  updateSpaceInfo
+  updateSpaceInfo,
+  deleteTodo,
+  allowGuest,
+  transOrSetOwnerManager,
+  handleWorkMode
 } from './space';
 
 export const api = {
@@ -43,13 +47,19 @@ export const api = {
   updateSpaceApps,
   leaveSpace,
   persistentSpace,
+  allowGuest,
   uploadSpaceApp,
   updateSpaceAppSync,
   updateSpaceAppAuth,
+  deleteTodo,
+  transOrSetOwnerManager,
+  checkHostToken,
+  handleWorkMode,
   // ---- chat api --------
   fetchLinkPreview,
   getChatMsg,
   uploadFile,
+  handleFileSystem,
   // ---- license api --------
   getLicenseByIP,
   checkLicenseByIP,

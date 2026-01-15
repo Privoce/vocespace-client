@@ -1,8 +1,8 @@
 'use client';
 
-import { PARTICIPANT_SETTINGS_KEY, ParticipantSettings } from '../std/space';
 import en from './en_US';
 import zh from './zh_CN';
+import ru from './ru_RU';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
 
 // 定义翻译类型
@@ -21,6 +21,7 @@ const I18nContext = createContext<I18nContextType | undefined>(undefined);
 const translations = {
   en,
   zh,
+  ru,
 };
 
 interface I18nProviderProps {
@@ -97,5 +98,9 @@ export const langOptions = [
   {
     value: 'zh',
     label: '简体中文',
+  },
+  {
+    value: 'ru',
+    label: 'Русский',
   },
 ];

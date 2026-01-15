@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { useLocalParticipant } from '@livekit/components-react';
-import { Button, Drawer, Image, Input, Popover, Upload } from 'antd';
+import { Button, Drawer, Image, Input, Modal, Popover, Tooltip, Upload } from 'antd';
 import { pictureCallback, SvgResource } from '@/app/resources/svg';
 import styles from '@/styles/chat.module.scss';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -13,9 +13,10 @@ import Dragger from 'antd/es/upload/Dragger';
 import { useRecoilState } from 'recoil';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from '../controls/drawer_tools';
-import { SnippetsOutlined } from '@ant-design/icons';
+import { FolderOpenOutlined, SnippetsOutlined } from '@ant-design/icons';
 import { api } from '@/lib/api';
 import { FileType } from '@/lib/std';
+import { FS } from './fs';
 
 export interface EnhancedChatProps {
   open: boolean;
@@ -41,6 +42,8 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
     const [isComposing, setIsComposing] = React.useState(false);
     const [dragOver, setDragOver] = React.useState(false);
     const dragCounterRef = React.useRef(0);
+    const [fsModal, setFsModal] = React.useState(false);
+    const [files, setFiles] = React.useState<string[]>([]);
 
     // 处理拖拽事件
     const handleDragEnter = (e: React.DragEvent) => {
@@ -192,7 +195,10 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
     };
 
     // 处理大文件上传（通过 HTTP API）
-    const handleLargeFileUpload = async (file: FileType, abortController?: AbortController): Promise<ChatMsgItem> => {
+    const handleLargeFileUpload = async (
+      file: FileType,
+      abortController?: AbortController,
+    ): Promise<ChatMsgItem> => {
       try {
         const response = await api.uploadFile(file, space.name, localParticipant, abortController);
 
@@ -323,6 +329,19 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
       return msgItemNodes;
     }, [chatMsg.msgs]);
 
+    // 打开当前space的本地文件系统，供用户浏览和选择文件
+    const openLocalFileSystem = async (fresh?: boolean) => {
+      const response = await api.handleFileSystem(space.name, 'ls');
+      if (response.ok) {
+        const { files }: { files: string[] } = await response.json();
+        setFiles(files);
+      }
+      // 不更新才打开
+      if (!fresh) {
+        setFsModal(true);
+      }
+    };
+
     return (
       <Drawer
         {...DEFAULT_DRAWER_PROP}
@@ -370,10 +389,21 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
 
         <div className={styles.tool}>
           <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="*">
-            <Button shape="circle" style={{ background: 'transparent', border: 'none' }}>
-              <SvgResource type="add" svgSize={18} color="#fff" />
-            </Button>
+            <Tooltip title={t('common.upload')}>
+              <Button shape="circle" style={{ background: 'transparent', border: 'none' }}>
+                <SvgResource type="add" svgSize={18} color="#fff" />
+              </Button>
+            </Tooltip>
           </Upload>
+          <Tooltip title={t('common.files')}>
+            <Button
+              shape="circle"
+              style={{ background: 'transparent', border: 'none', marginRight: 12 }}
+              onClick={async () =>await openLocalFileSystem()}
+            >
+              <FolderOpenOutlined style={{ fontSize: 18, color: '#fff' }}></FolderOpenOutlined>
+            </Button>
+          </Tooltip>
           <div className={styles.tool_input}>
             <Input
               value={value}
@@ -389,6 +419,15 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
             {t('common.send')}
           </Button>
         </div>
+        <Modal
+          open={fsModal}
+          title={t('common.files')}
+          footer={null}
+          onCancel={() => setFsModal(false)}
+          width={640}
+        >
+          <FS space={space} files={files} onFresh={openLocalFileSystem}></FS>
+        </Modal>
       </Drawer>
     );
   },

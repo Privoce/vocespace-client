@@ -71,10 +71,10 @@ import {
   SpaceTodo,
   todayTimeStamp,
 } from '@/lib/std/space';
-import { FlotButton, FlotLayout } from '../apps/flot';
+import { FlotButton, FlotLayout, FlotLayoutExports } from '../apps/flot';
 import { api } from '@/lib/api';
 import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
-import { VocespaceConfig } from '@/lib/std/conf';
+import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 import { acceptRaise, RaiseHandler, rejectRaise } from './widgets/raise';
 import { audio } from '@/lib/audio';
 import { AICutService } from '@/lib/ai/cut';
@@ -85,12 +85,13 @@ import {
   platformAPI,
   PlatformTodos,
 } from '@/lib/api/platform';
+import { useFullScreenBtn } from './widgets/full_screen';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
   noteApi: NotificationInstance;
   setPermissionDevice: (device: Track.Source) => void;
-  config: VocespaceConfig;
+  config: ReadableConf;
 }
 
 export interface VideoContainerExports {
@@ -113,8 +114,10 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     ref,
   ) => {
     const space = useMaybeRoomContext();
+    const FlotLayoutRef = useRef<FlotLayoutExports>(null);
     const [init, setInit] = useState(true);
     const { t, locale } = useI18n();
+    const { setIsFullScreen, isFullScreen } = useFullScreenBtn();
     const [uState, setUState] = useRecoilState(userState);
     const [collapsed, setCollapsed] = useState(isMobile());
     const [uLicenseState, setULicenseState] = useRecoilState(licenseState);
@@ -128,11 +131,17 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
     const channelRef = React.useRef<ChannelExports>(null);
     const [remoteApp, setRemoteApp] = useRecoilState(RemoteTargetApp);
-    const { settings, updateSettings, fetchSettings, clearSettings, updateOwnerId, updateRecord } =
-      useSpaceInfo(
-        space?.name || '', // 房间 ID
-        space?.localParticipant?.identity || '', // 参与者 ID
-      );
+    const {
+      settings,
+      updateSettings,
+      fetchSettings,
+      clearSettings,
+      transOrSetOwnerManager,
+      updateRecord,
+    } = useSpaceInfo(
+      space?.name || '', // 房间 ID
+      space?.localParticipant?.identity || '', // 参与者 ID
+    );
     const [openApp, setOpenApp] = useState<boolean>(false);
     // const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
     // const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
@@ -212,6 +221,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   lang: locale,
                   extraction: conf.extraction,
                   isAuth: uState.isAuth,
+                  blur: conf.blur,
                 });
 
                 if (!response.ok) {
@@ -314,9 +324,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       // 完成初始化并没有询问过用户时显示弹窗并询问
       if (
         !init &&
-        (settings.ai.cut.enabled === undefined
-          ? !noteStateForAICutService.hasAsked
-          : !settings.ai.cut.enabled) &&
+        (settings.ai.cut.enabled === undefined ? !noteStateForAICutService.hasAsked : false) &&
         !isMobile()
       ) {
         openAIServiceAskNote();
@@ -690,13 +698,42 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               break;
             }
             case ControlType.Transfer: {
-              const success = await updateOwnerId(space.localParticipant.identity);
+              const success = await transOrSetOwnerManager(
+                msg.senderId,
+                space.localParticipant.identity,
+                true,
+              );
               if (success) {
+                // 更新视图
+                layoutContext.pin.dispatch?.({ msg: 'clear_pin' });
                 messageApi.success(t('msg.success.user.transfer'));
               }
               socket.emit('update_user_status', {
                 space: space.name,
               } as WsBase);
+              break;
+            }
+            case ControlType.setManager: {
+              if (settings.managers.length < 5) {
+                const { success, isRemove } = await transOrSetOwnerManager(
+                  msg.senderId,
+                  space.localParticipant.identity,
+                  false,
+                );
+                if (success) {
+                  layoutContext.pin.dispatch?.({ msg: 'clear_pin' });
+                  if (isRemove) {
+                    messageApi.success(t('msg.success.user.remove_manager'));
+                  } else {
+                    messageApi.success(t('msg.success.user.set_manager'));
+                  }
+                }
+                socket.emit('update_user_status', {
+                  space: space.name,
+                } as WsBase);
+              } else {
+                messageApi.error(t('msg.error.user.manager_limit'));
+              }
               break;
             }
             case ControlType.Volume: {
@@ -1237,6 +1274,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         )}
         {showFlot && space && settings.participants[space.localParticipant.identity] && (
           <FlotLayout
+            ref={FlotLayoutRef}
             space={space.name}
             messageApi={messageApi}
             openApp={openApp}
@@ -1269,6 +1307,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             toRenameSettings={toSettingGeneral}
             setUserStatus={setUserStatus}
             showFlotApp={showFlotApp}
+            isFullScreen={isFullScreen}
+            setIsFullScreen={setIsFullScreen}
           ></Channel>
         )}
         {/* 主视口 */}
@@ -1305,43 +1345,72 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                         toRenameSettings={toSettingGeneral}
                         showFlotApp={showFlotApp}
                         selfRoom={selfRoom}
+                        setIsFullScreen={setIsFullScreen}
+                        isFullScreen={isFullScreen}
+                        setCollapsed={setCollapsed}
                       ></ParticipantItem>
                     </GridLayout>
                   </div>
                 ) : (
                   <div className="lk-focus-layout-wrapper">
-                    <FocusLayoutContainer>
-                      <CarouselLayout tracks={carouselTracks}>
-                        <ParticipantItem
-                          space={space}
-                          settings={settings}
-                          toSettings={toSettingGeneral}
-                          messageApi={messageApi}
-                          noteApi={noteApi}
-                          setUserStatus={setUserStatus}
-                          updateSettings={updateSettings}
-                          toRenameSettings={toSettingGeneral}
-                          showFlotApp={showFlotApp}
-                          selfRoom={selfRoom}
-                        ></ParticipantItem>
-                      </CarouselLayout>
-                      {focusTrack && (
-                        <ParticipantItem
-                          space={space}
-                          setUserStatus={setUserStatus}
-                          settings={settings}
-                          toSettings={toSettingGeneral}
-                          trackRef={focusTrack}
-                          messageApi={messageApi}
-                          noteApi={noteApi}
-                          isFocus={isFocus}
-                          updateSettings={updateSettings}
-                          toRenameSettings={toSettingGeneral}
-                          showFlotApp={showFlotApp}
-                          selfRoom={selfRoom}
-                        ></ParticipantItem>
-                      )}
-                    </FocusLayoutContainer>
+                    {isFullScreen ? (
+                      <ParticipantItem
+                        space={space}
+                        setUserStatus={setUserStatus}
+                        settings={settings}
+                        toSettings={toSettingGeneral}
+                        trackRef={focusTrack}
+                        messageApi={messageApi}
+                        noteApi={noteApi}
+                        isFocus={isFocus}
+                        updateSettings={updateSettings}
+                        toRenameSettings={toSettingGeneral}
+                        showFlotApp={showFlotApp}
+                        selfRoom={selfRoom}
+                        isFullScreen={isFullScreen}
+                        setIsFullScreen={setIsFullScreen}
+                        setCollapsed={setCollapsed}
+                      ></ParticipantItem>
+                    ) : (
+                      <FocusLayoutContainer>
+                        <CarouselLayout tracks={carouselTracks}>
+                          <ParticipantItem
+                            space={space}
+                            settings={settings}
+                            toSettings={toSettingGeneral}
+                            messageApi={messageApi}
+                            noteApi={noteApi}
+                            setUserStatus={setUserStatus}
+                            updateSettings={updateSettings}
+                            toRenameSettings={toSettingGeneral}
+                            showFlotApp={showFlotApp}
+                            selfRoom={selfRoom}
+                            isFullScreen={isFullScreen}
+                            setIsFullScreen={setIsFullScreen}
+                            setCollapsed={setCollapsed}
+                          ></ParticipantItem>
+                        </CarouselLayout>
+                        {focusTrack && (
+                          <ParticipantItem
+                            space={space}
+                            setUserStatus={setUserStatus}
+                            settings={settings}
+                            toSettings={toSettingGeneral}
+                            trackRef={focusTrack}
+                            messageApi={messageApi}
+                            noteApi={noteApi}
+                            isFocus={isFocus}
+                            updateSettings={updateSettings}
+                            toRenameSettings={toSettingGeneral}
+                            showFlotApp={showFlotApp}
+                            selfRoom={selfRoom}
+                            isFullScreen={isFullScreen}
+                            setIsFullScreen={setIsFullScreen}
+                            setCollapsed={setCollapsed}
+                          ></ParticipantItem>
+                        )}
+                      </FocusLayoutContainer>
+                    )}
                   </div>
                 )}
                 <Controls
@@ -1360,6 +1429,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   toRenameSettings={toSettingGeneral}
                   startOrStopAICutAnalysis={startOrStopAICutAnalysis}
                   openAIServiceAskNote={openAIServiceAskNote}
+                  setNoteStateForAICutService={setNoteStateForAICutService}
+                  downloadAIMdReport={FlotLayoutRef.current?.downloadAIMdReport}
                 ></Controls>
               </div>
               {SettingsComponent && (

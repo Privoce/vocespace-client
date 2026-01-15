@@ -616,9 +616,9 @@ lk load-test \
   - [ ] 截图可以多加几张如果任务重复
   - [x] TODO总结去除footer中的按钮，点击x关闭
   - [x] 合并Duration和Time Spent
-  - [ ] 在团队中增加AI分析的flot的入口 
-  - [ ] AI关闭后再启动会导致时间不累加 (历史会清理，导致时间重置)
-  - [ ] 优化时间累加
+  - [x] 在团队中增加AI分析的flot的入口 
+  - [x] AI关闭后再启动会导致时间不累加 (历史会清理，导致时间重置)
+  - [x] 优化时间累加
 
 - [x] 登陆使用_self
 - [x] 修复TODO总结弹窗无法关闭
@@ -630,7 +630,6 @@ lk load-test \
 - [x] 右键他人screen时right menu因该显示他人的right menu不是control menu
 - [ ] 房主固定 owner -》 设置多个管理员 (5) 管理员可以转让/房主设置
 - [ ] 房间设置的话，默认访客（直接输名字）可以进，然后我们让房间创建者可以选择是否允许访客
-- [ ] 平台用户信息在用户登陆之后需要能嵌入到会议中，使用iframe
 - [x] AI分析数据在平台上
   - [x] widget可以在平台页可见
   - [x] 平台需要能提供存储todo的数据库接口
@@ -651,7 +650,7 @@ lk load-test \
 - [x] 从会议端使用Google登陆参数会丢失（from="google"）
 - [x] 增加settings页面 参考github settings
 - [x] Quickly create new space -> create new space
-- [ ] 平台增加用户设置的字段
+- [x] 平台增加用户设置的字段
 - [x] 本地设置被覆盖了 bug
 - [x] 增加from参数允许space.voce.chat进行登陆
 - [x] 升序排列待办

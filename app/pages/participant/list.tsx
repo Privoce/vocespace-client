@@ -2,7 +2,7 @@ import { Avatar, List, MenuProps } from 'antd';
 import styles from '@/styles/controls.module.scss';
 import { randomColor } from '@/lib/std';
 import { useI18n } from '@/lib/i18n/i18n';
-import { ParticipantSettings } from '@/lib/std/space';
+import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { ControlRKeyMenu } from './menu';
 import { Room } from 'livekit-client';
 
@@ -10,13 +10,13 @@ export type ParticipantItemType = [string, ParticipantSettings];
 
 export interface ParticipantListProps {
   participants: ParticipantItemType[];
-  ownerId: string;
   size?: 'small' | 'large' | 'default';
   suffix?: (item: ParticipantItemType, index: number) => React.ReactNode;
   menu: MenuProps;
   selfMenu: MenuProps;
   onOpenMenu: (open: boolean, pid: string) => void;
   space: Room;
+  spaceInfo: SpaceInfo;
 }
 
 /**
@@ -27,12 +27,12 @@ export interface ParticipantListProps {
  */
 export function ParticipantList({
   participants,
-  ownerId,
   suffix,
   menu,
   onOpenMenu,
   size = 'large',
   selfMenu,
+  spaceInfo,
   space,
 }: ParticipantListProps) {
   const { t } = useI18n();
@@ -60,7 +60,12 @@ export function ParticipantList({
                     {item[1].name.substring(0, 3)}
                   </Avatar>
                   <span>{item[1].name}</span>
-                  {ownerId !== '' && item[0] === ownerId && (
+                  {item[0] === spaceInfo.ownerId && (
+                    <span className={styles.particepant_item_owner}>
+                      ( {t('more.participant.host')} )
+                    </span>
+                  )}
+                  {spaceInfo.managers.includes(item[0]) && (
                     <span className={styles.particepant_item_owner}>
                       ( {t('more.participant.manager')} )
                     </span>

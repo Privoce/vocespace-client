@@ -41,7 +41,42 @@ export interface AICutParticipantConf {
    * 提取内容配置的精细度
    */
   extraction: Extraction;
+  /**
+   * AI截图保存到云端的模糊度，使用布尔值表示，false表示不模糊，true表示模糊，模糊只应用5%的模糊效果
+   * 在看板上，会使用blur值来模糊图片，自己可以下载清晰图片，但别人使用看板查看时会被模糊
+   * 在云端则直接保存模糊后的图片
+   */
+  blur: boolean;
 }
+
+/**
+ * Work mode related configuration for participants
+ * 工作模式相关配置
+ * - enabled: 是否开启工作模式
+ * - videoBlur: 视频模糊度
+ * - screenBlur: 屏幕分享模糊度
+ * 其中 videoBlur 和 screenBlur 用于存储用户在开启工作模式前的模糊度设置，用于关闭工作模式时恢复
+ */
+export interface ParticipantWorkConf {
+  /**
+   * 是否开启工作模式, 在space中表示空间是否开启工作模式（目前没有作用）
+   */
+  enabled: boolean;
+  /**
+   * 视频模糊度, 在这里是存储用户原先的模糊度设置
+   */
+  videoBlur: number;
+  /**
+   * 屏幕分享模糊度，在这里是存储用户原先的模糊度设置
+   */
+  screenBlur: number;
+}
+
+export const DEFAULT_PARTICIPANT_WORK_CONF: ParticipantWorkConf = {
+  enabled: false,
+  videoBlur: 0.0,
+  screenBlur: 0.0,
+};
 
 /**
  * Participant settings in Space
@@ -138,6 +173,10 @@ export interface ParticipantSettings {
    * 是否认证通过
    */
   isAuth: boolean;
+  /**
+   * 是否开启了工作模式
+   */
+  work: ParticipantWorkConf;
 }
 
 export interface SpaceTimeRecord {
@@ -201,6 +240,29 @@ export interface SpaceAIConf {
   };
 }
 
+/**
+ * 工作模式相关配置
+ */
+export interface SpaceWorkConf extends ParticipantWorkConf {
+  /**
+   * 是否开启AI分析，开启后每个开始工作模式的用户都会自动启动AI分析
+   * 当然，用户可以选择开启后手动关闭AI分析
+   */
+  useAI: boolean;
+  /**
+   * 同步的配置项
+   * - 视频模糊度
+   * - 屏幕分享模糊度
+   */
+  sync: boolean;
+}
+
+export const DEFAULT_SPACE_WORK_CONF: SpaceWorkConf = {
+  ...DEFAULT_PARTICIPANT_WORK_CONF,
+  useAI: true,
+  sync: true,
+};
+
 export interface SpaceInfo {
   participants: {
     [participantId: string]: ParticipantSettings;
@@ -214,6 +276,36 @@ export interface SpaceInfo {
    * 空间主持人ID
    */
   ownerId: string;
+  /**
+   * 空间管理员ID列表，空间管理员可获得owner同等权限但无法对owner进行管理
+   * owner可以将其他用户设置为管理员，每个空间最多5个管理员，管理员可以转让自己的身份
+   * 管理员只能管理空间用户，无法删除空间，但可以更改部分空间设置
+   *
+   * 管理员可以管理用户的权限和应用：
+   *  - 帮助修改用户的名称
+   *  - 关闭/开启用户的麦克风和摄像头
+   *  - 开放空间应用给其他用户使用
+   *  - 录制空间
+   *  - 删除用户子房间
+   *  - 设置用户声音/虚化
+   *  - 强制用户离开空间
+   *
+   *  ---
+   *
+   * 管理员无法进行以下操作：
+   *  - 删除空间
+   *  - 转让空间所有权
+   *  - 修改空间的持久化设置
+   *  - 修改空间的访客加入设置
+   *  - 修改空间的AI相关设置
+   *  - 更改空间证书
+   */
+  managers: string[];
+  /**
+   * 是否允许访客加入
+   * 若为false，则只有认证用户才能加入空间
+   */
+  allowGuest: boolean;
   /**
    * 录制设置
    */
@@ -234,7 +326,15 @@ export interface SpaceInfo {
    * - true: 持久化空间，空间内的数据会持久化，应用数据也会保存
    */
   persistence: boolean;
+  /**
+   * 空间的AI相关配置
+   */
   ai: SpaceAIConf;
+  /**
+   * 工作模式相关配置
+   *
+   */
+  work: SpaceWorkConf;
 }
 
 export interface TodoItem {
@@ -389,6 +489,8 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
   ownerId: '',
   persistence: true,
   record: { active: false },
+  managers: [],
+  allowGuest: true,
   startAt,
   children: [
     {
@@ -411,10 +513,11 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
       freq: 5,
     },
   },
+  work: DEFAULT_SPACE_WORK_CONF,
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
-  version: '0.4.9',
+  version: '0.5.1',
   name: '',
   volume: 100,
   blur: 0.0,
@@ -439,10 +542,12 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
       spent: false,
       todo: true,
       extraction: 'medium',
+      blur: false,
     },
   },
   online: true,
   isAuth: false,
+  work: DEFAULT_PARTICIPANT_WORK_CONF,
 };
 
 /**

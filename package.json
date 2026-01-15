@@ -1,7 +1,8 @@
 {
-  "name": "livekit-meet",
-  "version": "0.1.0",
+  "name": "vocespace",
+  "version": "0.5.1",
   "private": true,
+  "type": "module",
   "scripts": {
     "dev": "node server.js",
     "build": "NODE_OPTIONS='--max-old-space-size=8192' next build",
@@ -39,6 +40,7 @@
     "react-markdown": "^10.1.0",
     "react-notion-x": "^7.4.2",
     "recoil": "^0.7.7",
+    "sharp": "^0.34.5",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
     "stripe": "^18.1.0",

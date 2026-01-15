@@ -83,6 +83,7 @@ export enum ControlType {
   BlurVideo = 'blur_video',
   BlurScreen = 'blur_screen',
   Transfer = 'transfer',
+  setManager = 'set_manager',
 }
 
 export interface WsControlParticipant extends WsTo {

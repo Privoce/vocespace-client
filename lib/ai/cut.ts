@@ -173,20 +173,44 @@ export class AICutService {
 
   downloadAllScreenshots() {
     this.screenshots.forEach((screenshot, index) => {
-      const a = document.createElement('a');
-      a.href = screenshot.data;
-      a.download = `${screenshot.timestamp}_${index + 1}.jpg`;
-      a.click();
+      (async () => {
+        try {
+          const response = await fetch(screenshot.data);
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${screenshot.timestamp}_${index + 1}.jpg`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } catch (e) {
+          console.error('下载截图失败:', e);
+        }
+      })();
     });
   }
 
   downloadTargetScreenshot(timestamp: number) {
     const target = this.screenshots.find((shot) => shot.timestamp === timestamp);
     if (target) {
-      const a = document.createElement('a');
-      a.href = target.data;
-      a.download = `screenshot_${target.timestamp}.jpg`;
-      a.click();
+      (async () => {
+        try {
+          const response = await fetch(target.data);
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `screenshot_${target.timestamp}.jpg`;
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        } catch (e) {
+          console.error('下载截图失败:', e);
+        }
+      })();
     } else {
       console.warn('No screenshot found for timestamp:', timestamp);
     }

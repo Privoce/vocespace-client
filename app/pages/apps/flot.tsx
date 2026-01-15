@@ -37,7 +37,7 @@ import { RemoteTargetApp, socket } from '@/app/rooms/[spaceName]/PageClientImpl'
 import { WsBase } from '@/lib/std/device';
 import { DEFAULT_COLLAPSE_HEADER_STYLES } from '../controls/collapse_tools';
 import { TodoTogether } from './todo_together';
-import { AICutAnalysisMdTabs } from './ai_analysis_md';
+import { AICutAnalysisMdTabsExports, AICutAnalysisMdTabs } from './ai_analysis_md';
 import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
 import { CopyButton } from '../controls/widgets/copy';
 import { useRecoilState } from 'recoil';
@@ -111,203 +111,264 @@ export interface FlotLayoutProps {
   ) => Promise<boolean | undefined>;
 }
 
-export function FlotLayout({
-  messageApi,
-  openApp,
-  spaceInfo,
-  space,
-  setOpenApp,
-  showAICutAnalysisSettings,
-  reloadResult,
-  startOrStopAICutAnalysis,
-  openAIServiceAskNote,
-  aiCutAnalysisRes,
-  cutInstance,
-  updateSettings,
-}: FlotLayoutProps) {
-  const flotAppItemRef = useRef<FlotAppExports>(null);
-  const [containerHeight, setContainerHeight] = useState<number>(0);
-  const [showAICutAnalysis, setShowAICutAnalysis] = useState<boolean>(true);
-  const { localParticipant } = useLocalParticipant();
-  const [targetParticipant, setTargetParticipant] = useRecoilState(RemoteTargetApp);
-  const [fetchData, setFetchData] = useState<boolean>(false);
-  const isSelf = useMemo(() => {
-    return localParticipant.identity === targetParticipant.participantId;
-  }, [localParticipant.identity, targetParticipant.participantId]);
-  const [remoteAnalysisRes, setRemoteAnalysisRes] = useState<AICutAnalysisRes>(
-    DEFAULT_AI_CUT_ANALYSIS_RES,
-  );
+export interface FlotLayoutExports {
+  downloadAIMdReport?: () => Promise<void>;
+}
 
-  // phone: window.innerWidth <= 728,
-  // pad: window.innerWidth > 728 && window.innerWidth <= 1024,
-  // desktop: window.innerWidth > 1024
-  const layoutType: {
-    span1: number;
-    span2: number;
-    ty: 'phone' | 'desktop' | 'pad';
-  } = useMemo(() => {
-    if (window.innerWidth <= 728) {
-      return {
-        span1: 24,
-        span2: 24,
-        ty: 'phone',
-      };
-    } else if (window.innerWidth > 728 && window.innerWidth <= 1024) {
-      return {
-        span1: 12,
-        span2: 12,
-        ty: 'pad',
-      };
-    } else {
-      return {
-        span1: 16,
-        span2: 8,
-        ty: 'desktop',
-      };
-    }
-  }, [window.innerWidth]);
+export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
+  (
+    {
+      messageApi,
+      openApp,
+      spaceInfo,
+      space,
+      setOpenApp,
+      showAICutAnalysisSettings,
+      reloadResult,
+      startOrStopAICutAnalysis,
+      openAIServiceAskNote,
+      aiCutAnalysisRes,
+      cutInstance,
+      updateSettings,
+    }: FlotLayoutProps,
+    ref,
+  ) => {
+    const flotAppItemRef = useRef<FlotAppExports>(null);
+    const AICutAnalysisMdTabsRef = useRef<AICutAnalysisMdTabsExports>(null);
+    const [containerHeight, setContainerHeight] = useState<number>(0);
+    const [showAICutAnalysis, setShowAICutAnalysis] = useState<boolean>(true);
+    const { localParticipant } = useLocalParticipant();
+    const [targetParticipant, setTargetParticipant] = useRecoilState(RemoteTargetApp);
+    const [fetchData, setFetchData] = useState<boolean>(false);
+    const isSelf = useMemo(() => {
+      return localParticipant.identity === targetParticipant.participantId;
+    }, [localParticipant.identity, targetParticipant.participantId]);
+    const [remoteAnalysisRes, setRemoteAnalysisRes] = useState<AICutAnalysisRes>(
+      DEFAULT_AI_CUT_ANALYSIS_RES,
+    );
 
-  const getRemoteAICutAnalysisRes = async (participantId: string) => {
-    if (participantId && !isSelf) {
-      // 发起请求获取结果
-      if (
-        targetParticipant.participantId &&
-        spaceInfo.participants[targetParticipant.participantId]?.isAuth
-      ) {
-        // 如果是认证用户则从平台获取
-        const aiResponse = await platformAPI.ai.getAIAnalysis(
-          targetParticipant.participantId,
-          todayTimeStamp(),
-        );
-        if (aiResponse.ok) {
-          const { data }: { data: PlarformAICutAnalysis } = await aiResponse.json();
-          return convertPlatformToACARes(data);
-        }
+    // phone: window.innerWidth <= 728,
+    // pad: window.innerWidth > 728 && window.innerWidth <= 1024,
+    // desktop: window.innerWidth > 1024
+    const layoutType: {
+      span1: number;
+      span2: number;
+      ty: 'phone' | 'desktop' | 'pad';
+    } = useMemo(() => {
+      if (window.innerWidth <= 728) {
+        return {
+          span1: 24,
+          span2: 24,
+          ty: 'phone',
+        };
+      } else if (window.innerWidth > 728 && window.innerWidth <= 1024) {
+        return {
+          span1: 12,
+          span2: 12,
+          ty: 'pad',
+        };
       } else {
-        const response = await api.ai.getAnalysisRes(
-          space,
-          participantId,
-          spaceInfo.participants[participantId].isAuth,
-        );
-        if (response.ok) {
-          const { res }: { res: AICutAnalysisRes } = await response.json();
-          return res;
+        return {
+          span1: 16,
+          span2: 8,
+          ty: 'desktop',
+        };
+      }
+    }, [window.innerWidth]);
+
+    const getRemoteAICutAnalysisRes = async (participantId: string) => {
+      if (participantId && !isSelf) {
+        // 发起请求获取结果
+        if (
+          targetParticipant.participantId &&
+          spaceInfo.participants[targetParticipant.participantId]?.isAuth
+        ) {
+          // 如果是认证用户则从平台获取
+          const aiResponse = await platformAPI.ai.getAIAnalysis(
+            targetParticipant.participantId,
+            todayTimeStamp(),
+          );
+          if (aiResponse.ok) {
+            const { data }: { data: PlarformAICutAnalysis } = await aiResponse.json();
+            return convertPlatformToACARes(data);
+          }
+        } else {
+          const response = await api.ai.getAnalysisRes(
+            space,
+            participantId,
+            spaceInfo.participants[participantId].isAuth,
+          );
+          if (response.ok) {
+            const { res }: { res: AICutAnalysisRes } = await response.json();
+            return res;
+          }
         }
       }
-    }
-    return DEFAULT_AI_CUT_ANALYSIS_RES;
-  };
+      return DEFAULT_AI_CUT_ANALYSIS_RES;
+    };
 
-  useEffect(() => {
-    if (
-      !isSelf &&
-      targetParticipant.participantId &&
-      spaceInfo.participants[targetParticipant.participantId].isAuth
-    ) {
-      // console.warn('Fetching remote AI Cut Analysis Result for', targetParticipant.participantId);
-      getRemoteAICutAnalysisRes(targetParticipant.participantId).then((res) => {
-        setRemoteAnalysisRes(res);
-      });
-    }
-  }, [isSelf, targetParticipant, spaceInfo.participants]);
-
-  const toPersonalPlatform = () => {
-    if (spaceInfo.participants[localParticipant.identity]?.isAuth) {
-      let url = `https://home.vocespace.com/ai/${localParticipant.identity}`;
-      window.open(url, '_blank');
-    }
-  };
-
-  const fetchTodo = async (participantId: string) => {
-    // 当前只先请求TODO数据
-    const response = await platformAPI.todo.getTodos(participantId);
-    if (response.ok) {
-      const { todos }: { todos: PlatformTodos[] } = await response.json();
-      const items: SpaceTodo[] = todos.map((todo) => {
-        return {
-          items: todo.items,
-          date: Number(todo.date),
-        };
-      });
-      let appDatas = spaceInfo.participants[participantId]?.appDatas || {};
-      appDatas = {
-        ...appDatas,
-        todo: sortTodos(items),
-      };
-      // 只有自己才需要更新
-      if (participantId === localParticipant.identity) {
-        await updateSettings({
-          appDatas,
+    useEffect(() => {
+      if (
+        !isSelf &&
+        targetParticipant.participantId &&
+        spaceInfo.participants[targetParticipant.participantId].isAuth
+      ) {
+        // console.warn('Fetching remote AI Cut Analysis Result for', targetParticipant.participantId);
+        getRemoteAICutAnalysisRes(targetParticipant.participantId).then((res) => {
+          setRemoteAnalysisRes(res);
         });
       }
-      socket.emit('update_user_status', {
-        space: space,
-      } as WsBase);
-    }
-  };
+    }, [isSelf, targetParticipant, spaceInfo.participants]);
 
-  // 每次打开Drawer，如果是认证过的用户都需要去平台端请求最新的AI分析结果和TODO数据
-  useEffect(() => {
-    if (
-      targetParticipant.participantId &&
-      spaceInfo.participants[targetParticipant.participantId]?.isAuth &&
-      fetchData
-    ) {
-      fetchTodo(targetParticipant.participantId).then(() => {
-        setFetchData(false);
-      });
-    }
-  }, [spaceInfo.participants, targetParticipant.participantId, fetchData]);
-  // 每次openApp为true就重置fetchData
-  useEffect(() => {
-    if (openApp) {
-      setFetchData(true);
-    }
-  }, [openApp]);
-
-  return (
-    <Drawer
-      {...DEFAULT_DRAWER_PROP}
-      open={openApp}
-      onClose={() => setOpenApp(false)}
-      title={
-        <DrawerHeader
-          title={'Widgets'}
-          icon={
-            spaceInfo.participants[localParticipant.identity]?.isAuth ? (
-              <span
-                style={{
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                }}
-                onClick={toPersonalPlatform}
-              >
-                <SvgResource type="share" svgSize={16}></SvgResource>
-              </span>
-            ) : undefined
-          }
-        ></DrawerHeader>
+    const toPersonalPlatform = () => {
+      let id = targetParticipant.participantId || localParticipant.identity;
+      if (spaceInfo.participants[id]?.isAuth) {
+        let url = `https://home.vocespace.com/ai/${id}`;
+        window.open(url, '_blank');
       }
-      extra={DrawerCloser({
-        on_clicked: () => {
-          setOpenApp(false);
-        },
-      })}
-      width={1168}
-      styles={{
-        body: {
-          padding: '0 24px',
-          overflow: 'hidden',
-        },
-      }}
-    >
-      <Row gutter={8} style={{ height: '100%' }}>
-        {layoutType.ty !== 'phone' && (
-          <Col span={layoutType.span1}>
-            {showAICutAnalysis && (
+    };
+
+    const fetchTodo = async (participantId: string) => {
+      // 当前只先请求TODO数据
+      const response = await platformAPI.todo.getTodos(participantId);
+      if (response.ok) {
+        const { todos }: { todos: PlatformTodos[] } = await response.json();
+        const items: SpaceTodo[] = todos.map((todo) => {
+          return {
+            items: todo.items,
+            date: Number(todo.date),
+          };
+        });
+        let appDatas = spaceInfo.participants[participantId]?.appDatas || {};
+        appDatas = {
+          ...appDatas,
+          todo: sortTodos(items),
+        };
+        // 只有自己才需要更新
+        if (participantId === localParticipant.identity) {
+          await updateSettings({
+            appDatas,
+          });
+        }
+        socket.emit('update_user_status', {
+          space: space,
+        } as WsBase);
+      }
+    };
+
+    // 每次打开Drawer，如果是认证过的用户都需要去平台端请求最新的AI分析结果和TODO数据
+    useEffect(() => {
+      if (
+        targetParticipant.participantId &&
+        spaceInfo.participants[targetParticipant.participantId]?.isAuth &&
+        fetchData
+      ) {
+        fetchTodo(targetParticipant.participantId).then(() => {
+          setFetchData(false);
+        });
+      }
+    }, [spaceInfo.participants, targetParticipant.participantId, fetchData]);
+    // 每次openApp为true就重置fetchData
+    useEffect(() => {
+      if (openApp) {
+        setFetchData(true);
+      }
+    }, [openApp]);
+
+    useImperativeHandle(ref, () => ({
+      downloadAIMdReport: AICutAnalysisMdTabsRef.current?.downloadMdReport,
+    }));
+
+    return (
+      <Drawer
+        {...DEFAULT_DRAWER_PROP}
+        open={openApp}
+        onClose={() => setOpenApp(false)}
+        title={
+          <DrawerHeader
+            title={'Widgets'}
+            icon={
+              spaceInfo.participants[targetParticipant.participantId || localParticipant.identity]
+                ?.isAuth ? (
+                <span
+                  style={{
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                  }}
+                  onClick={toPersonalPlatform}
+                >
+                  <SvgResource type="share" svgSize={16}></SvgResource>
+                </span>
+              ) : undefined
+            }
+          ></DrawerHeader>
+        }
+        extra={DrawerCloser({
+          on_clicked: () => {
+            setOpenApp(false);
+          },
+        })}
+        width={1168}
+        styles={{
+          body: {
+            padding: '0 24px',
+            overflow: 'hidden',
+          },
+        }}
+      >
+        <Row gutter={8} style={{ height: '100%' }}>
+          {layoutType.ty !== 'phone' && (
+            <Col span={layoutType.span1}>
+              {showAICutAnalysis && (
+                <AICutAnalysisMdTabs
+                  ref={AICutAnalysisMdTabsRef}
+                  result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
+                  reloadResult={reloadResult}
+                  showSettings={showAICutAnalysisSettings}
+                  setFlotAppOpen={setOpenApp}
+                  spaceInfo={spaceInfo}
+                  startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+                  openAIServiceAskNote={openAIServiceAskNote}
+                  messageApi={messageApi}
+                  isSelf={isSelf}
+                  style={{
+                    height: '100%',
+                    width: '100%',
+                  }}
+                  isAuthed={
+                    spaceInfo.participants[
+                      targetParticipant.participantId || localParticipant.identity
+                    ]?.isAuth
+                  }
+                  cutInstance={cutInstance}
+                  userId={targetParticipant.participantId || localParticipant.identity}
+                ></AICutAnalysisMdTabs>
+              )}
+            </Col>
+          )}
+          <Col
+            span={layoutType.span2}
+            style={{
+              height: '100%',
+              scrollbarWidth: 'thin',
+              overflowY: 'scroll',
+              overflowX: 'hidden',
+            }}
+          >
+            <FlotAppItem
+              ref={flotAppItemRef}
+              messageApi={messageApi}
+              apps={spaceInfo.apps}
+              space={space}
+              spaceInfo={spaceInfo}
+              onHeightChange={setContainerHeight}
+              participantId={targetParticipant.participantId || localParticipant.identity}
+              isSelf={isSelf}
+            />
+            {layoutType.ty === 'phone' && showAICutAnalysis && (
               <AICutAnalysisMdTabs
                 result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
                 reloadResult={reloadResult}
@@ -332,54 +393,11 @@ export function FlotLayout({
               ></AICutAnalysisMdTabs>
             )}
           </Col>
-        )}
-        <Col
-          span={layoutType.span2}
-          style={{
-            height: '100%',
-            scrollbarWidth: 'thin',
-            overflowY: 'scroll',
-            overflowX: 'hidden',
-          }}
-        >
-          <FlotAppItem
-            ref={flotAppItemRef}
-            messageApi={messageApi}
-            apps={spaceInfo.apps}
-            space={space}
-            spaceInfo={spaceInfo}
-            onHeightChange={setContainerHeight}
-            participantId={targetParticipant.participantId || localParticipant.identity}
-            isSelf={isSelf}
-          />
-          {layoutType.ty === 'phone' && showAICutAnalysis && (
-            <AICutAnalysisMdTabs
-              result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
-              reloadResult={reloadResult}
-              showSettings={showAICutAnalysisSettings}
-              setFlotAppOpen={setOpenApp}
-              spaceInfo={spaceInfo}
-              startOrStopAICutAnalysis={startOrStopAICutAnalysis}
-              openAIServiceAskNote={openAIServiceAskNote}
-              messageApi={messageApi}
-              isSelf={isSelf}
-              style={{
-                height: '100%',
-                width: '100%',
-              }}
-              isAuthed={
-                spaceInfo.participants[targetParticipant.participantId || localParticipant.identity]
-                  ?.isAuth
-              }
-              cutInstance={cutInstance}
-              userId={targetParticipant.participantId || localParticipant.identity}
-            ></AICutAnalysisMdTabs>
-          )}
-        </Col>
-      </Row>
-    </Drawer>
-  );
-}
+        </Row>
+      </Drawer>
+    );
+  },
+);
 
 interface FlotAppItemProps {
   messageApi: MessageInstance;
@@ -620,6 +638,9 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
           ),
           children: (
             <AppTodo
+              space={space}
+              participantId={participantId}
+              isAuth={spaceInfo.participants[participantId]?.isAuth || false}
               messageApi={messageApi}
               appData={todo.data}
               setAppData={todo.setData}
@@ -642,7 +663,13 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
               {t('more.app.todo.together.title')}
             </div>
           ),
-          children: <TodoTogether spaceInfo={spaceInfo} messageApi={messageApi}></TodoTogether>,
+          children: (
+            <TodoTogether
+              spaceInfo={spaceInfo}
+              messageApi={messageApi}
+              space={space}
+            ></TodoTogether>
+          ),
           style: itemStyle,
           styles: DEFAULT_COLLAPSE_HEADER_STYLES,
         });

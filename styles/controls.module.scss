@@ -367,6 +367,7 @@
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 12px;
+  text-align: left;
   &_item {
     width: 100%;
     &_justify {
@@ -417,7 +418,7 @@
   white-space: nowrap;
   width: 100%;
   text-align: start;
-  height: fit-content;
+  height: 24px;
   font-size: 14px;
   color: #fff;
   background-color: #00000080;
@@ -446,6 +447,23 @@
   &_line {
     width: 100%;
     margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+.work {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  flex-wrap: wrap;
+  &_line {
+    width: 100%;
+   
     display: flex;
     align-items: center;
     justify-content: flex-start;

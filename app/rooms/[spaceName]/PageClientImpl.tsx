@@ -39,7 +39,7 @@ import {
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
 import { WsBase, WsTo } from '@/lib/std/device';
-import { createRTCQulity, DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
+import { createRTCQulity, DEFAULT_VOCESPACE_CONFIG, ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { DEFAULT_LICENSE } from '@/lib/std/license';
@@ -173,7 +173,7 @@ export function PageClientImpl(props: {
   const getConfig = async () => {
     const response = await api.getConf();
     if (response.ok) {
-      const configData: VocespaceConfig = await response.json();
+      const configData: ReadableConf = await response.json();
       setConfig(configData);
       setLoadConfig(true);
     } else {
@@ -214,7 +214,7 @@ export function PageClientImpl(props: {
     const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
     if (storedSettingsStr) {
       const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
-      if (storedSettings?.version !== '0.4.9') {
+      if (storedSettings?.version !== '0.5.1') {
         // 版本不匹配/不存在，直接删除
         localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
         localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
@@ -305,7 +305,7 @@ function VideoConferenceComponent(props: {
     hq: boolean;
     codec: VideoCodec;
   };
-  config: VocespaceConfig;
+  config: ReadableConf;
   messageApi: MessageInstance;
   notApi: NotificationInstance;
 }) {

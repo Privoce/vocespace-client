@@ -21,22 +21,26 @@ import {
   SpaceTimer,
   SpaceCountdown,
   SpaceTodo,
+  DEFAULT_PARTICIPANT_WORK_CONF,
 } from '@/lib/std/space';
 import { RoomServiceClient } from 'livekit-server-sdk';
 import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
 import { WsParticipant } from '@/lib/std/device';
 import {
+  AllowGuestBody,
   CheckNameBody,
   DefineUserStatusBody,
   DefineUserStatusResponse,
   DeleteSpaceParticipantBody,
   PersistentSpaceBody,
+  TransOrSetOMBody,
   UpdateOwnerIdBody,
   UpdateSpaceAppAuthBody,
   UpdateSpaceAppsBody,
   UpdateSpaceAppSyncBody,
   UpdateSpaceParticipantBody,
   UploadSpaceAppBody,
+  WorkModeBody,
 } from '@/lib/api/space';
 import { UpdateRecordBody } from '@/lib/api/record';
 import {
@@ -1124,6 +1128,125 @@ export async function POST(request: NextRequest) {
     const spaceAppsAPIType = request.nextUrl.searchParams.get('apps');
     const isUpdateSpacePersistence = request.nextUrl.searchParams.get('persistence') === 'update';
     const isUpdate = request.nextUrl.searchParams.get('update') === 'true';
+    const isUpdateAllowGuest = request.nextUrl.searchParams.get('allowGuest') === 'update';
+    const isTransfer = request.nextUrl.searchParams.get('transfer') === 'true';
+    const isAuthManage = request.nextUrl.searchParams.get('auth') === 'manage';
+    const mode = request.nextUrl.searchParams.get('mode');
+    // 开启/关闭 工作模式 -------------------------------------------------------------------------
+    if (mode === 'work') {
+      const { spaceName, participantId, workType }: WorkModeBody = await request.json();
+      // 获取空间信息和用户信息
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      const participant = spaceInfo.participants[participantId];
+      if (!participant) {
+        return NextResponse.json({ error: 'Participant not found' }, { status: 404 });
+      }
+      // 先检测当前用户的work和传入的workType是否一致，如果一致则直接返回成功，因为已经是这个状态了
+      if (workType === participant.work.enabled) {
+        return NextResponse.json({ success: true, workType }, { status: 200 });
+      }
+
+      // 如果是关闭工作模式
+      // 通过用户的work结构中的配置还原用户的视频模糊度和屏幕模糊度，并设置enabled字段为false
+      if (!workType) {
+        participant.blur = participant.work.videoBlur;
+        participant.screenBlur = participant.work.screenBlur;
+        // 将work结构设置为DEFAULT
+        participant.work = DEFAULT_PARTICIPANT_WORK_CONF;
+        await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+        return NextResponse.json({ success: true, workType }, { status: 200 });
+      } else {
+        // 如果是开启工作模式
+        // 将当前用户的work结构中的enabled字段设置为true，并根据配置设置用户的视频模糊度和屏幕模糊度
+        participant.work.enabled = true;
+        participant.work.videoBlur = participant.blur;
+        participant.work.screenBlur = participant.screenBlur;
+        // 设置用户的视频模糊度和屏幕模糊度为工作模式下的配置
+        if (spaceInfo.work.sync) {
+          participant.blur = spaceInfo.work.videoBlur;
+          participant.screenBlur = spaceInfo.work.screenBlur;
+        }
+        await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+        return NextResponse.json({ success: true, workType }, { status: 200 });
+      }
+    }
+    // 用户身份处理 -----------------------------------------------------------------------------
+    if (isSpace && isAuthManage) {
+      let isRemove = false;
+      const { spaceName, participantId, replacedId }: TransOrSetOMBody = await request.json();
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      // 先确定participantId的是否在当前的space中
+      if (spaceInfo.participants[participantId] === undefined) {
+        return NextResponse.json({ error: 'Participant not in space' }, { status: 403 });
+      }
+
+      if (spaceInfo.participants[replacedId] === undefined) {
+        return NextResponse.json({ error: 'Replaced participant not in space' }, { status: 403 });
+      }
+
+      const isOwner = spaceInfo.ownerId === participantId;
+
+      if (isTransfer) {
+        // 转让身份（Owner/Manager），如果当前用户是Owner则转让Owner，如果是Manager则转让Manager
+        if (isOwner) {
+          spaceInfo.ownerId = replacedId;
+        } else {
+          // 删除管理员列表中的当前用户，并添加新的管理员
+          spaceInfo.managers = spaceInfo.managers.filter((id) => id !== participantId);
+          if (!spaceInfo.managers.includes(replacedId)) {
+            spaceInfo.managers.push(replacedId);
+          }
+        }
+      } else {
+        // 设置管理员, 只有Owner才有权限设置管理员
+        if (!isOwner) {
+          return NextResponse.json({ error: 'Only owner can set manager' }, { status: 403 });
+        }
+        // 设置管理员，管理员最多5个
+        if (spaceInfo.managers.length < 5) {
+          if (!spaceInfo.managers.includes(replacedId)) {
+            spaceInfo.managers.push(replacedId);
+          } else {
+            // 如果已经是管理，则说明是要移除管理员
+            spaceInfo.managers = spaceInfo.managers.filter((id) => id !== replacedId);
+            isRemove = true;
+          }
+        } else {
+          return NextResponse.json({ error: 'Manager limit reached' }, { status: 403 });
+        }
+      }
+      const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+      if (!success) {
+        return NextResponse.json({ error: 'Failed to update space managers' }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, isRemove }, { status: 200 });
+    }
+
+    // 更新空间是否允许游客加入 -----------------------------------------------------------------------------
+    if (isSpace && isUpdateAllowGuest) {
+      const { spaceName, allowGuest }: AllowGuestBody = await request.json();
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      spaceInfo.allowGuest = allowGuest;
+      const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+      if (!success) {
+        return NextResponse.json(
+          { error: 'Failed to update allow guest setting' },
+          { status: 500 },
+        );
+      }
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+
     // 是否更新空间相关设置 -----------------------------------------------------------------------------
     if (isUpdate && isSpace) {
       const { spaceName, info }: { spaceName: string; info: Partial<SpaceInfo> } =
@@ -1183,7 +1306,8 @@ export async function POST(request: NextRequest) {
     }
     // 用户上传App到Space中 ------------------------------------------------------------------
     if (spaceAppsAPIType === 'upload') {
-      const { spaceName, data, ty, participantId, isAuth }: UploadSpaceAppBody =
+      const isDelete = request.nextUrl.searchParams.get('delete') === 'true';
+      const { spaceName, data, ty, participantId, isAuth, deleteId }: UploadSpaceAppBody =
         await request.json();
       const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
       if (!spaceInfo) {
@@ -1219,14 +1343,23 @@ export async function POST(request: NextRequest) {
 
         // 将用户的数据传到平台接口进行同步和保存
         if (isAuth) {
-          try {
-            const pResponse = await platformAPI.todo.updateTodo(participantId, data as SpaceTodo);
-            // 平台虽然失败但不能影响用户的使用
+          if (isDelete) {
+            // 删除todo
+            const date = (data as SpaceTodo).date;
+            const pResponse = await platformAPI.todo.deleteTodo(participantId, date, deleteId!);
             if (!pResponse.ok) {
               console.error('Failed to sync todo to platform for participant:', participantId);
             }
-          } catch (e) {
-            console.error('Error syncing todo to platform for participant:', participantId, e);
+          } else {
+            try {
+              const pResponse = await platformAPI.todo.updateTodo(participantId, data as SpaceTodo);
+              // 平台虽然失败但不能影响用户的使用
+              if (!pResponse.ok) {
+                console.error('Failed to sync todo to platform for participant:', participantId);
+              }
+            } catch (e) {
+              console.error('Error syncing todo to platform for participant:', participantId, e);
+            }
           }
         }
 

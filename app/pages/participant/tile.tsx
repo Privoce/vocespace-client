@@ -1,8 +1,7 @@
 import { isTrackReferencePlaceholder } from '@/app/pages/controls/video_container';
-import { MouseMove, useVideoBlur, WsBase, WsMouseMove, WsSender, WsWave } from '@/lib/std/device';
+import { MouseMove, useVideoBlur, WsBase, WsMouseMove, WsWave } from '@/lib/std/device';
 import {
   AudioTrack,
-  ConnectionQualityIndicator,
   isTrackReference,
   LockLockedIcon,
   ParticipantName,
@@ -30,29 +29,21 @@ import {
   virtualMaskState,
 } from '@/app/rooms/[spaceName]/PageClientImpl';
 import styles from '@/styles/controls.module.scss';
-import { SvgResource, SvgType } from '@/app/resources/svg';
+import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
-import { randomColor } from '@/lib/std';
+import { isSpaceManager, randomColor } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
-import {
-  AppKey,
-  castCountdown,
-  castTimer,
-  castTodo,
-  ChildRoom,
-  ParticipantSettings,
-} from '@/lib/std/space';
-import { WaveHand } from '../controls/widgets/wave';
+import { ChildRoom, ParticipantSettings } from '@/lib/std/space';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { AppFlotIconCollect } from '../apps/app_pin';
 import { ParticipantTileMiniProps } from './mini';
-import { RaiseHand, RaiseHandler } from '../controls/widgets/raise';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
-import { Button, Tag, Tooltip } from 'antd';
+import { Tooltip } from 'antd';
+import { FullScreenBtnProps } from '../controls/widgets/full_screen';
 
-export interface ParticipantItemProps extends ParticipantTileMiniProps {
+export interface ParticipantItemProps extends ParticipantTileMiniProps, FullScreenBtnProps {
   toSettings?: (isDefineStatus?: boolean) => void;
   messageApi: MessageInstance;
   noteApi?: NotificationInstance;
@@ -77,6 +68,9 @@ export const ParticipantItem: (
       toRenameSettings,
       showFlotApp,
       selfRoom,
+      isFullScreen,
+      setIsFullScreen,
+      setCollapsed,
     }: ParticipantItemProps,
     ref,
   ) {
@@ -173,6 +167,10 @@ export const ParticipantItem: (
     const currentParticipant: ParticipantSettings | undefined = useMemo(() => {
       return settings.participants[trackReference.participant.identity];
     }, [settings.participants, trackReference.participant.identity]);
+
+    const userType = useMemo(() => {
+      return isSpaceManager(settings, trackReference.participant.identity).ty;
+    }, [settings, trackReference.participant.identity]);
 
     useEffect(() => {
       if (settings.participants && Object.keys(settings.participants).length > 0) {
@@ -633,6 +631,7 @@ export const ParticipantItem: (
                 maxWidth: '44%',
                 overflow: 'hidden',
                 padding: 4,
+                height: 24,
                 backgroundColor: '#00000080',
                 display: 'flex',
                 borderRadius: 4,
@@ -672,6 +671,20 @@ export const ParticipantItem: (
                             }}
                             show={'muted'}
                           ></TrackMutedIndicator>
+
+                          <div style={{ marginRight: 4 }}>
+                            {userType === 'Owner' ? (
+                              <SvgResource type="host" color="#FFAA33" svgSize={18}></SvgResource>
+                            ) : userType === 'Manager' ? (
+                              <SvgResource
+                                type="manager"
+                                color="#FFAA33"
+                                svgSize={18}
+                              ></SvgResource>
+                            ) : (
+                              <></>
+                            )}
+                          </div>
                           <ParticipantName />
                         </>
                       ) : (
@@ -708,12 +721,14 @@ export const ParticipantItem: (
                 localParticipant={localParticipant}
               />
             )}
-            {trackReference.source !== Track.Source.ScreenShare && (
-              <AppFlotIconCollect
-                showApp={showApp}
-                participant={currentParticipant}
-              ></AppFlotIconCollect>
-            )}
+            <AppFlotIconCollect
+              showApp={showApp}
+              participant={currentParticipant}
+              isFullScreen={isFullScreen}
+              setIsFullScreen={setIsFullScreen}
+              setCollapsed={setCollapsed}
+              trackReference={trackReference}
+            ></AppFlotIconCollect>
           </ParticipantTile>
         }
       ></ControlRKeyMenu>

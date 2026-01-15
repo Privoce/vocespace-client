@@ -1,17 +1,27 @@
 // 获取动态配置
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig, setStoredConf, setConfigEnv, setConfigLicense, writeBackConfig } from './conf';
-import { AIConf, RTCConf } from '@/lib/std/conf';
+import { AIConf, clearReadableConf, RTCConf } from '@/lib/std/conf';
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
+  const hostToken = request.nextUrl.searchParams.get('hostToken');
   let config = getConfig();
   setStoredConf(config);
-  return NextResponse.json(config, { status: 200 });
+  const readableConfig = clearReadableConf(config, hostToken);
+  return NextResponse.json(readableConfig, { status: 200 });
 }
 
 export async function POST(request: NextRequest) {
   const isUpdateLicense = request.nextUrl.searchParams.get('license');
   const isUpdateAI = request.nextUrl.searchParams.get('ai');
+  const isCheckHostToken = request.nextUrl.searchParams.get('check') === 'true';
+  // 验证host token --------------------------------------------------------------------------------
+  if (isCheckHostToken) {
+    const { hostToken }: { hostToken: string } = await request.json();
+    const config = getConfig();
+    return NextResponse.json({ success: hostToken === config.hostToken }, { status: 200 });
+  }
+  // 更新AI配置 -------------------------------------------------------------------------------------
   if (isUpdateAI) {
     const { aiConf }: { aiConf: AIConf } = await request.json();
     const conf = getConfig();
@@ -21,7 +31,6 @@ export async function POST(request: NextRequest) {
       if (!success) {
         throw error;
       }
-
     } catch (e) {
       return NextResponse.json(
         {

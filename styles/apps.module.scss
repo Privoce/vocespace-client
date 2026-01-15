@@ -25,18 +25,18 @@
 
 .todo {
   &_item {
-    margin: 4px 0;
     justify-content: space-between;
     display: inline-flex;
     align-items: center;
     width: 100%;
+    min-height: 32px;
   }
   &_list_wrapper {
     margin: 8px 0;
     width: 100%;
     flex: 1;
     height: calc(100% - 46px);
-    min-height: calc(50vh - 46px);
+    // min-height: calc(50vh - 46px);
   }
   &_add_wrapper {
     gap: 8px;
@@ -191,6 +191,15 @@
     align-items: center;
     gap: 8px;
   }
+  &_screenshot {
+    height: fit-content;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px;
+    margin: 8px 0;
+  }
   &_empty {
     height: 100%;
     display: flex;
@@ -233,4 +242,12 @@
   width: 100%;
   overflow-y: scroll;
   scrollbar-width: thin;
+}
+
+.todo_history_list {
+  .ant-list-pagination {
+    .ant-select-selector {
+      border: 1px solid #8c8c8c !important;
+    }
+  }
 }

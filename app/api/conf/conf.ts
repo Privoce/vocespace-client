@@ -1,8 +1,8 @@
-import { DEFAULT_VOCESPACE_CONFIG, RTCConf, VocespaceConfig } from '@/lib/std/conf';
+import { DEFAULT_VOCESPACE_CONFIG, mergeConf, ReadableConf, RTCConf, VocespaceConfig } from '@/lib/std/conf';
 import { readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
 
-export const getConfig = () => {
+export const getConfig = (): VocespaceConfig => {
   try {
     const configPath = join(process.cwd(), 'vocespace.conf.json');
     const configContent = readFileSync(configPath, 'utf-8');
@@ -10,7 +10,7 @@ export const getConfig = () => {
     return config;
   } catch (error) {
     console.error('Error reading vocespace.conf.json:', error);
-    return DEFAULT_VOCESPACE_CONFIG;
+    return DEFAULT_VOCESPACE_CONFIG as VocespaceConfig;
   }
 };
 
@@ -72,6 +72,6 @@ export const setConfig = (allowConfig: AllowConfig) => {
 // 暴露配置，给服务端使用，这样就可以在其他地方直接使用 STORED_CONF
 export let STORED_CONF: VocespaceConfig = getConfig();
 
-export const setStoredConf = (conf: VocespaceConfig) => {
-  STORED_CONF = conf;
+export const setStoredConf = (conf: ReadableConf) => {
+  STORED_CONF = mergeConf(STORED_CONF, conf);
 };

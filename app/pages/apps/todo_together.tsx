@@ -10,6 +10,7 @@ import { SvgResource } from '@/app/resources/svg';
 export interface TodoTogetherProps {
   spaceInfo: SpaceInfo;
   messageApi: MessageInstance;
+  space: string;
 }
 
 interface ParticipantTodoSummary {
@@ -23,7 +24,7 @@ interface ParticipantTodoSummary {
   isAuth: boolean;
 }
 
-export function TodoTogether({ spaceInfo, messageApi }: TodoTogetherProps) {
+export function TodoTogether({ spaceInfo, messageApi, space }: TodoTogetherProps) {
   const { t } = useI18n();
 
   const linkToUserAIPage = (participantId: string) => {
@@ -67,11 +68,13 @@ export function TodoTogether({ spaceInfo, messageApi }: TodoTogetherProps) {
               {/* <UserOutlined style={{ marginRight: 8, color: '#22CCEE' }} /> */}
               <span style={{ fontWeight: 'bold', color: '#fff' }}>{summary.name}</span>
               {summary.isAuth && (
-                <span onClick={(e) => {
-                  e.stopPropagation();
-                  e.preventDefault();
-                  linkToUserAIPage(summary.participantId)
-                }}>
+                <span
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                    linkToUserAIPage(summary.participantId);
+                  }}
+                >
                   <SvgResource type="share" svgSize={14}></SvgResource>
                 </span>
               )}
@@ -86,6 +89,7 @@ export function TodoTogether({ spaceInfo, messageApi }: TodoTogetherProps) {
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                   width: '100%',
+                  maxWidth: "290px"
                 }}
               >
                 {summary.firstTodoTitle || t('more.app.todo.together.empty')}
@@ -116,6 +120,9 @@ export function TodoTogether({ spaceInfo, messageApi }: TodoTogetherProps) {
           <div style={{ marginTop: 0 }}>
             {summary?.todoData && summary.todoData.length > 0 && (
               <AppTodo
+                space={space}
+                participantId={summary.participantId}
+                isAuth={summary.isAuth}
                 size="small"
                 bodyStyle={{
                   padding: '0 18px 0 0',
