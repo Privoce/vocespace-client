@@ -7,7 +7,7 @@ import { useMemo, useState } from 'react';
 import styles from '@/styles/controls.module.scss';
 import { ControlType, WsBase, WsControlParticipant, WsInviteDevice, WsTo } from '@/lib/std/device';
 import { socket } from '@/app/rooms/[spaceName]/PageClientImpl';
-import { src } from '@/lib/std';
+import { isSpaceManager, src } from '@/lib/std';
 import { usePlatformUserInfo } from '@/lib/hooks/platform';
 import { HomeOutlined } from '@ant-design/icons';
 

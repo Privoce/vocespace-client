@@ -22,7 +22,7 @@ import { AppAuth, ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/sp
 import { useVideoBlur, WsBase, WsSender, WsWave } from '@/lib/std/device';
 import { useRecoilState } from 'recoil';
 import { RemoteTargetApp, socket } from '@/app/rooms/[spaceName]/PageClientImpl';
-import { UserStatus } from '@/lib/std';
+import { isSpaceManager, UserStatus } from '@/lib/std';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { useI18n } from '@/lib/i18n/i18n';
