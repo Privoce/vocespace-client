@@ -264,7 +264,7 @@ export class AICutAnalysisService {
       messages,
       stream: false,
     });
-
+    console.warn('AI Response');
     return completion;
   }
 

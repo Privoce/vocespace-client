@@ -1,14 +1,14 @@
 'use client';
 
 import { SvgResource } from '@/app/resources/svg';
-
-import { PUserInfo } from '@/lib/hooks/platform';
 import { useI18n } from '@/lib/i18n/i18n';
-import { VOCESPACE_PLATFORM_USER_ID } from '@/lib/std/space';
+import { PlatformUser, TokenResult } from '@/lib/std';
+import { VOCESPACE_PLATFORM_USER } from '@/lib/std/space';
 import styles from '@/styles/pre_join.module.scss';
 import { MailOutlined, UserOutlined } from '@ant-design/icons';
 import { Avatar, Button, Divider, Dropdown } from 'antd';
 import { ItemType } from 'antd/es/menu/interface';
+import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 export function LoginButtons({ space }: { space: string }) {
@@ -47,10 +47,20 @@ export function LoginButtons({ space }: { space: string }) {
   );
 }
 
-export interface LoginStateBtnProps extends PUserInfo {}
+export interface LoginStateBtnProps {
+  data?: PlatformUser;
+}
 
-export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnProps) {
+export function LoginStateBtn({ data }: LoginStateBtnProps) {
+  const router = useRouter();
   const { t } = useI18n();
+  const { userId, username, avatar } = useMemo(() => {
+    return {
+      userId: data?.id,
+      username: data?.username,
+      avatar: data?.avatar,
+    };
+  }, [data]);
 
   const items: ItemType[] = useMemo(() => {
     if (userId && username) {
@@ -59,15 +69,19 @@ export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnP
           key: 'logout',
           label: t('login.out'),
           onClick: () => {
-            localStorage.removeItem(VOCESPACE_PLATFORM_USER_ID);
-            window.open(`https://home.vocespace.com/auth/user/${userId}?logout=true`, '_self');
+            localStorage.removeItem(VOCESPACE_PLATFORM_USER);
+            if (data?.auth === 'vocespace') {
+              window.open(`https://home.vocespace.com/auth/user/${userId}?logout=true`, '_self');
+            } else {
+              router.refresh();
+            }
           },
         },
       ];
     } else {
       return [];
     }
-  }, [userId, username, t]);
+  }, [userId, username, t, data?.auth]);
 
   return (
     <Dropdown menu={{ items }} placement="bottomRight" trigger={['hover']}>

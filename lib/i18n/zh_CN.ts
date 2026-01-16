@@ -1,4 +1,9 @@
 export default {
+  api: {
+    token: {
+      out_of_date: 'Token已过期，请重新获取',
+    },
+  },
   common: {
     full_screen: '全屏',
     guest: {
