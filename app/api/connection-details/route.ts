@@ -9,6 +9,7 @@ const COOKIE_KEY = 'random-participant-postfix';
 
 const {
   livekit: { url: LIVEKIT_URL, key: API_KEY, secret: API_SECRET },
+  serverUrl
 } = getConfig();
 
 function createParticipantToken(
@@ -82,11 +83,15 @@ const PlatformLogin = async (request: NextRequest, auth: AuthType) => {
   );
 
   // 这里我们就不能去返回了，而是进行重定向到对应的space页面，并携带auth参数，让前端去处理
+  let base = serverUrl || request.nextUrl.origin;
+  if (typeof base === 'string' && !/^https?:\/\//i.test(base)) {
+    base = `https://${base}`;
+  }
   const redirectUrl = new URL(
     `/${tokenRes.space}?auth=${auth}&details=${encodeURIComponent(
       JSON.stringify(details),
     )}&data=${encodeURIComponent(JSON.stringify(tokenRes))}`,
-    request.nextUrl.origin,
+    base,
   );
   return NextResponse.redirect(redirectUrl, {
     headers: {
