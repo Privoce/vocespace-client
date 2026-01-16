@@ -596,8 +596,8 @@ export function useControlRKeyMenu({
           break;
         }
         case 'safe.platform': {
-          if (platUser && platUser.userId) {
-            window.open(`https://home.vocespace.com/auth/user/${platUser.userId}`, '_blank');
+          if (platUser && platUser.id) {
+            window.open(`https://home.vocespace.com/auth/user/${platUser.id}`, '_blank');
           }
           break;
         }

@@ -1,4 +1,13 @@
 export default {
+  api: {
+    token: {
+      url: "url参数错误，无法进行连接",
+      out_of_date: 'Token已过期，请重新获取',
+      invalid: {
+        
+      }
+    }
+  },
   common: {
     full_screen: "全屏",
     guest: {

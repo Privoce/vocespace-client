@@ -1,9 +1,8 @@
 'use client';
 
 import { SvgResource } from '@/app/resources/svg';
-
-import { PUserInfo } from '@/lib/hooks/platform';
 import { useI18n } from '@/lib/i18n/i18n';
+import { PlatformUser, TokenResult } from '@/lib/std';
 import { VOCESPACE_PLATFORM_USER } from '@/lib/std/space';
 import styles from '@/styles/pre_join.module.scss';
 import { MailOutlined, UserOutlined } from '@ant-design/icons';
@@ -47,10 +46,19 @@ export function LoginButtons({ space }: { space: string }) {
   );
 }
 
-export interface LoginStateBtnProps extends PUserInfo {}
+export interface LoginStateBtnProps {
+  data?: PlatformUser;
+}
 
-export function LoginStateBtn({ userId, username, auth, avatar }: LoginStateBtnProps) {
+export function LoginStateBtn({ data }: LoginStateBtnProps) {
   const { t } = useI18n();
+  const { userId, username, avatar } = useMemo(() => {
+    return {
+      userId: data?.id,
+      username: data?.username,
+      avatar: data?.avatar,
+    };
+  }, [data]);
 
   const items: ItemType[] = useMemo(() => {
     if (userId && username) {

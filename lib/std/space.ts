@@ -555,7 +555,7 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
  */
 export const PARTICIPANT_SETTINGS_KEY = 'vocespace_participant_settings';
 /**
- * 来自 Vocespace 平台的用户ID 标识，用于标识用户是否为匿名用户
+ * 来自 Vocespace 平台的用户TOKEN标识，用于标识用户是否为匿名用户
  */
 export const VOCESPACE_PLATFORM_USER = 'vocespace_platform_user';
 

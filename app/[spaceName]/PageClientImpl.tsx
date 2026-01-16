@@ -27,7 +27,7 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { PreJoin } from '@/app/pages/pre_join/pre_join';
 import { atom, useRecoilState } from 'recoil';
-import { SearchParams, UserDefineStatus } from '@/lib/std';
+import { PlatformUser, SearchParams, UserDefineStatus } from '@/lib/std';
 import io from 'socket.io-client';
 import { ChatMsgItem } from '@/lib/std/chat';
 import {
@@ -114,6 +114,8 @@ export interface PageClientImplProps extends SearchParams {
   spaceName: string;
   loading: boolean;
   setLoading: (loading: boolean) => void;
+  data?: PlatformUser;
+  messageApi: MessageInstance;
 }
 
 export function PageClientImpl({
@@ -124,12 +126,13 @@ export function PageClientImpl({
   hq,
   codec,
   auth,
-  token,
-  room
+  data,
+  room,
+  details,
+  messageApi
 }: PageClientImplProps) {
   const { t } = useI18n();
   const [uState, setUState] = useRecoilState(userState);
-  const [messageApi, contextHolder] = message.useMessage();
   const [notApi, notHolder] = notification.useNotification();
   const [isReload, setIsReload] = useState(false);
   const router = useRouter();
@@ -158,22 +161,27 @@ export function PageClientImpl({
   const handlePreJoinSubmit = React.useCallback(
     async (values: LocalUserChoices) => {
       setPreJoinChoices(values);
-      const connectionDetailsResp = await api.joinSpace(
-        props.spaceName,
-        values.username,
-        props.region,
-        props.userId,
-      );
-      const connectionDetailsData = await connectionDetailsResp.json();
-      setConnectionDetails(connectionDetailsData);
-      if (props.userId && props.username && props.auth) {
+      if (details) {
+        // 如果details是有数据的，我们其实无需在此进行api请求，直接使用details作为connectionDetails
+        setConnectionDetails(details as ConnectionDetails);
+      } else {
+        const connectionDetailsResp = await api.joinSpace(
+          spaceName,
+          values.username,
+          region,
+          data?.identity,
+        );
+        const connectionDetailsData = await connectionDetailsResp.json();
+        setConnectionDetails(connectionDetailsData);
+      }
+      if (auth) {
         // 设置登陆状态：需要在localStorage中存储来自平台提供的用户id即可，因为id才是真正的唯一标识
         // localStorage.setItem(VOCESPACE_PLATFORM_USER, props.userId);
         // 去除url参数
-        router.replace(`/${props.spaceName}`);
+        router.replace(`/${spaceName}`);
       }
     },
-    [props],
+    [auth, data?.identity, region, spaceName, details],
   );
   const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
   // 配置数据 ----------------------------------------------------------------------------------------
@@ -197,46 +205,23 @@ export function PageClientImpl({
     }
   }, [loadConfig]);
 
-  // 平台直接加入房间逻辑 --------------------------------------------------------------------------------
-  // const directJoinFromPlatform = async () => {
-  //   let { userId, username, auth, spaceName } = props;
-  //   console.warn('userId, username, auth, spaceName', userId, username, auth, spaceName);
-  //   if (userId && username && auth && spaceName) {
-  //     const finalUserChoices = {
-  //       username,
-  //       videoEnabled: false,
-  //       audioEnabled: false,
-  //       videoDeviceId: '',
-  //       audioDeviceId: '',
-  //     } as LocalUserChoices;
-
-  //     setPreJoinChoices(finalUserChoices);
-  //     const connectionDetailsResp = await api.joinSpace(spaceName, username, props.region, userId);
-  //     const connectionDetailsData = await connectionDetailsResp.json();
-  //     setConnectionDetails(connectionDetailsData);
-  //     // 去除url参数
-  //     router.replace(`/${spaceName}`);
-  //   }
-  // };
-
-  // 如果携带auth参数并且auth参数为sohive，则表示通过sohive平台接入直接加入房间 ---------------------------------
+  // 平台直接加入房间逻辑 ---------------------------------
   useEffect(() => {
-    console.warn('Checking direct join from platform with props:', props);
-    let { data, auth, spaceName } = props;
-    if (auth === 'sohive' && data) {
-      console.warn('Direct join from sohive with data:', data);
-      const parsedData = JSON.parse(decodeURIComponent(data));
+    // console.warn('Checking direct join from platform with props:', props);
+    if (!data || !details) return;
+    if (!data.preJoin) {
       setPreJoinChoices({
-        username: parsedData.username,
+        username: data.username,
         videoEnabled: false,
         audioEnabled: false,
         videoDeviceId: '',
         audioDeviceId: '',
       });
-      setConnectionDetails(parsedData);
-      router.replace(`/${spaceName}?auth=sohive&room=${props.room}`);
+      setConnectionDetails(details as ConnectionDetails);
     }
-  }, []);
+
+    router.replace(`/${spaceName}`);
+  }, [data]);
 
   // 当localStorage中有reload这个标志时，需要重登陆
   useEffect(() => {
@@ -290,7 +275,6 @@ export function PageClientImpl({
   }, []);
   return (
     <main data-lk-theme="default" style={{ height: '100%' }}>
-      {contextHolder}
       {notHolder}
       {connectionDetails === undefined || preJoinChoices === undefined ? (
         <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
@@ -302,22 +286,20 @@ export function PageClientImpl({
             micLabel={t('common.device.microphone')}
             camLabel={t('common.device.camera')}
             userLabel={t('common.username')}
-            spaceParams={{
-              spaceName: props.spaceName,
-              username: props.username,
-              userId: props.userId,
-              auth: props.auth,
-              avatar: props.avatar,
-            }}
-            loading={props.loading}
-            setLoading={props.setLoading}
+            data={data}
+            loading={loading}
+            setLoading={setLoading}
+            space={spaceName}
           />
         </div>
       ) : (
         <VideoConferenceComponent
           connectionDetails={connectionDetails}
           userChoices={preJoinChoices}
-          options={{ codec: props.codec, hq: props.hq }}
+          options={{
+            codec: codec || 'vp9',
+            hq: hq === undefined ? true : typeof hq === 'string' ? Boolean(hq) : hq,
+          }}
           config={config}
           messageApi={messageApi}
           notApi={notApi}

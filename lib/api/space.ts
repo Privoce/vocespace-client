@@ -25,11 +25,15 @@ export const joinSpace = async (
   spaceName: string,
   username: string,
   region?: string,
+  identity?: string,
   auth?: string,
 ) => {
   const url = new URL(connect_endpoint('/api/connection-details'), window.location.origin);
   url.searchParams.append('spaceName', spaceName);
   url.searchParams.append('participantName', username);
+  if (identity) {
+    url.searchParams.append('identity', identity);
+  }
   if (auth) {
     url.searchParams.append('auth', auth);
   }
@@ -444,7 +448,6 @@ export const getUserMeta = async (userId: string | undefined) => {
   url.searchParams.append('userId', userId || '');
   return await fetch(url.toString());
 };
-
 
 export interface WorkModeBody {
   spaceName: string;
