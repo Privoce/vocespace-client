@@ -151,12 +151,7 @@ export async function GET(request: NextRequest) {
       return await PlatformLogin(request, auth);
     } else {
       // 没有 auth 参数，走普通流程
-      // const livekitServerUrl = region ? getLiveKitURL(region) : LIVEKIT_URL;
       let randomParticipantPostfix = request.cookies.get(COOKIE_KEY)?.value;
-      // if (livekitServerUrl === undefined) {
-      //   throw new Error('Invalid region');
-      // }
-
       if (typeof spaceName !== 'string') {
         return new NextResponse('Missing required query parameter: spaceName', { status: 400 });
       }
@@ -167,26 +162,6 @@ export async function GET(request: NextRequest) {
       }
 
       let identity = uIdentity || generateBasicIdentity(participantName, spaceName);
-      // const participantToken = await createParticipantToken(
-      //   {
-      //     // identity: `${participantName}__${randomParticipantPostfix}`,
-      //     identity: identity,
-      //     name: participantName,
-      //     metadata,
-      //   },
-      //   spaceName,
-      //   API_KEY,
-      //   API_SECRET,
-      // );
-
-      // // Return connection details
-      // const data: ConnectionDetails = {
-      //   serverUrl: livekitServerUrl,
-      //   roomName: spaceName,
-      //   participantToken: participantToken,
-      //   participantName: participantName,
-      // };
-
       const { details: data } = await generateData(identity, participantName, spaceName, metadata);
 
       return new NextResponse(JSON.stringify(data), {
