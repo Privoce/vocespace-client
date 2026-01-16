@@ -129,7 +129,7 @@ export function PageClientImpl({
   data,
   room,
   details,
-  messageApi
+  messageApi,
 }: PageClientImplProps) {
   const { t } = useI18n();
   const [uState, setUState] = useRecoilState(userState);
@@ -169,7 +169,7 @@ export function PageClientImpl({
           spaceName,
           values.username,
           region,
-          data?.identity,
+          data?.id,
         );
         const connectionDetailsData = await connectionDetailsResp.json();
         setConnectionDetails(connectionDetailsData);
@@ -181,7 +181,7 @@ export function PageClientImpl({
         router.replace(`/${spaceName}`);
       }
     },
-    [auth, data?.identity, region, spaceName, details],
+    [auth, data?.id, region, spaceName, details],
   );
   const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
   // 配置数据 ----------------------------------------------------------------------------------------
