@@ -65,7 +65,7 @@ import { useI18n } from '../i18n/i18n';
 
 export interface UsePlatformUserProps {
   searchParams: SearchParams;
-  messageApi: MessageInstance
+  messageApi: MessageInstance;
 }
 
 /**
@@ -74,8 +74,8 @@ export interface UsePlatformUserProps {
  */
 export { parseToken, generateToken } from './platformToken';
 
-export function usePlatformUser({ searchParams,messageApi }: UsePlatformUserProps) {
-  const {t} = useI18n();
+export function usePlatformUser({ searchParams, messageApi }: UsePlatformUserProps) {
+  const { t } = useI18n();
   const [platformUser, setPlatformUser] = useState<PlatformUser | undefined>(undefined);
   const [details, setDetails] = useState<ConnectionDetails | undefined>(undefined);
   const [isValid, setIsValid] = useState<boolean>(false);
@@ -108,7 +108,6 @@ export function usePlatformUser({ searchParams,messageApi }: UsePlatformUserProp
       }
       // 没有auth,data,details参数则直接返回，三个参数必须同时存在
       if (!searchParams.auth || !searchParams.data || !searchParams.details) {
-        messageApi.warning(t('api.token.url'));
         setPlatformUser(parsedInfo);
         return;
       }
@@ -135,7 +134,6 @@ export function usePlatformUser({ searchParams,messageApi }: UsePlatformUserProp
     } else {
       // 本地没有用户信息，检查searchParams中是否有auth和data参数
       if (!searchParams.auth || !searchParams.data || !searchParams.details) {
-        messageApi.warning(t('api.token.url'));
         return;
       }
       const platformNewInfo: PlatformUser = castToPlatformUser(

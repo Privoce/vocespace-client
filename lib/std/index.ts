@@ -481,7 +481,7 @@ export interface PlatformUser extends TokenResult {
  * @returns
  */
 export const verifyTokenResult = (tokenResult: Partial<TokenResult>): boolean => {
-  return !(!tokenResult.id || !tokenResult.username || !tokenResult.space || !tokenResult.iat);
+  return !(!tokenResult.id || !tokenResult.username || !tokenResult.space);
 };
 
 export const generateBasicIdentity = (participantName: string, spaceName: string): string =>
@@ -489,7 +489,7 @@ export const generateBasicIdentity = (participantName: string, spaceName: string
 
 export const verifyPlatformUser = (platUser: PlatformUser | TokenResult): boolean => {
   // 只需要验证exp是否过期
-  const currentTime = Date.now();
+  const currentTime = Math.floor(Date.now() / 1000);
   if (platUser.exp && platUser.exp < currentTime) {
     return false;
   }

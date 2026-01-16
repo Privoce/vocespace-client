@@ -8,6 +8,7 @@ import styles from '@/styles/pre_join.module.scss';
 import { MailOutlined, UserOutlined } from '@ant-design/icons';
 import { Avatar, Button, Divider, Dropdown } from 'antd';
 import { ItemType } from 'antd/es/menu/interface';
+import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
 export function LoginButtons({ space }: { space: string }) {
@@ -51,6 +52,7 @@ export interface LoginStateBtnProps {
 }
 
 export function LoginStateBtn({ data }: LoginStateBtnProps) {
+  const router = useRouter();
   const { t } = useI18n();
   const { userId, username, avatar } = useMemo(() => {
     return {
@@ -68,14 +70,18 @@ export function LoginStateBtn({ data }: LoginStateBtnProps) {
           label: t('login.out'),
           onClick: () => {
             localStorage.removeItem(VOCESPACE_PLATFORM_USER);
-            window.open(`https://home.vocespace.com/auth/user/${userId}?logout=true`, '_self');
+            if (data?.auth === 'vocespace') {
+              window.open(`https://home.vocespace.com/auth/user/${userId}?logout=true`, '_self');
+            } else {
+              router.refresh();
+            }
           },
         },
       ];
     } else {
       return [];
     }
-  }, [userId, username, t]);
+  }, [userId, username, t, data?.auth]);
 
   return (
     <Dropdown menu={{ items }} placement="bottomRight" trigger={['hover']}>

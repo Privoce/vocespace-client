@@ -1,5 +1,10 @@
 export default {
   common: {
+    api: {
+    token: {
+      out_of_date: 'Срок действия токена истек. Пожалуйста, получите новый.',
+    },
+  },
     full_screen: 'Полный экран',
     guest: {
       not_allow:

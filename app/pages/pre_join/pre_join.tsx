@@ -22,7 +22,7 @@ import { LangSelect } from '@/app/pages/controls/selects/lang_select';
 import { ulid } from 'ulid';
 import { api } from '@/lib/api';
 import { LoginButtons, LoginStateBtn } from './login';
-import { SpaceInfo, VOCESPACE_PLATFORM_USER } from '@/lib/std/space';
+import { SpaceInfo } from '@/lib/std/space';
 
 export interface PreJoinPropsExt extends PreJoinProps {
   data: PlatformUser | undefined;
@@ -61,8 +61,6 @@ export function PreJoin({
   setLoading,
 }: PreJoinPropsExt) {
   const { t } = useI18n();
-  // 调试：打印 spaceParams 来检查参数是否正确传递
-  // console.log('PreJoin spaceParams:', spaceParams);
   // user choices -------------------------------------------------------------------------------------
   const {
     userChoices: initialUserChoices,
@@ -87,6 +85,11 @@ export function PreJoin({
     data?.username || userChoices.username || '',
   );
   // Save user choices to persistent storage ---------------------------------------------------------
+  React.useEffect(() => {
+    if (data?.username && data?.username !== username) {
+      setUsername(data.username);
+    }
+  }, [data]);
   React.useEffect(() => {
     saveAudioInputEnabled(audioEnabled);
   }, [audioEnabled, saveAudioInputEnabled]);

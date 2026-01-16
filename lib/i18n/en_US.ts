@@ -1,4 +1,9 @@
 export default {
+  api: {
+    token: {
+      out_of_date: 'The token has expired. Please obtain a new one.',
+    },
+  },
   common: {
     full_screen: 'Full Screen',
     guest: {
