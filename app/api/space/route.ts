@@ -1,11 +1,5 @@
 // /app/api/space/route.ts
-import {
-  DEFAULT_USER_DEFINE_STATUS,
-  ERROR_CODE,
-  isUndefinedString,
-  UserDefineStatus,
-  UserStatus,
-} from '@/lib/std';
+import { ERROR_CODE, isUndefinedString } from '@/lib/std';
 import { NextRequest, NextResponse } from 'next/server';
 import Redis from 'ioredis';
 import { ChatMsgItem } from '@/lib/std/chat';
@@ -807,27 +801,6 @@ class SpaceManager {
           error: 'Room or participant does not exist, or not complete initialized.',
         }; // 房间或参与者不存在可能出现了问题
       }
-      // 删除参与者前删除该参与者构建的子房间 (新需求无需清理子房间, 暂时注释)
-      // const childRoomsToDelete = spaceInfo.children
-      //   .filter((child) => child.ownerId === participantId)
-      //   .map((child) => child.name);
-
-      // if (childRoomsToDelete.length > 0) {
-      //   await Promise.all(
-      //     childRoomsToDelete.map(async (roomName) => {
-      //       await this.deleteChildRoom(room, roomName);
-      //     }),
-      //   );
-
-      //   // 重新获取最新的房间设置
-      //   spaceInfo = await this.getSpaceInfo(room);
-      //   if (!spaceInfo) {
-      //     return {
-      //       success: false,
-      //       error: 'Room settings changed during deletion process.',
-      //     };
-      //   }
-      // }
       // 检查当前这个参与者是否在子房间中，如果在子房间需要移除
       const childRooms = spaceInfo.children.filter((child) =>
         child.participants.includes(participantId),
@@ -1660,9 +1633,10 @@ export async function DELETE(request: NextRequest) {
             );
             if (success) {
               if (clearAll) {
-                return NextResponse.json({ success: true, clearRoom: spaceId });
+                return NextResponse.json({ success: true, space: spaceId, clearRoom: spaceId });
               }
               return NextResponse.json({
+                space: spaceId,
                 success: true,
                 message: 'Participant removed successfully',
               });
@@ -1792,6 +1766,9 @@ const userHeartbeat = async () => {
 };
 
 // 定时任务，每隔5分钟执行一次
-setInterval(async () => {
-  await userHeartbeat();
-}, 5 * 60 * 1000); // 每5分钟执行一次
+setInterval(
+  async () => {
+    await userHeartbeat();
+  },
+  5 * 60 * 1000,
+); // 每5分钟执行一次

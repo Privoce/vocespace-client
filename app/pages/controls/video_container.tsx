@@ -261,9 +261,12 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             aiCutAnalysisIntervalId.current = null;
           }
 
-          aiCutAnalysisIntervalId.current = setInterval(async () => {
-            await reloadResult();
-          }, (freq + 2) * 60 * 1000); //增加2分钟的缓冲时间
+          aiCutAnalysisIntervalId.current = setInterval(
+            async () => {
+              await reloadResult();
+            },
+            (freq + 2) * 60 * 1000,
+          ); //增加2分钟的缓冲时间
         } else {
           // 停止截图服务并停止AI分析
           stopAICutService(space);

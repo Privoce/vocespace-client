@@ -52,7 +52,6 @@ export interface LoginStateBtnProps {
 }
 
 export function LoginStateBtn({ data }: LoginStateBtnProps) {
-  const router = useRouter();
   const { t } = useI18n();
   const { userId, username, avatar } = useMemo(() => {
     return {
@@ -73,7 +72,7 @@ export function LoginStateBtn({ data }: LoginStateBtnProps) {
             if (data?.auth === 'vocespace') {
               window.open(`https://home.vocespace.com/auth/user/${userId}?logout=true`, '_self');
             } else {
-              router.refresh();
+              window.location.reload();
             }
           },
         },

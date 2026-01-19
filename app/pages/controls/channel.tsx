@@ -14,7 +14,6 @@ import styles from '@/styles/channel.module.scss';
 import { useI18n } from '@/lib/i18n/i18n';
 import { SvgResource } from '@/app/resources/svg';
 import {
-  Badge,
   Button,
   Collapse,
   CollapseProps,
