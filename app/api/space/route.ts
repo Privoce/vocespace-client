@@ -26,6 +26,7 @@ import {
   DefineUserStatusBody,
   DefineUserStatusResponse,
   DeleteSpaceParticipantBody,
+  EnterRoomBody,
   PersistentSpaceBody,
   TransOrSetOMBody,
   UpdateOwnerIdBody,
@@ -666,7 +667,7 @@ class SpaceManager {
       let startAt = Date.now();
       if (!spaceInfo) {
         spaceInfo = {
-          ...DEFAULT_SPACE_INFO(startAt),
+          ...DEFAULT_SPACE_INFO(startAt, pData.platform ? pData.platform !== 'c_s' : true),
           ownerId: participantId,
         };
         // 这里还需要设置到房间的使用记录中
@@ -923,7 +924,7 @@ class SpaceManager {
       let spaceInfo = await this.getSpaceInfo(room);
       let startAt = Date.now();
       if (!spaceInfo) {
-        spaceInfo = DEFAULT_SPACE_INFO(startAt);
+        spaceInfo = DEFAULT_SPACE_INFO(startAt, true);
       }
 
       // 获取所有参与者的名字
@@ -1024,7 +1025,7 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ error: ERROR_CODE.createSpace.SpaceExist }, { status: 200 });
       }
       const newSpaceInfo = {
-        ...DEFAULT_SPACE_INFO(Date.now()),
+        ...DEFAULT_SPACE_INFO(Date.now(), true),
         ownerId: ownerId || `${spaceOwner}__${spaceOwner}`,
       } as SpaceInfo;
 
@@ -1421,8 +1422,143 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 如果是创建子房间 -------------------------------------------------------------------------
+    // 如果是创建子房间/进入子房间 -------------------------------------------------------------------------
     if (isChildRoom) {
+      const isEnter = request.nextUrl.searchParams.get('enter') === 'true';
+      // 进入子房间的处理 -----------------------------------------------------------------------------
+      if (isEnter) {
+        const { space, auth, uid, room, identity, username }: EnterRoomBody = await request.json();
+        // 无需处理
+        if (room === '$space') {
+          return NextResponse.json({ success: true }, { status: 200 });
+        }
+        // 获取space信息
+        const spaceInfo = await SpaceManager.getSpaceInfo(space);
+        if (!spaceInfo) {
+          return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+        }
+
+        // 先判断auth，如果是c_s, 说明进入了customer - service模式，用户需要进入某个空闲房间
+        // 这里的空闲房间指的是某个私人房间，且这个私人房间只有房间拥有者(客服)一个人，顾客需要进入这个房间
+        // 这是个一对一的模式
+        if (auth === 'c_s') {
+          // 这里一般来说，客服都会指定一个房间名
+          const existingRoom =
+            room === '$empty'
+              ? null
+              : spaceInfo.children.find((child) => child.ownerId === uid && child.name === room);
+          // 判断用户身份
+          if (identity === 'assistant') {
+            // 助理直接进入自己的私人房间或者创建房间
+            // 房间存在
+            if (existingRoom) {
+              // 如果这个房间不是私人房间，且内部已经有超过一个人了，那么设置这个房间为私人房间，并清理内部所有人，再进入
+              if (!existingRoom.isPrivate) {
+                existingRoom.isPrivate = true;
+              }
+
+              if (existingRoom.participants.length >= 1) {
+                existingRoom.participants = [uid];
+              } else {
+                existingRoom.participants.push(uid);
+              }
+              await SpaceManager.setSpaceInfo(space, spaceInfo);
+              return NextResponse.json({ success: true }, { status: 200 });
+            } else {
+              // 创建新的私人房间
+              const newChildRoom: ChildRoom = {
+                name: room || `${username}'s Room`,
+                participants: [uid],
+                ownerId: uid,
+                isPrivate: true,
+              };
+              const { success, error } = await SpaceManager.setChildRoom(space, newChildRoom);
+              if (success) {
+                return NextResponse.json({ success: true }, { status: 200 });
+              } else {
+                return NextResponse.json({ error }, { status: 500 });
+              }
+            }
+          } else if (identity === 'customer') {
+            // 如果是顾客
+            if (existingRoom) {
+              // 房间存在，我们需要检查这个房间是否满人(一对一场景下，支持2个人在一个房间内)
+              if (existingRoom.participants.length >= 2) {
+                // 满人则寻找其他空闲房间，找到一个就让用户进入
+                const freeRoom = spaceInfo.children.find(
+                  (child) =>
+                    child.isPrivate &&
+                    child.participants.length === 1 && // 只有房主一个人
+                    child.ownerId !== existingRoom.ownerId, // 不能是同一个客服的房间
+                );
+                if (freeRoom) {
+                  freeRoom.participants.push(uid);
+                  await SpaceManager.setSpaceInfo(space, spaceInfo);
+                  return NextResponse.json({ success: true }, { status: 200 });
+                } else {
+                  return NextResponse.json(
+                    {
+                      error: 'No available rooms, please wait...',
+                      code: ERROR_CODE.enterRoom.FullAndWait,
+                    },
+                    { status: 200 },
+                  );
+                }
+              } else {
+                // 没有满人，直接加入
+                existingRoom.participants.push(uid);
+                await SpaceManager.setSpaceInfo(space, spaceInfo);
+                return NextResponse.json({ success: true }, { status: 200 });
+              }
+            } else {
+              // 房间不存在，说明客服还没有创建房间，直接返回错误让用户等待
+              return NextResponse.json(
+                {
+                  error: 'No available rooms, please wait...',
+                  code: ERROR_CODE.enterRoom.NotExist,
+                },
+                { status: 200 },
+              );
+            }
+          } else {
+            // 其他身份不在c_s模式下工作
+            return NextResponse.json(
+              {
+                error: 'Invalid identity for c_s mode',
+                code: ERROR_CODE.enterRoom.InvalidIdentityCS,
+              },
+              { status: 200 },
+            );
+          }
+        } else {
+          // 非c_s模式下，直接加入指定房间，如果不存在就创建，有就直接加入
+          const existingRoom = spaceInfo.children.find((child) => child.name === room);
+          if (existingRoom) {
+            // 房间存在，加入房间，无论是否私人房间都可以加入
+            if (!existingRoom.participants.includes(uid)) {
+              existingRoom.participants.push(uid);
+              await SpaceManager.setSpaceInfo(space, spaceInfo);
+            }
+            return NextResponse.json({ success: true }, { status: 200 });
+          } else {
+            // 房间不存在，创建新房间
+            const newChildRoom: ChildRoom = {
+              name: room || `${username}'s Room`,
+              participants: [uid],
+              ownerId: uid,
+              isPrivate: true,
+            };
+            const { success, error } = await SpaceManager.setChildRoom(space, newChildRoom);
+            if (success) {
+              return NextResponse.json({ success: true }, { status: 200 });
+            } else {
+              return NextResponse.json({ error }, { status: 500 });
+            }
+          }
+        }
+      }
+
+      // 创建子房间的处理 -----------------------------------------------------------------------------
       const { spaceName, roomName, participantId, isPrivate }: CreateRoomBody =
         await request.json();
 

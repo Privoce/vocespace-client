@@ -72,24 +72,13 @@ export interface UserDefineStatus {
   screenBlur: number;
 }
 
-export const DEFAULT_USER_DEFINE_STATUS: UserDefineStatus[] = [
-  {
-    id: UserStatus.Working,
-    creator: {
-      name: 'system',
-      id: 'system',
-    },
-    title: 'settings.general.status.working',
-    volume: 100,
-    blur: 0,
-    screenBlur: 0,
-  },
-];
-
 export function is_web(): boolean {
   return typeof window !== 'undefined';
 }
 
+/**
+ * 是否是iOS设备
+ */
 export function isIos(): boolean {
   if (!is_web()) return false;
 
@@ -99,6 +88,9 @@ export function isIos(): boolean {
   return /iPad|iPhone|iPod/.test(userAgent) && !(window as any).MSStream;
 }
 
+/**
+ * 是否为移动设备
+ */
 export function isMobile(): boolean {
   if (!is_web()) return false;
 
@@ -129,6 +121,9 @@ export function isMobile(): boolean {
   return isMobileUserAgent || (hasTouchScreen && isSmallScreen);
 }
 
+/**
+ * 是否是平板设备
+ */
 export function isTablet(): boolean {
   if (!is_web()) return false;
 
@@ -142,6 +137,12 @@ export function isTablet(): boolean {
   return isTabletUserAgent || (hasTouchScreen && isTabletScreen);
 }
 
+/**
+ * src路径，根据部署的basePath进行调整
+ * 使用在img,video等标签的src属性上
+ * @param url
+ * @returns
+ */
 export function src(url: string): string {
   let prefix = process.env.NEXT_PUBLIC_BASE_PATH;
   if (!prefix || prefix === '' || prefix === '/') {
@@ -150,6 +151,11 @@ export function src(url: string): string {
   return `${prefix}${url}`;
 }
 
+/**
+ * 连接端点路径，根据部署的basePath进行调整
+ * @param url
+ * @returns
+ */
 export function connect_endpoint(url: string): string {
   let prefix = process.env.NEXT_PUBLIC_BASE_PATH;
   if (!prefix || prefix === '' || prefix === '/') {
@@ -157,7 +163,10 @@ export function connect_endpoint(url: string): string {
   }
   return `${prefix}${url}`;
 }
-///生成唯一颜色
+
+/**
+ * 生成唯一颜色，当前仅使用在分享屏幕时用户鼠标的颜色区分上
+ */
 export const randomColor = (participantId: string): string => {
   // 使用参与者ID创建一个简单的哈希值
   let hash = 0;
@@ -297,8 +306,16 @@ export enum CreateSpaceError {
   SpaceExist = 'common.create_space.error.exist',
 }
 
+export enum EnterRoomError {
+  // 房间已满员，请稍后再试
+  FullAndWait = 'api.room.error.full_and_wait',
+  NotExist = 'api.room.error.not_exist',
+  InvalidIdentityCS = 'api.room.error.invalid_identity_c_s',
+}
+
 export const ERROR_CODE = {
   createSpace: CreateSpaceError,
+  enterRoom: EnterRoomError,
 };
 
 /**
@@ -354,7 +371,7 @@ export const downloadFile = (url: string, fileName: string) => {
  * c_s: 来自客服系统登录 (目前专为sohive设计)考虑到泛用性，命名为customer_service，可后续扩展
  * other: 来自其他未知平台登录
  */
-export type AuthType = 'vocespace' | 'space' | 'c_s' | 'other';
+export type AuthType = 'vocespace' | 'space' | 'c_s' | 'other' | string;
 
 /**
  * VoceSpace SearchParams 搜索参数类型
@@ -396,6 +413,7 @@ export interface SearchParams {
  * 1. $empty: 任意空房间
  * 2. string: 其他自定义房间名, 具体房间，用户将直接进入该房间，如果没有则创建该房间
  * 3. $space: 空间主房间，无需后续进行任何处理，用户将直接进入空间主房间
+ * 需要注意的是只要带有room参数，用户每次进入都会进入指定房间，没有必要请勿使用该参数
  */
 export type RoomType = '$empty' | string | '$space';
 
@@ -408,6 +426,8 @@ export type RoomType = '$empty' | string | '$space';
  * - manager: 空间管理员
  * - participant: 空间参与者
  * - guest: 访客
+ *
+ * 目前对assistant和customer的已确定进行特殊处理，后续可根据需要扩展
  */
 export type IdentityType =
   | 'assistant'
@@ -440,6 +460,7 @@ export interface TokenResult {
   space: string;
   /**
    * 房间名
+   * **需要注意的是只要带有room参数，用户每次进入都会进入指定房间，没有必要请勿使用该参数**
    */
   room?: RoomType;
   /**
@@ -453,7 +474,7 @@ export interface TokenResult {
    * - participant: 空间参与者
    * - guest: 访客
    */
-  identity: IdentityType;
+  identity?: IdentityType;
   /**
    * 是否经过预加入页面进入，如果为true则需要经过预加入页面，false则直接进入
    */

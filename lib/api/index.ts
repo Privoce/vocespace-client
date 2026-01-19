@@ -27,11 +27,13 @@ import {
   deleteTodo,
   allowGuest,
   transOrSetOwnerManager,
-  handleWorkMode
+  handleWorkMode,
+  enterRoom,
 } from './space';
 
 export const api = {
   // ---- space api --------
+  enterRoom,
   joinSpace,
   updateSpaceInfo,
   createSpace,

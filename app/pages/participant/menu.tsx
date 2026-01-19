@@ -34,7 +34,7 @@ export function ControlRKeyMenu({
       trigger={trigger}
       menu={menu}
       onOpenChange={onOpenChange}
-      className='vocespace_full_size'
+      className="vocespace_full_size"
     >
       {children}
     </Dropdown>
@@ -78,7 +78,10 @@ export function useControlRKeyMenu({
   const userAuth = useMemo(() => {
     return isSpaceManager(spaceInfo, space?.localParticipant.identity || '');
   }, [spaceInfo.ownerId, space?.localParticipant.identity]);
-  const { platUser } = usePlatformUserInfo({ uid: space?.localParticipant.identity! });
+  const { platUser } = usePlatformUserInfo({
+    space: space,
+    uid: space?.localParticipant.identity!,
+  });
 
   // 处理音量、模糊视频和模糊屏幕的调整------------------------------------------------------------
   const handleAdjustment = async (

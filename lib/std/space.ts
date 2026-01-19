@@ -1,4 +1,4 @@
-import { UserStatus } from '.';
+import { AuthType, UserStatus } from '.';
 import { ModelBg, ModelRole } from './virtual';
 import { Extraction } from '../ai/analysis';
 import dayjs, { Dayjs } from 'dayjs';
@@ -170,7 +170,12 @@ export interface ParticipantSettings {
    */
   online: boolean;
   /**
+   * 来自哪个平台
+   */
+  platform?: AuthType;
+  /**
    * 是否认证通过
+   * - 只有来自 Vocespace 平台的用户我们才会认为是认证用户，其他平台的用户一律视为未认证用户
    */
   isAuth: boolean;
   /**
@@ -484,7 +489,7 @@ export const DEFAULT_COUNTDOWN: Countdown = {
   stopTimeStamp: null as number | null,
 };
 
-export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
+export const DEFAULT_SPACE_INFO = (startAt: number, createRoom: boolean): SpaceInfo => ({
   participants: {},
   ownerId: '',
   persistence: true,
@@ -492,20 +497,22 @@ export const DEFAULT_SPACE_INFO = (startAt: number): SpaceInfo => ({
   managers: [],
   allowGuest: true,
   startAt,
-  children: [
-    {
-      name: 'Meeting Room',
-      participants: [],
-      ownerId: 'system',
-      isPrivate: false,
-    },
-    {
-      name: '☕️ Coffee Break',
-      participants: [],
-      ownerId: 'system',
-      isPrivate: false,
-    },
-  ],
+  children: createRoom
+    ? [
+        {
+          name: 'Meeting Room',
+          participants: [],
+          ownerId: 'system',
+          isPrivate: false,
+        },
+        {
+          name: '☕️ Coffee Break',
+          participants: [],
+          ownerId: 'system',
+          isPrivate: false,
+        },
+      ]
+    : [],
   apps: ['todo', 'countdown'],
   ai: {
     cut: {

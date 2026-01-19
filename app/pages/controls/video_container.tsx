@@ -86,6 +86,7 @@ import {
   PlatformTodos,
 } from '@/lib/api/platform';
 import { useFullScreenBtn } from './widgets/full_screen';
+import { usePlatformUserInfo } from '@/lib/hooks/platform';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -143,6 +144,15 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       space?.localParticipant?.identity || '', // 参与者 ID
     );
     const [openApp, setOpenApp] = useState<boolean>(false);
+    const { isAuth, createRoom, platUser, roomEnter } = usePlatformUserInfo({
+      space,
+      uid: space?.localParticipant?.identity || '',
+      onEnterRoom: () => {
+        socket.emit('update_user_status', {
+          space: space!.name,
+        } as WsBase);
+      },
+    });
     // const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
     // const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
     const isActive = true;
@@ -398,7 +408,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       };
 
       const syncSettings = async () => {
-        let isAuth = await platformAPI.isAuth(space.localParticipant.identity);
         const todos = await fetchPlatformData(isAuth);
         // 将当前参与者的基础设置发送到服务器 ----------------------------------------------------------
         await updateSettings(
@@ -410,30 +419,37 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             online: true,
             ...(todos ? { appDatas: { ...uState.appDatas, todo: todos } } : uState.appDatas),
             isAuth,
+            platform: platUser?.auth,
           },
           undefined,
           true,
         );
 
-        const roomName = `${space.localParticipant.name}'s room`;
-
-        // 为新加入的参与者创建一个自己的私人房间
-        if (!settings.children.some((child) => child.name === roomName)) {
-          const response = await api.createRoom({
-            spaceName: space.name,
-            roomName,
-            ownerId: space.localParticipant.identity,
-            isPrivate: true,
-          });
-
-          if (!response.ok) {
-            messageApi.error({
-              content: t('channel.create.error'),
+        // 从vocespace/space平台过来的用户，需要为其创建私人房间 ------------------------------
+        if (settings && createRoom) {
+          // 为新加入的参与者创建一个自己的私人房间
+          const roomName = `${space.localParticipant.name}'s room`;
+          if (!settings.children.some((child) => child.name === roomName)) {
+            const response = await api.createRoom({
+              spaceName: space.name,
+              roomName,
+              ownerId: space.localParticipant.identity,
+              isPrivate: true,
             });
-          } else {
-            await fetchSettings();
+
+            if (!response.ok) {
+              messageApi.error({
+                content: t('channel.create.error'),
+              });
+            } else {
+              await fetchSettings();
+            }
           }
         }
+
+        // 如果是platform用户，有可能是需要直接进入某个子房间的 ------------------------------------------
+        // 详细见usePlatformUserInfo中对于roomEnter的处理
+        await roomEnter();
       };
 
       // 获取历史聊天记录 ---------------------------------------------------------------------------

@@ -605,7 +605,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       setScreenBlur,
       handleWorkMode,
       startOrStopWork,
-      lastAICutConfig 
+      lastAICutConfig,
     } = useWork({
       space,
       spaceInfo,
@@ -742,6 +742,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           )}
           {space && spaceInfo.participants && visibleControls.microphone && (
             <MoreButton
+              space={space}
               size={controlSize}
               controlWidth={controlWidth}
               setOpenMore={setOpenMore}

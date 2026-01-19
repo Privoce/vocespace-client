@@ -3,9 +3,10 @@ import { useState, useCallback } from 'react';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { DEFAULT_SPACE_INFO, ParticipantSettings, RecordSettings, SpaceInfo } from '../std/space';
 import { api } from '../api';
+import { isCreateRoom } from './platform';
 
 export function useSpaceInfo(spaceName: string, participantId: string) {
-  const [settings, setSettings] = useState<SpaceInfo>(DEFAULT_SPACE_INFO(Date.now()));
+  const [settings, setSettings] = useState<SpaceInfo>(DEFAULT_SPACE_INFO(Date.now(), isCreateRoom()));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 

@@ -3,6 +3,13 @@ export default {
     token: {
       out_of_date: 'Token已过期，请重新获取',
     },
+    room: {
+      error: {
+        full_and_wait: '所有房间已满员，请稍微等待',
+        not_exist: '房间不存在或已被删除',
+        invalid_identity_c_s: '无效的身份类型，用户只能是助理或顾客',
+      },
+    },
   },
   common: {
     full_screen: '全屏',

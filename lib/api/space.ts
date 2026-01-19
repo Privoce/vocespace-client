@@ -1,5 +1,5 @@
 import { Socket } from 'socket.io-client';
-import { connect_endpoint, UserDefineStatus } from '../std';
+import { AuthType, connect_endpoint, IdentityType, RoomType, UserDefineStatus } from '../std';
 import {
   AppAuth,
   AppKey,
@@ -471,5 +471,39 @@ export const handleWorkMode = async (
       participantId,
       workType,
     } as WorkModeBody),
+  });
+};
+
+export interface EnterRoomBody {
+  space: string;
+  auth: AuthType;
+  uid: string;
+  room?: RoomType;
+  identity?: IdentityType;
+  username: string;
+}
+
+export const enterRoom = async (
+  space: string,
+  auth: AuthType,
+  uid: string,
+  username: string,
+  room?: RoomType,
+  identity?: IdentityType,
+) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('childRoom', 'true');
+  url.searchParams.append('enter', 'true');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      space,
+      auth,
+      uid,
+      room,
+      identity,
+      username,
+    } as EnterRoomBody),
   });
 };

@@ -7,8 +7,10 @@ import { ViewAdjusts } from '@/lib/std/window';
 import { usePlatformUserInfo } from '@/lib/hooks/platform';
 import { useLocalParticipant } from '@livekit/components-react';
 import { HomeOutlined, RobotOutlined } from '@ant-design/icons';
+import { Room } from 'livekit-client';
 
 export interface MoreButtonProps {
+  space: Room;
   showText?: boolean;
   setOpenMore: (open: boolean) => void;
   isRecording: boolean;
@@ -34,6 +36,7 @@ export interface MoreButtonInnerProps extends MoreButtonProps {
 }
 
 export function MoreButtonInner({
+  space,
   showText = true,
   setOpenMore,
   setMoreType,
@@ -57,7 +60,7 @@ export function MoreButtonInner({
 
   const { localParticipant } = useLocalParticipant();
 
-  const { platUser } = usePlatformUserInfo({ uid: localParticipant.identity });
+  const { platUser } = usePlatformUserInfo({ space, uid: localParticipant.identity });
 
   const onClickChatMsg = () => {
     if (chat && chat.visible) {
