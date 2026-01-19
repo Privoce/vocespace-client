@@ -3,13 +3,19 @@ import { AccessToken, AccessTokenOptions, VideoGrant } from 'livekit-server-sdk'
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '../conf/conf';
 import { generateToken, parseToken } from '@/lib/hooks/platformToken';
-import { AuthType, generateBasicIdentity, TokenResult, verifyPlatformUser, verifyTokenResult } from '@/lib/std';
+import {
+  AuthType,
+  generateBasicIdentity,
+  TokenResult,
+  verifyPlatformUser,
+  verifyTokenResult,
+} from '@/lib/std';
 
 const COOKIE_KEY = 'random-participant-postfix';
 
 const {
   livekit: { url: LIVEKIT_URL, key: API_KEY, secret: API_SECRET },
-  serverUrl
+  serverUrl,
 } = getConfig();
 
 function createParticipantToken(
@@ -67,7 +73,7 @@ const PlatformLogin = async (request: NextRequest, auth: AuthType) => {
   } catch (e) {
     return new NextResponse('Invalid token format', { status: 400 });
   }
-  
+
   // 检查Token有效性
   if (!verifyPlatformUser(tokenRes)) {
     return new NextResponse('Token is expired', { status: 401 });
@@ -76,7 +82,7 @@ const PlatformLogin = async (request: NextRequest, auth: AuthType) => {
   // default is undefined
   let randomParticipantPostfix = request.cookies.get(COOKIE_KEY)?.value;
   const { token: participantToken, details } = await generateData(
-    tokenRes.identity,
+    tokenRes.identity || 'participant',
     tokenRes.username,
     tokenRes.space,
     token,

@@ -1437,19 +1437,19 @@ export async function POST(request: NextRequest) {
         if (!spaceInfo) {
           return NextResponse.json({ error: 'Space not found' }, { status: 404 });
         }
-
+        console.warn(space, auth, uid, room, identity, username);
         // 先判断auth，如果是c_s, 说明进入了customer - service模式，用户需要进入某个空闲房间
         // 这里的空闲房间指的是某个私人房间，且这个私人房间只有房间拥有者(客服)一个人，顾客需要进入这个房间
         // 这是个一对一的模式
         if (auth === 'c_s') {
-          // 这里一般来说，客服都会指定一个房间名
-          const existingRoom =
-            room === '$empty'
-              ? null
-              : spaceInfo.children.find((child) => child.ownerId === uid && child.name === room);
           // 判断用户身份
           if (identity === 'assistant') {
             // 助理直接进入自己的私人房间或者创建房间
+            // 这里一般来说，客服都会指定一个房间名
+            const existingRoom =
+              room === '$empty'
+                ? null
+                : spaceInfo.children.find((child) => child.ownerId === uid && child.name === room);
             // 房间存在
             if (existingRoom) {
               // 如果这个房间不是私人房间，且内部已经有超过一个人了，那么设置这个房间为私人房间，并清理内部所有人，再进入
@@ -1480,6 +1480,9 @@ export async function POST(request: NextRequest) {
               }
             }
           } else if (identity === 'customer') {
+            // 这里一般来说，客服都会指定一个房间名
+            const existingRoom =
+              room === '$empty' ? null : spaceInfo.children.find((child) => child.name === room);
             // 如果是顾客
             if (existingRoom) {
               // 房间存在，我们需要检查这个房间是否满人(一对一场景下，支持2个人在一个房间内)
