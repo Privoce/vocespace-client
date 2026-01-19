@@ -79,11 +79,6 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   ) => Promise<void>;
   openAIServiceAskNote: () => void;
   downloadAIMdReport?: () => Promise<void>;
-  setNoteStateForAICutService: (value: {
-    openAIService: boolean;
-    noteClosed: boolean;
-    hasAsked: boolean;
-  }) => void;
 }
 
 export interface ControlBarExport {
@@ -130,7 +125,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       startOrStopAICutAnalysis,
       openAIServiceAskNote,
       downloadAIMdReport,
-      setNoteStateForAICutService,
       ...props
     }: ControlBarProps,
     ref,
@@ -600,7 +594,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       openModal: workModalOpen,
       setOpenModal: setWorkModalOpen,
       enabled: workEnabled,
-      setEnabeled: setWorkEnabled,
+      setEnabled: setWorkEnabled,
       isUseAI,
       setIsUseAI,
       isSync,
@@ -611,12 +605,12 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       setScreenBlur,
       handleWorkMode,
       startOrStopWork,
+      lastAICutConfig 
     } = useWork({
       space,
       spaceInfo,
       messageApi,
       startOrStopAICutAnalysis,
-      openAIService: setNoteStateForAICutService,
       downloadAIMdReport,
     });
 
@@ -628,7 +622,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           showAICutAnalysisSettings: setAICutModalOpen,
           isChatOpen: chatOpen, // 使用 chatOpen 而不是 isChatOpen，因为 chatOpen 是实际控制聊天窗口的状态
           setChatOpen,
-        } as ControlBarExport),
+        }) as ControlBarExport,
     );
     // 当是手机的情况下需要适当增加marginBottom，因为手机端自带的Tabbar会遮挡
     return (
@@ -732,6 +726,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               spaceInfo={spaceInfo}
               space={space.name}
               startOrStopWork={startOrStopWork}
+              localParticipant={space.localParticipant}
+              lastAICutConfig={lastAICutConfig}
             ></Work>
           )}
           {visibleControls.chat && !isMobile && (
@@ -909,8 +905,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             isDownload
               ? t('more.record.to_download')
               : isManager
-              ? t('more.record.confirm')
-              : t('more.record.confirm_request')
+                ? t('more.record.confirm')
+                : t('more.record.confirm_request')
           }
           cancelText={t('more.record.cancel')}
           onCancel={recordModalOnCancel}

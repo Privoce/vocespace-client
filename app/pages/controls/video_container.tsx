@@ -1432,7 +1432,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   toRenameSettings={toSettingGeneral}
                   startOrStopAICutAnalysis={startOrStopAICutAnalysis}
                   openAIServiceAskNote={openAIServiceAskNote}
-                  setNoteStateForAICutService={setNoteStateForAICutService}
                   downloadAIMdReport={FlotLayoutRef.current?.downloadAIMdReport}
                 ></Controls>
               </div>

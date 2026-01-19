@@ -8,13 +8,14 @@ import { AICutParticipantConf, ParticipantSettings, SpaceInfo } from '@/lib/std/
 import { useLocalParticipant } from '@livekit/components-react';
 import { WsBase, WsTo } from '@/lib/std/device';
 import styles from '@/styles/controls.module.scss';
-import { Room } from 'livekit-client';
+import { LocalParticipant, Room } from 'livekit-client';
 import { api } from '@/lib/api';
 import { MessageInstance } from 'antd/es/message/interface';
 import equal from 'fast-deep-equal';
 import { isSpaceManager } from '@/lib/std';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './ai';
+import { Extraction } from '@/lib/ai/analysis';
 
 export interface UseWorkProps {
   spaceInfo: SpaceInfo;
@@ -24,37 +25,41 @@ export interface UseWorkProps {
     conf: AICutParticipantConf,
     reload?: boolean,
   ) => Promise<void>;
-  openAIService: (value: {
-    openAIService: boolean;
-    noteClosed: boolean;
-    hasAsked: boolean;
-  }) => void;
   messageApi: MessageInstance;
   downloadAIMdReport?: () => Promise<void>;
+}
+
+interface AICutConfig {
+  freq: number;
+  spent: boolean;
+  todo: boolean;
+  extraction: Extraction;
+  blur: boolean;
 }
 
 export const useWork = ({
   spaceInfo,
   space,
   startOrStopAICutAnalysis,
-  openAIService,
   messageApi,
   downloadAIMdReport,
 }: UseWorkProps) => {
   const { t } = useI18n();
   const [openModal, setOpenModal] = useState(false);
-  const [enabled, setEnabeled] = useState(false);
+  const [enabled, setEnabled] = useState(false);
   const [isUseAI, setIsUseAI] = useState(true);
   const [isSync, setIsSync] = useState(false);
   const [videoBlur, setVideoBlur] = useState(0.0);
   const [screenBlur, setScreenBlur] = useState(0.0);
+  // 存储上次的 AICutConfig，以便关闭工作模式时使用
+  const [lastAICutConfig, setLastAICutConfig] = useState<AICutConfig | undefined>(undefined);
   // 数据初始化和同步
   useEffect(() => {
     if (space) {
       const { useAI, sync, videoBlur, screenBlur } = spaceInfo.work;
       const isEnabled =
         spaceInfo.participants[space.localParticipant.identity]?.work.enabled || false;
-      setEnabeled(isEnabled);
+      setEnabled(isEnabled);
       setIsUseAI(useAI);
       setIsSync(sync);
       setVideoBlur(videoBlur);
@@ -62,7 +67,7 @@ export const useWork = ({
     }
   }, [space, spaceInfo]);
 
-  const startOrStopWork = async (enabled: boolean) => {
+  const startOrStopWork = async (enabled: boolean, aiCutConfig: AICutConfig) => {
     if (!space) return;
     const startWorkRes = await api.handleWorkMode(
       space.name,
@@ -74,8 +79,8 @@ export const useWork = ({
       return;
     } else {
       const { workType }: { workType: boolean } = await startWorkRes.json();
-      const { spent, todo, extraction, blur, enabled } =
-        spaceInfo.participants[space.localParticipant.identity].ai.cut;
+      const { spent, todo, extraction, blur, freq } = aiCutConfig;
+      const enabled = spaceInfo.participants[space.localParticipant.identity].ai.cut.enabled;
 
       // 成功开启/关闭了工作模式
       if (workType) {
@@ -84,8 +89,8 @@ export const useWork = ({
             // 没开启屏幕共享，但开启了AI，说明出现了问题，提示用户开启屏幕共享
             space?.localParticipant.setScreenShareEnabled(true);
           } else if (!enabled && space.localParticipant.isScreenShareEnabled) {
-            // 没开启AI，但开启了屏幕共享，需要开启AI
-            await startOrStopAICutAnalysis(spaceInfo.ai.cut.freq, {
+            // 没开启AI,但开启了屏幕共享,需要开启AI
+            await startOrStopAICutAnalysis(freq, {
               enabled: true,
               spent,
               todo,
@@ -93,12 +98,14 @@ export const useWork = ({
               blur,
             });
           } else if (!enabled && !space.localParticipant.isScreenShareEnabled) {
-            // 没开启AI，也没开启屏幕共享，需要两个都开启
+            // 没开启AI,也没开启屏幕共享,需要两个都开启
             space?.localParticipant.setScreenShareEnabled(true);
-            openAIService({
-              hasAsked: true,
-              openAIService: true,
-              noteClosed: true,
+            await startOrStopAICutAnalysis(freq, {
+              enabled: true,
+              spent,
+              todo,
+              extraction,
+              blur,
             });
           } else {
             // 开启AI且屏幕共享，或者不开就不用管了
@@ -116,7 +123,7 @@ export const useWork = ({
         space.localParticipant.setScreenShareEnabled(false);
 
         if (isUseAI && enabled) {
-          await startOrStopAICutAnalysis(spaceInfo.ai.cut.freq, {
+          await startOrStopAICutAnalysis(freq, {
             enabled: false,
             spent,
             todo,
@@ -136,9 +143,9 @@ export const useWork = ({
   };
 
   const handleWorkMode = useCallback(
-    async (startWork?: boolean) => {
+    async (aiCutConfig: AICutConfig, startWork?: boolean) => {
       if (!space) return;
-
+      setLastAICutConfig(aiCutConfig);
       let enabledWork = startWork === undefined ? enabled : startWork;
 
       const work = {
@@ -161,8 +168,9 @@ export const useWork = ({
         }
         messageApi.success(t('work.save.success'));
       }
+
       // 处理工作模式的开启和关闭
-      await startOrStopWork(enabledWork);
+      await startOrStopWork(enabledWork, aiCutConfig);
     },
     [
       enabled,
@@ -182,7 +190,7 @@ export const useWork = ({
     openModal,
     setOpenModal,
     enabled,
-    setEnabeled,
+    setEnabled,
     isUseAI,
     setIsUseAI,
     isSync,
@@ -193,6 +201,7 @@ export const useWork = ({
     setScreenBlur,
     handleWorkMode,
     startOrStopWork,
+    lastAICutConfig,
   };
 };
 
@@ -205,43 +214,29 @@ export interface WorkProps {
   setOpenModal: (open: boolean) => void;
   isStartWork: boolean;
   setIsStartWork: (isStartWork: boolean) => void;
-  startOrStopWork: (enabled: boolean) => Promise<void>;
+  startOrStopWork: (enabled: boolean, aiCutConfig: AICutConfig) => Promise<void>;
+  lastAICutConfig?: AICutConfig;
+  localParticipant: LocalParticipant;
 }
 
 export function Work({
   showText = true,
   controlWidth,
   spaceInfo,
-  space,
   startOrStopWork,
   setOpenModal,
   isStartWork,
-  setIsStartWork,
+  lastAICutConfig,
+  localParticipant,
 }: WorkProps) {
   if (!spaceInfo.ai.cut.enabled) {
     return <></>;
   }
 
   const { t } = useI18n();
-  const { localParticipant } = useLocalParticipant();
   const showTextOrHide = useMemo(() => {
     return ViewAdjusts(controlWidth).w960 ? false : showText;
   }, [controlWidth]);
-
-  const participant = useMemo(() => {
-    return spaceInfo.participants[localParticipant.identity];
-  }, [spaceInfo, localParticipant]);
-
-  const wsTo = useMemo(() => {
-    return {
-      space,
-      senderId: localParticipant.identity,
-      senderName: localParticipant?.name ?? participant?.name ?? localParticipant.identity,
-      receiverId: spaceInfo.ownerId,
-      socketId: spaceInfo.participants[spaceInfo.ownerId]?.socketId,
-      senderSocketId: participant?.socketId,
-    } as WsTo;
-  }, [spaceInfo, space]);
 
   return (
     <Button
@@ -260,7 +255,16 @@ export function Work({
         if (isStartWork) {
           // 关闭工作模式
           // setIsStartWork(false);
-          await startOrStopWork(false);
+          await startOrStopWork(
+            false,
+            lastAICutConfig || {
+              freq: spaceInfo.ai.cut.freq,
+              spent: spaceInfo.participants[localParticipant.identity].ai.cut.spent,
+              todo: spaceInfo.participants[localParticipant.identity].ai.cut.todo,
+              extraction: spaceInfo.participants[localParticipant.identity].ai.cut.extraction,
+              blur: spaceInfo.participants[localParticipant.identity].ai.cut.blur,
+            },
+          );
         } else {
           // 打开工作模式设置弹窗
           setOpenModal(true);
@@ -287,7 +291,7 @@ export interface WorkModalProps {
   screenBlur: number;
   setScreenBlur: (value: number) => void;
   spaceInfo: SpaceInfo;
-  handleWorkMode: (start?: boolean) => Promise<void>;
+  handleWorkMode: (aiCutConfig: AICutConfig, start?: boolean) => Promise<void>;
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
 }
 
@@ -335,7 +339,6 @@ export function WorkModal({
 
   const saveAICutSettings = async () => {
     if (!space) return;
-
     if (cutFreq !== spaceInfo.ai.cut.freq) {
       const response = await api.updateSpaceInfo(space.name, {
         ai: {
@@ -381,10 +384,18 @@ export function WorkModal({
     setIsStartWork(true);
 
     try {
-      let _res1 = await saveAICutSettings();
-      setTimeout(async () => {
-        let _res2 = await handleWorkMode(true);
-      }, 1000);
+      await saveAICutSettings();
+      // 传入所有最新的 AI cut 配置参数,避免使用旧的 spaceInfo
+      await handleWorkMode(
+        {
+          freq: cutFreq,
+          spent: aiCutDeps.includes('spent'),
+          todo: aiCutDeps.includes('todo'),
+          extraction: extraction,
+          blur: cutBlur,
+        },
+        true,
+      );
     } catch (error) {
       console.error(error);
     } finally {
