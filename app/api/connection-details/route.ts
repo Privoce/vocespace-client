@@ -89,8 +89,8 @@ const PlatformLogin = async (request: NextRequest, auth: AuthType) => {
   );
 
   // 这里我们就不能去返回了，而是进行重定向到对应的space页面，并携带auth参数，让前端去处理
-  // let base = serverUrl || request.nextUrl.origin;
-  let base = request.nextUrl.origin;
+  let base = serverUrl || request.nextUrl.origin;
+  // let base = request.nextUrl.origin;
   if (typeof base === 'string' && !/^https?:\/\//i.test(base)) {
     base = `https://${base}`;
   }
