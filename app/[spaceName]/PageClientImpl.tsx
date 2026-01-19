@@ -219,7 +219,6 @@ export function PageClientImpl({
       });
       setConnectionDetails(details as ConnectionDetails);
     }
-
     router.replace(`/${spaceName}`);
   }, [data]);
 

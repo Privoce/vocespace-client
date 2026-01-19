@@ -132,6 +132,7 @@ export const usePlatformUserInfo = ({
   onEnterRoom?: () => void;
 }) => {
   const platUser: PlatformUser | null = useMemo(() => {
+    if (!space) return null;
     if (typeof window === 'undefined') return null;
     const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER);
     if (storedUserInfo) {
@@ -140,7 +141,7 @@ export const usePlatformUserInfo = ({
     } else {
       return null;
     }
-  }, [uid]);
+  }, [uid, space]);
 
   const { isAuth, createRoom } = useMemo(() => {
     // 只有platUser是null时或者auth类型不是c_s才会创建房间

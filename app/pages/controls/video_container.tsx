@@ -976,6 +976,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       config,
       controlsRef,
       locale,
+      createRoom,
+      platUser,
+      roomEnter,
     ]);
 
     const selfRoom = useMemo(() => {

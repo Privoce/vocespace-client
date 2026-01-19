@@ -1428,6 +1428,7 @@ export async function POST(request: NextRequest) {
       // 进入子房间的处理 -----------------------------------------------------------------------------
       if (isEnter) {
         const { space, auth, uid, room, identity, username }: EnterRoomBody = await request.json();
+        console.warn(space, auth, uid, room, identity, username);
         // 无需处理
         if (room === '$space') {
           return NextResponse.json({ success: true }, { status: 200 });
