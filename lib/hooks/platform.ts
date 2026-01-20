@@ -143,11 +143,14 @@ export const usePlatformUserInfo = ({
     }
   }, [uid, space]);
 
-  const { isAuth, createRoom } = useMemo(() => {
+  const { isAuth, createRoom, isCustomer, showAI, showSelfPlatform } = useMemo(() => {
     // 只有platUser是null时或者auth类型不是c_s才会创建房间
     return {
       isAuth: platUser !== null && (platUser.auth === 'vocespace' || platUser.auth === 'space'),
       createRoom: !platUser || platUser.auth !== 'c_s',
+      isCustomer: platUser?.auth === 'c_s' && platUser.identity === 'customer',
+      showAI: platUser?.auth !== 'c_s',
+      showSelfPlatform: platUser?.auth === 'vocespace',
     };
   }, [platUser]);
 
@@ -183,11 +186,7 @@ export const usePlatformUserInfo = ({
     }
   }, [platUser, onEnterRoom, space]);
 
-  const isCustomer = useMemo(() => {
-    return platUser?.auth === 'c_s' && platUser.identity === 'customer';
-  }, [platUser]);
-
-  return { platUser, isAuth, createRoom, roomEnter, isCustomer };
+  return { platUser, isAuth, createRoom, roomEnter, isCustomer, showAI, showSelfPlatform };
 };
 
 /**

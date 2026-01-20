@@ -109,6 +109,7 @@ export interface FlotLayoutProps {
     record?: RecordSettings,
     init?: boolean,
   ) => Promise<boolean | undefined>;
+  showAI: boolean;
 }
 
 export interface FlotLayoutExports {
@@ -130,13 +131,13 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
       aiCutAnalysisRes,
       cutInstance,
       updateSettings,
+      showAI,
     }: FlotLayoutProps,
     ref,
   ) => {
     const flotAppItemRef = useRef<FlotAppExports>(null);
     const AICutAnalysisMdTabsRef = useRef<AICutAnalysisMdTabsExports>(null);
     const [containerHeight, setContainerHeight] = useState<number>(0);
-    const [showAICutAnalysis, setShowAICutAnalysis] = useState<boolean>(true);
     const { localParticipant } = useLocalParticipant();
     const [targetParticipant, setTargetParticipant] = useRecoilState(RemoteTargetApp);
     const [fetchData, setFetchData] = useState<boolean>(false);
@@ -157,24 +158,24 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
     } = useMemo(() => {
       if (window.innerWidth <= 728) {
         return {
-          span1: 24,
+          span1: showAI ? 24 : 0,
           span2: 24,
           ty: 'phone',
         };
       } else if (window.innerWidth > 728 && window.innerWidth <= 1024) {
         return {
-          span1: 12,
-          span2: 12,
+          span1: showAI ? 12 : 0,
+          span2: showAI ? 12 : 24,
           ty: 'pad',
         };
       } else {
         return {
-          span1: 16,
-          span2: 8,
+          span1: showAI ? 16 : 0,
+          span2: showAI ? 8 : 24,
           ty: 'desktop',
         };
       }
-    }, [window.innerWidth]);
+    }, [window.innerWidth, showAI]);
 
     const getRemoteAICutAnalysisRes = async (participantId: string) => {
       if (participantId && !isSelf) {
@@ -311,7 +312,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
             setOpenApp(false);
           },
         })}
-        width={1168}
+        width={showAI ? 1168 : 420}
         styles={{
           body: {
             padding: '0 24px',
@@ -320,33 +321,31 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
         }}
       >
         <Row gutter={8} style={{ height: '100%' }}>
-          {layoutType.ty !== 'phone' && (
+          {layoutType.ty !== 'phone' && showAI && (
             <Col span={layoutType.span1}>
-              {showAICutAnalysis && (
-                <AICutAnalysisMdTabs
-                  ref={AICutAnalysisMdTabsRef}
-                  result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
-                  reloadResult={reloadResult}
-                  showSettings={showAICutAnalysisSettings}
-                  setFlotAppOpen={setOpenApp}
-                  spaceInfo={spaceInfo}
-                  startOrStopAICutAnalysis={startOrStopAICutAnalysis}
-                  openAIServiceAskNote={openAIServiceAskNote}
-                  messageApi={messageApi}
-                  isSelf={isSelf}
-                  style={{
-                    height: '100%',
-                    width: '100%',
-                  }}
-                  isAuthed={
-                    spaceInfo.participants[
-                      targetParticipant.participantId || localParticipant.identity
-                    ]?.isAuth
-                  }
-                  cutInstance={cutInstance}
-                  userId={targetParticipant.participantId || localParticipant.identity}
-                ></AICutAnalysisMdTabs>
-              )}
+              <AICutAnalysisMdTabs
+                ref={AICutAnalysisMdTabsRef}
+                result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
+                reloadResult={reloadResult}
+                showSettings={showAICutAnalysisSettings}
+                setFlotAppOpen={setOpenApp}
+                spaceInfo={spaceInfo}
+                startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+                openAIServiceAskNote={openAIServiceAskNote}
+                messageApi={messageApi}
+                isSelf={isSelf}
+                style={{
+                  height: '100%',
+                  width: '100%',
+                }}
+                isAuthed={
+                  spaceInfo.participants[
+                    targetParticipant.participantId || localParticipant.identity
+                  ]?.isAuth
+                }
+                cutInstance={cutInstance}
+                userId={targetParticipant.participantId || localParticipant.identity}
+              ></AICutAnalysisMdTabs>
             </Col>
           )}
           <Col
@@ -368,7 +367,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
               participantId={targetParticipant.participantId || localParticipant.identity}
               isSelf={isSelf}
             />
-            {layoutType.ty === 'phone' && showAICutAnalysis && (
+            {layoutType.ty === 'phone' && showAI && (
               <AICutAnalysisMdTabs
                 result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
                 reloadResult={reloadResult}

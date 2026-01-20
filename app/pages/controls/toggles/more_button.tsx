@@ -60,7 +60,10 @@ export function MoreButtonInner({
 
   const { localParticipant } = useLocalParticipant();
 
-  const { platUser } = usePlatformUserInfo({ space, uid: localParticipant.identity });
+  const { platUser, showSelfPlatform } = usePlatformUserInfo({
+    space,
+    uid: localParticipant.identity,
+  });
 
   const onClickChatMsg = () => {
     if (chat && chat.visible) {
@@ -97,7 +100,7 @@ export function MoreButtonInner({
         key: 'setting',
         icon: <SvgResource type="setting" svgSize={16} />,
       },
-      ...(platUser
+      ...(showSelfPlatform
         ? [
             {
               label: <div>{t('more.platform')}</div>,

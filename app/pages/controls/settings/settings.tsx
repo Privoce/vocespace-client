@@ -34,6 +34,7 @@ export interface SettingsProps {
   localParticipant: LocalParticipant;
   spaceInfo: SpaceInfo;
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
+  showAI: boolean;
 }
 
 export interface SettingsExports {
@@ -66,6 +67,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
       space,
       localParticipant,
       spaceInfo,
+      showAI,
     }: SettingsProps,
     ref,
   ) => {
@@ -86,7 +88,6 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
     const { env, state, isConnected } = useRecordingEnv(messageApi);
     const [recordsData, setRecordsData] = useState<RecordData[]>([]);
     const [firstOpen, setFirstOpen] = useState(true);
-
     const searchRoomRecords = async () => {
       const response = await fetch(`${env?.server_host}/api/s3/${space}`);
       if (response.ok) {
@@ -136,19 +137,23 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
           ></GeneralSettings>
         ),
       },
-      {
-        key: 'ai',
-        label: <TabItem type="ai" svgSize={16} label={t('settings.ai.title')}></TabItem>,
-        children: (
-          <AISettings
-            space={space}
-            messageApi={messageApi}
-            spaceInfo={spaceInfo}
-            localParticipant={localParticipant}
-            updateSettings={updateSettings}
-          ></AISettings>
-        ),
-      },
+      ...(showAI
+        ? [
+            {
+              key: 'ai',
+              label: <TabItem type="ai" svgSize={16} label={t('settings.ai.title')}></TabItem>,
+              children: (
+                <AISettings
+                  space={space}
+                  messageApi={messageApi}
+                  spaceInfo={spaceInfo}
+                  localParticipant={localParticipant}
+                  updateSettings={updateSettings}
+                ></AISettings>
+              ),
+            },
+          ]
+        : []),
       {
         key: 'audio',
         label: <TabItem type="audio" label={t('settings.audio.title')}></TabItem>,

@@ -38,6 +38,7 @@ import { AICutService } from '@/lib/ai/cut';
 import { useWork, Work, WorkModal } from './widgets/work';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/ai';
 import { DEFAULT_WINDOW_ADJUST_WIDTH } from '@/lib/std/window';
+import { usePlatformUserInfo } from '@/lib/hooks/platform';
 
 /** @public */
 export type ControlBarControls = {
@@ -240,6 +241,15 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
 
     // settings ------------------------------------------------------------------------------------------
     const space = useMaybeRoomContext();
+    const { showAI, showSelfPlatform } = usePlatformUserInfo({
+      space,
+      uid: space?.localParticipant?.identity || '',
+      onEnterRoom: () => {
+        socket.emit('update_user_status', {
+          space: space!.name,
+        } as WsBase);
+      },
+    });
     const [key, setKey] = React.useState<TabKey>('general');
     const settingsRef = React.useRef<SettingsExports>(null);
     const [messageApi, contextHolder] = message.useMessage();
@@ -707,7 +717,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                 (isScreenShareEnabled ? t('common.stop_share') : t('common.share_screen'))}
             </TrackToggle>
           )}
-          {space && visibleControls.microphone && spaceInfo.ai.cut.enabled && (
+          {space && visibleControls.microphone && spaceInfo.ai.cut.enabled && showAI && (
             // <Reaction
             //   updateSettings={updateSettings}
             //   space={space.name}
@@ -808,6 +818,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           <div className={styles.setting_container}>
             {space && (
               <Settings
+                showAI={showAI}
                 updateSettings={updateSettings}
                 ref={settingsRef}
                 close={settingVis}
@@ -920,35 +931,37 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           )}
         </Modal>
         {/* -------------------- ai cut modal --------------------------------------------------- */}
-        <Modal
-          open={aiCutModalOpen}
-          title={t('ai.cut.title')}
-          footer={null}
-          okText={aiCutServiceRef.current.isRunning ? t('common.close') : t('common.open')}
-          cancelText={t('common.cancel')}
-          onCancel={saveAICutServiceSettings}
-        >
-          <AICutAnalysisSettingsPanel
-            space={space}
-            spaceInfo={spaceInfo}
-            aiCutDeps={aiCutDeps}
-            setAICutDeps={setAICutDeps}
-            extraction={extraction}
-            setExtraction={setExtraction}
-            cutFreq={cutFreq}
-            setCutFreq={setCutFreq}
-            cutBlur={cutBlur}
-            setCutBlur={setCutBlur}
-            isServiceOpen={isServiceOpen}
-            setIsServiceOpen={setIsServiceOpen}
-            aiCutOptions={aiCutOptions}
-            aiCutOptionsChange={aiCutOptionsChange}
-            isManager={isManager}
-          ></AICutAnalysisSettingsPanel>
-          {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
-        </Modal>
+        {showAI && (
+          <Modal
+            open={aiCutModalOpen}
+            title={t('ai.cut.title')}
+            footer={null}
+            okText={aiCutServiceRef.current.isRunning ? t('common.close') : t('common.open')}
+            cancelText={t('common.cancel')}
+            onCancel={saveAICutServiceSettings}
+          >
+            <AICutAnalysisSettingsPanel
+              space={space}
+              spaceInfo={spaceInfo}
+              aiCutDeps={aiCutDeps}
+              setAICutDeps={setAICutDeps}
+              extraction={extraction}
+              setExtraction={setExtraction}
+              cutFreq={cutFreq}
+              setCutFreq={setCutFreq}
+              cutBlur={cutBlur}
+              setCutBlur={setCutBlur}
+              isServiceOpen={isServiceOpen}
+              setIsServiceOpen={setIsServiceOpen}
+              aiCutOptions={aiCutOptions}
+              aiCutOptionsChange={aiCutOptionsChange}
+              isManager={isManager}
+            ></AICutAnalysisSettingsPanel>
+            {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
+          </Modal>
+        )}
         {/* ------------------ work ----------------------------------------------------- */}
-        {space && (
+        {space && showAI && (
           <WorkModal
             space={space}
             spaceInfo={spaceInfo}

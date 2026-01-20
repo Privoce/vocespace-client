@@ -144,7 +144,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       space?.localParticipant?.identity || '', // 参与者 ID
     );
     const [openApp, setOpenApp] = useState<boolean>(false);
-    const { isAuth, createRoom, platUser, roomEnter, isCustomer } = usePlatformUserInfo({
+    const { isAuth, createRoom, platUser, roomEnter, isCustomer, showAI } = usePlatformUserInfo({
       space,
       uid: space?.localParticipant?.identity || '',
       onEnterRoom: () => {
@@ -1304,6 +1304,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         )}
         {showFlot && space && settings.participants[space.localParticipant.identity] && (
           <FlotLayout
+            showAI={showAI}
             ref={FlotLayoutRef}
             space={space.name}
             messageApi={messageApi}
