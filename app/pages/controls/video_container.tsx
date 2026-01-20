@@ -144,7 +144,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       space?.localParticipant?.identity || '', // 参与者 ID
     );
     const [openApp, setOpenApp] = useState<boolean>(false);
-    const { isAuth, createRoom, platUser, roomEnter } = usePlatformUserInfo({
+    const { isAuth, createRoom, platUser, roomEnter, isCustomer } = usePlatformUserInfo({
       space,
       uid: space?.localParticipant?.identity || '',
       onEnterRoom: () => {
@@ -976,9 +976,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       config,
       controlsRef,
       locale,
-      createRoom,
       platUser,
-      roomEnter,
     ]);
 
     const selfRoom = useMemo(() => {
@@ -1274,6 +1272,16 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       }
     };
 
+    const mainViewWidth = useMemo(() => {
+      return isCustomer
+        ? '100vw'
+        : collapsed
+          ? isActive
+            ? 'calc(100vw - 28px)'
+            : '100vw'
+          : 'calc(100vw - 280px)';
+    }, [collapsed, isCustomer, isActive]);
+
     useImperativeHandle(ref, () => ({
       clearRoom: () => clearRoom(),
     }));
@@ -1312,7 +1320,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           ></FlotLayout>
         )}
         {/* 左侧侧边栏 */}
-        {space && (
+        {space && !isCustomer && (
           <Channel
             ref={channelRef}
             config={config}
@@ -1340,7 +1348,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           style={{
             height: '100vh',
             transition: 'width 0.3s ease-in-out',
-            width: collapsed ? (isActive ? 'calc(100vw - 28px)' : '100vw') : 'calc(100vw - 280px)',
+            width: mainViewWidth,
           }}
         >
           {space && (

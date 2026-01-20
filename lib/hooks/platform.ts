@@ -182,7 +182,12 @@ export const usePlatformUserInfo = ({
       console.error('Failed to enter room:', error);
     }
   }, [platUser, onEnterRoom, space]);
-  return { platUser, isAuth, createRoom, roomEnter };
+
+  const isCustomer = useMemo(() => {
+    return platUser?.auth === 'c_s' && platUser.identity === 'customer';
+  }, [platUser]);
+
+  return { platUser, isAuth, createRoom, roomEnter, isCustomer };
 };
 
 /**
