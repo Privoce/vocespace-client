@@ -27,6 +27,7 @@ import { ParticipantSettings, SpaceDateRecords, SpaceInfo, SpaceInfoMap } from '
 import { useI18n } from '@/lib/i18n/i18n';
 import { LangSelect } from '../pages/controls/selects/lang_select';
 import { UserStatus } from '@/lib/std';
+import { usePlatformUserInfoCheap } from '@/lib/hooks/platform';
 
 const { Title } = Typography;
 
@@ -151,7 +152,7 @@ export default function Dashboard() {
                   virtualEnabled: participant.virtual?.enabled || false,
                   during: countDuring(participant.startAt),
                   online: participant.online,
-                  isAuth: participant.isAuth,
+                  isAuth: usePlatformUserInfoCheap({ user: participant }).isAuth,
                 });
               },
             );

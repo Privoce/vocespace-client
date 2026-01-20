@@ -86,7 +86,7 @@ import {
   PlatformTodos,
 } from '@/lib/api/platform';
 import { useFullScreenBtn } from './widgets/full_screen';
-import { usePlatformUserInfo } from '@/lib/hooks/platform';
+import { usePlatformUserInfo, usePlatformUserInfoCheap } from '@/lib/hooks/platform';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -179,7 +179,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       const response = await api.ai.getAnalysisRes(
         space!.name,
         space!.localParticipant.identity,
-        settings.participants[space?.localParticipant.identity!]?.isAuth || false,
+        usePlatformUserInfoCheap({ user: settings.participants[space?.localParticipant.identity!] })
+          .isAuth,
       );
       if (response.ok) {
         const { res }: { res: AICutAnalysisRes } = await response.json();
@@ -230,7 +231,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   freq: freq,
                   lang: locale,
                   extraction: conf.extraction,
-                  isAuth: uState.isAuth,
+                  isAuth: usePlatformUserInfoCheap({ user: uState }).isAuth,
                   blur: conf.blur,
                 });
 
@@ -418,8 +419,12 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             startAt: new Date().getTime(),
             online: true,
             ...(todos ? { appDatas: { ...uState.appDatas, todo: todos } } : uState.appDatas),
-            isAuth,
-            platform: platUser?.auth,
+            auth: platUser
+              ? {
+                  platform: platUser.auth,
+                  identity: platUser.identity,
+                }
+              : undefined,
           },
           undefined,
           true,

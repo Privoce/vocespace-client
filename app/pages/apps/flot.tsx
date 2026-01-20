@@ -50,6 +50,7 @@ import {
   PlatformTodos,
 } from '@/lib/api/platform';
 import { SvgResource } from '@/app/resources/svg';
+import { usePlatformUserInfoCheap } from '@/lib/hooks/platform';
 
 export interface FlotButtonProps {
   style?: React.CSSProperties;
@@ -182,7 +183,9 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
         // 发起请求获取结果
         if (
           targetParticipant.participantId &&
-          spaceInfo.participants[targetParticipant.participantId]?.isAuth
+          usePlatformUserInfoCheap({
+            user: spaceInfo.participants[targetParticipant.participantId],
+          }).isAuth
         ) {
           // 如果是认证用户则从平台获取
           const aiResponse = await platformAPI.ai.getAIAnalysis(
@@ -197,7 +200,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
           const response = await api.ai.getAnalysisRes(
             space,
             participantId,
-            spaceInfo.participants[participantId].isAuth,
+            usePlatformUserInfoCheap({ user: spaceInfo.participants[participantId] }).isAuth,
           );
           if (response.ok) {
             const { res }: { res: AICutAnalysisRes } = await response.json();
@@ -212,7 +215,8 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
       if (
         !isSelf &&
         targetParticipant.participantId &&
-        spaceInfo.participants[targetParticipant.participantId].isAuth
+        usePlatformUserInfoCheap({ user: spaceInfo.participants[targetParticipant.participantId] })
+          .isAuth
       ) {
         // console.warn('Fetching remote AI Cut Analysis Result for', targetParticipant.participantId);
         getRemoteAICutAnalysisRes(targetParticipant.participantId).then((res) => {
@@ -223,7 +227,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
 
     const toPersonalPlatform = () => {
       let id = targetParticipant.participantId || localParticipant.identity;
-      if (spaceInfo.participants[id]?.isAuth) {
+      if (usePlatformUserInfoCheap({ user: spaceInfo.participants[id] }).isAuth) {
         let url = `https://home.vocespace.com/ai/${id}`;
         window.open(url, '_blank');
       }
@@ -261,7 +265,8 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
     useEffect(() => {
       if (
         targetParticipant.participantId &&
-        spaceInfo.participants[targetParticipant.participantId]?.isAuth &&
+        usePlatformUserInfoCheap({ user: spaceInfo.participants[targetParticipant.participantId] })
+          .isAuth &&
         fetchData
       ) {
         fetchTodo(targetParticipant.participantId).then(() => {
@@ -289,8 +294,11 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
           <DrawerHeader
             title={'Widgets'}
             icon={
-              spaceInfo.participants[targetParticipant.participantId || localParticipant.identity]
-                ?.isAuth ? (
+              usePlatformUserInfoCheap({
+                user: spaceInfo.participants[
+                  targetParticipant.participantId || localParticipant.identity
+                ],
+              }).isAuth ? (
                 <span
                   style={{
                     cursor: 'pointer',
@@ -339,9 +347,11 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
                   width: '100%',
                 }}
                 isAuthed={
-                  spaceInfo.participants[
-                    targetParticipant.participantId || localParticipant.identity
-                  ]?.isAuth
+                  usePlatformUserInfoCheap({
+                    user: spaceInfo.participants[
+                      targetParticipant.participantId || localParticipant.identity
+                    ],
+                  }).isAuth
                 }
                 cutInstance={cutInstance}
                 userId={targetParticipant.participantId || localParticipant.identity}
@@ -383,9 +393,11 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
                   width: '100%',
                 }}
                 isAuthed={
-                  spaceInfo.participants[
-                    targetParticipant.participantId || localParticipant.identity
-                  ]?.isAuth
+                  usePlatformUserInfoCheap({
+                    user: spaceInfo.participants[
+                      targetParticipant.participantId || localParticipant.identity
+                    ],
+                  }).isAuth
                 }
                 cutInstance={cutInstance}
                 userId={targetParticipant.participantId || localParticipant.identity}
@@ -489,7 +501,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
         participantId,
         key,
         data,
-        spaceInfo.participants[participantId]?.isAuth,
+        usePlatformUserInfoCheap({ user: spaceInfo.participants[participantId] }).isAuth,
       );
       if (response.ok) {
         socket.emit('update_user_status', {
@@ -639,7 +651,9 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
             <AppTodo
               space={space}
               participantId={participantId}
-              isAuth={spaceInfo.participants[participantId]?.isAuth || false}
+              isAuth={
+                usePlatformUserInfoCheap({ user: spaceInfo.participants[participantId] }).isAuth
+              }
               messageApi={messageApi}
               appData={todo.data}
               setAppData={todo.setData}
@@ -757,15 +771,15 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
         let castedTimer = castTimer(participant.appDatas.timer);
         let castedCountdown = castCountdown(participant.appDatas.countdown);
         let castedTodo = sortTodos(participant.appDatas.todo || []);
-        let auth = participant.auth;
+        let appAuth = participant.appAuth;
         if (castedTimer) {
           timer = {
             data: castedTimer,
             setData: async (data) => {
               // update the timer data
-              await setRemoteTimerData(auth, participantId, data);
+              await setRemoteTimerData(appAuth, participantId, data);
             },
-            auth,
+            auth: appAuth,
           };
         }
         if (castedCountdown) {
@@ -774,7 +788,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
             setData: async (data) => {
               // update the countdown data
             },
-            auth,
+            auth: appAuth,
           };
         }
         todo = {
@@ -783,7 +797,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
             // update the todo data
             console.warn(data);
           },
-          auth,
+          auth: appAuth,
         };
       }
       const items = createItems(participantId, timer, countdown, todo, isSelf);

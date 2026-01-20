@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { TokenResult, IdentityType, RoomType } from '../std';
+import { ParticipantSettings } from '../std/space';
 
 export const SECRET_KEY = 'vocespace_secret_privoce';
 
@@ -62,3 +63,18 @@ export default {
   parseToken,
   generateToken,
 };
+
+/**
+ * 服务端处理平台用户信息的 Hook
+ */
+export const usePlatformUserInfoServer = ({user}: {user: ParticipantSettings}) => {
+  const {auth} = user;
+
+  const isAuth = auth ? (auth.platform === "vocespace"|| auth.platform === 'space') : false;
+  const createRoom = auth ? !(auth.platform === 'c_s') : true;
+
+  return {
+    isAuth,
+    createRoom,
+  };
+}

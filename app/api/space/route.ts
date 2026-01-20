@@ -48,6 +48,7 @@ import {
 } from '@/lib/api/channel';
 import { getConfig } from '../conf/conf';
 import { platformAPI } from '@/lib/api/platform';
+import { usePlatformUserInfoServer } from '@/lib/hooks/platformToken';
 
 const { LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL } = process.env;
 
@@ -666,8 +667,10 @@ class SpaceManager {
       // 房间不存在说明是第一次创建
       let startAt = Date.now();
       if (!spaceInfo) {
+        const { createRoom } = usePlatformUserInfoServer({ user: pData });
+
         spaceInfo = {
-          ...DEFAULT_SPACE_INFO(startAt, pData.platform ? pData.platform !== 'c_s' : true),
+          ...DEFAULT_SPACE_INFO(startAt, createRoom),
           ownerId: participantId,
         };
         // 这里还需要设置到房间的使用记录中
@@ -691,11 +694,12 @@ class SpaceManager {
           );
         } else {
           if (init) {
+            const { isAuth } = usePlatformUserInfoServer({ user: pData });
             // 这里说明房间存在而且且用户也存在，说明用户可能是重连或房间是持久化的，我们无需大范围数据更新，只需要更新
             // 用户的最基础设置即可
             // 由于todo数据连接了平台端数据，所以这里需要更改为平台端的todo数据，但只有在isAuth为true时才更新
             let appDatas = participant.appDatas;
-            if (pData.isAuth) {
+            if (isAuth) {
               appDatas = {
                 ...appDatas,
                 todo: pData.appDatas.todo,
@@ -713,7 +717,7 @@ class SpaceManager {
               startAt: participant.startAt,
               online: true,
               appDatas,
-              isAuth: pData.isAuth,
+              auth: pData.auth,
             };
             return await this.setSpaceInfo(room, spaceInfo);
           }
@@ -1271,7 +1275,7 @@ export async function POST(request: NextRequest) {
       if (!spaceInfo) {
         return NextResponse.json({ error: 'Space not found' }, { status: 404 });
       }
-      spaceInfo.participants[participantId].auth = appAuth;
+      spaceInfo.participants[participantId].appAuth = appAuth;
       const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
       if (!success) {
         return NextResponse.json({ error: 'Failed to update app auth' }, { status: 500 });
@@ -1536,6 +1540,11 @@ export async function POST(request: NextRequest) {
           }
         } else {
           // 非c_s模式下，直接加入指定房间，如果不存在就创建，有就直接加入
+          if (!room) {
+            // 没有指定room字段的情况，在其他模式下无需加入任何room
+            return NextResponse.json({ success: true }, { status: 200 });
+          }
+
           const existingRoom = spaceInfo.children.find((child) => child.name === room);
           if (existingRoom) {
             // 房间存在，加入房间，无论是否私人房间都可以加入

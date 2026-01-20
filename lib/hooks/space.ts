@@ -123,3 +123,4 @@ export function useSpaceInfo(spaceName: string, participantId: string) {
     updateRecord,
   };
 }
+

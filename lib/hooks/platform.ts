@@ -6,7 +6,7 @@
 'use client';
 
 import { useCallback, useMemo, useState } from 'react';
-import { VOCESPACE_PLATFORM_USER } from '../std/space';
+import { ParticipantSettings, VOCESPACE_PLATFORM_USER } from '../std/space';
 import { AuthType, TokenResult, SearchParams, PlatformUser, verifyPlatformUser } from '../std';
 import equal from 'fast-deep-equal';
 import { ConnectionDetails } from '../types';
@@ -26,6 +26,10 @@ export interface UsePlatformUserProps {
  */
 export { parseToken, generateToken } from './platformToken';
 
+/**
+ * 用于在客户端中处理来自平台并存储在localStorage中的用户信息的hook
+ * 目的是在进入空间前就处理好平台用户信息，避免在空间内再进行处理
+ */
 export function usePlatformUser({ searchParams, messageApi }: UsePlatformUserProps) {
   const { t } = useI18n();
   const [platformUser, setPlatformUser] = useState<PlatformUser | undefined>(undefined);
@@ -119,7 +123,8 @@ export function usePlatformUser({ searchParams, messageApi }: UsePlatformUserPro
 }
 
 /**
- * 这个hook只需要从localStorage中获取平台用户信息
+ * 这个hook只需要从localStorage中获取平台用户信息来处理数据
+ * 常用在需要根据平台用户信息来决定一些UI显示与否的场景，这是一个纯客户端hook
  * @param param0
  */
 export const usePlatformUserInfo = ({
@@ -203,4 +208,20 @@ export const isCreateRoom = (): boolean => {
     return parsedInfo.auth !== 'c_s';
   }
   return true;
+};
+
+/**
+ * 一种简单快捷的方式处理用户数据，直接返回需要的信息，不使用任何react hook
+ * 适合需要简单处理的场景
+ */
+export const usePlatformUserInfoCheap = ({ user }: { user: ParticipantSettings }) => {
+  const { auth } = user;
+
+  const isAuth = auth ? auth.platform === 'vocespace' || auth.platform === 'space' : false;
+  const createRoom = auth ? !(auth.platform === 'c_s') : true;
+
+  return {
+    isAuth,
+    createRoom,
+  };
 };

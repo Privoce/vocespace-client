@@ -200,7 +200,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       showFlotApp(
         trackReference.participant.identity,
         trackReference.participant.name,
-        currentParticipant.auth!,
+        currentParticipant.appAuth!,
       );
     };
 

@@ -1,4 +1,4 @@
-import { AuthType, UserStatus } from '.';
+import { AuthType, IdentityType, UserStatus } from '.';
 import { ModelBg, ModelRole } from './virtual';
 import { Extraction } from '../ai/analysis';
 import dayjs, { Dayjs } from 'dayjs';
@@ -78,6 +78,17 @@ export const DEFAULT_PARTICIPANT_WORK_CONF: ParticipantWorkConf = {
   screenBlur: 0.0,
 };
 
+export interface AuthPlatform {
+  /**
+   * 认证的身份类型
+   */
+  identity?: IdentityType;
+  /**
+   * 来自平台类型，普遍认为other表示访客用户
+   */
+  platform: AuthType;
+}
+
 /**
  * Participant settings in Space
  */
@@ -134,7 +145,7 @@ export interface ParticipantSettings {
   /**
    * 用户应用权限
    */
-  auth: AppAuth;
+  appAuth: AppAuth;
   /**
    * 用户应用数据
    */
@@ -170,14 +181,9 @@ export interface ParticipantSettings {
    */
   online: boolean;
   /**
-   * 来自哪个平台
+   * 认证数据
    */
-  platform?: AuthType;
-  /**
-   * 是否认证通过
-   * - 只有来自 Vocespace 平台的用户我们才会认为是认证用户，其他平台的用户一律视为未认证用户
-   */
-  isAuth: boolean;
+  auth?: AuthPlatform;
   /**
    * 是否开启了工作模式
    */
@@ -524,7 +530,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number, createRoom: boolean): SpaceI
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
-  version: '0.5.1',
+  version: '0.5.2',
   name: '',
   volume: 100,
   blur: 0.0,
@@ -540,7 +546,7 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   openPromptSound: true,
   openShareAudio: true,
   sync: ['todo'], // 默认同步待办事项
-  auth: 'read',
+  appAuth: 'read',
   appDatas: {},
   raiseHand: false,
   ai: {
@@ -553,7 +559,10 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
     },
   },
   online: true,
-  isAuth: false,
+  auth: {
+    platform: 'other',
+    identity: 'participant',
+  },
   work: DEFAULT_PARTICIPANT_WORK_CONF,
 };
 

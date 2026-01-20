@@ -6,6 +6,7 @@ import { MessageInstance } from 'antd/es/message/interface';
 import { useMemo } from 'react';
 import styles from '@/styles/apps.module.scss';
 import { SvgResource } from '@/app/resources/svg';
+import { usePlatformUserInfoCheap } from '@/lib/hooks/platform';
 
 export interface TodoTogetherProps {
   spaceInfo: SpaceInfo;
@@ -48,7 +49,7 @@ export function TodoTogether({ spaceInfo, messageApi, space }: TodoTogetherProps
           totalCount: todoData.length,
           firstTodoTitle: firstTodo?.title,
           todos: participant.appDatas?.todo || [],
-          isAuth: participant.isAuth,
+          isAuth: usePlatformUserInfoCheap({ user: participant }).isAuth,
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name)); // 按名字排序

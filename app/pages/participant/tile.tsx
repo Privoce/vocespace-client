@@ -596,7 +596,7 @@ export const ParticipantItem: (
       showFlotApp(
         trackReference.participant.identity,
         trackReference.participant.name,
-        currentParticipant.auth,
+        currentParticipant.appAuth,
       );
     };
 
