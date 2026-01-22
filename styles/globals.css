@@ -5,8 +5,9 @@
 }
 
 html {
-  color-scheme: dark;
-  background-color: #111;
+  color-scheme: light;
+  background-color: #fff;
+  color: #000;
 }
 
 html,
@@ -47,6 +48,11 @@ h2 a {
   text-decoration: none;
 }
 
+label, p{
+  color: #000;
+}
+
+
 /* basic style for <a> link */
 .basic_link {
   color: #22ccee;
@@ -77,7 +83,8 @@ h2 a {
   font-size: 1.25rem;
   line-height: 144%;
   text-align: center;
-  color: rgba(255, 255, 255, 0.6);
+  color: #000;
+  /* color: rgba(255, 255, 255, 0.6); */
 }
 
 .ant-switch:hover:not(.ant-switch-disabled) {
@@ -112,13 +119,13 @@ h2 a {
 }
 
 :where(.css-dev-only-do-not-override-fx2ox2).ant-dropdown .ant-dropdown-menu {
-  background-color: #1e1e1e;
+  background-color: #F59346;
   color: #fff;
 }
 
 .controls_audio_toggle {
   .ant-select-selector {
-    background-color: #1e1e1e;
+    background-color: #F59346;
     color: #fff;
   }
 }
@@ -128,11 +135,11 @@ h2 a {
 }
 
 .lk-media-device-select [data-lk-active='true'] > .lk-button {
-  background-color: #22ccee !important;
+  background-color: #F59346 !important;
 }
 
 .lk-button[data-lk-source='screen_share'][data-lk-enabled='true'] {
-  background-color: #22ccee !important;
+  background-color: #F59346 !important;
 }
 
 .lk-disconnect-button {
@@ -158,7 +165,7 @@ h2 a {
 }
 
 .vocespace_button {
-  background-color: #333;
+  background-color: #F59346;
   border: none;
   display: inline-flex;
   gap: 6px;
@@ -185,12 +192,12 @@ h2 a {
 }
 
 .vocespace_button_text:hover {
-  background-color: #22ccee;
+  background-color: #F59346;
   color: #fff;
 }
 
 .vocespace_button:hover {
-  background-color: #22ccee;
+  background-color: #F59346;
   color: #fff;
 }
 
@@ -212,7 +219,7 @@ h2 a {
   .ant-picker-time-panel-column
   > li.ant-picker-time-panel-cell-selected
   .ant-picker-time-panel-cell-inner {
-  background-color: #22ccee !important;
+  background-color: #F59346 !important;
 }
 
 .ant-upload-drag-container {
@@ -230,25 +237,41 @@ h2 a {
 
 :where(.css-dev-only-do-not-override-afko2).ant-select-outlined:not(.ant-select-customize-input)
   .ant-select-selector {
-  border: 1px solid #8c8c8c !important;
+  border: 1px solid #f2aa73!important;
 }
 
 :where(.css-dev-only-do-not-override-afko2).ant-select-outlined:not(.ant-select-customize-input)
   .ant-select-selector:hover {
-  border: 1px solid #22ccee !important;
+  border: 1px solid #F59346 !important;
 }
 
 :where(.css-dev-only-do-not-override-afko2).ant-select-outlined:not(.ant-select-customize-input)
   .ant-select-selector:focus {
-  border: 1px solid #22ccee !important;
+  border: 1px solid #F59346 !important;
 }
 
 :where(.css-dev-only-do-not-override-afko2).ant-select-outlined:not(.ant-select-customize-input)
   .ant-select-selector:active {
-  border: 1px solid #22ccee !important;
+  border: 1px solid #F59346 !important;
 }
 
 .vocespace_full_size {
   width: 100%;
   height: 100%;
+}
+
+.ant-slider .ant-slider-rail {
+  background-color: #f2aa73 !important;
+}
+
+.lk-button-group-menu > .lk-button-menu {
+  background-color: #f2aa73 !important;
+}
+
+.lk-button-group > .lk-button:first-child {
+  background-color: #F59346 !important;
+}
+
+.lk-video-conference-inner {
+  background-color: #fff;
 }

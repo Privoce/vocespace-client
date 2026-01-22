@@ -25,7 +25,7 @@ export function SettingToggle({ enabled, onClicked, showText = true }: TogglePro
           color="default"
           size="large"
           onClick={on_clicked}
-          style={{ backgroundColor: '#1E1E1E', height: '44px', borderRadius: '8px' }}
+          style={{ backgroundColor: '#F59346', height: '44px', borderRadius: '8px' }}
         >
           <SvgResource type="setting" svgSize={16}></SvgResource>
           {t('common.setting')}
@@ -36,7 +36,7 @@ export function SettingToggle({ enabled, onClicked, showText = true }: TogglePro
           color="default"
           size="large"
           onClick={on_clicked}
-          style={{ backgroundColor: '#1E1E1E', height: '38px', borderRadius: '8px' }}
+          style={{ backgroundColor: '#F59346', height: '38px', borderRadius: '8px' }}
         >
           <SvgResource type="setting" svgSize={16}></SvgResource>
         </Button>

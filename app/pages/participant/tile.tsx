@@ -42,6 +42,7 @@ import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { Tooltip } from 'antd';
 import { FullScreenBtnProps } from '../controls/widgets/full_screen';
+import { ParticipantPlaceholder2 } from './placeholder';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps, FullScreenBtnProps {
   toSettings?: (isDefineStatus?: boolean) => void;
@@ -215,8 +216,8 @@ export const ParticipantItem: (
               }}
             >
               {deleyMask && (
-                <div className="lk-participant-placeholder" style={{ opacity: 1, zIndex: 1000 }}>
-                  <ParticipantPlaceholder />
+                <div className="lk-participant-placeholder" style={{ opacity: 1, zIndex: 1000,  backgroundColor: "#eaeaea"  }}>
+                  <ParticipantPlaceholder2 />
                 </div>
               )}
               {isLocal && uState.virtual.enabled && !virtualMask && (
@@ -620,8 +621,8 @@ export const ParticipantItem: (
         children={
           <ParticipantTile ref={ref} trackRef={trackReference}>
             {deviceTrack}
-            <div className="lk-participant-placeholder">
-              <ParticipantPlaceholder />
+            <div className="lk-participant-placeholder" style={{backgroundColor: "#eaeaea"}}>
+              <ParticipantPlaceholder2 />
             </div>
             <div
               className="lk-participant-metadata"

@@ -121,14 +121,14 @@ export function MeetingTab({ hq, setHq }: MeetingTabProps) {
         {t('common.start_metting')}
       </Button>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
+        {/* <div style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
           <Checkbox
             id="use-e2ee"
             checked={e2ee}
             onChange={(ev) => setE2ee(ev.target.checked)}
           ></Checkbox>
           <label htmlFor="use-e2ee">{t('msg.info.enabled_e2ee')}</label>
-        </div>
+        </div> */}
         {/* {e2ee && (
           <div
             style={{
@@ -150,13 +150,13 @@ export function MeetingTab({ hq, setHq }: MeetingTabProps) {
             />
           </div>
         )} */}
-        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
+        {/* <div style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
           <Checkbox id="use-hq" checked={hq} onChange={(ev) => setHq(ev.target.checked)}></Checkbox>
 
           <Tooltip title={t('common.high_quality_desc')} placement="right">
             <label htmlFor="use-hq">{t('common.high_quality')}</label>
           </Tooltip>
-        </div>
+        </div> */}
       </div>
     </div>
   );

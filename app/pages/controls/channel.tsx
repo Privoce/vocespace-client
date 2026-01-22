@@ -547,7 +547,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
 
     const panelStyle: React.CSSProperties = {
       marginBottom: 0,
-      background: '#1e1e1e',
+      background: '#eaeaea',
       borderRadius: 0,
       border: 'none',
       padding: '0px',
@@ -555,7 +555,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
 
     const subStyle: React.CSSProperties = {
       marginBottom: 0,
-      background: selected == 'sub' ? '#2a2a2a' : '#1e1e1e',
+      background: selected == 'sub' ? '#f67f22' : '#eaeaea',
       borderRadius: 0,
       border: 'none',
     };
@@ -840,7 +840,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
               defaultActiveKey={subActiveKey}
               activeKey={subActiveKey}
               expandIcon={() => undefined}
-              style={{ background: token.colorBgContainer }}
+              style={{ background: '#eaeaea' }}
               items={subChildren}
             />
           ),
@@ -1016,7 +1016,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                 onClick={toggleCollapse}
                 icon={<MenuUnfoldOutlined />}
                 style={{
-                  backgroundColor: '#1a1a1a',
+                  backgroundColor: '#f67f22',
                   height: '100%',
                   display: 'flex',
                   alignItems: 'flex-start',
@@ -1030,7 +1030,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             placement="left"
             styles={{
               header: {
-                backgroundColor: '#1e1e1e',
+                backgroundColor: '#eaeaea',
               },
               body: {
                 padding: '0 24px',
@@ -1039,7 +1039,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                 justifyContent: 'space-between',
                 flexWrap: 'wrap',
                 overflow: 'hidden',
-                backgroundColor: '#1e1e1e',
+                backgroundColor: '#eaeaea',
               },
             }}
             width={'100%'}
@@ -1069,7 +1069,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                   defaultActiveKey={['main', 'sub']}
                   activeKey={mainActiveKey}
                   expandIcon={() => undefined}
-                  style={{ background: token.colorBgContainer }}
+                  style={{ background: '#eaeaea' }}
                   items={mainItems}
                 />
               </div>
@@ -1092,7 +1092,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
               onClick={toggleCollapse}
               icon={<MenuUnfoldOutlined />}
               style={{
-                backgroundColor: '#1a1a1a',
+                backgroundColor: '#f67f22',
                 height: '100%',
                 display: 'flex',
                 alignItems: 'flex-start',
@@ -1111,19 +1111,19 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                 <div className={styles.roomInfo}>
                   {/* <SvgResource.Hash className={styles.roomIcon} /> */}
                   <span className={styles.roomName}>{space.name}</span>
-                  <Tooltip title={t('common.create_own_space')} placement="right">
+                  {/* <Tooltip title={t('common.create_own_space')} placement="right">
                     <Button
                       size="small"
                       type="text"
                       icon={<PlusCircleOutlined></PlusCircleOutlined>}
                       onClick={createOwnSpace}
                     ></Button>
-                  </Tooltip>
+                  </Tooltip> */}
                 </div>
                 <div className={styles.headerActions}>
-                  <Tag color="#22CCEE">
+                  {/* <Tag color="#22CCEE">
                     {allParticipants.length} {t('channel.menu.active')}
-                  </Tag>
+                  </Tag> */}
                   <Button
                     className={styles.collapseButton}
                     onClick={toggleCollapse}
@@ -1141,7 +1141,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                   defaultActiveKey={['main', 'sub']}
                   activeKey={mainActiveKey}
                   expandIcon={() => undefined}
-                  style={{ background: token.colorBgContainer }}
+                  style={{ background: '#eaeaea' }}
                   items={mainItems}
                 />
               </div>

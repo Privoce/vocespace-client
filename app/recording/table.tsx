@@ -320,7 +320,7 @@ export function RecordingTable({
                   styles={{
                     label: {
                       color: '#8c8c8c',
-                      backgroundColor: '#1a1a1a',
+                      backgroundColor: '#f67f22',
                     },
                   }}
                 >

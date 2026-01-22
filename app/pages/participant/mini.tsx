@@ -31,6 +31,7 @@ import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { Tooltip } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
 import { FullScreenBtnProps } from '../controls/widgets/full_screen';
+import { ParticipantPlaceholder2 } from './placeholder';
 
 export interface ParticipantTileMiniProps extends ParticipantTileProps, FullScreenBtnProps {
   settings: SpaceInfo;
@@ -248,9 +249,9 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
             )}
             <div
               className="lk-participant-placeholder"
-              style={{ border: '1px solid #111', zIndex: 110 }}
+              style={{ border: '1px solid #8f8f8f', zIndex: 110, backgroundColor: "#eaeaea" }}
             >
-              <ParticipantPlaceholder />
+              <ParticipantPlaceholder2 />
             </div>
             <div
               className="lk-participant-metadata"

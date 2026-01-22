@@ -74,7 +74,7 @@ export function Reaction({
       <Button
         size="large"
         style={{
-          backgroundColor: '#1E1E1E',
+          backgroundColor: '#F59346',
           height: '46px',
           borderRadius: '8px',
           border: 'none',

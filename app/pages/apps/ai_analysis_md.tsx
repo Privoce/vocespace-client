@@ -215,7 +215,7 @@ export const AICutAnalysisMdTabs = forwardRef<AICutAnalysisMdTabsExports, AICutA
         style={{
           ...style,
           marginBottom: 8,
-          backgroundColor: '#1e1e1e',
+          backgroundColor: '#F59346',
           minHeight: '420px',
           maxHeight: 'calc(100vh - 60px)',
         }}

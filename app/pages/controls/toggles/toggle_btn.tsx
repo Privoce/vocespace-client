@@ -16,13 +16,13 @@ export const ToggleBtn = ({ svgType, svgSize = 18, label, onClick }: ToggleBtnPr
       size="large"
       onClick={onClick}
       style={{
-        backgroundColor: '#1E1E1E',
+        backgroundColor: '#F59346',
         height: '46px',
         borderRadius: '8px',
         fontSize: '16px',
       }}
     >
-      <SvgResource type={svgType} svgSize={svgSize}></SvgResource>
+      <SvgResource type={svgType} svgSize={svgSize} color='#fff'></SvgResource>
       {label && label}
     </Button>
   );

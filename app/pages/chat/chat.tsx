@@ -541,7 +541,7 @@ function ChatMsgItemCmp({ isLocal, msg, downloadFile, isImg }: ChatMsgItemProps)
           ) : (
             <Popover
               placement="right"
-              style={{ background: '#1E1E1E' }}
+              style={{ background: '#F59346' }}
               content={
                 <Button shape="circle" type="text" onClick={() => downloadFile(msg?.file?.url)}>
                   <SvgResource type="download" svgSize={16} color="#22CCEE"></SvgResource>

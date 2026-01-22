@@ -11,7 +11,7 @@ export function DrawerHeader({ title, icon }: { title: string, icon?: React.Reac
 }
 
 export const DEFAULT_DRAWER_PROP: DrawerProps = {
-  style: { backgroundColor: '#111', padding: 0, margin: 0, color: '#fff' },
+  style: { backgroundColor: '#fff', padding: 0, margin: 0, color: '#000' },
   placement: 'right',
   closable: false,
   width: '640px',
@@ -36,7 +36,7 @@ export const DrawerCloser = ({
   return (
     <div>
       <Button type="text" shape="circle" onClick={on_clicked}>
-        <SvgResource type="close" color="#fff" svgSize={16}></SvgResource>
+        <SvgResource type="close" color="#000" svgSize={16}></SvgResource>
       </Button>
     </div>
   );

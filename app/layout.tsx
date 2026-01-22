@@ -31,7 +31,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: '#101828',
+  themeColor: '#F59346',
 };
 
 const neutral = {
@@ -49,10 +49,10 @@ const neutral = {
 };
 
 const brand = {
-  primary: '#06AED4',
-  primaryHover: '#22CCEE',
-  primaryActive: '#22CCEE',
-  primaryText: '#aaa',
+  primary: '#F59346',
+  primaryHover: '#F5B05F',
+  primaryActive: '#F5B05F',
+  primaryText: '#000',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -60,102 +60,110 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ConfigProvider
       theme={{
         token: {
-          colorPrimary: '#22CCEE',
+          colorPrimary: '#F5B05F',
           borderRadius: 4,
-          colorText: brand.primaryText,
+          colorText: "#000000",
           colorTextDisabled: '#333',
         },
         components: {
           Button: {
-            defaultColor: '#8c8c8c',
+            defaultColor: '#F59346',
           },
           Dropdown: {
-            colorBgElevated: '#1E1E1E',
-            controlItemBgHover: '#333',
+            colorBgElevated: '#fff',
+            controlItemBgHover: '#F5B05F',
             colorTextDisabled: '#8c8c8c',
             colorTextDescription: '#8c8c8c',
-            colorText: '#fff',
+            colorText: '#000',
           },
           Spin: {
             dotSize: 32,
+            colorBgContainer: "#fff",
+            colorFillSecondary: "#fff",
+            colorBgBase: "#fff",
+            colorBgMask: "#fff"
           },
           Radio: {
-            buttonBg: '#2E2E2E',
-            colorBorder: '#1E1E1E',
-            buttonCheckedBg: '#1E1E1E',
+            buttonBg: '#F59346',
+            colorBorder: '#fff',
+            buttonCheckedBg: '#fff',
+            buttonColor: "#fff"
           },
           Input: {
-            colorBgBase: '#1E1E1E',
-            activeBg: '#1E1E1E',
-            colorBgContainer: '#1E1E1E',
-            colorBorder: '#22CCEE',
+            colorBgBase: '#fff',
+            activeBg: '#fff',
+            colorBgContainer: '#fff',
+            colorBorder: '#F5B05F',
             colorTextPlaceholder: '#8c8c8c',
             paddingBlockLG: 8,
-            colorBorderSecondary: '#1E1E1E',
-            colorText: '#ffffff',
+            colorBorderSecondary: '#fff',
+            colorText: '#000',
           },
           InputNumber: {
-            colorBgBase: '#1E1E1E',
-            activeBg: '#1E1E1E',
-            colorBgContainer: '#1E1E1E',
-            colorBorder: '#22CCEE',
+            colorBgBase: '#fff',
+            activeBg: '#fff',
+            colorBgContainer: '#fff',
+            colorBorder: '#F5B05F',
             colorTextPlaceholder: '#8c8c8c',
             paddingBlockLG: 8,
-            colorText: '#ffffff',
-            handleBg: '#22CCEE',
+            colorText: '#000',
+            handleBg: '#F5B05F',
             handleWidth: 32,
             handleVisible: true,
             handleHoverColor: '#fff',
           },
           Timeline: {
             dotBg: 'transparent',
-            tailColor: '#22CCEE',
+            tailColor: '#F5B05F',
           },
           DatePicker: {
-            colorBgContainer: '#1E1E1E',
+            colorBgContainer: '#fff',
             colorTextPlaceholder: '#8c8c8c',
-            colorText: '#ffffff',
-            colorBorder: '#1E1E1E',
-            colorBgBase: '#1E1E1E',
+            colorText: '#000',
+            colorBorder: '#fff',
+            colorBgBase: '#fff',
             colorIcon: '#ffffff',
-            colorBgElevated: '#1E1E1E',
-            cellActiveWithRangeBg: '#22CCEE',
+            colorBgElevated: '#fff',
+            cellActiveWithRangeBg: '#F5B05F',
             cellHoverBg: '#333',
-            cellBgDisabled: '#1E1E1E',
+            cellBgDisabled: '#fff',
             colorTextDisabled: '#8c8c8c',
           },
           Slider: {
-            railHoverBg: '#888',
+            railHoverBg: '#F59346',
+            trackBg: '#F59346',
+            trackHoverBg: '#F5B05F',
+            railBg: '#F5B05F',
           },
           Select: {
-            selectorBg: '#1E1E1E',
-            activeBorderColor: '#22CCEE',
-            activeOutlineColor: '#1E1E1E',
+            selectorBg: '#fff',
+            activeBorderColor: '#F5B05F',
+            activeOutlineColor: '#fff',
             colorTextPlaceholder: '#ffffff',
-            colorText: '#ffffff',
+            colorText: '#000',
             colorIcon: '#ffffff',
             colorIconHover: '#ffffff',
-            hoverBorderColor: '#22CCEE',
-            optionSelectedBg: '#22CCEE',
+            hoverBorderColor: '#F5B05F',
+            optionSelectedBg: '#F5B05F',
             optionSelectedColor: '#fff',
             optionActiveBg: '#333',
-            colorBgBase: '#1E1E1E',
-            multipleItemBg: '#1E1E1E',
-            colorBgLayout: '#1E1E1E',
-            colorBgElevated: '#1E1E1E',
-            colorBorder: '#22CCEE',
+            colorBgBase: '#fff',
+            multipleItemBg: '#fff',
+            colorBgLayout: '#fff',
+            colorBgElevated: '#fff',
+            colorBorder: '#F5B05F',
           },
           Popover: {
-            colorBgElevated: '#1E1E1E',
+            colorBgElevated: '#fff',
           },
           Modal: {
-            contentBg: '#1E1E1E',
-            headerBg: '#1E1E1E',
-            footerBg: '#1E1E1E',
+            contentBg: '#fff',
+            headerBg: '#fff',
+            footerBg: '#fff',
             titleColor: '#ffffff',
           },
           Avatar: {
-            groupBorderColor: '#22CCEE',
+            groupBorderColor: '#F5B05F',
           },
           List: {
             itemPadding: '4px 0',
@@ -163,10 +171,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             colorSplit: '#8c8c8c',
           },
           Card: {
-            colorBgContainer: '#1E1E1E',
-            colorBorder: '#1E1E1E',
-            colorBorderBg: '#1E1E1E',
-            colorBorderSecondary: '#1E1E1E',
+            colorBgContainer: '#fff',
+            colorBorder: '#fff',
+            colorBorderBg: '#fff',
+            colorBorderSecondary: '#fff',
             colorText: brand.primaryText,
           },
           Statistic: {
@@ -174,41 +182,48 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             colorTextDescription: brand.primaryText,
           },
           Table: {
-            bodySortBg: '#1E1E1E',
+            bodySortBg: '#fff',
             headerBg: '#2c2c2c',
-            footerBg: '#1E1E1E',
-            colorBgContainer: '#1E1E1E',
+            footerBg: '#fff',
+            colorBgContainer: '#fff',
           },
           Menu: {
-            itemActiveBg: '#22CCEE',
-            itemBg: '#1E1E1E',
-            itemSelectedBg: '#22CCEE',
+            itemActiveBg: '#F5B05F',
+            itemBg: '#fff',
+            itemSelectedBg: '#F5B05F',
             itemSelectedColor: '#fff',
           },
           Collapse: {
             contentPadding: 4,
             headerPadding: 4,
+            headerBg: '#fff',
+            contentBg: "#fff"
           },
           Badge: {
             colorBorderBg: 'transparent',
           },
           Empty: {
-            colorTextDescription: '#22CCEE',
+            colorTextDescription: '#F5B05F',
           },
           Checkbox: {
-            colorBgContainer: '#1E1E1E',
+            colorBgContainer: '#fff',
             colorBorder: '#333',
             colorTextDisabled: '#888',
           },
           Tree: {
-            colorBgContainer: '#1e1e1e',
+            colorBgContainer: '#fff',
             colorBorder: '#878787',
-            colorBorderBg: '#1E1E1E',
-            nodeSelectedBg: '#1E1E1E',
+            colorBorderBg: '#fff',
+            nodeSelectedBg: '#fff',
           },
           Divider: {
             colorSplit: '#333',
           },
+          Skeleton: {
+            gradientFromColor: '#ffffff',
+            gradientToColor: '#e1e1e1',
+            colorBgContainer: '#fff',
+          }
         },
       }}
     >

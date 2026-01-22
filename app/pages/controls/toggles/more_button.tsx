@@ -119,7 +119,7 @@ export function MoreButtonInner({
           </div>
         ),
         key: 'chat',
-        icon: <SvgResource type="chat" svgSize={16} />,
+        icon: <SvgResource type="chat" svgSize={16}  />,
       });
     }
     return moreItems;
@@ -176,7 +176,7 @@ export function MoreButtonInner({
       <Button
         size={size}
         style={{
-          backgroundColor: '#1E1E1E',
+          backgroundColor: '#F59346',
           height: '46px',
           borderRadius: '8px',
           border: 'none',
@@ -184,9 +184,9 @@ export function MoreButtonInner({
         }}
       >
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-          <SvgResource type="more" svgSize={18}></SvgResource>
+          <SvgResource type="more" svgSize={18} color='#fff'></SvgResource>
           {showTextOrHide && t('more.title')}
-          <SvgResource type="down" svgSize={14}></SvgResource>
+          <SvgResource type="down" svgSize={14} color='#fff'></SvgResource>
         </div>
       </Button>
     </Dropdown>

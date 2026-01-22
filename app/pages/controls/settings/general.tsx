@@ -111,7 +111,7 @@ export function GeneralSettings({
         }}
       ></Input>
       <div className={styles.common_space}>{t('settings.general.lang')}:</div>
-      <LangSelect style={{ width: '100%' }}></LangSelect>
+      {/* <LangSelect style={{ width: '100%' }}></LangSelect> */}
       <div className={styles.common_space}>{t('settings.general.status.title')}:</div>
       {/* <div className={styles.setting_box_line}>
         <StatusSelect

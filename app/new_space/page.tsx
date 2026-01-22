@@ -22,7 +22,7 @@ export default function Page() {
   return (
     <>
       <main className={styles.main} data-lk-theme="default">
-        <span className={styles.lang_select}>
+        {/* <span className={styles.lang_select}>
           {loading ? (
             <Skeleton.Node
               active
@@ -31,16 +31,16 @@ export default function Page() {
           ) : (
             <LangSelect></LangSelect>
           )}
-        </span>
+        </span> */}
         {loading ? (
           <div className={styles.flex_column}>
             <Skeleton.Node
               active
-              style={{ height: `45px`, backgroundColor: '#333', width: '240px' }}
+              style={{ height: `45px`, backgroundColor: '#e1e1e1', width: '240px' }}
             ></Skeleton.Node>
             <Skeleton.Node
               active
-              style={{ height: `36px`, backgroundColor: '#333', width: '360px' }}
+              style={{ height: `36px`, backgroundColor: '#e1e1e1', width: '360px' }}
             ></Skeleton.Node>
           </div>
         ) : (
@@ -63,7 +63,7 @@ export default function Page() {
           <div className={styles.flex_column}>
             <Skeleton.Node
               active
-              style={{ height: `200px`, backgroundColor: '#333', width: '400px' }}
+              style={{ height: `200px`, backgroundColor: '#e1e1e1', width: '400px' }}
             ></Skeleton.Node>
           </div>
         ) : (
@@ -73,7 +73,7 @@ export default function Page() {
         )}
       </main>
       {/* footer for connect ------------------------------------------------------------------- */}
-      {loading ? (
+      {/* {loading ? (
         <Skeleton.Node
           active
           style={{ height: `67px`, backgroundColor: '#333', width: '100%' }}
@@ -95,7 +95,7 @@ export default function Page() {
             {t('msg.info.offical_web')}
           </a>
         </footer>
-      )}
+      )} */}
     </>
   );
 }

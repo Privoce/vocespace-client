@@ -158,7 +158,7 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
       // replace endpoint with real one if needed
       const res = await api.updateAuthRBACConf(space.name, changeableAuth);
       if (!res.ok) throw new Error('save failed');
-      messageApi.success(t('auth.saveSuccess'));
+      messageApi.success(t('auth.saveSuccess'));    
     } catch (e) {
       console.error(e);
       messageApi.error(t('auth.saveFail'));

@@ -1300,14 +1300,14 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         onDrop={handleDrop}
       >
         {/* 右侧应用浮窗，悬浮态 */}
-        {showFlot && space && settings.participants[space.localParticipant.identity] && (
+        {/* {showFlot && space && settings.participants[space.localParticipant.identity] && (
           <FlotButton
             openApp={openApp}
             setOpenApp={setOpenApp}
             style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
           ></FlotButton>
-        )}
-        {showFlot && space && settings.participants[space.localParticipant.identity] && (
+        )} */}
+        {/* {showFlot && space && settings.participants[space.localParticipant.identity] && (
           <FlotLayout
             showAI={showAI}
             ref={FlotLayoutRef}
@@ -1324,9 +1324,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             cutInstance={aiCutServiceRef.current}
             updateSettings={updateSettings}
           ></FlotLayout>
-        )}
+        )} */}
         {/* 左侧侧边栏 */}
-        {space && !isCustomer && (
+        {space && !isCustomer && !init && (
           <Channel
             ref={channelRef}
             config={config}

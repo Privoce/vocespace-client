@@ -1,13 +1,13 @@
 .container {
   width: 280px;
   height: 100vh;
-  background-color: #1e1e1e;
+  background-color: #eaeaea;
   color: #ffffff;
   display: flex;
   flex-direction: column;
   transition: width 0.3s ease;
   position: relative;
-  border-right: 1px solid #2a2a2a;
+  border-right: 1px solid #eaeaea;
 
   &.collapsed {
     width: fit-content;
@@ -20,8 +20,8 @@
 
 .header {
   padding: 16px 8px;
-  border-bottom: 1px solid #2a2a2a;
-  background-color: #1a1a1a;
+  border-bottom: 1px solid #eaeaea;
+  background-color: #cfcfcf;
   &_mobile {
     display: inline-flex;
     align-items: center;
@@ -48,13 +48,13 @@
 .roomIcon {
   width: 20px;
   height: 20px;
-  color: #22ccee;
+  color: #F59346;
 }
 
 .roomName {
   font-size: 16px;
   font-weight: 600;
-  color: #ffffff;
+  color: #000;
   max-width: calc(100% - 28px);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -70,7 +70,7 @@
 .onlineCount {
   font-size: 12px;
   color: #b9bbbe;
-  background-color: #2a2a2a;
+  background-color: #f67f22;
   padding: 2px 6px;
   border-radius: 12px;
 }
@@ -88,7 +88,7 @@
   transition: all 0.2s;
 
   &:hover {
-    background-color: #2a2a2a;
+    background-color: #f67f22;
     color: #ffffff;
   }
 
@@ -108,7 +108,7 @@
   }
 
   &::-webkit-scrollbar-track {
-    background: #1e1e1e;
+    background: #dcddde;
   }
 
   &::-webkit-scrollbar-thumb {
@@ -116,7 +116,7 @@
     border-radius: 3px;
 
     &:hover {
-      background: #4a4a4a;
+      background: #F59346;
     }
   }
   &_mobile {
@@ -130,7 +130,7 @@
     }
 
     &::-webkit-scrollbar-track {
-      background: #1e1e1e;
+      background: #eaeaea;
     }
 
     &::-webkit-scrollbar-thumb {
@@ -138,7 +138,7 @@
       border-radius: 3px;
 
       &:hover {
-        background: #4a4a4a;
+        background: #F59346;
       }
     }
   }
@@ -153,7 +153,7 @@
   transition: background-color 0.2s;
 
   &:hover {
-    background-color: #2a2a2a;
+    background-color: #f67f22;
   }
 }
 
@@ -209,7 +209,7 @@
   transition: all 0.2s;
 
   &:hover {
-    background-color: #3a3a3a;
+    background-color: #F59346;
     color: #ffffff;
   }
 
@@ -230,7 +230,7 @@
   }
 
   &:not(.active):hover {
-    background-color: #2a2a2a;
+    background-color: #f67f22;
   }
 }
 
@@ -279,7 +279,7 @@
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  border: 2px solid #1e1e1e;
+  border: 2px solid #F59346;
 }
 
 .status_online .statusIndicator {
@@ -306,13 +306,13 @@
 
 .bottom {
   padding: 16px;
-  border-top: 1px solid #2a2a2a;
+  border-top: 1px solid #f67f22;
 }
 
 .createRoomButton {
   width: 100%;
   padding: 12px;
-  background-color: #2a2a2a;
+  background-color: #f67f22;
   border: 1px solid #3a3a3a;
   border-radius: 8px;
   color: #dcddde;
@@ -380,7 +380,7 @@
       }
     }
     &:hover {
-      background-color: #333;
+      background-color: #f1a368;
       cursor: pointer;
     }
   }

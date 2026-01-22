@@ -507,10 +507,10 @@ export function ExportTodoHistroy({
             label: {
               color: '#8c8c8c',
               fontWeight: 700,
-              backgroundColor: '#1a1a1a',
+              backgroundColor: '#f67f22',
             },
             content: {
-              backgroundColor: '#1E1E1E',
+              backgroundColor: '#F59346',
               color: '#8c8c8c',
             },
           }}

@@ -242,7 +242,7 @@ export function Work({
     <Button
       size="large"
       style={{
-        backgroundColor: isStartWork ? '#22CCEE' : '#1E1E1E',
+        backgroundColor: isStartWork ? '#22CCEE' : '#F59346',
         height: '46px',
         borderRadius: '8px',
         border: 'none',

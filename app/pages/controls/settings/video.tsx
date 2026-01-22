@@ -80,10 +80,10 @@ export function VideoSettings({
           }}
         />
       </div>
-      <div className={styles.setting_box}>
+      {/* <div className={styles.setting_box}>
         <div style={{ marginBottom: '6px' }}>{t('settings.virtual.title')}:</div>
         <VirtualSettings ref={virtualSettingsRef} {...virtual}></VirtualSettings>
-      </div>
+      </div> */}
     </div>
   );
 }

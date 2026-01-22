@@ -28,7 +28,7 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    background-color: #000;
+    background-color: #eaeaea;
     border-radius: 8px;
     &__placeholder {
       height: auto;
@@ -58,9 +58,10 @@
       &_volume {
         width: 100%;
         height: fit-content;
-        background-color: #1e1e1e;
+        background-color: #fff;
         padding: 1rem;
         border-radius: 8px;
+        border: 1px solid #F59346;
         &__button {
           width: 100%;
           background-color: #1f8cf9;
@@ -84,6 +85,7 @@
             align-items: center;
             justify-content: flex-start;
             gap: 0.5rem;
+            color: #000;
           }
         }
       }
@@ -93,6 +95,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: flex-start;
+      background-color: #F59346 !important;
     }
     &__form {
       width: 100%;
@@ -140,8 +143,8 @@
       cursor: pointer;
       height: 44px;
       width: 100%;
-      border: 1px solid #333;
-      background-color: #1e1e1e;
+      border: 1px solid #F59346;
+      background-color: #F59346;
       border-radius: 8px;
       display: flex;
       align-items: center;

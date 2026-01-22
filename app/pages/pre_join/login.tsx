@@ -70,7 +70,7 @@ export function LoginStateBtn({ data }: LoginStateBtnProps) {
           onClick: () => {
             localStorage.removeItem(VOCESPACE_PLATFORM_USER);
             if (data?.auth === 'vocespace') {
-              window.open(`https://home.vocespace.com/auth/user/${userId}?logout=true`, '_self');
+              // window.open(`https://home.vocespace.com/auth/user/${userId}?logout=true`, '_self');
             } else {
               window.location.reload();
             }
@@ -90,11 +90,11 @@ export function LoginStateBtn({ data }: LoginStateBtnProps) {
         type="text"
         onClick={(e) => {
           e.preventDefault();
-          if (!userId) {
-            window.open(`https://home.vocespace.com/auth/login`, '_self');
-          } else {
-            window.open(`https://home.vocespace.com/auth/user/${userId}`, '_self');
-          }
+          // if (!userId) {
+          //   window.open(`https://home.vocespace.com/auth/login`, '_self');
+          // } else {
+          //   window.open(`https://home.vocespace.com/auth/user/${userId}`, '_self');
+          // }
         }}
       >
         <div className={styles.wrapper}>
@@ -102,7 +102,7 @@ export function LoginStateBtn({ data }: LoginStateBtnProps) {
             src={avatar}
             size={38}
             style={{
-              backgroundColor: avatar ? 'transparent' : '#22CCEE',
+              backgroundColor: avatar ? 'transparent' : '#F59346',
               verticalAlign: 'middle',
               fontSize: 16,
               border: 'none',

@@ -71,13 +71,13 @@ export function AppFlotIconCollect({
 }: AppFlotIconCollectProps) {
   return participant && participant.sync ? (
     <div className="lk-focus-toggle-button" style={style}>
-      {participant.sync.length > 0 && trackReference?.source !== Track.Source.ScreenShare && (
+      {/* {participant.sync.length > 0 && trackReference?.source !== Track.Source.ScreenShare && (
         <AppFlotIcon
           appKey="todo"
           pin={() => showApp()}
           contextUndefined={contextUndefined}
         ></AppFlotIcon>
-      )}
+      )} */}
       {trackReference?.source === Track.Source.ScreenShare && (
         <FullScreenBtn
           trackReference={trackReference}

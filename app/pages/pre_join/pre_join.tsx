@@ -23,6 +23,7 @@ import { ulid } from 'ulid';
 import { api } from '@/lib/api';
 import { LoginButtons, LoginStateBtn } from './login';
 import { SpaceInfo } from '@/lib/std/space';
+import { ParticipantPlaceholder2 } from '../participant/placeholder';
 
 export interface PreJoinPropsExt extends PreJoinProps {
   data: PlatformUser | undefined;
@@ -311,7 +312,7 @@ export function PreJoin({
     <div className={styles.view}>
       {contextHolder}
       <Spin spinning={spinning} percent={percent} fullscreen />
-      <span className={styles.view__lang_select}>
+      {/* <span className={styles.view__lang_select}>
         {loading ? (
           <Skeleton.Node
             active
@@ -320,7 +321,7 @@ export function PreJoin({
         ) : (
           <LangSelect></LangSelect>
         )}
-      </span>
+      </span> */}
       <div className={styles.view__video}>
         {videoTrack && videoEnabled && (
           <video
@@ -335,7 +336,7 @@ export function PreJoin({
         )}
         {(!videoTrack || !videoEnabled) && (
           <div className={styles.view__video__placeholder}>
-            <ParticipantPlaceholder />
+            <ParticipantPlaceholder2 />
           </div>
         )}
       </div>
@@ -398,7 +399,7 @@ export function PreJoin({
               }}
             ></Slider>
             <button
-              style={{ backgroundColor: '#22CCEE' }}
+              style={{ backgroundColor: '#F59346' }}
               className={styles.view__controls__group_volume__button}
               onClick={play_sound}
             >
@@ -460,7 +461,7 @@ export function PreJoin({
             autoComplete="off"
           />
           <button
-            style={{ backgroundColor: '#22CCEE' }}
+            style={{ backgroundColor: '#F59346' }}
             className={styles.view__controls__form__button}
             type="submit"
             onClick={handleSubmit}

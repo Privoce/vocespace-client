@@ -685,7 +685,7 @@ export default {
   },
   msg: {
     info: {
-      title: 'Your cyber co-working space developed by Privoce',
+      title: 'Video Customer Service with Rounting',
       contact: 'Contact',
       learn_more: 'Learn More',
       offical_web: 'official website',
