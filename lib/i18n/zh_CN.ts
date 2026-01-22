@@ -11,6 +11,16 @@ export default {
       },
     },
   },
+  auth: {
+    createRoom: '创建房间',
+    manageRoom: '管理房间',
+    manageRole: '管理角色',
+    controlUser: '控制用户',
+    recording: '录制空间',
+    save: '保存修改',
+    saveFail: '保存失败，请稍后再试。',
+    saveSuccess: '保存成功',
+  },
   common: {
     full_screen: '全屏',
     guest: {

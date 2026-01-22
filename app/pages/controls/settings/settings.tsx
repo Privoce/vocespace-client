@@ -140,7 +140,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
       {
         key: 'auth',
         label: <TabItem type="auth" label={t('settings.auth.title')}></TabItem>,
-        children: <AuthSettings></AuthSettings>,
+        children: <AuthSettings spaceInfo={spaceInfo} space={space} messageApi={messageApi}></AuthSettings>,
       },
       ...(showAI
         ? [

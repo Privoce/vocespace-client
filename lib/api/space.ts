@@ -13,6 +13,7 @@ import {
   AppKey,
   ParticipantSettings,
   RecordSettings,
+  SpaceAuthConf,
   SpaceCountdown,
   SpaceInfo,
   SpaceTimer,
@@ -524,5 +525,22 @@ export const enterSpaceRoomFromLink = async (childRoomEnter: ChildRoomEnter) => 
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(childRoomEnter),
+  });
+};
+
+export interface UpdateAuthRBACConfBody {
+  spaceName: string;
+  authConf: SpaceAuthConf;
+}
+
+export const updateAuthRBACConf = async (spaceName: string, conf: SpaceAuthConf) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('space', 'true');
+  url.searchParams.append('update', 'true');
+  url.searchParams.append('auth', 'rbac');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ spaceName, authConf: conf } as UpdateAuthRBACConfBody),
   });
 };

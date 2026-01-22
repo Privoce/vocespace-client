@@ -36,6 +36,7 @@ import {
   EnterRoomBody,
   PersistentSpaceBody,
   TransOrSetOMBody,
+  UpdateAuthRBACConfBody,
   UpdateOwnerIdBody,
   UpdateSpaceAppAuthBody,
   UpdateSpaceAppsBody,
@@ -1115,8 +1116,22 @@ export async function POST(request: NextRequest) {
     const isUpdate = request.nextUrl.searchParams.get('update') === 'true';
     const isUpdateAllowGuest = request.nextUrl.searchParams.get('allowGuest') === 'update';
     const isTransfer = request.nextUrl.searchParams.get('transfer') === 'true';
-    const isAuthManage = request.nextUrl.searchParams.get('auth') === 'manage';
+    const authManage = request.nextUrl.searchParams.get('auth');
     const mode = request.nextUrl.searchParams.get('mode');
+    // 更新 rbac 配置 -----------------------------------------------------------------------------
+    if (isSpace && isUpdate && authManage === 'rbac') {
+      const { spaceName, authConf }: UpdateAuthRBACConfBody = await request.json();
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      spaceInfo.auth = authConf;
+      const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+      if (!success) {
+        return NextResponse.json({ error: 'Failed to update rbac configuration' }, { status: 500 });
+      }
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
     // 开启/关闭 工作模式 -------------------------------------------------------------------------
     if (mode === 'work') {
       const { spaceName, participantId, workType }: WorkModeBody = await request.json();
@@ -1159,7 +1174,7 @@ export async function POST(request: NextRequest) {
       }
     }
     // 用户身份处理 -----------------------------------------------------------------------------
-    if (isSpace && isAuthManage) {
+    if (isSpace && authManage === 'manage') {
       let isRemove = false;
       const { spaceName, participantId, replacedId }: TransOrSetOMBody = await request.json();
       const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
@@ -1616,7 +1631,7 @@ export async function POST(request: NextRequest) {
         }
         url.searchParams.append('auth', authType);
         url.searchParams.append('token', token);
-        url.searchParams.append('fromServer', "true");
+        url.searchParams.append('fromServer', 'true');
         return await fetch(url.toString());
       }
 

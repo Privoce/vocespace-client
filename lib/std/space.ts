@@ -274,7 +274,106 @@ export const DEFAULT_SPACE_WORK_CONF: SpaceWorkConf = {
   sync: true,
 };
 
+/**
+ * 允许访客加入的设置
+ * - allow: 允许访客加入
+ * - disable: 禁止访客加入
+ * - link: 通过链接允许访客加入，访客会通过链接直接加入到某个房间内
+ */
 export type AllowGuest = 'allow' | 'disable' | 'link';
+
+/**
+ * RBAC 权限配置
+ */
+export interface SpaceRBACConf {
+  /**
+   * 创建子房间权限
+   * 游客没有权利创建子房间
+   */
+  createRoom: boolean;
+  /**
+   * 控制子房间权限
+   * 一般只有创建该房间的用户拥有绝对控制权限，但管理员和房主可以控制所有子房间
+   *
+   * - 删除子房间
+   * - 修改子房间名称
+   * - 设置子房间私密/公开
+   */
+  manageRoom: boolean;
+  /**
+   * 管理角色权限
+   * - 分配给其他用户管理员角色/取消管理员角色（房主）
+   * - 转让自己的权限给其他用户（管理员只能转让自己的权限，不能转让房主权限）但这一条不算
+   */
+  manageRole: boolean;
+  /**
+   * 控制用户权限
+   * - 可以修改用户的名称
+   * - 将用户移除出空间
+   * - 开关用户的麦克风和摄像头
+   * - 修改用户视频模糊度/分享模糊度
+   */
+  controlUser: boolean;
+  /**
+   * 录制空间权限
+   */
+  recording: boolean;
+}
+
+export interface SpaceAuthConf {
+  owner: SpaceRBACConf;
+  manager: SpaceRBACConf;
+  participant: SpaceRBACConf;
+  guest: SpaceRBACConf;
+}
+
+export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
+  switch (role) {
+    case 'owner':
+      return {
+        createRoom: true,
+        manageRoom: true,
+        manageRole: true,
+        controlUser: true,
+        recording: true,
+      } as SpaceRBACConf;
+    case 'manager':
+    case 'assistant':
+      return {
+        createRoom: true,
+        manageRoom: true,
+        manageRole: false,
+        controlUser: true,
+        recording: true,
+      } as SpaceRBACConf;
+    case 'participant':
+      return {
+        createRoom: true,
+        manageRoom: false,
+        manageRole: false,
+        controlUser: false,
+        recording: false,
+      } as SpaceRBACConf;
+
+    case 'guest':
+    case 'customer':
+    default:
+      return {
+        createRoom: false,
+        manageRoom: false,
+        manageRole: false,
+        controlUser: false,
+        recording: false,
+      } as SpaceRBACConf;
+  }
+};
+
+export const DEFAULT_SPACE_AUTH_CONF: SpaceAuthConf = {
+  owner: DEFAULT_RBAC_CONF('owner'),
+  manager: DEFAULT_RBAC_CONF('manager'),
+  participant: DEFAULT_RBAC_CONF('participant'),
+  guest: DEFAULT_RBAC_CONF('guest'),
+};
 
 export interface SpaceInfo {
   participants: {
@@ -348,6 +447,10 @@ export interface SpaceInfo {
    *
    */
   work: SpaceWorkConf;
+  /**
+   * 空间的RBAC认证配置
+   */
+  auth: SpaceAuthConf;
 }
 
 export interface TodoItem {
@@ -503,7 +606,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number, createRoom: boolean): SpaceI
   persistence: true,
   record: { active: false },
   managers: [],
-  allowGuest: "allow",
+  allowGuest: 'allow',
   startAt,
   children: createRoom
     ? [
@@ -529,6 +632,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number, createRoom: boolean): SpaceI
     },
   },
   work: DEFAULT_SPACE_WORK_CONF,
+  auth: DEFAULT_SPACE_AUTH_CONF,
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {

@@ -30,10 +30,12 @@ import {
   handleWorkMode,
   enterRoom,
   enterSpaceRoomFromLink,
+  updateAuthRBACConf
 } from './space';
 
 export const api = {
   // ---- space api --------
+  updateAuthRBACConf,
   enterSpaceRoomFromLink,
   enterRoom,
   joinSpace,
