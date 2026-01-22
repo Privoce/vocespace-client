@@ -1,5 +1,12 @@
 // /app/api/space/route.ts
-import { ERROR_CODE, isUndefinedString } from '@/lib/std';
+import {
+  AuthType,
+  ChildRoomEnter,
+  DEFAULT_TOKEN_RESULT,
+  ERROR_CODE,
+  isUndefinedString,
+  splitPlatformUser,
+} from '@/lib/std';
 import { NextRequest, NextResponse } from 'next/server';
 import Redis from 'ioredis';
 import { ChatMsgItem } from '@/lib/std/chat';
@@ -48,7 +55,7 @@ import {
 } from '@/lib/api/channel';
 import { getConfig } from '../conf/conf';
 import { platformAPI } from '@/lib/api/platform';
-import { usePlatformUserInfoServer } from '@/lib/hooks/platformToken';
+import { generateToken, usePlatformUserInfoServer } from '@/lib/hooks/platformToken';
 
 const { LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL } = process.env;
 
@@ -1428,11 +1435,10 @@ export async function POST(request: NextRequest) {
 
     // 如果是创建子房间/进入子房间 -------------------------------------------------------------------------
     if (isChildRoom) {
-      const isEnter = request.nextUrl.searchParams.get('enter') === 'true';
+      const enter = request.nextUrl.searchParams.get('enter');
       // 进入子房间的处理 -----------------------------------------------------------------------------
-      if (isEnter) {
+      if (enter === 'true') {
         const { space, auth, uid, room, identity, username }: EnterRoomBody = await request.json();
-        console.warn(space, auth, uid, room, identity, username);
         // 无需处理
         if (room === '$space') {
           return NextResponse.json({ success: true }, { status: 200 });
@@ -1442,7 +1448,6 @@ export async function POST(request: NextRequest) {
         if (!spaceInfo) {
           return NextResponse.json({ error: 'Space not found' }, { status: 404 });
         }
-        console.warn(space, auth, uid, room, identity, username);
         // 先判断auth，如果是c_s, 说明进入了customer - service模式，用户需要进入某个空闲房间
         // 这里的空闲房间指的是某个私人房间，且这个私人房间只有房间拥有者(客服)一个人，顾客需要进入这个房间
         // 这是个一对一的模式
@@ -1569,6 +1574,50 @@ export async function POST(request: NextRequest) {
             }
           }
         }
+      } else if (enter === 'link') {
+        const { space, room, roomOwner, platUser }: ChildRoomEnter = await request.json();
+        // 检查space
+        const spaceInfo = await SpaceManager.getSpaceInfo(space);
+        if (!spaceInfo) {
+          return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+        }
+        // 查找对应的子房间
+        const targetRoom = spaceInfo.children.find((child) => child.name === room);
+        if (!targetRoom) {
+          return NextResponse.json({ error: 'Child room not found' }, { status: 404 });
+        }
+        if (targetRoom.isPrivate) {
+          // 私密房间，需要验证room owner
+          if (targetRoom.ownerId !== roomOwner) {
+            return NextResponse.json(
+              { error: 'Unauthorized to enter private room' },
+              { status: 403 },
+            );
+          }
+        }
+
+        const url = new URL('/api/connection-details', request.url);
+        let token = '';
+        let authType: AuthType = 'other';
+        if (!platUser) {
+          // 说明是个第一次进入的游客用户，直接请求/api/connection-details这个接口进行处理
+          // 生成个用户名，通过genUserName接口生成一个可用的用户名
+          const username = await SpaceManager.genUserName(space);
+          token = generateToken(DEFAULT_TOKEN_RESULT(space, username, room));
+        } else {
+          // 是平台用户，数据上添加用户到子房间中
+          if (!targetRoom.participants.includes(platUser.id)) {
+            targetRoom.participants.push(platUser.id);
+            await SpaceManager.setSpaceInfo(space, spaceInfo);
+          }
+          const { tokenResult, auth } = splitPlatformUser(platUser);
+          token = generateToken(tokenResult);
+          authType = auth;
+        }
+        url.searchParams.append('auth', authType);
+        url.searchParams.append('token', token);
+        url.searchParams.append('fromServer', "true");
+        return await fetch(url.toString());
       }
 
       // 创建子房间的处理 -----------------------------------------------------------------------------

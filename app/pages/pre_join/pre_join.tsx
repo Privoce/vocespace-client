@@ -259,7 +259,7 @@ export function PreJoin({
     }
     const { settings: spaceInfo }: { settings?: SpaceInfo } = await response.json();
 
-    let allowGuest = spaceInfo?.allowGuest || true;
+    let allowGuest = (spaceInfo?.allowGuest && spaceInfo.allowGuest === 'allow') || true;
     // 有房间且房间不允许游客加入
     if (spaceInfo && !allowGuest && data?.identity === 'guest') {
       messageApi.error(t('common.guest.not_allow'));

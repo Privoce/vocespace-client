@@ -9,6 +9,7 @@ import { usePlatformUser } from '@/lib/hooks/platform';
 import useMessage from 'antd/es/message/useMessage';
 import { message } from 'antd';
 import { useRouter } from 'next/navigation';
+import { api } from '@/lib/api';
 
 export default function Page({
   params,
@@ -32,10 +33,28 @@ export default function Page({
 
   const checkAndFetchByStored = async () => {
     setLoading(true);
-    await checkOrUpdateStore();
-    setTimeout(() => {
-      setLoading(false);
-    }, 500);
+
+    try {
+      if (searchParams.childRoomEnter) {
+        const response = await api.enterSpaceRoomFromLink({
+          ...JSON.parse(decodeURIComponent(searchParams.childRoomEnter as string)),
+          platUser: platformUser,
+        });
+        if (response.ok) {
+          const { redirectUrl, cookie }: { redirectUrl: string; cookie: string } =
+            await response.json();
+          router.replace(redirectUrl);
+        }
+      } else {
+        await checkOrUpdateStore();
+      }
+    } catch (error) {
+      console.error('enterRoom error:', error);
+    } finally {
+      setTimeout(() => {
+        setLoading(false);
+      }, 500);
+    }
   };
 
   /**
@@ -54,7 +73,6 @@ export default function Page({
   React.useEffect(() => {
     checkAndFetchByStored();
   }, []); // 只在组件挂载时运行一次
-
 
   return (
     <RecoilRoot>

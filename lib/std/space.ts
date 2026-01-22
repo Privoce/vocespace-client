@@ -274,6 +274,8 @@ export const DEFAULT_SPACE_WORK_CONF: SpaceWorkConf = {
   sync: true,
 };
 
+export type AllowGuest = 'allow' | 'disable' | 'link';
+
 export interface SpaceInfo {
   participants: {
     [participantId: string]: ParticipantSettings;
@@ -316,7 +318,7 @@ export interface SpaceInfo {
    * 是否允许访客加入
    * 若为false，则只有认证用户才能加入空间
    */
-  allowGuest: boolean;
+  allowGuest: AllowGuest;
   /**
    * 录制设置
    */
@@ -501,7 +503,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number, createRoom: boolean): SpaceI
   persistence: true,
   record: { active: false },
   managers: [],
-  allowGuest: true,
+  allowGuest: "allow",
   startAt,
   children: createRoom
     ? [

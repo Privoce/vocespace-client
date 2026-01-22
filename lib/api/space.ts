@@ -1,6 +1,14 @@
 import { Socket } from 'socket.io-client';
-import { AuthType, connect_endpoint, IdentityType, RoomType, UserDefineStatus } from '../std';
 import {
+  AuthType,
+  ChildRoomEnter,
+  connect_endpoint,
+  IdentityType,
+  RoomType,
+  UserDefineStatus,
+} from '../std';
+import {
+  AllowGuest,
   AppAuth,
   AppKey,
   ParticipantSettings,
@@ -373,10 +381,10 @@ export const persistentSpace = async (spaceName: string, persistence: boolean) =
 
 export interface AllowGuestBody {
   spaceName: string;
-  allowGuest: boolean;
+  allowGuest: AllowGuest;
 }
 
-export const allowGuest = async (spaceName: string, allowGuest: boolean) => {
+export const allowGuest = async (spaceName: string, allowGuest: AllowGuest) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('space', 'true');
   url.searchParams.append('allowGuest', 'update');
@@ -505,5 +513,16 @@ export const enterRoom = async (
       identity,
       username,
     } as EnterRoomBody),
+  });
+};
+
+export const enterSpaceRoomFromLink = async (childRoomEnter: ChildRoomEnter) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('childRoom', 'true');
+  url.searchParams.append('enter', 'link');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(childRoomEnter),
   });
 };

@@ -3,7 +3,6 @@ import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { MessageInstance } from 'antd/es/message/interface';
 import { ModelBg, ModelRole } from '@/lib/std/virtual';
 import { useI18n } from '@/lib/i18n/i18n';
-import { isMobile, UserStatus } from '@/lib/std';
 import { useRecoilState } from 'recoil';
 import { userState } from '@/app/[spaceName]/PageClientImpl';
 import { LocalParticipant, Room } from 'livekit-client';
@@ -21,6 +20,7 @@ import { ReloadOutlined } from '@ant-design/icons';
 import { AppSettings } from './app';
 import { ParticipantSettings, SettingState, SpaceInfo } from '@/lib/std/space';
 import { AISettings } from './ai';
+import { AuthSettings } from './auth';
 
 export interface SettingsProps {
   username: string;
@@ -136,6 +136,11 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
             spaceInfo={spaceInfo}
           ></GeneralSettings>
         ),
+      },
+      {
+        key: 'auth',
+        label: <TabItem type="auth" label={t('settings.auth.title')}></TabItem>,
+        children: <AuthSettings></AuthSettings>,
       },
       ...(showAI
         ? [

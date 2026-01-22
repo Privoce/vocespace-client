@@ -5,7 +5,7 @@
 
 'use client';
 
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ParticipantSettings, VOCESPACE_PLATFORM_USER } from '../std/space';
 import { AuthType, TokenResult, SearchParams, PlatformUser, verifyPlatformUser } from '../std';
 import equal from 'fast-deep-equal';

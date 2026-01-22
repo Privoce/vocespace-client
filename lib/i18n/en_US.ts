@@ -561,7 +561,10 @@ export default {
           ultra: 'Ultra',
         },
         allow_guest: {
-          title: 'Allow Guest to Join',
+          title: 'Guest Permission',
+          allow: "Allow guests to join",
+          disable: "Disable guest to join",
+          link: "Allow guest joining a private room with an invitation link",
           success: 'Guest join settings modified successfully',
           error: 'Failed to set guest access for the current space',
         },

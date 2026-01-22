@@ -373,6 +373,26 @@ export const downloadFile = (url: string, fileName: string) => {
  */
 export type AuthType = 'vocespace' | 'space' | 'c_s' | 'other' | string;
 
+export interface ChildRoomEnter {
+  space: string;
+  room: string;
+  roomOwner: string;
+  /**
+   * 平台用户信息, 该用户可能曾经登陆过该空间
+   */
+  platUser?: PlatformUser;
+}
+
+export const encodeChildRoomEnter = (space: string, room: string, roomOwner: string): string => {
+  return encodeURIComponent(
+    JSON.stringify({
+      space,
+      room,
+      roomOwner,
+    } as ChildRoomEnter),
+  );
+};
+
 /**
  * VoceSpace SearchParams 搜索参数类型
  *
@@ -406,6 +426,10 @@ export interface SearchParams {
    * 外部化子房间名称，用户邀请他人时使用
    */
   room?: RoomType;
+  /**
+   * 用户通过内部用户生成的邀请链接进入指定space的某个子房间时使用
+   */
+  childRoomEnter?: ChildRoomEnter | string;
 }
 
 /**
@@ -421,25 +445,31 @@ export type RoomType = '$empty' | string | '$space';
  * IdentityType 用户身份类型
  * - assistant: 客服人员
  * - customer: 顾客
- * - other: 其他身份
  * - owner: 空间所有者
  * - manager: 空间管理员
  * - participant: 空间参与者
  * - guest: 访客
  *
- * 目前对assistant和customer的已确定进行特殊处理，后续可根据需要扩展
+ * 处理
+ * - assistant: auth = c_s 时 客服人员的身份，拥有侧边栏房间管理无AI功能
+ * - customer: auth = c_s 时 顾客的身份，只有加入房间功能无侧边栏和AI功能
+ * - owner = space owner, 拥有所有权限
+ * - manager = space manager, 拥有大部分权限
+ * - participant = space participant, 普通参与者权限
+ * - guest = space guest, 访客权限，受限较多
+ *
+ * 没有auth时默认为guest身份
+ * participant属于通过平台接入的普通用户，没有特殊权限
+ * guest属于未通过平台接入的访客，权限受限较多
+ * manager相当于被owner授予权限的participant，guest身份无法被授予权限
+ * 因此manager，owner，participant三种身份必须通过平台接入
+ *
+ * guest虽然可以通过客户端创建一个空间，变成空间的owner但是依然无法用侧边栏和AI功能，只能使用基础的音视频功能
  */
-export type IdentityType =
-  | 'assistant'
-  | 'customer'
-  | 'other'
-  | 'owner'
-  | 'manager'
-  | 'participant'
-  | 'guest';
+export type IdentityType = 'assistant' | 'customer' | 'owner' | 'manager' | 'participant' | 'guest';
 
 /**
- * TokenResult 用户Token解析结果，当前仅用于sohive接入，后续可扩展
+ * TokenResult 用户Token解析结果
  */
 export interface TokenResult {
   /**
@@ -495,6 +525,51 @@ export interface TokenResult {
 export interface PlatformUser extends TokenResult {
   auth: AuthType;
 }
+
+/**
+ * 拆解PlatformUser为TokenResult和AuthType
+ * @param platUser
+ */
+export const splitPlatformUser = (
+  platUser: PlatformUser,
+): {
+  tokenResult: TokenResult;
+  auth: AuthType;
+} => {
+  return {
+    auth: platUser.auth,
+    tokenResult: {
+      id: platUser.id,
+      username: platUser.username,
+      avatar: platUser.avatar,
+      space: platUser.space,
+      room: platUser.room,
+      identity: platUser.identity,
+      preJoin: platUser.preJoin,
+      iat: platUser.iat,
+      exp: platUser.exp,
+    },
+  };
+};
+
+/**
+ * 生成默认的TokenResult对象, 为guest
+ */
+export const DEFAULT_TOKEN_RESULT = (
+  space: string,
+  username: string,
+  room?: string,
+): TokenResult => {
+  return {
+    id: generateBasicIdentity(username, space),
+    username,
+    space,
+    identity: 'guest',
+    room,
+    iat: Math.floor(Date.now() / 1000),
+    exp: Math.floor(Date.now() / 1000) + 3600 * 24 * 15,
+  };
+};
 
 /**
  * 校验TokenResult是否合法，不可省略必要字段

@@ -29,10 +29,12 @@ import {
   transOrSetOwnerManager,
   handleWorkMode,
   enterRoom,
+  enterSpaceRoomFromLink,
 } from './space';
 
 export const api = {
   // ---- space api --------
+  enterSpaceRoomFromLink,
   enterRoom,
   joinSpace,
   updateSpaceInfo,

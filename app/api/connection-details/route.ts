@@ -10,6 +10,7 @@ import {
   verifyPlatformUser,
   verifyTokenResult,
 } from '@/lib/std';
+import { SpaceInfo } from '@/lib/std/space';
 
 const COOKIE_KEY = 'random-participant-postfix';
 
@@ -63,6 +64,7 @@ function getCookieExpirationTime(): string {
 
 const PlatformLogin = async (request: NextRequest, auth: AuthType) => {
   const token = request.nextUrl.searchParams.get('token');
+  const isFromServer = request.nextUrl.searchParams.get('fromServer');
   if (!token) {
     return new NextResponse('Missing required query parameter: token', { status: 400 });
   }
@@ -100,11 +102,19 @@ const PlatformLogin = async (request: NextRequest, auth: AuthType) => {
     )}&data=${encodeURIComponent(JSON.stringify(tokenRes))}`,
     base,
   );
-  return NextResponse.redirect(redirectUrl, {
-    headers: {
-      'Set-Cookie': `${COOKIE_KEY}=${randomParticipantPostfix}; Path=/; HttpOnly; SameSite=Strict; Secure; Expires=${getCookieExpirationTime()}`,
-    },
-  });
+  if (isFromServer === 'true') {
+    // 来自后端的请求，直接返回连接详情JSON,让前端处理重定向
+    return NextResponse.json({
+      redirectUrl: redirectUrl.toString(),
+      cookie: `${COOKIE_KEY}=${randomParticipantPostfix}; Path=/; HttpOnly; SameSite=Strict; Secure; Expires=${getCookieExpirationTime()}`,
+    });
+  } else {
+    return NextResponse.redirect(redirectUrl, {
+      headers: {
+        'Set-Cookie': `${COOKIE_KEY}=${randomParticipantPostfix}; Path=/; HttpOnly; SameSite=Strict; Secure; Expires=${getCookieExpirationTime()}`,
+      },
+    });
+  }
 };
 
 const generateData = async (

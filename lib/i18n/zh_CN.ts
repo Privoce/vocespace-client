@@ -243,6 +243,8 @@ export default {
       rename: '重命名',
       switch_privacy: '设为',
       active: '在线',
+      share: '分享',
+      share_room: '分享房间',
     },
     join: {
       title: '加入房间',
@@ -488,6 +490,9 @@ export default {
   },
   settings: {
     title: '设置',
+    auth: {
+      title: '权限',
+    },
     ai: {
       title: 'AI',
       desc: '配置AI分析服务的相关参数，以启用AI分析功能。',
@@ -551,7 +556,10 @@ export default {
           ultra: '极致',
         },
         allow_guest: {
-          title: '允许访客加入',
+          title: '访客权限',
+          allow: '无限制',
+          disable: '禁止访客加入',
+          link: '允许通过邀请链接加入私密房间',
           success: '修改访客加入设置成功',
           error: '设置当前空间访客加入失败',
         },

@@ -7,7 +7,7 @@ import { MessageInstance } from 'antd/es/message/interface';
 import { TransIfSystemStatus, UserStatus } from '@/lib/std';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '@/lib/api';
-import { SpaceInfo } from '@/lib/std/space';
+import { AllowGuest, SpaceInfo } from '@/lib/std/space';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
 import { DefineUserStatusResponse } from '@/lib/api/space';
@@ -42,7 +42,12 @@ export function GeneralSettings({
   const StateInputRef = useRef<InputRef>(null);
   useEffect(() => {
     setIsOwner(localParticipant.identity === spaceInfo.ownerId);
-    setState(TransIfSystemStatus(t, spaceInfo.participants[localParticipant.identity]?.status || UserStatus.Online));
+    setState(
+      TransIfSystemStatus(
+        t,
+        spaceInfo.participants[localParticipant.identity]?.status || UserStatus.Online,
+      ),
+    );
   }, [localParticipant.identity, spaceInfo]);
 
   // 当appendStatus为true时自动聚焦状态输入框
@@ -61,7 +66,7 @@ export function GeneralSettings({
     }
   };
 
-  const setSpaceAllowGuest = async (allowGuest: boolean) => {
+  const setSpaceAllowGuest = async (allowGuest: AllowGuest) => {
     const response = await api.allowGuest(space, allowGuest);
     if (response.ok) {
       messageApi.success(t('settings.general.conf.allow_guest.success'));
@@ -187,13 +192,24 @@ export function GeneralSettings({
             size="large"
             block
             value={allowGuest}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+            }}
             onChange={async (e) => {
               setAllowGuest(e.target.value);
               await setSpaceAllowGuest(e.target.value);
             }}
           >
-            <Radio.Button value={true}>{t('common.open')}</Radio.Button>
-            <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+            <Radio.Button value={'allow'}>
+              {t('settings.general.conf.allow_guest.allow')}
+            </Radio.Button>
+            <Radio.Button value={'link'}>
+              {t('settings.general.conf.allow_guest.link')}
+            </Radio.Button>
+            <Radio.Button value={'disable'}>
+              {t('settings.general.conf.allow_guest.disable')}
+            </Radio.Button>
           </Radio.Group>
         </>
       )}

@@ -46,7 +46,13 @@ import { WsJoinRoom, WsRemove, WsSender } from '@/lib/std/device';
 import { api } from '@/lib/api';
 import { UpdateRoomParam, UpdateRoomType } from '@/lib/api/channel';
 import { Room } from 'livekit-client';
-import { CreateSpaceError, isMobile as is_mobile, UserStatus } from '@/lib/std';
+import {
+  ChildRoomEnter,
+  CreateSpaceError,
+  encodeChildRoomEnter,
+  isMobile as is_mobile,
+  UserStatus,
+} from '@/lib/std';
 import { DEFAULT_DRAWER_PROP } from './drawer_tools';
 import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 import { audio } from '@/lib/audio';
@@ -109,6 +115,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
     const [roomJoinVis, setRoomJoinVis] = useState<number | null>(null);
     const [joinModalOpen, setJoinModalOpen] = useState(false);
     const [renameModalOpen, setRenameModalOpen] = useState(false);
+    const [shareRoomOpen, setShareRoomOpen] = useState(false);
     const [renameRoomName, setRenameRoomName] = useState('');
     const [joinParticipant, setJoinParticipant] = useState<{
       id: string;
@@ -504,6 +511,14 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
         onClick: () => {
           console.warn('rename', selectedRoom);
           setRenameModalOpen(true);
+        },
+      },
+      {
+        key: 'share',
+        label: t('channel.menu.share'),
+        disabled: authDisabled,
+        onClick: () => {
+          setShareRoomOpen(true);
         },
       },
       {
@@ -951,6 +966,37 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             }}
           ></Input>
         </Modal>
+
+        {selectedRoom && (
+          <Modal
+            open={shareRoomOpen}
+            title={t('channel.menu.share_room')}
+            onCancel={() => setShareRoomOpen(false)}
+            okText={t('recording.copy.title')}
+            cancelText={t('common.cancel')}
+            onOk={() => {
+              // 复制到剪贴板
+              navigator.clipboard.writeText(
+                `https://${config.serverUrl}/${space.name}?childRoomEnter=${encodeChildRoomEnter(
+                  space.name,
+                  selectedRoom.name,
+                  space.localParticipant.identity,
+                )}`,
+              );
+              messageApi.success({
+                content: t('common.copy.success'),
+              });
+            }}
+          >
+            <p>
+              {`https://${config.serverUrl}/${space.name}?childRoomEnter=${encodeChildRoomEnter(
+                space.name,
+                selectedRoom.name,
+                space.localParticipant.identity,
+              )}`}
+            </p>
+          </Modal>
+        )}
       </>
     );
 
