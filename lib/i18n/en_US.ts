@@ -1,7 +1,25 @@
 export default {
   api: {
     token: {
-      out_of_date: 'The token has expired. Please obtain a new one.',
+      out_of_date: 'Token has expired, please obtain a new one',
+    },
+    room: {
+      error: {
+        full_and_wait: 'All rooms are full, please wait a moment',
+        not_exist: 'Room does not exist or has been deleted',
+        invalid_identity_c_s:
+          'Invalid identity type, the user can only be an assistant or a customer',
+      },
+    },
+    auth: {
+      createRoom: 'Create room',
+      manageRoom: 'Manage room',
+      manageRole: 'Manage roles',
+      controlUser: 'Control user',
+      recording: 'Recording space',
+      save: 'Save changes',
+      saveFail: 'Save failed, please try again later',
+      saveSuccess: 'Save successful',
     },
   },
   common: {
@@ -562,9 +580,9 @@ export default {
         },
         allow_guest: {
           title: 'Guest Permission',
-          allow: "Allow guests to join",
-          disable: "Disable guest to join",
-          link: "Allow guest joining a private room with an invitation link",
+          allow: 'Allow guests to join',
+          disable: 'Disable guest to join',
+          link: 'Allow guest joining a private room with an invitation link',
           success: 'Guest join settings modified successfully',
           error: 'Failed to set guest access for the current space',
         },
