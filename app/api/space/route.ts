@@ -4,6 +4,7 @@ import {
   ChildRoomEnter,
   DEFAULT_TOKEN_RESULT,
   ERROR_CODE,
+  IdentityType,
   isUndefinedString,
   splitPlatformUser,
 } from '@/lib/std';
@@ -23,6 +24,9 @@ import {
   SpaceCountdown,
   SpaceTodo,
   DEFAULT_PARTICIPANT_WORK_CONF,
+  DEFAULT_SPACE_AUTH_CONF,
+  SpaceRBACConf,
+  handleIdentityType,
 } from '@/lib/std/space';
 import { RoomServiceClient } from 'livekit-server-sdk';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
@@ -76,6 +80,23 @@ if (enabled) {
     db,
   });
 }
+
+const exportRBAC = (uid: string, spaceInfo?: SpaceInfo, pidentity?: string): SpaceRBACConf => {
+  if (!spaceInfo) {
+    return DEFAULT_SPACE_AUTH_CONF.guest;
+  }
+
+  const targetParticipant = spaceInfo.participants[uid];
+
+  if (!targetParticipant) {
+    return DEFAULT_SPACE_AUTH_CONF.guest;
+  }
+  const identity = handleIdentityType(
+    (targetParticipant?.auth?.identity || pidentity || 'guest') as IdentityType,
+  );
+
+  return spaceInfo.auth[identity] || DEFAULT_SPACE_AUTH_CONF.guest;
+};
 
 class SpaceManager {
   // 空间 redis key 前缀
@@ -713,7 +734,7 @@ class SpaceManager {
                 todo: pData.appDatas.todo,
               };
             }
-
+            const isEmptySpace = Object.keys(spaceInfo.participants).length === 0;
             spaceInfo.participants[participantId] = {
               ...participant,
               name: pData.name,
@@ -727,6 +748,29 @@ class SpaceManager {
               appDatas,
               auth: pData.auth,
             };
+
+            // 设置auth，如果发现当前空间中没有人/空间ownerId就是当前用户，那必须把auth中的identity设置为owner
+            if (spaceInfo.ownerId === participantId || isEmptySpace) {
+              spaceInfo.participants[participantId].auth = {
+                identity: 'owner',
+                platform: pData.auth?.platform || 'other',
+              };
+            }
+
+            // 用户初始化完成之后通过RBAC获取权限，检查是否需要创建私人房间
+            const { createRoom } = exportRBAC(participantId, spaceInfo);
+            const roomName = `${spaceInfo.participants[participantId].name}'s Room`;
+            if (createRoom && !spaceInfo.children.find((c) => c.name === roomName)) {
+              const room = {
+                name: roomName,
+                isPrivate: true,
+                participants: [],
+                ownerId: participantId,
+              } as ChildRoom;
+
+              spaceInfo.children.push(room);
+            }
+
             return await this.setSpaceInfo(room, spaceInfo);
           }
         }

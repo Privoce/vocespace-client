@@ -320,12 +320,53 @@ export interface SpaceRBACConf {
   recording: boolean;
 }
 
+/**
+ * 专门为用户设计的快捷RBAC结构，便于直接使用
+ * 通过usePlatformUserInfo hook获取该结构用于各种组件权限判断和显示
+ */
+export interface SpaceAuthRBAC extends SpaceRBACConf {
+  /**
+   * 用户是否来自vocespace平台进行注册认证
+   * 来自vocespace平台的用户能够将AI分析结果和TODO List保存到vocespace平台的看板中
+   * 并且有个人主页可供查看和管理以及直接跳转，最低身份为participant而不是guest
+   */
+  fromVocespace: boolean;
+  auth: AuthType;
+  /**
+   * 是否显示侧边栏频道，只有guest和customer身份不显示侧边栏频道
+   */
+  showSideChannel: boolean;
+  /**
+   * 是否显示AI相关功能，只有customer和guest身份不显示AI相关功能
+   */
+  showAI: boolean;
+}
+
 export interface SpaceAuthConf {
   owner: SpaceRBACConf;
   manager: SpaceRBACConf;
   participant: SpaceRBACConf;
   guest: SpaceRBACConf;
 }
+
+export const handleIdentityType = (identity?: IdentityType): keyof SpaceAuthConf => {
+  if (!identity) return 'guest';
+  switch (identity) {
+    case 'owner':
+      return 'owner';
+    case 'manager':
+      return 'manager';
+    case 'participant':
+      return 'participant';
+    case 'assistant':
+      return 'manager';
+    case 'customer':
+      return 'guest';
+    case 'guest':
+    default:
+      return 'guest';
+  }
+};
 
 export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
   switch (role) {

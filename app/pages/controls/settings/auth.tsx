@@ -11,6 +11,8 @@ import { Room } from 'livekit-client';
 import { isSpaceManager } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
 import { api } from '@/lib/api';
+import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { WsBase } from '@/lib/std/device';
 
 type RolePerm = {
   key: string;
@@ -45,8 +47,7 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
     const checked = Boolean((changeableAuth as any)[roleKey]?.[field]);
     return (
       <Switch
-        checkedChildren={<CheckCircleTwoTone twoToneColor="#52c41a" />}
-        unCheckedChildren={<CloseCircleTwoTone twoToneColor="#ff4d4f" />}
+        style={{}}
         checked={checked}
         disabled={!isOwner}
         onChange={(val: boolean) => {
@@ -112,7 +113,7 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
     return [
       {
         key: 'owner',
-        role: 'owner',
+        role: 'Owner',
         createRoom: changeableAuth.owner.createRoom,
         manageRoom: changeableAuth.owner.manageRoom,
         manageRole: changeableAuth.owner.manageRole,
@@ -121,7 +122,7 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
       },
       {
         key: 'manager',
-        role: 'manager',
+        role: 'Manager',
         createRoom: changeableAuth.manager.createRoom,
         manageRoom: changeableAuth.manager.manageRoom,
         manageRole: changeableAuth.manager.manageRole,
@@ -130,7 +131,7 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
       },
       {
         key: 'participant',
-        role: 'participant',
+        role: 'Participant',
         createRoom: changeableAuth.participant.createRoom,
         manageRoom: changeableAuth.participant.manageRoom,
         manageRole: changeableAuth.participant.manageRole,
@@ -139,7 +140,7 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
       },
       {
         key: 'guest',
-        role: 'guest',
+        role: 'Guest',
         createRoom: changeableAuth.guest.createRoom,
         manageRoom: changeableAuth.guest.manageRoom,
         manageRole: changeableAuth.guest.manageRole,
@@ -159,6 +160,9 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
       const res = await api.updateAuthRBACConf(space.name, changeableAuth);
       if (!res.ok) throw new Error('save failed');
       messageApi.success(t('auth.saveSuccess'));
+      socket.emit('update_user_status', {
+        space: space.name,
+      } as WsBase);
     } catch (e) {
       console.error(e);
       messageApi.error(t('auth.saveFail'));

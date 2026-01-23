@@ -8,7 +8,7 @@ import styles from '@/styles/controls.module.scss';
 import { ControlType, WsBase, WsControlParticipant, WsInviteDevice, WsTo } from '@/lib/std/device';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { isSpaceManager, src } from '@/lib/std';
-import { usePlatformUserInfo } from '@/lib/hooks/platform';
+import { exportRBAC, usePlatformUserInfo } from '@/lib/hooks/platform';
 import { HomeOutlined } from '@ant-design/icons';
 
 export interface ControlRKeyMenuProps {
@@ -75,9 +75,12 @@ export function useControlRKeyMenu({
   // const isOwner = useMemo(() => {
   //   return spaceInfo.ownerId === space?.localParticipant.identity;
   // }, [spaceInfo.ownerId, space?.localParticipant.identity]);
-  const userAuth = useMemo(() => {
-    return isSpaceManager(spaceInfo, space?.localParticipant.identity || '');
+  const isOwner = useMemo(() => {
+    return isSpaceManager(spaceInfo, space?.localParticipant.identity || '').ty === 'Owner';
   }, [spaceInfo.ownerId, space?.localParticipant.identity]);
+  const { manageRole, controlUser } = useMemo(() => {
+    return exportRBAC(space?.localParticipant.identity || '', spaceInfo);
+  }, [space, spaceInfo]);
   const { platUser } = usePlatformUserInfo({
     space: space,
     uid: space?.localParticipant.identity!,
@@ -103,13 +106,12 @@ export function useControlRKeyMenu({
             screenBlur: blurScreen,
           });
         }
-        console.warn('handle self');
         socket.emit('update_user_status', {
           space: space.name,
         } as WsBase);
       }
     } else {
-      if (space?.localParticipant && selectedParticipant && userAuth.isManager) {
+      if (space?.localParticipant && selectedParticipant && manageRole) {
         let wsTo = {
           space: space.name,
           senderName: space.localParticipant.name,
@@ -336,7 +338,7 @@ export function useControlRKeyMenu({
               }}
             >
               <Slider
-                disabled={!userAuth.isManager}
+                disabled={!controlUser}
                 min={0.0}
                 max={100.0}
                 step={1.0}
@@ -352,7 +354,7 @@ export function useControlRKeyMenu({
             </div>
           </div>
         ),
-        disabled: !userAuth.isManager,
+        disabled: !controlUser,
       },
       {
         key: 'control.blur_video',
@@ -371,7 +373,7 @@ export function useControlRKeyMenu({
               }}
             >
               <Slider
-                disabled={!userAuth.isManager}
+                disabled={!controlUser}
                 min={0.0}
                 max={1.0}
                 step={0.05}
@@ -387,7 +389,7 @@ export function useControlRKeyMenu({
             </div>
           </div>
         ),
-        disabled: !userAuth.isManager,
+        disabled: !controlUser,
       },
       {
         key: 'control.blur_screen',
@@ -406,7 +408,7 @@ export function useControlRKeyMenu({
               }}
             >
               <Slider
-                disabled={!userAuth.isManager}
+                disabled={!controlUser}
                 min={0.0}
                 max={1.0}
                 step={0.05}
@@ -422,7 +424,7 @@ export function useControlRKeyMenu({
             </div>
           </div>
         ),
-        disabled: !userAuth.isManager,
+        disabled: !controlUser,
       },
     ];
 
@@ -434,13 +436,13 @@ export function useControlRKeyMenu({
         key: 'control.trans',
         label: (
           <span style={{ marginLeft: '8px' }}>
-            {userAuth.ty === 'Owner'
+            {isOwner
               ? t('more.participant.set.control.trans')
               : t('more.participant.set.control.trans_manager')}
           </span>
         ),
         icon: <SvgResource type="switch" svgSize={16} />,
-        disabled: !userAuth.isManager,
+        disabled: !manageRole,
       });
       managerItems.push({
         key: 'control.setManager',
@@ -452,11 +454,11 @@ export function useControlRKeyMenu({
           </span>
         ),
         icon: <SvgResource type="manager" svgSize={16} color="#FFAA33" />,
-        disabled: userAuth.ty !== 'Owner',
+        disabled: !isOwner,
       });
     }
 
-    const otherItems: MenuProps['items'] = userAuth.isManager
+    const otherItems: MenuProps['items'] = controlUser
       ? [
           {
             label: t('more.participant.set.control.title'),
@@ -472,7 +474,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="user" svgSize={16} />,
-                disabled: !userAuth.isManager,
+                disabled: !controlUser,
               },
               {
                 key: 'control.mute_audio',
@@ -482,7 +484,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="audio_close" svgSize={16} />,
-                disabled: !userAuth.isManager ? true : !isMicDisabled,
+                disabled: !controlUser ? true : !isMicDisabled,
               },
               {
                 key: 'control.mute_video',
@@ -492,7 +494,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="video_close" svgSize={16} />,
-                disabled: !userAuth.isManager ? true : !isCamDisabled,
+                disabled: !controlUser ? true : !isCamDisabled,
               },
               {
                 key: 'control.mute_screen',
@@ -502,7 +504,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="screen_close" svgSize={16} />,
-                disabled: !userAuth.isManager ? true : !isScreenShareDisabled,
+                disabled: !controlUser ? true : !isScreenShareDisabled,
               },
               ...controlItems,
             ],
@@ -520,7 +522,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="leave" svgSize={16} />,
-                disabled: !userAuth.isManager,
+                disabled: !controlUser,
               },
             ],
           },
@@ -574,13 +576,15 @@ export function useControlRKeyMenu({
   }, [
     isCamDisabled,
     isMicDisabled,
-    userAuth,
+    isOwner,
     isScreenShareDisabled,
     volume,
     blurVideo,
     blurScreen,
     spaceInfo,
     selectedParticipant,
+    manageRole,
+    controlUser,
   ]);
   // 处理自己的菜单点击事件 -------------------------------------------------------------
   const handleSelfOptClick: MenuProps['onClick'] = (e) => {
@@ -754,6 +758,7 @@ export function useControlRKeyMenu({
     handleSelfOptClick,
     handleOptClick,
     optOpen,
-    userAuth,
+    isOwner,
+    manageRole,
   };
 }

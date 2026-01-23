@@ -6,8 +6,26 @@
 'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ParticipantSettings, VOCESPACE_PLATFORM_USER } from '../std/space';
-import { AuthType, TokenResult, SearchParams, PlatformUser, verifyPlatformUser } from '../std';
+import {
+  DEFAULT_RBAC_CONF,
+  DEFAULT_SPACE_AUTH_CONF,
+  handleIdentityType,
+  ParticipantSettings,
+  SpaceAuthConf,
+  SpaceAuthRBAC,
+  SpaceInfo,
+  SpaceRBACConf,
+  VOCESPACE_PLATFORM_USER,
+} from '../std/space';
+import {
+  AuthType,
+  TokenResult,
+  SearchParams,
+  PlatformUser,
+  verifyPlatformUser,
+  isSpaceManager,
+  IdentityType,
+} from '../std';
 import equal from 'fast-deep-equal';
 import { ConnectionDetails } from '../types';
 import { MessageInstance } from 'antd/es/message/interface';
@@ -122,21 +140,39 @@ export function usePlatformUser({ searchParams, messageApi }: UsePlatformUserPro
   };
 }
 
+export const exportRBAC = (uid: string, spaceInfo?: SpaceInfo): SpaceRBACConf => {
+  if (!spaceInfo) {
+    return DEFAULT_SPACE_AUTH_CONF.guest;
+  }
+
+  const targetParticipant = spaceInfo.participants[uid];
+
+  if (!targetParticipant) {
+    return DEFAULT_SPACE_AUTH_CONF.guest;
+  }
+  const identity = handleIdentityType(
+    (targetParticipant?.auth?.identity || 'guest') as IdentityType,
+  );
+
+  return spaceInfo.auth[identity] || DEFAULT_SPACE_AUTH_CONF.guest;
+};
+
 /**
  * 这个hook只需要从localStorage中获取平台用户信息来处理数据
  * 常用在需要根据平台用户信息来决定一些UI显示与否的场景，这是一个纯客户端hook
  * @param param0
  */
 export const usePlatformUserInfo = ({
-  uid,
   space,
   onEnterRoom,
+  uid,
 }: {
   space?: Room;
-  uid: string;
+  uid?: string;
   onEnterRoom?: () => void;
 }) => {
   const platUser: PlatformUser | null = useMemo(() => {
+    if (!uid) return null;
     if (!space) return null;
     if (typeof window === 'undefined') return null;
     const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER);
@@ -148,16 +184,25 @@ export const usePlatformUserInfo = ({
     }
   }, [uid, space]);
 
-  const { isAuth, createRoom, isCustomer, showAI, showSelfPlatform } = useMemo(() => {
-    // 只有platUser是null时或者auth类型不是c_s才会创建房间
+  const { fromVocespace, auth, showSideChannel, showAI } = useMemo(() => {
+    if (!platUser || !uid || !space) {
+      return {
+        fromVocespace: false,
+        auth: 'other',
+        showSideChannel: false,
+        showAI: false,
+        ...DEFAULT_RBAC_CONF('guest'),
+      };
+    }
+
+    const identity = handleIdentityType(platUser.identity);
     return {
-      isAuth: platUser !== null && (platUser.auth === 'vocespace' || platUser.auth === 'space'),
-      createRoom: !platUser || platUser.auth !== 'c_s',
-      isCustomer: platUser?.auth === 'c_s' && platUser.identity === 'customer',
-      showAI: platUser?.auth !== 'c_s',
-      showSelfPlatform: platUser?.auth === 'vocespace',
+      fromVocespace: platUser.auth === 'vocespace',
+      auth: platUser.auth || 'other',
+      showSideChannel: !['guest', 'customer'].includes(identity),
+      showAI: !['guest', 'customer'].includes(identity),
     };
-  }, [platUser]);
+  }, [platUser, space]);
 
   /**
    * 自动进入某个房间的逻辑
@@ -191,7 +236,14 @@ export const usePlatformUserInfo = ({
     }
   }, [platUser, onEnterRoom, space]);
 
-  return { platUser, isAuth, createRoom, roomEnter, isCustomer, showAI, showSelfPlatform };
+  return {
+    platUser,
+    roomEnter,
+    fromVocespace,
+    auth,
+    showSideChannel,
+    showAI,
+  };
 };
 
 /**
