@@ -31,7 +31,7 @@
     "live2d-motionsync": "^0.0.4",
     "livekit-client": "2.9.3",
     "livekit-server-sdk": "2.10.1",
-    "next": "14.2.24",
+    "next": "14.2.35",
     "openai": "^6.7.0",
     "pixi-live2d-display": "^0.4.0",
     "pixi.js": "6.5.10",
