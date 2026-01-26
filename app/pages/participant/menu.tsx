@@ -220,74 +220,74 @@ export function useControlRKeyMenu({
               </div>
             ),
           },
-          {
-            key: 'control.blur_video',
-            label: (
-              <div>
-                <div className={styles.inline_flex}>
-                  <SvgResource type="blur" svgSize={16} />
-                  <span style={{ marginLeft: '8px' }}>
-                    {t('more.participant.set.control.blur.video')}
-                  </span>
-                </div>
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                  }}
-                >
-                  <Slider
-                    disabled={!isSelf}
-                    min={0.0}
-                    max={1.0}
-                    step={0.05}
-                    value={blurVideo}
-                    onChange={(e) => {
-                      setBlurVideo(e);
-                    }}
-                    onChangeComplete={(e) => {
-                      setBlurVideo(e);
-                      handleAdjustment('control.blur_video', true);
-                    }}
-                  ></Slider>
-                </div>
-              </div>
-            ),
-          },
-          {
-            key: 'control.blur_screen',
-            label: (
-              <div>
-                <div className={styles.inline_flex}>
-                  <SvgResource type="blur" svgSize={16} />
-                  <span style={{ marginLeft: '8px' }}>
-                    {t('more.participant.set.control.blur.screen')}
-                  </span>
-                </div>
-                <div
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    e.preventDefault();
-                  }}
-                >
-                  <Slider
-                    disabled={!isSelf}
-                    min={0.0}
-                    max={1.0}
-                    step={0.05}
-                    value={blurScreen}
-                    onChange={(e) => {
-                      setBlurScreen(e);
-                    }}
-                    onChangeComplete={(e) => {
-                      setBlurScreen(e);
-                      handleAdjustment('control.blur_screen', true);
-                    }}
-                  ></Slider>
-                </div>
-              </div>
-            ),
-          },
+          // {
+          //   key: 'control.blur_video',
+          //   label: (
+          //     <div>
+          //       <div className={styles.inline_flex}>
+          //         <SvgResource type="blur" svgSize={16} />
+          //         <span style={{ marginLeft: '8px' }}>
+          //           {t('more.participant.set.control.blur.video')}
+          //         </span>
+          //       </div>
+          //       <div
+          //         onClick={(e) => {
+          //           e.stopPropagation();
+          //           e.preventDefault();
+          //         }}
+          //       >
+          //         <Slider
+          //           disabled={!isSelf}
+          //           min={0.0}
+          //           max={1.0}
+          //           step={0.05}
+          //           value={blurVideo}
+          //           onChange={(e) => {
+          //             setBlurVideo(e);
+          //           }}
+          //           onChangeComplete={(e) => {
+          //             setBlurVideo(e);
+          //             handleAdjustment('control.blur_video', true);
+          //           }}
+          //         ></Slider>
+          //       </div>
+          //     </div>
+          //   ),
+          // },
+          // {
+          //   key: 'control.blur_screen',
+          //   label: (
+          //     <div>
+          //       <div className={styles.inline_flex}>
+          //         <SvgResource type="blur" svgSize={16} />
+          //         <span style={{ marginLeft: '8px' }}>
+          //           {t('more.participant.set.control.blur.screen')}
+          //         </span>
+          //       </div>
+          //       <div
+          //         onClick={(e) => {
+          //           e.stopPropagation();
+          //           e.preventDefault();
+          //         }}
+          //       >
+          //         <Slider
+          //           disabled={!isSelf}
+          //           min={0.0}
+          //           max={1.0}
+          //           step={0.05}
+          //           value={blurScreen}
+          //           onChange={(e) => {
+          //             setBlurScreen(e);
+          //           }}
+          //           onChangeComplete={(e) => {
+          //             setBlurScreen(e);
+          //             handleAdjustment('control.blur_screen', true);
+          //           }}
+          //         ></Slider>
+          //       </div>
+          //     </div>
+          //   ),
+          // },
         ],
       },
 
@@ -354,76 +354,76 @@ export function useControlRKeyMenu({
         ),
         disabled: !userAuth.isManager,
       },
-      {
-        key: 'control.blur_video',
-        label: (
-          <div>
-            <div className={styles.inline_flex}>
-              <SvgResource type="blur" svgSize={16} />
-              <span style={{ marginLeft: '8px' }}>
-                {t('more.participant.set.control.blur.video')}
-              </span>
-            </div>
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-              }}
-            >
-              <Slider
-                disabled={!userAuth.isManager}
-                min={0.0}
-                max={1.0}
-                step={0.05}
-                value={blurVideo}
-                onChange={(e) => {
-                  setBlurVideo(e);
-                }}
-                onChangeComplete={(e) => {
-                  setBlurVideo(e);
-                  handleAdjustment('control.blur_video');
-                }}
-              ></Slider>
-            </div>
-          </div>
-        ),
-        disabled: !userAuth.isManager,
-      },
-      {
-        key: 'control.blur_screen',
-        label: (
-          <div>
-            <div className={styles.inline_flex}>
-              <SvgResource type="blur" svgSize={16} />
-              <span style={{ marginLeft: '8px' }}>
-                {t('more.participant.set.control.blur.screen')}
-              </span>
-            </div>
-            <div
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-              }}
-            >
-              <Slider
-                disabled={!userAuth.isManager}
-                min={0.0}
-                max={1.0}
-                step={0.05}
-                value={blurScreen}
-                onChange={(e) => {
-                  setBlurScreen(e);
-                }}
-                onChangeComplete={(e) => {
-                  setBlurScreen(e);
-                  handleAdjustment('control.blur_screen');
-                }}
-              ></Slider>
-            </div>
-          </div>
-        ),
-        disabled: !userAuth.isManager,
-      },
+      // {
+      //   key: 'control.blur_video',
+      //   label: (
+      //     <div>
+      //       <div className={styles.inline_flex}>
+      //         <SvgResource type="blur" svgSize={16} />
+      //         <span style={{ marginLeft: '8px' }}>
+      //           {t('more.participant.set.control.blur.video')}
+      //         </span>
+      //       </div>
+      //       <div
+      //         onClick={(e) => {
+      //           e.stopPropagation();
+      //           e.preventDefault();
+      //         }}
+      //       >
+      //         <Slider
+      //           disabled={!userAuth.isManager}
+      //           min={0.0}
+      //           max={1.0}
+      //           step={0.05}
+      //           value={blurVideo}
+      //           onChange={(e) => {
+      //             setBlurVideo(e);
+      //           }}
+      //           onChangeComplete={(e) => {
+      //             setBlurVideo(e);
+      //             handleAdjustment('control.blur_video');
+      //           }}
+      //         ></Slider>
+      //       </div>
+      //     </div>
+      //   ),
+      //   disabled: !userAuth.isManager,
+      // },
+      // {
+      //   key: 'control.blur_screen',
+      //   label: (
+      //     <div>
+      //       <div className={styles.inline_flex}>
+      //         <SvgResource type="blur" svgSize={16} />
+      //         <span style={{ marginLeft: '8px' }}>
+      //           {t('more.participant.set.control.blur.screen')}
+      //         </span>
+      //       </div>
+      //       <div
+      //         onClick={(e) => {
+      //           e.stopPropagation();
+      //           e.preventDefault();
+      //         }}
+      //       >
+      //         <Slider
+      //           disabled={!userAuth.isManager}
+      //           min={0.0}
+      //           max={1.0}
+      //           step={0.05}
+      //           value={blurScreen}
+      //           onChange={(e) => {
+      //             setBlurScreen(e);
+      //           }}
+      //           onChangeComplete={(e) => {
+      //             setBlurScreen(e);
+      //             handleAdjustment('control.blur_screen');
+      //           }}
+      //         ></Slider>
+      //       </div>
+      //     </div>
+      //   ),
+      //   disabled: !userAuth.isManager,
+      // },
     ];
 
     // 如果selectParticipant是Owner，就不能转让管理员权限

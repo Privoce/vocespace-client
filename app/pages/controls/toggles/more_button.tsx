@@ -87,7 +87,7 @@ export function MoreButtonInner({
           </div>
         ),
         key: 'record',
-        icon: <SvgResource type="record" svgSize={16} color={isRecording ? '#FF0000' : '#fff'} />,
+        icon: <SvgResource type="record" svgSize={16} color={isRecording ? '#FF0000' : '#000'} />,
       },
       // 参与者管理功能
       {

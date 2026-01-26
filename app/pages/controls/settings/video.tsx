@@ -46,7 +46,7 @@ export function VideoSettings({
           <Radio.Button value={false}>{t('common.close')}</Radio.Button>
         </Radio.Group>
       </div>
-      <div className={styles.setting_box}>
+      {/* <div className={styles.setting_box}>
         <span>{t('settings.video.video_blur')}:</span>
         <Slider
           defaultValue={0.0}
@@ -79,7 +79,7 @@ export function VideoSettings({
             setScreenBlur(e);
           }}
         />
-      </div>
+      </div> */}
       {/* <div className={styles.setting_box}>
         <div style={{ marginBottom: '6px' }}>{t('settings.virtual.title')}:</div>
         <VirtualSettings ref={virtualSettingsRef} {...virtual}></VirtualSettings>

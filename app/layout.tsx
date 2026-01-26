@@ -9,11 +9,11 @@ import { ConfigProvider } from 'antd';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Voce Space | Self-hosted conference app',
+    default: 'Video Customer Service by SoHive',
     template: '%s',
   },
   description:
-    'Voce space is WebRTC project that gives you everything needed to build scalable and real-time audio and/or video experiences in your applications.',
+    'Deliver personalized customer experiences with drop-in video and shared sessions. No apps, no code—just better engagement and sales outcomes. Engage customers in virtual communities with drop-in video chats, live sessions, and shared experiences. No code or apps—just seamless engagement. 24/7 drop-in video, live chat, and shared sessions in one no-code platform. Attract prospects and drive customer engagement with zero app installs.',
   icons: {
     icon: {
       rel: 'icon',

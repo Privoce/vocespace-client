@@ -399,7 +399,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
             <Button
               shape="circle"
               style={{ background: 'transparent', border: 'none', marginRight: 12 }}
-              onClick={async () =>await openLocalFileSystem()}
+              onClick={async () => await openLocalFileSystem()}
             >
               <FolderOpenOutlined style={{ fontSize: 18, color: '#fff' }}></FolderOpenOutlined>
             </Button>
@@ -412,7 +412,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
               onCompositionStart={() => setIsComposing(true)}
               onCompositionEnd={() => setIsComposing(false)}
               onKeyDown={handleKeyDown}
-              style={{ paddingRight: 0, backgroundColor: '#333' }}
+              style={{ paddingRight: 0 }}
             />
           </div>
           <Button style={{ border: 'none' }} type="primary" onClick={sendMsg}>

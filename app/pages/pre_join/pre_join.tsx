@@ -425,7 +425,7 @@ export function PreJoin({
               />
             </div>
           </div>
-          <div className={styles.view__controls__group_volume}>
+          {/* <div className={styles.view__controls__group_volume}>
             <div className={styles.view__controls__group_volume__header}>
               <div className={styles.view__controls__group_volume__header__left}>
                 <SvgResource type="video" svgSize={18}></SvgResource>
@@ -444,7 +444,7 @@ export function PreJoin({
                 setDevice({ ...device, blur: e });
               }}
             ></Slider>
-          </div>
+          </div> */}
           {showLoginBtn && <LoginButtons space={space}></LoginButtons>}
           <Input
             ref={inputRef}
