@@ -5,10 +5,10 @@ export default {
     },
     room: {
       error: {
-        full_and_wait: 'All rooms are full, please wait a moment',
+        full_and_wait: 'All rooms are full, please wait a moment', //flag
         not_exist: 'Room does not exist or has been deleted',
         invalid_identity_c_s:
-          'Invalid identity type, the user can only be an assistant or a customer',
+          'Invalid identity type, the user can only be an assistant or a customer', //flag
       },
     },
     auth: {
@@ -25,7 +25,7 @@ export default {
   common: {
     full_screen: 'Full Screen',
     guest: {
-      not_allow: 'Sorry, the current space does not allow guests to join. Please Login!',
+      not_allow: 'Sorry, the current space does not allow guests to join without signing in. Please log in or sign up to continue.', 
     },
     confirm: 'Confirm',
     cancel: 'Cancel',
@@ -38,7 +38,7 @@ export default {
     unknown: 'Unknown',
     loading: 'Loading...',
     no_data: 'No data available',
-    no_more: 'No more data',
+    no_more: 'No more data', //flag
     demo: 'New Space',
     custom: 'Enter Space Name',
     start_metting: 'Join',
@@ -59,34 +59,34 @@ export default {
       screen: 'Screen',
     },
     chat: 'Chat',
-    chat_placeholder: 'Please enter a message',
+    chat_placeholder: 'Click here to start typing your message to the current room',
     chat_drag_file_here: 'Drag file here',
     files: 'Files',
     upload: 'Upload',
     send: 'Send',
     sending: 'Sending',
-    send_file_or: 'Do you want to send this file?',
+    send_file_or: 'Please confirm you would like to share the selected file with all users currently in this room.',
     leave: 'Leave',
     share_screen: 'Share Screen',
-    stop_share: 'Stop Share Screen',
-    wave_msg: 'sent you a reminder!',
+    stop_share: 'Stop Screen Share',
+    wave_msg: 'sent you a reminder!', //flag
     full_user:
-      'The room user has exceeded thene limit and cannot join. You can join other rooms or inform the builder to upgrade your license to obtain more user slots.',
+      'Sorry, the room you have tried to join is currently full.',
     open: 'ON',
     close: 'OFF',
     high_quality: 'Lossless mode',
     high_quality_desc:
-      'When enabled, video, audio, and screen sharing will be transmitted at a fixed resolution and higher quality, but may increase bandwidth usage and latency.',
+      'When enabled, video, audio, and screen sharing will be transmitted at a fixed resolution and higher quality. This mode may increase bandwidth usage and latency.',
     socket_reconnect: 'Reconnecting...',
     create_own_space: 'Create your own VoceSpace',
     create_space: {
       jump: 'Jump to your Vocespace?',
-      success: 'Create space successfully',
+      success: 'Space created successfully',
       error: {
-        unknown: 'Create space failed, please try again later or create manually',
-        param: 'Required parameters missing, space creation failed',
+        unknown: 'Space creation failed. Please try again later or create manually.',
+        param: 'Space creation failed. Some required parameters were missing.',
         exist:
-          'The space already exists. Please check whether it has been created or manually create it to access it',
+          'The Space you have tried to create already exists. Please check whether it has been created or manually create it to access it.', //flag
       },
       ok: 'Jump',
       cancel: 'Cancel',
@@ -98,26 +98,26 @@ export default {
     },
   },
   work: {
-    title: 'Work Mode',
-    start: 'Start Working',
-    close: 'End Work',
-    desc: 'After enabling work mode, the system will request you to enable screen sharing, apply work settings, and use AI to analyze and record work based on to-do items, helping you better manage your work.',
-    use_ai: 'Enable AI Analysis',
+    title: 'Worklog',
+    start: 'Start Worklog',
+    close: 'End Worklog',
+    desc: 'Worklog lets you automatically log your work activity based on a screen you choose to share. You have full control over what you share.',
+    use_ai: 'Enable AI Work Summary',
     sync: 'Synchronize Configuration',
     sync_desc:
-      'As an administrator/host, you can synchronize the following settings to all members who have enabled work mode.',
+      'As an administrator/host, you can synchronize the following settings to all members who have enabled Worklog.', //flag
     save: {
-      success: 'Work mode settings saved successfully',
-      error: 'Work mode settings saved failed, please try again later.',
+      success: 'Worklog settings saved successfully',
+      error: 'Worklog settings save failed, please try again later.',
     },
     mode: {
       start: {
-        success: 'Work mode enabled',
-        error: 'Failed to enable work mode, please try again later.',
+        success: 'Worklog enabled',
+        error: 'Failed to enable worklog, please try again later.',
       },
       stop: {
-        success: 'Work mode disabled',
-        error: 'Failed to disable work mode, please try again later.',
+        success: 'Worklog disabled',
+        error: 'Failed to disable worklog, please try again later.', //flag
       },
     },
   },
@@ -125,20 +125,20 @@ export default {
     cut: {
       blur: {
         title: 'Screenshot Blur',
-        desc: 'Sets the final display blur level of AI analysis screenshots. The blur level does not affect AI analysis and is only applied to screenshots saved in the cloud and viewed by others.',
+        desc: 'You can blur worklog screenshots. Blur does not affect AI summaries. Blur is only applied to screenshots saved in the cloud and viewed by others.',
       },
       time: {
         start: 'Start Time',
         duration: 'Duration (minutes)',
       },
       extraction: {
-        title: 'Extraction granularity',
-        desc: 'Sets the extraction granularity of AI analysis. The higher the granularity, the more detailed the extracted information. For non-professional scenarios or users who do not require overly detailed information, medium or easy can be selected.',
-        easy: 'Easy',
+        title: 'Summaries Level of Detail',
+        desc: 'You can set how detailed you want AI summaries to be.',
+        easy: 'High-level',
         medium: 'Medium',
-        max: 'Max',
+        max: 'Max Detail',
       },
-      report: 'AI Analysis Report',
+      report: 'AI Analysis Report', //flag this section 141-175, need to confirm verbage for AI "analysis" vs summary vs worklog vs report
       start: 'Start Analysis',
       stop: 'Stop Analysis',
       empty:
@@ -176,74 +176,74 @@ export default {
       },
       download: 'Download Markdown report',
       download_content:
-        'Preparing report content for you, this process will take approximately 30 seconds, please wait patiently and do not close the current page.',
+        'Preparing your report. This process can take up to a minute. Closing the current page will cancel the process.', //flag - closing or refreshing, or just closing?
       reload: 'Update report',
     },
   },
   login: {
     following: 'Login using the following method',
     out: 'Log out',
-    anon: 'Anonymous',
+    anon: 'Anonymous', //flag
     guest: 'Join as a guest',
   },
   reaction: {
-    title: 'Reaction',
+    title: 'Reaction', //flag - where is this?
   },
   recording: {
-    title: 'Recording Record',
-    empty: 'No recording record yet',
-    fresh: 'Refresh',
+    title: 'Saved Recordings',
+    empty: 'No recordings saved yet',
+    fresh: 'Refresh list',
     search: {
-      success: 'Successfully searched for recording files',
+      success: 'Successfully searched for recording files', //flag maybe Found the following files, cant see in UI where to run search
       error:
-        'No recording files found. Please check if the room name is correct. The room may not have any recorded video files or may have been deleted.',
+        'No recording files found. Please check if the room name is correct. The room may not have any recorded video files, or it may have been deleted.',
     },
     try_s3: {
-      unavailable: 'The S3 service is not configured or the environment variables are not set',
-      init: 'Successfully retrieved the S3 service environment variables',
-      connected: 'Connected to the S3 service',
+      unavailable: 'The storage service is not configured or the environment variables are not set',
+      init: 'Successfully retrieved the simple storage service environment variables',
+      connected: 'Connected to the storage service',
       connect_error:
-        'Unable to connect to the S3 service. You may be accessing a local service. Please check the configuration or contact the administrator.',
-      connecting: 'Connecting to the S3 service...',
+        'Unable to connect to the storage service. You may be accessing a local service. Please check the configuration or contact the administrator.',
+      connecting: 'Connecting to the storage service...',
       enving: 'Getting environment variables...',
-      unconnect: 'Unable to connect to the S3 service',
+      unconnect: 'Unable to connect to the storage service',
     },
     copy: {
       title: 'Copy Link',
-      success: 'Download link copied to clipboard',
-      error: 'Copy link failed, please copy manually',
+      success: 'Link successfully copied to clipboard',
+      error: 'Failed to copy link, please copy manually',
     },
     get_download_link: {
-      success: 'Get download link successfully',
-      error: 'Get download link failed, please try again later',
+      success: 'Successfully got download link', //flag need to see context
+      error: 'Failed to get download link, please try again later',
     },
     delete: {
       title: 'Delete',
       confirm: {
-        title: 'Confirm to delete',
+        title: 'Confirm deletion',
         content: [
-          'Are you sure you want to delete the recording file',
-          '? This operation cannot be undone.',
+          'Are you sure you want to delete the recording file?', //flag - selected files or file(s) or file
+          'Deleted files cannot be recovered.',
         ],
         ok: 'Delete',
         cancel: 'Cancel',
       },
       success: 'Deleted successfully',
-      error: 'Delete failed, please try again later',
+      error: 'Deletion failed, please try again later',
     },
     download: {
       title: 'Download',
       success: 'Download link successfully obtained, file downloading...',
       error:
-        'Download link failed to obtain, please try again later or contact the administrator to download',
+        'Failed to obtain download link, please try again later or contact the space administrator',
     },
     table: {
       file: 'File name',
-      opt: 'Operation',
+      opt: 'Operation', //flag
       size: 'File size',
       last_modified: 'Last modified',
       ty: 'Type',
-      ty_json: 'Record file',
+      ty_json: 'Record file', //flag
       ty_video: 'Video file',
     },
     pagation: {
@@ -268,10 +268,10 @@ export default {
     },
     join: {
       title: 'Join Room',
-      success: 'Join room successfully',
+      success: 'Joined room successfully',
     },
     delete: {
-      success: 'Delete room successfully',
+      success: 'Deleted room successfully',
       error: 'Failed to delete room, please try again later. ',
       remain:
         'There are still members in the room and it cannot be deleted. Please notify all members to leave the room first.',
@@ -282,14 +282,14 @@ export default {
       empty_name: 'Room name cannot be empty',
     },
     leave: {
-      success: 'Leave room, return to Space successfully',
+      success: 'Left room, returned to lobby successfully',
       error: 'Failed to leave room, please try again later. ',
     },
     modal: {
       title: 'Create a room',
       desc: [
-        'After creating a room, you can invite other participants to join the room. Rooms can be used for specific discussions or activities.',
-        'In a room, the Space is still visible, and you can return to the Space at any time to communicate. For participants in the Space, they cannot hear the discussion content of the room, but they can see the existence of the room.',
+        'Rooms are places to meet, host activities, or work on your own. Like setting up at a coffee shop, library, or coworking space. Anybody can join a public room. Users need permission to join private rooms.',
+        'Signed-in users can see rooms in the space. You can only hear the room you are currently in. Guests cannot see anything outside the room they are in.', //flag need to understand visibility differences across permission levels
       ],
       placeholder: 'Please enter the room name',
       cancel: 'Cancel',
@@ -298,27 +298,27 @@ export default {
         title: 'Privacy',
         public: {
           title: 'Public',
-          desc: 'Public rooms, any participant in the space can join freely, room permissions are loose, suitable for open discussions.',
+          desc: 'Public rooms: Any participant in the space can join freely. Room permissions are loose. Suitable for open discussions.',
         },
         private: {
           title: 'Private',
-          desc: 'Private rooms, room permissions are completely controlled by the owner, only with the consent of the room owner can join, suitable for discussions that require privacy protection.',
+          desc: 'Private rooms: Joining requires permission from the room owner. Room permissions are completely controlled by the owner. Suitable for private meetings and events.',
         },
         success: 'Privacy switch successful, currently is',
       },
       join: {
         title: 'Request to join the room',
-        want: 'Want to join the room, do you agree? ',
-        ok: 'Agree',
-        cancel: 'Reject',
+        want: 'wants to join the room. May they enter?', //flag - what happens when multiple people try to join at the same time? do we have a queue? Admit All button?
+        ok: 'Yes',
+        cancel: 'No',
         missing_data:
-          'Joining data is not available. If you see this error, please contact the development team. ',
-        reject: 'Sorry! You are rejected to join the room. ',
-        missing_owner: 'The room owner is currently offline and cannot process your request.',
+          'Joining data is not available. If you see this error, please contact the space administrator.',
+        reject: 'The door will not budge.', //flag Space admins should be able to set custom responses to room accept and deny
+        missing_owner: 'The room owner is currently offline and cannot process your request.', //flag I don't see this notice appear when I try to join empty rooms
       },
       rename: {
         title: 'Rename room',
-        desc: 'Please enter a new room name. The room name can be modified at any time. But it cannot be the same as other existing room names. ',
+        desc: 'Please enter a new room name. The room name can be modified at any time. Two rooms in a space cannot have the same name.',
         placeholder: 'Please enter a new room name',
         ok: 'Rename',
         cancel: 'Cancel',
@@ -336,7 +336,7 @@ export default {
   more: {
     title: 'More',
     channel: 'Channel',
-    platform: 'Homepage',
+    platform: 'Profile Page',
     ai: {
       cut: 'AI Analysis',
       desc: "Timed screenshots and AI analysis help you summarize your space's content and generate reports.",
@@ -346,26 +346,26 @@ export default {
       raise: {
         cancel: 'Cancel Raise Hand',
         title: 'Raise Hand',
-        receive: 'raised hand, please handle it!',
+        receive: 'raised their hand',
         handle: {
-          title: 'Handling Request',
+          title: 'Handling Request', //flag - this feature can probably be deleted. its sufficient to simply notify room owners of raised hands
           accept: 'Allow',
           accept_desc: 'Allow the user to speak and notify them that they can speak.',
-          reject: 'Reject',
+          reject: 'Decline',
           reject_desc:
-            "Reject the user's ability to speak, notify them, and cancel their raised hand status.",
-          rejected: 'Sorry, your request to speak has been rejected.',
-          accepted: 'You have been allowed to speak. Please begin your speech.',
+            "Decline the user's request to speak, notify them, and cancel their raised hand status.",
+          rejected: 'Sorry, your request to speak has been declined.',
+          accepted: 'Your raised hand has been called on. Please begin speaking.',
         },
       },
-      upload: {
+      upload: { //flag - what it this?
         to_space: 'Upload application to space',
         history: 'Upload history',
         success: 'Application upload successful',
         error: 'Application upload failed. Please try again later.',
       },
       tab: {
-        self: 'self',
+        self: 'self', //flag ?
         no_auth: 'This user does not have read/write permissions enabled',
       },
       settings: {
@@ -404,16 +404,16 @@ export default {
         },
       },
       todo: {
-        title: 'Todo',
+        title: 'To-Do',
         add: 'Add task',
-        placeholder: 'Please enter todo',
+        placeholder: 'Please enter to-do',
         empty: 'No tasks available, please create new tasks below',
         create: 'Create todo',
-        empty_value: 'Todo cannot be empty',
-        delete: 'Todo deleted successfully',
+        empty_value: 'To-do cannot be empty',
+        delete: 'To-do deleted successfully',
         undone: 'Undone',
         done: 'Done',
-        unexport: 'Current todo is empty, cannot export',
+        unexport: 'Current to-do is empty, cannot export',
         complete: 'Completed Tasks',
         together: {
           title: 'Team Status',
@@ -436,7 +436,7 @@ export default {
       confirm_request: 'Request recording',
       cancel: 'Cancel',
       download_msg:
-        'The recording is complete and is being transferred to the cloud for storage. You can access the records of the current service to download it. ',
+        'The recording is complete and is being transferred to cloud storage. You can access saved recordings in Settings.',
       download: 'Download recording',
       to_download: 'Download Page',
     },
@@ -450,7 +450,7 @@ export default {
       invite: {
         title: 'Invite Participants',
         web: 'in Browser',
-        add: 'add into VoceSpace Room',
+        add: 'add into VoceSpace room',
         texts: [
           "$user invites you to join [$space]'s VoceSpace",
           "Please click or copy the following link and join [$space]'s VoceSpace in browser",
@@ -465,12 +465,12 @@ export default {
           title: 'Participant Invite',
           wave: 'Send a Reminder',
           open: {
-            video: 'Invite to Enable Camera',
-            audio: 'Invite to Enable Microphone',
+            video: 'Invite to Turn On Camera',
+            audio: 'Invite to Unmute',
             share: 'Invite to Share Screen',
           },
           close: {
-            video: 'Invite to Disable Camera',
+            video: 'Invite to Disable Camera', //flag - if this is an admin action, "invite to" should be deleted. is it just a request?
             audio: 'Invite to Disable Microphone',
             share: 'Invite to Stop Sharing Screen',
           },
@@ -478,9 +478,9 @@ export default {
         control: {
           title: 'Participant Control',
           trans: 'Transfer Room Host',
-          trans_manager: 'Transfer Manager',
-          set_manager: 'Set Manager',
-          remove_manager: 'Remove Manager',
+          trans_manager: 'Transfer Manager Role',
+          set_manager: 'Grant Manager Permissions',
+          remove_manager: 'Remove Manager Permissions',
           change_name: 'Change Name',
           mute: {
             audio: 'Mute Microphone',
@@ -489,12 +489,12 @@ export default {
           },
           volume: 'Volume Adjustment',
           blur: {
-            video: 'Video Blur',
-            screen: 'Screen Blur',
+            video: 'Blur Camera Video',
+            screen: 'Blur Shared Screen',
           },
         },
         safe: {
-          title: 'Safe',
+          title: 'Admin',
           remove: {
             title: 'Remove member',
             desc: 'Are you sure you want to remove this member? ',
@@ -502,9 +502,9 @@ export default {
             cancel: 'Cancel',
           },
           leave: {
-            title: 'Leave VoceSpace',
+            title: 'Leave VoceSpace', //flag - probably brand with $space
             desc: 'Are you sure you want to leave VoceSpace?',
-            confirm: 'Confirm to leave',
+            confirm: 'Yes',
             cancel: 'Cancel',
           },
         },
@@ -587,18 +587,18 @@ export default {
           error: 'Failed to set guest access for the current space',
         },
       },
-      status: {
+      status: { //flag is this feature enabled? i see status text edit field, but no preset options like below
         title: 'State',
         online: 'Online',
         online_desc: "Online, user's video and audio will work normally",
-        leisure: 'Leisure',
-        leisure_desc: "Leisure, user's video will be blurred, audio will not be adjusted",
+        leisure: 'On break',
+        leisure_desc: "On break, user's video will be blurred, audio will not be adjusted",
         busy: 'Busy',
         busy_desc: "Busy, user's video will be blurred, audio will be muted",
         offline: 'Away',
         offline_desc: "Away, user's video and audio will be turned off",
         working: 'Working',
-        working_desc: 'Dependency todo auto generates current work status',
+        working_desc: 'Dependency to-do auto generates current work status',
         define: {
           title: 'Custom state',
           name: 'State name',
@@ -641,7 +641,7 @@ export default {
       input: 'Please enter license',
       gift: {
         title: 'A chance to get a free upgrade! 🎁',
-        desc: 'Share your experience through blog posts or social media to get a chance to upgrade for free. Add WeChat to get: Privoce',
+        desc: 'Share your experience through blog posts or social media to get a chance to upgrade for free. Add WeChat to get: Privoce', //flag clarify ask
       },
       license_pro: 'VoceSpace Pro [$499/year]',
       license_custom: 'VoceSpace Custom',
@@ -651,8 +651,8 @@ export default {
       invalid: 'The certificate is invalid or expired. Please check if it is correct.',
       invalid_domain:
         'The current domain is not in the list of allowed domains for the certificate. Please contact the administrator to check the server domain configuration.',
-      default_license:
-        'To ensure your use, the current system has loaded a default certificate for you. The default certificate only supports temporary rooms with less than 5 people. If you need more user places, please purchase a professional certificate.',
+      default_license: //flag clarify, this is for free trial?
+        'To ensure your use, the current system has loaded a default certificate for you. The default certificate only supports temporary rooms with fewer than 5 people. If you would like to host more users, please purchase a professional certificate.',
       update_success: 'The certificate was updated successfully',
       circle_ip:
         'Your current IP address is a loopback address/private address, and we do not recommend purchasing a license for this address. Please purchase a license using a public IP address. If you need to purchase licenses and support services for private addresses, please contact WeChat: Privose.',
@@ -665,21 +665,21 @@ export default {
     },
     video: {
       title: 'Video',
-      video_blur: 'Video Blur',
-      screen_blur: 'Screen Blur',
-      device: 'Video Device',
+      video_blur: 'Camera Video Blur',
+      screen_blur: 'Shared Screen Blur',
+      device: 'Video Input Device',
     },
     virtual: {
       title: 'Video Preview',
       tab: {
-        model: 'Model',
-        background: 'Background',
+        model: 'Video Avatar',
+        background: 'Video Avatar Background',
       },
-      open: 'Enable Virtual Role',
-      model: 'Virtual Role Model',
-      background: 'Virtual Role Background',
+      open: 'Enable Video Avatar',
+      model: 'Selected Video Avatar',
+      background: 'Selected Video Avatar Background',
       none: 'None',
-      none_warning: 'Please select a virtual role model before comparing',
+      none_warning: 'Please select a video avatar before comparing',
     },
     about_us: {
       title: 'About Us',
@@ -703,7 +703,7 @@ export default {
   },
   msg: {
     info: {
-      title: 'Your cyber co-working space developed by Privoce',
+      title: 'Your virtual co-working space, developed by Privoce',
       contact: 'Contact',
       learn_more: 'Learn More',
       offical_web: 'official website',
@@ -712,7 +712,7 @@ export default {
       connect_with_server: 'Connect Voce Space with a custom server using Voce Space Server.',
       enabled_e2ee: 'End-to-end encryption enabled',
       enter_room: 'Please enter the space name or link',
-      virtual_loading: 'Loading virtual role, please wait...',
+      virtual_loading: 'Loading video avatar, please wait...',
       invite_device: 'Inviting you to enable:',
       remove_participant: 'You have been removed from the room by the room host',
       req_record: 'Request to start recording',
@@ -764,7 +764,7 @@ export default {
         permission: 'Failed to request permission.',
       },
       user: {
-        manager_limit: 'The number of managers has reached the limit, no more managers can be set.',
+        manager_limit: 'Manager seats are full. Please remove a manager to set a new one.',
         username: {
           change: 'Username changed failed',
           request: 'Failed to request username',
@@ -788,11 +788,11 @@ export default {
         permission: {
           how: 'How to enable permission?',
           changed_with_reload:
-            'After changing the permission, you may need to refresh the page for it to take effect.',
+            'After changing permission settings, you may need to refresh the page to take effect.',
           set_on_hand:
-            'If you previously denied permission, you may need to manually allow them in your browser settings.',
+            'If you previously denied or missed a browser permission request, you may need to manually allow them in your browser settings.',
           chrome_edge: [
-            'Click the lock icon to the left of the browser address bar',
+            'Click the little icon between the refresh button and the website URL in the upper left corner of your browser',
             'Select `Site Settings`',
             'Choose `Allow` in the `Camera` and `Microphone` dropdown menus',
             'Refresh the page',
@@ -824,8 +824,8 @@ export default {
     },
     success: {
       record: {
-        start: 'The room has successfully started recording',
-        stop: 'The room recording has been successfully stopped. The recording status will be removed after 10 seconds.',
+        start: 'The room has started recording', //flag unclear what exactly is being recorded - all screens? gallery view? view of the user who pressed record?
+        stop: 'The room recording has been stopped. The recording status will be removed after 10 seconds.', //flag why the 10s delay?
         copy: 'Recording link copied to clipboard',
       },
       device: {
@@ -842,7 +842,7 @@ export default {
         },
         lang: 'Language changed successfully',
         transfer: 'You have been successfully transferred',
-        set_manager: 'You have been set as a manager',
+        set_manager: 'You have been granted manager permissions',
         remove_manager: 'Your manager status has been removed',
       },
       file: {
@@ -901,8 +901,8 @@ export default {
         participant: 'User',
         state: 'Status',
         volume: 'Volume',
-        blur: 'Video Blur',
-        screen_blur: 'Screen Blur',
+        blur: 'Camera Video Blur',
+        screen_blur: 'Shared Screen Blur',
         is_auth: 'Authenticated',
         during: 'Online Duration',
       },
