@@ -22,11 +22,9 @@ import { SvgResource } from '../resources/svg';
 import styles from '@/styles/dashboard.module.scss';
 import { api } from '@/lib/api';
 import { ConfQulity, useRTCConf, useVoceSpaceConf } from '../pages/controls/settings/conf';
-import { RTCConf } from '@/lib/std/conf';
 import { ParticipantSettings, SpaceDateRecords, SpaceInfo, SpaceInfoMap } from '@/lib/std/space';
 import { useI18n } from '@/lib/i18n/i18n';
 import { LangSelect } from '../pages/controls/selects/lang_select';
-import { UserStatus } from '@/lib/std';
 import { usePlatformUserInfoCheap } from '@/lib/hooks/platform';
 
 const { Title } = Typography;
@@ -65,7 +63,7 @@ interface ParticipantTableData {
   volume: number;
   blur: number;
   screenBlur: number;
-  status: string;
+  status: boolean;
   isOwner: boolean;
   isRecording: boolean;
   virtualEnabled: boolean;
@@ -91,6 +89,7 @@ export default function Dashboard() {
   const [totalSpaces, setTotalSpaces] = useState(0);
   const [totalParticipants, setTotalParticipants] = useState(0);
   const [onlineParticipants, setOnlineParticipants] = useState(0);
+  const [authParticipants, setAuthParticipants] = useState(0);
   const [activeRecordings, setActiveRecordings] = useState(0);
   const [messageApi, contextHolder] = message.useMessage();
   const [openConf, setOpenConf] = useState(false);
@@ -111,20 +110,58 @@ export default function Dashboard() {
     });
     return grouped;
   }, [currentSpacesData]);
-  // 获取当前空间信息
-  const fetchCurrentSpaces = async () => {
+
+  // 统一获取所有数据（当前空间和历史数据）
+  const fetchAllData = async () => {
     setLoading(true);
     try {
-      const response = await api.allSpaceInfos();
-      if (response.ok) {
-        const spaceInfoMap: SpaceInfoMap = await response.json();
+      // 同时获取当前空间信息和历史记录
+      const [spaceResponse, historyResponse] = await Promise.all([
+        api.allSpaceInfos(),
+        api.historySpaceInfos(),
+      ]);
+
+      // 处理历史数据
+      let records: SpaceDateRecords | null = null;
+      if (historyResponse.ok) {
+        const result = await historyResponse.json();
+        records = result.records;
+      } else {
+        messageApi.error('获取历史房间数据失败');
+      }
+
+      // 构建历史时长映射 { spaceId: { participantName: totalDuration } }
+      const historicalDurations: { [spaceId: string]: { [name: string]: number } } = {};
+
+      if (records) {
+        Object.entries(records).forEach(([spaceId, timeRecords]) => {
+          historicalDurations[spaceId] = {};
+          Object.entries(timeRecords.participants).forEach(
+            ([participantName, participantRecords]) => {
+              let totalDuration = 0;
+              participantRecords.forEach((record) => {
+                const end = record.end || Date.now();
+                totalDuration += end - record.start;
+              });
+              historicalDurations[spaceId][participantName] = totalDuration;
+            },
+          );
+        });
+
+        // 处理历史数据和榜单
+        processHistoryData(records);
+      }
+
+      // 处理当前空间数据
+      if (spaceResponse.ok) {
+        const spaceInfoMap: SpaceInfoMap = await spaceResponse.json();
 
         const participantsData: ParticipantTableData[] = [];
         let roomCount = 0;
         let participantCount = 0;
         let recordingCount = 0;
         let onlineCount = 0;
-
+        let unAuthCount = 0;
         Object.entries(spaceInfoMap).forEach(([spaceId, spaceInfo]: [string, SpaceInfo]) => {
           if (spaceInfo.participants && Object.keys(spaceInfo.participants).length > 0) {
             roomCount++;
@@ -138,6 +175,21 @@ export default function Dashboard() {
                 if (participant.online) {
                   onlineCount++;
                 }
+
+                if (
+                  !participant.auth ||
+                  participant.auth?.identity === 'guest' ||
+                  participant.auth?.platform === 'other'
+                ) {
+                  unAuthCount++;
+                }
+
+                // 从历史记录中获取该用户的总时长
+                const historicalDuration = historicalDurations[spaceId]?.[participant.name] || 0;
+                const hours = Math.floor(historicalDuration / 3600000);
+                const minutes = Math.floor((historicalDuration % 3600000) / 60000);
+                const duringDisplay = `${hours}h ${minutes}m`;
+
                 participantsData.push({
                   key: `${spaceId}-${participantId}`,
                   spaceId,
@@ -146,11 +198,11 @@ export default function Dashboard() {
                   volume: participant.volume,
                   blur: participant.blur,
                   screenBlur: participant.screenBlur,
-                  status: participant.status,
+                  status: participant.online,
                   isOwner: spaceInfo.ownerId === participantId,
                   isRecording: spaceInfo.record?.active || false,
                   virtualEnabled: participant.virtual?.enabled || false,
-                  during: countDuring(participant.startAt),
+                  during: duringDisplay,
                   online: participant.online,
                   isAuth: usePlatformUserInfoCheap({ user: participant }).isAuth,
                 });
@@ -163,201 +215,179 @@ export default function Dashboard() {
         setTotalSpaces(roomCount);
         setTotalParticipants(participantCount);
         setOnlineParticipants(onlineCount);
+        setAuthParticipants(
+          participantCount - unAuthCount >= 0 ? participantCount - unAuthCount : 0,
+        );
         setActiveRecordings(recordingCount);
       }
     } catch (error) {
-      console.error('Failed to fetch current rooms:', error);
+      console.error('Failed to fetch data:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  // 获取历史房间数据
-  const fetchHistorySpaces = async () => {
-    const response = await api.historySpaceInfos();
-    if (!response.ok) {
-      messageApi.error('获取历史房间数据失败');
-      return;
-    } else {
-      const { records }: { records: SpaceDateRecords | null } = await response.json();
-      if (records) {
-        // 转为 HistorySpaceData 格式
-        const historyData: HistorySpaceData[] = [];
-        const dailyData: { [spaceId: string]: LeaderboardData[] } = {};
-        const weeklyData: { [spaceId: string]: LeaderboardData[] } = {};
-        const monthlyData: { [spaceId: string]: LeaderboardData[] } = {};
+  // 处理历史数据和榜单
+  const processHistoryData = (records: SpaceDateRecords) => {
+    // 转为 HistorySpaceData 格式
+    const historyData: HistorySpaceData[] = [];
+    const dailyData: { [spaceId: string]: LeaderboardData[] } = {};
+    const weeklyData: { [spaceId: string]: LeaderboardData[] } = {};
+    const monthlyData: { [spaceId: string]: LeaderboardData[] } = {};
 
-        const now = new Date();
-        const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-        const todayEnd = todayStart + 24 * 60 * 60 * 1000 - 1;
+    const now = new Date();
+    const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+    const todayEnd = todayStart + 24 * 60 * 60 * 1000 - 1;
 
-        const weekStart = new Date(
-          now.getFullYear(),
-          now.getMonth(),
-          now.getDate() - now.getDay(),
-        ).getTime();
-        const weekEnd = weekStart + 7 * 24 * 60 * 60 * 1000 - 1;
+    const weekStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate() - now.getDay(),
+    ).getTime();
+    const weekEnd = weekStart + 7 * 24 * 60 * 60 * 1000 - 1;
 
-        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-        const monthEnd = new Date(
-          now.getFullYear(),
-          now.getMonth() + 1,
-          0,
-          23,
-          59,
-          59,
-          999,
-        ).getTime();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999).getTime();
 
-        // 遍历records中的记录
-        for (const [spaceId, timeRecords] of Object.entries(records)) {
-          // 计算房间总使用时长和今日使用时长
-          let totalSpaceDuration = 0;
-          let todaySpaceDuration = 0;
+    // 遍历records中的记录
+    for (const [spaceId, timeRecords] of Object.entries(records)) {
+      // 计算房间总使用时长和今日使用时长
+      let totalSpaceDuration = 0;
+      let todaySpaceDuration = 0;
 
-          timeRecords.space.forEach((record) => {
-            const end = record.end || Date.now();
-            totalSpaceDuration += end - record.start;
+      timeRecords.space.forEach((record) => {
+        const end = record.end || Date.now();
+        totalSpaceDuration += end - record.start;
 
-            if (record.start >= todayStart && record.start <= todayEnd) {
-              if (end > todayEnd) {
-                todaySpaceDuration += todayEnd - record.start;
-              } else {
-                todaySpaceDuration += end - record.start;
-              }
-            }
-          });
-
-          historyData.push({
-            key: spaceId,
-            room: spaceId,
-            during: `${Math.floor(totalSpaceDuration / 3600000)}h ${Math.floor(
-              (totalSpaceDuration % 3600000) / 60000,
-            )}m`,
-            today: `${Math.floor(todaySpaceDuration / 3600000)}h ${Math.floor(
-              (todaySpaceDuration % 3600000) / 60000,
-            )}m`,
-          });
-
-          // 计算参与者榜单数据
-          const dailyParticipants: { [name: string]: { total: number; period: number } } = {};
-          const weeklyParticipants: { [name: string]: { total: number; period: number } } = {};
-          const monthlyParticipants: { [name: string]: { total: number; period: number } } = {};
-
-          // 处理参与者记录
-          Object.entries(timeRecords.participants).forEach(([participantName, records]) => {
-            let totalDuration = 0;
-            let dailyDuration = 0;
-            let weeklyDuration = 0;
-            let monthlyDuration = 0;
-
-            records.forEach((record) => {
-              const end = record.end || Date.now();
-              const duration = end - record.start;
-              totalDuration += duration;
-
-              // 计算日榜
-              if (record.start >= todayStart && record.start <= todayEnd) {
-                if (end > todayEnd) {
-                  dailyDuration += todayEnd - record.start;
-                } else {
-                  dailyDuration += duration;
-                }
-              }
-
-              // 计算周榜
-              if (record.start >= weekStart && record.start <= weekEnd) {
-                if (end > weekEnd) {
-                  weeklyDuration += weekEnd - record.start;
-                } else {
-                  weeklyDuration += duration;
-                }
-              }
-
-              // 计算月榜
-              if (record.start >= monthStart && record.start <= monthEnd) {
-                if (end > monthEnd) {
-                  monthlyDuration += monthEnd - record.start;
-                } else {
-                  monthlyDuration += duration;
-                }
-              }
-            });
-
-            if (totalDuration > 0) {
-              dailyParticipants[participantName] = { total: totalDuration, period: dailyDuration };
-              weeklyParticipants[participantName] = {
-                total: totalDuration,
-                period: weeklyDuration,
-              };
-              monthlyParticipants[participantName] = {
-                total: totalDuration,
-                period: monthlyDuration,
-              };
-            }
-          });
-
-          // 转换为LeaderboardData格式
-          const formatDuration = (ms: number) => {
-            const hours = Math.floor(ms / 3600000);
-            const minutes = Math.floor((ms % 3600000) / 60000);
-            return `${hours}h ${minutes}m`;
-          };
-
-          dailyData[spaceId] = Object.entries(dailyParticipants)
-            .map(([name, data]) => ({
-              key: `${spaceId}-${name}-daily`,
-              participantName: name,
-              spaceId,
-              totalDuration: data.total,
-              periodDuration: data.period,
-              totalDisplay: formatDuration(data.total),
-              periodDisplay: formatDuration(data.period),
-            }))
-            .sort((a, b) => b.periodDuration - a.periodDuration);
-
-          weeklyData[spaceId] = Object.entries(weeklyParticipants)
-            .map(([name, data]) => ({
-              key: `${spaceId}-${name}-weekly`,
-              participantName: name,
-              spaceId,
-              totalDuration: data.total,
-              periodDuration: data.period,
-              totalDisplay: formatDuration(data.total),
-              periodDisplay: formatDuration(data.period),
-            }))
-            .sort((a, b) => b.periodDuration - a.periodDuration);
-
-          monthlyData[spaceId] = Object.entries(monthlyParticipants)
-            .map(([name, data]) => ({
-              key: `${spaceId}-${name}-monthly`,
-              participantName: name,
-              spaceId,
-              totalDuration: data.total,
-              periodDuration: data.period,
-              totalDisplay: formatDuration(data.total),
-              periodDisplay: formatDuration(data.period),
-            }))
-            .sort((a, b) => b.periodDuration - a.periodDuration);
+        if (record.start >= todayStart && record.start <= todayEnd) {
+          if (end > todayEnd) {
+            todaySpaceDuration += todayEnd - record.start;
+          } else {
+            todaySpaceDuration += end - record.start;
+          }
         }
+      });
 
-        setHistorySpacesData(historyData);
-        setDailyLeaderboard(dailyData);
-        setWeeklyLeaderboard(weeklyData);
-        setMonthlyLeaderboard(monthlyData);
-      }
+      historyData.push({
+        key: spaceId,
+        room: spaceId,
+        during: `${Math.floor(totalSpaceDuration / 3600000)}h ${Math.floor(
+          (totalSpaceDuration % 3600000) / 60000,
+        )}m`,
+        today: `${Math.floor(todaySpaceDuration / 3600000)}h ${Math.floor(
+          (todaySpaceDuration % 3600000) / 60000,
+        )}m`,
+      });
+
+      // 计算参与者榜单数据
+      const dailyParticipants: { [name: string]: { total: number; period: number } } = {};
+      const weeklyParticipants: { [name: string]: { total: number; period: number } } = {};
+      const monthlyParticipants: { [name: string]: { total: number; period: number } } = {};
+
+      // 处理参与者记录
+      Object.entries(timeRecords.participants).forEach(([participantName, records]) => {
+        let totalDuration = 0;
+        let dailyDuration = 0;
+        let weeklyDuration = 0;
+        let monthlyDuration = 0;
+
+        records.forEach((record) => {
+          const end = record.end || Date.now();
+          const duration = end - record.start;
+          totalDuration += duration;
+
+          // 计算日榜 - 处理跨日的情况
+          const recordEnd = Math.min(end, todayEnd);
+          const recordStart = Math.max(record.start, todayStart);
+          if (recordStart <= todayEnd && recordEnd >= todayStart) {
+            dailyDuration += Math.max(0, recordEnd - recordStart);
+          }
+
+          // 计算周榜 - 处理跨周的情况
+          const weekRecordEnd = Math.min(end, weekEnd);
+          const weekRecordStart = Math.max(record.start, weekStart);
+          if (weekRecordStart <= weekEnd && weekRecordEnd >= weekStart) {
+            weeklyDuration += Math.max(0, weekRecordEnd - weekRecordStart);
+          }
+
+          // 计算月榜 - 处理跨月的情况
+          const monthRecordEnd = Math.min(end, monthEnd);
+          const monthRecordStart = Math.max(record.start, monthStart);
+          if (monthRecordStart <= monthEnd && monthRecordEnd >= monthStart) {
+            monthlyDuration += Math.max(0, monthRecordEnd - monthRecordStart);
+          }
+        });
+
+        if (totalDuration > 0) {
+          dailyParticipants[participantName] = { total: totalDuration, period: dailyDuration };
+          weeklyParticipants[participantName] = {
+            total: totalDuration,
+            period: weeklyDuration,
+          };
+          monthlyParticipants[participantName] = {
+            total: totalDuration,
+            period: monthlyDuration,
+          };
+        }
+      });
+
+      // 转换为LeaderboardData格式
+      const formatDuration = (ms: number) => {
+        const hours = Math.floor(ms / 3600000);
+        const minutes = Math.floor((ms % 3600000) / 60000);
+        const second = Math.floor((ms % 60000) / 1000);
+        return `${hours}h ${minutes}m ${second}s`;
+      };
+
+      dailyData[spaceId] = Object.entries(dailyParticipants)
+        .map(([name, data]) => ({
+          key: `${spaceId}-${name}-daily`,
+          participantName: name,
+          spaceId,
+          totalDuration: data.total,
+          periodDuration: data.period,
+          totalDisplay: formatDuration(data.total),
+          periodDisplay: formatDuration(data.period),
+        }))
+        .sort((a, b) => b.periodDuration - a.periodDuration);
+
+      weeklyData[spaceId] = Object.entries(weeklyParticipants)
+        .map(([name, data]) => ({
+          key: `${spaceId}-${name}-weekly`,
+          participantName: name,
+          spaceId,
+          totalDuration: data.total,
+          periodDuration: data.period,
+          totalDisplay: formatDuration(data.total),
+          periodDisplay: formatDuration(data.period),
+        }))
+        .sort((a, b) => b.periodDuration - a.periodDuration);
+
+      monthlyData[spaceId] = Object.entries(monthlyParticipants)
+        .map(([name, data]) => ({
+          key: `${spaceId}-${name}-monthly`,
+          participantName: name,
+          spaceId,
+          totalDuration: data.total,
+          periodDuration: data.period,
+          totalDisplay: formatDuration(data.total),
+          periodDisplay: formatDuration(data.period),
+        }))
+        .sort((a, b) => b.periodDuration - a.periodDuration);
     }
-  };
 
+    setHistorySpacesData(historyData);
+    setDailyLeaderboard(dailyData);
+    setWeeklyLeaderboard(weeklyData);
+    setMonthlyLeaderboard(monthlyData);
+  };
   useEffect(() => {
     getConf();
-    fetchCurrentSpaces();
-    fetchHistorySpaces();
+    fetchAllData();
 
     // 每120秒刷新一次数据
     const interval = setInterval(() => {
-      fetchCurrentSpaces();
-      fetchHistorySpaces();
+      fetchAllData();
     }, 120000);
 
     return () => clearInterval(interval);
@@ -385,7 +415,7 @@ export default function Dashboard() {
       dataIndex: 'status',
       key: 'status',
       width: 120,
-      render: (status: string) => <Tag color="blue">{status === UserStatus.Online ? 'Online' : status}</Tag>,
+      render: (status: boolean) => <Tag color="blue">{status ? 'Online' : 'Offline'}</Tag>,
     },
     {
       title: (
@@ -578,7 +608,7 @@ export default function Dashboard() {
             <Card>
               <Statistic
                 title={t('dashboard.count.platform')}
-                value={onlineParticipants}
+                value={authParticipants}
                 prefix={<SvgResource type="user" svgSize={16} color="#ffffff"></SvgResource>}
               />
             </Card>
@@ -587,7 +617,13 @@ export default function Dashboard() {
             <Card>
               <div style={{ marginBottom: '9px' }}>{t('dashboard.count.opt')}</div>
               <div style={{ display: 'inline-flex', gap: '8px' }}>
-                <Button type="primary" onClick={fetchCurrentSpaces} loading={loading}>
+                <Button
+                  type="primary"
+                  onClick={async () => {
+                    await fetchAllData();
+                  }}
+                  loading={loading}
+                >
                   {t('dashboard.count.refresh')}
                 </Button>
                 <Button

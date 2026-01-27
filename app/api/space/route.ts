@@ -723,6 +723,15 @@ class SpaceManager {
           );
         } else {
           if (init) {
+            // 用户重连或持久化房间用户重新上线，记录新的上线时间
+            await this.setSpaceDateRecords(
+              room,
+              { start: spaceInfo.startAt },
+              {
+                [pData.name]: [{ start: startAt }],
+              },
+            );
+            
             const { isAuth } = usePlatformUserInfoServer({ user: pData });
             // 这里说明房间存在而且且用户也存在，说明用户可能是重连或房间是持久化的，我们无需大范围数据更新，只需要更新
             // 用户的最基础设置即可
@@ -1966,59 +1975,64 @@ const reallyLeaveSpace = async (spaceName: string, participantId: string): Promi
 // 经过测试，发现当用户退出房间时可能会失败，导致用户实际已经退出，但服务端数据还存在
 // 增加心跳检测，定时检查用户是否在线，若用户已经离线，需要从房间中进行移除, 依赖livekit server api
 const userHeartbeat = async () => {
-  if (
-    isUndefinedString(LIVEKIT_API_KEY) ||
-    isUndefinedString(LIVEKIT_API_SECRET) ||
-    isUndefinedString(LIVEKIT_URL)
-  ) {
-    console.warn('LiveKit API credentials are not set, skipping user heartbeat check.');
-    return;
-  }
-  let hostname = LIVEKIT_URL!.replace('wss', 'https').replace('ws', 'http');
-  const roomServer = new RoomServiceClient(hostname, LIVEKIT_API_KEY!, LIVEKIT_API_SECRET!);
-  // 列出所有房间
-  const currentRooms = await roomServer.listRooms();
-  for (const room of currentRooms) {
-    // 列出房间中所有的参与者，然后和redis中的参与者进行对比
-    const roomParticipants = await roomServer.listParticipants(room.name);
-    const redisRoom = await SpaceManager.getSpaceInfo(room.name);
-    if (!redisRoom) {
-      continue; // 如果redis中没有这个房间，跳过 (本地开发环境和正式环境使用的redis不同，但服务器是相同的)
+  try {
+    if (
+      isUndefinedString(LIVEKIT_API_KEY) ||
+      isUndefinedString(LIVEKIT_API_SECRET) ||
+      isUndefinedString(LIVEKIT_URL)
+    ) {
+      console.warn('LiveKit API credentials are not set, skipping user heartbeat check.');
+      return;
     }
-    const redisParticipants = Object.keys(redisRoom.participants);
-    // 有两种情况: 1. redis中有参与者但livekit中没有, 2. livekit中有参与者但redis中没有
-    // 情况1: 说明参与者已经离开了房间，但redis中没有清除，需要从redis中删除
-    // 情况2: 说明参与者实际是在房间中的，但是redis中没有初始化成功，这时候就需要告知参与者进行初始化 (socket.io)
-
-    // 首先获取两种情况的参与者
-    const inRedisNotInLK = redisParticipants.filter((p) => {
-      return !roomParticipants.some((lkParticipant) => lkParticipant.identity === p);
-    });
-
-    const inLKNotInRedis = roomParticipants.filter((lkParticipant) => {
-      return !redisParticipants.includes(lkParticipant.identity);
-    });
-    // 处理情况1 --------------------------------------------------------------------------------------------
-    if (inRedisNotInLK.length > 0) {
-      // 检查房间是否为持久化房间
-      if (redisRoom.persistence) {
-        console.warn(`Skipping participant removal for persistent room: ${room.name}`);
-        continue; // 跳过持久化房间的参与者清理
+    let hostname = LIVEKIT_URL!.replace('wss', 'https').replace('ws', 'http');
+    const roomServer = new RoomServiceClient(hostname, LIVEKIT_API_KEY!, LIVEKIT_API_SECRET!);
+    // 列出所有房间
+    const currentRooms = await roomServer.listRooms();
+    for (const room of currentRooms) {
+      // 列出房间中所有的参与者，然后和redis中的参与者进行对比
+      const roomParticipants = await roomServer.listParticipants(room.name);
+      const redisRoom = await SpaceManager.getSpaceInfo(room.name);
+      if (!redisRoom) {
+        continue; // 如果redis中没有这个房间，跳过 (本地开发环境和正式环境使用的redis不同，但服务器是相同的)
       }
-      for (const participantId of inRedisNotInLK) {
-        await SpaceManager.removeParticipant(room.name, participantId);
+      const redisParticipants = Object.keys(redisRoom.participants);
+      // 有两种情况: 1. redis中有参与者但livekit中没有, 2. livekit中有参与者但redis中没有
+      // 情况1: 说明参与者已经离开了房间，但redis中没有清除，需要从redis中删除
+      // 情况2: 说明参与者实际是在房间中的，但是redis中没有初始化成功，这时候就需要告知参与者进行初始化 (socket.io)
+
+      // 首先获取两种情况的参与者
+      const inRedisNotInLK = redisParticipants.filter((p) => {
+        return !roomParticipants.some((lkParticipant) => lkParticipant.identity === p);
+      });
+
+      const inLKNotInRedis = roomParticipants.filter((lkParticipant) => {
+        return !redisParticipants.includes(lkParticipant.identity);
+      });
+      // 处理情况1 --------------------------------------------------------------------------------------------
+      if (inRedisNotInLK.length > 0) {
+        // 检查房间是否为持久化房间
+        if (redisRoom.persistence) {
+          console.warn(`Skipping participant removal for persistent room: ${room.name}`);
+          continue; // 跳过持久化房间的参与者清理
+        }
+        for (const participantId of inRedisNotInLK) {
+          await SpaceManager.removeParticipant(room.name, participantId);
+        }
+      }
+
+      // 处理情况2 --------------------------------------------------------------------------------------------
+      if (inLKNotInRedis.length > 0) {
+        for (const participant of inLKNotInRedis) {
+          socket.emit('re_init', {
+            space: room.name,
+            participantId: participant.identity,
+          } as WsParticipant);
+        }
       }
     }
-
-    // 处理情况2 --------------------------------------------------------------------------------------------
-    if (inLKNotInRedis.length > 0) {
-      for (const participant of inLKNotInRedis) {
-        socket.emit('re_init', {
-          space: room.name,
-          participantId: participant.identity,
-        } as WsParticipant);
-      }
-    }
+  } catch (error) {
+    console.error('Error in userHeartbeat:', error);
+    // 网络错误或LiveKit服务器不可达时，记录错误但不中断定时任务
   }
 };
 
