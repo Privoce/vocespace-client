@@ -11,14 +11,14 @@ import { ItemType } from 'antd/es/menu/interface';
 import { useRouter } from 'next/navigation';
 import { useMemo } from 'react';
 
-export function LoginButtons({ space }: { space: string }) {
+export function LoginButtons({ space, serverUrl }: { space: string; serverUrl: string }) {
   const { t } = useI18n();
 
   const toVocespace = (google = false) => {
     window.open(
       `https://home.vocespace.com/auth/login?from=vocespace&spaceName=${space}&auth=${
         google ? 'google' : 'email'
-      }`,
+      }&redirectUrl=${encodeURIComponent(`${serverUrl}`)}`,
       '_self',
     );
   };

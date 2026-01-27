@@ -289,6 +289,7 @@ export function PageClientImpl({
             loading={loading}
             setLoading={setLoading}
             space={spaceName}
+            config={config}
           />
         </div>
       ) : (
