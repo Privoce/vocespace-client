@@ -18,7 +18,7 @@ export function LoginButtons({ space, serverUrl }: { space: string; serverUrl: s
     window.open(
       `https://home.vocespace.com/auth/login?from=vocespace&spaceName=${space}&auth=${
         google ? 'google' : 'email'
-      }&redirectUrl=${encodeURIComponent(`${serverUrl}`)}`,
+      }&redirectTo=${encodeURIComponent(`${serverUrl}`)}`,
       '_self',
     );
   };
