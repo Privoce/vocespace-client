@@ -163,7 +163,7 @@ export default function Dashboard() {
         const result = await historyResponse.json();
         records = result.records;
       } else {
-        messageApi.error('获取历史房间数据失败');
+        messageApi.error(t('dashboard.history_fetch_failed'));
       }
 
       // 构建历史时长映射 { spaceId: { participantName: totalDuration } }
@@ -442,7 +442,7 @@ export default function Dashboard() {
         setIsHostManager(true);
         const resp = await api.allSpaceInfos();
         if (!resp.ok) {
-          messageApi.error('获取空间列表失败');
+          messageApi.error(t('dashboard.spaces_fetch_failed'));
           return;
         }
         const spaces: SpaceInfoMap = await resp.json();
@@ -452,7 +452,7 @@ export default function Dashboard() {
 
       const ok = await checkHostToken(token);
       if (!ok) {
-        messageApi.error('Host token 验证失败');
+        messageApi.error(t('dashboard.host_token_verify_failed'));
         return;
       }
       // 记录本次验证
@@ -462,14 +462,14 @@ export default function Dashboard() {
       // 获取所有空间信息
       const resp = await api.allSpaceInfos();
       if (!resp.ok) {
-        messageApi.error('获取空间列表失败');
+        messageApi.error(t('dashboard.spaces_fetch_failed'));
         return;
       }
       const spaces: SpaceInfoMap = await resp.json();
       setManageSpaces(spaces);
     } catch (e) {
       console.error(e);
-      messageApi.error('验证或加载失败');
+      messageApi.error(t('dashboard.verify_or_load_failed'));
     } finally {
       setManageLoading(false);
     }
@@ -489,9 +489,9 @@ export default function Dashboard() {
       // 尝试调用后端删除接口：如果没有专门删除接口，清空 participants 作为替代（视后端实现）
       const resp = await api.deleteSpace(spaceName);
       if (!resp.ok) {
-        messageApi.error('删除空间失败');
+        messageApi.error(t('dashboard.delete_failed'));
       } else {
-        messageApi.success('删除空间成功（已请求后端清理）');
+        messageApi.success(t('dashboard.delete_success'));
         // refresh
         const refreshed = await api.allSpaceInfos();
         if (refreshed.ok) {
@@ -503,7 +503,7 @@ export default function Dashboard() {
       }
     } catch (e) {
       console.error(e);
-      messageApi.error('删除空间失败');
+      messageApi.error(t('dashboard.delete_failed'));
     } finally {
       setManageLoading(false);
     }
@@ -518,7 +518,7 @@ export default function Dashboard() {
       const resp = await api.getSpaceInfo(spaceName);
 
       if (!resp.ok) {
-        messageApi.error('获取空间信息失败');
+        messageApi.error(t('dashboard.get_space_info_failed'));
         return;
       }
       const { settings: data } = await resp.json();
@@ -530,7 +530,7 @@ export default function Dashboard() {
       setOwnerCandidates(candidates);
     } catch (e) {
       console.error(e);
-      messageApi.error('获取候选用户失败');
+      messageApi.error(t('dashboard.get_candidates_failed'));
     } finally {
       setManageLoading(false);
     }
@@ -538,16 +538,16 @@ export default function Dashboard() {
 
   const handleSaveNewOwner = async () => {
     if (!editingOwnerSpace || !selectedNewOwner) {
-      messageApi.error('请选择新 owner');
+      messageApi.error(t('dashboard.select_new_owner'));
       return;
     }
     try {
       setManageLoading(true);
       const resp = await api.updateOwnerId(editingOwnerSpace, selectedNewOwner);
       if (!resp.ok) {
-        messageApi.error('修改 owner 失败');
+        messageApi.error(t('dashboard.change_owner_failed'));
       } else {
-        messageApi.success('修改 owner 成功');
+        messageApi.success(t('dashboard.change_owner_success'));
         // refresh list
         const refreshed = await api.allSpaceInfos();
         if (refreshed.ok) {
@@ -560,7 +560,7 @@ export default function Dashboard() {
       }
     } catch (e) {
       console.error(e);
-      messageApi.error('修改 owner 失败');
+      messageApi.error(t('dashboard.change_owner_failed'));
     } finally {
       setManageLoading(false);
     }
@@ -575,7 +575,7 @@ export default function Dashboard() {
         api.historySpaceInfos(),
       ]);
       if (!spaceResp.ok) {
-        messageApi.error('获取空间信息失败');
+        messageApi.error(t('dashboard.get_space_info_failed'));
         return;
       }
       const spaceInfo: SpaceInfo = await spaceResp.json();
@@ -624,10 +624,10 @@ export default function Dashboard() {
       a.download = `${spaceName}.md`;
       a.click();
       URL.revokeObjectURL(url);
-      messageApi.success('导出成功');
+      messageApi.success(t('dashboard.export_success'));
     } catch (e) {
       console.error(e);
-      messageApi.error('导出失败');
+      messageApi.error(t('dashboard.export_failed'));
     } finally {
       setManageLoading(false);
     }
@@ -909,7 +909,7 @@ export default function Dashboard() {
                     }
                   }}
                 >
-                  管理空间
+                  {t('dashboard.manage_spaces')}
                 </Button>
               </div>
             </Card>
@@ -1151,7 +1151,7 @@ export default function Dashboard() {
       </Modal>
       {/* 管理空间 Modal */}
       <Modal
-        title="管理空间"
+        title={t('dashboard.manage_spaces')}
         open={openManage}
         onCancel={handleCloseManage}
         width={800}
@@ -1160,12 +1160,12 @@ export default function Dashboard() {
         {!isHostManager ? (
           <div style={{ display: 'flex', gap: 8 }}>
             <Input
-              placeholder="Host Token"
+              placeholder={t('dashboard.host_token_placeholder')}
               value={hostToken}
               onChange={(e) => setHostToken(e.target.value)}
             />
             <Button loading={manageLoading} onClick={async () => await handleVerifyHostAndLoad()} type="primary">
-              验证并加载
+              {t('dashboard.verify_and_load')}
             </Button>
           </div>
         ) : (
@@ -1177,8 +1177,8 @@ export default function Dashboard() {
                   setHostToken('');
                   clearVerified();
                 }}
-              >
-                注销
+                >
+                {t('dashboard.logout')}
               </Button>
             </div>
             <Table
@@ -1203,20 +1203,20 @@ export default function Dashboard() {
                   render: (_: any, record: any) => (
                     <Space>
                       <Popconfirm
-                        title="确认删除该空间？"
+                        title={t('dashboard.confirm_delete_space')}
                         onConfirm={() => handleDeleteSpace(record.space)}
-                        okText="是"
-                        cancelText="否"
+                        okText={t('dashboard.yes')}
+                        cancelText={t('dashboard.no')}
                       >
                         <Button danger size="small">
-                          删除空间
+                          {t('dashboard.delete_space_button')}
                         </Button>
                       </Popconfirm>
                       <Button size="small" onClick={() => handleEditOwner(record.space)}>
-                        修改空间owner
+                        {t('dashboard.edit_owner_button')}
                       </Button>
                       <Button size="small" onClick={() => handleExportSpace(record.space)}>
-                        提取空间用户数据
+                        {t('dashboard.export_space_button')}
                       </Button>
                     </Space>
                   ),
@@ -1226,14 +1226,14 @@ export default function Dashboard() {
 
             {/* 修改 owner 的 Modal */}
             <Modal
-              title="修改空间 Owner"
+              title={t('dashboard.edit_owner_modal_title')}
               open={!!editingOwnerSpace}
               onCancel={() => setEditingOwnerSpace(null)}
               footer={
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <Button onClick={() => setEditingOwnerSpace(null)}>取消</Button>
+                  <Button onClick={() => setEditingOwnerSpace(null)}>{t('dashboard.cancel')}</Button>
                   <Button type="primary" loading={manageLoading} onClick={handleSaveNewOwner}>
-                    保存
+                    {t('dashboard.save')}
                   </Button>
                 </div>
               }
@@ -1242,7 +1242,7 @@ export default function Dashboard() {
                 <div style={{ minWidth: 120 }}>{editingOwnerSpace}</div>
                 <Select
                   style={{ minWidth: 240 }}
-                  placeholder="选择新 owner"
+                  placeholder="new owner"
                   value={selectedNewOwner || undefined}
                   onChange={(val) => setSelectedNewOwner(val)}
                 >
