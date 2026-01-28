@@ -16,6 +16,8 @@ import {
   Modal,
   Input,
   Tabs,
+  Select,
+  Popconfirm,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { SvgResource } from '../resources/svg';
@@ -95,7 +97,41 @@ export default function Dashboard() {
   const [openConf, setOpenConf] = useState(false);
   const [isHostManager, setIsHostManager] = useState(false);
   const [hostToken, setHostToken] = useState('');
+  const [openManage, setOpenManage] = useState(false);
+  const [manageLoading, setManageLoading] = useState(false);
+  const [manageSpaces, setManageSpaces] = useState<SpaceInfoMap | null>(null);
+  const [editingOwnerSpace, setEditingOwnerSpace] = useState<string | null>(null);
+  const [ownerCandidates, setOwnerCandidates] = useState<Array<{ id: string; name: string }>>([]);
+  const [selectedNewOwner, setSelectedNewOwner] = useState<string | null>(null);
   const { conf, getConf, checkHostToken } = useVoceSpaceConf();
+
+  const VERIFIED_KEY = 'vocespace_host_token_verified';
+
+  const getVerified = () => {
+    try {
+      const v = localStorage.getItem(VERIFIED_KEY);
+      if (!v) return null;
+      return JSON.parse(v) as { token: string; at: number } | null;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const setVerified = (token: string) => {
+    try {
+      localStorage.setItem(VERIFIED_KEY, JSON.stringify({ token, at: Date.now() }));
+    } catch (e) {
+      // ignore
+    }
+  };
+
+  const clearVerified = () => {
+    try {
+      localStorage.removeItem(VERIFIED_KEY);
+    } catch (e) {
+      // ignore
+    }
+  };
 
   // 根据 Space 分组数据
   const groupedSpacesData = useMemo(() => {
@@ -393,6 +429,210 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, []);
 
+  // 管理空间: 验证 Host Token 并加载空间列表
+  const handleVerifyHostAndLoad = async (tokenOverride?: string) => {
+    try {
+      setManageLoading(true);
+      const token = tokenOverride ?? hostToken;
+
+      // 如果本地已有验证并且 token 相同且在1小时内，则直接使用
+      const saved = getVerified();
+      if (saved && saved.token === token && Date.now() - saved.at < 3600_000) {
+        setHostToken(token);
+        setIsHostManager(true);
+        const resp = await api.allSpaceInfos();
+        if (!resp.ok) {
+          messageApi.error('获取空间列表失败');
+          return;
+        }
+        const spaces: SpaceInfoMap = await resp.json();
+        setManageSpaces(spaces);
+        return;
+      }
+
+      const ok = await checkHostToken(token);
+      if (!ok) {
+        messageApi.error('Host token 验证失败');
+        return;
+      }
+      // 记录本次验证
+      setVerified(token);
+      setHostToken(token);
+      setIsHostManager(true);
+      // 获取所有空间信息
+      const resp = await api.allSpaceInfos();
+      if (!resp.ok) {
+        messageApi.error('获取空间列表失败');
+        return;
+      }
+      const spaces: SpaceInfoMap = await resp.json();
+      setManageSpaces(spaces);
+    } catch (e) {
+      console.error(e);
+      messageApi.error('验证或加载失败');
+    } finally {
+      setManageLoading(false);
+    }
+  };
+
+  const handleCloseManage = () => {
+    setOpenManage(false);
+    setIsHostManager(false);
+    setHostToken('');
+    setManageSpaces(null);
+  };
+
+  // 删除空间（前端将调用 updateSpaceInfo 设置 participants 清空，后端如果有删除 API 可替换）
+  const handleDeleteSpace = async (spaceName: string) => {
+    try {
+      setManageLoading(true);
+      // 尝试调用后端删除接口：如果没有专门删除接口，清空 participants 作为替代（视后端实现）
+      const resp = await api.deleteSpace(spaceName);
+      if (!resp.ok) {
+        messageApi.error('删除空间失败');
+      } else {
+        messageApi.success('删除空间成功（已请求后端清理）');
+        // refresh
+        const refreshed = await api.allSpaceInfos();
+        if (refreshed.ok) {
+          const spaces: SpaceInfoMap = await refreshed.json();
+          setManageSpaces(spaces);
+          // 同步主界面
+          await fetchAllData();
+        }
+      }
+    } catch (e) {
+      console.error(e);
+      messageApi.error('删除空间失败');
+    } finally {
+      setManageLoading(false);
+    }
+  };
+
+  // 显示修改 owner 的候选用户（从 getSpaceInfo 获取 participants）
+  const handleEditOwner = async (spaceName: string) => {
+    try {
+      setEditingOwnerSpace(spaceName);
+      setSelectedNewOwner(null);
+      setManageLoading(true);
+      const resp = await api.getSpaceInfo(spaceName);
+
+      if (!resp.ok) {
+        messageApi.error('获取空间信息失败');
+        return;
+      }
+      const { settings: data } = await resp.json();
+      const participants = data as SpaceInfo;
+      const candidates: Array<{ id: string; name: string }> = Object.entries(
+        participants.participants || {},
+      ).map(([id, p]: [string, ParticipantSettings]) => ({ id, name: p.name }));
+      console.warn(data, candidates);
+      setOwnerCandidates(candidates);
+    } catch (e) {
+      console.error(e);
+      messageApi.error('获取候选用户失败');
+    } finally {
+      setManageLoading(false);
+    }
+  };
+
+  const handleSaveNewOwner = async () => {
+    if (!editingOwnerSpace || !selectedNewOwner) {
+      messageApi.error('请选择新 owner');
+      return;
+    }
+    try {
+      setManageLoading(true);
+      const resp = await api.updateOwnerId(editingOwnerSpace, selectedNewOwner);
+      if (!resp.ok) {
+        messageApi.error('修改 owner 失败');
+      } else {
+        messageApi.success('修改 owner 成功');
+        // refresh list
+        const refreshed = await api.allSpaceInfos();
+        if (refreshed.ok) {
+          const spaces: SpaceInfoMap = await refreshed.json();
+          setManageSpaces(spaces);
+          await fetchAllData();
+        }
+        setEditingOwnerSpace(null);
+        setSelectedNewOwner(null);
+      }
+    } catch (e) {
+      console.error(e);
+      messageApi.error('修改 owner 失败');
+    } finally {
+      setManageLoading(false);
+    }
+  };
+
+  // 导出空间数据为 Markdown 并下载
+  const handleExportSpace = async (spaceName: string) => {
+    try {
+      setManageLoading(true);
+      const [spaceResp, historyResp] = await Promise.all([
+        api.getSpaceInfo(spaceName),
+        api.historySpaceInfos(),
+      ]);
+      if (!spaceResp.ok) {
+        messageApi.error('获取空间信息失败');
+        return;
+      }
+      const spaceInfo: SpaceInfo = await spaceResp.json();
+      let records: SpaceDateRecords | null = null;
+      if (historyResp.ok) {
+        const r = await historyResp.json();
+        records = r.records;
+      }
+
+      // 构造 markdown
+      let md = `- 空间: ${spaceName}\n`;
+      md += `- 子房间:\n`;
+      if (spaceInfo.children && spaceInfo.children.length > 0) {
+        for (const child of spaceInfo.children) {
+          const users = child.participants.join(', ');
+          md += `    - ${child.name}: ${users}\n`;
+        }
+      } else {
+        md += '    - 无\n';
+      }
+
+      md += `- 用户:\n`;
+      // 使用 history records 优先，如果没有则使用 spaceInfo.participants
+      if (records && records[spaceName]) {
+        const participants = records[spaceName].participants || {};
+        for (const [pname, precords] of Object.entries(participants)) {
+          const durations = precords
+            .map((r: any) => {
+              const end = r.end || Date.now();
+              return `${new Date(r.start).toLocaleString()} - ${new Date(end).toLocaleString()}`;
+            })
+            .join('; ');
+          md += `    - ${pname}: ${durations}\n`;
+        }
+      } else if (spaceInfo.participants) {
+        for (const [id, p] of Object.entries(spaceInfo.participants)) {
+          md += `    - ${p.name} (id: ${id})\n`;
+        }
+      }
+
+      // 下载 md
+      const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${spaceName}.md`;
+      a.click();
+      URL.revokeObjectURL(url);
+      messageApi.success('导出成功');
+    } catch (e) {
+      console.error(e);
+      messageApi.error('导出失败');
+    } finally {
+      setManageLoading(false);
+    }
+  };
+
   // 当前房间参与者表格列定义（去掉房间列，因为现在按Space分组显示）
   const currentSpacesColumns: ColumnsType<ParticipantTableData> = [
     {
@@ -558,8 +798,15 @@ export default function Dashboard() {
 
   const confirmConfHandle = async () => {
     if (!isHostManager) {
+      // 先检查本地缓存
+      const saved = getVerified();
+      if (saved && saved.token === hostToken && Date.now() - saved.at < 3600_000) {
+        setIsHostManager(true);
+        return;
+      }
       const success = await checkHostToken(hostToken);
       if (success) {
+        setVerified(hostToken);
         setIsHostManager(true);
       } else {
         messageApi.error(t('dashboard.conf.error.verify'));
@@ -569,6 +816,7 @@ export default function Dashboard() {
       setOpenConf(false);
       setIsHostManager(false);
       setHostToken('');
+      clearVerified();
     }
   };
 
@@ -630,10 +878,38 @@ export default function Dashboard() {
                   color="danger"
                   variant="solid"
                   onClick={() => {
-                    setOpenConf(true);
+                    const saved = getVerified();
+                    if (saved && Date.now() - saved.at < 3600_000) {
+                      setHostToken(saved.token);
+                      setIsHostManager(true);
+                      setOpenConf(true);
+                    } else {
+                      setOpenConf(true);
+                    }
                   }}
                 >
                   {t('dashboard.count.global_conf')}
+                </Button>
+                <Button
+                  type="primary"
+                  onClick={async () => {
+                    const saved = getVerified();
+                    if (saved && Date.now() - saved.at < 3600_000) {
+                      // 直接使用缓存 token 调用验证加载，避免依赖 setHostToken 的异步更新
+                      try {
+                        await handleVerifyHostAndLoad(saved.token);
+                        setOpenManage(true);
+                      } catch (e) {
+                        console.error(e);
+                        // 打开 modal 让用户手动输入
+                        setOpenManage(true);
+                      }
+                    } else {
+                      setOpenManage(true);
+                    }
+                  }}
+                >
+                  管理空间
                 </Button>
               </div>
             </Card>
@@ -871,6 +1147,114 @@ export default function Dashboard() {
               setHostToken(e.target.value);
             }}
           ></Input>
+        )}
+      </Modal>
+      {/* 管理空间 Modal */}
+      <Modal
+        title="管理空间"
+        open={openManage}
+        onCancel={handleCloseManage}
+        width={800}
+        footer={null}
+      >
+        {!isHostManager ? (
+          <div style={{ display: 'flex', gap: 8 }}>
+            <Input
+              placeholder="Host Token"
+              value={hostToken}
+              onChange={(e) => setHostToken(e.target.value)}
+            />
+            <Button loading={manageLoading} onClick={async () => await handleVerifyHostAndLoad()} type="primary">
+              验证并加载
+            </Button>
+          </div>
+        ) : (
+          <div>
+            <div style={{ marginBottom: 12 }}>
+              <Button
+                onClick={async () => {
+                  setIsHostManager(false);
+                  setHostToken('');
+                  clearVerified();
+                }}
+              >
+                注销
+              </Button>
+            </div>
+            <Table
+              dataSource={
+                manageSpaces
+                  ? Object.entries(manageSpaces).map(([k, v]) => ({
+                      key: k,
+                      space: k,
+                      ownerId: v.ownerId,
+                      ownerName: v.participants?.[v.ownerId]?.name || '',
+                    }))
+                  : []
+              }
+              loading={manageLoading}
+              pagination={{ pageSize: 10 }}
+              columns={[
+                { title: 'Space', dataIndex: 'space', key: 'space' },
+                { title: 'Owner', dataIndex: 'ownerName', key: 'ownerName' },
+                {
+                  title: 'Actions',
+                  key: 'actions',
+                  render: (_: any, record: any) => (
+                    <Space>
+                      <Popconfirm
+                        title="确认删除该空间？"
+                        onConfirm={() => handleDeleteSpace(record.space)}
+                        okText="是"
+                        cancelText="否"
+                      >
+                        <Button danger size="small">
+                          删除空间
+                        </Button>
+                      </Popconfirm>
+                      <Button size="small" onClick={() => handleEditOwner(record.space)}>
+                        修改空间owner
+                      </Button>
+                      <Button size="small" onClick={() => handleExportSpace(record.space)}>
+                        提取空间用户数据
+                      </Button>
+                    </Space>
+                  ),
+                },
+              ]}
+            />
+
+            {/* 修改 owner 的 Modal */}
+            <Modal
+              title="修改空间 Owner"
+              open={!!editingOwnerSpace}
+              onCancel={() => setEditingOwnerSpace(null)}
+              footer={
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button onClick={() => setEditingOwnerSpace(null)}>取消</Button>
+                  <Button type="primary" loading={manageLoading} onClick={handleSaveNewOwner}>
+                    保存
+                  </Button>
+                </div>
+              }
+            >
+              <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                <div style={{ minWidth: 120 }}>{editingOwnerSpace}</div>
+                <Select
+                  style={{ minWidth: 240 }}
+                  placeholder="选择新 owner"
+                  value={selectedNewOwner || undefined}
+                  onChange={(val) => setSelectedNewOwner(val)}
+                >
+                  {ownerCandidates.map((c) => (
+                    <Select.Option key={c.id} value={c.id}>
+                      {c.name} ({c.id})
+                    </Select.Option>
+                  ))}
+                </Select>
+              </div>
+            </Modal>
+          </div>
         )}
       </Modal>
     </div>

@@ -123,6 +123,27 @@ class SpaceManager {
     return `${this.PARTICIPANT_KEY_PREFIX}${space}:${participantId}`;
   }
 
+  // 删除整个空间 ------------------------------------------------------------------------
+  static async deleteEntireSpace(spaceName: string): Promise<boolean> {
+    try {
+      // 1. 直接从redis键中移除
+      const spaceKey = this.getSpaceKey(spaceName);
+      if (redisClient) {
+        await redisClient.del(spaceKey);
+      } else {
+        return false;
+      }
+
+      // 3. 直接删除space:date:records:spaceName
+      const spaceDataKey = `${this.SPACE_DATE_RECORDS_KEY_PREFIX}${spaceName}`;
+      await redisClient.del(spaceDataKey);
+      return true;
+    } catch (e) {
+      console.error('Error deleting entire space:', e);
+      return false;
+    }
+  }
+
   // 切换房间隐私性 ----------------------------------------------------------------------
   static async switchChildRoomPrivacy(
     spaceName: string,
@@ -731,7 +752,7 @@ class SpaceManager {
                 [pData.name]: [{ start: startAt }],
               },
             );
-            
+
             const { isAuth } = usePlatformUserInfoServer({ user: pData });
             // 这里说明房间存在而且且用户也存在，说明用户可能是重连或房间是持久化的，我们无需大范围数据更新，只需要更新
             // 用户的最基础设置即可
@@ -833,13 +854,49 @@ class SpaceManager {
       if (!redisClient) {
         throw new Error('Redis client is not initialized or disabled.');
       }
+
       const spaceInfo = await this.getSpaceInfo(spaceName);
-      if (!spaceInfo || !spaceInfo.participants[newOwnerId]) {
-        return false; // 房间或新主持人不存在
-      } else {
-        spaceInfo.ownerId = newOwnerId;
-        return await this.setSpaceInfo(spaceName, spaceInfo);
+      if (!spaceInfo) {
+        return false;
       }
+
+      // Ensure the new owner exists in participants
+      if (!spaceInfo.participants[newOwnerId]) {
+        return false;
+      }
+
+      const oldOwnerId = spaceInfo.ownerId;
+      spaceInfo.ownerId = newOwnerId;
+
+      // Downgrade previous owner's identity according to platform
+      const oldOwner = spaceInfo.participants[oldOwnerId];
+      if (oldOwner) {
+        if (oldOwner.auth?.platform === 'other') {
+          oldOwner.auth.identity = 'guest';
+        } else if (oldOwner.auth?.platform === 'c_s') {
+          oldOwner.auth.identity = 'customer';
+        } else {
+          if (oldOwner.auth && oldOwner.auth.identity) {
+            oldOwner.auth.identity = 'participant';
+          }
+        }
+      }
+
+      // Promote new owner
+      const newOwner = spaceInfo.participants[newOwnerId];
+      if (newOwner) {
+        if (!newOwner.auth) {
+          newOwner.auth = {
+            identity: 'owner',
+            platform: 'other',
+          };
+        } else {
+          newOwner.auth.identity = 'owner';
+        }
+      }
+
+      const success = await this.setSpaceInfo(spaceName, spaceInfo);
+      return success;
     } catch (error) {
       console.error('Error transferring ownership:', error);
       return false;
@@ -1842,8 +1899,22 @@ export async function DELETE(request: NextRequest) {
   const socketId = request.nextUrl.searchParams.get('socketId');
   const childRoom = request.nextUrl.searchParams.get('childRoom') as ChildRoomMethods | null;
   const isDeleteParticipant = request.nextUrl.searchParams.get('participant') === 'delete';
+  const isSpaceDelete = request.nextUrl.searchParams.get('delete') === 'true';
   const isSpace = request.nextUrl.searchParams.get('space') === 'true';
   try {
+    // 删除整个Space ---------------------------------------------------------------------------------
+    if (isSpaceDelete && isSpace) {
+      const { spaceName } = await request.json();
+      const success = await SpaceManager.deleteEntireSpace(spaceName);
+      if (success) {
+        return NextResponse.json({ success: true, message: 'Space deleted successfully' });
+      } else {
+        return NextResponse.json(
+          { success: false, message: 'Failed to delete space' },
+          { status: 500 },
+        );
+      }
+    }
     // [离开子房间] ---------------------------------------------------------------------------------------------
     if (childRoom === ChildRoomMethods.LEAVE) {
       const body = await request.json();
@@ -1954,7 +2025,13 @@ export async function DELETE(request: NextRequest) {
     }
   } catch (error) {
     console.error('DELETE Error:', error);
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : String(error) },
+      { status: 500 },
+    );
   }
+  // 如果没有任何分支命中，返回 Bad Request
+  return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
 }
 
 /// 通过livekit服务端API确定用户是否真的离开了房间

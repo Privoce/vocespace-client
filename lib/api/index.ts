@@ -30,7 +30,8 @@ import {
   handleWorkMode,
   enterRoom,
   enterSpaceRoomFromLink,
-  updateAuthRBACConf
+  updateAuthRBACConf,
+  deleteSpace,
 } from './space';
 
 export const api = {
@@ -61,6 +62,7 @@ export const api = {
   transOrSetOwnerManager,
   checkHostToken,
   handleWorkMode,
+  deleteSpace,
   // ---- chat api --------
   fetchLinkPreview,
   getChatMsg,
@@ -84,5 +86,5 @@ export const api = {
   reloadLicense,
   // ---- platform api --------
   getUserMeta,
-  ai
+  ai,
 };
