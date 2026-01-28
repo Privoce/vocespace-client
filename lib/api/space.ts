@@ -23,6 +23,18 @@ import { ai } from './ai';
 
 const SPACE_API = connect_endpoint('/api/space');
 
+export const deleteSpace = async (spaceName: string) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('space', 'true');
+  url.searchParams.append('delete', 'true');
+  return await fetch(url.toString(), {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ spaceName }),
+  });
+};
+
+
 /**
  * 加入空间
  * @param spaceName 空间名称

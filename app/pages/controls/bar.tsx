@@ -241,9 +241,9 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
 
     // settings ------------------------------------------------------------------------------------------
     const space = useMaybeRoomContext();
-    const { showAI, showSelfPlatform } = usePlatformUserInfo({
+    const { showAI } = usePlatformUserInfo({
       space,
-      uid: space?.localParticipant?.identity || '',
+      uid: space?.localParticipant.identity,
       onEnterRoom: () => {
         socket.emit('update_user_status', {
           space: space!.name,
@@ -753,6 +753,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           {space && spaceInfo.participants && visibleControls.microphone && (
             <MoreButton
               space={space}
+              spaceInfo={spaceInfo}
               size={controlSize}
               controlWidth={controlWidth}
               setOpenMore={setOpenMore}

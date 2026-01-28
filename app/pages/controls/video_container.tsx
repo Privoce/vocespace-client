@@ -86,7 +86,7 @@ import {
   PlatformTodos,
 } from '@/lib/api/platform';
 import { useFullScreenBtn } from './widgets/full_screen';
-import { usePlatformUserInfo, usePlatformUserInfoCheap } from '@/lib/hooks/platform';
+import { exportRBAC, usePlatformUserInfo, usePlatformUserInfoCheap } from '@/lib/hooks/platform';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -143,16 +143,20 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       space?.name || '', // 房间 ID
       space?.localParticipant?.identity || '', // 参与者 ID
     );
-    const [openApp, setOpenApp] = useState<boolean>(false);
-    const { isAuth, createRoom, platUser, roomEnter, isCustomer, showAI } = usePlatformUserInfo({
+    const { fromVocespace, platUser, roomEnter, showAI } = usePlatformUserInfo({
       space,
-      uid: space?.localParticipant?.identity || '',
+      uid: space?.localParticipant.identity,
       onEnterRoom: () => {
         socket.emit('update_user_status', {
           space: space!.name,
         } as WsBase);
       },
     });
+    const showSideChannel = useMemo(()=>{
+      if (!space) return false;
+      return exportRBAC(space?.localParticipant.identity, settings).createRoom
+    }, [space, settings])
+    const [openApp, setOpenApp] = useState<boolean>(false);
     // const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
     // const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
     const isActive = true;
@@ -409,7 +413,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       };
 
       const syncSettings = async () => {
-        const todos = await fetchPlatformData(isAuth);
+        const todos = await fetchPlatformData(fromVocespace);
         // 将当前参与者的基础设置发送到服务器 ----------------------------------------------------------
         await updateSettings(
           {
@@ -429,29 +433,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           undefined,
           true,
         );
-
-        // 从vocespace/space平台过来的用户，需要为其创建私人房间 ------------------------------
-        if (settings && createRoom) {
-          // 为新加入的参与者创建一个自己的私人房间
-          const roomName = `${space.localParticipant.name}'s room`;
-          if (!settings.children.some((child) => child.name === roomName)) {
-            const response = await api.createRoom({
-              spaceName: space.name,
-              roomName,
-              ownerId: space.localParticipant.identity,
-              isPrivate: true,
-            });
-
-            if (!response.ok) {
-              messageApi.error({
-                content: t('channel.create.error'),
-              });
-            } else {
-              await fetchSettings();
-            }
-          }
-        }
-
         // 如果是platform用户，有可能是需要直接进入某个子房间的 ------------------------------------------
         // 详细见usePlatformUserInfo中对于roomEnter的处理
         await roomEnter();
@@ -981,7 +962,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       config,
       controlsRef,
       locale,
-      platUser,
+      platUser
     ]);
 
     const selfRoom = useMemo(() => {
@@ -1278,14 +1259,14 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     };
 
     const mainViewWidth = useMemo(() => {
-      return isCustomer
+      return !showSideChannel
         ? '100vw'
         : collapsed
           ? isActive
             ? 'calc(100vw - 28px)'
             : '100vw'
           : 'calc(100vw - 280px)';
-    }, [collapsed, isCustomer, isActive]);
+    }, [collapsed, showSideChannel, isActive]);
 
     useImperativeHandle(ref, () => ({
       clearRoom: () => clearRoom(),
@@ -1326,7 +1307,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           ></FlotLayout>
         )} */}
         {/* 左侧侧边栏 */}
-        {space && !isCustomer && !init && (
+        {space && showSideChannel && (
           <Channel
             ref={channelRef}
             config={config}

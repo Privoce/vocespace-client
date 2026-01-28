@@ -4,6 +4,7 @@ import {
   ChildRoomEnter,
   DEFAULT_TOKEN_RESULT,
   ERROR_CODE,
+  IdentityType,
   isUndefinedString,
   splitPlatformUser,
 } from '@/lib/std';
@@ -23,6 +24,9 @@ import {
   SpaceCountdown,
   SpaceTodo,
   DEFAULT_PARTICIPANT_WORK_CONF,
+  DEFAULT_SPACE_AUTH_CONF,
+  SpaceRBACConf,
+  handleIdentityType,
 } from '@/lib/std/space';
 import { RoomServiceClient } from 'livekit-server-sdk';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
@@ -58,11 +62,10 @@ import { getConfig } from '../conf/conf';
 import { platformAPI } from '@/lib/api/platform';
 import { generateToken, usePlatformUserInfoServer } from '@/lib/hooks/platformToken';
 
-const { LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL } = process.env;
-
 // [redis config env] ----------------------------------------------------------
 const {
   redis: { enabled, host, port, password, db },
+  livekit: { url: LIVEKIT_URL, key: LIVEKIT_API_KEY, secret: LIVEKIT_API_SECRET },
 } = getConfig();
 
 let redisClient: Redis | null = null;
@@ -76,6 +79,23 @@ if (enabled) {
     db,
   });
 }
+
+const exportRBAC = (uid: string, spaceInfo?: SpaceInfo, pidentity?: string): SpaceRBACConf => {
+  if (!spaceInfo) {
+    return DEFAULT_SPACE_AUTH_CONF.guest;
+  }
+
+  const targetParticipant = spaceInfo.participants[uid];
+
+  if (!targetParticipant) {
+    return DEFAULT_SPACE_AUTH_CONF.guest;
+  }
+  const identity = handleIdentityType(
+    (targetParticipant?.auth?.identity || pidentity || 'guest') as IdentityType,
+  );
+
+  return spaceInfo.auth[identity] || DEFAULT_SPACE_AUTH_CONF.guest;
+};
 
 class SpaceManager {
   // 空间 redis key 前缀
@@ -100,6 +120,27 @@ class SpaceManager {
   // participant redis key
   private static getParticipantKey(space: string, participantId: string): string {
     return `${this.PARTICIPANT_KEY_PREFIX}${space}:${participantId}`;
+  }
+
+  // 删除整个空间 ------------------------------------------------------------------------
+  static async deleteEntireSpace(spaceName: string): Promise<boolean> {
+    try {
+      // 1. 直接从redis键中移除
+      const spaceKey = this.getSpaceKey(spaceName);
+      if (redisClient) {
+        await redisClient.del(spaceKey);
+      } else {
+        return false;
+      }
+
+      // 3. 直接删除space:date:records:spaceName
+      const spaceDataKey = `${this.SPACE_DATE_RECORDS_KEY_PREFIX}${spaceName}`;
+      await redisClient.del(spaceDataKey);
+      return true;
+    } catch (e) {
+      console.error('Error deleting entire space:', e);
+      return false;
+    }
   }
 
   // 切换房间隐私性 ----------------------------------------------------------------------
@@ -702,6 +743,15 @@ class SpaceManager {
           );
         } else {
           if (init) {
+            // 用户重连或持久化房间用户重新上线，记录新的上线时间
+            await this.setSpaceDateRecords(
+              room,
+              { start: spaceInfo.startAt },
+              {
+                [pData.name]: [{ start: startAt }],
+              },
+            );
+
             const { isAuth } = usePlatformUserInfoServer({ user: pData });
             // 这里说明房间存在而且且用户也存在，说明用户可能是重连或房间是持久化的，我们无需大范围数据更新，只需要更新
             // 用户的最基础设置即可
@@ -713,7 +763,7 @@ class SpaceManager {
                 todo: pData.appDatas.todo,
               };
             }
-
+            const isEmptySpace = Object.keys(spaceInfo.participants).length === 0;
             spaceInfo.participants[participantId] = {
               ...participant,
               name: pData.name,
@@ -727,6 +777,29 @@ class SpaceManager {
               appDatas,
               auth: pData.auth,
             };
+
+            // 设置auth，如果发现当前空间中没有人/空间ownerId就是当前用户，那必须把auth中的identity设置为owner
+            if (spaceInfo.ownerId === participantId || isEmptySpace) {
+              spaceInfo.participants[participantId].auth = {
+                identity: 'owner',
+                platform: pData.auth?.platform || 'other',
+              };
+            }
+
+            // 用户初始化完成之后通过RBAC获取权限，检查是否需要创建私人房间
+            const { createRoom } = exportRBAC(participantId, spaceInfo);
+            const roomName = `${spaceInfo.participants[participantId].name}'s Room`;
+            if (createRoom && !spaceInfo.children.find((c) => c.name === roomName)) {
+              const room = {
+                name: roomName,
+                isPrivate: true,
+                participants: [],
+                ownerId: participantId,
+              } as ChildRoom;
+
+              spaceInfo.children.push(room);
+            }
+
             return await this.setSpaceInfo(room, spaceInfo);
           }
         }
@@ -780,13 +853,49 @@ class SpaceManager {
       if (!redisClient) {
         throw new Error('Redis client is not initialized or disabled.');
       }
+
       const spaceInfo = await this.getSpaceInfo(spaceName);
-      if (!spaceInfo || !spaceInfo.participants[newOwnerId]) {
-        return false; // 房间或新主持人不存在
-      } else {
-        spaceInfo.ownerId = newOwnerId;
-        return await this.setSpaceInfo(spaceName, spaceInfo);
+      if (!spaceInfo) {
+        return false;
       }
+
+      // Ensure the new owner exists in participants
+      if (!spaceInfo.participants[newOwnerId]) {
+        return false;
+      }
+
+      const oldOwnerId = spaceInfo.ownerId;
+      spaceInfo.ownerId = newOwnerId;
+
+      // Downgrade previous owner's identity according to platform
+      const oldOwner = spaceInfo.participants[oldOwnerId];
+      if (oldOwner) {
+        if (oldOwner.auth?.platform === 'other') {
+          oldOwner.auth.identity = 'guest';
+        } else if (oldOwner.auth?.platform === 'c_s') {
+          oldOwner.auth.identity = 'customer';
+        } else {
+          if (oldOwner.auth && oldOwner.auth.identity) {
+            oldOwner.auth.identity = 'participant';
+          }
+        }
+      }
+
+      // Promote new owner
+      const newOwner = spaceInfo.participants[newOwnerId];
+      if (newOwner) {
+        if (!newOwner.auth) {
+          newOwner.auth = {
+            identity: 'owner',
+            platform: 'other',
+          };
+        } else {
+          newOwner.auth.identity = 'owner';
+        }
+      }
+
+      const success = await this.setSpaceInfo(spaceName, spaceInfo);
+      return success;
     } catch (error) {
       console.error('Error transferring ownership:', error);
       return false;
@@ -848,6 +957,25 @@ class SpaceManager {
       );
       // 如果是持久化房间，删除参与者操作到此为止
       if (spaceInfo.persistence) {
+        // 需要确定参与者的身份，如果是guest则需要直接删除，guest永远不持久存储
+        const { isAuth } = usePlatformUserInfoServer({
+          user: spaceInfo.participants[participantId],
+        });
+        if (!isAuth) {
+          console.warn('Removing guest participant from persistent room:', participantId);
+          delete spaceInfo.participants[participantId];
+        }
+        // 检查，如果没有参与者了也需要直接删除房间
+        if (spaceInfo.participants && Object.keys(spaceInfo.participants).length === 0) {
+          await this.deleteSpace(room, spaceInfo.startAt);
+          return {
+            success: true,
+            clearAll: true,
+          };
+        } else {
+          await this.setSpaceInfo(room, spaceInfo);
+        }
+
         return {
           success: true,
           clearAll: false,
@@ -1789,8 +1917,22 @@ export async function DELETE(request: NextRequest) {
   const socketId = request.nextUrl.searchParams.get('socketId');
   const childRoom = request.nextUrl.searchParams.get('childRoom') as ChildRoomMethods | null;
   const isDeleteParticipant = request.nextUrl.searchParams.get('participant') === 'delete';
+  const isSpaceDelete = request.nextUrl.searchParams.get('delete') === 'true';
   const isSpace = request.nextUrl.searchParams.get('space') === 'true';
   try {
+    // 删除整个Space ---------------------------------------------------------------------------------
+    if (isSpaceDelete && isSpace) {
+      const { spaceName } = await request.json();
+      const success = await SpaceManager.deleteEntireSpace(spaceName);
+      if (success) {
+        return NextResponse.json({ success: true, message: 'Space deleted successfully' });
+      } else {
+        return NextResponse.json(
+          { success: false, message: 'Failed to delete space' },
+          { status: 500 },
+        );
+      }
+    }
     // [离开子房间] ---------------------------------------------------------------------------------------------
     if (childRoom === ChildRoomMethods.LEAVE) {
       const body = await request.json();
@@ -1901,7 +2043,13 @@ export async function DELETE(request: NextRequest) {
     }
   } catch (error) {
     console.error('DELETE Error:', error);
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : String(error) },
+      { status: 500 },
+    );
   }
+  // 如果没有任何分支命中，返回 Bad Request
+  return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
 }
 
 /// 通过livekit服务端API确定用户是否真的离开了房间
@@ -1922,59 +2070,64 @@ const reallyLeaveSpace = async (spaceName: string, participantId: string): Promi
 // 经过测试，发现当用户退出房间时可能会失败，导致用户实际已经退出，但服务端数据还存在
 // 增加心跳检测，定时检查用户是否在线，若用户已经离线，需要从房间中进行移除, 依赖livekit server api
 const userHeartbeat = async () => {
-  if (
-    isUndefinedString(LIVEKIT_API_KEY) ||
-    isUndefinedString(LIVEKIT_API_SECRET) ||
-    isUndefinedString(LIVEKIT_URL)
-  ) {
-    console.warn('LiveKit API credentials are not set, skipping user heartbeat check.');
-    return;
-  }
-  let hostname = LIVEKIT_URL!.replace('wss', 'https').replace('ws', 'http');
-  const roomServer = new RoomServiceClient(hostname, LIVEKIT_API_KEY!, LIVEKIT_API_SECRET!);
-  // 列出所有房间
-  const currentRooms = await roomServer.listRooms();
-  for (const room of currentRooms) {
-    // 列出房间中所有的参与者，然后和redis中的参与者进行对比
-    const roomParticipants = await roomServer.listParticipants(room.name);
-    const redisRoom = await SpaceManager.getSpaceInfo(room.name);
-    if (!redisRoom) {
-      continue; // 如果redis中没有这个房间，跳过 (本地开发环境和正式环境使用的redis不同，但服务器是相同的)
+  try {
+    if (
+      isUndefinedString(LIVEKIT_API_KEY) ||
+      isUndefinedString(LIVEKIT_API_SECRET) ||
+      isUndefinedString(LIVEKIT_URL)
+    ) {
+      console.warn('LiveKit API credentials are not set, skipping user heartbeat check.');
+      return;
     }
-    const redisParticipants = Object.keys(redisRoom.participants);
-    // 有两种情况: 1. redis中有参与者但livekit中没有, 2. livekit中有参与者但redis中没有
-    // 情况1: 说明参与者已经离开了房间，但redis中没有清除，需要从redis中删除
-    // 情况2: 说明参与者实际是在房间中的，但是redis中没有初始化成功，这时候就需要告知参与者进行初始化 (socket.io)
-
-    // 首先获取两种情况的参与者
-    const inRedisNotInLK = redisParticipants.filter((p) => {
-      return !roomParticipants.some((lkParticipant) => lkParticipant.identity === p);
-    });
-
-    const inLKNotInRedis = roomParticipants.filter((lkParticipant) => {
-      return !redisParticipants.includes(lkParticipant.identity);
-    });
-    // 处理情况1 --------------------------------------------------------------------------------------------
-    if (inRedisNotInLK.length > 0) {
-      // 检查房间是否为持久化房间
-      if (redisRoom.persistence) {
-        console.warn(`Skipping participant removal for persistent room: ${room.name}`);
-        continue; // 跳过持久化房间的参与者清理
+    let hostname = LIVEKIT_URL!.replace('wss', 'https').replace('ws', 'http');
+    const roomServer = new RoomServiceClient(hostname, LIVEKIT_API_KEY!, LIVEKIT_API_SECRET!);
+    // 列出所有房间
+    const currentRooms = await roomServer.listRooms();
+    for (const room of currentRooms) {
+      // 列出房间中所有的参与者，然后和redis中的参与者进行对比
+      const roomParticipants = await roomServer.listParticipants(room.name);
+      const redisRoom = await SpaceManager.getSpaceInfo(room.name);
+      if (!redisRoom) {
+        continue; // 如果redis中没有这个房间，跳过 (本地开发环境和正式环境使用的redis不同，但服务器是相同的)
       }
-      for (const participantId of inRedisNotInLK) {
-        await SpaceManager.removeParticipant(room.name, participantId);
+      const redisParticipants = Object.keys(redisRoom.participants);
+      // 有两种情况: 1. redis中有参与者但livekit中没有, 2. livekit中有参与者但redis中没有
+      // 情况1: 说明参与者已经离开了房间，但redis中没有清除，需要从redis中删除
+      // 情况2: 说明参与者实际是在房间中的，但是redis中没有初始化成功，这时候就需要告知参与者进行初始化 (socket.io)
+
+      // 首先获取两种情况的参与者
+      const inRedisNotInLK = redisParticipants.filter((p) => {
+        return !roomParticipants.some((lkParticipant) => lkParticipant.identity === p);
+      });
+
+      const inLKNotInRedis = roomParticipants.filter((lkParticipant) => {
+        return !redisParticipants.includes(lkParticipant.identity);
+      });
+      // 处理情况1 --------------------------------------------------------------------------------------------
+      if (inRedisNotInLK.length > 0) {
+        // 检查房间是否为持久化房间
+        if (redisRoom.persistence) {
+          console.warn(`Skipping participant removal for persistent room: ${room.name}`);
+          continue; // 跳过持久化房间的参与者清理
+        }
+        for (const participantId of inRedisNotInLK) {
+          await SpaceManager.removeParticipant(room.name, participantId);
+        }
+      }
+
+      // 处理情况2 --------------------------------------------------------------------------------------------
+      if (inLKNotInRedis.length > 0) {
+        for (const participant of inLKNotInRedis) {
+          socket.emit('re_init', {
+            space: room.name,
+            participantId: participant.identity,
+          } as WsParticipant);
+        }
       }
     }
-
-    // 处理情况2 --------------------------------------------------------------------------------------------
-    if (inLKNotInRedis.length > 0) {
-      for (const participant of inLKNotInRedis) {
-        socket.emit('re_init', {
-          space: room.name,
-          participantId: participant.identity,
-        } as WsParticipant);
-      }
-    }
+  } catch (error) {
+    console.error('Error in userHeartbeat:', error);
+    // 网络错误或LiveKit服务器不可达时，记录错误但不中断定时任务
   }
 };
 

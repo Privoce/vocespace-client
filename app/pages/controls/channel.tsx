@@ -57,6 +57,7 @@ import { DEFAULT_DRAWER_PROP } from './drawer_tools';
 import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 import { audio } from '@/lib/audio';
 import { FullScreenBtnProps } from './widgets/full_screen';
+import { exportRBAC } from '@/lib/hooks/platform';
 
 interface ChannelProps extends FullScreenBtnProps {
   // roomName: string;
@@ -128,6 +129,9 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
     const [subRoomsTmp, setSubRoomsTmp] = useState<string[]>([]);
     const [mainActiveKey, setMainActiveKey] = useState<string[]>(['main', 'sub']);
     const [roomPrivacy, setRoomPrivacy] = useState<RoomPrivacy>('public');
+    const { createRoom, manageRoom } = useMemo(() => {
+      return exportRBAC(localParticipantId, settings);
+    }, [localParticipantId, settings]);
     const roomPrivacyOptions: CheckboxGroupProps<string>['options'] = [
       {
         label: t('channel.modal.privacy.public.title'),
@@ -499,9 +503,9 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       if (localParticipantId === settings.ownerId) {
         return false;
       } else {
-        return selectedRoom?.ownerId !== localParticipantId;
+        return selectedRoom?.ownerId !== localParticipantId ? true : !manageRoom;
       }
-    }, [settings.ownerId, selectedRoom, localParticipantId]);
+    }, [settings.ownerId, selectedRoom, localParticipantId, manageRoom]);
 
     const subContextItems: MenuProps['items'] = [
       {
@@ -821,7 +825,8 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                 <SvgResource type="room" svgSize={16} color="#aaa"></SvgResource>
                 <span>{t('channel.menu.sub')}</span>
               </div>
-              <div className={styles.room_header_extra} style={{ height: '30px' }}>
+              {
+                createRoom && <div className={styles.room_header_extra} style={{ height: '30px' }}>
                 <button
                   className="vocespace_button_text"
                   style={{ height: '100%' }}
@@ -832,6 +837,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                   <PlusCircleOutlined></PlusCircleOutlined>
                 </button>
               </div>
+              }
             </div>
           ),
           children: (
@@ -847,7 +853,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
           style: panelStyle,
         },
       ];
-    }, [mainContext, subChildren, childRooms, subActiveKey, mainJoinVis]);
+    }, [mainContext, subChildren, childRooms, subActiveKey, mainJoinVis, createRoom]);
 
     /**
      * 创建属于自己的空间, 直接使用 api.createSpace，将当前用户作为空间的拥有者，在数据层创建，不跳转

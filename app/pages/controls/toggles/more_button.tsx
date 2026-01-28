@@ -4,10 +4,11 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { useMemo, useState } from 'react';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
 import { ViewAdjusts } from '@/lib/std/window';
-import { usePlatformUserInfo } from '@/lib/hooks/platform';
+import { exportRBAC, usePlatformUserInfo } from '@/lib/hooks/platform';
 import { useLocalParticipant } from '@livekit/components-react';
 import { HomeOutlined, RobotOutlined } from '@ant-design/icons';
 import { Room } from 'livekit-client';
+import { SpaceInfo } from '@/lib/std/space';
 
 export interface MoreButtonProps {
   space: Room;
@@ -28,6 +29,7 @@ export interface MoreButtonProps {
     onClicked: () => void;
   };
   size: SizeType;
+  spaceInfo: SpaceInfo;
 }
 
 export interface MoreButtonInnerProps extends MoreButtonProps {
@@ -51,6 +53,7 @@ export function MoreButtonInner({
   isDot,
   setIsDot,
   size,
+  spaceInfo,
 }: MoreButtonInnerProps) {
   const { t } = useI18n();
 
@@ -59,8 +62,10 @@ export function MoreButtonInner({
   }, [controlWidth]);
 
   const { localParticipant } = useLocalParticipant();
-
-  const { platUser, showSelfPlatform } = usePlatformUserInfo({
+  const { recording } = useMemo(() => {
+    return exportRBAC(localParticipant.identity, spaceInfo);
+  }, [spaceInfo, localParticipant.identity]);
+  const { platUser, fromVocespace } = usePlatformUserInfo({
     space,
     uid: localParticipant.identity,
   });
@@ -80,15 +85,21 @@ export function MoreButtonInner({
         icon: <SvgResource type="app" svgSize={16} />,
       },
       // 录屏功能
-      {
-        label: (
-          <div style={{ marginLeft: '8px' }}>
-            {!isRecording ? t('more.record.start') : t('more.record.stop')}
-          </div>
-        ),
-        key: 'record',
-        icon: <SvgResource type="record" svgSize={16} color={isRecording ? '#FF0000' : '#000'} />,
-      },
+      ...(recording
+        ? [
+            {
+              label: (
+                <div style={{ marginLeft: '8px' }}>
+                  {!isRecording ? t('more.record.start') : t('more.record.stop')}
+                </div>
+              ),
+              key: 'record',
+              icon: (
+                <SvgResource type="record" svgSize={16} color={isRecording ? '#FF0000' : '#000'} />
+              ),
+            },
+          ]
+        : []),
       // 参与者管理功能
       {
         label: <div style={{ marginLeft: '8px' }}>{t('more.participant.title')}</div>,
@@ -100,7 +111,7 @@ export function MoreButtonInner({
         key: 'setting',
         icon: <SvgResource type="setting" svgSize={16} />,
       },
-      ...(showSelfPlatform
+      ...(fromVocespace
         ? [
             {
               label: <div>{t('more.platform')}</div>,
@@ -123,7 +134,7 @@ export function MoreButtonInner({
       });
     }
     return moreItems;
-  }, [isRecording, chat, t]);
+  }, [isRecording, chat, t, fromVocespace, recording]);
 
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {

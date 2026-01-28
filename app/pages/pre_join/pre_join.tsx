@@ -24,12 +24,14 @@ import { api } from '@/lib/api';
 import { LoginButtons, LoginStateBtn } from './login';
 import { SpaceInfo } from '@/lib/std/space';
 import { ParticipantPlaceholder2 } from '../participant/placeholder';
+import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 
 export interface PreJoinPropsExt extends PreJoinProps {
   data: PlatformUser | undefined;
   loading: boolean;
   setLoading: (loading: boolean) => void;
   space: string;
+  config: VocespaceConfig | ReadableConf;
 }
 
 /**
@@ -60,6 +62,7 @@ export function PreJoin({
   loading,
   space,
   setLoading,
+  config,
 }: PreJoinPropsExt) {
   const { t } = useI18n();
   // user choices -------------------------------------------------------------------------------------
@@ -445,7 +448,7 @@ export function PreJoin({
               }}
             ></Slider>
           </div> */}
-          {showLoginBtn && <LoginButtons space={space}></LoginButtons>}
+          {showLoginBtn && <LoginButtons serverUrl={config.serverUrl} space={space}></LoginButtons>}
           <Input
             ref={inputRef}
             size="large"
