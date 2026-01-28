@@ -505,6 +505,9 @@ export default {
   },
   settings: {
     title: 'Настройки',
+    auth: {
+      title: 'Права доступа',
+    },
     ai: {
       title: 'AI',
       desc: 'Настройте параметры AI-анализа для включения функции.',

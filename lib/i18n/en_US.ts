@@ -513,6 +513,9 @@ export default {
   },
   settings: {
     title: 'Settings',
+    auth: {
+      title: 'Permissions',
+    },
     ai: {
       title: 'AI',
       desc: 'Configure the relevant parameters of the AI ​​analysis service to enable AI analysis functions.',

@@ -62,11 +62,10 @@ import { getConfig } from '../conf/conf';
 import { platformAPI } from '@/lib/api/platform';
 import { generateToken, usePlatformUserInfoServer } from '@/lib/hooks/platformToken';
 
-const { LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL } = process.env;
-
 // [redis config env] ----------------------------------------------------------
 const {
   redis: { enabled, host, port, password, db },
+  livekit: { url: LIVEKIT_URL, key: LIVEKIT_API_KEY, secret: LIVEKIT_API_SECRET },
 } = getConfig();
 
 let redisClient: Redis | null = null;
@@ -958,6 +957,25 @@ class SpaceManager {
       );
       // 如果是持久化房间，删除参与者操作到此为止
       if (spaceInfo.persistence) {
+        // 需要确定参与者的身份，如果是guest则需要直接删除，guest永远不持久存储
+        const { isAuth } = usePlatformUserInfoServer({
+          user: spaceInfo.participants[participantId],
+        });
+        if (!isAuth) {
+          console.warn('Removing guest participant from persistent room:', participantId);
+          delete spaceInfo.participants[participantId];
+        }
+        // 检查，如果没有参与者了也需要直接删除房间
+        if (spaceInfo.participants && Object.keys(spaceInfo.participants).length === 0) {
+          await this.deleteSpace(room, spaceInfo.startAt);
+          return {
+            success: true,
+            clearAll: true,
+          };
+        } else {
+          await this.setSpaceInfo(room, spaceInfo);
+        }
+
         return {
           success: true,
           clearAll: false,
