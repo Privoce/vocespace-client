@@ -143,7 +143,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       space?.name || '', // 房间 ID
       space?.localParticipant?.identity || '', // 参与者 ID
     );
-    const { fromVocespace, platUser, roomEnter, showSideChannel, showAI } = usePlatformUserInfo({
+    const { fromVocespace, platUser, roomEnter, showAI } = usePlatformUserInfo({
       space,
       uid: space?.localParticipant.identity,
       onEnterRoom: () => {
@@ -152,6 +152,10 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         } as WsBase);
       },
     });
+    const showSideChannel = useMemo(()=>{
+      if (!space) return false;
+      return exportRBAC(space?.localParticipant.identity, settings).createRoom
+    }, [space, settings])
     const [openApp, setOpenApp] = useState<boolean>(false);
     // const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
     // const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
