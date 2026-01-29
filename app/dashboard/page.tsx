@@ -28,6 +28,8 @@ import { ParticipantSettings, SpaceDateRecords, SpaceInfo, SpaceInfoMap } from '
 import { useI18n } from '@/lib/i18n/i18n';
 import { LangSelect } from '../pages/controls/selects/lang_select';
 import { usePlatformUserInfoCheap } from '@/lib/hooks/platform';
+import { socket } from '../[spaceName]/PageClientImpl';
+import { WsBase } from '@/lib/std/device';
 
 const { Title } = Typography;
 
@@ -557,6 +559,10 @@ export default function Dashboard() {
         }
         setEditingOwnerSpace(null);
         setSelectedNewOwner(null);
+        // socket update
+        socket.emit('update_user_status', {
+          space: editingOwnerSpace,
+        } as WsBase);
       }
     } catch (e) {
       console.error(e);
@@ -1164,7 +1170,11 @@ export default function Dashboard() {
               value={hostToken}
               onChange={(e) => setHostToken(e.target.value)}
             />
-            <Button loading={manageLoading} onClick={async () => await handleVerifyHostAndLoad()} type="primary">
+            <Button
+              loading={manageLoading}
+              onClick={async () => await handleVerifyHostAndLoad()}
+              type="primary"
+            >
               {t('dashboard.verify_and_load')}
             </Button>
           </div>
@@ -1177,7 +1187,7 @@ export default function Dashboard() {
                   setHostToken('');
                   clearVerified();
                 }}
-                >
+              >
                 {t('dashboard.logout')}
               </Button>
             </div>
@@ -1231,7 +1241,9 @@ export default function Dashboard() {
               onCancel={() => setEditingOwnerSpace(null)}
               footer={
                 <div style={{ display: 'flex', gap: 8 }}>
-                  <Button onClick={() => setEditingOwnerSpace(null)}>{t('dashboard.cancel')}</Button>
+                  <Button onClick={() => setEditingOwnerSpace(null)}>
+                    {t('dashboard.cancel')}
+                  </Button>
                   <Button type="primary" loading={manageLoading} onClick={handleSaveNewOwner}>
                     {t('dashboard.save')}
                   </Button>
