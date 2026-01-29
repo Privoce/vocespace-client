@@ -265,6 +265,7 @@ export default {
       rename: 'Rename',
       switch_privacy: 'Set to ',
       active: 'active',
+      share: 'Share',
     },
     join: {
       title: 'Join Room',

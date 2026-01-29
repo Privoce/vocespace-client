@@ -259,6 +259,7 @@ export default {
       rename: 'Переименовать',
       switch_privacy: 'Установить как',
       active: 'В сети',
+      share: "Поделиться",
     },
     join: {
       title: 'Присоединиться к комнате',
