@@ -731,86 +731,64 @@ class SpaceManager {
           },
         );
       } else {
-        // 房间存在，这个用户可能是新加入的，我们可以查找房间中是否有这个用户，如果没有则需要将用户记录添加到使用记录中
-        let participant = spaceInfo.participants[participantId];
-        if (!participant) {
-          await this.setSpaceDateRecords(
-            room,
-            { start: spaceInfo.startAt },
-            {
-              [pData.name]: [{ start: startAt }],
-            },
-          );
-        } else {
-          if (init) {
-            // 用户重连或持久化房间用户重新上线，记录新的上线时间
-            await this.setSpaceDateRecords(
-              room,
-              { start: spaceInfo.startAt },
-              {
-                [pData.name]: [{ start: startAt }],
-              },
-            );
-
-            const { isAuth } = usePlatformUserInfoServer({ user: pData });
-            // 这里说明房间存在而且且用户也存在，说明用户可能是重连或房间是持久化的，我们无需大范围数据更新，只需要更新
-            // 用户的最基础设置即可
-            // 由于todo数据连接了平台端数据，所以这里需要更改为平台端的todo数据，但只有在isAuth为true时才更新
-            let appDatas = participant.appDatas;
-            if (isAuth) {
-              appDatas = {
-                ...appDatas,
-                todo: pData.appDatas.todo,
-              };
-            }
-            const isEmptySpace = Object.keys(spaceInfo.participants).length === 0;
-            spaceInfo.participants[participantId] = {
-              ...participant,
-              name: pData.name,
-              volume: pData.volume,
-              version: pData.version,
-              blur: pData.blur,
-              screenBlur: pData.screenBlur,
-              socketId: pData.socketId,
-              startAt: participant.startAt,
-              online: true,
-              appDatas,
-              auth: pData.auth,
-            };
-
-            // 设置auth，如果发现当前空间中没有人/空间ownerId就是当前用户，那必须把auth中的identity设置为owner
-            if (spaceInfo.ownerId === participantId || isEmptySpace) {
-              spaceInfo.participants[participantId].auth = {
-                identity: 'owner',
-                platform: pData.auth?.platform || 'other',
-              };
-            }
-
-            // 用户初始化完成之后通过RBAC获取权限，检查是否需要创建私人房间
-            const { createRoom } = exportRBAC(participantId, spaceInfo);
-            const roomName = `${spaceInfo.participants[participantId].name}'s Room`;
-            if (createRoom && !spaceInfo.children.find((c) => c.name === roomName)) {
-              const room = {
-                name: roomName,
-                isPrivate: true,
-                participants: [],
-                ownerId: participantId,
-              } as ChildRoom;
-
-              spaceInfo.children.push(room);
-            }
-
-            return await this.setSpaceInfo(room, spaceInfo);
-          }
-        }
+        // 房间存在
+        // 用户重连或持久化房间用户重新上线，记录新的上线时间
+        await this.setSpaceDateRecords(
+          room,
+          { start: spaceInfo.startAt },
+          {
+            [pData.name]: [{ start: startAt }],
+          },
+        );
       }
-
+    
+      const isEmptySpace = Object.keys(spaceInfo.participants).length === 0;
       // 更新参与者数据
       spaceInfo.participants[participantId] = {
         ...spaceInfo.participants[participantId],
         ...pData,
+        online: true,
       };
+      // 设置auth，如果发现当前空间中没有人/空间ownerId就是当前用户，那必须把auth中的identity设置为owner
+      if (spaceInfo.ownerId === participantId || isEmptySpace) {
+        spaceInfo.participants[participantId].auth = {
+          identity: 'owner',
+          platform: pData.auth?.platform || 'other',
+        };
+      }
 
+      let participant = spaceInfo.participants[participantId];
+      // init 时进行房间创建
+      if (init) {
+        const { isAuth } = usePlatformUserInfoServer({ user: participant });
+        // 这里说明房间存在而且且用户也存在，说明用户可能是重连或房间是持久化的，我们无需大范围数据更新，只需要更新
+        // 用户的最基础设置即可
+        // 由于todo数据连接了平台端数据，所以这里需要更改为平台端的todo数据，但只有在isAuth为true时才更新
+        let appDatas = participant.appDatas;
+        if (isAuth) {
+          appDatas = {
+            ...appDatas,
+            todo: participant.appDatas.todo,
+          };
+        }
+        spaceInfo.participants[participantId].appDatas = appDatas;
+
+        // 用户初始化完成之后通过RBAC获取权限，检查是否需要创建私人房间
+        const { createRoom } = exportRBAC(participantId, spaceInfo);
+        console.warn(createRoom, 'createRoom after exportRBAC', participantId);
+        const roomName = `${spaceInfo.participants[participantId].name}'s Room`;
+        if (createRoom && !spaceInfo.children.find((c) => c.name === roomName)) {
+          const room = {
+            name: roomName,
+            isPrivate: true,
+            participants: [],
+            ownerId: participantId,
+          } as ChildRoom;
+
+          spaceInfo.children.push(room);
+        }
+      }
+   
       // 保存更新后的房间设置
       return await this.setSpaceInfo(room, spaceInfo);
     } catch (error) {

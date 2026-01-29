@@ -691,12 +691,14 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                   ) : (
                     <SvgResource type="public" svgSize={16} color="#aaa"></SvgResource>
                   )}
-                  <div
+                  <Tooltip title={room.name} placement="bottomLeft">
+                    <div
                     className={styles.room_header_wrapper_title_name_title}
-                    style={{ width: room.participants.length > 0 ? '100px' : 'calc(100% - 24px)' }}
+                    style={{ width: room.participants.length > 0 ? '100px' : '160px', maxWidth: '160px' }}
                   >
                     {room.name}
                   </div>
+                  </Tooltip>
                 </div>
                 {room.participants.length > 0 && (
                   <Tag

@@ -200,7 +200,7 @@ export const usePlatformUserInfo = ({
       fromVocespace: platUser.auth === 'vocespace',
       auth: platUser.auth || 'other',
       showSideChannel: !['guest', 'customer'].includes(identity),
-      showAI: !['guest', 'customer'].includes(identity),
+      showAI: !['guest', 'customer', "assistant"].includes(identity),
     };
   }, [platUser, space]);
 

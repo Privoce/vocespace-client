@@ -143,6 +143,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       space?.name || '', // 房间 ID
       space?.localParticipant?.identity || '', // 参与者 ID
     );
+    console.warn(settings);
     const { fromVocespace, platUser, roomEnter, showAI } = usePlatformUserInfo({
       space,
       uid: space?.localParticipant.identity,
@@ -152,10 +153,10 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         } as WsBase);
       },
     });
-    const showSideChannel = useMemo(()=>{
+    const showSideChannel = useMemo(() => {
       if (!space) return false;
-      return exportRBAC(space?.localParticipant.identity, settings).createRoom
-    }, [space, settings])
+      return exportRBAC(space?.localParticipant.identity, settings).createRoom;
+    }, [space, settings]);
     const [openApp, setOpenApp] = useState<boolean>(false);
     // const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
     // const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
@@ -340,6 +341,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     // 手机无需AI分享分析提示
     useEffect(() => {
       // 完成初始化并没有询问过用户时显示弹窗并询问
+      if (!settings) return;
       if (
         !init &&
         (settings.ai.cut.enabled === undefined ? !noteStateForAICutService.hasAsked : false) &&
@@ -347,7 +349,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       ) {
         openAIServiceAskNote();
       }
-    }, [init, noteStateForAICutService.hasAsked, settings.ai.cut.enabled]);
+    }, [init, noteStateForAICutService.hasAsked, settings]);
 
     useEffect(() => {
       if (noteStateForAICutService.noteClosed) {
@@ -962,11 +964,11 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       config,
       controlsRef,
       locale,
-      platUser
+      platUser,
     ]);
 
     const selfRoom = useMemo(() => {
-      if (!space || space.state !== ConnectionState.Connected) return;
+      if (!space || space.state !== ConnectionState.Connected || !settings || !settings.children) return;
 
       let selfRoom = settings.children.find((child) => {
         return child.participants.includes(space.localParticipant.identity);
@@ -988,7 +990,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         };
       }
       return selfRoom;
-    }, [settings.children, space]);
+    }, [settings, space]);
 
     useLayoutEffect(() => {
       if (!settings || !space || space.state !== ConnectionState.Connected) return;
@@ -1481,34 +1483,63 @@ export function isEqualTrackRef(
   a?: TrackReferenceOrPlaceholder,
   b?: TrackReferenceOrPlaceholder,
 ): boolean {
-  if (a === undefined || b === undefined) {
+  try {
+    if (a === undefined || b === undefined) {
+      return false;
+    }
+
+    if (isTrackReference(a) && isTrackReference(b)) {
+      // publication may be undefined in some edge cases
+      return (a.publication?.trackSid ?? '') === (b.publication?.trackSid ?? '');
+    }
+
+    const ida = getTrackReferenceIdSafe(a);
+    const idb = getTrackReferenceIdSafe(b);
+    if (!ida || !idb) return false;
+    return ida === idb;
+  } catch (e) {
+    console.warn('isEqualTrackRef error', e);
     return false;
-  }
-  if (isTrackReference(a) && isTrackReference(b)) {
-    return a.publication.trackSid === b.publication.trackSid;
-  } else {
-    return getTrackReferenceId(a) === getTrackReferenceId(b);
   }
 }
 
-export function getTrackReferenceId(trackReference: TrackReferenceOrPlaceholder | number) {
-  if (typeof trackReference === 'string' || typeof trackReference === 'number') {
-    return `${trackReference}`;
-  } else if (isTrackReferencePlaceholder(trackReference)) {
-    return `${trackReference.participant.identity}_${trackReference.source}_placeholder`;
-  } else if (isTrackReference(trackReference)) {
-    return `${trackReference.participant.identity}_${trackReference.publication.source}_${trackReference.publication.trackSid}`;
-  } else {
-    throw new Error(`Can't generate a id for the given track reference: ${trackReference}`);
+export function getTrackReferenceIdSafe(
+  trackReference?: TrackReferenceOrPlaceholder | number,
+): string | undefined {
+  if (trackReference === undefined || trackReference === null) return undefined;
+  try {
+    if (typeof trackReference === 'string' || typeof trackReference === 'number') {
+      return `${trackReference}`;
+    }
+
+    if (isTrackReferencePlaceholder(trackReference)) {
+      return `${trackReference.participant.identity}_${trackReference.source}_placeholder`;
+    }
+
+    if (isTrackReference(trackReference)) {
+      const pid = trackReference.participant?.identity;
+      const src = trackReference.publication?.source;
+      const sid = trackReference.publication?.trackSid;
+      if (!pid || !src || !sid) return undefined;
+      return `${pid}_${src}_${sid}`;
+    }
+  } catch (e) {
+    console.warn('getTrackReferenceIdSafe error', e);
+    return undefined;
   }
+
+  return undefined;
+}
+
+// Deprecated: compatibility wrapper for older callers
+export function getTrackReferenceId(trackReference: TrackReferenceOrPlaceholder | number) {
+  return getTrackReferenceIdSafe(trackReference) || `${trackReference}`;
 }
 
 export function isTrackReferencePlaceholder(
   trackReference?: TrackReferenceOrPlaceholder,
 ): trackReference is TrackReferencePlaceholder {
-  if (!trackReference) {
-    return false;
-  }
+  if (!trackReference) return false;
   return (
     trackReference.hasOwnProperty('participant') &&
     trackReference.hasOwnProperty('source') &&
