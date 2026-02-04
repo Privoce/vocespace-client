@@ -154,7 +154,11 @@ const verifyWhitList = (name: string, id?: string | null, whiteList?: string[]):
   if (!whiteList || whiteList.length === 0) {
     return false;
   }
-  console.warn(whiteList);
+
+  if (whiteList.includes('*')) {
+    return true;
+  }
+
   const normalize = (item: string) => item.replace(/^USER-/i, '');
 
   if (!id) {
