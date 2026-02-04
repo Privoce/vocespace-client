@@ -919,6 +919,7 @@ export default {
         verify: 'Administrator token error, please try again',
         not_loaded:
           'Configuration not loaded or unable to obtain configuration, please try again later',
+        update: 'Configuration update failed, please try again later.',
       },
       success: {
         update: 'Configuration updated',
