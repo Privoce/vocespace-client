@@ -857,10 +857,28 @@ export default {
       resolution: '配置全局画质',
       verify: '验证',
       close: '关闭',
+      create_space: '创建新空间',
+      create_space_desc: [
+        '选择一个策略允许创建新的 VoceSpace 空间',
+        '1. ALL: 任何人都可以创建新的 VoceSpace 空间',
+        '2. WHITE: 仅白名单用户可以创建新的 VoceSpace 空间',
+        '3. WHITE-PLATFORM: 白名单和平台用户可以创建新的 VoceSpace 空间',
+      ],
+      white_list: '白名单',
+      add_white_list: '添加',
+      delete_white_list: '删除',
+      white_list_desc: [
+        '* :表示所有用户，相当于ALL策略',
+        '单个用户：输入平台用户ID',
+        'USER-John: 表示允许用户名为John的用户创建空间',
+      ],
+      white_list_exist: '白名单已存在',
+      white_list_not_exist: '白名单不存在',
       placeholder: '请输入管理员令牌',
       error: {
         verify: '管理员令牌错误，请重试',
         not_loaded: '配置未加载完成或无法获得配置，请稍后再试',
+        update: "配置更新失败，请稍后再试",
       },
       success: {
         update: '配置已更新',
@@ -874,6 +892,7 @@ export default {
       opt: '操作',
       refresh: '刷新数据',
       global_conf: '配置画质(全局)',
+      allow_create_space: '创建空间策略',
       history: {
         title: '历史房间统计',
         day: '日榜',

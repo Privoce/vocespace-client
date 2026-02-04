@@ -66,6 +66,8 @@ import { generateToken, usePlatformUserInfoServer } from '@/lib/hooks/platformTo
 const {
   redis: { enabled, host, port, password, db },
   livekit: { url: LIVEKIT_URL, key: LIVEKIT_API_KEY, secret: LIVEKIT_API_SECRET },
+  create_space,
+  whiteList,
 } = getConfig();
 
 let redisClient: Redis | null = null;
@@ -741,7 +743,7 @@ class SpaceManager {
           },
         );
       }
-    
+
       const isEmptySpace = Object.keys(spaceInfo.participants).length === 0;
       // 更新参与者数据
       spaceInfo.participants[participantId] = {
@@ -788,7 +790,7 @@ class SpaceManager {
           spaceInfo.children.push(room);
         }
       }
-   
+
       // 保存更新后的房间设置
       return await this.setSpaceInfo(room, spaceInfo);
     } catch (error) {

@@ -93,6 +93,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             paddingBlockLG: 8,
             colorBorderSecondary: '#1E1E1E',
             colorText: '#ffffff',
+            colorTextDisabled: "#8c8c8c"
           },
           InputNumber: {
             colorBgBase: '#1E1E1E',

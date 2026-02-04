@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig, setStoredConf, setConfigEnv, setConfigLicense, writeBackConfig } from './conf';
 import { AIConf, clearReadableConf, RTCConf } from '@/lib/std/conf';
+import { UpdateCreateSpaceConfBody } from '@/lib/api/conf';
 
 export async function GET(request: NextRequest) {
   const hostToken = request.nextUrl.searchParams.get('hostToken');
@@ -15,6 +16,31 @@ export async function POST(request: NextRequest) {
   const isUpdateLicense = request.nextUrl.searchParams.get('license');
   const isUpdateAI = request.nextUrl.searchParams.get('ai');
   const isCheckHostToken = request.nextUrl.searchParams.get('check') === 'true';
+  const isCreateSpace = request.nextUrl.searchParams.get('create_space') === 'true';
+  // 更新创建空间配置 ---------------------------------------------------------------------------
+  if (isCreateSpace) {
+    const { createStrategy, whiteList }: UpdateCreateSpaceConfBody = await request.json();
+
+    const conf = getConfig();
+    conf.create_space = createStrategy;
+    conf.whiteList = whiteList;
+    try {
+      const { success, error } = writeBackConfig(conf);
+      if (!success) {
+        throw error;
+      }
+    } catch (e) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'can not update create space config',
+        },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json({ success: true }, { status: 200 });
+  }
+
   // 验证host token --------------------------------------------------------------------------------
   if (isCheckHostToken) {
     const { hostToken }: { hostToken: string } = await request.json();

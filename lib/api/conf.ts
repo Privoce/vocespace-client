@@ -1,5 +1,5 @@
 import { connect_endpoint } from '../std';
-import { RTCConf } from '../std/conf';
+import { CreateSpaceStrategy, RTCConf } from '../std/conf';
 import { AIConf } from '../std/conf';
 
 const CONF_API_URL = connect_endpoint('/api/conf');
@@ -55,5 +55,30 @@ export const updateAIConf = async (aiConf: AIConf): Promise<Response> => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ aiConf }),
+  });
+};
+
+export interface UpdateCreateSpaceConfBody {
+  createStrategy: CreateSpaceStrategy;
+  whiteList: string[];
+}
+
+export const updateCreateSpaceConf = async (
+  createStrategy: CreateSpaceStrategy,
+  whiteList: string[] | undefined | Set<string>,
+): Promise<Response> => {
+  const url = new URL(CONF_API_URL, window.location.origin);
+  url.searchParams.append('create_space', 'true');
+  const whiteListArray = whiteList
+    ? Array.isArray(whiteList)
+      ? whiteList
+      : Array.from(whiteList)
+    : [];
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ createStrategy, whiteList: whiteListArray }),
   });
 };

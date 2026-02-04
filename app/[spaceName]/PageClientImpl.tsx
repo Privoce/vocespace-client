@@ -171,8 +171,14 @@ export function PageClientImpl({
           region,
           data?.id,
         );
-        const connectionDetailsData = await connectionDetailsResp.json();
-        setConnectionDetails(connectionDetailsData);
+       
+        if (connectionDetailsResp.ok) {
+          const connectionDetailsData = await connectionDetailsResp.json();
+          setConnectionDetails(connectionDetailsData);
+        } else {
+          const { error } = await connectionDetailsResp.json();
+          messageApi.error(error);
+        }
       }
       if (auth) {
         // 设置登陆状态：需要在localStorage中存储来自平台提供的用户id即可，因为id才是真正的唯一标识

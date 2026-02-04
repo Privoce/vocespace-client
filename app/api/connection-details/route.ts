@@ -10,7 +10,6 @@ import {
   verifyPlatformUser,
   verifyTokenResult,
 } from '@/lib/std';
-import { SpaceInfo } from '@/lib/std/space';
 
 const COOKIE_KEY = 'random-participant-postfix';
 
@@ -151,6 +150,33 @@ const generateData = async (
   };
 };
 
+const verifyWhitList = (name: string, id?: string | null, whiteList?: string[]): boolean => {
+  if (!whiteList || whiteList.length === 0) {
+    return false;
+  }
+  console.warn(whiteList);
+  const normalize = (item: string) => item.replace(/^USER-/i, '');
+
+  if (!id) {
+    // 没有 ID，先精确匹配白名单项或 USER-<name>，再做前缀/包含容错匹配
+    if (whiteList.includes(name)) return true;
+    if (whiteList.includes(`USER-${name}`)) return true;
+    if (whiteList.some((item) => {
+      const n = normalize(item);
+      return n === name || n.startsWith(name) || name.startsWith(n);
+    })) return true;
+  } else {
+    // 有 ID 优先检查 ID，其次做类似的名称容错匹配
+    if (whiteList.includes(id)) return true;
+    if (whiteList.some((item) => {
+      const n = normalize(item);
+      return n === name || n.startsWith(name) || name.startsWith(n);
+    })) return true;
+  }
+
+  return false;
+};
+
 // ------- GET /api/connection-details ---------------------------------------------------------------------
 export async function GET(request: NextRequest) {
   try {
@@ -162,6 +188,26 @@ export async function GET(request: NextRequest) {
     const uIdentity = request.nextUrl.searchParams.get('identity');
     // with auth id (from vocespace platform)
     const auth = request.nextUrl.searchParams.get('auth') as AuthType | null;
+
+    // 测试得出没有每次都获取新的config，所以重新获取一次配置
+    const { create_space, whiteList } = getConfig();
+
+    // 从配置中查询是否允许用户创建房间以及白名单检查
+    if (create_space === 'white') {
+      if (!verifyWhitList(participantName || '', auth , whiteList)) {
+        throw new Error(
+          'Creation failed: you are not in the white list. You are not allowed to create space.',
+        );
+      }
+    } else if (create_space === 'white_platform') {
+      // 没有auth验证白名单
+      if (!auth && !verifyWhitList(participantName || '', auth , whiteList)) {
+        throw new Error(
+          'Creation failed: you are not in the white list. You are not allowed to create space.',
+        );
+      }
+    }
+
     // special handling for sohive auth: /api/connection-details?auth=sohive&token=xxx
     // 通过这种方式接入的用户，必须提供 token 参数，通过解析 token 获取用户名和空间名以及房间名，这样用户可以直接进入指定的房间
     if (auth) {
@@ -189,9 +235,12 @@ export async function GET(request: NextRequest) {
       });
     }
   } catch (error) {
-    if (error instanceof Error) {
-      return new NextResponse(error.message, { status: 500 });
-    }
+    return NextResponse.json(
+      {
+        error: error instanceof Error ? error.message : 'Internal Server Error',
+      },
+      { status: 500 },
+    );
   }
 }
 

@@ -51,6 +51,14 @@ export interface AIConf {
 }
 
 /**
+ * 创建空间的策略
+ * all: 允许所有用户创建空间
+ * white: 仅允许白名单用户创建空间
+ * white_platform: 仅允许白名单用户和平台用户创建空间
+ */
+export type CreateSpaceStrategy = 'all' | 'white' | 'white_platform';
+
+/**
  * 可以被前端读取的配置项，不包含敏感信息
  */
 export interface ReadableConf {
@@ -63,6 +71,11 @@ export interface ReadableConf {
   serverUrl: string;
   license: string;
   ai?: AIConf; // 必须传递hostToken给后端校验成功才能传递这个配置
+  whiteList?: string[]; // 允许创建空间的白名单用户列表
+  /**
+   * 创建空间的策略
+   */
+  create_space: CreateSpaceStrategy;
 }
 
 export interface VocespaceConfig {
@@ -109,6 +122,11 @@ export interface VocespaceConfig {
    * | 混元Vision                         | 腾讯        | 文本、图像       | 中文任务优化，SuperCLUE-V测评中领先 |
    */
   ai?: AIConf;
+  /**
+   * 创建空间的策略
+   */
+  create_space: CreateSpaceStrategy;
+  whiteList?: string[]; // 允许创建空间的白名单用户列表
 }
 
 export const mergeConf = (oldConf: VocespaceConfig, newConf: ReadableConf): VocespaceConfig => {
@@ -146,6 +164,8 @@ export const clearReadableConf = (
     priority: conf.priority,
     serverUrl: conf.serverUrl,
     license: conf.license,
+    create_space: conf.create_space,
+    whiteList: conf.whiteList,
   };
   // 如果hostToken正确，则传递AI配置
   if (hostToken && hostToken === conf.hostToken && conf.ai) {
@@ -176,6 +196,8 @@ export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig | ReadableConf = {
   serverUrl: 'localhost',
   // hostToken: 'vocespace_privoce',
   license: DEFAULT_LICENSE.value,
+  create_space: 'all',
+  whiteList: [],
 };
 
 const RTCVideoPresets = (options: {

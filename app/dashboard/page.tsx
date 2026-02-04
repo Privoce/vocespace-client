@@ -18,6 +18,7 @@ import {
   Tabs,
   Select,
   Popconfirm,
+  Radio,
 } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { SvgResource } from '../resources/svg';
@@ -30,6 +31,7 @@ import { LangSelect } from '../pages/controls/selects/lang_select';
 import { usePlatformUserInfoCheap } from '@/lib/hooks/platform';
 import { socket } from '../[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
+import { CreateSpaceStrategy } from '@/lib/std/conf';
 
 const { Title } = Typography;
 
@@ -76,6 +78,8 @@ interface ParticipantTableData {
   isAuth: boolean;
 }
 
+type ActionKey = 'refresh' | 'global_conf' | 'manage_spaces' | 'ac_space';
+
 export default function Dashboard() {
   const { t } = useI18n();
   const [currentSpacesData, setCurrentSpacesData] = useState<ParticipantTableData[]>([]);
@@ -97,6 +101,7 @@ export default function Dashboard() {
   const [activeRecordings, setActiveRecordings] = useState(0);
   const [messageApi, contextHolder] = message.useMessage();
   const [openConf, setOpenConf] = useState(false);
+  const [createSpaceConf, setCreateSpaceConf] = useState(false);
   const [isHostManager, setIsHostManager] = useState(false);
   const [hostToken, setHostToken] = useState('');
   const [openManage, setOpenManage] = useState(false);
@@ -105,9 +110,23 @@ export default function Dashboard() {
   const [editingOwnerSpace, setEditingOwnerSpace] = useState<string | null>(null);
   const [ownerCandidates, setOwnerCandidates] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedNewOwner, setSelectedNewOwner] = useState<string | null>(null);
-  const { conf, getConf, checkHostToken } = useVoceSpaceConf();
-
+  const { conf, getConf, checkHostToken, updateCreateSpaceConf } = useVoceSpaceConf();
+  const [createSpaceOption, setCreateSpaceOption] = useState<CreateSpaceStrategy>(
+    conf?.create_space || 'all',
+  );
+  const [addWhiteListValue, setAddWhiteListValue] = useState<string>('');
+  const [selectOption, setSelectOption] = useState<ActionKey>('refresh');
+  const [createSpaceWhiteList, setCreateSpaceWhiteList] = useState<string>('');
   const VERIFIED_KEY = 'vocespace_host_token_verified';
+
+  useEffect(() => {
+    if (conf) {
+      setCreateSpaceOption(conf?.create_space || 'all');
+      if (conf.whiteList && conf.whiteList.length > 0) {
+        setCreateSpaceWhiteList(conf.whiteList.join('\n'));
+      }
+    }
+  }, [conf]);
 
   const getVerified = () => {
     try {
@@ -826,6 +845,44 @@ export default function Dashboard() {
     }
   };
 
+  const confirmCreateSpaceHandle = async () => {
+    if (!isHostManager) {
+      // 先检查本地缓存
+      const saved = getVerified();
+      if (saved && saved.token === hostToken && Date.now() - saved.at < 3600_000) {
+        setIsHostManager(true);
+        return;
+      }
+      const success = await checkHostToken(hostToken);
+      if (success) {
+        setVerified(hostToken);
+        setIsHostManager(true);
+      } else {
+        messageApi.error(t('dashboard.conf.error.verify'));
+      }
+    } else {
+      // 保存配置
+      const whiteList = createSpaceWhiteList
+        .split('\n')
+        .map((item) => item.trim())
+        .filter((item) => item.length > 0);
+
+      // 转为HashSet进行去重
+      const whiteListSet = new Set<string>(whiteList);
+      await updateCreateSpaceConf(
+        createSpaceOption,
+        whiteListSet,
+        (e) => {
+          messageApi.error(t('dashboard.conf.error.update') + ': ' + e.message);
+        },
+        () => {
+          messageApi.success(t('dashboard.conf.success.update'));
+          setCreateSpaceConf(false);
+        },
+      );
+    }
+  };
+
   return (
     <div className={styles.container} style={{ position: 'relative' }}>
       {contextHolder}
@@ -870,8 +927,15 @@ export default function Dashboard() {
           <Col span={8}>
             <Card>
               <div style={{ marginBottom: '9px' }}>{t('dashboard.count.opt')}</div>
-              <div style={{ display: 'inline-flex', gap: '8px' }}>
-                <Button
+              <div
+                style={{
+                  display: 'flex',
+                  gap: '8px',
+                  flexWrap: 'wrap',
+                  justifyContent: 'space-between',
+                }}
+              >
+                {/* <Button
                   type="primary"
                   onClick={async () => {
                     await fetchAllData();
@@ -916,6 +980,73 @@ export default function Dashboard() {
                   }}
                 >
                   {t('dashboard.manage_spaces')}
+                </Button> */}
+                <Select
+                  value={selectOption}
+                  style={{ flex: 1 }}
+                  onChange={(v) => {
+                    setSelectOption(v as ActionKey);
+                  }}
+                  options={[
+                    {
+                      label: t('dashboard.count.refresh'),
+                      key: 'refresh',
+                      loading: loading,
+                      value: 'refresh',
+                    },
+                    {
+                      label: t('dashboard.count.global_conf'),
+                      key: 'global_conf',
+                      value: 'global_conf',
+                    },
+                    {
+                      label: t('dashboard.manage_spaces'),
+                      key: 'manage_spaces',
+                      value: 'manage_spaces',
+                    },
+                    {
+                      label: t('dashboard.count.allow_create_space'),
+                      key: 'ac_space',
+                      value: 'ac_space',
+                    },
+                  ]}
+                ></Select>
+                <Button
+                  type="primary"
+                  loading={loading}
+                  onClick={async () => {
+                    if (selectOption === 'refresh') {
+                      await fetchAllData();
+                    } else if (selectOption === 'global_conf') {
+                      const saved = getVerified();
+                      if (saved && Date.now() - saved.at < 3600_000) {
+                        setHostToken(saved.token);
+                        setIsHostManager(true);
+                        setOpenConf(true);
+                      } else {
+                        setOpenConf(true);
+                      }
+                    } else if (selectOption === 'manage_spaces') {
+                      const saved = getVerified();
+                      if (saved && Date.now() - saved.at < 3600_000) {
+                        // 直接使用缓存 token 调用验证加载，避免依赖 setHostToken 的异步更新
+                        try {
+                          await handleVerifyHostAndLoad(saved.token);
+                          setOpenManage(true);
+                        } catch (e) {
+                          console.error(e);
+                          // 打开 modal 让用户手动输入
+                          setOpenManage(true);
+                        }
+                      } else {
+                        setOpenManage(true);
+                      }
+                    } else if (selectOption === 'ac_space') {
+                      setCreateSpaceConf(true);
+                    }
+                  }}
+                >
+                  Handle
                 </Button>
               </div>
             </Card>
@@ -1121,6 +1252,138 @@ export default function Dashboard() {
           ]}
         />
       </Card>
+      {/* 配置是否允许创建空间 */}
+      <Modal
+        title={t('dashboard.conf.create_space')}
+        open={createSpaceConf}
+        onCancel={() => {
+          setCreateSpaceConf(false);
+        }}
+        footer={
+          <Button type="primary" onClick={confirmCreateSpaceHandle}>
+            {!isHostManager ? t('dashboard.conf.verify') : t('dashboard.save')}
+          </Button>
+        }
+      >
+        {isHostManager ? (
+          <div>
+            <div>
+              <div>{t('dashboard.conf.create_space_desc.0')}</div>
+              <div>{t('dashboard.conf.create_space_desc.1')}</div>
+              <div>{t('dashboard.conf.create_space_desc.2')}</div>
+              <div>{t('dashboard.conf.create_space_desc.3')}</div>
+            </div>
+            <Radio.Group
+              block
+              size="large"
+              optionType="button"
+              value={createSpaceOption}
+              onChange={(e) => {
+                setCreateSpaceOption(e.target.value);
+              }}
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                margin: '16px 0',
+              }}
+              options={[
+                {
+                  label: 'ALL',
+                  value: 'all',
+                  style: { width: '100%' },
+                },
+                {
+                  label: 'WHITE',
+                  value: 'white',
+                  style: { width: '100%' },
+                },
+                {
+                  label: 'WHITE-PLATFORM',
+                  value: 'white_platform',
+                  style: { width: '100%' },
+                },
+              ]}
+            ></Radio.Group>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 8,
+              }}
+            >
+              <div>
+                <div>{t('dashboard.conf.white_list')}</div>
+                <div>{t('dashboard.conf.white_list_desc.0')}</div>
+                <div>{t('dashboard.conf.white_list_desc.1')}</div>
+                <div>{t('dashboard.conf.white_list_desc.2')}</div>
+              </div>
+              <div
+                style={{
+                  display: 'flex',
+                  gap: 8,
+                }}
+              >
+                <Input
+                  value={addWhiteListValue}
+                  onChange={(e) => {
+                    setAddWhiteListValue(e.target.value);
+                  }}
+                ></Input>
+                <Button
+                  type="primary"
+                  onClick={() => {
+                    const currentList = createSpaceWhiteList
+                      ? createSpaceWhiteList.split('\n').map((s) => s.trim())
+                      : [];
+                    if (addWhiteListValue && !currentList.includes(addWhiteListValue.trim())) {
+                      currentList.push(addWhiteListValue.trim());
+                      setCreateSpaceWhiteList(currentList.join('\n'));
+                      setAddWhiteListValue('');
+                    } else {
+                      messageApi.warning(t('dashboard.conf.white_list_exist'));
+                    }
+                  }}
+                >
+                  {t('dashboard.conf.add_white_list')}
+                </Button>
+                <Button
+                  variant="filled"
+                  danger
+                  onClick={() => {
+                    const currentList = createSpaceWhiteList
+                      ? createSpaceWhiteList.split('\n').map((s) => s.trim())
+                      : [];
+                    if (addWhiteListValue && currentList.includes(addWhiteListValue.trim())) {
+                      const newList = currentList.filter((s) => s !== addWhiteListValue.trim());
+                      setCreateSpaceWhiteList(newList.join('\n'));
+                      setAddWhiteListValue('');
+                    } else {
+                      messageApi.warning(t('dashboard.conf.white_list_not_exist'));
+                    }
+                  }}
+                >
+                  {t('dashboard.conf.delete_white_list')}
+                </Button>
+              </div>
+              <Input.TextArea
+                placeholder={t('dashboard.conf.white_list')}
+                value={createSpaceWhiteList}
+                autoSize
+                disabled
+              ></Input.TextArea>
+            </div>
+          </div>
+        ) : (
+          <Input
+            placeholder={t('dashboard.conf.placeholder')}
+            value={hostToken}
+            onChange={(e) => {
+              setHostToken(e.target.value);
+            }}
+          ></Input>
+        )}
+      </Modal>
+      {/* 配置画质 */}
       <Modal
         title={t('dashboard.conf.resolution')}
         open={openConf}
@@ -1179,7 +1442,7 @@ export default function Dashboard() {
             </Button>
           </div>
         ) : (
-          <div>
+          <div style={{ overflow: 'auto', maxWidth: '100%' }}>
             <div style={{ marginBottom: 12 }}>
               <Button
                 onClick={async () => {
@@ -1203,12 +1466,13 @@ export default function Dashboard() {
                   : []
               }
               loading={manageLoading}
-              pagination={{ pageSize: 10 }}
+              pagination={{ pageSize: 8 }}
               columns={[
-                { title: 'Space', dataIndex: 'space', key: 'space' },
-                { title: 'Owner', dataIndex: 'ownerName', key: 'ownerName' },
+                { title: 'Space', dataIndex: 'space', key: 'space', width: 200 },
+                { title: 'Owner', dataIndex: 'ownerName', key: 'ownerName', width: 140 },
                 {
                   title: 'Actions',
+                  fixed: 'right',
                   key: 'actions',
                   render: (_: any, record: any) => (
                     <Space>
