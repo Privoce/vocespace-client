@@ -25,7 +25,8 @@ export default {
   common: {
     full_screen: 'Full Screen',
     guest: {
-      not_allow: 'Sorry, the current space does not allow guests to join without signing in. Please log in or sign up to continue.', 
+      not_allow:
+        'Sorry, the current space does not allow guests to join without signing in. Please log in or sign up to continue.',
     },
     confirm: 'Confirm',
     cancel: 'Cancel',
@@ -65,13 +66,13 @@ export default {
     upload: 'Upload',
     send: 'Send',
     sending: 'Sending',
-    send_file_or: 'Please confirm you would like to share the selected file with all users currently in this room.',
+    send_file_or:
+      'Please confirm you would like to share the selected file with all users currently in this room.',
     leave: 'Leave',
     share_screen: 'Share Screen',
     stop_share: 'Stop Screen Share',
     wave_msg: 'sent you a reminder!', //flag
-    full_user:
-      'Sorry, the room you have tried to join is currently full.',
+    full_user: 'Sorry, the room you have tried to join is currently full.',
     open: 'ON',
     close: 'OFF',
     high_quality: 'Lossless mode',
@@ -359,7 +360,8 @@ export default {
           accepted: 'Your raised hand has been called on. Please begin speaking.',
         },
       },
-      upload: { //flag - what it this?
+      upload: {
+        //flag - what it this?
         to_space: 'Upload application to space',
         history: 'Upload history',
         success: 'Application upload successful',
@@ -591,7 +593,8 @@ export default {
           error: 'Failed to set guest access for the current space',
         },
       },
-      status: { //flag is this feature enabled? i see status text edit field, but no preset options like below
+      status: {
+        //flag is this feature enabled? i see status text edit field, but no preset options like below
         title: 'State',
         online: 'Online',
         online_desc: "Online, user's video and audio will work normally",
@@ -655,7 +658,8 @@ export default {
       invalid: 'The certificate is invalid or expired. Please check if it is correct.',
       invalid_domain:
         'The current domain is not in the list of allowed domains for the certificate. Please contact the administrator to check the server domain configuration.',
-      default_license: //flag clarify, this is for free trial?
+      //flag clarify, this is for free trial?
+      default_license:
         'To ensure your use, the current system has loaded a default certificate for you. The default certificate only supports temporary rooms with fewer than 5 people. If you would like to host more users, please purchase a professional certificate.',
       update_success: 'The certificate was updated successfully',
       circle_ip:
@@ -893,6 +897,23 @@ export default {
       resolution: 'Configure global graphics quality',
       verify: 'Verify',
       close: 'Close',
+      create_space: 'Create Space Policy',
+      create_space_desc: [
+        'Select a policy to allow the creation of new VoceSpace spaces',
+        '1. ALL: Anyone can create new VoceSpace spaces',
+        '2. WHITE: Only whitelisted users can create new VoceSpace spaces',
+        '3. WHITE-PLATFORM: Whitelisted and platform users can create new VoceSpace spaces',
+      ],
+      white_list: 'Whitelist',
+      add_white_list: 'Add',
+      delete_white_list: 'Delete',
+      white_list_desc: [
+        '* : Represents all users, equivalent to the ALL policy',
+        'Single user: Enter the platform user ID',
+        'USER-John: Indicates that a user named John is allowed to create spaces',
+      ],
+      white_list_exist: 'Whitelist already exists',
+      white_list_not_exist: 'Whitelist does not exist',
       placeholder: 'Please enter administrator token',
       error: {
         verify: 'Administrator token error, please try again',
@@ -911,6 +932,7 @@ export default {
       opt: 'Operation',
       refresh: 'Refresh data',
       global_conf: 'Configure Image Quality (Global)',
+      allow_create_space: 'Create Space Policy',
       history: {
         title: 'Historical Room Statistics',
         day: 'Daily Ranking',
