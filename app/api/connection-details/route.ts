@@ -10,6 +10,7 @@ import {
   verifyPlatformUser,
   verifyTokenResult,
 } from '@/lib/std';
+import { SpaceInfo } from '@/lib/std/space';
 
 const COOKIE_KEY = 'random-participant-postfix';
 
@@ -165,20 +166,56 @@ const verifyWhitList = (name: string, id?: string | null, whiteList?: string[]):
     // 没有 ID，先精确匹配白名单项或 USER-<name>，再做前缀/包含容错匹配
     if (whiteList.includes(name)) return true;
     if (whiteList.includes(`USER-${name}`)) return true;
-    if (whiteList.some((item) => {
-      const n = normalize(item);
-      return n === name || n.startsWith(name) || name.startsWith(n);
-    })) return true;
+    if (
+      whiteList.some((item) => {
+        const n = normalize(item);
+        return n === name || n.startsWith(name) || name.startsWith(n);
+      })
+    )
+      return true;
   } else {
     // 有 ID 优先检查 ID，其次做类似的名称容错匹配
     if (whiteList.includes(id)) return true;
-    if (whiteList.some((item) => {
-      const n = normalize(item);
-      return n === name || n.startsWith(name) || name.startsWith(n);
-    })) return true;
+    if (
+      whiteList.some((item) => {
+        const n = normalize(item);
+        return n === name || n.startsWith(name) || name.startsWith(n);
+      })
+    )
+      return true;
   }
 
   return false;
+};
+
+// 向 /api/space 接口查询空间是否存在
+const isSpaceExist = async (spaceName: string): Promise<boolean> => {
+  try {
+    // 构建请求 URL（使用配置的 serverUrl 或本地相对路径）
+    const baseUrl = serverUrl || 'http://localhost:3000';
+    // const baseUrl = 'http://localhost:3000';
+    const url = new URL('/api/space', baseUrl);
+    url.searchParams.set('spaceName', spaceName);
+
+    const response = await fetch(url.toString(), {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    if (!response.ok) {
+      return false;
+    }
+
+    const { settings }: { settings: SpaceInfo } = await response.json();
+    // 根据 /api/space 的返回格式判断空间是否存在
+    // 假设返回的数据结构中有空间信息，则表示存在
+    return Object.keys(settings.participants || {}).length > 0;
+  } catch (error) {
+    console.error('Failed to check space existence:', error);
+    return false;
+  }
 };
 
 // ------- GET /api/connection-details ---------------------------------------------------------------------
@@ -192,23 +229,26 @@ export async function GET(request: NextRequest) {
     const uIdentity = request.nextUrl.searchParams.get('identity');
     // with auth id (from vocespace platform)
     const auth = request.nextUrl.searchParams.get('auth') as AuthType | null;
+    const existSpace = await isSpaceExist(spaceName || '');
+    if (!existSpace) {
+      // 测试得出没有每次都获取新的config，所以重新获取一次配置
+      const { create_space, whiteList } = getConfig();
 
-    // 测试得出没有每次都获取新的config，所以重新获取一次配置
-    const { create_space, whiteList } = getConfig();
-
-    // 从配置中查询是否允许用户创建房间以及白名单检查
-    if (create_space === 'white') {
-      if (!verifyWhitList(participantName || '', auth , whiteList)) {
-        throw new Error(
-          'Creation failed: you are not in the white list. You are not allowed to create space.',
-        );
-      }
-    } else if (create_space === 'white_platform') {
-      // 没有auth验证白名单
-      if (!auth && !verifyWhitList(participantName || '', auth , whiteList)) {
-        throw new Error(
-          'Creation failed: you are not in the white list. You are not allowed to create space.',
-        );
+      // 从配置中查询是否允许用户创建房间以及白名单检查
+      if (create_space === 'white') {
+        if (!verifyWhitList(participantName || '', uIdentity, whiteList)) {
+          throw new Error(
+            'Creation failed: you are not in the white list. You are not allowed to create space.',
+          );
+        }
+      } else if (create_space === 'white_platform') {
+        console.warn('white platform creation mode is not implemented yet.', uIdentity);
+        // 没有auth验证白名单
+        if (!uIdentity && !verifyWhitList(participantName || '', uIdentity, whiteList)) {
+          throw new Error(
+            'Creation failed: you are not in the white list. You are not allowed to create space.',
+          );
+        }
       }
     }
 
