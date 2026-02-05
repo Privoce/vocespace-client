@@ -192,7 +192,7 @@ const verifyWhitList = (name: string, id?: string | null, whiteList?: string[]):
 const isSpaceExist = async (spaceName: string): Promise<boolean> => {
   try {
     // 构建请求 URL（使用配置的 serverUrl 或本地相对路径）
-    const baseUrl = serverUrl || 'http://localhost:3000';
+    const baseUrl = `https://${serverUrl}` || 'http://localhost:3000';
     // const baseUrl = 'http://localhost:3000';
     const url = new URL('/api/space', baseUrl);
     url.searchParams.set('spaceName', spaceName);
@@ -209,6 +209,7 @@ const isSpaceExist = async (spaceName: string): Promise<boolean> => {
     }
 
     const { settings }: { settings: SpaceInfo } = await response.json();
+    console.warn(Object.keys(settings.participants || {}).length);
     // 根据 /api/space 的返回格式判断空间是否存在
     // 假设返回的数据结构中有空间信息，则表示存在
     return Object.keys(settings.participants || {}).length > 0;
