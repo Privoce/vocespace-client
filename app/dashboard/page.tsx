@@ -1288,17 +1288,17 @@ export default function Dashboard() {
               }}
               options={[
                 {
-                  label: 'ALL',
+                  label: t("dashboard.conf.create_space_option.all"),
                   value: 'all',
                   style: { width: '100%' },
                 },
                 {
-                  label: 'WHITE',
+                  label: t("dashboard.conf.create_space_option.white"),
                   value: 'white',
                   style: { width: '100%' },
                 },
                 {
-                  label: 'WHITE-PLATFORM',
+                  label: t("dashboard.conf.create_space_option.white_platform"),
                   value: 'white_platform',
                   style: { width: '100%' },
                 },
@@ -1315,7 +1315,6 @@ export default function Dashboard() {
                 <div>{t('dashboard.conf.white_list')}</div>
                 <div>{t('dashboard.conf.white_list_desc.0')}</div>
                 <div>{t('dashboard.conf.white_list_desc.1')}</div>
-                <div>{t('dashboard.conf.white_list_desc.2')}</div>
               </div>
               <div
                 style={{
