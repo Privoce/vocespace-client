@@ -155,7 +155,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     });
     const showSideChannel = useMemo(() => {
       if (!space) return false;
-      return exportRBAC(space?.localParticipant.identity, settings).createRoom;
+      return exportRBAC(space?.localParticipant.identity, settings).viewRoom;
     }, [space, settings]);
     const [openApp, setOpenApp] = useState<boolean>(false);
     // const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);

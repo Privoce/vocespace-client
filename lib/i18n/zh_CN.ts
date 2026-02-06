@@ -20,6 +20,7 @@ export default {
     save: '保存修改',
     saveFail: '保存失败，请稍后再试。',
     saveSuccess: '保存成功',
+    viewRoom: '加入房间',
   },
   common: {
     full_screen: '全屏',
@@ -882,7 +883,7 @@ export default {
       error: {
         verify: '管理员令牌错误，请重试',
         not_loaded: '配置未加载完成或无法获得配置，请稍后再试',
-        update: "配置更新失败，请稍后再试",
+        update: '配置更新失败，请稍后再试',
       },
       success: {
         update: '配置已更新',

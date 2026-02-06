@@ -21,6 +21,7 @@ export default {
     save: 'Save changes',
     saveFail: 'Save failed, please try again later',
     saveSuccess: 'Save successful',
+    viewRoom: 'View rooms',
   },
   common: {
     full_screen: 'Full Screen',
