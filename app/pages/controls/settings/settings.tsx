@@ -137,28 +137,28 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
           ></GeneralSettings>
         ),
       },
-      {
-        key: 'auth',
-        label: <TabItem type="auth" label={t('settings.auth.title')}></TabItem>,
-        children: <AuthSettings spaceInfo={spaceInfo} space={space} messageApi={messageApi}></AuthSettings>,
-      },
-      ...(showAI
-        ? [
-            {
-              key: 'ai',
-              label: <TabItem type="ai" svgSize={16} label={t('settings.ai.title')}></TabItem>,
-              children: (
-                <AISettings
-                  space={space}
-                  messageApi={messageApi}
-                  spaceInfo={spaceInfo}
-                  localParticipant={localParticipant}
-                  updateSettings={updateSettings}
-                ></AISettings>
-              ),
-            },
-          ]
-        : []),
+      // {
+      //   key: 'auth',
+      //   label: <TabItem type="auth" label={t('settings.auth.title')}></TabItem>,
+      //   children: <AuthSettings spaceInfo={spaceInfo} space={space} messageApi={messageApi}></AuthSettings>,
+      // },
+      // ...(showAI
+      //   ? [
+      //       {
+      //         key: 'ai',
+      //         label: <TabItem type="ai" svgSize={16} label={t('settings.ai.title')}></TabItem>,
+      //         children: (
+      //           <AISettings
+      //             space={space}
+      //             messageApi={messageApi}
+      //             spaceInfo={spaceInfo}
+      //             localParticipant={localParticipant}
+      //             updateSettings={updateSettings}
+      //           ></AISettings>
+      //         ),
+      //       },
+      //     ]
+      //   : []),
       {
         key: 'audio',
         label: <TabItem type="audio" label={t('settings.audio.title')}></TabItem>,

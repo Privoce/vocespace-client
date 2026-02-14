@@ -73,7 +73,12 @@ import {
 } from '@/lib/std/space';
 import { FlotButton, FlotLayout, FlotLayoutExports } from '../apps/flot';
 import { api } from '@/lib/api';
-import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
+import {
+  analyzeLicense,
+  getLicensePersonLimit,
+  licenseStatus,
+  validLicenseDomain,
+} from '@/lib/std/license';
 import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 import { acceptRaise, RaiseHandler, rejectRaise } from './widgets/raise';
 import { audio } from '@/lib/audio';
@@ -968,7 +973,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     ]);
 
     const selfRoom = useMemo(() => {
-      if (!space || space.state !== ConnectionState.Connected || !settings || !settings.children) return;
+      if (!space || space.state !== ConnectionState.Connected || !settings || !settings.children)
+        return;
 
       let selfRoom = settings.children.find((child) => {
         return child.participants.includes(space.localParticipant.identity);
@@ -1260,15 +1266,16 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       }
     };
 
-    const mainViewWidth = useMemo(() => {
-      return !showSideChannel
-        ? '100vw'
-        : collapsed
-          ? isActive
-            ? 'calc(100vw - 28px)'
-            : '100vw'
-          : 'calc(100vw - 280px)';
-    }, [collapsed, showSideChannel, isActive]);
+    // const mainViewWidth = useMemo(() => {
+    //   return !showSideChannel
+    //     ? '100vw'
+    //     : collapsed
+    //       ? isActive
+    //         ? 'calc(100vw - 28px)'
+    //         : '100vw'
+    //       : 'calc(100vw - 28px)';
+    // }, [collapsed, showSideChannel, isActive]);
+    const mainViewWidth = "100vw";
 
     useImperativeHandle(ref, () => ({
       clearRoom: () => clearRoom(),
@@ -1309,7 +1316,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           ></FlotLayout>
         )}
         {/* 左侧侧边栏 */}
-        {space && showSideChannel && (
+        {/* {space && showSideChannel && (
           <Channel
             ref={channelRef}
             config={config}
