@@ -1543,11 +1543,19 @@ export async function POST(request: NextRequest) {
         if (participantSettings) {
           // 有参与者，判断当前参与者的online状态，如果为false，说明是重连，可以直接使用该名字
           if (participantSettings.online) {
-            // 在线状态，那么不允许使用该名字
-            return NextResponse.json(
-              { success: false, error: 'Participant name already exists' },
-              { status: 200 },
-            );
+            // 在线状态，那么不允许使用该名字, 需要分配一个新的名字给用户，如果是Bob就需要分配Bob 02 这样的名字给用户, 数字用个数类推
+            let newName = participantName;
+            let suffix = 1;
+            const existingNames = Object.values(spaceInfo.participants).map((p) => p.name);
+            while (existingNames.includes(newName)) {
+              suffix += 1;
+              let suffix_str = suffix.toString();
+              if (suffix < 10) {
+                suffix_str = `0${suffix}`;
+              }
+              newName = `${participantName} ${suffix_str}`;
+            }
+            return NextResponse.json({ success: true, name: newName }, { status: 200 });
           } else {
             // 离线状态，允许使用该名字
             return NextResponse.json({ success: true, name: participantName }, { status: 200 });

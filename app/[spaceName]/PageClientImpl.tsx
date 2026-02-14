@@ -171,7 +171,7 @@ export function PageClientImpl({
           region,
           data?.id,
         );
-       
+
         if (connectionDetailsResp.ok) {
           const connectionDetailsData = await connectionDetailsResp.json();
           setConnectionDetails(connectionDetailsData);
@@ -343,7 +343,6 @@ function VideoConferenceComponent(props: {
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [permissionDevice, setPermissionDevice] = useState<Track.Source | null>(null);
   const videoContainerRef = React.useRef<VideoContainerExports>(null);
-
   const resolutions = createRTCQulity(
     {
       resolution: props.config.resolution,
@@ -451,7 +450,7 @@ function VideoConferenceComponent(props: {
       space: room.name,
     } as WsBase);
     socket.disconnect();
-    router.push('/new_space');
+    router.replace('/');
   }, [router, room.localParticipant]);
   const handleError = React.useCallback((error: Error) => {
     console.error(`${t('msg.error.room.unexpect')}: ${error.message}`);
@@ -465,43 +464,52 @@ function VideoConferenceComponent(props: {
     props.messageApi.error(`${t('msg.error.room.unexpect')}: ${error.message}`);
   }, []);
 
-  const handleMediaDeviceFailure = React.useCallback((fail?: MediaDeviceFailure) => {
-    if (fail) {
-      switch (fail) {
-        case MediaDeviceFailure.DeviceInUse:
-          props.messageApi.error(t('msg.error.device.in_use'));
-          break;
-        case MediaDeviceFailure.NotFound:
-          props.messageApi.error(t('msg.error.device.not_found'));
-          break;
-        case MediaDeviceFailure.PermissionDenied:
-          if (!permissionOpened) {
-            setPermissionOpened(true);
-            props.notApi.open({
-              duration: 3,
-              message: t('msg.error.device.permission_denied_title'),
-              description: t('msg.error.device.permission_denied_desc'),
-              btn: (
-                <Space>
-                  <Button
-                    type="primary"
-                    size="small"
-                    onClick={() => setPermissionModalVisible(true)}
-                  >
-                    {t('msg.request.device.allow')}
-                  </Button>
-                </Space>
-              ),
-              onClose: () => setPermissionOpened(false),
-            });
-          }
-          break;
-        case MediaDeviceFailure.Other:
-          props.messageApi.error(t('msg.error.device.other'));
-          break;
+  const handleMediaDeviceFailure = React.useCallback(
+    (fail?: MediaDeviceFailure) => {
+      if (fail) {
+        switch (fail) {
+          case MediaDeviceFailure.DeviceInUse:
+            props.messageApi.error(t('msg.error.device.in_use'));
+            break;
+          case MediaDeviceFailure.NotFound:
+            props.messageApi.error(t('msg.error.device.not_found'));
+            break;
+          case MediaDeviceFailure.PermissionDenied:
+            if (
+              permissionDevice === Track.Source.Camera ||
+              permissionDevice === Track.Source.Microphone
+            ) {
+              props.notApi.open({
+                duration: 3,
+                message: t('msg.error.device.permission_denied_title'),
+                description: t('msg.error.device.permission_denied_desc'),
+                btn: (
+                  <Space>
+                    <Button
+                      type="primary"
+                      size="small"
+                      onClick={() => setPermissionModalVisible(true)}
+                    >
+                      {t('msg.request.device.allow')}
+                    </Button>
+                  </Space>
+                ),
+                onClose: () => setPermissionOpened(false),
+              });
+            }
+            // if (!permissionOpened) {
+            //   setPermissionOpened(true);
+
+            // }
+            break;
+          case MediaDeviceFailure.Other:
+            props.messageApi.error(t('msg.error.device.other'));
+            break;
+        }
       }
-    }
-  }, []);
+    },
+    [permissionDevice],
+  );
 
   // 请求权限的函数 - 将在用户点击按钮时直接触发
   const requestMediaPermissions = async () => {

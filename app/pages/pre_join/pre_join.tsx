@@ -245,7 +245,9 @@ export function PreJoin({
       // 虽然用户名不为空，但依然需要验证是否唯一
       const response = await api.checkUsername(spaceName, username, data?.id);
       if (response.ok) {
-        const { success } = await response.json();
+        const { success, name } = await response.json();
+        setUsername(name);
+        finalUserChoices.username = name;
         if (!success) {
           messageApi.error({
             content: t('msg.error.user.username.exist'),
