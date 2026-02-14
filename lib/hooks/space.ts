@@ -3,9 +3,10 @@ import { useState, useCallback } from 'react';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { DEFAULT_SPACE_INFO, ParticipantSettings, RecordSettings, SpaceInfo } from '../std/space';
 import { api } from '../api';
+import { isCreateRoom } from './platform';
 
 export function useSpaceInfo(spaceName: string, participantId: string) {
-  const [settings, setSettings] = useState<SpaceInfo>(DEFAULT_SPACE_INFO(Date.now()));
+  const [settings, setSettings] = useState<SpaceInfo>(DEFAULT_SPACE_INFO(Date.now(), isCreateRoom()));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
@@ -50,28 +51,28 @@ export function useSpaceInfo(spaceName: string, participantId: string) {
     },
     [participantId, spaceName],
   );
-  // 转让或设置房间的主持人
-  const updateOwnerId = useCallback(
-    async (replacedId?: string) => {
-      const response = await api.updateOwnerId(spaceName, replacedId || participantId);
-      if (!response.ok) {
-        return false;
+
+  // 转让/设置房间主持人或管理员(根据当前用户身份决定)
+  const transOrSetOwnerManager = useCallback(
+    async (originId: string, replacedId?: string, isTransfer = true) => {
+      const response = await api.transOrSetOwnerManager(
+        spaceName,
+        originId,
+        replacedId || participantId,
+        isTransfer,
+      );
+      if (response.ok) {
+        return (await response.json()) as { success: boolean; isRemove?: boolean };
+      } else {
+        return { success: false } as { success: boolean; isRemove?: boolean };
       }
-
-      const { ownerId } = await response.json();
-      setSettings((prevSettings) => ({
-        ...prevSettings,
-        ownerId: ownerId || prevSettings.ownerId,
-      }));
-
-      return true;
     },
     [participantId, spaceName],
   );
 
   // 更新当前参与者设置
   const updateSettings = useCallback(
-    async (newSettings: Partial<ParticipantSettings>, record?: RecordSettings) => {
+    async (newSettings: Partial<ParticipantSettings>, record?: RecordSettings, init = false) => {
       if (!spaceName || !participantId) return;
       try {
         const response = await api.updateSpaceParticipant(
@@ -79,6 +80,7 @@ export function useSpaceInfo(spaceName: string, participantId: string) {
           participantId,
           newSettings,
           record,
+          init,
         );
         if (!response.ok) {
           throw new Error(`Failed to update settings: ${response.status}`);
@@ -117,7 +119,8 @@ export function useSpaceInfo(spaceName: string, participantId: string) {
     updateSettings,
     fetchSettings,
     clearSettings,
-    updateOwnerId,
+    transOrSetOwnerManager,
     updateRecord,
   };
 }
+

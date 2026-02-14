@@ -27,21 +27,24 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { PreJoin } from '@/app/pages/pre_join/pre_join';
 import { atom, useRecoilState } from 'recoil';
-import { UserDefineStatus } from '@/lib/std';
+import { PlatformUser, SearchParams, UserDefineStatus } from '@/lib/std';
 import io from 'socket.io-client';
 import { ChatMsgItem } from '@/lib/std/chat';
 import {
   AppAuth,
-  Countdown,
   DEFAULT_PARTICIPANT_SETTINGS,
   PARTICIPANT_SETTINGS_KEY,
   ParticipantSettings,
-  Timer,
-  TodoItem,
+  VOCESPACE_PLATFORM_USER,
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
 import { WsBase, WsTo } from '@/lib/std/device';
-import { createRTCQulity, DEFAULT_VOCESPACE_CONFIG, VocespaceConfig } from '@/lib/std/conf';
+import {
+  createRTCQulity,
+  DEFAULT_VOCESPACE_CONFIG,
+  ReadableConf,
+  VocespaceConfig,
+} from '@/lib/std/conf';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { DEFAULT_LICENSE, DEFAULT_TMP_LICENSE } from '@/lib/std/license';
@@ -98,25 +101,38 @@ export const chatMsgState = atom({
   },
 });
 
-export const SingleAppDataState = atom({
-  key: 'SingleAppDataState',
+export const RemoteTargetApp = atom({
+  key: 'RemoteTargetApp',
   default: {
     participantId: undefined as string | undefined,
     participantName: undefined as string | undefined,
     auth: 'read' as AppAuth,
-    targetApp: undefined as Timer | Countdown | TodoItem[] | undefined,
   },
 });
 
-export function PageClientImpl(props: {
+export interface PageClientImplProps extends SearchParams {
   spaceName: string;
-  region?: string;
-  hq: boolean;
-  codec: VideoCodec;
-}) {
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
+  data?: PlatformUser;
+  messageApi: MessageInstance;
+}
+
+export function PageClientImpl({
+  spaceName,
+  loading,
+  setLoading,
+  region,
+  hq,
+  codec,
+  auth,
+  data,
+  room,
+  details,
+  messageApi,
+}: PageClientImplProps) {
   const { t } = useI18n();
   const [uState, setUState] = useRecoilState(userState);
-  const [messageApi, contextHolder] = message.useMessage();
   const [notApi, notHolder] = notification.useNotification();
   const [isReload, setIsReload] = useState(false);
   const router = useRouter();
@@ -142,41 +158,38 @@ export function PageClientImpl(props: {
     undefined,
   );
 
-  const handlePreJoinSubmit = React.useCallback(async (values: LocalUserChoices) => {
-    setPreJoinChoices(values);
-    const connectionDetailsResp = await api.joinSpace(
-      props.spaceName,
-      values.username,
-      props.region,
-    );
-    const connectionDetailsData = await connectionDetailsResp.json();
-    setConnectionDetails(connectionDetailsData);
-  }, []);
-  const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
-
-  // 从localStorage中获取用户设置 --------------------------------------------------------------------
-  useEffect(() => {
-    const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
-    if (storedSettingsStr) {
-      const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
-      if (storedSettings?.version !== '0.3.0') {
-        // 版本不匹配/不存在，直接删除
-        localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
-        return;
+  const handlePreJoinSubmit = React.useCallback(
+    async (values: LocalUserChoices) => {
+      setPreJoinChoices(values);
+      if (details) {
+        // 如果details是有数据的，我们其实无需在此进行api请求，直接使用details作为connectionDetails
+        setConnectionDetails(details as ConnectionDetails);
       } else {
-        setUState(storedSettings);
+        const connectionDetailsResp = await api.joinSpace(
+          spaceName,
+          values.username,
+          region,
+          data?.id,
+        );
+
+        if (connectionDetailsResp.ok) {
+          const connectionDetailsData = await connectionDetailsResp.json();
+          setConnectionDetails(connectionDetailsData);
+        } else {
+          const { error } = await connectionDetailsResp.json();
+          messageApi.error(error);
+        }
       }
-    } else {
-      // 没有则存到localStorage中
-      localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
-    }
-
-    return () => {
-      // 在组件卸载时将用户设置存储到localStorage中，保证用户设置的持久化
-      localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
-    };
-  }, []);
-
+      if (auth) {
+        // 设置登陆状态：需要在localStorage中存储来自平台提供的用户id即可，因为id才是真正的唯一标识
+        // localStorage.setItem(VOCESPACE_PLATFORM_USER, props.userId);
+        // 去除url参数
+        router.replace(`/${spaceName}`);
+      }
+    },
+    [auth, data?.id, region, spaceName, details],
+  );
+  const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
   // 配置数据 ----------------------------------------------------------------------------------------
   const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
   const [loadConfig, setLoadConfig] = useState(false);
@@ -184,7 +197,7 @@ export function PageClientImpl(props: {
   const getConfig = async () => {
     const response = await api.getConf();
     if (response.ok) {
-      const configData: VocespaceConfig = await response.json();
+      const configData: ReadableConf = await response.json();
       setConfig(configData);
       setLoadConfig(true);
     } else {
@@ -198,10 +211,45 @@ export function PageClientImpl(props: {
     }
   }, [loadConfig]);
 
+  // 平台直接加入房间逻辑 ---------------------------------
+  useEffect(() => {
+    // console.warn('Checking direct join from platform with props:', props);
+    if (!data || !details) return;
+    if (!data.preJoin) {
+      setPreJoinChoices({
+        username: data.username,
+        videoEnabled: false,
+        audioEnabled: false,
+        videoDeviceId: '',
+        audioDeviceId: '',
+      });
+      setConnectionDetails(details as ConnectionDetails);
+    }
+    router.replace(`/${spaceName}`);
+  }, [data]);
+
   // 当localStorage中有reload这个标志时，需要重登陆
   useEffect(() => {
+    const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
+    if (storedSettingsStr) {
+      const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
+      if (storedSettings?.version !== '0.5.2') {
+        // 版本不匹配/不存在，直接删除
+        localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
+        localStorage.removeItem(VOCESPACE_PLATFORM_USER);
+        return;
+      }
+      setUState(storedSettings);
+    }
     const reloadRoom = localStorage.getItem('reload');
     if (reloadRoom) {
+      if (storedSettingsStr) {
+        const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
+        setUState(storedSettings);
+      } else {
+        // 没有则存到localStorage中
+        localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
+      }
       setIsReload(true);
       messageApi.loading(t('settings.general.conf.reloading'));
       localStorage.removeItem('reload');
@@ -219,11 +267,19 @@ export function PageClientImpl(props: {
         // router.push(`/${reloadRoom}`);
       }, 5000);
     }
-  }, []);
 
+    // 直接加入房间逻辑
+    // directJoinFromPlatform();
+
+    return () => {
+      // 在组件卸载时将用户设置存储到localStorage中，保证用户设置的持久化
+      if (isReload) {
+        localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
+      }
+    };
+  }, []);
   return (
     <main data-lk-theme="default" style={{ height: '100%' }}>
-      {contextHolder}
       {notHolder}
       {connectionDetails === undefined || preJoinChoices === undefined ? (
         <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
@@ -235,13 +291,21 @@ export function PageClientImpl(props: {
             micLabel={t('common.device.microphone')}
             camLabel={t('common.device.camera')}
             userLabel={t('common.username')}
+            data={data}
+            loading={loading}
+            setLoading={setLoading}
+            space={spaceName}
+            config={config}
           />
         </div>
       ) : (
         <VideoConferenceComponent
           connectionDetails={connectionDetails}
           userChoices={preJoinChoices}
-          options={{ codec: props.codec, hq: props.hq }}
+          options={{
+            codec: codec || 'vp9',
+            hq: hq === undefined ? true : typeof hq === 'string' ? Boolean(hq) : hq,
+          }}
           config={config}
           messageApi={messageApi}
           notApi={notApi}
@@ -258,7 +322,7 @@ function VideoConferenceComponent(props: {
     hq: boolean;
     codec: VideoCodec;
   };
-  config: VocespaceConfig;
+  config: ReadableConf;
   messageApi: MessageInstance;
   notApi: NotificationInstance;
 }) {
@@ -272,14 +336,13 @@ function VideoConferenceComponent(props: {
   const e2eeEnabled = !!(e2eePassphrase && worker);
   const keyProvider = new ExternalE2EEKeyProvider();
   const [e2eeSetupComplete, setE2eeSetupComplete] = React.useState(false);
-
+  const [roomState, setRoomState] = useRecoilState(roomStatusState);
   const [permissionOpened, setPermissionOpened] = useState(false);
   const [permissionModalVisible, setPermissionModalVisible] = useState(false);
   const [permissionRequested, setPermissionRequested] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [permissionDevice, setPermissionDevice] = useState<Track.Source | null>(null);
   const videoContainerRef = React.useRef<VideoContainerExports>(null);
-
   const resolutions = createRTCQulity(
     {
       resolution: props.config.resolution,
@@ -373,6 +436,7 @@ function VideoConferenceComponent(props: {
 
   const router = useRouter();
   const handleOnLeave = React.useCallback(async () => {
+    setRoomState([]);
     socket.emit('mouse_remove', {
       space: room.name,
       senderName: room.localParticipant.name || room.localParticipant.identity,
@@ -386,7 +450,7 @@ function VideoConferenceComponent(props: {
       space: room.name,
     } as WsBase);
     socket.disconnect();
-    router.push('/new_space');
+    router.replace('/');
   }, [router, room.localParticipant]);
   const handleError = React.useCallback((error: Error) => {
     console.error(`${t('msg.error.room.unexpect')}: ${error.message}`);
@@ -400,43 +464,52 @@ function VideoConferenceComponent(props: {
     props.messageApi.error(`${t('msg.error.room.unexpect')}: ${error.message}`);
   }, []);
 
-  const handleMediaDeviceFailure = React.useCallback((fail?: MediaDeviceFailure) => {
-    if (fail) {
-      switch (fail) {
-        case MediaDeviceFailure.DeviceInUse:
-          props.messageApi.error(t('msg.error.device.in_use'));
-          break;
-        case MediaDeviceFailure.NotFound:
-          props.messageApi.error(t('msg.error.device.not_found'));
-          break;
-        case MediaDeviceFailure.PermissionDenied:
-          if (!permissionOpened) {
-            setPermissionOpened(true);
-            props.notApi.open({
-              duration: 3,
-              message: t('msg.error.device.permission_denied_title'),
-              description: t('msg.error.device.permission_denied_desc'),
-              btn: (
-                <Space>
-                  <Button
-                    type="primary"
-                    size="small"
-                    onClick={() => setPermissionModalVisible(true)}
-                  >
-                    {t('msg.request.device.allow')}
-                  </Button>
-                </Space>
-              ),
-              onClose: () => setPermissionOpened(false),
-            });
-          }
-          break;
-        case MediaDeviceFailure.Other:
-          props.messageApi.error(t('msg.error.device.other'));
-          break;
+  const handleMediaDeviceFailure = React.useCallback(
+    (fail?: MediaDeviceFailure) => {
+      if (fail) {
+        switch (fail) {
+          case MediaDeviceFailure.DeviceInUse:
+            props.messageApi.error(t('msg.error.device.in_use'));
+            break;
+          case MediaDeviceFailure.NotFound:
+            props.messageApi.error(t('msg.error.device.not_found'));
+            break;
+          case MediaDeviceFailure.PermissionDenied:
+            if (
+              permissionDevice === Track.Source.Camera ||
+              permissionDevice === Track.Source.Microphone
+            ) {
+              props.notApi.open({
+                duration: 3,
+                message: t('msg.error.device.permission_denied_title'),
+                description: t('msg.error.device.permission_denied_desc'),
+                btn: (
+                  <Space>
+                    <Button
+                      type="primary"
+                      size="small"
+                      onClick={() => setPermissionModalVisible(true)}
+                    >
+                      {t('msg.request.device.allow')}
+                    </Button>
+                  </Space>
+                ),
+                onClose: () => setPermissionOpened(false),
+              });
+            }
+            // if (!permissionOpened) {
+            //   setPermissionOpened(true);
+
+            // }
+            break;
+          case MediaDeviceFailure.Other:
+            props.messageApi.error(t('msg.error.device.other'));
+            break;
+        }
       }
-    }
-  }, []);
+    },
+    [permissionDevice],
+  );
 
   // 请求权限的函数 - 将在用户点击按钮时直接触发
   const requestMediaPermissions = async () => {

@@ -9,22 +9,28 @@ import {
   usePreviewTracks,
 } from '@livekit/components-react';
 import styles from '@/styles/pre_join.module.scss';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { facingModeFromLocalTrack, LocalAudioTrack, LocalVideoTrack, Track } from 'livekit-client';
 import { Input, InputRef, message, Skeleton, Slider, Space, Spin } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useRecoilState } from 'recoil';
 import { userState } from '@/app/[spaceName]/PageClientImpl';
-import { src } from '@/lib/std';
+import { PlatformUser, src } from '@/lib/std';
 import { useVideoBlur } from '@/lib/std/device';
 import { LangSelect } from '@/app/pages/controls/selects/lang_select';
 import { ulid } from 'ulid';
 import { api } from '@/lib/api';
+import { LoginButtons, LoginStateBtn } from './login';
+import { SpaceInfo } from '@/lib/std/space';
+import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 
 export interface PreJoinPropsExt extends PreJoinProps {
-  hq?: boolean;
-  setHq?: (hq: boolean) => void;
+  data: PlatformUser | undefined;
+  loading: boolean;
+  setLoading: (loading: boolean) => void;
+  space: string;
+  config: VocespaceConfig | ReadableConf;
 }
 
 /**
@@ -51,8 +57,11 @@ export function PreJoin({
   camLabel,
   userLabel,
   joinLabel,
-  hq,
-  setHq,
+  data,
+  loading,
+  space,
+  setLoading,
+  config,
 }: PreJoinPropsExt) {
   const { t } = useI18n();
   // user choices -------------------------------------------------------------------------------------
@@ -74,10 +83,16 @@ export function PreJoin({
   const [videoEnabled, setVideoEnabled] = React.useState<boolean>(userChoices.videoEnabled);
   const [audioDeviceId, setAudioDeviceId] = React.useState<string>(userChoices.audioDeviceId);
   const [videoDeviceId, setVideoDeviceId] = React.useState<string>(userChoices.videoDeviceId);
-  const [username, setUsername] = React.useState(userChoices.username);
   const [messageApi, contextHolder] = message.useMessage();
-  const [loading, setLoading] = React.useState(true);
+  const [username, setUsername] = React.useState<string>(
+    data?.username || userChoices.username || '',
+  );
   // Save user choices to persistent storage ---------------------------------------------------------
+  React.useEffect(() => {
+    if (data?.username && data?.username !== username) {
+      setUsername(data.username);
+    }
+  }, [data]);
   React.useEffect(() => {
     saveAudioInputEnabled(audioEnabled);
   }, [audioEnabled, saveAudioInputEnabled]);
@@ -95,17 +110,43 @@ export function PreJoin({
   }, [username, saveUsername]);
 
   useEffect(() => {
-    setTimeout(() => {
-      setLoading(false);
-    }, 500);
-  }, []);
+    const checkDevices = async () => {
+      try {
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        const hasCamera = devices.some((device) => device.kind === 'videoinput');
+        const hasMicrophone = devices.some((device) => device.kind === 'audioinput');
+
+        // 如果没有对应设备，自动禁用
+        if (!hasCamera && videoEnabled) {
+          setVideoEnabled(false);
+        }
+        if (!hasMicrophone && audioEnabled) {
+          setAudioEnabled(false);
+        }
+      } catch (error) {
+        console.error('device check fail:', error);
+        // 检测失败时禁用所有设备
+        setVideoEnabled(false);
+        setAudioEnabled(false);
+      }
+    };
+
+    if (loading === false) {
+      // 只在加载完成后检测
+      checkDevices();
+    }
+  }, [loading]);
+
+  const showLoginBtn = useMemo(() => {
+    return !data;
+  }, [data]);
 
   // Preview tracks -----------------------------------------------------------------------------------
   const tracks = usePreviewTracks(
     {
-      audio: audioEnabled ? { deviceId: initialUserChoices.audioDeviceId } : false,
+      audio: audioEnabled ? { deviceId: userChoices.audioDeviceId } : false,
       video: videoEnabled
-        ? { deviceId: initialUserChoices.videoDeviceId, processor: videoProcessor }
+        ? { deviceId: userChoices.videoDeviceId, processor: videoProcessor }
         : false,
     },
     onError,
@@ -202,9 +243,11 @@ export function PreJoin({
       }
     } else {
       // 虽然用户名不为空，但依然需要验证是否唯一
-      const response = await api.checkUsername(spaceName, username);
+      const response = await api.checkUsername(spaceName, username, data?.id);
       if (response.ok) {
-        const { success } = await response.json();
+        const { success, name } = await response.json();
+        setUsername(name);
+        finalUserChoices.username = name;
         if (!success) {
           messageApi.error({
             content: t('msg.error.user.username.exist'),
@@ -212,6 +255,20 @@ export function PreJoin({
           return;
         }
       }
+    }
+
+    // 加入空间前还需要确定当前空间是否允许游客加入
+    const response = await api.getSpaceInfo(spaceName);
+    if (!response.ok) {
+      throw new Error(`Failed to fetch settings: ${response.status}`);
+    }
+    const { settings: spaceInfo }: { settings?: SpaceInfo } = await response.json();
+
+    let allowGuest = (spaceInfo?.allowGuest && spaceInfo.allowGuest === 'allow') || true;
+    // 有房间且房间不允许游客加入
+    if (spaceInfo && !allowGuest && data?.identity === 'guest') {
+      messageApi.error(t('common.guest.not_allow'));
+      return;
     }
 
     if (typeof onSubmit === 'function') {
@@ -244,6 +301,17 @@ export function PreJoin({
       setPlay(false);
     }
   };
+
+  useEffect(() => {
+    if (device.volume !== volume) {
+      setVolume(device.volume);
+    }
+    if (device.blur !== blur) {
+      setBlur(device.blur);
+      setVideoBlur(device.blur);
+    }
+  }, [device, volume, blur]);
+
   return (
     <div className={styles.view}>
       {contextHolder}
@@ -373,7 +441,6 @@ export function PreJoin({
               min={0.0}
               max={1.0}
               step={0.01}
-              defaultValue={0.15}
               value={blur}
               onChange={(e) => {
                 setBlur(e);
@@ -382,6 +449,7 @@ export function PreJoin({
               }}
             ></Slider>
           </div>
+          {showLoginBtn && <LoginButtons serverUrl={config.serverUrl} space={space}></LoginButtons>}
           <Input
             ref={inputRef}
             size="large"
@@ -406,6 +474,7 @@ export function PreJoin({
           </button>
         </div>
       )}
+      <LoginStateBtn data={data} />
     </div>
   );
 }

@@ -10,6 +10,7 @@ import {
 import { MessageInstance } from 'antd/es/message/interface';
 import { useMemo, useState } from 'react';
 import { EnvData, RecordData } from '@/lib/std/recording';
+import { useI18n } from '@/lib/i18n/i18n';
 
 const { Text } = Typography;
 const { confirm } = Modal;
@@ -32,6 +33,7 @@ export function RecordingTable({
   expandable = false,
 }: RecordingTableProps) {
   const [loading, setLoading] = useState(false);
+  const { t } = useI18n();
   // 格式化文件大小
   const formatFileSize = (bytes: number): string => {
     if (bytes === 0) return '0 B';
@@ -56,13 +58,13 @@ export function RecordingTable({
         // 复制链接到剪贴板
         try {
           await navigator.clipboard.writeText(url!);
-          messageApi.success('下载链接已复制到剪贴板');
+          messageApi.success(t('recording.copy.success'));
         } catch (err) {
           console.error('Failed to copy:', err);
-          messageApi.error('复制链接失败，请手动复制');
+          messageApi.error(t('recording.copy.error'));
         }
       } else {
-        messageApi.error('获取下载链接失败，请稍后重试');
+        messageApi.error(t('recording.get_download_link.error'));
       }
     }
   };
@@ -70,12 +72,14 @@ export function RecordingTable({
   // 删除文件
   const handleDelete = (record: RecordData) => {
     confirm({
-      title: '确认删除',
+      title: t('recording.delete.confirm.title'),
       icon: <ExclamationCircleOutlined />,
-      content: `确定要删除录制文件 "${record.key}" 吗？此操作不可恢复。`,
-      okText: '删除',
+      content: `${t('recording.delete.confirm.0')} "${record.key}" ${t(
+        'recording.delete.confirm.1',
+      )}`,
+      okText: t('recording.delete.confirm.ok'),
       okType: 'danger',
-      cancelText: '取消',
+      cancelText: t('recording.delete.confirm.cancel'),
       onOk: async () => {
         setLoading(true);
         try {
@@ -90,14 +94,14 @@ export function RecordingTable({
               setRecordsData((prev) => {
                 return prev.filter((item) => item.id !== record.id);
               });
-              messageApi.success('删除成功');
+              messageApi.success(t('recording.delete.success'));
               return;
             }
           }
-          messageApi.error('删除失败');
+          messageApi.error(t('recording.delete.error'));
         } catch (error) {
           console.error('Delete failed:', error);
-          messageApi.error('删除失败，请稍后重试');
+          messageApi.error(t('recording.delete.error'));
         } finally {
           setLoading(false);
         }
@@ -126,9 +130,9 @@ export function RecordingTable({
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        messageApi.success('下载链接获取成功，文件正在下载');
+        messageApi.success(t('recording.download.success'));
       } else {
-        messageApi.error('下载链接获取失败，请稍后重试或联系管理员进行下载');
+        messageApi.error(t('recording.download.error'));
       }
     }
   };
@@ -138,7 +142,7 @@ export function RecordingTable({
     if (expandable) {
       return [
         {
-          title: '文件名',
+          title: t('recording.table.file'),
           dataIndex: 'key',
           key: 'key',
           width: 150,
@@ -149,7 +153,7 @@ export function RecordingTable({
           ),
         },
         {
-          title: '操作',
+          title: t('recording.table.opt'),
           key: 'action',
           width: 120,
           ellipsis: true,
@@ -162,26 +166,24 @@ export function RecordingTable({
                 onClick={() => handleDownload(record)}
                 loading={loading}
               >
-                下载
+                {t('recording.download.title')}
               </Button>
-              <Tooltip title="删除文件">
-                <Button
-                  danger
-                  size="small"
-                  icon={<DeleteOutlined />}
-                  onClick={() => handleDelete(record)}
-                  loading={loading}
-                >
-                  删除
-                </Button>
-              </Tooltip>
+              <Button
+                danger
+                size="small"
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete(record)}
+                loading={loading}
+              >
+                {t('recording.delete.title')}
+              </Button>
               <Button
                 type="default"
                 size="small"
                 icon={<ScissorOutlined />}
                 onClick={() => copyDownloadLink(record)}
               >
-                复制链接
+                {t('recording.copy.title')}
               </Button>
             </Space>
           ),
@@ -190,7 +192,7 @@ export function RecordingTable({
     } else {
       return [
         {
-          title: '文件名',
+          title: t('recording.table.file'),
           dataIndex: 'key',
           key: 'key',
           width: 120,
@@ -206,7 +208,7 @@ export function RecordingTable({
           ),
         },
         {
-          title: '文件大小',
+          title: t('recording.table.size'),
           dataIndex: 'size',
           key: 'size',
           width: 100,
@@ -214,7 +216,7 @@ export function RecordingTable({
           sorter: (a, b) => a.size - b.size,
         },
         {
-          title: '最后修改时间',
+          title: t('recording.table.last_modified'),
           dataIndex: 'last_modified',
           key: 'last_modified',
           width: 180,
@@ -234,7 +236,7 @@ export function RecordingTable({
           sorter: (a, b) => new Date(a.last_modified).getTime(),
         },
         {
-          title: '类型',
+          title: t('recording.table.ty'),
           dataIndex: 'key',
           key: 'ty',
           width: 80,
@@ -242,13 +244,15 @@ export function RecordingTable({
           render: (key: string) => {
             return (
               <Tag color={key.endsWith('json') ? 'green' : 'blue'}>
-                {key.endsWith('json') ? '记录文件' : '视频文件'}
+                {key.endsWith('json')
+                  ? t('recording.table.ty_json')
+                  : t('recording.table.ty_video')}
               </Tag>
             );
           },
         },
         {
-          title: '操作',
+          title: t('recording.table.opt'),
           key: 'action',
           width: 150,
           render: (_, record) => (
@@ -260,33 +264,31 @@ export function RecordingTable({
                 onClick={() => handleDownload(record)}
                 loading={loading}
               >
-                下载
+                {t('recording.download.title')}
               </Button>
-              <Tooltip title="删除文件">
-                <Button
-                  danger
-                  size="small"
-                  icon={<DeleteOutlined />}
-                  onClick={() => handleDelete(record)}
-                  loading={loading}
-                >
-                  删除
-                </Button>
-              </Tooltip>
+              <Button
+                danger
+                size="small"
+                icon={<DeleteOutlined />}
+                onClick={() => handleDelete(record)}
+                loading={loading}
+              >
+                {t('recording.delete.title')}
+              </Button>
               <Button
                 type="default"
                 size="small"
                 icon={<ScissorOutlined />}
                 onClick={() => copyDownloadLink(record)}
               >
-                复制链接
+                {t('recording.copy.title')}
               </Button>
             </Space>
           ),
         },
       ];
     }
-  }, [expandable]);
+  }, [expandable, t]);
 
   return (
     <Table
@@ -297,41 +299,59 @@ export function RecordingTable({
         pageSize: 10,
         showSizeChanger: true,
         showQuickJumper: true,
-        showTotal: (total, range) => `第 ${range[0]}-${range[1]} 条，共 ${total} 条`,
+        showTotal: (total, range) =>
+          `${t('recording.pagation.now')} ${range[0]}-${range[1]} ${t(
+            'recording.pagation.num',
+          )}, ${t('recording.pagation.total')} ${total} ${t('recording.pagation.num')}`,
       }}
       scroll={{ x: expandable ? 'max-content' : 800 }}
       locale={{
-        emptyText: <p style={{color: "#8c8c8c"}}>该房间暂无录制文件</p>,
+        emptyText: <p style={{ color: '#8c8c8c' }}>{t('recording.empty')}</p>,
       }}
-      expandable={expandable ? {
-       showExpandColumn: true,
-        expandedRowRender: (record) => (
-          <Descriptions size='small' column={2} bordered styles={{
-            label: {
-                color: "#8c8c8c",
-                backgroundColor: "#1a1a1a",
+      expandable={
+        expandable
+          ? {
+              showExpandColumn: true,
+              expandedRowRender: (record) => (
+                <Descriptions
+                  size="small"
+                  column={2}
+                  bordered
+                  styles={{
+                    label: {
+                      color: '#8c8c8c',
+                      backgroundColor: '#1a1a1a',
+                    },
+                  }}
+                >
+                  <Descriptions.Item label={t('recording.table.file')}>
+                    {record.key}
+                  </Descriptions.Item>
+                  <Descriptions.Item label={t('recording.table.size')}>
+                    {formatFileSize(record.size)}
+                  </Descriptions.Item>
+                  <Descriptions.Item label={t('recording.table.last_modified')}>
+                    {new Date(record.last_modified * 1000).toLocaleString('zh-CN', {
+                      year: 'numeric',
+                      month: '2-digit',
+                      day: '2-digit',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit',
+                    })}
+                  </Descriptions.Item>
+                  <Descriptions.Item label={t('recording.table.ty')}>
+                    <Tag color={record.key.endsWith('json') ? 'green' : 'blue'}>
+                      {record.key.endsWith('json')
+                        ? t('recording.table.ty_json')
+                        : t('recording.table.ty_video')}
+                    </Tag>
+                  </Descriptions.Item>
+                </Descriptions>
+              ),
             }
-          }}>
-            <Descriptions.Item label="文件名">{record.key}</Descriptions.Item>
-            <Descriptions.Item label="文件大小">{formatFileSize(record.size)}</Descriptions.Item>
-            <Descriptions.Item label="最后修改时间">
-              {new Date(record.last_modified * 1000).toLocaleString('zh-CN', {
-                year: 'numeric',
-                month: '2-digit',
-                day: '2-digit',
-                hour: '2-digit',
-                minute: '2-digit',
-                second: '2-digit',
-              })}
-            </Descriptions.Item>
-            <Descriptions.Item label="类型">
-              <Tag color={record.key.endsWith('json') ? 'green' : 'blue'}>
-                {record.key.endsWith('json') ? '记录文件' : '视频文件'}
-              </Tag>
-            </Descriptions.Item>
-          </Descriptions>
-        ),
-      }: undefined}
+          : undefined
+      }
     />
   );
 }

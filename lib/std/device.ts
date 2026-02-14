@@ -41,6 +41,12 @@ export interface WsRemove extends WsBase {
 export interface WsSender extends WsBase {
   senderName: string;
   senderId: string;
+  /**
+   * 发送者的socket ID (可选)
+   * 如果携带此字段，服务器会将消息发送到指定的socket ID，确保消息只发送给特定的连接。
+   * 当前用于举手功能，确保主持人与举手者之间的通信
+   */
+  senderSocketId?: string; 
 }
 
 export interface WsTo extends WsSender {
@@ -77,6 +83,7 @@ export enum ControlType {
   BlurVideo = 'blur_video',
   BlurScreen = 'blur_screen',
   Transfer = 'transfer',
+  setManager = 'set_manager',
 }
 
 export interface WsControlParticipant extends WsTo {
@@ -216,14 +223,10 @@ export function useVideoBlur({
     return count_video_blur(throttledVideoBlur, debouncedDimensions);
   }, [throttledVideoBlur, debouncedDimensions]);
 
-  const handleSetVideoBlur = useCallback((value: number) => {
-    setVideoBlur(value);
-  }, []);
-
   return {
     blurValue,
     dimensions: debouncedDimensions,
-    setVideoBlur: handleSetVideoBlur,
+    setVideoBlur,
   };
 }
 

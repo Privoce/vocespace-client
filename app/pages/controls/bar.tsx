@@ -9,7 +9,7 @@ import {
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { Drawer, Input, message, Modal } from 'antd';
+import { Button, Drawer, Input, message, Modal } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
@@ -17,21 +17,28 @@ import { Settings, SettingsExports, TabKey } from './settings/settings';
 import { useRecoilState } from 'recoil';
 import {
   chatMsgState,
+  RemoteTargetApp,
   socket,
   userState,
   virtualMaskState,
 } from '@/app/[spaceName]/PageClientImpl';
-import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
-import { isMobile as is_moblie, UserStatus } from '@/lib/std';
+import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { isMobile as is_mobile, isSpaceManager, UserStatus } from '@/lib/std';
 import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';
 import { ChatToggle } from './toggles/chat_toggle';
 import { MoreButton } from './toggles/more_button';
 import { ControlType, WsBase, WsControlParticipant, WsTo } from '@/lib/std/device';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from './drawer_tools';
-import { AppDrawer } from '../apps/app_drawer';
 import { ParticipantManage } from '../participant/manage';
 import { api } from '@/lib/api';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
+import equal from 'fast-deep-equal';
+import { ChatMsgItem } from '@/lib/std/chat';
+import { AICutService } from '@/lib/ai/cut';
+import { useWork, Work, WorkModal } from './widgets/work';
+import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/ai';
+import { DEFAULT_WINDOW_ADJUST_WIDTH } from '@/lib/std/window';
+import { usePlatformUserInfo } from '@/lib/hooks/platform';
 
 /** @public */
 export type ControlBarControls = {
@@ -66,10 +73,20 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   openApp: boolean;
   setOpenApp: (open: boolean) => void;
   toRenameSettings: () => void;
+  startOrStopAICutAnalysis: (
+    freq: number,
+    conf: AICutParticipantConf,
+    reload?: boolean,
+  ) => Promise<void>;
+  openAIServiceAskNote: () => void;
+  downloadAIMdReport?: () => Promise<void>;
 }
 
 export interface ControlBarExport {
-  openSettings: (key: TabKey) => void;
+  openSettings: (key: TabKey, isDefineStatus?: boolean) => void;
+  showAICutAnalysisSettings: (open: boolean) => void;
+  isChatOpen: boolean;
+  setChatOpen: (open: boolean) => void;
 }
 
 /**
@@ -106,6 +123,9 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       openApp,
       setOpenApp,
       toRenameSettings,
+      startOrStopAICutAnalysis,
+      openAIServiceAskNote,
+      downloadAIMdReport,
       ...props
     }: ControlBarProps,
     ref,
@@ -118,11 +138,13 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const enhanceChatRef = React.useRef<EnhancedChatExports>(null);
     const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
     const controlLeftRef = React.useRef<HTMLDivElement>(null);
+    const [aiCutModalOpen, setAICutModalOpen] = React.useState(false);
+    const aiCutServiceRef = React.useRef<AICutService>(new AICutService());
     const [controlWidth, setControlWidth] = React.useState(
       controlLeftRef.current ? controlLeftRef.current.clientWidth : window.innerWidth,
     );
     const isMobile = React.useMemo(() => {
-      return is_moblie();
+      return is_mobile();
     }, []);
 
     const controlSize = React.useMemo(() => {
@@ -148,7 +170,9 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         setIsChatOpen(layoutContext?.widget.state?.showChat);
       }
     }, [layoutContext?.widget.state?.showChat]);
-    const isTooLittleSpace = useMediaQuery(`(max-width: ${isChatOpen ? 1000 : 720}px)`);
+    const isTooLittleSpace = useMediaQuery(
+      `(max-width: ${isChatOpen ? 1000 : DEFAULT_WINDOW_ADJUST_WIDTH}px)`,
+    );
 
     const defaultVariation = isTooLittleSpace ? 'minimal' : 'verbose';
     variation ??= defaultVariation;
@@ -174,7 +198,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       [variation],
     );
     const showText = React.useMemo(() => {
-      if (controlWidth < 720) {
+      if (controlWidth < DEFAULT_WINDOW_ADJUST_WIDTH) {
         return false;
       } else {
         return variation === 'textOnly' || variation === 'verbose';
@@ -217,6 +241,15 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
 
     // settings ------------------------------------------------------------------------------------------
     const space = useMaybeRoomContext();
+    const { showAI } = usePlatformUserInfo({
+      space,
+      uid: space?.localParticipant.identity,
+      onEnterRoom: () => {
+        socket.emit('update_user_status', {
+          space: space!.name,
+        } as WsBase);
+      },
+    });
     const [key, setKey] = React.useState<TabKey>('general');
     const settingsRef = React.useRef<SettingsExports>(null);
     const [messageApi, contextHolder] = message.useMessage();
@@ -235,16 +268,22 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           await space.localParticipant?.setMetadata(JSON.stringify({ name: newName }));
           await space.localParticipant.setName(newName);
           messageApi.success(t('msg.success.user.username.change'));
+          await updateSettings({
+            name: newName,
+          });
         } else if (newName == (space.localParticipant?.name || space.localParticipant.identity)) {
         } else {
           messageApi.error(t('msg.error.user.username.change'));
         }
         // 更新其他设置 ------------------------------------------------
-        await updateSettings(settingsRef.current.state);
-        // 通知socket，进行状态的更新 -----------------------------------
-        socket.emit('update_user_status', {
-          space: space.name,
-        } as WsBase);
+        // await updateSettings(settingsRef.current.state);
+        if (!equal(getState(uState), settingsRef.current.state)) {
+          await updateSettings(settingsRef.current.state);
+          // 通知socket，进行状态的更新 -----------------------------------
+          socket.emit('update_user_status', {
+            space: space.name,
+          } as WsBase);
+        }
         socket.emit('reload_virtual', {
           identity: space.localParticipant.identity,
           roomId: space.name,
@@ -255,33 +294,104 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     };
 
     // 打开设置面板 -----------------------------------------------------------
-    const openSettings = async (tab: TabKey) => {
+    const openSettings = async (tab: TabKey, isDefineStatus?: boolean) => {
       setKey(tab);
       setSettingVis(true);
       if (settingsRef.current && tab === 'video') {
         await settingsRef.current.startVideo();
       }
+      if (isDefineStatus) {
+        if (settingsRef.current) {
+          settingsRef.current.setAppendStatus(true);
+        } else {
+          let finish = false;
+          const interval = setInterval(() => {
+            if (settingsRef.current && !finish) {
+              settingsRef.current.setAppendStatus(true);
+              finish = true;
+              clearInterval(interval);
+            }
+          }, 300);
+        }
+      }
     };
-
-    React.useImperativeHandle(
-      ref,
-      () =>
-        ({
-          openSettings,
-        } as ControlBarExport),
-    );
 
     // [chat] -----------------------------------------------------------------------------------------------------
     const [chatOpen, setChatOpen] = React.useState(false);
     const onChatClose = () => {
       setChatOpen(false);
     };
-    const sendFileConfirm = (onOk: () => Promise<void>) => {
-      Modal.confirm({
+    const sendFileConfirm = (onOk: (abortController?: AbortController) => Promise<ChatMsgItem>) => {
+      const modal = Modal.confirm({
         title: t('common.send'),
         content: t('common.send_file_or'),
-        onOk,
+        okText: t('common.send'),
+        cancelText: t('common.cancel'),
+        onOk: async () => {
+          modal.destroy();
+          await sendingFile(onOk);
+        },
       });
+    };
+
+    const sendingFile = async (
+      onOk: (abortController?: AbortController) => Promise<ChatMsgItem>,
+    ) => {
+      // 创建 AbortController 来控制上传取消
+      const abortController = new AbortController();
+      let isUploading = false;
+
+      const sending = Modal.confirm({
+        title: t('common.send'),
+        content: t('common.sending'),
+        okText: (
+          <Button type="primary" loading>
+            {t('common.sending')}
+          </Button>
+        ),
+        cancelText: t('common.cancel'),
+        onCancel: () => {
+          // 如果正在上传，则中断上传
+          if (isUploading) {
+            abortController.abort();
+            messageApi.info({
+              content: t('msg.info.file.upload_cancelled'),
+              duration: 2,
+            });
+          }
+        },
+      });
+
+      try {
+        isUploading = true;
+        // 传递 abortController 给上传函数
+        const fileMessage = await onOk(abortController);
+        isUploading = false;
+
+        if (fileMessage) {
+          sending.destroy();
+          socket.emit('chat_file', fileMessage);
+          messageApi.success({
+            content: t('msg.success.file.upload'),
+            duration: 2,
+          });
+        }
+      } catch (error: any) {
+        isUploading = false;
+        sending.destroy();
+
+        if (error.name === 'AbortError') {
+          // 用户取消了上传
+          console.log('Upload cancelled by user');
+        } else {
+          // 其他错误
+          // messageApi.error({
+          //   content: `${t('msg.error.file.upload')}: ${error.message}`,
+          //   duration: 3,
+          // });
+          console.error(error);
+        }
+      }
     };
 
     // [more] -----------------------------------------------------------------------------------------------------
@@ -291,12 +401,14 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [selectedParticipant, setSelectedParticipant] = React.useState<Participant | null>(null);
     const [username, setUsername] = React.useState<string>('');
     const [openNameModal, setOpenNameModal] = React.useState(false);
+    const [remoteApp, setRemoteApp] = useRecoilState(RemoteTargetApp);
     // const [openAppModal, setOpenAppModal] = React.useState(false);
     const participantList = React.useMemo(() => {
       return Object.entries(spaceInfo.participants);
     }, [spaceInfo]);
-    const isOwner = React.useMemo(() => {
-      return spaceInfo.ownerId === space?.localParticipant.identity;
+    const isManager = React.useMemo(() => {
+      // return spaceInfo.ownerId === space?.localParticipant.identity;
+      return isSpaceManager(spaceInfo, space?.localParticipant.identity || '').isManager;
     }, [spaceInfo.ownerId, space?.localParticipant.identity]);
 
     // [record] -----------------------------------------------------------------------------------------------------
@@ -307,7 +419,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     }, [spaceInfo.record]);
 
     const onClickRecord = async () => {
-      // if (!space && isOwner) return;
+      if (!space && isManager) return;
 
       // if (!isRecording) {
       //   setOpenRecordModal(true);
@@ -341,7 +453,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const startRecord = async () => {
       if (isRecording || !space) return;
 
-      if (isOwner) {
+      if (isManager) {
         // host request to start recording
         const response = await api.sendRecordRequest({
           spaceName: space.name,
@@ -370,7 +482,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             space: space.name,
           });
         }
-        console.warn(spaceInfo);
+        // console.warn(spaceInfo);
       } else {
         // participant request to start recording
         socket.emit('req_record', {
@@ -409,17 +521,131 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
 
     const onClickApp = async () => {
       if (!space) return;
-
-      // 打开Notion应用
+      setRemoteApp({
+        participantId: space.localParticipant.identity,
+        participantName: space.localParticipant.name,
+        auth: 'write',
+      });
       setOpenApp(true);
     };
+
+    // ai -----------------------------------------------------------------------------------------
+    const {
+      aiCutDeps,
+      setAICutDeps,
+      extraction,
+      setExtraction,
+      cutFreq,
+      setCutFreq,
+      cutBlur,
+      setCutBlur,
+      isServiceOpen,
+      setIsServiceOpen,
+      aiCutOptions,
+      aiCutOptionsChange,
+    } = useAICutAnalysisSettings({
+      space,
+      spaceInfo,
+    });
+
+    const onClickAI = async () => {
+      setAICutModalOpen(true);
+    };
+
+    const saveAICutServiceSettings = async () => {
+      const response = await api.updateSpaceInfo(space!.name, {
+        ai: {
+          cut: {
+            ...spaceInfo.ai.cut,
+            freq: cutFreq,
+          },
+        },
+      });
+
+      if (!response.ok) {
+        let { error } = await response.json();
+        messageApi.error(error);
+        setAICutModalOpen(false);
+        return;
+      }
+      // await updateSettings({
+      //   ai: {
+      //     cut: {
+      //       enabled: isServiceOpen,
+      //       todo: aiCutDeps.includes('todo'),
+      //       spent: aiCutDeps.includes('spent'),
+      //     },
+      //   },
+      // });
+
+      setAICutModalOpen(false);
+      if (space && !space.localParticipant.isScreenShareEnabled && isServiceOpen) {
+        openAIServiceAskNote();
+      }
+      const includeSpent = aiCutDeps.includes('spent');
+      const includeTodo = aiCutDeps.includes('todo');
+      let reload = true;
+      // 判断，如果spent, todo的选中状态或cutFreq与之前不同则需要reload
+      const { spent, todo } = spaceInfo.participants[space!.localParticipant.identity]?.ai.cut;
+      if (spent === includeSpent && todo === includeTodo && spaceInfo.ai.cut.freq === cutFreq) {
+        reload = false;
+      }
+
+      await startOrStopAICutAnalysis(
+        cutFreq,
+        {
+          enabled: isServiceOpen,
+          spent: includeSpent,
+          todo: includeTodo,
+          extraction,
+          blur: cutBlur,
+        },
+        reload,
+      );
+    };
+
+    // --- work -----------------------------------------------------------------------------------------
+    const {
+      openModal: workModalOpen,
+      setOpenModal: setWorkModalOpen,
+      enabled: workEnabled,
+      setEnabled: setWorkEnabled,
+      isUseAI,
+      setIsUseAI,
+      isSync,
+      setIsSync,
+      videoBlur,
+      setVideoBlur,
+      screenBlur,
+      setScreenBlur,
+      handleWorkMode,
+      startOrStopWork,
+      lastAICutConfig,
+    } = useWork({
+      space,
+      spaceInfo,
+      messageApi,
+      startOrStopAICutAnalysis,
+      downloadAIMdReport,
+    });
+
+    React.useImperativeHandle(
+      ref,
+      () =>
+        ({
+          openSettings,
+          showAICutAnalysisSettings: setAICutModalOpen,
+          isChatOpen: chatOpen, // 使用 chatOpen 而不是 isChatOpen，因为 chatOpen 是实际控制聊天窗口的状态
+          setChatOpen,
+        }) as ControlBarExport,
+    );
     // 当是手机的情况下需要适当增加marginBottom，因为手机端自带的Tabbar会遮挡
     return (
       <div
         {...htmlProps}
         className={styles.controls}
         style={{
-          marginBottom: isMobile ? '46px' : 'auto',
+          marginBottom: 'auto',
         }}
       >
         {contextHolder}
@@ -496,6 +722,29 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                 (isScreenShareEnabled ? t('common.stop_share') : t('common.share_screen'))}
             </TrackToggle>
           )}
+          {space && visibleControls.microphone && spaceInfo.ai.cut.enabled && showAI && (
+            // <Reaction
+            //   updateSettings={updateSettings}
+            //   space={space.name}
+            //   size={controlSize}
+            //   controlWidth={controlWidth}
+            //   spaceInfo={spaceInfo}
+            // ></Reaction>
+
+            <Work
+              isStartWork={workEnabled}
+              setIsStartWork={setWorkEnabled}
+              setOpenModal={setWorkModalOpen}
+              showText={showText}
+              size={controlSize}
+              controlWidth={controlWidth}
+              spaceInfo={spaceInfo}
+              space={space.name}
+              startOrStopWork={startOrStopWork}
+              localParticipant={space.localParticipant}
+              lastAICutConfig={lastAICutConfig}
+            ></Work>
+          )}
           {visibleControls.chat && !isMobile && (
             <ChatToggle
               controlWidth={controlWidth}
@@ -508,6 +757,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           )}
           {space && spaceInfo.participants && visibleControls.microphone && (
             <MoreButton
+              space={space}
+              spaceInfo={spaceInfo}
               size={controlSize}
               controlWidth={controlWidth}
               setOpenMore={setOpenMore}
@@ -515,6 +766,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               onSettingOpen={async () => {
                 setSettingVis(true);
               }}
+              onClickAI={onClickAI}
               onClickRecord={onClickRecord}
               onClickManage={fetchSettings}
               onClickApp={onClickApp}
@@ -572,14 +824,14 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           <div className={styles.setting_container}>
             {space && (
               <Settings
+                showAI={showAI}
+                updateSettings={updateSettings}
                 ref={settingsRef}
                 close={settingVis}
                 messageApi={messageApi}
-                space={space.name}
+                space={space}
                 username={userChoices.username}
                 tab={{ key, setKey }}
-                // saveChanges={saveChanges}
-                setUserStatus={setUserStatus}
                 localParticipant={space.localParticipant}
                 spaceInfo={spaceInfo}
               ></Settings>
@@ -617,27 +869,16 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         >
           <div className={styles.invite_container} ref={inviteTextRef}>
             <div className={styles.invite_container_item}>
-              {space?.localParticipant.name} &nbsp;
-              {t('more.participant.invite.texts.0')}
+              {t('more.participant.invite.texts.0')
+                .replace('$user', space?.localParticipant.name || '')
+                .replace('$space', space?.name || '')}
             </div>
             <div className={styles.invite_container_item}>
               <div className={styles.invite_container_item_justify}>
-                {t('more.participant.invite.texts.1')}
-                {t('more.participant.invite.web')}
-                {t('more.participant.invite.add')}
+                {t('more.participant.invite.texts.1').replace('$space', space?.name || '')}
               </div>
               <div>
                 {t('more.participant.invite.link')}: {window.location.href}
-              </div>
-            </div>
-            <div className={styles.invite_container_item}>
-              <div className={styles.invite_container_item_justify}>
-                {t('more.participant.invite.texts.2')}
-                <strong>{`${window.location.href}`}</strong>
-                {t('more.participant.invite.add')}
-              </div>
-              <div>
-                {t('more.participant.invite.room')}: {space?.name}
               </div>
             </div>
           </div>
@@ -681,9 +922,9 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           okText={
             isDownload
               ? t('more.record.to_download')
-              : isOwner
-              ? t('more.record.confirm')
-              : t('more.record.confirm_request')
+              : isManager
+                ? t('more.record.confirm')
+                : t('more.record.confirm_request')
           }
           cancelText={t('more.record.cancel')}
           onCancel={recordModalOnCancel}
@@ -692,18 +933,59 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           {isDownload ? (
             <div>{t('more.record.download_msg')}</div>
           ) : (
-            <div>{isOwner ? t('more.record.desc') : t('more.record.request')}</div>
+            <div>{isManager ? t('more.record.desc') : t('more.record.request')}</div>
           )}
         </Modal>
-        {/* ---------------- app drawer ------------------------------------------------------- */}
-        {spaceInfo && space && (
-          <AppDrawer
-            open={openApp}
-            setOpen={setOpenApp}
-            messageApi={messageApi}
+        {/* -------------------- ai cut modal --------------------------------------------------- */}
+        {showAI && (
+          <Modal
+            open={aiCutModalOpen}
+            title={t('ai.cut.title')}
+            footer={null}
+            okText={aiCutServiceRef.current.isRunning ? t('common.close') : t('common.open')}
+            cancelText={t('common.cancel')}
+            onCancel={saveAICutServiceSettings}
+          >
+            <AICutAnalysisSettingsPanel
+              space={space}
+              spaceInfo={spaceInfo}
+              aiCutDeps={aiCutDeps}
+              setAICutDeps={setAICutDeps}
+              extraction={extraction}
+              setExtraction={setExtraction}
+              cutFreq={cutFreq}
+              setCutFreq={setCutFreq}
+              cutBlur={cutBlur}
+              setCutBlur={setCutBlur}
+              isServiceOpen={isServiceOpen}
+              setIsServiceOpen={setIsServiceOpen}
+              aiCutOptions={aiCutOptions}
+              aiCutOptionsChange={aiCutOptionsChange}
+              isManager={isManager}
+            ></AICutAnalysisSettingsPanel>
+            {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
+          </Modal>
+        )}
+        {/* ------------------ work ----------------------------------------------------- */}
+        {space && showAI && (
+          <WorkModal
+            space={space}
             spaceInfo={spaceInfo}
-            space={space.name}
-          ></AppDrawer>
+            open={workModalOpen}
+            setOpen={setWorkModalOpen}
+            isStartWork={workEnabled}
+            setIsStartWork={setWorkEnabled}
+            isUseAI={isUseAI}
+            setIsUseAI={setIsUseAI}
+            isSync={isSync}
+            setIsSync={setIsSync}
+            videoBlur={videoBlur}
+            setVideoBlur={setVideoBlur}
+            screenBlur={screenBlur}
+            setScreenBlur={setScreenBlur}
+            handleWorkMode={handleWorkMode}
+            updateSettings={updateSettings}
+          ></WorkModal>
         )}
       </div>
     );

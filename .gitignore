@@ -52,4 +52,4 @@ vocespace.*
 /deploy/sge_deploy
 /public/license
 
-/prompt/*
+/prompt/useless/**

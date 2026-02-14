@@ -1,8 +1,10 @@
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { SvgResource } from '@/app/resources/svg';
 import { audio } from '@/lib/audio';
+import { useI18n } from '@/lib/i18n/i18n';
 import { WsWave } from '@/lib/std/device';
 import { LayoutContext } from '@livekit/components-react';
+import { Tooltip } from 'antd';
 
 export interface WavePinProps {
   /**当Wave按钮被点击时触发 */
@@ -58,13 +60,19 @@ export function WaveHand({ style, wsWave, contextUndefined = true }: WaveHandPro
 export function WavePin({
   wavePin,
   style = {
-    left: '0.25rem',
     width: 'fit-content',
+    padding: 4,
+    backgroundColor: '#00000080',
+    margin: '0 4px',
+    borderRadius: 4,
   },
 }: WavePinProps) {
+  const { t } = useI18n();
   return (
-    <button className="lk-button lk-focus-toggle-button" style={style} onClick={wavePin}>
-      <SvgResource svgSize={16} type="wave"></SvgResource>
-    </button>
+    <Tooltip placement="bottom" title={t('more.participant.wave')}>
+      <button className="lk-button" style={style} onClick={wavePin}>
+        <SvgResource svgSize={16} type="wave"></SvgResource>
+      </button>
+    </Tooltip>
   );
 }

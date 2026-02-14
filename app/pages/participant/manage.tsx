@@ -107,7 +107,7 @@ export function ParticipantManage({
             <ParticipantList
               space={space}
               participants={participantList}
-              ownerId={spaceInfo.ownerId}
+              spaceInfo={spaceInfo}
               menu={{
                 items: optItems,
                 onClick: handleOptClick,

@@ -172,6 +172,9 @@
     align-items: center;
     justify-content: space-between;
     gap: 8px;
+    overflow: hidden;
+    text-wrap: nowrap;
+    text-overflow: clip;
   }
   span {
     margin-left: 8px;
@@ -188,7 +191,7 @@
   width: 200px;
   display: inline-flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: space-between;
   padding: 8px 0;
   gap: 8px;
   &_name {
@@ -364,9 +367,10 @@
   align-items: flex-start;
   flex-wrap: wrap;
   gap: 12px;
-  &_item{
+  text-align: left;
+  &_item {
     width: 100%;
-    &_justify{
+    &_justify {
       text-align: justify;
       margin-bottom: 2px;
     }
@@ -380,7 +384,7 @@
   gap: 8px;
 }
 
-.checkbox_item{
+.checkbox_item {
   height: 32px;
   width: 100%;
   display: inline-flex;
@@ -407,3 +411,63 @@
 //   justify-content: space-between;
 //   gap: 12px;
 // }
+
+.status_tag {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: 100%;
+  text-align: start;
+  height: 24px;
+  font-size: 14px;
+  color: #fff;
+  background-color: #00000080;
+  padding: 5px 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  cursor: pointer;
+  &_title{
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  & > span {
+    margin-right: 4px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.ai_cut {
+  &_line {
+    width: 100%;
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+
+.work {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  width: 100%;
+  flex-wrap: wrap;
+  &_line {
+    width: 100%;
+   
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}

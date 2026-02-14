@@ -1,90 +1,423 @@
-import { SvgResource } from '@/app/resources/svg';
-import { Button, Collapse, CollapseProps, Popover, Tabs, TabsProps, theme, Tooltip } from 'antd';
-import { useEffect, useMemo, useState } from 'react';
+import { Button, Col, Collapse, CollapseProps, Drawer, Row, theme, Tooltip } from 'antd';
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
 import styles from '@/styles/apps.module.scss';
 import { AppTimer } from './timer';
 import { AppCountdown } from './countdown';
-import { AppTodo, ExportTodoHistroy } from './todo_list';
+import { AppTodo } from './todo_list';
 import { MessageInstance } from 'antd/es/message/interface';
-import { ProfileOutlined, TeamOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  AppstoreOutlined,
+  EyeInvisibleOutlined,
+  EyeOutlined,
+  ProfileOutlined,
+} from '@ant-design/icons';
 import { useI18n } from '@/lib/i18n/i18n';
 import {
+  AICutParticipantConf,
   AppAuth,
   AppKey,
   castCountdown,
   castTimer,
-  castTodo,
   Countdown,
   DEFAULT_COUNTDOWN,
   DEFAULT_TIMER,
+  ParticipantSettings,
+  RecordSettings,
+  sortTodos,
   SpaceCountdown,
   SpaceInfo,
   SpaceTimer,
   SpaceTodo,
   Timer,
-  TodoItem,
+  todayTimeStamp,
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
 import { useLocalParticipant } from '@livekit/components-react';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { RemoteTargetApp, socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
+import { DEFAULT_COLLAPSE_HEADER_STYLES } from '../controls/collapse_tools';
+import { TodoTogether } from './todo_together';
+import { AICutAnalysisMdTabsExports, AICutAnalysisMdTabs } from './ai_analysis_md';
+import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
+import { CopyButton } from '../controls/widgets/copy';
+import { useRecoilState } from 'recoil';
+import { AICutService } from '@/lib/ai/cut';
+import { DEFAULT_DRAWER_PROP, DrawerCloser, DrawerHeader } from '../controls/drawer_tools';
+import {
+  convertPlatformToACARes,
+  PlarformAICutAnalysis,
+  platformAPI,
+  PlatformTodos,
+} from '@/lib/api/platform';
+import { SvgResource } from '@/app/resources/svg';
+import { usePlatformUserInfoCheap } from '@/lib/hooks/platform';
 
-export interface FlotLayoutProps {
+export interface FlotButtonProps {
   style?: React.CSSProperties;
-  messageApi: MessageInstance;
   openApp: boolean;
-  spaceInfo: SpaceInfo;
-  space: string;
+  setOpenApp: (open: boolean) => void;
 }
 
-export function FlotLayout({ style, messageApi, openApp, spaceInfo, space }: FlotLayoutProps) {
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    if (openApp && open) {
-      setOpen(false);
-    }
-  }, [open, openApp]);
+export function FlotButton({ style, openApp, setOpenApp }: FlotButtonProps) {
+  const { localParticipant } = useLocalParticipant();
+  const [targetParticipant, setTargetParticipant] = useRecoilState(RemoteTargetApp);
 
   return (
-    <div style={style} className={styles.flot_layout}>
-      <Popover
-        open={open}
-        placement="leftTop"
-        content={
-          <FlotAppItem
-            messageApi={messageApi}
-            apps={spaceInfo.apps}
-            space={space}
-            spaceInfo={spaceInfo}
-          />
+    <Button
+      onClick={async () => {
+        if (!openApp && targetParticipant.participantId !== localParticipant.identity) {
+          setTargetParticipant({
+            participantId: localParticipant.identity,
+            participantName: localParticipant.name,
+            auth: 'write',
+          });
         }
+        setOpenApp(!openApp);
+      }}
+      type="text"
+      style={{
+        height: 'fit-content',
+        width: 'fit-content',
+        padding: '12px 2px',
+        backgroundColor: '#00000050',
+        borderRadius: '24px',
+        color: '#fff',
+        ...style,
+      }}
+      icon={<AppstoreOutlined style={{ fontSize: 16 }} />}
+    ></Button>
+  );
+}
+
+export interface FlotLayoutProps {
+  messageApi: MessageInstance;
+  openApp: boolean;
+  setOpenApp: (open: boolean) => void;
+  spaceInfo: SpaceInfo;
+  space: string;
+  showAICutAnalysisSettings?: (open: boolean) => void;
+  aiCutAnalysisRes?: AICutAnalysisRes;
+  reloadResult?: () => Promise<void>;
+  startOrStopAICutAnalysis?: (
+    freq: number,
+    conf: AICutParticipantConf,
+    reload?: boolean,
+  ) => Promise<void>;
+  openAIServiceAskNote?: () => void;
+  cutInstance: AICutService;
+  updateSettings: (
+    newSettings: Partial<ParticipantSettings>,
+    record?: RecordSettings,
+    init?: boolean,
+  ) => Promise<boolean | undefined>;
+  showAI: boolean;
+}
+
+export interface FlotLayoutExports {
+  downloadAIMdReport?: () => Promise<void>;
+}
+
+export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
+  (
+    {
+      messageApi,
+      openApp,
+      spaceInfo,
+      space,
+      setOpenApp,
+      showAICutAnalysisSettings,
+      reloadResult,
+      startOrStopAICutAnalysis,
+      openAIServiceAskNote,
+      aiCutAnalysisRes,
+      cutInstance,
+      updateSettings,
+      showAI,
+    }: FlotLayoutProps,
+    ref,
+  ) => {
+    const flotAppItemRef = useRef<FlotAppExports>(null);
+    const AICutAnalysisMdTabsRef = useRef<AICutAnalysisMdTabsExports>(null);
+    const [containerHeight, setContainerHeight] = useState<number>(0);
+    const { localParticipant } = useLocalParticipant();
+    const [targetParticipant, setTargetParticipant] = useRecoilState(RemoteTargetApp);
+    const [fetchData, setFetchData] = useState<boolean>(false);
+    const isSelf = useMemo(() => {
+      return localParticipant.identity === targetParticipant.participantId;
+    }, [localParticipant.identity, targetParticipant.participantId]);
+    const [remoteAnalysisRes, setRemoteAnalysisRes] = useState<AICutAnalysisRes>(
+      DEFAULT_AI_CUT_ANALYSIS_RES,
+    );
+
+    // phone: window.innerWidth <= 728,
+    // pad: window.innerWidth > 728 && window.innerWidth <= 1024,
+    // desktop: window.innerWidth > 1024
+    const layoutType: {
+      span1: number;
+      span2: number;
+      ty: 'phone' | 'desktop' | 'pad';
+    } = useMemo(() => {
+      if (window.innerWidth <= 728) {
+        return {
+          span1: showAI ? 24 : 0,
+          span2: 24,
+          ty: 'phone',
+        };
+      } else if (window.innerWidth > 728 && window.innerWidth <= 1024) {
+        return {
+          span1: showAI ? 12 : 0,
+          span2: showAI ? 12 : 24,
+          ty: 'pad',
+        };
+      } else {
+        return {
+          span1: showAI ? 16 : 0,
+          span2: showAI ? 8 : 24,
+          ty: 'desktop',
+        };
+      }
+    }, [window.innerWidth, showAI]);
+
+    const getRemoteAICutAnalysisRes = async (participantId: string) => {
+      if (participantId && !isSelf) {
+        // 发起请求获取结果
+        if (
+          targetParticipant.participantId &&
+          usePlatformUserInfoCheap({
+            user: spaceInfo.participants[targetParticipant.participantId],
+          }).isAuth
+        ) {
+          // 如果是认证用户则从平台获取
+          const aiResponse = await platformAPI.ai.getAIAnalysis(
+            targetParticipant.participantId,
+            todayTimeStamp(),
+          );
+          if (aiResponse.ok) {
+            const { data }: { data: PlarformAICutAnalysis } = await aiResponse.json();
+            return convertPlatformToACARes(data);
+          }
+        } else {
+          const response = await api.ai.getAnalysisRes(
+            space,
+            participantId,
+            usePlatformUserInfoCheap({ user: spaceInfo.participants[participantId] }).isAuth,
+          );
+          if (response.ok) {
+            const { res }: { res: AICutAnalysisRes } = await response.json();
+            return res;
+          }
+        }
+      }
+      return DEFAULT_AI_CUT_ANALYSIS_RES;
+    };
+
+    useEffect(() => {
+      if (
+        !isSelf &&
+        targetParticipant.participantId &&
+        usePlatformUserInfoCheap({ user: spaceInfo.participants[targetParticipant.participantId] })
+          .isAuth
+      ) {
+        // console.warn('Fetching remote AI Cut Analysis Result for', targetParticipant.participantId);
+        getRemoteAICutAnalysisRes(targetParticipant.participantId).then((res) => {
+          setRemoteAnalysisRes(res);
+        });
+      }
+    }, [isSelf, targetParticipant, spaceInfo.participants]);
+
+    const toPersonalPlatform = () => {
+      let id = targetParticipant.participantId || localParticipant.identity;
+      if (usePlatformUserInfoCheap({ user: spaceInfo.participants[id] }).isAuth) {
+        let url = `https://home.vocespace.com/ai/${id}`;
+        window.open(url, '_blank');
+      }
+    };
+
+    const fetchTodo = async (participantId: string) => {
+      // 当前只先请求TODO数据
+      const response = await platformAPI.todo.getTodos(participantId);
+      if (response.ok) {
+        const { todos }: { todos: PlatformTodos[] } = await response.json();
+        const items: SpaceTodo[] = todos.map((todo) => {
+          return {
+            items: todo.items,
+            date: Number(todo.date),
+          };
+        });
+        let appDatas = spaceInfo.participants[participantId]?.appDatas || {};
+        appDatas = {
+          ...appDatas,
+          todo: sortTodos(items),
+        };
+        // 只有自己才需要更新
+        if (participantId === localParticipant.identity) {
+          await updateSettings({
+            appDatas,
+          });
+        }
+        socket.emit('update_user_status', {
+          space: space,
+        } as WsBase);
+      }
+    };
+
+    // 每次打开Drawer，如果是认证过的用户都需要去平台端请求最新的AI分析结果和TODO数据
+    useEffect(() => {
+      if (
+        targetParticipant.participantId &&
+        usePlatformUserInfoCheap({ user: spaceInfo.participants[targetParticipant.participantId] })
+          .isAuth &&
+        fetchData
+      ) {
+        fetchTodo(targetParticipant.participantId).then(() => {
+          setFetchData(false);
+        });
+      }
+    }, [spaceInfo.participants, targetParticipant.participantId, fetchData]);
+    // 每次openApp为true就重置fetchData
+    useEffect(() => {
+      if (openApp) {
+        setFetchData(true);
+      }
+    }, [openApp]);
+
+    useImperativeHandle(ref, () => ({
+      downloadAIMdReport: AICutAnalysisMdTabsRef.current?.downloadMdReport,
+    }));
+
+    return (
+      <Drawer
+        {...DEFAULT_DRAWER_PROP}
+        open={openApp}
+        onClose={() => setOpenApp(false)}
+        title={
+          <DrawerHeader
+            title={'Widgets'}
+            icon={
+              usePlatformUserInfoCheap({
+                user: spaceInfo.participants[
+                  targetParticipant.participantId || localParticipant.identity
+                ],
+              }).isAuth ? (
+                <span
+                  style={{
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                  }}
+                  onClick={toPersonalPlatform}
+                >
+                  <SvgResource type="share" svgSize={16}></SvgResource>
+                </span>
+              ) : undefined
+            }
+          ></DrawerHeader>
+        }
+        extra={DrawerCloser({
+          on_clicked: () => {
+            setOpenApp(false);
+          },
+        })}
+        width={showAI ? 1168 : 420}
         styles={{
           body: {
-            background: '#1a1a1a90',
-            width: '300px',
+            padding: '0 24px',
+            overflow: 'hidden',
           },
         }}
       >
-        <Button
-          onClick={() => {
-            if (openApp) return;
-            setOpen(!open);
-          }}
-          type="text"
-          style={{ height: '100%', width: '100%' }}
-          icon={<SvgResource type="app" svgSize={16}></SvgResource>}
-        ></Button>
-      </Popover>
-    </div>
-  );
-}
+        <Row gutter={8} style={{ height: '100%' }}>
+          {layoutType.ty !== 'phone' && showAI && (
+            <Col span={layoutType.span1}>
+              <AICutAnalysisMdTabs
+                ref={AICutAnalysisMdTabsRef}
+                result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
+                reloadResult={reloadResult}
+                showSettings={showAICutAnalysisSettings}
+                setFlotAppOpen={setOpenApp}
+                spaceInfo={spaceInfo}
+                startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+                openAIServiceAskNote={openAIServiceAskNote}
+                messageApi={messageApi}
+                isSelf={isSelf}
+                style={{
+                  height: '100%',
+                  width: '100%',
+                }}
+                isAuthed={
+                  usePlatformUserInfoCheap({
+                    user: spaceInfo.participants[
+                      targetParticipant.participantId || localParticipant.identity
+                    ],
+                  }).isAuth
+                }
+                cutInstance={cutInstance}
+                userId={targetParticipant.participantId || localParticipant.identity}
+              ></AICutAnalysisMdTabs>
+            </Col>
+          )}
+          <Col
+            span={layoutType.span2}
+            style={{
+              height: '100%',
+              scrollbarWidth: 'thin',
+              overflowY: 'scroll',
+              overflowX: 'hidden',
+            }}
+          >
+            <FlotAppItem
+              ref={flotAppItemRef}
+              messageApi={messageApi}
+              apps={spaceInfo.apps}
+              space={space}
+              spaceInfo={spaceInfo}
+              onHeightChange={setContainerHeight}
+              participantId={targetParticipant.participantId || localParticipant.identity}
+              isSelf={isSelf}
+            />
+            {layoutType.ty === 'phone' && showAI && (
+              <AICutAnalysisMdTabs
+                result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
+                reloadResult={reloadResult}
+                showSettings={showAICutAnalysisSettings}
+                setFlotAppOpen={setOpenApp}
+                spaceInfo={spaceInfo}
+                startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+                openAIServiceAskNote={openAIServiceAskNote}
+                messageApi={messageApi}
+                isSelf={isSelf}
+                style={{
+                  height: '100%',
+                  width: '100%',
+                }}
+                isAuthed={
+                  usePlatformUserInfoCheap({
+                    user: spaceInfo.participants[
+                      targetParticipant.participantId || localParticipant.identity
+                    ],
+                  }).isAuth
+                }
+                cutInstance={cutInstance}
+                userId={targetParticipant.participantId || localParticipant.identity}
+              ></AICutAnalysisMdTabs>
+            )}
+          </Col>
+        </Row>
+      </Drawer>
+    );
+  },
+);
 
 interface FlotAppItemProps {
   messageApi: MessageInstance;
   apps: AppKey[];
   space: string;
   spaceInfo: SpaceInfo;
+  onHeightChange?: (height: number) => void;
+  isSelf: boolean;
+  participantId: string;
 }
 
 export interface TimerProp {
@@ -99,396 +432,397 @@ export interface CountdownProp {
   auth: AppAuth;
 }
 export interface TodoProp {
-  data: TodoItem[];
-  setData: (data: TodoItem[]) => Promise<void>;
+  data: SpaceTodo[];
+  setData: (data: SpaceTodo) => Promise<void>;
   auth: AppAuth;
 }
 
-const DEFAULT_KEYS: AppKey[] = ['timer', 'countdown', 'todo'];
+const DEFAULT_KEYS: (AppKey | 'together')[] = ['timer', 'countdown', 'todo', 'together'];
 
-function FlotAppItem({ messageApi, apps, space, spaceInfo }: FlotAppItemProps) {
-  const { localParticipant } = useLocalParticipant();
-  const [activeKeys, setActiveKeys] = useState<Map<string, AppKey[]>>(
-    new Map([[localParticipant.identity, DEFAULT_KEYS]]),
-  );
-  const { t } = useI18n();
-  const { token } = theme.useToken();
-  const [showExport, setShowExport] = useState<boolean>(false);
+export interface FlotAppExports {
+  clientHeight?: number;
+}
 
-  // 初始化远程用户的 activeKeys
-  useEffect(() => {
-    const remoteParticipantKeys = Object.keys(spaceInfo.participants).filter((k) => {
-      return k !== localParticipant.identity;
-    });
+const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
+  (
+    { messageApi, apps, space, spaceInfo, onHeightChange, isSelf, participantId }: FlotAppItemProps,
+    ref,
+  ) => {
+    const [activeKeys, setActiveKeys] = useState<(AppKey | 'together')[]>(DEFAULT_KEYS);
+    const { t } = useI18n();
+    const { token } = theme.useToken();
+    const [showExport, setShowExport] = useState<boolean>(false);
+    const containerRef = useRef<HTMLDivElement>(null);
+    const resizeObserverRef = useRef<ResizeObserver | null>(null);
 
-    setActiveKeys((prev) => {
-      const newMap = new Map(prev);
+    // 监听容器高度变化
+    useEffect(() => {
+      if (containerRef.current && onHeightChange) {
+        const updateHeight = () => {
+          if (containerRef.current) {
+            const height = containerRef.current.clientHeight;
+            onHeightChange(height);
+          }
+        };
 
-      remoteParticipantKeys.forEach((participantId) => {
-        const participant = spaceInfo.participants[participantId];
-        if (participant?.sync && !newMap.has(participantId)) {
-          const keys: AppKey[] = [];
-          if (participant.appDatas?.timer) keys.push('timer');
-          if (participant.appDatas?.countdown) keys.push('countdown');
-          if (participant.appDatas?.todo) keys.push('todo');
-          newMap.set(participantId, keys);
-        }
-      });
+        // 初始设置高度
+        updateHeight();
 
-      return newMap;
-    });
-  }, [spaceInfo.participants, localParticipant.identity]);
+        // 设置 ResizeObserver
+        resizeObserverRef.current = new ResizeObserver(() => {
+          updateHeight();
+        });
 
-  const itemStyle: React.CSSProperties = {
-    marginBottom: 8,
-    background: token.colorFillAlter,
-    borderRadius: token.borderRadiusSM,
-    border: 'none',
-  };
+        resizeObserverRef.current.observe(containerRef.current);
 
-  const appData = useMemo(() => {
-    return spaceInfo.participants[localParticipant.identity]?.appDatas || {};
-  }, [spaceInfo, localParticipant]);
+        return () => {
+          if (resizeObserverRef.current) {
+            resizeObserverRef.current.disconnect();
+          }
+        };
+      }
+    }, [onHeightChange]);
 
-  const selfAuth = useMemo(() => {
-    if (spaceInfo.participants[localParticipant.identity]) {
-      return spaceInfo.participants[localParticipant.identity].auth;
-    }
-    return 'read';
-  }, [spaceInfo.participants]);
+    const itemStyle: React.CSSProperties = {
+      marginBottom: 8,
+      background: token.colorFillAlter,
+      borderRadius: token.borderRadiusSM,
+      border: 'none',
+    };
 
-  // const toggleCollapse = (key: 'timer' | 'countdown' | 'todo') => {
-  //   setActiveKeys((prev) => {
-  //     if (prev.includes(key)) {
-  //       return prev.filter((k) => k !== key);
-  //     }
-  //     return [...prev, key];
-  //   });
-  // };
+    const appData = useMemo(() => {
+      return spaceInfo.participants[participantId]?.appDatas || {};
+    }, [spaceInfo, participantId]);
 
-  const upload = async (key: AppKey, data: SpaceTimer | SpaceCountdown | SpaceTodo) => {
-    let participantId = localParticipant.identity;
-    const response = await api.uploadSpaceApp(space, participantId, key, data);
-    if (response.ok) {
-      socket.emit('update_user_status', {
+    // 只有本地用户才有upload方法 ------------------------------------------------------------------
+    const upload = async (key: AppKey, data: SpaceTimer | SpaceCountdown | SpaceTodo) => {
+      const response = await api.uploadSpaceApp(
         space,
-      } as WsBase);
-      messageApi.success(t('more.app.upload.success'));
-    } else {
-      messageApi.error(t('more.app.upload.error'));
-    }
-  };
+        participantId,
+        key,
+        data,
+        usePlatformUserInfoCheap({ user: spaceInfo.participants[participantId] }).isAuth,
+      );
+      if (response.ok) {
+        socket.emit('update_user_status', {
+          space,
+        } as WsBase);
+        messageApi.success(t('more.app.upload.success'));
+      } else {
+        messageApi.error(t('more.app.upload.error'));
+      }
+    };
 
-  const setSelfTimerData = async (timer: Timer) => {
-    await upload('timer', {
-      ...timer,
-      timestamp: Date.now(),
-    } as SpaceTimer);
-  };
+    const setSelfTimerData = async (timer: Timer) => {
+      await upload('timer', {
+        ...timer,
+        timestamp: Date.now(),
+      } as SpaceTimer);
+    };
 
-  const setRemoteTimerData = async (auth: AppAuth, participantId: string, timer: Timer) => {
-    if (auth !== 'write') return;
-    // 通过API更新
-    // const response = await api.updateParticipantApp(participantId, 'timer', timer);
-  };
+    const setRemoteTimerData = async (auth: AppAuth, participantId: string, timer: Timer) => {
+      if (auth !== 'write') return;
+      // 通过API更新
+      // const response = await api.updateParticipantApp(participantId, 'timer', timer);
+    };
 
-  const setSelfCountdownData = async (countdown: Countdown) => {
-    await upload('countdown', {
-      ...countdown,
-      timestamp: Date.now(),
-    } as SpaceCountdown);
-  };
+    const setSelfCountdownData = async (countdown: Countdown) => {
+      await upload('countdown', {
+        ...countdown,
+        timestamp: Date.now(),
+      } as SpaceCountdown);
+    };
 
-  const setSelfTodoData = async (todo: TodoItem[]) => {
-    await upload('todo', {
-      items: todo,
-      timestamp: Date.now(),
-    } as SpaceTodo);
-  };
+    const setSelfTodoData = async (todo: SpaceTodo) => {
+      await upload('todo', todo);
+    };
 
-  const updateAppSync = async (key: AppKey) => {
-    const response = await api.updateSpaceAppSync(space, localParticipant.identity, key);
-    if (response.ok) {
-      socket.emit('update_user_status', {
-        space,
-      } as WsBase);
-      messageApi.success(t('more.app.settings.sync.update.success'));
-    } else {
-      messageApi.error(t('more.app.settings.sync.update.error'));
-    }
-  };
+    const updateAppSync = async (key: AppKey) => {
+      const response = await api.updateSpaceAppSync(space, participantId, key);
+      if (response.ok) {
+        socket.emit('update_user_status', {
+          space,
+        } as WsBase);
+        messageApi.success(t('more.app.settings.sync.update.success'));
+      } else {
+        messageApi.error(t('more.app.settings.sync.update.error'));
+      }
+    };
 
-  const exportTodo = (data: TodoItem[]) => {
-    if (data.length === 0) {
-      messageApi.info(t('more.app.todo.unexport'));
-    } else {
-      setShowExport(true);
-    }
-  };
+    const exportTodo = (dataLength: number) => {
+      if (dataLength === 0) {
+        messageApi.info(t('more.app.todo.unexport'));
+      } else {
+        setShowExport(true);
+      }
+    };
 
-  const showSyncIcon = (isRemote: boolean, key: AppKey) => {
-    return isRemote ? (
-      <span></span>
-    ) : (
-      <>
-        {spaceInfo.participants[localParticipant.identity].sync.includes(key) ? (
-          <Tooltip title={t('more.app.settings.sync.desc_priv')}>
-            <TeamOutlined
-              onClick={(e) => {
-                e.stopPropagation();
-                updateAppSync(key);
-              }}
-            />
-          </Tooltip>
-        ) : (
-          <Tooltip title={t('more.app.settings.sync.desc_pub')}>
-            <UserOutlined
-              onClick={(e) => {
-                e.stopPropagation();
-                updateAppSync(key);
-              }}
-            />
-          </Tooltip>
-        )}
-      </>
-    );
-  };
+    const showSyncIcon = (isSelf: boolean, key: AppKey) => {
+      if (!isSelf) {
+        return <span></span>;
+      }
 
-  const createItems = (
-    participantId: string,
-    timer?: TimerProp,
-    countdown?: CountdownProp,
-    todo?: TodoProp,
-    isRemote = false,
-  ): CollapseProps['items'] => {
-    let items: CollapseProps['items'] = [];
+      // 安全检查：确保参与者和 sync 属性存在
+      const participant = spaceInfo.participants[participantId];
+      if (!participant || !participant.sync) {
+        return <span></span>;
+      }
 
-    if (timer) {
-      items.push({
-        key: 'timer',
-        label: (
-          <div style={{ height: 22, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            {showSyncIcon(isRemote, 'timer')}
-            {activeKeys.get(participantId)?.includes('timer') ? '' : t('more.app.timer.title')}
-          </div>
-        ),
-        children: (
-          <AppTimer
-            size="small"
-            appData={timer.data}
-            setAppData={timer.setData}
-            auth={timer.auth}
-          ></AppTimer>
-        ),
-        style: itemStyle,
-      });
-    }
-
-    if (countdown) {
-      items.push({
-        key: 'countdown',
-        label: (
-          <div style={{ height: 22, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            {showSyncIcon(isRemote, 'countdown')}
-            {activeKeys.get(participantId)?.includes('countdown')
-              ? ''
-              : t('more.app.countdown.title')}
-          </div>
-        ),
-        children: (
-          <AppCountdown
-            messageApi={messageApi}
-            size="small"
-            appData={countdown.data}
-            setAppData={countdown.setData}
-            auth={countdown.auth}
-          />
-        ),
-        style: itemStyle,
-      });
-    }
-
-    if (todo) {
-      items.push({
-        key: 'todo',
-        label: (
-          <div style={{ height: 22, display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-            {showSyncIcon(isRemote, 'todo')}
-            {!isRemote && (
-              <ProfileOutlined
+      return (
+        <>
+          {participant.sync.includes(key) ? (
+            <Tooltip title={t('more.app.settings.sync.desc_priv')}>
+              <EyeOutlined
                 onClick={(e) => {
                   e.stopPropagation();
-                  exportTodo(todo.data);
+                  updateAppSync(key);
                 }}
               />
-            )}
-            {activeKeys.get(participantId)?.includes('todo') ? '' : t('more.app.todo.title')}
-          </div>
-        ),
-        children: (
-          <AppTodo
-            messageApi={messageApi}
-            appData={todo.data}
-            setAppData={todo.setData}
-            auth={todo.auth}
-            showExport={showExport}
-            setShowExport={setShowExport}
-          />
-        ),
-        style: itemStyle,
-      });
-    }
-
-    return items;
-  };
-
-  const selfItems: CollapseProps['items'] = useMemo(() => {
-    // items.filter((item) => apps.includes(item.key as AppKey))
-    let timer: TimerProp | undefined = undefined;
-    if (apps.includes('timer')) {
-      timer = {
-        data: castTimer(appData.timer) || DEFAULT_TIMER,
-        setData: setSelfTimerData,
-        auth: 'write',
-      };
-    }
-    let countdown: CountdownProp | undefined = undefined;
-    if (apps.includes('countdown')) {
-      countdown = {
-        data: castCountdown(appData.countdown) || DEFAULT_COUNTDOWN,
-        setData: setSelfCountdownData,
-        auth: 'write',
-      };
-    }
-    let todo: TodoProp | undefined = undefined;
-    if (apps.includes('todo')) {
-      todo = {
-        data: castTodo(appData.todo) || [],
-        setData: setSelfTodoData,
-        auth: 'write',
-      };
-    }
-
-    const items = createItems(localParticipant.identity, timer, countdown, todo);
-
-    if (!items) {
-      return [];
-    }
-
-    return items;
-  }, [apps, activeKeys, appData, showExport]);
-
-  const tabItems: TabsProps['items'] = useMemo(() => {
-    let remoteParticipantKeys = Object.keys(spaceInfo.participants).filter((k) => {
-      return k !== localParticipant.identity;
-    });
-
-    const remoteAppDatas = remoteParticipantKeys.map((key) => {
-      return {
-        id: key,
-        name: spaceInfo.participants[key].name,
-        auth: spaceInfo.participants[key].auth,
-        sync: spaceInfo.participants[key].sync,
-        appDatas: spaceInfo.participants[key].appDatas,
-      };
-    });
-    let res = [
-      {
-        key: 'self',
-        label: t('more.app.tab.self'),
-        children: (
-          <Collapse
-            bordered={false}
-            activeKey={activeKeys.get(localParticipant.identity)}
-            onChange={(keys) => {
-              setActiveKeys((prev) => {
-                const newMap = new Map(prev);
-                newMap.set(localParticipant.identity, keys as AppKey[]);
-                return newMap;
-              });
-            }}
-            expandIconPosition="end"
-            items={selfItems}
-          />
-        ),
-      },
-    ];
-
-    if (remoteAppDatas.length > 0) {
-      remoteAppDatas.forEach((v) => {
-        if (v.sync) {
-          let castedTimer = castTimer(v.appDatas.timer);
-          let castedCountdown = castCountdown(v.appDatas.countdown);
-          let castedTodo = castTodo(v.appDatas.todo);
-
-          let timer: TimerProp | undefined = undefined;
-          if (castedTimer) {
-            timer = {
-              data: castedTimer,
-              setData: async (data) => {
-                // update the timer data
-                await setRemoteTimerData(v.auth, v.id, data);
-              },
-              auth: v.auth,
-            };
-          }
-          let countdown: CountdownProp | undefined = undefined;
-          if (castedCountdown) {
-            countdown = {
-              data: castedCountdown,
-              setData: async (data) => {
-                // update the countdown data
-              },
-              auth: v.auth,
-            };
-          }
-          let todo: TodoProp | undefined = undefined;
-          if (castedTodo) {
-            todo = {
-              data: castedTodo,
-              setData: async (data) => {
-                // update the todo data
-                console.warn(data);
-              },
-              auth: v.auth,
-            };
-          }
-
-          let remoteItems = createItems(v.id, timer, countdown, todo, true);
-          setActiveKeys((prev) => {
-            if (!prev.has(v.id)) {
-              const newMap = new Map(prev);
-              newMap.set(v.id, DEFAULT_KEYS);
-              return newMap;
-            }
-            return prev;
-          });
-
-          res.push({
-            key: v.id,
-            label: v.name,
-            children: (
-              <Collapse
-                bordered={false}
-                activeKey={activeKeys.get(v.id)}
-                onChange={(keys) => {
-                  setActiveKeys((prev) => {
-                    const newMap = new Map(prev);
-                    newMap.set(v.id, keys as AppKey[]);
-                    return newMap;
-                  });
+            </Tooltip>
+          ) : (
+            <Tooltip title={t('more.app.settings.sync.desc_pub')}>
+              <EyeInvisibleOutlined
+                onClick={(e) => {
+                  e.stopPropagation();
+                  updateAppSync(key);
                 }}
-                expandIconPosition="end"
-                items={remoteItems}
               />
-            ),
-          });
+            </Tooltip>
+          )}
+        </>
+      );
+    };
+
+    const getTodoText = (todo: TodoProp) => {
+      return todo.data
+        .map((item) => {
+          return `--- ${new Date(item.date).toLocaleDateString()} ---\n${item.items
+            .map((item, index) => `- [${item.done ? 'x' : ' '}] ${index + 1}. ${item.title}`)
+            .join('\n')}
+      `;
+        })
+        .join('\n\n');
+    };
+
+    const createItems = (
+      participantId: string,
+      timer?: TimerProp,
+      countdown?: CountdownProp,
+      todo?: TodoProp,
+      isSelf = false,
+    ): CollapseProps['items'] => {
+      let items: CollapseProps['items'] = [];
+
+      if (todo) {
+        items.push({
+          key: 'todo',
+          label: (
+            <div className={styles.flot_header}>
+              {t('more.app.todo.title')}
+              <div className={styles.flot_header_icons}>
+                {showSyncIcon(isSelf, 'todo')}
+                {isSelf && (
+                  <>
+                    <Tooltip title={t('more.app.todo.complete')}>
+                      <ProfileOutlined
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          exportTodo(todo.data.length);
+                        }}
+                      />
+                    </Tooltip>
+                    {/* <Tooltip title={t('more.ai.cut')}>
+                      <RobotOutlined
+                        disabled={!spaceInfo.participants[participantId]?.ai.cut}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowAICutAnalysis(!showAICutAnalysis);
+                        }}
+                      />
+                    </Tooltip> */}
+
+                    <CopyButton text={getTodoText(todo)} messageApi={messageApi}></CopyButton>
+                  </>
+                )}
+              </div>
+            </div>
+          ),
+          children: (
+            <AppTodo
+              space={space}
+              participantId={participantId}
+              isAuth={
+                usePlatformUserInfoCheap({ user: spaceInfo.participants[participantId] }).isAuth
+              }
+              messageApi={messageApi}
+              appData={todo.data}
+              setAppData={todo.setData}
+              auth={todo.auth}
+              showExport={showExport}
+              setShowExport={setShowExport}
+            />
+          ),
+          style: itemStyle,
+          styles: DEFAULT_COLLAPSE_HEADER_STYLES,
+        });
+      }
+
+      if (isSelf) {
+        items.push({
+          key: 'together',
+          label: (
+            <div className={styles.flot_header}>
+              {/* {showSyncIcon(isRemote, 'timer')} */}
+              {t('more.app.todo.together.title')}
+            </div>
+          ),
+          children: (
+            <TodoTogether
+              spaceInfo={spaceInfo}
+              messageApi={messageApi}
+              space={space}
+            ></TodoTogether>
+          ),
+          style: itemStyle,
+          styles: DEFAULT_COLLAPSE_HEADER_STYLES,
+        });
+      }
+
+      if (timer) {
+        items.push({
+          key: 'timer',
+          label: (
+            <div className={styles.flot_header}>
+              {t('more.app.timer.title')}
+              {showSyncIcon(isSelf, 'timer')}
+            </div>
+          ),
+          children: (
+            <AppTimer
+              size="small"
+              appData={timer.data}
+              setAppData={timer.setData}
+              auth={timer.auth}
+            ></AppTimer>
+          ),
+          style: itemStyle,
+          styles: DEFAULT_COLLAPSE_HEADER_STYLES,
+        });
+      }
+
+      if (countdown) {
+        items.push({
+          key: 'countdown',
+          label: (
+            <div className={styles.flot_header}>
+              {t('more.app.countdown.title')}
+              {showSyncIcon(isSelf, 'countdown')}
+            </div>
+          ),
+          children: (
+            <AppCountdown
+              messageApi={messageApi}
+              size="small"
+              appData={countdown.data}
+              setAppData={countdown.setData}
+              auth={countdown.auth}
+            />
+          ),
+          style: itemStyle,
+          styles: DEFAULT_COLLAPSE_HEADER_STYLES,
+        });
+      }
+
+      return items;
+    };
+
+    const app = useMemo(() => {
+      if (!spaceInfo) return <></>;
+
+      const participant = spaceInfo.participants[participantId];
+      let timer: TimerProp | undefined = undefined;
+      let countdown: CountdownProp | undefined = undefined;
+      let todo: TodoProp | undefined = undefined;
+
+      if (isSelf) {
+        if (apps.includes('timer')) {
+          timer = {
+            data: castTimer(appData.timer) || DEFAULT_TIMER,
+            setData: setSelfTimerData,
+            auth: 'write',
+          };
         }
-      });
-    }
+        if (apps.includes('countdown')) {
+          countdown = {
+            data: castCountdown(appData.countdown) || DEFAULT_COUNTDOWN,
+            setData: setSelfCountdownData,
+            auth: 'write',
+          };
+        }
 
-    return res;
-  }, [spaceInfo, selfItems, activeKeys]);
+        if (apps.includes('todo')) {
+          todo = {
+            data: sortTodos(appData.todo || []),
+            setData: setSelfTodoData,
+            auth: 'write',
+          };
+        }
+      } else {
+        let castedTimer = castTimer(participant.appDatas.timer);
+        let castedCountdown = castCountdown(participant.appDatas.countdown);
+        let castedTodo = sortTodos(participant.appDatas.todo || []);
+        let appAuth = participant.appAuth;
+        if (castedTimer) {
+          timer = {
+            data: castedTimer,
+            setData: async (data) => {
+              // update the timer data
+              await setRemoteTimerData(appAuth, participantId, data);
+            },
+            auth: appAuth,
+          };
+        }
+        if (castedCountdown) {
+          countdown = {
+            data: castedCountdown,
+            setData: async (data) => {
+              // update the countdown data
+            },
+            auth: appAuth,
+          };
+        }
+        todo = {
+          data: castedTodo || [],
+          setData: async (data) => {
+            // update the todo data
+            console.warn(data);
+          },
+          auth: appAuth,
+        };
+      }
+      const items = createItems(participantId, timer, countdown, todo, isSelf);
+      return (
+        <Collapse
+          bordered={false}
+          activeKey={activeKeys}
+          onChange={(keys) => {
+            setActiveKeys(keys as AppKey[]);
+          }}
+          expandIconPosition="start"
+          items={items}
+        />
+      );
+    }, [spaceInfo, participantId, activeKeys, isSelf, showExport]);
 
-  return <Tabs size="small" items={tabItems}></Tabs>;
-}
+    useImperativeHandle(ref, () => ({
+      clientHeight: containerRef.current?.clientHeight,
+    }));
+    // 暂时不使用tab，返回自己的即可
+    // return <Tabs style={{ width: 360 }} size="small" items={tabItems}></Tabs>;
+    return (
+      <div ref={containerRef} className={styles.flot_app_item}>
+        {app}
+      </div>
+    );
+  },
+);

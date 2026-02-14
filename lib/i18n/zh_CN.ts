@@ -1,5 +1,32 @@
 export default {
+  api: {
+    token: {
+      out_of_date: 'Token已过期，请重新获取',
+    },
+    room: {
+      error: {
+        full_and_wait: '所有房间已满员，请稍微等待',
+        not_exist: '房间不存在或已被删除',
+        invalid_identity_c_s: '无效的身份类型，用户只能是助理或顾客',
+      },
+    },
+  },
+  auth: {
+    createRoom: '创建房间',
+    manageRoom: '管理房间',
+    manageRole: '管理角色',
+    controlUser: '控制用户',
+    recording: '录制空间',
+    save: '保存修改',
+    saveFail: '保存失败，请稍后再试。',
+    saveSuccess: '保存成功',
+    viewRoom: '加入房间',
+  },
   common: {
+    full_screen: '全屏',
+    guest: {
+      not_allow: '很抱歉，当前空间不允许访客加入，请登陆',
+    },
     confirm: '确认',
     cancel: '取消',
     alert: '提示',
@@ -34,7 +61,10 @@ export default {
     chat: '聊天',
     chat_placeholder: '请输入消息',
     chat_drag_file_here: '将文件拖放到此处',
+    files: '文件',
+    upload: '上传',
     send: '发送',
+    sending: '发送中',
     send_file_or: '是否发送文件？',
     leave: '离开',
     share_screen: '共享屏幕',
@@ -48,12 +78,172 @@ export default {
     high_quality_desc:
       '开启后，视频，音频和屏幕分享将以固定的分辨率以及更高的质量传输，但可能会增加带宽使用和延迟。',
     socket_reconnect: '正在重新连接...',
+    create_own_space: '创建自己的 VoceSpace',
+    create_space: {
+      jump: '跳转到您的 VoceSpace?',
+      success: '创建空间成功',
+      error: {
+        unknown: '创建空间失败，请稍后再试或手动创建',
+        param: '缺少必要参数，创建空间失败',
+        exist: '空间已存在，请检查是否已经创建过或手动创建以访问',
+      },
+      ok: '跳转',
+      cancel: '取消',
+    },
+    start_sharing: '开始共享',
+    copy: {
+      success: '已复制到剪贴板',
+      error: '复制失败，请手动复制',
+    },
+  },
+
+  work: {
+    title: '工作模式设置',
+    start: '开始工作',
+    close: '结束工作',
+    desc: '开启工作模式后，系统会请求开启您的屏幕共享，应用工作设置并通过AI结合待办事项进行工作分析和记录，帮助您更好地进行工作管理。',
+    use_ai: '开启AI分析',
+    sync: '同步配置',
+    sync_desc: '作为管理员/主持人，您可以将以下设置同步给所有开启工作模式的成员。',
+    save: {
+      success: '工作模式设置保存成功',
+      error: '工作模式设置保存失败，请稍后再试。',
+    },
+    mode: {
+      start: {
+        success: '工作模式已开启',
+        error: '开启工作模式失败，请稍后再试。',
+      },
+      stop: {
+        success: '工作模式已关闭',
+        error: '关闭工作模式失败，请稍后再试。',
+      },
+    },
+  },
+  ai: {
+    cut: {
+      blur: {
+        title: '截图模糊度',
+        desc: '设置AI分析截图最终显示的模糊度，模糊度不会影响AI分析，只会应用在云端保存和他人查看时的截图效果。',
+      },
+      time: {
+        start: '开始时间',
+        duration: '持续时间(分钟)',
+      },
+      extraction: {
+        title: '提取精细度',
+        desc: '设置AI分析的提取精细度，精细度越高，提取的信息越详细，对于非专业场景或不需要过于详细信息的用户，可选择中等或简单精细度。',
+        easy: '简单',
+        medium: '中等',
+        max: '精细',
+      },
+      report: 'AI分析报告',
+      start: '开启分析',
+      stop: '停止分析',
+      title: 'AI分析设置',
+      empty: '开启AI分析后，系统将会定时截图并进行分析，帮助您总结空间内容生成报告。',
+      freq: '截图频率(分钟)',
+      freq_desc:
+        '设置AI分析的截图频率，默认为每5分钟截图一次进行分析。若长于5分钟则在5分钟时会进行第一次截图。',
+      ask_permission: '您的AI助手需要捕捉屏幕截图，请选择需要进行分析的窗口。',
+      choose: '选择屏幕',
+      not_now: '稍后再说',
+      ask_permission_title: '屏幕共享权限',
+      source_dep: 'AI 工作日志源数据',
+      source_dep_desc:
+        '选择用于AI分析的屏幕共享源数据。您可以选择共享整屏幕、工作待办、花费时间。选择合适的源数据有助于提高AI分析的准确性和相关性。',
+      share_screen: '共享屏幕',
+      share_todo: '待办事项',
+      share_time: '工作时间',
+      share_timeStatistic: '时间统计',
+      open: '开启AI分析服务',
+      freq_analysis: 'AI分析频率(分钟)',
+      myAnalysis: '我的AI分析报告',
+      error: {
+        res: '无法获取AI分析结果，请稍后再试。',
+        download: '无法下载Markdown报告，请稍后再试。',
+        reload: '无法更新AI分析结果，请稍后再试。',
+        start: '无法开启AI分析服务，请检查是否已开启屏幕共享权限。',
+      },
+      success: {
+        reload: 'AI分析结果已更新',
+        stop: '已停止AI分析服务',
+        start: 'AI分析服务已开启',
+      },
+      download: '下载Markdown报告',
+      download_content:
+        '正在为您整理报告内容，这个过程大约需要30秒，请耐心等待并不要关闭当前页面。',
+      reload: '更新报告',
+    },
+  },
+  reaction: {
+    title: '反应',
   },
   docker: {
     record: "录制为企业版专属功能，请联系han@privoce.com或微信Privoce购买"
   },
   recording: {
     title: '录制记录',
+    empty: '暂无录制记录',
+    fresh: '刷新',
+    search: {
+      success: '查找录制文件成功',
+      error: '查找录制文件为空，请检查房间名是否正确，房间内可能没有录制视频文件或已经删除',
+    },
+    try_s3: {
+      unavailible: 'S3服务未配置或环境变量未设置',
+      init: 'S3服务环境变量获取成功',
+      connected: '已连接到S3服务',
+      connect_error: '无法连接到S3服务，当前可能访问了本地服务，请检查配置或联系管理员',
+      connecting: '正在连接S3服务...',
+      enving: '获取环境变量中...',
+      unconnect: '无法连接到S3服务',
+    },
+    copy: {
+      title: '复制链接',
+      success: '下载链接已复制到剪贴板',
+      error: '复制链接失败，请手动复制',
+    },
+    get_download_link: {
+      success: '获取下载链接成功',
+      error: '获取下载链接失败，请稍后再试',
+    },
+    delete: {
+      title: '删除',
+      confirm: {
+        title: '确定删除',
+        content: ['确定要删除录制文件', '吗？此操作不可恢复。'],
+        ok: '删除',
+        cancel: '取消',
+      },
+      success: '删除成功',
+      error: '删除失败，请稍后再试',
+    },
+    download: {
+      title: '下载',
+      success: '下载链接获取成功，文件正在下载...',
+      error: '下载链接获取失败，请稍后重试或联系管理员进行下载',
+    },
+    table: {
+      file: '文件名',
+      opt: '操作',
+      size: '文件大小',
+      last_modified: '最后修改',
+      ty: '类型',
+      ty_json: '记录文件',
+      ty_video: '视频文件',
+    },
+    pagation: {
+      total: '共',
+      num: '条',
+      now: '第',
+    },
+  },
+  login: {
+    following: '使用以下方式登陆',
+    out: '退出登录',
+    anon: '匿名用户',
+    guest: '以访客身份加入',
   },
   channel: {
     menu: {
@@ -68,6 +258,8 @@ export default {
       rename: '重命名',
       switch_privacy: '设为',
       active: '在线',
+      share: '分享',
+      share_room: '分享房间',
     },
     join: {
       title: '加入房间',
@@ -137,8 +329,27 @@ export default {
   more: {
     title: '更多',
     channel: '频道',
+    platform: '个人主页',
+    ai: {
+      cut: 'AI分析',
+      desc: '定时截图并进行AI分析，帮助您总结空间内容生成报告',
+    },
     app: {
       title: '应用',
+      raise: {
+        cancel: '取消举手',
+        title: '举手',
+        receive: '发起了举手请求，请处理！',
+        handle: {
+          title: '处理请求',
+          accept: '允许',
+          accept_desc: '允许该用户发言，并通知其可以发言。',
+          reject: '拒绝',
+          reject_desc: '拒绝该用户发言，通知该用户并取消举手状态。',
+          rejected: '很抱歉，您的发言请求已被拒绝。',
+          accepted: '您已被允许发言，请开始您的发言。',
+        },
+      },
       upload: {
         to_space: '上传应用到空间',
         history: '上传历史',
@@ -188,13 +399,22 @@ export default {
         title: '待办事项',
         add: '添加待办',
         placeholder: '请输入待办事项',
-        empty: '暂无待办事项，在下方输入待办并点击添加按钮创建新的待办事项',
+        empty: '暂无待办事项，请在下方创建新的待办事项',
         create: '创建待办',
         empty_value: '待办事项不能为空',
         delete: '删除待办成功',
         undone: '未完成',
         done: '已完成',
-        unexport: "当前待办为空，无法导出"
+        unexport: '当前待办为空，无法导出',
+        complete: '已完成的事项',
+        together: {
+          title: '团队进度',
+          empty: '暂无用户的待办事项',
+        },
+        copy: '复制待办',
+        today_done: '今日已完成',
+        history: '待办事项',
+        today_empty: '今日暂无已完成的待办事项',
       },
     },
     record: {
@@ -215,12 +435,17 @@ export default {
       title: '成员',
       manage: '管理成员',
       search: '搜索成员',
-      manager: '主持人',
+      manager: '管理员',
+      host: '房主',
+      wave: '打招呼',
       invite: {
         title: '邀请成员',
         web: '浏览器中',
         add: '加入 VoceSpace 房间',
-        texts: ['邀请您加入 VoceSpace', '请 点击|复制 以下链接到', '请复制以下房间名称到'],
+        texts: [
+          '$user 邀请您加入[$space]的VoceSpace',
+          '请点击/复制以下链接到浏览器中加入[$space]的VoceSpace',
+        ],
         ok: '复制邀请',
         cancel: '取消',
         link: '链接',
@@ -245,6 +470,9 @@ export default {
         control: {
           title: '成员控制',
           trans: '转让房间主持人',
+          trans_manager: '转让管理员',
+          set_manager: '设置管理员',
+          remove_manager: '移除管理员',
           change_name: '修改名称',
           mute: {
             audio: '静音音频',
@@ -277,6 +505,40 @@ export default {
   },
   settings: {
     title: '设置',
+    auth: {
+      title: '权限',
+    },
+    ai: {
+      title: 'AI',
+      desc: '配置AI分析服务的相关参数，以启用AI分析功能。',
+      model: '模型名称(多模态模型)',
+      model_desc:
+        '选择用于AI分析的语言模型，模型名称需支持多模态输入（图像+文本），以便处理截图并生成分析报告。',
+      key: 'API密钥',
+      url: 'API地址',
+      recommand: [
+        '我们推荐使用以下多模态模型以获得更好的AI分析效果：',
+        '1. GPT-4V',
+        '2. Claude-3-vision',
+        '3. Gemini-Pro-Vision',
+        '4. Qwen3',
+        '5. 豆包(Doubao)',
+      ],
+      enabled: 'AI询问弹窗',
+      update: {
+        save: '保存AI配置',
+        success: 'AI配置更新成功',
+        error: 'AI配置更新失败，请稍后再试。',
+        incomplete: '请完整填写AI配置参数，确保模型名称，API地址和API密钥均已填写。',
+      },
+      precheck: {
+        desc: '要修改AI设置需要先输入host token进行验证，若您不知道host token，请联系软件部署者获取。',
+        placeholder: '请输入host token',
+        check: '验证',
+        error: '验证失败，请检查后重新输入。',
+        success: '验证成功，您现在可以修改AI设置。',
+      },
+    },
     general: {
       title: '常规',
       username: '用户名',
@@ -284,7 +546,7 @@ export default {
       share_audio: '共享音频',
       prompt_sound: '进入提示音',
       persistence: {
-        title: '持久化空间',
+        title: '持久化空间和用户历史数据',
         success: '设置当前空间持久化成功',
         error: '设置当前空间持久化失败',
       },
@@ -308,6 +570,14 @@ export default {
           hd: '超清',
           ultra: '极致',
         },
+        allow_guest: {
+          title: '访客权限',
+          allow: '无限制',
+          disable: '禁止访客加入',
+          link: '允许通过邀请链接加入私密房间',
+          success: '修改访客加入设置成功',
+          error: '设置当前空间访客加入失败',
+        },
       },
       status: {
         title: '状态',
@@ -319,6 +589,8 @@ export default {
         busy_desc: '忙碌中，用户的视频将进行模糊处理, 音频将静音',
         offline: '离开',
         offline_desc: '离开, 用户的视频和音频都将关闭',
+        working: '工作中',
+        working_desc: '依赖待办自动生成当前工作状态',
         define: {
           title: '自定义状态',
           name: '状态名称',
@@ -357,7 +629,8 @@ export default {
       buy: '购买证书',
       invalid: '证书无效或已过期，请检查证书是否正确。',
       invalid_domain: '当前域名不在证书允许的域名列表中，请联系管理员检查服务器域名配置是否正确。',
-      default_license: "为保证您的使用，当前系统已为您加载默认证书，默认证书仅支持5人以下的临时房间使用，若需要更多用户名额，请购买专业版证书。",
+      default_license:
+        '为保证您的使用，当前系统已为您加载默认证书，默认证书仅支持5人以下的临时房间使用，若需要更多用户名额，请购买专业版证书。',
       update_success: '证书更新成功',
       circle_ip:
         '当前您的IP地址为回环地址/私有地址，不建议您为此地址购买证书。请使用公网IP地址购买证书。若需要为私有地址购买证书并支持服务，请联系Wechat: Privoce。',
@@ -422,8 +695,17 @@ export default {
       remove_participant: '您已被房间主持人移除房间',
       req_record: '请求进行录制',
       recording: "房间在10s后将开启录制，若您不希望被录制，可点击'离开房间'按钮退出。",
+      file: {
+        upload_cancelled: '文件上传已取消',
+      },
     },
     error: {
+      client: {
+        title: '客户端错误',
+        sub: '客户端遇到错误，请检查控制台日志了解详细信息并联系管理员。',
+        back: '返回',
+        connect: '微信: Privoce',
+      },
       conf_load: '配置加载失败，请检查vocespace.conf.json文件是否存在',
       record: {
         copy: '录制链接复制失败',
@@ -456,6 +738,7 @@ export default {
         permission: '请求权限失败。',
       },
       user: {
+        manager_limit: '管理员数量已达上限，无法设置更多管理员。',
         username: {
           change: '用户名修改失败',
           request: '请求用户名失败',
@@ -465,6 +748,7 @@ export default {
       file: {
         upload: '文件上传失败',
         download: '文件下载失败',
+        too_large: '文件过大，最大支持:',
       },
     },
     request: {
@@ -529,7 +813,118 @@ export default {
           change: '用户名修改成功',
         },
         lang: '语言修改成功',
-        transfer: '您已成功被转让为房间主持人',
+        transfer: '您已成功被转让身份',
+        set_manager: '您你被设置为管理员身份',
+        remove_manager: '您的管理员身份已被移除',
+      },
+      file: {
+        upload: '文件上传成功',
+      },
+    },
+  },
+  dashboard: {
+    manage_spaces: '管理空间',
+    host_token_verify_failed: 'Host token 验证失败',
+    history_fetch_failed: '获取历史房间数据失败',
+    spaces_fetch_failed: '获取空间列表失败',
+    verify_or_load_failed: '验证或加载失败',
+    delete_success: '删除空间成功（已请求后端清理）',
+    delete_failed: '删除空间失败',
+    get_space_info_failed: '获取空间信息失败',
+    get_candidates_failed: '获取候选用户失败',
+    select_new_owner: '请选择新 owner',
+    change_owner_failed: '修改 owner 失败',
+    change_owner_success: '修改 owner 成功',
+    export_failed: '导出失败',
+    export_success: '导出成功',
+    confirm_delete_space: '确认删除该空间？',
+    yes: '是',
+    no: '否',
+    delete_space_button: '删除空间',
+    edit_owner_button: '修改空间owner',
+    export_space_button: '提取空间用户数据',
+    edit_owner_modal_title: '修改空间 Owner',
+    cancel: '取消',
+    save: '保存',
+    host_token_placeholder: 'Host Token',
+    verify_and_load: '验证并加载',
+    logout: '注销',
+    common: {
+      day: '日',
+      week: '周',
+      month: '月',
+      year: '年',
+      total: '总',
+      during: '时长',
+    },
+    conf: {
+      resolution: '配置全局画质',
+      verify: '验证',
+      close: '关闭',
+      create_space: '创建新空间',
+      create_space_option: {
+        all: '所有人',
+        white: '指定用户',
+        white_platform: '注册用户和指定用户',
+      },
+      create_space_desc: [
+        '选择一个策略允许创建新的 VoceSpace 空间',
+        '1. 所有人: 允许所有人创建空间',
+        '2. 指定用户：指定用户（通过用户名或者ID指定）能创建空间',
+        '3. 注册用户和指定用户：指定用户和所有平台注册用户能创建空间',
+      ],
+      white_list: '指定用户白名单',
+      add_white_list: '添加',
+      delete_white_list: '删除',
+      white_list_desc: [
+        '用户ID：输入平台用户ID，如57ca4825-cf35-4bc5-a0f9-3b85134005db',
+        'USER-John: 表示允许用户名为John的用户创建空间',
+      ],
+      white_list_exist: '白名单已存在',
+      white_list_not_exist: '白名单不存在',
+      placeholder: '请输入管理员令牌',
+      error: {
+        verify: '管理员令牌错误，请重试',
+        not_loaded: '配置未加载完成或无法获得配置，请稍后再试',
+        update: '配置更新失败，请稍后再试',
+      },
+      success: {
+        update: '配置已更新',
+      },
+    },
+    count: {
+      room: '房间数',
+      participant: '所有用户数',
+      online_participant: '在线用户数',
+      platform: '平台用户数',
+      opt: '操作',
+      refresh: '刷新数据',
+      global_conf: '配置画质(全局)',
+      allow_create_space: '创建空间策略',
+      history: {
+        title: '历史房间统计',
+        day: '日榜',
+        week: '周榜',
+        month: '月榜',
+        table: {
+          room: '房间名',
+          total: '总时长',
+          today: '今日使用时长',
+        },
+        empty: '暂无记录',
+      },
+    },
+    active: {
+      empty_room: '暂无活跃房间',
+      title: '当前活跃用户',
+      table: {
+        participant: '用户',
+        state: '状态',
+        volume: '音量',
+        blur: '视频模糊度',
+        screen_blur: '屏幕模糊度',
+        is_auth: '已认证',
+        during: '在线时长',
       },
     },
   },

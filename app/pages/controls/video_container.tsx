@@ -1,4 +1,4 @@
-import { getServerIp, is_web, isMobile, src, UserDefineStatus, UserStatus } from '@/lib/std';
+import { isMobile, src, UserDefineStatus, UserStatus } from '@/lib/std';
 import {
   CarouselLayout,
   ConnectionStateToast,
@@ -21,16 +21,19 @@ import {
   Participant,
   ParticipantEvent,
   ParticipantTrackPermission,
+  Room,
   RoomEvent,
   Track,
   TrackPublication,
 } from 'livekit-client';
 import React, {
   forwardRef,
+  useCallback,
   useEffect,
   useImperativeHandle,
   useLayoutEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react';
 import { ControlBarExport, Controls } from './bar';
@@ -43,35 +46,53 @@ import { useI18n } from '@/lib/i18n/i18n';
 import {
   chatMsgState,
   licenseState,
+  RemoteTargetApp,
   roomStatusState,
   socket,
   userState,
 } from '@/app/[spaceName]/PageClientImpl';
-import { useRouter } from 'next/navigation';
 import {
   ControlType,
   WsBase,
   WsControlParticipant,
   WsInviteDevice,
   WsParticipant,
+  WsSender,
   WsTo,
   WsWave,
 } from '@/lib/std/device';
 import { Button } from 'antd';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { Channel, ChannelExports } from './channel';
-import { AppKey, PARTICIPANT_SETTINGS_KEY } from '@/lib/std/space';
-import { FlotLayout } from '../apps/flot';
+import {
+  AICutParticipantConf,
+  AppAuth,
+  PARTICIPANT_SETTINGS_KEY,
+  SpaceTodo,
+  todayTimeStamp,
+} from '@/lib/std/space';
+import { FlotButton, FlotLayout, FlotLayoutExports } from '../apps/flot';
 import { api } from '@/lib/api';
-import { SingleFlotLayout } from '../apps/single_flot';
 import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
-import { VocespaceConfig } from '@/lib/std/conf';
+import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
+import { acceptRaise, RaiseHandler, rejectRaise } from './widgets/raise';
+import { audio } from '@/lib/audio';
+import { AICutService } from '@/lib/ai/cut';
+import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES, Extraction } from '@/lib/ai/analysis';
+import {
+  convertPlatformToACARes,
+  PlarformAICutAnalysis,
+  platformAPI,
+  PlatformTodos,
+} from '@/lib/api/platform';
+import { useFullScreenBtn } from './widgets/full_screen';
+import { exportRBAC, usePlatformUserInfo, usePlatformUserInfoCheap } from '@/lib/hooks/platform';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
   noteApi: NotificationInstance;
   setPermissionDevice: (device: Track.Source) => void;
-  config: VocespaceConfig;
+  config: ReadableConf;
 }
 
 export interface VideoContainerExports {
@@ -94,8 +115,10 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     ref,
   ) => {
     const space = useMaybeRoomContext();
+    const FlotLayoutRef = useRef<FlotLayoutExports>(null);
     const [init, setInit] = useState(true);
-    const { t } = useI18n();
+    const { t, locale } = useI18n();
+    const { setIsFullScreen, isFullScreen } = useFullScreenBtn();
     const [uState, setUState] = useRecoilState(userState);
     const [collapsed, setCollapsed] = useState(isMobile());
     const [uLicenseState, setULicenseState] = useRecoilState(licenseState);
@@ -108,21 +131,234 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
     const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
     const channelRef = React.useRef<ChannelExports>(null);
-    const router = useRouter();
-    const { settings, updateSettings, fetchSettings, clearSettings, updateOwnerId, updateRecord } =
-      useSpaceInfo(
-        space?.name || '', // 房间 ID
-        space?.localParticipant?.identity || '', // 参与者 ID
-      );
+    const [remoteApp, setRemoteApp] = useRecoilState(RemoteTargetApp);
+    const {
+      settings,
+      updateSettings,
+      fetchSettings,
+      clearSettings,
+      transOrSetOwnerManager,
+      updateRecord,
+    } = useSpaceInfo(
+      space?.name || '', // 房间 ID
+      space?.localParticipant?.identity || '', // 参与者 ID
+    );
+    console.warn(settings);
+    const { fromVocespace, platUser, roomEnter, showAI } = usePlatformUserInfo({
+      space,
+      uid: space?.localParticipant.identity,
+      onEnterRoom: () => {
+        socket.emit('update_user_status', {
+          space: space!.name,
+        } as WsBase);
+      },
+    });
+    const showSideChannel = useMemo(() => {
+      if (!space) return false;
+      return exportRBAC(space?.localParticipant.identity, settings).viewRoom;
+    }, [space, settings]);
     const [openApp, setOpenApp] = useState<boolean>(false);
-    const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
-    const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
+    // const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
+    // const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
     const isActive = true;
+    const aiCutServiceRef = React.useRef<AICutService>(new AICutService());
+    const [noteStateForAICutService, setNoteStateForAICutService] = useState({
+      openAIService: false,
+      noteClosed: false,
+      hasAsked: !settings?.ai?.cut?.enabled || false, // 如果设置中enabled为true表示需要询问，否则不需要询问
+    });
+    const [aiCutAnalysisRes, setAICutAnalysisRes] = useState<AICutAnalysisRes>(
+      DEFAULT_AI_CUT_ANALYSIS_RES,
+    );
+    const aiCutAnalysisIntervalId = useRef<NodeJS.Timeout | null>(null);
+    const showFlotApp = (id?: string, participantName?: string, auth?: AppAuth) => {
+      setRemoteApp({
+        participantId: id,
+        participantName,
+        auth: auth || 'read',
+      });
 
-    const showSingleFlotApp = (appKey: AppKey) => {
-      setTargetAppKey(appKey);
-      setOpenSingleApp(!openSingleApp);
+      setOpenApp(!openApp);
     };
+    const reloadResult = async () => {
+      const response = await api.ai.getAnalysisRes(
+        space!.name,
+        space!.localParticipant.identity,
+        usePlatformUserInfoCheap({ user: settings.participants[space?.localParticipant.identity!] })
+          .isAuth,
+      );
+      if (response.ok) {
+        const { res }: { res: AICutAnalysisRes } = await response.json();
+        setAICutAnalysisRes(res);
+        messageApi.success(t('ai.cut.success.reload'));
+      } else {
+        messageApi.error(t('ai.cut.error.reload'));
+      }
+    };
+    const stopAICutService = async (space: Room) => {
+      aiCutServiceRef.current.stop();
+      aiCutServiceRef.current.clearScreenshots();
+      if (aiCutAnalysisIntervalId.current) {
+        clearInterval(aiCutAnalysisIntervalId.current);
+        aiCutAnalysisIntervalId.current = null;
+      }
+      const response = await api.ai.stop(space.name, space.localParticipant.identity);
+      if (response.ok) {
+        // messageApi.success(t('ai.cut.success.stop'));
+      }
+    };
+    // 开启或关闭AI截屏服务 --------------------------------------------------------
+    const startOrStopAICutAnalysis = useCallback(
+      async (freq: number, conf: AICutParticipantConf, reload?: boolean) => {
+        if (!space || !space.localParticipant) return;
+        if (conf.enabled) {
+          await aiCutServiceRef.current.start(
+            freq,
+            conf.spent,
+            space.localParticipant,
+            reload,
+            async (lastScreenShot) => {
+              if (space && space.localParticipant) {
+                let todos: string[] = [];
+                if (conf.todo) {
+                  todos =
+                    uState.appDatas.todo
+                      ?.map((todo) => todo.items.filter((item) => !item.done))
+                      .flat()
+                      .map((item) => item.title) || [];
+                }
+
+                const response = await api.ai.analysis({
+                  spaceName: space.name,
+                  userId: space.localParticipant.identity,
+                  screenShot: lastScreenShot,
+                  todos,
+                  freq: freq,
+                  lang: locale,
+                  extraction: conf.extraction,
+                  isAuth: usePlatformUserInfoCheap({ user: uState }).isAuth,
+                  blur: conf.blur,
+                });
+
+                if (!response.ok) {
+                  messageApi.warning(t('ai.cut.error.start'));
+                  // 停止AI截屏服务
+                  stopAICutService(space);
+                  await updateSettings({
+                    ai: {
+                      cut: {
+                        ...conf,
+                        enabled: false,
+                      },
+                    },
+                  });
+                  socket.emit('update_user_status', {
+                    space: space.name,
+                  } as WsBase);
+                  return;
+                }
+              }
+            },
+            () => {
+              messageApi.success(t('ai.cut.success.start'));
+            },
+            (e) => {
+              console.error('Failed to start AI Cut Service:', e);
+              messageApi.warning(t('ai.cut.error.start'));
+            },
+          );
+          // 如果已有定时器，先清除，避免重复创建多个定时器
+          if (aiCutAnalysisIntervalId.current) {
+            try {
+              clearInterval(aiCutAnalysisIntervalId.current as unknown as number);
+            } catch (e) {
+              // ignore
+            }
+            aiCutAnalysisIntervalId.current = null;
+          }
+
+          aiCutAnalysisIntervalId.current = setInterval(
+            async () => {
+              await reloadResult();
+            },
+            (freq + 2) * 60 * 1000,
+          ); //增加2分钟的缓冲时间
+        } else {
+          // 停止截图服务并停止AI分析
+          stopAICutService(space);
+        }
+
+        await updateSettings({
+          ai: {
+            cut: { ...conf },
+          },
+        });
+        socket.emit('update_user_status', {
+          space: space.name,
+        } as WsBase);
+      },
+      [space, settings, uState, t, updateSettings, aiCutAnalysisIntervalId, locale],
+    );
+
+    const openAIServiceAskNote = () => {
+      // 提示用户开启屏幕共享权限, 关闭后判断开启还是关闭AI服务
+      noteApi.open({
+        message: t('ai.cut.ask_permission_title'),
+        description: t('ai.cut.ask_permission'),
+        duration: 10,
+        onClose: async () => {
+          // 用户关闭弹窗或超时关闭，默认不开启AI服务
+          setNoteStateForAICutService({
+            openAIService: false,
+            noteClosed: true,
+            hasAsked: true,
+          });
+        },
+        actions: (
+          <div style={{ display: 'inline-flex', gap: 16 }}>
+            <Button
+              type="primary"
+              onClick={() => {
+                // 用户选择开启屏幕共享和AI服务
+                space?.localParticipant.setScreenShareEnabled(true);
+                setNoteStateForAICutService({
+                  hasAsked: true,
+                  openAIService: true,
+                  noteClosed: true,
+                });
+                noteApi.destroy();
+              }}
+            >
+              {t('common.start_sharing')}
+            </Button>
+          </div>
+        ),
+      });
+    };
+
+    // 监控AI截屏服务状态 --------------------------------------------------------
+    // 用户需要确保至少开启屏幕共享，如果关闭则需要提示用户，如果用户确定关闭则要停止AI截屏服务
+    // 手机无需AI分享分析提示
+    useEffect(() => {
+      // 完成初始化并没有询问过用户时显示弹窗并询问
+      if (!settings) return;
+      if (
+        !init &&
+        (settings.ai.cut.enabled === undefined ? !noteStateForAICutService.hasAsked : false) &&
+        !isMobile()
+      ) {
+        openAIServiceAskNote();
+      }
+    }, [init, noteStateForAICutService.hasAsked, settings]);
+
+    useEffect(() => {
+      if (noteStateForAICutService.noteClosed) {
+        startOrStopAICutAnalysis(settings.ai.cut.freq, {
+          ...uState.ai.cut,
+          enabled: noteStateForAICutService.openAIService,
+        });
+      }
+    }, [noteStateForAICutService.noteClosed, noteStateForAICutService.openAIService]);
 
     useEffect(() => {
       if (!space) return;
@@ -147,34 +383,61 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         setInit(true);
       });
 
+      // 从平台端获取数据 ai总结/todos ---------------------------------------------------------------
+      const fetchPlatformData = async (isAuth: boolean) => {
+        // todos ----
+        let identity = space.localParticipant.identity;
+        if (isAuth) {
+          const aiResponse = await platformAPI.ai.getAIAnalysis(identity, todayTimeStamp());
+          const response = await platformAPI.todo.getTodos(identity);
+          if (aiResponse.ok) {
+            const { data }: { data: PlarformAICutAnalysis } = await aiResponse.json();
+            setAICutAnalysisRes(convertPlatformToACARes(data));
+          } else {
+            setAICutAnalysisRes(DEFAULT_AI_CUT_ANALYSIS_RES);
+          }
+
+          if (response.ok) {
+            const { todos }: { todos: PlatformTodos[] } = await response.json();
+            const items: SpaceTodo[] = todos.map((todo) => {
+              return {
+                items: todo.items,
+                date: Number(todo.date),
+              };
+            });
+
+            // 更新本地数据
+            return items;
+          }
+        }
+
+        return [];
+      };
+
       const syncSettings = async () => {
+        const todos = await fetchPlatformData(fromVocespace);
         // 将当前参与者的基础设置发送到服务器 ----------------------------------------------------------
-        await updateSettings({
-          ...uState,
-          socketId: socket.id,
-          name: space.localParticipant.name || space.localParticipant.identity,
-          startAt: new Date().getTime(),
-        });
-        console.warn(uState);
-        // const roomName = `${space.localParticipant.name}'s room`;
-
-        // 为新加入的参与者创建一个自己的私人房间
-        // if (!settings.children.some((child) => child.name === roomName)) {
-        //   const response = await api.createRoom({
-        //     spaceName: space.name,
-        //     roomName,
-        //     ownerId: space.localParticipant.identity,
-        //     isPrivate: true,
-        //   });
-
-        //   if (!response.ok) {
-        //     messageApi.error({
-        //       content: t('channel.create.error'),
-        //     });
-        //   } else {
-        //     await fetchSettings();
-        //   }
-        // }
+        await updateSettings(
+          {
+            ...uState,
+            socketId: socket.id,
+            name: space.localParticipant.name || space.localParticipant.identity,
+            startAt: new Date().getTime(),
+            online: true,
+            ...(todos ? { appDatas: { ...uState.appDatas, todo: todos } } : uState.appDatas),
+            auth: platUser
+              ? {
+                  platform: platUser.auth,
+                  identity: platUser.identity,
+                }
+              : undefined,
+          },
+          undefined,
+          true,
+        );
+        // 如果是platform用户，有可能是需要直接进入某个子房间的 ------------------------------------------
+        // 详细见usePlatformUserInfo中对于roomEnter的处理
+        await roomEnter();
       };
 
       // 获取历史聊天记录 ---------------------------------------------------------------------------
@@ -218,6 +481,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       };
 
       if (init) {
+        // 重置AI截图询问状态，允许在新会话中重新询问
+        setNoteStateForAICutService({
+          openAIService: false,
+          noteClosed: false,
+          hasAsked: false,
+        });
+
         // 获取历史聊天记录
         validLicense().then(() => {
           fetchChatMsg();
@@ -242,7 +512,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       // 监听服务器的提醒事件的响应 -------------------------------------------------------------------
       socket.on('wave_response', (msg: WsWave) => {
         if (msg.receiverId === space.localParticipant.identity && msg.space === space.name) {
-          console.warn(msg);
           waveAudioRef.current?.play();
           let actions = undefined;
           if (msg.childRoom || msg.inSpace) {
@@ -269,6 +538,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           noteApi.info({
             message: `${msg.senderName} ${t('common.wave_msg')}`,
             actions,
+            duration: 10,
           });
         }
       });
@@ -435,13 +705,42 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               break;
             }
             case ControlType.Transfer: {
-              const success = await updateOwnerId(space.localParticipant.identity);
+              const success = await transOrSetOwnerManager(
+                msg.senderId,
+                space.localParticipant.identity,
+                true,
+              );
               if (success) {
+                // 更新视图
+                layoutContext.pin.dispatch?.({ msg: 'clear_pin' });
                 messageApi.success(t('msg.success.user.transfer'));
               }
               socket.emit('update_user_status', {
                 space: space.name,
               } as WsBase);
+              break;
+            }
+            case ControlType.setManager: {
+              if (settings.managers.length < 5) {
+                const { success, isRemove } = await transOrSetOwnerManager(
+                  msg.senderId,
+                  space.localParticipant.identity,
+                  false,
+                );
+                if (success) {
+                  layoutContext.pin.dispatch?.({ msg: 'clear_pin' });
+                  if (isRemove) {
+                    messageApi.success(t('msg.success.user.remove_manager'));
+                  } else {
+                    messageApi.success(t('msg.success.user.set_manager'));
+                  }
+                }
+                socket.emit('update_user_status', {
+                  space: space.name,
+                } as WsBase);
+              } else {
+                messageApi.error(t('msg.error.user.manager_limit'));
+              }
               break;
             }
             case ControlType.Volume: {
@@ -528,6 +827,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       socket.on('chat_msg_response', (msg: ChatMsgItem) => {
         if (msg.roomName === space.name) {
           setChatMsg((prev) => {
+            if (controlsRef.current && controlsRef.current.isChatOpen) {
+              return {
+                unhandled: 0,
+                msgs: [...prev.msgs, msg],
+              };
+            }
+
             return {
               unhandled: prev.unhandled + 1,
               msgs: [...prev.msgs, msg],
@@ -537,12 +843,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       });
 
       socket.on('chat_file_response', (msg: ChatMsgItem) => {
+        console.warn(msg);
         if (msg.roomName === space.name) {
           setChatMsg((prev) => {
             // 使用函数式更新来获取最新的 messages 状态
             const existingFile = prev.msgs.find((m) => m.id === msg.id);
             if (!existingFile) {
-              let isOthers = msg.id !== space.localParticipant.identity;
+              let isOthers = msg.sender.id !== space.localParticipant.identity;
               return {
                 unhandled: prev.unhandled + (isOthers ? 1 : 0),
                 msgs: [...prev.msgs, msg],
@@ -559,6 +866,67 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         // 在localstorage中添加一个reload标记，这样退出之后如果有这个标记就可以自动重载
         localStorage.setItem('reload', space.name);
         space.disconnect(true);
+      });
+
+      // raise hand socket event ----------------------------------------------
+      socket.on('raise_response', async (msg: WsSender) => {
+        if (msg.space === space.name) {
+          if (
+            space.localParticipant.identity === settings.ownerId &&
+            msg.senderId !== space.localParticipant.identity
+          ) {
+            await audio.raise();
+
+            const wsTo: WsTo = {
+              space: space.name,
+              senderId: space.localParticipant.identity,
+              senderName: space.localParticipant.name || space.localParticipant.identity,
+              receiverId: msg.senderId,
+              socketId: msg.senderSocketId!, // 这里一定是有这个senderSocketId的
+            };
+
+            noteApi?.info({
+              message: `${msg.senderName} ${t('more.app.raise.receive')}`,
+              duration: 5,
+              actions: (
+                <RaiseHandler
+                  onAccept={() => acceptRaise(wsTo)}
+                  onReject={() => rejectRaise(wsTo)}
+                />
+              ),
+            });
+          }
+        }
+      });
+
+      const raiseHandle = async (msg: WsTo, isReject: boolean) => {
+        if (msg.space === space.name && msg.receiverId === space.localParticipant.identity) {
+          let msg = t('more.app.raise.handle.accepted');
+          if (isReject) msg = t('more.app.raise.handle.rejected');
+          messageApi.warning(msg);
+
+          await updateSettings({
+            raiseHand: false,
+          });
+
+          socket.emit('update_user_status', {
+            space: space.name,
+          } as WsBase);
+        }
+      };
+
+      // cancel raise hand socket event ----------------------------------------------
+      socket.on('raise_cancel_response', async (msg: WsTo) => {
+        await raiseHandle(msg, true);
+      });
+
+      // accept raise hand socket event ----------------------------------------------
+      socket.on('raise_accept_response', async (msg: WsTo) => {
+        await raiseHandle(msg, false);
+        // 为用户打开麦克风
+        if (!space.localParticipant.isMicrophoneEnabled) {
+          await space.localParticipant.setMicrophoneEnabled(true);
+        }
       });
 
       return () => {
@@ -578,6 +946,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         socket.off('re_init_response');
         socket.off('connect');
         socket.off('reload_env_response');
+        socket.off('raise_response');
+        socket.off('raise_cancel_response');
+        socket.off('raise_accept_response');
         space.off(RoomEvent.ParticipantConnected, onParticipantConnected);
         space.off(ParticipantEvent.TrackMuted, onTrackHandler);
         space.off(RoomEvent.ParticipantDisconnected, onParticipantDisConnected);
@@ -588,14 +959,16 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       uState,
       init,
       uLicenseState,
-
       chatMsg,
       socket,
       config,
+      controlsRef,
+      locale,
+      platUser,
     ]);
 
     const selfRoom = useMemo(() => {
-      if (!space || space.state !== ConnectionState.Connected) return;
+      if (!space || space.state !== ConnectionState.Connected || !settings || !settings.children) return;
 
       let selfRoom = settings.children.find((child) => {
         return child.participants.includes(space.localParticipant.identity);
@@ -617,12 +990,11 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         };
       }
       return selfRoom;
-    }, [settings.children, space]);
+    }, [settings, space]);
 
     useLayoutEffect(() => {
       if (!settings || !space || space.state !== ConnectionState.Connected) return;
       if (!freshPermission) return;
-      console.warn('freshPermission', freshPermission);
       // 发送一次fetchSettings请求，确保settings是最新的
       fetchSettings();
     }, [settings, space, freshPermission]);
@@ -697,17 +1069,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           return newState;
         });
       }
-      // 同步settings中的房间的状态到uRoomStatusState中 ----------------------------------------
-      if (settings.status && settings.status.length > 0) {
-        setURoomStatusState((prev) => {
-          const newState = [...prev];
-          if (prev !== settings!.status!) {
-            return settings!.status!;
-          }
-          return newState;
-        });
-      }
-    }, [space, settings, uRoomStatusState]);
+    }, [space, settings]);
 
     const [widgetState, setWidgetState] = React.useState<WidgetState>({
       showChat: false,
@@ -791,9 +1153,25 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       tracks,
     ]);
 
-    const toSettingGeneral = () => {
-      controlsRef.current?.openSettings('general');
+    const toSettingGeneral = (isDefineStatus?: boolean) => {
+      controlsRef.current?.openSettings('general', isDefineStatus);
     };
+    // [room update handler] --------------------------------------------------------------------------------------
+    const handleUpdateRoom = async () => {
+      await fetchSettings();
+      // 需要更新用户视图Layout，因为发现在focus layout下切换房间会导致视图没有更新，依然看到上一个房间的视图
+      if (focusTrack) {
+        layoutContext.pin.dispatch?.({ msg: 'clear_pin' });
+      }
+
+      // 通知其他参与者更新用户状态
+      if (space) {
+        socket.emit('update_user_status', {
+          space: space.name,
+        } as WsBase);
+      }
+    };
+
     // [user status] ------------------------------------------------------------------------------------------
     const setUserStatus = async (status: UserStatus | string) => {
       let newStatus = {
@@ -859,47 +1237,86 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       return !isMobile() ? true : collapsed;
     }, [collapsed]);
 
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // 如果拖拽的文件数量大于0，则表示是文件拖拽，如果文件拖拽就需要让<Controls />组件开启聊天的Drawer
+      if (e.dataTransfer.files.length > 0) {
+        if (controlsRef.current) {
+          controlsRef.current.setChatOpen(true);
+        }
+      }
+    };
+    const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (controlsRef.current) {
+        controlsRef.current.setChatOpen(true);
+      }
+    };
+
+    const mainViewWidth = useMemo(() => {
+      return !showSideChannel
+        ? '100vw'
+        : collapsed
+          ? isActive
+            ? 'calc(100vw - 28px)'
+            : '100vw'
+          : 'calc(100vw - 280px)';
+    }, [collapsed, showSideChannel, isActive]);
+
     useImperativeHandle(ref, () => ({
       clearRoom: () => clearRoom(),
     }));
 
     return (
-      <div className="video_container_wrapper" style={{ position: 'relative' }}>
+      <div
+        className="video_container_wrapper"
+        style={{ position: 'relative' }}
+        onDragEnter={handleDrag}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
         {/* 右侧应用浮窗，悬浮态 */}
-        {/* {showFlot && space && settings && (
-          <FlotLayout
-            space={space.name}
+        {showFlot && space && settings.participants[space.localParticipant.identity] && (
+          <FlotButton
+            openApp={openApp}
+            setOpenApp={setOpenApp}
             style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
+          ></FlotButton>
+        )}
+        {showFlot && space && settings.participants[space.localParticipant.identity] && (
+          <FlotLayout
+            showAI={showAI}
+            ref={FlotLayoutRef}
+            space={space.name}
             messageApi={messageApi}
             openApp={openApp}
             spaceInfo={settings}
+            setOpenApp={setOpenApp}
+            showAICutAnalysisSettings={controlsRef.current?.showAICutAnalysisSettings}
+            reloadResult={reloadResult}
+            aiCutAnalysisRes={aiCutAnalysisRes}
+            startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+            openAIServiceAskNote={openAIServiceAskNote}
+            cutInstance={aiCutServiceRef.current}
+            updateSettings={updateSettings}
           ></FlotLayout>
-        )} */}
-        {/* 右侧单应用浮窗，悬浮态，用于当用户点击自己视图头上角图标进行显示 */}
-        {/* {space && (
-          <SingleFlotLayout
-            space={space.name}
-            style={{ position: 'absolute', top: '100px', right: '0px', zIndex: 1001 }}
-            messageApi={messageApi}
-            openApp={openSingleApp}
-            setOpen={setOpenSingleApp}
-            spaceInfo={settings}
-            appKey={targetAppKey}
-          ></SingleFlotLayout>
-        )} */}
+        )}
         {/* 左侧侧边栏 */}
-        {/* {space && (
+        {space && showSideChannel && (
           <Channel
             ref={channelRef}
+            config={config}
             space={space}
             localParticipantId={space.localParticipant.identity}
             settings={settings}
-            onUpdate={async () => {
-              await fetchSettings();
-              socket.emit('update_user_status', {
-                space: space.name,
-              } as WsBase);
-            }}
+            onUpdate={handleUpdateRoom}
             tracks={originTracks}
             collapsed={collapsed}
             setCollapsed={setCollapsed}
@@ -908,7 +1325,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             updateSettings={updateSettings}
             toRenameSettings={toSettingGeneral}
             setUserStatus={setUserStatus}
-            showSingleFlotApp={showSingleFlotApp}
+            showFlotApp={showFlotApp}
+            isFullScreen={isFullScreen}
+            setIsFullScreen={setIsFullScreen}
           ></Channel>
         )} */}
         {/* 主视口 */}
@@ -918,17 +1337,19 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           style={{
             height: '100vh',
             transition: 'width 0.3s ease-in-out',
-            // width: collapsed ? (isActive ? 'calc(100vw - 28px)' : '100vw') : 'calc(100vw - 280px)',
-            width: '100vw'
+            width: mainViewWidth,
           }}
         >
-          {is_web() && space && (
+          {space && (
             <LayoutContextProvider
               value={layoutContext}
               // onPinChange={handleFocusStateChange}
               onWidgetChange={widgetUpdate}
             >
-              <div className="lk-video-conference-inner" style={{ alignItems: 'space-between' }}>
+              <div
+                className="lk-video-conference-inner"
+                style={{ alignItems: 'space-between', height: '100dvh' }}
+              >
                 {!focusTrack ? (
                   <div className="lk-grid-layout-wrapper">
                     <GridLayout tracks={tracks}>
@@ -937,46 +1358,78 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                         settings={settings}
                         toSettings={toSettingGeneral}
                         messageApi={messageApi}
+                        noteApi={noteApi}
                         setUserStatus={setUserStatus}
                         updateSettings={updateSettings}
                         toRenameSettings={toSettingGeneral}
-                        showSingleFlotApp={showSingleFlotApp}
+                        showFlotApp={showFlotApp}
                         selfRoom={selfRoom}
+                        setIsFullScreen={setIsFullScreen}
+                        isFullScreen={isFullScreen}
+                        setCollapsed={setCollapsed}
                       ></ParticipantItem>
                     </GridLayout>
                   </div>
                 ) : (
                   <div className="lk-focus-layout-wrapper">
-                    <FocusLayoutContainer>
-                      <CarouselLayout tracks={carouselTracks}>
-                        <ParticipantItem
-                          space={space}
-                          settings={settings}
-                          toSettings={toSettingGeneral}
-                          messageApi={messageApi}
-                          setUserStatus={setUserStatus}
-                          updateSettings={updateSettings}
-                          toRenameSettings={toSettingGeneral}
-                          showSingleFlotApp={showSingleFlotApp}
-                          selfRoom={selfRoom}
-                        ></ParticipantItem>
-                      </CarouselLayout>
-                      {focusTrack && (
-                        <ParticipantItem
-                          space={space}
-                          setUserStatus={setUserStatus}
-                          settings={settings}
-                          toSettings={toSettingGeneral}
-                          trackRef={focusTrack}
-                          messageApi={messageApi}
-                          isFocus={isFocus}
-                          updateSettings={updateSettings}
-                          toRenameSettings={toSettingGeneral}
-                          showSingleFlotApp={showSingleFlotApp}
-                          selfRoom={selfRoom}
-                        ></ParticipantItem>
-                      )}
-                    </FocusLayoutContainer>
+                    {isFullScreen ? (
+                      <ParticipantItem
+                        space={space}
+                        setUserStatus={setUserStatus}
+                        settings={settings}
+                        toSettings={toSettingGeneral}
+                        trackRef={focusTrack}
+                        messageApi={messageApi}
+                        noteApi={noteApi}
+                        isFocus={isFocus}
+                        updateSettings={updateSettings}
+                        toRenameSettings={toSettingGeneral}
+                        showFlotApp={showFlotApp}
+                        selfRoom={selfRoom}
+                        isFullScreen={isFullScreen}
+                        setIsFullScreen={setIsFullScreen}
+                        setCollapsed={setCollapsed}
+                      ></ParticipantItem>
+                    ) : (
+                      <FocusLayoutContainer>
+                        <CarouselLayout tracks={carouselTracks}>
+                          <ParticipantItem
+                            space={space}
+                            settings={settings}
+                            toSettings={toSettingGeneral}
+                            messageApi={messageApi}
+                            noteApi={noteApi}
+                            setUserStatus={setUserStatus}
+                            updateSettings={updateSettings}
+                            toRenameSettings={toSettingGeneral}
+                            showFlotApp={showFlotApp}
+                            selfRoom={selfRoom}
+                            isFullScreen={isFullScreen}
+                            setIsFullScreen={setIsFullScreen}
+                            setCollapsed={setCollapsed}
+                          ></ParticipantItem>
+                        </CarouselLayout>
+                        {focusTrack && (
+                          <ParticipantItem
+                            space={space}
+                            setUserStatus={setUserStatus}
+                            settings={settings}
+                            toSettings={toSettingGeneral}
+                            trackRef={focusTrack}
+                            messageApi={messageApi}
+                            noteApi={noteApi}
+                            isFocus={isFocus}
+                            updateSettings={updateSettings}
+                            toRenameSettings={toSettingGeneral}
+                            showFlotApp={showFlotApp}
+                            selfRoom={selfRoom}
+                            isFullScreen={isFullScreen}
+                            setIsFullScreen={setIsFullScreen}
+                            setCollapsed={setCollapsed}
+                          ></ParticipantItem>
+                        )}
+                      </FocusLayoutContainer>
+                    )}
                   </div>
                 )}
                 <Controls
@@ -991,8 +1444,11 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   collapsed={collapsed}
                   setCollapsed={setCollapsed}
                   openApp={openApp}
-                  toRenameSettings={toSettingGeneral}
                   setOpenApp={setOpenApp}
+                  toRenameSettings={toSettingGeneral}
+                  startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+                  openAIServiceAskNote={openAIServiceAskNote}
+                  downloadAIMdReport={FlotLayoutRef.current?.downloadAIMdReport}
                 ></Controls>
               </div>
               {SettingsComponent && (
@@ -1027,34 +1483,63 @@ export function isEqualTrackRef(
   a?: TrackReferenceOrPlaceholder,
   b?: TrackReferenceOrPlaceholder,
 ): boolean {
-  if (a === undefined || b === undefined) {
+  try {
+    if (a === undefined || b === undefined) {
+      return false;
+    }
+
+    if (isTrackReference(a) && isTrackReference(b)) {
+      // publication may be undefined in some edge cases
+      return (a.publication?.trackSid ?? '') === (b.publication?.trackSid ?? '');
+    }
+
+    const ida = getTrackReferenceIdSafe(a);
+    const idb = getTrackReferenceIdSafe(b);
+    if (!ida || !idb) return false;
+    return ida === idb;
+  } catch (e) {
+    console.warn('isEqualTrackRef error', e);
     return false;
-  }
-  if (isTrackReference(a) && isTrackReference(b)) {
-    return a.publication.trackSid === b.publication.trackSid;
-  } else {
-    return getTrackReferenceId(a) === getTrackReferenceId(b);
   }
 }
 
-export function getTrackReferenceId(trackReference: TrackReferenceOrPlaceholder | number) {
-  if (typeof trackReference === 'string' || typeof trackReference === 'number') {
-    return `${trackReference}`;
-  } else if (isTrackReferencePlaceholder(trackReference)) {
-    return `${trackReference.participant.identity}_${trackReference.source}_placeholder`;
-  } else if (isTrackReference(trackReference)) {
-    return `${trackReference.participant.identity}_${trackReference.publication.source}_${trackReference.publication.trackSid}`;
-  } else {
-    throw new Error(`Can't generate a id for the given track reference: ${trackReference}`);
+export function getTrackReferenceIdSafe(
+  trackReference?: TrackReferenceOrPlaceholder | number,
+): string | undefined {
+  if (trackReference === undefined || trackReference === null) return undefined;
+  try {
+    if (typeof trackReference === 'string' || typeof trackReference === 'number') {
+      return `${trackReference}`;
+    }
+
+    if (isTrackReferencePlaceholder(trackReference)) {
+      return `${trackReference.participant.identity}_${trackReference.source}_placeholder`;
+    }
+
+    if (isTrackReference(trackReference)) {
+      const pid = trackReference.participant?.identity;
+      const src = trackReference.publication?.source;
+      const sid = trackReference.publication?.trackSid;
+      if (!pid || !src || !sid) return undefined;
+      return `${pid}_${src}_${sid}`;
+    }
+  } catch (e) {
+    console.warn('getTrackReferenceIdSafe error', e);
+    return undefined;
   }
+
+  return undefined;
+}
+
+// Deprecated: compatibility wrapper for older callers
+export function getTrackReferenceId(trackReference: TrackReferenceOrPlaceholder | number) {
+  return getTrackReferenceIdSafe(trackReference) || `${trackReference}`;
 }
 
 export function isTrackReferencePlaceholder(
   trackReference?: TrackReferenceOrPlaceholder,
 ): trackReference is TrackReferencePlaceholder {
-  if (!trackReference) {
-    return false;
-  }
+  if (!trackReference) return false;
   return (
     trackReference.hasOwnProperty('participant') &&
     trackReference.hasOwnProperty('source') &&

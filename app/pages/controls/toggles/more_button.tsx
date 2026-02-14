@@ -4,8 +4,14 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { useMemo, useState } from 'react';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
 import { ViewAdjusts } from '@/lib/std/window';
+import { exportRBAC, usePlatformUserInfo } from '@/lib/hooks/platform';
+import { useLocalParticipant } from '@livekit/components-react';
+import { HomeOutlined, RobotOutlined } from '@ant-design/icons';
+import { Room } from 'livekit-client';
+import { SpaceInfo } from '@/lib/std/space';
 
 export interface MoreButtonProps {
+  space: Room;
   showText?: boolean;
   setOpenMore: (open: boolean) => void;
   isRecording: boolean;
@@ -14,6 +20,7 @@ export interface MoreButtonProps {
   onClickManage?: () => Promise<void>;
   onClickRecord?: () => Promise<void>;
   onClickApp?: () => Promise<void>;
+  onClickAI?: () => Promise<void>;
   controlWidth: number;
   chat?: {
     visible: boolean;
@@ -22,6 +29,7 @@ export interface MoreButtonProps {
     onClicked: () => void;
   };
   size: SizeType;
+  spaceInfo: SpaceInfo;
 }
 
 export interface MoreButtonInnerProps extends MoreButtonProps {
@@ -30,6 +38,7 @@ export interface MoreButtonInnerProps extends MoreButtonProps {
 }
 
 export function MoreButtonInner({
+  space,
   showText = true,
   setOpenMore,
   setMoreType,
@@ -37,18 +46,29 @@ export function MoreButtonInner({
   onClickRecord,
   onSettingOpen,
   onClickApp,
+  onClickAI,
   isRecording,
   controlWidth,
   chat,
   isDot,
   setIsDot,
   size,
+  spaceInfo,
 }: MoreButtonInnerProps) {
   const { t } = useI18n();
 
   const showTextOrHide = useMemo(() => {
-    return ViewAdjusts(controlWidth).w720 ? false : showText;
+    return ViewAdjusts(controlWidth).w960 ? false : showText;
   }, [controlWidth]);
+
+  const { localParticipant } = useLocalParticipant();
+  const { recording } = useMemo(() => {
+    return exportRBAC(localParticipant.identity, spaceInfo);
+  }, [spaceInfo, localParticipant.identity]);
+  const { platUser, fromVocespace } = usePlatformUserInfo({
+    space,
+    uid: localParticipant.identity,
+  });
 
   const onClickChatMsg = () => {
     if (chat && chat.visible) {
@@ -65,15 +85,21 @@ export function MoreButtonInner({
       //   icon: <SvgResource type="app" svgSize={16} />,
       // },
       // 录屏功能
-      {
-        label: (
-          <div style={{ marginLeft: '8px' }}>
-            {!isRecording ? t('more.record.start') : t('more.record.stop')}
-          </div>
-        ),
-        key: 'record',
-        icon: <SvgResource type="record" svgSize={16} color={isRecording ? '#FF0000' : '#fff'} />,
-      },
+      ...(recording
+        ? [
+            {
+              label: (
+                <div style={{ marginLeft: '8px' }}>
+                  {!isRecording ? t('more.record.start') : t('more.record.stop')}
+                </div>
+              ),
+              key: 'record',
+              icon: (
+                <SvgResource type="record" svgSize={16} color={isRecording ? '#FF0000' : '#fff'} />
+              ),
+            },
+          ]
+        : []),
       // 参与者管理功能
       {
         label: <div style={{ marginLeft: '8px' }}>{t('more.participant.title')}</div>,
@@ -85,6 +111,15 @@ export function MoreButtonInner({
         key: 'setting',
         icon: <SvgResource type="setting" svgSize={16} />,
       },
+      ...(fromVocespace
+        ? [
+            {
+              label: <div>{t('more.platform')}</div>,
+              key: 'platform_user',
+              icon: <HomeOutlined style={{ fontSize: 16 }} />,
+            },
+          ]
+        : []),
     ];
     if (chat && chat.visible) {
       moreItems.push({
@@ -99,7 +134,7 @@ export function MoreButtonInner({
       });
     }
     return moreItems;
-  }, [isRecording, chat, t]);
+  }, [isRecording, chat, t, fromVocespace, recording]);
 
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
@@ -131,6 +166,11 @@ export function MoreButtonInner({
         break;
       case 'chat':
         onClickChatMsg();
+        break;
+      case 'platform_user':
+        if (platUser && platUser.id) {
+          window.open(`https://home.vocespace.com/auth/user/${platUser.id}`, '_blank');
+        }
         break;
       default:
         break;

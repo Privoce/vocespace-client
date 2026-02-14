@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect_endpoint, isUndefinedString } from '.';
 import { MessageInstance } from 'antd/es/message/interface';
+import { useI18n } from '../i18n/i18n';
 
 export enum RecordState {
   // 获取环境变量状态，表示需要获取环境变量
@@ -36,11 +37,11 @@ export interface RecordResponse {
   success: boolean;
 }
 
-
 const CONNECT_ENDPOINT = connect_endpoint('/api/record');
 
 export function useRecordingEnv(messageApi: MessageInstance) {
   const [env, setEnv] = useState<EnvData | null>(null);
+  const { t } = useI18n();
   const [state, setState] = useState<RecordState>(RecordState.GetEnv);
   const get_env = useCallback(async () => {
     if (env != null) return;
@@ -60,7 +61,7 @@ export function useRecordingEnv(messageApi: MessageInstance) {
         isUndefinedString(server_host)
       ) {
         setState(RecordState.UnAvailable);
-        messageApi.error('S3服务未配置或环境变量未设置');
+        messageApi.error(t('recording.try_s3.unavailible'));
       } else {
         setEnv({
           s3_access_key,
@@ -70,7 +71,7 @@ export function useRecordingEnv(messageApi: MessageInstance) {
           server_host,
         });
         setState(RecordState.Init);
-        messageApi.success('S3服务环境变量获取成功');
+        messageApi.success(t('recording.try_s3.init'));
       }
     }
   }, [env]);
@@ -82,10 +83,10 @@ export function useRecordingEnv(messageApi: MessageInstance) {
         const data = await response.json();
         if (data.success) {
           setState(RecordState.Connected);
-          messageApi.success('S3服务连接成功');
+          messageApi.success(t('recording.try_s3.connected'));
         } else {
           setState(RecordState.UnAvailable);
-          messageApi.error('S3服务连接失败，请检查配置');
+          messageApi.error(t('recording.try_s3.connect_error'));
         }
       }
     } catch (error) {
@@ -109,7 +110,7 @@ export function useRecordingEnv(messageApi: MessageInstance) {
         break;
       case RecordState.UnAvailable:
         // 无法连接到S3服务，提示用户
-        messageApi.error('无法连接到S3服务，当前可能访问了本地服务，请检查配置或联系管理员');
+        messageApi.error(t('recording.try_s3.connect_error'));
         break;
       default:
         break;
@@ -119,17 +120,17 @@ export function useRecordingEnv(messageApi: MessageInstance) {
   const isConnected = useMemo(() => {
     switch (state) {
       case RecordState.GetEnv:
-        return '获取环境变量中...';
+        return t('recording.try_s3.enving');
       case RecordState.Init:
-        return '正在连接S3服务...';
+        return t('recording.try_s3.connecting');
       case RecordState.Connected:
-        return '已连接到S3服务';
+        return t('recording.try_s3.connected');
       case RecordState.UnAvailable:
-        return '无法连接到S3服务';
+        return t('recording.try_s3.unconnect');
       default:
         return '';
     }
-  }, [state]);
+  }, [state, t]);
 
   return { env, state, isConnected };
 }

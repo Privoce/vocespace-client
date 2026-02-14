@@ -36,6 +36,7 @@ export function VideoSettings({
         <div className={styles.common_space}>{t('settings.general.share_audio')}:</div>
         <Radio.Group
           block
+          size="large"
           value={openShareAudio}
           onChange={(e) => {
             setOpenShareAudio(e.target.value);

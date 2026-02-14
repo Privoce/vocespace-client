@@ -4,10 +4,11 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { useEffect, useRef, useState } from 'react';
 import {
   countLevelByConf,
+  CreateSpaceStrategy,
+  ReadableConf,
   RTCConf,
   rtcLevelToNumber,
   rtcNumberToConf,
-  VocespaceConfig,
 } from '@/lib/std/conf';
 import { api } from '@/lib/api';
 import { isUndefinedNumber, isUndefinedString } from '@/lib/std';
@@ -217,14 +218,47 @@ export function ConfQulity({ isOwner, messageApi, space, onReload }: ConfQulityP
 }
 
 export function useVoceSpaceConf() {
-  const [conf, setConf] = useState<VocespaceConfig | null>(null);
-  const getConf = async () => {
-    const response = await api.getConf();
+  const [conf, setConf] = useState<ReadableConf | null>(null);
+  const getConf = async (hostToken?: string) => {
+    const response = await api.getConf(hostToken);
     if (response.ok) {
-      setConf((await response.json()) as VocespaceConfig);
+      setConf((await response.json()) as ReadableConf);
     }
   };
-  return { conf, getConf, setConf };
+  const checkHostToken = async (hostToken: string) => {
+    const response = await api.checkHostToken(hostToken);
+    if (response.ok) {
+      const { success } = await response.json();
+      return success;
+    }
+    return false;
+  };
+
+  const updateCreateSpaceConf = async (
+    createStrategy: CreateSpaceStrategy,
+    whiteList: string[] | undefined | Set<string>,
+    onError: (error: Error) => void,
+    onSuccess: () => void,
+  ) => {
+    try {
+      const response = await api.updateCreateSpaceConf(createStrategy, whiteList);
+      if (response.ok) {
+        await getConf();
+        onSuccess();
+      } else {
+        const { error } = await response.json();
+        if (error) {
+          throw new Error(error);
+        } else {
+          throw new Error('unknown error');
+        }
+      }
+    } catch (error) {
+      onError(error as Error);
+    }
+  };
+
+  return { conf, getConf, setConf, checkHostToken, updateCreateSpaceConf };
 }
 
 export interface UseRTCConfProps {
@@ -238,7 +272,7 @@ export function useRTCConf({ onError, onSuccess }: UseRTCConfProps) {
   const getRTCConf = async () => {
     const response = await api.getConf();
     if (response.ok) {
-      const { resolution, maxBitrate, maxFramerate, priority, codec }: VocespaceConfig =
+      const { resolution, maxBitrate, maxFramerate, priority, codec }: ReadableConf =
         await response.json();
       if (
         isUndefinedString(resolution) ||

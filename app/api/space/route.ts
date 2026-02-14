@@ -1,5 +1,13 @@
 // /app/api/space/route.ts
-import { isUndefinedString, UserDefineStatus } from '@/lib/std';
+import {
+  AuthType,
+  ChildRoomEnter,
+  DEFAULT_TOKEN_RESULT,
+  ERROR_CODE,
+  IdentityType,
+  isUndefinedString,
+  splitPlatformUser,
+} from '@/lib/std';
 import { NextRequest, NextResponse } from 'next/server';
 import Redis from 'ioredis';
 import { ChatMsgItem } from '@/lib/std/chat';
@@ -15,22 +23,31 @@ import {
   SpaceTimer,
   SpaceCountdown,
   SpaceTodo,
+  DEFAULT_PARTICIPANT_WORK_CONF,
+  DEFAULT_SPACE_AUTH_CONF,
+  SpaceRBACConf,
+  handleIdentityType,
 } from '@/lib/std/space';
 import { RoomServiceClient } from 'livekit-server-sdk';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsParticipant } from '@/lib/std/device';
 import {
+  AllowGuestBody,
   CheckNameBody,
   DefineUserStatusBody,
   DefineUserStatusResponse,
   DeleteSpaceParticipantBody,
+  EnterRoomBody,
   PersistentSpaceBody,
+  TransOrSetOMBody,
+  UpdateAuthRBACConfBody,
   UpdateOwnerIdBody,
   UpdateSpaceAppAuthBody,
   UpdateSpaceAppsBody,
   UpdateSpaceAppSyncBody,
   UpdateSpaceParticipantBody,
   UploadSpaceAppBody,
+  WorkModeBody,
 } from '@/lib/api/space';
 import { UpdateRecordBody } from '@/lib/api/record';
 import {
@@ -42,12 +59,15 @@ import {
   UpdateRoomBody,
 } from '@/lib/api/channel';
 import { getConfig } from '../conf/conf';
-
-const { LIVEKIT_API_KEY, LIVEKIT_API_SECRET, LIVEKIT_URL } = process.env;
+import { platformAPI } from '@/lib/api/platform';
+import { generateToken, usePlatformUserInfoServer } from '@/lib/hooks/platformToken';
 
 // [redis config env] ----------------------------------------------------------
 const {
   redis: { enabled, host, port, password, db },
+  livekit: { url: LIVEKIT_URL, key: LIVEKIT_API_KEY, secret: LIVEKIT_API_SECRET },
+  create_space,
+  whiteList,
 } = getConfig();
 
 let redisClient: Redis | null = null;
@@ -61,6 +81,23 @@ if (enabled) {
     db,
   });
 }
+
+const exportRBAC = (uid: string, spaceInfo?: SpaceInfo, pidentity?: string): SpaceRBACConf => {
+  if (!spaceInfo) {
+    return DEFAULT_SPACE_AUTH_CONF.guest;
+  }
+
+  const targetParticipant = spaceInfo.participants[uid];
+
+  if (!targetParticipant) {
+    return DEFAULT_SPACE_AUTH_CONF.guest;
+  }
+  const identity = handleIdentityType(
+    (targetParticipant?.auth?.identity || pidentity || 'guest') as IdentityType,
+  );
+
+  return spaceInfo.auth[identity] || DEFAULT_SPACE_AUTH_CONF.guest;
+};
 
 class SpaceManager {
   // 空间 redis key 前缀
@@ -85,6 +122,27 @@ class SpaceManager {
   // participant redis key
   private static getParticipantKey(space: string, participantId: string): string {
     return `${this.PARTICIPANT_KEY_PREFIX}${space}:${participantId}`;
+  }
+
+  // 删除整个空间 ------------------------------------------------------------------------
+  static async deleteEntireSpace(spaceName: string): Promise<boolean> {
+    try {
+      // 1. 直接从redis键中移除
+      const spaceKey = this.getSpaceKey(spaceName);
+      if (redisClient) {
+        await redisClient.del(spaceKey);
+      } else {
+        return false;
+      }
+
+      // 3. 直接删除space:date:records:spaceName
+      const spaceDataKey = `${this.SPACE_DATE_RECORDS_KEY_PREFIX}${spaceName}`;
+      await redisClient.del(spaceDataKey);
+      return true;
+    } catch (e) {
+      console.error('Error deleting entire space:', e);
+      return false;
+    }
   }
 
   // 切换房间隐私性 ----------------------------------------------------------------------
@@ -650,6 +708,7 @@ class SpaceManager {
     room: string,
     participantId: string,
     pData: ParticipantSettings,
+    init = false,
   ): Promise<boolean> {
     try {
       if (!redisClient) {
@@ -659,8 +718,10 @@ class SpaceManager {
       // 房间不存在说明是第一次创建
       let startAt = Date.now();
       if (!spaceInfo) {
+        const { createRoom } = usePlatformUserInfoServer({ user: pData });
+
         spaceInfo = {
-          ...DEFAULT_SPACE_INFO(startAt),
+          ...DEFAULT_SPACE_INFO(startAt, createRoom),
           ownerId: participantId,
         };
         // 这里还需要设置到房间的使用记录中
@@ -672,23 +733,63 @@ class SpaceManager {
           },
         );
       } else {
-        // 房间存在，这个用户可能是新加入的，我们可以查找房间中是否有这个用户，如果没有则需要将用户记录添加到使用记录中
-        let participant = spaceInfo.participants[participantId];
-        if (!participant) {
-          await this.setSpaceDateRecords(
-            room,
-            { start: spaceInfo.startAt },
-            {
-              [pData.name]: [{ start: startAt }],
-            },
-          );
-        }
+        // 房间存在
+        // 用户重连或持久化房间用户重新上线，记录新的上线时间
+        await this.setSpaceDateRecords(
+          room,
+          { start: spaceInfo.startAt },
+          {
+            [pData.name]: [{ start: startAt }],
+          },
+        );
       }
+
+      const isEmptySpace = Object.keys(spaceInfo.participants).length === 0;
       // 更新参与者数据
       spaceInfo.participants[participantId] = {
         ...spaceInfo.participants[participantId],
         ...pData,
+        online: true,
       };
+      // 设置auth，如果发现当前空间中没有人/空间ownerId就是当前用户，那必须把auth中的identity设置为owner
+      if (spaceInfo.ownerId === participantId || isEmptySpace) {
+        spaceInfo.participants[participantId].auth = {
+          identity: 'owner',
+          platform: pData.auth?.platform || 'other',
+        };
+      }
+
+      let participant = spaceInfo.participants[participantId];
+      // init 时进行房间创建
+      if (init) {
+        const { isAuth } = usePlatformUserInfoServer({ user: participant });
+        // 这里说明房间存在而且且用户也存在，说明用户可能是重连或房间是持久化的，我们无需大范围数据更新，只需要更新
+        // 用户的最基础设置即可
+        // 由于todo数据连接了平台端数据，所以这里需要更改为平台端的todo数据，但只有在isAuth为true时才更新
+        let appDatas = participant.appDatas;
+        if (isAuth) {
+          appDatas = {
+            ...appDatas,
+            todo: participant.appDatas.todo,
+          };
+        }
+        spaceInfo.participants[participantId].appDatas = appDatas;
+
+        // 用户初始化完成之后通过RBAC获取权限，检查是否需要创建私人房间
+        const { createRoom } = exportRBAC(participantId, spaceInfo);
+        console.warn(createRoom, 'createRoom after exportRBAC', participantId);
+        const roomName = `${spaceInfo.participants[participantId].name}'s Room`;
+        if (createRoom && !spaceInfo.children.find((c) => c.name === roomName)) {
+          const room = {
+            name: roomName,
+            isPrivate: true,
+            participants: [],
+            ownerId: participantId,
+          } as ChildRoom;
+
+          spaceInfo.children.push(room);
+        }
+      }
 
       // 保存更新后的房间设置
       return await this.setSpaceInfo(room, spaceInfo);
@@ -732,13 +833,49 @@ class SpaceManager {
       if (!redisClient) {
         throw new Error('Redis client is not initialized or disabled.');
       }
+
       const spaceInfo = await this.getSpaceInfo(spaceName);
-      if (!spaceInfo || !spaceInfo.participants[newOwnerId]) {
-        return false; // 房间或新主持人不存在
-      } else {
-        spaceInfo.ownerId = newOwnerId;
-        return await this.setSpaceInfo(spaceName, spaceInfo);
+      if (!spaceInfo) {
+        return false;
       }
+
+      // Ensure the new owner exists in participants
+      if (!spaceInfo.participants[newOwnerId]) {
+        return false;
+      }
+
+      const oldOwnerId = spaceInfo.ownerId;
+      spaceInfo.ownerId = newOwnerId;
+
+      // Downgrade previous owner's identity according to platform
+      const oldOwner = spaceInfo.participants[oldOwnerId];
+      if (oldOwner) {
+        if (oldOwner.auth?.platform === 'other') {
+          oldOwner.auth.identity = 'guest';
+        } else if (oldOwner.auth?.platform === 'c_s') {
+          oldOwner.auth.identity = 'customer';
+        } else {
+          if (oldOwner.auth && oldOwner.auth.identity) {
+            oldOwner.auth.identity = 'participant';
+          }
+        }
+      }
+
+      // Promote new owner
+      const newOwner = spaceInfo.participants[newOwnerId];
+      if (newOwner) {
+        if (!newOwner.auth) {
+          newOwner.auth = {
+            identity: 'owner',
+            platform: 'other',
+          };
+        } else {
+          newOwner.auth.identity = 'owner';
+        }
+      }
+
+      const success = await this.setSpaceInfo(spaceName, spaceInfo);
+      return success;
     } catch (error) {
       console.error('Error transferring ownership:', error);
       return false;
@@ -766,27 +903,6 @@ class SpaceManager {
           error: 'Room or participant does not exist, or not complete initialized.',
         }; // 房间或参与者不存在可能出现了问题
       }
-      // 删除参与者前删除该参与者构建的子房间 (新需求无需清理子房间, 暂时注释)
-      // const childRoomsToDelete = spaceInfo.children
-      //   .filter((child) => child.ownerId === participantId)
-      //   .map((child) => child.name);
-
-      // if (childRoomsToDelete.length > 0) {
-      //   await Promise.all(
-      //     childRoomsToDelete.map(async (roomName) => {
-      //       await this.deleteChildRoom(room, roomName);
-      //     }),
-      //   );
-
-      //   // 重新获取最新的房间设置
-      //   spaceInfo = await this.getSpaceInfo(room);
-      //   if (!spaceInfo) {
-      //     return {
-      //       success: false,
-      //       error: 'Room settings changed during deletion process.',
-      //     };
-      //   }
-      // }
       // 检查当前这个参与者是否在子房间中，如果在子房间需要移除
       const childRooms = spaceInfo.children.filter((child) =>
         child.participants.includes(participantId),
@@ -803,7 +919,12 @@ class SpaceManager {
       let participantName = spaceInfo.participants[participantId].name;
       let participantStartAt = spaceInfo.participants[participantId].startAt;
       // 删除参与者
-      delete spaceInfo.participants[participantId];
+      if (!spaceInfo.persistence) {
+        delete spaceInfo.participants[participantId];
+      } else {
+        // 将这个用户的在线状态设置为false
+        spaceInfo.participants[participantId].online = false;
+      }
       // 先设置回去, 以防transferOwner读取脏数据
       await this.setSpaceInfo(room, spaceInfo);
       // 用户离开需要更新用户的end记录
@@ -814,6 +935,32 @@ class SpaceManager {
           [participantName]: [{ start: participantStartAt, end: Date.now() }],
         },
       );
+      // 如果是持久化房间，删除参与者操作到此为止
+      if (spaceInfo.persistence) {
+        // 需要确定参与者的身份，如果是guest则需要直接删除，guest永远不持久存储
+        const { isAuth } = usePlatformUserInfoServer({
+          user: spaceInfo.participants[participantId],
+        });
+        if (!isAuth) {
+          console.warn('Removing guest participant from persistent room:', participantId);
+          delete spaceInfo.participants[participantId];
+        }
+        // 检查，如果没有参与者了也需要直接删除房间
+        if (spaceInfo.participants && Object.keys(spaceInfo.participants).length === 0) {
+          await this.deleteSpace(room, spaceInfo.startAt);
+          return {
+            success: true,
+            clearAll: true,
+          };
+        } else {
+          await this.setSpaceInfo(room, spaceInfo);
+        }
+
+        return {
+          success: true,
+          clearAll: false,
+        };
+      }
 
       // 判断这个参与者是否是主持人，如果是则进行转让，转给第一个参与者， 如果没有参与者直接删除房间
       if (Object.keys(spaceInfo.participants).length === 0) {
@@ -850,10 +997,11 @@ class SpaceManager {
       };
     }
   }
-  // 定义(添加)房间的状态 --------------------------------------------------------------
+  // 定义(添加)用户的状态 --------------------------------------------------------------
   static async defineStatus(
     spaceName: string,
-    status: UserDefineStatus,
+    participantId: string,
+    status: string,
   ): Promise<{
     success: boolean;
     error?: any;
@@ -867,17 +1015,14 @@ class SpaceManager {
       if (!spaceInfo) {
         throw new Error('Room not found');
       }
-      // 房间存在，需要检查是否已经存在同名状态
-      if (!spaceInfo.status) {
-        spaceInfo.status = [status];
+      // 房间存在，获取用户进行状态更新
+      let participant = spaceInfo.participants[participantId];
+      if (!participant) {
+        throw new Error('Participant not found');
       } else {
-        const isExist = spaceInfo.status.some((s) => s.name === status.name);
-        if (isExist) {
-          throw new Error('Status already exists');
-        } else {
-          spaceInfo.status.push(status);
-        }
+        spaceInfo.participants[participantId].status = status;
       }
+
       await this.setSpaceInfo(spaceName, spaceInfo);
       return {
         success: true,
@@ -899,18 +1044,17 @@ class SpaceManager {
       let spaceInfo = await this.getSpaceInfo(room);
       let startAt = Date.now();
       if (!spaceInfo) {
-        // spaceInfo = {
-        //   participants: {},
-        //   ownerId: '',
-        //   record: { active: false },
-        //   startAt,
-        //   children: [],
-        // };
-        spaceInfo = DEFAULT_SPACE_INFO(startAt);
+        spaceInfo = DEFAULT_SPACE_INFO(startAt, true);
       }
 
       // 获取所有参与者的名字
       const participants = Object.values(spaceInfo.participants);
+
+      if (participants.length === 0) {
+        // 没有参与者，直接返回第一个用户（管理员）
+        return 'Admin';
+      }
+
       let usedUserNames: number[] = [];
       participants.forEach((participant) => {
         if (participant.name.startsWith('User')) {
@@ -937,19 +1081,9 @@ class SpaceManager {
 
       const availableUserName = `User ${suffix_str}`;
 
-      // 这里还需要设置到房间的使用记录中
-      // await this.setSpaceDateRecords(
-      //   room,
-      //   { start: startAt },
-      //   {
-      //     [availableUserName]: [{ start: startAt }],
-      //   },
-      // );
-
       return availableUserName;
     } catch (error) {
-      console.error('Error generating user name:', error);
-      return 'User 01'; // 默认返回第一个用户
+      return 'Admin'; // 默认返回第一个用户(管理员)
     }
   }
   // 更新录制设置 -------------------------------------------------------
@@ -996,6 +1130,29 @@ export async function GET(request: NextRequest) {
   const isTimeRecord = request.nextUrl.searchParams.get('timeRecord') === 'true';
   const isChat = request.nextUrl.searchParams.get('chat') === 'true';
   const isHistory = request.nextUrl.searchParams.get('history') === 'true';
+  const isCreateSpace = request.nextUrl.searchParams.get('space') === 'create';
+  // 创建一个新的空间 -------------------------------------------------------------------------------
+  if (isCreateSpace) {
+    const spaceOwner = request.nextUrl.searchParams.get('owner');
+    const ownerId = request.nextUrl.searchParams.get('ownerId');
+    if (!spaceOwner) {
+      return NextResponse.json({ error: ERROR_CODE.createSpace.ParamLack }, { status: 200 });
+    } else {
+      // 如果有spaceName这个参数则使用这个作为空间名字，否则使用owner作为空间名字
+      let realSpaceName = spaceName || spaceOwner;
+      const spaceInfo = await SpaceManager.getSpaceInfo(realSpaceName);
+      if (spaceInfo) {
+        return NextResponse.json({ error: ERROR_CODE.createSpace.SpaceExist }, { status: 200 });
+      }
+      const newSpaceInfo = {
+        ...DEFAULT_SPACE_INFO(Date.now(), true),
+        ownerId: ownerId || `${spaceOwner}__${spaceOwner}`,
+      } as SpaceInfo;
+
+      await SpaceManager.setSpaceInfo(realSpaceName, newSpaceInfo);
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+  }
   // 获取某个空间的聊天记录 --------------------------------------------------------------------------
   if (isChat && isHistory && spaceName) {
     const chatMessages = await SpaceManager.getChatMessages(spaceName);
@@ -1064,6 +1221,159 @@ export async function POST(request: NextRequest) {
     const isSpace = request.nextUrl.searchParams.get('space') === 'true';
     const spaceAppsAPIType = request.nextUrl.searchParams.get('apps');
     const isUpdateSpacePersistence = request.nextUrl.searchParams.get('persistence') === 'update';
+    const isUpdate = request.nextUrl.searchParams.get('update') === 'true';
+    const isUpdateAllowGuest = request.nextUrl.searchParams.get('allowGuest') === 'update';
+    const isTransfer = request.nextUrl.searchParams.get('transfer') === 'true';
+    const authManage = request.nextUrl.searchParams.get('auth');
+    const mode = request.nextUrl.searchParams.get('mode');
+    // 更新 rbac 配置 -----------------------------------------------------------------------------
+    if (isSpace && isUpdate && authManage === 'rbac') {
+      const { spaceName, authConf }: UpdateAuthRBACConfBody = await request.json();
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      spaceInfo.auth = authConf;
+      const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+      if (!success) {
+        return NextResponse.json({ error: 'Failed to update rbac configuration' }, { status: 500 });
+      }
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+    // 开启/关闭 工作模式 -------------------------------------------------------------------------
+    if (mode === 'work') {
+      const { spaceName, participantId, workType }: WorkModeBody = await request.json();
+      // 获取空间信息和用户信息
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      const participant = spaceInfo.participants[participantId];
+      if (!participant) {
+        return NextResponse.json({ error: 'Participant not found' }, { status: 404 });
+      }
+      // 先检测当前用户的work和传入的workType是否一致，如果一致则直接返回成功，因为已经是这个状态了
+      if (workType === participant.work.enabled) {
+        return NextResponse.json({ success: true, workType }, { status: 200 });
+      }
+
+      // 如果是关闭工作模式
+      // 通过用户的work结构中的配置还原用户的视频模糊度和屏幕模糊度，并设置enabled字段为false
+      if (!workType) {
+        participant.blur = participant.work.videoBlur;
+        participant.screenBlur = participant.work.screenBlur;
+        // 将work结构设置为DEFAULT
+        participant.work = DEFAULT_PARTICIPANT_WORK_CONF;
+        await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+        return NextResponse.json({ success: true, workType }, { status: 200 });
+      } else {
+        // 如果是开启工作模式
+        // 将当前用户的work结构中的enabled字段设置为true，并根据配置设置用户的视频模糊度和屏幕模糊度
+        participant.work.enabled = true;
+        participant.work.videoBlur = participant.blur;
+        participant.work.screenBlur = participant.screenBlur;
+        // 设置用户的视频模糊度和屏幕模糊度为工作模式下的配置
+        if (spaceInfo.work.sync) {
+          participant.blur = spaceInfo.work.videoBlur;
+          participant.screenBlur = spaceInfo.work.screenBlur;
+        }
+        await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+        return NextResponse.json({ success: true, workType }, { status: 200 });
+      }
+    }
+    // 用户身份处理 -----------------------------------------------------------------------------
+    if (isSpace && authManage === 'manage') {
+      let isRemove = false;
+      const { spaceName, participantId, replacedId }: TransOrSetOMBody = await request.json();
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      // 先确定participantId的是否在当前的space中
+      if (spaceInfo.participants[participantId] === undefined) {
+        return NextResponse.json({ error: 'Participant not in space' }, { status: 403 });
+      }
+
+      if (spaceInfo.participants[replacedId] === undefined) {
+        return NextResponse.json({ error: 'Replaced participant not in space' }, { status: 403 });
+      }
+
+      const isOwner = spaceInfo.ownerId === participantId;
+
+      if (isTransfer) {
+        // 转让身份（Owner/Manager），如果当前用户是Owner则转让Owner，如果是Manager则转让Manager
+        if (isOwner) {
+          spaceInfo.ownerId = replacedId;
+        } else {
+          // 删除管理员列表中的当前用户，并添加新的管理员
+          spaceInfo.managers = spaceInfo.managers.filter((id) => id !== participantId);
+          if (!spaceInfo.managers.includes(replacedId)) {
+            spaceInfo.managers.push(replacedId);
+          }
+        }
+      } else {
+        // 设置管理员, 只有Owner才有权限设置管理员
+        if (!isOwner) {
+          return NextResponse.json({ error: 'Only owner can set manager' }, { status: 403 });
+        }
+        // 设置管理员，管理员最多5个
+        if (spaceInfo.managers.length < 5) {
+          if (!spaceInfo.managers.includes(replacedId)) {
+            spaceInfo.managers.push(replacedId);
+          } else {
+            // 如果已经是管理，则说明是要移除管理员
+            spaceInfo.managers = spaceInfo.managers.filter((id) => id !== replacedId);
+            isRemove = true;
+          }
+        } else {
+          return NextResponse.json({ error: 'Manager limit reached' }, { status: 403 });
+        }
+      }
+      const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+      if (!success) {
+        return NextResponse.json({ error: 'Failed to update space managers' }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, isRemove }, { status: 200 });
+    }
+
+    // 更新空间是否允许游客加入 -----------------------------------------------------------------------------
+    if (isSpace && isUpdateAllowGuest) {
+      const { spaceName, allowGuest }: AllowGuestBody = await request.json();
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      spaceInfo.allowGuest = allowGuest;
+      const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+      if (!success) {
+        return NextResponse.json(
+          { error: 'Failed to update allow guest setting' },
+          { status: 500 },
+        );
+      }
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+
+    // 是否更新空间相关设置 -----------------------------------------------------------------------------
+    if (isUpdate && isSpace) {
+      const { spaceName, info }: { spaceName: string; info: Partial<SpaceInfo> } =
+        await request.json();
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      const updatedSpaceInfo = {
+        ...spaceInfo,
+        ...info,
+      };
+      const success = await SpaceManager.setSpaceInfo(spaceName, updatedSpaceInfo);
+      if (!success) {
+        return NextResponse.json({ error: 'Failed to update space settings' }, { status: 500 });
+      }
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+
     // 用户应用是否同步 -----------------------------------------------------------------------
     if (spaceAppsAPIType === 'sync') {
       const { spaceName, participantId, sync }: UpdateSpaceAppSyncBody = await request.json();
@@ -1095,7 +1405,7 @@ export async function POST(request: NextRequest) {
       if (!spaceInfo) {
         return NextResponse.json({ error: 'Space not found' }, { status: 404 });
       }
-      spaceInfo.participants[participantId].auth = appAuth;
+      spaceInfo.participants[participantId].appAuth = appAuth;
       const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
       if (!success) {
         return NextResponse.json({ error: 'Failed to update app auth' }, { status: 500 });
@@ -1104,7 +1414,9 @@ export async function POST(request: NextRequest) {
     }
     // 用户上传App到Space中 ------------------------------------------------------------------
     if (spaceAppsAPIType === 'upload') {
-      const { spaceName, data, ty, participantId }: UploadSpaceAppBody = await request.json();
+      const isDelete = request.nextUrl.searchParams.get('delete') === 'true';
+      const { spaceName, data, ty, participantId, isAuth, deleteId }: UploadSpaceAppBody =
+        await request.json();
       const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
       if (!spaceInfo) {
         return NextResponse.json({ error: 'Space not found' }, { status: 404 });
@@ -1114,7 +1426,68 @@ export async function POST(request: NextRequest) {
       } else if (ty === 'countdown') {
         spaceInfo.participants[participantId].appDatas.countdown = data as SpaceCountdown;
       } else {
-        spaceInfo.participants[participantId].appDatas.todo = data as SpaceTodo;
+        // 更新todo
+        let targetUpdateTodo = spaceInfo.participants[participantId].appDatas.todo?.find((item) => {
+          return item.date === (data as SpaceTodo).date;
+        });
+        if (!targetUpdateTodo) {
+          // 如果没有找到则添加一个新的
+          if (!spaceInfo.participants[participantId].appDatas.todo) {
+            spaceInfo.participants[participantId].appDatas.todo = [];
+          }
+          spaceInfo.participants[participantId].appDatas.todo.push(data as SpaceTodo);
+        } else {
+          // 更新spaceInfo
+          spaceInfo.participants[participantId].appDatas.todo = spaceInfo.participants[
+            participantId
+          ].appDatas.todo?.map((item) => {
+            if (item.date === (data as SpaceTodo).date) {
+              return data as SpaceTodo;
+            } else {
+              return item;
+            }
+          });
+        }
+
+        // 将用户的数据传到平台接口进行同步和保存
+        if (isAuth) {
+          if (isDelete) {
+            // 删除todo
+            const date = (data as SpaceTodo).date;
+            const pResponse = await platformAPI.todo.deleteTodo(participantId, date, deleteId!);
+            if (!pResponse.ok) {
+              console.error('Failed to sync todo to platform for participant:', participantId);
+            }
+          } else {
+            try {
+              const pResponse = await platformAPI.todo.updateTodo(participantId, data as SpaceTodo);
+              // 平台虽然失败但不能影响用户的使用
+              if (!pResponse.ok) {
+                console.error('Failed to sync todo to platform for participant:', participantId);
+              }
+            } catch (e) {
+              console.error('Error syncing todo to platform for participant:', participantId, e);
+            }
+          }
+        }
+
+        if ((data as SpaceTodo).items.length > 0) {
+          let currentTodo = (data as SpaceTodo).items.find((t) => {
+            // 需要找到第一个未完成的(done为undefined)
+            return !t.done;
+          });
+
+          if (!currentTodo) {
+            // 如果没有，则取最后一个
+            currentTodo = (data as SpaceTodo).items[(data as SpaceTodo).items.length - 1];
+          }
+          // 当todo有更新时，我们需要将用户的状态修改为`🖥️ ${todo.title}`
+          // ⚠️当用户不选择公开todo时不要修改
+          let targetParticipant = spaceInfo.participants[participantId];
+          if (targetParticipant.sync.includes('todo')) {
+            targetParticipant.status = `🖥️ ${currentTodo.title}`;
+          }
+        }
       }
       const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
       return NextResponse.json({ success }, { status: 200 });
@@ -1158,28 +1531,227 @@ export async function POST(request: NextRequest) {
 
     // 处理用户唯一名 -------------------------------------------------------------------------
     if (isNameCheck) {
-      const { spaceName, participantName }: CheckNameBody = await request.json();
+      const { spaceName, participantName, participantId }: CheckNameBody = await request.json();
       // 获取房间设置
       const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
       if (!spaceInfo) {
         // 房间不存在说明是第一次创建
         return NextResponse.json({ success: true, name: participantName }, { status: 200 });
       } else {
-        const pid = `${participantName}__${spaceName}`;
+        const pid = participantId || `${participantName}__${spaceName}`;
         const participantSettings = spaceInfo.participants[pid];
         if (participantSettings) {
-          console.warn(pid);
-          // 有参与者
-          return NextResponse.json(
-            { success: false, error: 'Participant name already exists' },
-            { status: 200 },
-          );
+          // 有参与者，判断当前参与者的online状态，如果为false，说明是重连，可以直接使用该名字
+          if (participantSettings.online) {
+            // 在线状态，那么不允许使用该名字, 需要分配一个新的名字给用户，如果是Bob就需要分配Bob 02 这样的名字给用户, 数字用个数类推
+            let newName = participantName;
+            let suffix = 1;
+            const existingNames = Object.values(spaceInfo.participants).map((p) => p.name);
+            while (existingNames.includes(newName)) {
+              suffix += 1;
+              let suffix_str = suffix.toString();
+              if (suffix < 10) {
+                suffix_str = `0${suffix}`;
+              }
+              newName = `${participantName} ${suffix_str}`;
+            }
+            return NextResponse.json({ success: true, name: newName }, { status: 200 });
+          } else {
+            // 离线状态，允许使用该名字
+            return NextResponse.json({ success: true, name: participantName }, { status: 200 });
+          }
         }
       }
     }
 
-    // 如果是创建子房间 -------------------------------------------------------------------------
+    // 如果是创建子房间/进入子房间 -------------------------------------------------------------------------
     if (isChildRoom) {
+      const enter = request.nextUrl.searchParams.get('enter');
+      // 进入子房间的处理 -----------------------------------------------------------------------------
+      if (enter === 'true') {
+        const { space, auth, uid, room, identity, username }: EnterRoomBody = await request.json();
+        // 无需处理
+        if (room === '$space') {
+          return NextResponse.json({ success: true }, { status: 200 });
+        }
+        // 获取space信息
+        const spaceInfo = await SpaceManager.getSpaceInfo(space);
+        if (!spaceInfo) {
+          return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+        }
+        // 先判断auth，如果是c_s, 说明进入了customer - service模式，用户需要进入某个空闲房间
+        // 这里的空闲房间指的是某个私人房间，且这个私人房间只有房间拥有者(客服)一个人，顾客需要进入这个房间
+        // 这是个一对一的模式
+        if (auth === 'c_s') {
+          // 判断用户身份
+          if (identity === 'assistant') {
+            // 助理直接进入自己的私人房间或者创建房间
+            // 这里一般来说，客服都会指定一个房间名
+            const existingRoom =
+              room === '$empty'
+                ? null
+                : spaceInfo.children.find((child) => child.ownerId === uid && child.name === room);
+            // 房间存在
+            if (existingRoom) {
+              // 如果这个房间不是私人房间，且内部已经有超过一个人了，那么设置这个房间为私人房间，并清理内部所有人，再进入
+              if (!existingRoom.isPrivate) {
+                existingRoom.isPrivate = true;
+              }
+
+              if (existingRoom.participants.length >= 1) {
+                existingRoom.participants = [uid];
+              } else {
+                existingRoom.participants.push(uid);
+              }
+              await SpaceManager.setSpaceInfo(space, spaceInfo);
+              return NextResponse.json({ success: true }, { status: 200 });
+            } else {
+              // 创建新的私人房间
+              const newChildRoom: ChildRoom = {
+                name: room || `${username}'s Room`,
+                participants: [uid],
+                ownerId: uid,
+                isPrivate: true,
+              };
+              const { success, error } = await SpaceManager.setChildRoom(space, newChildRoom);
+              if (success) {
+                return NextResponse.json({ success: true }, { status: 200 });
+              } else {
+                return NextResponse.json({ error }, { status: 500 });
+              }
+            }
+          } else if (identity === 'customer') {
+            // 这里一般来说，客服都会指定一个房间名
+            const existingRoom =
+              room === '$empty' ? null : spaceInfo.children.find((child) => child.name === room);
+            // 如果是顾客
+            if (existingRoom) {
+              // 房间存在，我们需要检查这个房间是否满人(一对一场景下，支持2个人在一个房间内)
+              if (existingRoom.participants.length >= 2) {
+                // 满人则寻找其他空闲房间，找到一个就让用户进入
+                const freeRoom = spaceInfo.children.find(
+                  (child) =>
+                    child.isPrivate &&
+                    child.participants.length === 1 && // 只有房主一个人
+                    child.ownerId !== existingRoom.ownerId, // 不能是同一个客服的房间
+                );
+                if (freeRoom) {
+                  freeRoom.participants.push(uid);
+                  await SpaceManager.setSpaceInfo(space, spaceInfo);
+                  return NextResponse.json({ success: true }, { status: 200 });
+                } else {
+                  return NextResponse.json(
+                    {
+                      error: 'No available rooms, please wait...',
+                      code: ERROR_CODE.enterRoom.FullAndWait,
+                    },
+                    { status: 200 },
+                  );
+                }
+              } else {
+                // 没有满人，直接加入
+                existingRoom.participants.push(uid);
+                await SpaceManager.setSpaceInfo(space, spaceInfo);
+                return NextResponse.json({ success: true }, { status: 200 });
+              }
+            } else {
+              // 房间不存在，说明客服还没有创建房间，直接返回错误让用户等待
+              return NextResponse.json(
+                {
+                  error: 'No available rooms, please wait...',
+                  code: ERROR_CODE.enterRoom.NotExist,
+                },
+                { status: 200 },
+              );
+            }
+          } else {
+            // 其他身份不在c_s模式下工作
+            return NextResponse.json(
+              {
+                error: 'Invalid identity for c_s mode',
+                code: ERROR_CODE.enterRoom.InvalidIdentityCS,
+              },
+              { status: 200 },
+            );
+          }
+        } else {
+          // 非c_s模式下，直接加入指定房间，如果不存在就创建，有就直接加入
+          if (!room) {
+            // 没有指定room字段的情况，在其他模式下无需加入任何room
+            return NextResponse.json({ success: true }, { status: 200 });
+          }
+
+          const existingRoom = spaceInfo.children.find((child) => child.name === room);
+          if (existingRoom) {
+            // 房间存在，加入房间，无论是否私人房间都可以加入
+            if (!existingRoom.participants.includes(uid)) {
+              existingRoom.participants.push(uid);
+              await SpaceManager.setSpaceInfo(space, spaceInfo);
+            }
+            return NextResponse.json({ success: true }, { status: 200 });
+          } else {
+            // 房间不存在，创建新房间
+            const newChildRoom: ChildRoom = {
+              name: room || `${username}'s Room`,
+              participants: [uid],
+              ownerId: uid,
+              isPrivate: true,
+            };
+            const { success, error } = await SpaceManager.setChildRoom(space, newChildRoom);
+            if (success) {
+              return NextResponse.json({ success: true }, { status: 200 });
+            } else {
+              return NextResponse.json({ error }, { status: 500 });
+            }
+          }
+        }
+      } else if (enter === 'link') {
+        const { space, room, roomOwner, platUser }: ChildRoomEnter = await request.json();
+        // 检查space
+        const spaceInfo = await SpaceManager.getSpaceInfo(space);
+        if (!spaceInfo) {
+          return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+        }
+        // 查找对应的子房间
+        const targetRoom = spaceInfo.children.find((child) => child.name === room);
+        if (!targetRoom) {
+          return NextResponse.json({ error: 'Child room not found' }, { status: 404 });
+        }
+        if (targetRoom.isPrivate) {
+          // 私密房间，需要验证room owner
+          if (targetRoom.ownerId !== roomOwner) {
+            return NextResponse.json(
+              { error: 'Unauthorized to enter private room' },
+              { status: 403 },
+            );
+          }
+        }
+
+        const url = new URL('/api/connection-details', request.url);
+        let token = '';
+        let authType: AuthType = 'other';
+        if (!platUser) {
+          // 说明是个第一次进入的游客用户，直接请求/api/connection-details这个接口进行处理
+          // 生成个用户名，通过genUserName接口生成一个可用的用户名
+          const username = await SpaceManager.genUserName(space);
+          token = generateToken(DEFAULT_TOKEN_RESULT(space, username, room));
+        } else {
+          // 是平台用户，数据上添加用户到子房间中
+          if (!targetRoom.participants.includes(platUser.id)) {
+            targetRoom.participants.push(platUser.id);
+            await SpaceManager.setSpaceInfo(space, spaceInfo);
+          }
+          const { tokenResult, auth } = splitPlatformUser(platUser);
+          token = generateToken(tokenResult);
+          authType = auth;
+        }
+        url.searchParams.append('auth', authType);
+        url.searchParams.append('token', token);
+        url.searchParams.append('fromServer', 'true');
+        return await fetch(url.toString());
+      }
+
+      // 创建子房间的处理 -----------------------------------------------------------------------------
       const { spaceName, roomName, participantId, isPrivate }: CreateRoomBody =
         await request.json();
 
@@ -1226,9 +1798,14 @@ export async function POST(request: NextRequest) {
     }
     // 更新参与者设置 ---------------------------------------------------------------------------
     if (isUpdateParticipant && isSpace) {
-      const { spaceName, settings, participantId }: UpdateSpaceParticipantBody =
+      const { spaceName, settings, participantId, init }: UpdateSpaceParticipantBody =
         await request.json();
-      const success = await SpaceManager.updateParticipant(spaceName, participantId, settings);
+      const success = await SpaceManager.updateParticipant(
+        spaceName,
+        participantId,
+        settings,
+        init,
+      );
       return NextResponse.json({ success }, { status: 200 });
     }
 
@@ -1301,22 +1878,19 @@ export async function PUT(request: NextRequest) {
   }
   // 用户自定义状态 -------------------------------------------------------------------------------------
   if (isDefineStatus) {
-    const { spaceName, status }: DefineUserStatusBody = await request.json();
+    const { spaceName, participantId, status }: DefineUserStatusBody = await request.json();
     if (!spaceName || !status) {
       return NextResponse.json({ error: 'Space name and status are required' }, { status: 400 });
     }
-    const { success, error } = await SpaceManager.defineStatus(spaceName, status);
+    const { success, error } = await SpaceManager.defineStatus(spaceName, participantId, status);
     if (success) {
-      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
-      return NextResponse.json(
-        { success: true, status: spaceInfo?.status, spaceName } as DefineUserStatusResponse,
-        { status: 200 },
-      );
+      return NextResponse.json({ success: true, spaceName } as DefineUserStatusResponse, {
+        status: 200,
+      });
     } else {
       return NextResponse.json(
         {
           error,
-          status: [status],
         } as DefineUserStatusResponse,
         {
           status: 500,
@@ -1331,8 +1905,22 @@ export async function DELETE(request: NextRequest) {
   const socketId = request.nextUrl.searchParams.get('socketId');
   const childRoom = request.nextUrl.searchParams.get('childRoom') as ChildRoomMethods | null;
   const isDeleteParticipant = request.nextUrl.searchParams.get('participant') === 'delete';
+  const isSpaceDelete = request.nextUrl.searchParams.get('delete') === 'true';
   const isSpace = request.nextUrl.searchParams.get('space') === 'true';
   try {
+    // 删除整个Space ---------------------------------------------------------------------------------
+    if (isSpaceDelete && isSpace) {
+      const { spaceName } = await request.json();
+      const success = await SpaceManager.deleteEntireSpace(spaceName);
+      if (success) {
+        return NextResponse.json({ success: true, message: 'Space deleted successfully' });
+      } else {
+        return NextResponse.json(
+          { success: false, message: 'Failed to delete space' },
+          { status: 500 },
+        );
+      }
+    }
     // [离开子房间] ---------------------------------------------------------------------------------------------
     if (childRoom === ChildRoomMethods.LEAVE) {
       const body = await request.json();
@@ -1388,9 +1976,10 @@ export async function DELETE(request: NextRequest) {
             );
             if (success) {
               if (clearAll) {
-                return NextResponse.json({ success: true, clearRoom: spaceId });
+                return NextResponse.json({ success: true, space: spaceId, clearRoom: spaceId });
               }
               return NextResponse.json({
+                space: spaceId,
                 success: true,
                 message: 'Participant removed successfully',
               });
@@ -1442,7 +2031,13 @@ export async function DELETE(request: NextRequest) {
     }
   } catch (error) {
     console.error('DELETE Error:', error);
+    return NextResponse.json(
+      { success: false, error: error instanceof Error ? error.message : String(error) },
+      { status: 500 },
+    );
   }
+  // 如果没有任何分支命中，返回 Bad Request
+  return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
 }
 
 /// 通过livekit服务端API确定用户是否真的离开了房间
@@ -1463,58 +2058,71 @@ const reallyLeaveSpace = async (spaceName: string, participantId: string): Promi
 // 经过测试，发现当用户退出房间时可能会失败，导致用户实际已经退出，但服务端数据还存在
 // 增加心跳检测，定时检查用户是否在线，若用户已经离线，需要从房间中进行移除, 依赖livekit server api
 const userHeartbeat = async () => {
-  if (
-    isUndefinedString(LIVEKIT_API_KEY) ||
-    isUndefinedString(LIVEKIT_API_SECRET) ||
-    isUndefinedString(LIVEKIT_URL)
-  ) {
-    console.warn('LiveKit API credentials are not set, skipping user heartbeat check.');
-    return;
-  }
-  let hostname = LIVEKIT_URL!.replace('wss', 'https').replace('ws', 'http');
-  const roomServer = new RoomServiceClient(hostname, LIVEKIT_API_KEY!, LIVEKIT_API_SECRET!);
-  // 列出所有房间
-  const currentRooms = await roomServer.listRooms();
-  for (const room of currentRooms) {
-    // 列出房间中所有的参与者，然后和redis中的参与者进行对比
-    const roomParticipants = await roomServer.listParticipants(room.name);
-    const redisRoom = await SpaceManager.getSpaceInfo(room.name);
-    if (!redisRoom) {
-      continue; // 如果redis中没有这个房间，跳过 (本地开发环境和正式环境使用的redis不同，但服务器是相同的)
+  try {
+    if (
+      isUndefinedString(LIVEKIT_API_KEY) ||
+      isUndefinedString(LIVEKIT_API_SECRET) ||
+      isUndefinedString(LIVEKIT_URL)
+    ) {
+      console.warn('LiveKit API credentials are not set, skipping user heartbeat check.');
+      return;
     }
-    const redisParticipants = Object.keys(redisRoom.participants);
-    // 有两种情况: 1. redis中有参与者但livekit中没有, 2. livekit中有参与者但redis中没有
-    // 情况1: 说明参与者已经离开了房间，但redis中没有清除，需要从redis中删除
-    // 情况2: 说明参与者实际是在房间中的，但是redis中没有初始化成功，这时候就需要告知参与者进行初始化 (socket.io)
+    let hostname = LIVEKIT_URL!.replace('wss', 'https').replace('ws', 'http');
+    const roomServer = new RoomServiceClient(hostname, LIVEKIT_API_KEY!, LIVEKIT_API_SECRET!);
+    // 列出所有房间
+    const currentRooms = await roomServer.listRooms();
+    for (const room of currentRooms) {
+      // 列出房间中所有的参与者，然后和redis中的参与者进行对比
+      const roomParticipants = await roomServer.listParticipants(room.name);
+      const redisRoom = await SpaceManager.getSpaceInfo(room.name);
+      if (!redisRoom) {
+        continue; // 如果redis中没有这个房间，跳过 (本地开发环境和正式环境使用的redis不同，但服务器是相同的)
+      }
+      const redisParticipants = Object.keys(redisRoom.participants);
+      // 有两种情况: 1. redis中有参与者但livekit中没有, 2. livekit中有参与者但redis中没有
+      // 情况1: 说明参与者已经离开了房间，但redis中没有清除，需要从redis中删除
+      // 情况2: 说明参与者实际是在房间中的，但是redis中没有初始化成功，这时候就需要告知参与者进行初始化 (socket.io)
 
-    // 首先获取两种情况的参与者
-    const inRedisNotInLK = redisParticipants.filter((p) => {
-      return !roomParticipants.some((lkParticipant) => lkParticipant.identity === p);
-    });
+      // 首先获取两种情况的参与者
+      const inRedisNotInLK = redisParticipants.filter((p) => {
+        return !roomParticipants.some((lkParticipant) => lkParticipant.identity === p);
+      });
 
-    const inLKNotInRedis = roomParticipants.filter((lkParticipant) => {
-      return !redisParticipants.includes(lkParticipant.identity);
-    });
-    // 处理情况1 --------------------------------------------------------------------------------------------
-    if (inRedisNotInLK.length > 0) {
-      for (const participantId of inRedisNotInLK) {
-        await SpaceManager.removeParticipant(room.name, participantId);
+      const inLKNotInRedis = roomParticipants.filter((lkParticipant) => {
+        return !redisParticipants.includes(lkParticipant.identity);
+      });
+      // 处理情况1 --------------------------------------------------------------------------------------------
+      if (inRedisNotInLK.length > 0) {
+        // 检查房间是否为持久化房间
+        if (redisRoom.persistence) {
+          console.warn(`Skipping participant removal for persistent room: ${room.name}`);
+          continue; // 跳过持久化房间的参与者清理
+        }
+        for (const participantId of inRedisNotInLK) {
+          await SpaceManager.removeParticipant(room.name, participantId);
+        }
+      }
+
+      // 处理情况2 --------------------------------------------------------------------------------------------
+      if (inLKNotInRedis.length > 0) {
+        for (const participant of inLKNotInRedis) {
+          socket.emit('re_init', {
+            space: room.name,
+            participantId: participant.identity,
+          } as WsParticipant);
+        }
       }
     }
-
-    // 处理情况2 --------------------------------------------------------------------------------------------
-    if (inLKNotInRedis.length > 0) {
-      for (const participant of inLKNotInRedis) {
-        socket.emit('re_init', {
-          space: room.name,
-          participantId: participant.identity,
-        } as WsParticipant);
-      }
-    }
+  } catch (error) {
+    console.error('Error in userHeartbeat:', error);
+    // 网络错误或LiveKit服务器不可达时，记录错误但不中断定时任务
   }
 };
 
 // 定时任务，每隔5分钟执行一次
-setInterval(async () => {
-  await userHeartbeat();
-}, 5 * 60 * 1000); // 每5分钟执行一次
+setInterval(
+  async () => {
+    await userHeartbeat();
+  },
+  5 * 60 * 1000,
+); // 每5分钟执行一次

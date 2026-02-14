@@ -7,7 +7,9 @@ import { useMemo, useState } from 'react';
 import styles from '@/styles/controls.module.scss';
 import { ControlType, WsBase, WsControlParticipant, WsInviteDevice, WsTo } from '@/lib/std/device';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { src } from '@/lib/std';
+import { isSpaceManager, src } from '@/lib/std';
+import { exportRBAC, usePlatformUserInfo } from '@/lib/hooks/platform';
+import { HomeOutlined } from '@ant-design/icons';
 
 export interface ControlRKeyMenuProps {
   disabled?: boolean;
@@ -27,7 +29,13 @@ export function ControlRKeyMenu({
   const trigger: ('click' | 'contextMenu' | 'hover')[] = isRKey ? ['contextMenu'] : ['click'];
 
   return (
-    <Dropdown disabled={disabled} trigger={trigger} menu={menu} onOpenChange={onOpenChange}>
+    <Dropdown
+      disabled={disabled}
+      trigger={trigger}
+      menu={menu}
+      onOpenChange={onOpenChange}
+      className="vocespace_full_size"
+    >
       {children}
     </Dropdown>
   );
@@ -42,6 +50,7 @@ export interface UseControlRKeyMenuProps {
   setUsername: (username: string) => void;
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
+  isSelf: boolean;
 }
 
 export function useControlRKeyMenu({
@@ -53,6 +62,7 @@ export function useControlRKeyMenu({
   setUsername,
   updateSettings,
   toRenameSettings,
+  isSelf,
 }: UseControlRKeyMenuProps) {
   const { t } = useI18n();
   // 必要的状态和Owner的确定 -------------------------------------------------------------------
@@ -62,9 +72,19 @@ export function useControlRKeyMenu({
   const [volume, setVolume] = useState(0.0);
   const [blurVideo, setBlurVideo] = useState(0.0);
   const [blurScreen, setBlurScreen] = useState(0.0);
+  // const isOwner = useMemo(() => {
+  //   return spaceInfo.ownerId === space?.localParticipant.identity;
+  // }, [spaceInfo.ownerId, space?.localParticipant.identity]);
   const isOwner = useMemo(() => {
-    return spaceInfo.ownerId === space?.localParticipant.identity;
+    return isSpaceManager(spaceInfo, space?.localParticipant.identity || '').ty === 'Owner';
   }, [spaceInfo.ownerId, space?.localParticipant.identity]);
+  const { manageRole, controlUser } = useMemo(() => {
+    return exportRBAC(space?.localParticipant.identity || '', spaceInfo);
+  }, [space, spaceInfo]);
+  const { platUser } = usePlatformUserInfo({
+    space: space,
+    uid: space?.localParticipant.identity!,
+  });
 
   // 处理音量、模糊视频和模糊屏幕的调整------------------------------------------------------------
   const handleAdjustment = async (
@@ -91,7 +111,7 @@ export function useControlRKeyMenu({
         } as WsBase);
       }
     } else {
-      if (space?.localParticipant && selectedParticipant && isOwner) {
+      if (space?.localParticipant && selectedParticipant && manageRole) {
         let wsTo = {
           space: space.name,
           senderName: space.localParticipant.name,
@@ -185,7 +205,7 @@ export function useControlRKeyMenu({
                   }}
                 >
                   <Slider
-                    disabled={!isOwner}
+                    disabled={!isSelf}
                     min={0.0}
                     max={100.0}
                     step={1.0}
@@ -195,7 +215,7 @@ export function useControlRKeyMenu({
                     }}
                     onChangeComplete={(e) => {
                       setVolume(e);
-                      handleAdjustment('control.volume');
+                      handleAdjustment('control.volume', true);
                     }}
                   ></Slider>
                 </div>
@@ -219,7 +239,7 @@ export function useControlRKeyMenu({
                   }}
                 >
                   <Slider
-                    disabled={!isOwner}
+                    disabled={!isSelf}
                     min={0.0}
                     max={1.0}
                     step={0.05}
@@ -229,7 +249,7 @@ export function useControlRKeyMenu({
                     }}
                     onChangeComplete={(e) => {
                       setBlurVideo(e);
-                      handleAdjustment('control.blur_video');
+                      handleAdjustment('control.blur_video', true);
                     }}
                   ></Slider>
                 </div>
@@ -253,7 +273,7 @@ export function useControlRKeyMenu({
                   }}
                 >
                   <Slider
-                    disabled={!isOwner}
+                    disabled={!isSelf}
                     min={0.0}
                     max={1.0}
                     step={0.05}
@@ -263,7 +283,7 @@ export function useControlRKeyMenu({
                     }}
                     onChangeComplete={(e) => {
                       setBlurScreen(e);
-                      handleAdjustment('control.blur_screen');
+                      handleAdjustment('control.blur_screen', true);
                     }}
                   ></Slider>
                 </div>
@@ -287,10 +307,19 @@ export function useControlRKeyMenu({
             ),
             icon: <SvgResource type="leave" svgSize={16} />,
           },
+          ...(platUser
+            ? [
+                {
+                  key: 'safe.platform',
+                  label: <span>{t('more.platform')}</span>,
+                  icon: <HomeOutlined style={{ fontSize: 16 }}></HomeOutlined>,
+                },
+              ]
+            : []),
         ],
       },
     ];
-  }, [isCamDisabled, isMicDisabled, isOwner, isScreenShareDisabled, volume, blurVideo, blurScreen]);
+  }, [isCamDisabled, isMicDisabled, isScreenShareDisabled, volume, blurVideo, blurScreen, isSelf]);
   // 右键他人的菜单选项 -------------------------------------------------------------
   const optItems: MenuProps['items'] = useMemo(() => {
     const controlItems: MenuProps['items'] = [
@@ -309,7 +338,7 @@ export function useControlRKeyMenu({
               }}
             >
               <Slider
-                disabled={!isOwner}
+                disabled={!controlUser}
                 min={0.0}
                 max={100.0}
                 step={1.0}
@@ -325,7 +354,7 @@ export function useControlRKeyMenu({
             </div>
           </div>
         ),
-        disabled: !isOwner,
+        disabled: !controlUser,
       },
       {
         key: 'control.blur_video',
@@ -344,7 +373,7 @@ export function useControlRKeyMenu({
               }}
             >
               <Slider
-                disabled={!isOwner}
+                disabled={!controlUser}
                 min={0.0}
                 max={1.0}
                 step={0.05}
@@ -360,7 +389,7 @@ export function useControlRKeyMenu({
             </div>
           </div>
         ),
-        disabled: !isOwner,
+        disabled: !controlUser,
       },
       {
         key: 'control.blur_screen',
@@ -379,7 +408,7 @@ export function useControlRKeyMenu({
               }}
             >
               <Slider
-                disabled={!isOwner}
+                disabled={!controlUser}
                 min={0.0}
                 max={1.0}
                 step={0.05}
@@ -395,27 +424,48 @@ export function useControlRKeyMenu({
             </div>
           </div>
         ),
-        disabled: !isOwner,
+        disabled: !controlUser,
       },
     ];
 
-    const otherItems: MenuProps['items'] = isOwner
+    // 如果selectParticipant是Owner，就不能转让管理员权限
+    const managerItems = [];
+
+    if (spaceInfo.ownerId !== selectedParticipant?.identity) {
+      managerItems.push({
+        key: 'control.trans',
+        label: (
+          <span style={{ marginLeft: '8px' }}>
+            {isOwner
+              ? t('more.participant.set.control.trans')
+              : t('more.participant.set.control.trans_manager')}
+          </span>
+        ),
+        icon: <SvgResource type="switch" svgSize={16} />,
+        disabled: !manageRole,
+      });
+      managerItems.push({
+        key: 'control.setManager',
+        label: (
+          <span style={{ marginLeft: '8px' }}>
+            {spaceInfo.managers.includes(selectedParticipant?.identity || '')
+              ? t('more.participant.set.control.remove_manager')
+              : t('more.participant.set.control.set_manager')}
+          </span>
+        ),
+        icon: <SvgResource type="manager" svgSize={16} color="#FFAA33" />,
+        disabled: !isOwner,
+      });
+    }
+
+    const otherItems: MenuProps['items'] = controlUser
       ? [
           {
             label: t('more.participant.set.control.title'),
             key: 'control',
             type: 'group',
             children: [
-              {
-                key: 'control.trans',
-                label: (
-                  <span style={{ marginLeft: '8px' }}>
-                    {t('more.participant.set.control.trans')}
-                  </span>
-                ),
-                icon: <SvgResource type="switch" svgSize={16} />,
-                disabled: !isOwner,
-              },
+              ...managerItems,
               {
                 key: 'control.change_name',
                 label: (
@@ -424,7 +474,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="user" svgSize={16} />,
-                disabled: !isOwner,
+                disabled: !controlUser,
               },
               {
                 key: 'control.mute_audio',
@@ -434,7 +484,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="audio_close" svgSize={16} />,
-                disabled: !isOwner ? true : !isMicDisabled,
+                disabled: !controlUser ? true : !isMicDisabled,
               },
               {
                 key: 'control.mute_video',
@@ -444,7 +494,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="video_close" svgSize={16} />,
-                disabled: !isOwner ? true : !isCamDisabled,
+                disabled: !controlUser ? true : !isCamDisabled,
               },
               {
                 key: 'control.mute_screen',
@@ -454,7 +504,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="screen_close" svgSize={16} />,
-                disabled: !isOwner ? true : !isScreenShareDisabled,
+                disabled: !controlUser ? true : !isScreenShareDisabled,
               },
               ...controlItems,
             ],
@@ -472,7 +522,7 @@ export function useControlRKeyMenu({
                   </span>
                 ),
                 icon: <SvgResource type="leave" svgSize={16} />,
-                disabled: !isOwner,
+                disabled: !controlUser,
               },
             ],
           },
@@ -523,7 +573,19 @@ export function useControlRKeyMenu({
       },
       ...otherItems,
     ];
-  }, [isCamDisabled, isMicDisabled, isOwner, isScreenShareDisabled, volume, blurVideo, blurScreen]);
+  }, [
+    isCamDisabled,
+    isMicDisabled,
+    isOwner,
+    isScreenShareDisabled,
+    volume,
+    blurVideo,
+    blurScreen,
+    spaceInfo,
+    selectedParticipant,
+    manageRole,
+    controlUser,
+  ]);
   // 处理自己的菜单点击事件 -------------------------------------------------------------
   const handleSelfOptClick: MenuProps['onClick'] = (e) => {
     if (space?.localParticipant) {
@@ -538,6 +600,12 @@ export function useControlRKeyMenu({
               space.disconnect(true);
             },
           });
+          break;
+        }
+        case 'safe.platform': {
+          if (platUser && platUser.id) {
+            window.open(`https://home.vocespace.com/auth/user/${platUser.id}`, '_blank');
+          }
           break;
         }
         case 'control.change_name': {
@@ -578,7 +646,7 @@ export function useControlRKeyMenu({
         socket.emit('invite_device', {
           ...wsTo,
           device,
-          isOpen
+          isOpen,
         } as WsInviteDevice);
       };
 
@@ -657,6 +725,13 @@ export function useControlRKeyMenu({
           } as WsControlParticipant);
           break;
         }
+        case 'control.setManager': {
+          socket.emit('control_participant', {
+            ...wsTo,
+            type: ControlType.setManager,
+          } as WsControlParticipant);
+          break;
+        }
         default:
           break;
       }
@@ -684,5 +759,6 @@ export function useControlRKeyMenu({
     handleOptClick,
     optOpen,
     isOwner,
+    manageRole,
   };
 }

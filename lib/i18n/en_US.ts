@@ -1,5 +1,34 @@
 export default {
+  api: {
+    token: {
+      out_of_date: 'Token has expired, please obtain a new one',
+    },
+    room: {
+      error: {
+        full_and_wait: 'All rooms are full, please wait a moment', //flag
+        not_exist: 'Room does not exist or has been deleted',
+        invalid_identity_c_s:
+          'Invalid identity type, the user can only be an assistant or a customer', //flag
+      },
+    },
+  },
+  auth: {
+    createRoom: 'Create room',
+    manageRoom: 'Manage room',
+    manageRole: 'Manage roles',
+    controlUser: 'Control user',
+    recording: 'Recording space',
+    save: 'Save changes',
+    saveFail: 'Save failed, please try again later',
+    saveSuccess: 'Save successful',
+    viewRoom: 'View rooms',
+  },
   common: {
+    full_screen: 'Full Screen',
+    guest: {
+      not_allow:
+        'Sorry, the current space does not allow guests to join without signing in. Please log in or sign up to continue.',
+    },
     confirm: 'Confirm',
     cancel: 'Cancel',
     alert: 'Alert',
@@ -11,7 +40,7 @@ export default {
     unknown: 'Unknown',
     loading: 'Loading...',
     no_data: 'No data available',
-    no_more: 'No more data',
+    no_more: 'No more data', //flag
     demo: 'New Space',
     custom: 'Enter Space Name',
     start_metting: 'Join',
@@ -32,29 +61,202 @@ export default {
       screen: 'Screen',
     },
     chat: 'Chat',
-    chat_placeholder: 'Please enter a message',
+    chat_placeholder: 'Click here to start typing your message to the current room',
     chat_drag_file_here: 'Drag file here',
+    files: 'Files',
+    upload: 'Upload',
     send: 'Send',
-    send_file_or: 'Do you want to send this file?',
+    sending: 'Sending',
+    send_file_or:
+      'Please confirm you would like to share the selected file with all users currently in this room.',
     leave: 'Leave',
     share_screen: 'Share Screen',
-    stop_share: 'Stop Share Screen',
-    wave_msg: 'sent you a reminder!',
-    full_user:
-      'The room user has exceeded the limit and cannot join. You can join other rooms or inform the builder to upgrade your license to obtain more user slots.',
-    open: 'Open',
-    close: 'Close',
+    stop_share: 'Stop Screen Share',
+    wave_msg: 'sent you a reminder!', //flag
+    full_user: 'Sorry, the room you have tried to join is currently full.',
+    open: 'ON',
+    close: 'OFF',
     high_quality: 'Lossless mode',
     high_quality_desc:
-      'When enabled, video, audio, and screen sharing will be transmitted at a fixed resolution and higher quality, but may increase bandwidth usage and latency.',
+      'When enabled, video, audio, and screen sharing will be transmitted at a fixed resolution and higher quality. This mode may increase bandwidth usage and latency.',
     socket_reconnect: 'Reconnecting...',
+    create_own_space: 'Create your own VoceSpace',
+    create_space: {
+      jump: 'Jump to your Vocespace?',
+      success: 'Space created successfully',
+      error: {
+        unknown: 'Space creation failed. Please try again later or create manually.',
+        param: 'Space creation failed. Some required parameters were missing.',
+        exist:
+          'The Space you have tried to create already exists. Please check whether it has been created or manually create it to access it.', //flag
+      },
+      ok: 'Jump',
+      cancel: 'Cancel',
+    },
+    start_sharing: 'Start Sharing',
+    copy: {
+      success: 'Copied to clipboard',
+      error: 'Copying failed, please copy manually',
+    },
+  },
+  work: {
+    title: 'Worklog',
+    start: 'Start Worklog',
+    close: 'End Worklog',
+    desc: 'Worklog lets you automatically log your work activity based on a screen you choose to share. You have full control over what you share.',
+    use_ai: 'Enable AI Work Summary',
+    sync: 'Synchronize Configuration',
+    sync_desc:
+      'As an administrator/host, you can synchronize the following settings to all members who have enabled Worklog.', //flag
+    save: {
+      success: 'Worklog settings saved successfully',
+      error: 'Worklog settings save failed, please try again later.',
+    },
+    mode: {
+      start: {
+        success: 'Worklog enabled',
+        error: 'Failed to enable worklog, please try again later.',
+      },
+      stop: {
+        success: 'Worklog disabled',
+        error: 'Failed to disable worklog, please try again later.', //flag
+      },
+    },
+  },
+  ai: {
+    cut: {
+      blur: {
+        title: 'Screenshot Blur',
+        desc: 'You can blur worklog screenshots. Blur does not affect AI summaries. Blur is only applied to screenshots saved in the cloud and viewed by others.',
+      },
+      time: {
+        start: 'Start Time',
+        duration: 'Duration (minutes)',
+      },
+      extraction: {
+        title: 'Summaries Level of Detail',
+        desc: 'You can set how detailed you want AI summaries to be.',
+        easy: 'High-level',
+        medium: 'Medium',
+        max: 'Max Detail',
+      },
+      report: 'AI Analysis Report', //flag this section 141-175, need to confirm verbage for AI "analysis" vs summary vs worklog vs report
+      start: 'Start Analysis',
+      stop: 'Stop Analysis',
+      empty:
+        'Once AI analysis is enabled, the system will periodically take screenshots and analyze them to help you summarize the content of your space and generate reports.',
+      title: 'AI Analysis Settings',
+      freq: 'Screenshot Frequency (minutes)',
+      freq_desc:
+        'Sets the screenshot frequency for AI analysis. The default is to take a screenshot every 5 minutes for analysis. If it takes longer than 5 minutes, the first screenshot will be taken at the 5-minute mark.',
+      ask_permission:
+        'Your AI worklog will capture screen activity. Please share the screen or window of your task.',
+      ask_permission_title: 'Screen Sharing Permission',
+      choose: 'Choose Screen',
+      not_now: 'Not now',
+      source_dep: 'AI Work Log Source Data',
+      source_dep_desc:
+        'Select the screen sharing source data to use for AI analysis. You can choose to share the entire screen, work to-dos, or time spent. Choosing appropriate source data helps improve the accuracy and relevance of AI analysis.',
+      share_screen: 'Share Screen',
+      share_todo: 'To-do List',
+      share_time: 'Time Spent',
+      share_timeStatistic: 'Duration',
+      open: 'Enable AI analysis service',
+      freq_analysis: 'AI analysis frequency (minutes)',
+      myAnalysis: 'My AI analysis report',
+      error: {
+        res: 'Unable to retrieve AI analysis results, please try again later.',
+        download: 'Unable to download Markdown report, please try again later.',
+        reload: 'Unable to update AI analysis results, please try again later.',
+        start:
+          'Unable to start AI analysis service, please check if screen sharing permission is enabled.',
+      },
+      success: {
+        reload: 'AI analysis results updated',
+        stop: 'AI analysis service stopped',
+        start: 'AI analysis service started',
+      },
+      download: 'Download Markdown report',
+      download_content:
+        'Preparing your report. This process can take up to a minute. Closing the current page will cancel the process.', //flag - closing or refreshing, or just closing?
+      reload: 'Update report',
+    },
+  },
+  login: {
+    following: 'Login using the following method',
+    out: 'Log out',
+    anon: 'Anonymous', //flag
+    guest: 'Join as a guest',
+  },
+  reaction: {
+    title: 'Reaction', //flag - where is this?
   },
   docker: {
     record:
       'Recording is an enterprise feature, for upgrading please contact han@priovce.com or add WeChat: Privoce',
   },
   recording: {
-    title: 'Recording',
+    title: 'Saved Recordings',
+    empty: 'No recordings saved yet',
+    fresh: 'Refresh list',
+    search: {
+      success: 'Successfully searched for recording files', //flag maybe Found the following files, cant see in UI where to run search
+      error:
+        'No recording files found. Please check if the room name is correct. The room may not have any recorded video files, or it may have been deleted.',
+    },
+    try_s3: {
+      unavailable: 'The storage service is not configured or the environment variables are not set',
+      init: 'Successfully retrieved the simple storage service environment variables',
+      connected: 'Connected to the storage service',
+      connect_error:
+        'Unable to connect to the storage service. You may be accessing a local service. Please check the configuration or contact the administrator.',
+      connecting: 'Connecting to the storage service...',
+      enving: 'Getting environment variables...',
+      unconnect: 'Unable to connect to the storage service',
+    },
+    copy: {
+      title: 'Copy Link',
+      success: 'Link successfully copied to clipboard',
+      error: 'Failed to copy link, please copy manually',
+    },
+    get_download_link: {
+      success: 'Successfully got download link', //flag need to see context
+      error: 'Failed to get download link, please try again later',
+    },
+    delete: {
+      title: 'Delete',
+      confirm: {
+        title: 'Confirm deletion',
+        content: [
+          'Are you sure you want to delete the recording file?', //flag - selected files or file(s) or file
+          'Deleted files cannot be recovered.',
+        ],
+        ok: 'Delete',
+        cancel: 'Cancel',
+      },
+      success: 'Deleted successfully',
+      error: 'Deletion failed, please try again later',
+    },
+    download: {
+      title: 'Download',
+      success: 'Download link successfully obtained, file downloading...',
+      error:
+        'Failed to obtain download link, please try again later or contact the space administrator',
+    },
+    table: {
+      file: 'File name',
+      opt: 'Operation', //flag
+      size: 'File size',
+      last_modified: 'Last modified',
+      ty: 'Type',
+      ty_json: 'Record file', //flag
+      ty_video: 'Video file',
+    },
+    pagation: {
+      total: 'Total',
+      num: 'Items',
+      now: 'Number',
+    },
   },
   channel: {
     menu: {
@@ -69,13 +271,14 @@ export default {
       rename: 'Rename',
       switch_privacy: 'Set to ',
       active: 'active',
+      share: 'Share',
     },
     join: {
       title: 'Join Room',
-      success: 'Join room successfully',
+      success: 'Joined room successfully',
     },
     delete: {
-      success: 'Delete room successfully',
+      success: 'Deleted room successfully',
       error: 'Failed to delete room, please try again later. ',
       remain:
         'There are still members in the room and it cannot be deleted. Please notify all members to leave the room first.',
@@ -86,14 +289,14 @@ export default {
       empty_name: 'Room name cannot be empty',
     },
     leave: {
-      success: 'Leave room, return to Space successfully',
+      success: 'Left room, returned to lobby successfully',
       error: 'Failed to leave room, please try again later. ',
     },
     modal: {
       title: 'Create a room',
       desc: [
-        'After creating a room, you can invite other participants to join the room. Rooms can be used for specific discussions or activities.',
-        'In a room, the Space is still visible, and you can return to the Space at any time to communicate. For participants in the Space, they cannot hear the discussion content of the room, but they can see the existence of the room.',
+        'Rooms are places to meet, host activities, or work on your own. Like setting up at a coffee shop, library, or coworking space. Anybody can join a public room. Users need permission to join private rooms.',
+        'Signed-in users can see rooms in the space. You can only hear the room you are currently in. Guests cannot see anything outside the room they are in.', //flag need to understand visibility differences across permission levels
       ],
       placeholder: 'Please enter the room name',
       cancel: 'Cancel',
@@ -102,27 +305,27 @@ export default {
         title: 'Privacy',
         public: {
           title: 'Public',
-          desc: 'Public rooms, any participant in the space can join freely, room permissions are loose, suitable for open discussions.',
+          desc: 'Public rooms: Any participant in the space can join freely. Room permissions are loose. Suitable for open discussions.',
         },
         private: {
           title: 'Private',
-          desc: 'Private rooms, room permissions are completely controlled by the owner, only with the consent of the room owner can join, suitable for discussions that require privacy protection.',
+          desc: 'Private rooms: Joining requires permission from the room owner. Room permissions are completely controlled by the owner. Suitable for private meetings and events.',
         },
         success: 'Privacy switch successful, currently is',
       },
       join: {
         title: 'Request to join the room',
-        want: 'Want to join the room, do you agree? ',
-        ok: 'Agree',
-        cancel: 'Reject',
+        want: 'wants to join the room. May they enter?', //flag - what happens when multiple people try to join at the same time? do we have a queue? Admit All button?
+        ok: 'Yes',
+        cancel: 'No',
         missing_data:
-          'Joining data is not available. If you see this error, please contact the development team. ',
-        reject: 'Sorry! You are rejected to join the room. ',
-        missing_owner: 'The room owner is currently offline and cannot process your request.',
+          'Joining data is not available. If you see this error, please contact the space administrator.',
+        reject: 'The door will not budge.', //flag Space admins should be able to set custom responses to room accept and deny
+        missing_owner: 'The room owner is currently offline and cannot process your request.', //flag I don't see this notice appear when I try to join empty rooms
       },
       rename: {
         title: 'Rename room',
-        desc: 'Please enter a new room name. The room name can be modified at any time. But it cannot be the same as other existing room names. ',
+        desc: 'Please enter a new room name. The room name can be modified at any time. Two rooms in a space cannot have the same name.',
         placeholder: 'Please enter a new room name',
         ok: 'Rename',
         cancel: 'Cancel',
@@ -140,16 +343,37 @@ export default {
   more: {
     title: 'More',
     channel: 'Channel',
+    platform: 'Profile Page',
+    ai: {
+      cut: 'AI Analysis',
+      desc: "Timed screenshots and AI analysis help you summarize your space's content and generate reports.",
+    },
     app: {
       title: 'Application',
+      raise: {
+        cancel: 'Cancel Raise Hand',
+        title: 'Raise Hand',
+        receive: 'raised their hand',
+        handle: {
+          title: 'Handling Request', //flag - this feature can probably be deleted. its sufficient to simply notify room owners of raised hands
+          accept: 'Allow',
+          accept_desc: 'Allow the user to speak and notify them that they can speak.',
+          reject: 'Decline',
+          reject_desc:
+            "Decline the user's request to speak, notify them, and cancel their raised hand status.",
+          rejected: 'Sorry, your request to speak has been declined.',
+          accepted: 'Your raised hand has been called on. Please begin speaking.',
+        },
+      },
       upload: {
+        //flag - what it this?
         to_space: 'Upload application to space',
         history: 'Upload history',
         success: 'Application upload successful',
         error: 'Application upload failed. Please try again later.',
       },
       tab: {
-        self: 'self',
+        self: 'self', //flag ?
         no_auth: 'This user does not have read/write permissions enabled',
       },
       settings: {
@@ -188,16 +412,25 @@ export default {
         },
       },
       todo: {
-        title: 'Todo',
-        add: 'Add todo',
-        placeholder: 'Please enter todo',
-        empty: 'No todo, enter todo below and click the add button to create a new todo',
+        title: 'To-Do',
+        add: 'Add task',
+        placeholder: 'Please enter to-do',
+        empty: 'No tasks available, please create new tasks below',
         create: 'Create todo',
-        empty_value: 'Todo cannot be empty',
-        delete: 'Todo deleted successfully',
+        empty_value: 'To-do cannot be empty',
+        delete: 'To-do deleted successfully',
         undone: 'Undone',
         done: 'Done',
-        unexport: 'Current todo is empty, cannot export',
+        unexport: 'Current to-do is empty, cannot export',
+        complete: 'Completed Tasks',
+        together: {
+          title: 'Team Status',
+          empty: 'No user task available',
+        },
+        copy: 'Copy todo',
+        today_done: 'Completed today',
+        history: 'Current list',
+        today_empty: 'No task completed today, keep going!',
       },
     },
     record: {
@@ -211,7 +444,7 @@ export default {
       confirm_request: 'Request recording',
       cancel: 'Cancel',
       download_msg:
-        'The recording is complete and is being transferred to the cloud for storage. You can access the records of the current service to download it. ',
+        'The recording is complete and is being transferred to cloud storage. You can access saved recordings in Settings.',
       download: 'Download recording',
       to_download: 'Download Page',
     },
@@ -219,19 +452,20 @@ export default {
       title: 'Participants',
       manage: 'Manage Participants',
       search: 'Search Participants',
-      manager: 'host',
+      manager: 'Manager',
+      host: 'Host',
+      wave: 'Send Greeting',
       invite: {
         title: 'Invite Participants',
         web: 'in Browser',
-        add: 'add into VoceSpace Room',
+        add: 'add into VoceSpace room',
         texts: [
-          'Invite you to join VoceSpace',
-          'Please click|copy the following link to',
-          'Please copy the following room name to',
+          "$user invites you to join [$space]'s VoceSpace",
+          "Please click or copy the following link and join [$space]'s VoceSpace in browser",
         ],
         ok: 'Copy Invite',
         cancel: 'Cancel',
-        link: 'Link',
+        link: 'Join link',
         room: 'Room Name',
       },
       set: {
@@ -239,12 +473,12 @@ export default {
           title: 'Participant Invite',
           wave: 'Send a Reminder',
           open: {
-            video: 'Invite to Enable Camera',
-            audio: 'Invite to Enable Microphone',
+            video: 'Invite to Turn On Camera',
+            audio: 'Invite to Unmute',
             share: 'Invite to Share Screen',
           },
           close: {
-            video: 'Invite to Disable Camera',
+            video: 'Invite to Disable Camera', //flag - if this is an admin action, "invite to" should be deleted. is it just a request?
             audio: 'Invite to Disable Microphone',
             share: 'Invite to Stop Sharing Screen',
           },
@@ -252,6 +486,9 @@ export default {
         control: {
           title: 'Participant Control',
           trans: 'Transfer Room Host',
+          trans_manager: 'Transfer Manager Role',
+          set_manager: 'Grant Manager Permissions',
+          remove_manager: 'Remove Manager Permissions',
           change_name: 'Change Name',
           mute: {
             audio: 'Mute Microphone',
@@ -260,12 +497,12 @@ export default {
           },
           volume: 'Volume Adjustment',
           blur: {
-            video: 'Video Blur',
-            screen: 'Screen Blur',
+            video: 'Blur Camera Video',
+            screen: 'Blur Shared Screen',
           },
         },
         safe: {
-          title: 'Safe',
+          title: 'Admin',
           remove: {
             title: 'Remove member',
             desc: 'Are you sure you want to remove this member? ',
@@ -273,9 +510,9 @@ export default {
             cancel: 'Cancel',
           },
           leave: {
-            title: 'Leave VoceSpace',
+            title: 'Leave VoceSpace', //flag - probably brand with $space
             desc: 'Are you sure you want to leave VoceSpace?',
-            confirm: 'Confirm to leave',
+            confirm: 'Yes',
             cancel: 'Cancel',
           },
         },
@@ -284,6 +521,41 @@ export default {
   },
   settings: {
     title: 'Settings',
+    auth: {
+      title: 'Permissions',
+    },
+    ai: {
+      title: 'AI',
+      desc: 'Configure the relevant parameters of the AI ​​analysis service to enable AI analysis functions.',
+      model: 'Model name (multimodal model)',
+      model_desc:
+        'Select the language model for AI analysis. The model name must support multimodal input (image + text) to process screenshots and generate analysis reports.',
+      key: 'API key',
+      url: 'API address',
+      recommand: [
+        'We recommend using the following multimodal models for better AI analysis results:',
+        '1. GPT-4V',
+        '2. Claude-3-vision',
+        '3. Gemini-Pro-Vision',
+        '4. Qwen3',
+        '5. Doubao',
+      ],
+      enabled: 'AI inquiry pop-up',
+      update: {
+        save: 'Save AI configuration',
+        success: 'AI configuration update successful',
+        error: 'AI configuration update failed, please try again later. ',
+        incomplete:
+          'Please fill in the AI ​​configuration parameters completely, ensuring that the model name, API address, and API key are all entered.',
+      },
+      precheck: {
+        desc: 'To modify AI settings, you need to enter a host token for verification. If you do not know your host token, please contact the software deployer to obtain it.',
+        placeholder: 'Please enter your host token',
+        check: 'Verify',
+        error: 'Verification failed. Please check and re-enter.',
+        success: 'Verification successful. You can now modify AI settings.',
+      },
+    },
     general: {
       title: 'General',
       username: 'Username',
@@ -291,7 +563,7 @@ export default {
       share_audio: 'Share Screen Audio',
       prompt_sound: 'Enter Prompt Sound',
       persistence: {
-        title: 'Persistent Space',
+        title: 'Auto-save Rooms and Members History Data',
         success: 'Successfully set the current space to persistent',
         error: 'Failed to set the current space to persistent',
       },
@@ -317,17 +589,28 @@ export default {
           hd: 'HD',
           ultra: 'Ultra',
         },
+        allow_guest: {
+          title: 'Guest Permission',
+          allow: 'Allow guests to join',
+          disable: 'Disable guest to join',
+          link: 'Allow guest joining a private room with an invitation link',
+          success: 'Guest join settings modified successfully',
+          error: 'Failed to set guest access for the current space',
+        },
       },
       status: {
-        title: 'Status',
+        //flag is this feature enabled? i see status text edit field, but no preset options like below
+        title: 'State',
         online: 'Online',
         online_desc: "Online, user's video and audio will work normally",
-        leisure: 'Leisure',
-        leisure_desc: "Leisure, user's video will be blurred, audio will not be adjusted",
+        leisure: 'On break',
+        leisure_desc: "On break, user's video will be blurred, audio will not be adjusted",
         busy: 'Busy',
         busy_desc: "Busy, user's video will be blurred, audio will be muted",
         offline: 'Away',
         offline_desc: "Away, user's video and audio will be turned off",
+        working: 'Working',
+        working_desc: 'Dependency to-do auto generates current work status',
         define: {
           title: 'Custom state',
           name: 'State name',
@@ -346,14 +629,14 @@ export default {
         title: 'Custom Status',
         name: 'Status Name',
         desc: 'Status Description',
-        icon: 'Status Icon',
+        icon: 'State Icon',
         placeholder: {
-          name: 'Please enter status name',
-          desc: 'Please enter status description',
+          name: 'Please enter state name',
+          desc: 'Please enter state description',
         },
-        save: 'Save Status',
-        success: 'Status saved successfully',
-        fail: 'Failed to save status',
+        save: 'Save State',
+        success: 'State saved successfully',
+        fail: 'Failed to save state',
       },
     },
     license: {
@@ -370,7 +653,7 @@ export default {
       input: 'Please enter license',
       gift: {
         title: 'A chance to get a free upgrade! 🎁',
-        desc: 'Share your experience through blog posts or social media to get a chance to upgrade for free. Add WeChat to get: Privoce',
+        desc: 'Share your experience through blog posts or social media to get a chance to upgrade for free. Add WeChat to get: Privoce', //flag clarify ask
       },
       license_pro: 'VoceSpace Pro [$499/year]',
       license_custom: 'VoceSpace Custom',
@@ -380,8 +663,9 @@ export default {
       invalid: 'The certificate is invalid or expired. Please check if it is correct.',
       invalid_domain:
         'The current domain is not in the list of allowed domains for the certificate. Please contact the administrator to check the server domain configuration.',
+      //flag clarify, this is for free trial?
       default_license:
-        'To ensure your use, the current system has loaded a default certificate for you. The default certificate only supports temporary rooms with less than 5 people. If you need more user places, please purchase a professional certificate.',
+        'To ensure your use, the current system has loaded a default certificate for you. The default certificate only supports temporary rooms with fewer than 5 people. If you would like to host more users, please purchase a professional certificate.',
       update_success: 'The certificate was updated successfully',
       circle_ip:
         'Your current IP address is a loopback address/private address, and we do not recommend purchasing a license for this address. Please purchase a license using a public IP address. If you need to purchase licenses and support services for private addresses, please contact WeChat: Privose.',
@@ -394,21 +678,21 @@ export default {
     },
     video: {
       title: 'Video',
-      video_blur: 'Video Blur',
-      screen_blur: 'Screen Blur',
-      device: 'Video Device',
+      video_blur: 'Camera Video Blur',
+      screen_blur: 'Shared Screen Blur',
+      device: 'Video Input Device',
     },
     virtual: {
-      title: 'Virtual Role',
+      title: 'Video Preview',
       tab: {
-        model: 'Model',
-        background: 'Background',
+        model: 'Video Avatar',
+        background: 'Video Avatar Background',
       },
-      open: 'Enable Virtual Role',
-      model: 'Virtual Role Model',
-      background: 'Virtual Role Background',
+      open: 'Enable Video Avatar',
+      model: 'Selected Video Avatar',
+      background: 'Selected Video Avatar Background',
       none: 'None',
-      none_warning: 'Please select a virtual role model before comparing',
+      none_warning: 'Please select a video avatar before comparing',
     },
     about_us: {
       title: 'About Us',
@@ -432,7 +716,7 @@ export default {
   },
   msg: {
     info: {
-      title: 'Your cyber co-working space developed by Privoce',
+      title: 'Your virtual co-working space, developed by Privoce',
       contact: 'Contact',
       learn_more: 'Learn More',
       offical_web: 'official website',
@@ -441,12 +725,21 @@ export default {
       connect_with_server: 'Connect Voce Space with a custom server using Voce Space Server.',
       enabled_e2ee: 'End-to-end encryption enabled',
       enter_room: 'Please enter the space name or link',
-      virtual_loading: 'Loading virtual role, please wait...',
+      virtual_loading: 'Loading video avatar, please wait...',
       invite_device: 'Inviting you to enable:',
       remove_participant: 'You have been removed from the room by the room host',
       req_record: 'Request to start recording',
+      file: {
+        upload_cancelled: 'File upload cancelled',
+      },
     },
     error: {
+      client: {
+        title: 'Client Error',
+        sub: 'Client encountered an error, please check the console logs for more details. Please contact the administrator.',
+        back: 'Back',
+        connect: 'Email: han@privoce.com',
+      },
       conf_load:
         'Configuration loading failed, please check whether the vocespace.conf.json file exists',
       record: {
@@ -484,6 +777,7 @@ export default {
         permission: 'Failed to request permission.',
       },
       user: {
+        manager_limit: 'Manager seats are full. Please remove a manager to set a new one.',
         username: {
           change: 'Username changed failed',
           request: 'Failed to request username',
@@ -493,6 +787,7 @@ export default {
       file: {
         upload: 'File upload failed',
         download: 'File download failed',
+        too_large: 'File too large, maximum supported:',
       },
     },
     request: {
@@ -506,11 +801,11 @@ export default {
         permission: {
           how: 'How to enable permission?',
           changed_with_reload:
-            'After changing the permission, you may need to refresh the page for it to take effect.',
+            'After changing permission settings, you may need to refresh the page to take effect.',
           set_on_hand:
-            'If you previously denied permission, you may need to manually allow them in your browser settings.',
+            'If you previously denied or missed a browser permission request, you may need to manually allow them in your browser settings.',
           chrome_edge: [
-            'Click the lock icon to the left of the browser address bar',
+            'Click the little icon between the refresh button and the website URL in the upper left corner of your browser',
             'Select `Site Settings`',
             'Choose `Allow` in the `Camera` and `Microphone` dropdown menus',
             'Refresh the page',
@@ -542,8 +837,8 @@ export default {
     },
     success: {
       record: {
-        start: 'The room has successfully started recording',
-        stop: 'The room recording has been successfully stopped. The recording status will be removed after 10 seconds.',
+        start: 'The room has started recording', //flag unclear what exactly is being recorded - all screens? gallery view? view of the user who pressed record?
+        stop: 'The room recording has been stopped. The recording status will be removed after 10 seconds.', //flag why the 10s delay?
         copy: 'Recording link copied to clipboard',
       },
       device: {
@@ -559,7 +854,119 @@ export default {
           change: 'Username changed successfully',
         },
         lang: 'Language changed successfully',
-        transfer: 'You are now the host',
+        transfer: 'You have been successfully transferred',
+        set_manager: 'You have been granted manager permissions',
+        remove_manager: 'Your manager status has been removed',
+      },
+      file: {
+        upload: 'File uploaded successfully',
+      },
+    },
+  },
+  dashboard: {
+    manage_spaces: 'Manage Spaces',
+    host_token_verify_failed: 'Host token verification failed',
+    history_fetch_failed: 'Failed to fetch historical room data',
+    spaces_fetch_failed: 'Failed to fetch space list',
+    verify_or_load_failed: 'Verification or loading failed',
+    delete_success: 'Space deleted successfully (backend cleanup requested)',
+    delete_failed: 'Failed to delete space',
+    get_space_info_failed: 'Failed to get space information',
+    get_candidates_failed: 'Failed to get candidate users',
+    select_new_owner: 'Please select a new owner',
+    change_owner_failed: 'Failed to change owner',
+    change_owner_success: 'Owner changed successfully',
+    export_failed: 'Export failed',
+    export_success: 'Export successful',
+    confirm_delete_space: 'Confirm deletion of this space?',
+    yes: 'Yes',
+    no: 'No',
+    delete_space_button: 'Delete Space',
+    edit_owner_button: 'Change Space Owner',
+    export_space_button: 'Export Space User Data',
+    edit_owner_modal_title: 'Change Space Owner',
+    cancel: 'Cancel',
+    save: 'Save',
+    host_token_placeholder: 'Host Token',
+    verify_and_load: 'Verify and Load',
+    logout: 'Logout',
+    common: {
+      day: 'Day',
+      week: 'Week',
+      month: 'Month',
+      year: 'Year',
+      total: 'Total',
+      during: 'Duration',
+    },
+    conf: {
+      resolution: 'Configure global graphics quality',
+      verify: 'Verify',
+      close: 'Close',
+      create_space: 'Create Space Policy',
+      create_space_option: {
+        all: 'Everyone',
+        white: 'Specific Users',
+        white_platform: 'Registered Users + Specific Users',
+      },
+      create_space_desc: [
+        'Select a policy to allow the creation of new VoceSpace spaces',
+        '1. Everyone: Anyone can create new VoceSpace spaces',
+        '2. Specific Users: Only specified users can create new VoceSpace spaces',
+        '3. Registered Users + Specific Users: Registered users and specified users can create new VoceSpace spaces',
+      ],
+      white_list: 'Specific Users Whitelist',
+      add_white_list: 'Add',
+      delete_white_list: 'Delete',
+      white_list_desc: [
+        'User ID: Enter the platform user ID, e.g., 57ca4825-cf35-4bc5-a0f9-3b85134005db',
+        'USER-Vance: Indicates that a user named Vance is allowed to create spaces',
+      ],
+      white_list_exist: 'Whitelist already exists',
+      white_list_not_exist: 'Whitelist does not exist',
+      placeholder: 'Please enter administrator token',
+      error: {
+        verify: 'Administrator token error, please try again',
+        not_loaded:
+          'Configuration not loaded or unable to obtain configuration, please try again later',
+        update: 'Configuration update failed, please try again later.',
+      },
+      success: {
+        update: 'Configuration updated',
+      },
+    },
+    count: {
+      room: 'Rooms',
+      participant: 'All users',
+      online_participant: 'Online users',
+      platform: 'Platform users',
+      opt: 'Operation',
+      refresh: 'Refresh data',
+      global_conf: 'Configure Image Quality (Global)',
+      allow_create_space: 'Create Space Policy',
+      history: {
+        title: 'Historical Room Statistics',
+        day: 'Daily Ranking',
+        week: 'Weekly Ranking',
+        month: 'Monthly Ranking',
+        table: {
+          room: 'Room Name',
+          total: 'Total Duration',
+          today: "Today's Duration",
+        },
+        empty: 'No Records',
+      },
+    },
+    active: {
+      empty_room: 'No Active Rooms',
+      title: 'Current Active Users',
+      table: {
+        participant: 'User',
+        state: 'Status',
+        volume: 'Volume',
+        blur: 'Camera Video Blur',
+        screen_blur: 'Shared Screen Blur',
+        is_auth: 'Authenticated',
+        during: 'Online Duration',
       },
     },
   },

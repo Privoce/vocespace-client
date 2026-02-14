@@ -326,7 +326,6 @@ lk load-test \
   - [x] 分离表单和页面
   - [x] 单独构建hook
 - [x] 当用户刷新或直接关闭标签页，用户数据没有清除 （DELETE API成功执行，但无法刷新用户socket数据, 给足服务器清理用户的时间）
-- [ ] 重写MicrophoneTraggle组件
 - [x] 用户退出不清理子房间
 - [x] 使用 server api 进行心跳检测
   - [x] in redis not in lk
@@ -392,12 +391,16 @@ lk load-test \
   - [x] 主持人设置
   - [x] 设置API
   - [x] 控制离开空间行为
-- [ ] 举手，广播所有人（参考zoom） 4
+- [x] 举手，广播所有人（参考zoom） 4
   - [x] 举手组件
-  - [ ] 举手后显示举手图标
-  - [ ] 主持人收到特殊通知，主持人可直接点击发言按钮，举手用户的麦克风自动打开并收到发言通知
-  - [ ] 主持人拒绝发言，保持举手用户麦克风关闭并取消举手图标，收到拒绝发言通知
-  - [ ] 举手排序，多人举手时主持人安排发言顺序，设置发言倒计时，开始后进行倒计时发言
+  - [x] 举手后显示举手图标
+  - [x] 除了主持人，其他人不能取消哦他人举手
+  - [x] TileActionCollect组件控制actions的显示
+  - [x] socket：举手/取消举手 事件
+  - [x] raise hand auth control
+  - [x] 主持人收到特殊通知，主持人可直接点击发言按钮，举手用户的麦克风自动打开并收到发言通知
+  - [x] 主持人拒绝发言，保持举手用户麦克风关闭并取消举手图标，收到拒绝发言通知
+  - ~[ ] 举手排序，多人举手时主持人安排发言顺序，设置发言倒计时，开始后进行倒计时发言(暂无需求)~
 - [x] 应用共享 3
   - [x] 所有人可读
   - [x] 所有人可共享
@@ -414,10 +417,6 @@ lk load-test \
   - [x] 用户分享后在视口右上角增加图标，点击图片从开启Popover
   - [ ] ～可写～
     - [ ] ～通道/时间戳时序～
-- [ ] 用户自己的状态与房间状态之间进行联系
-  - [ ] 子房间状态列表
-  - [ ] 子房间拥有着同步子房间状态
-  - [ ] 增加状态设置部分
 - [x] dashboard 参会时长排序 2
   - [x] 日榜，周榜，月榜
   - [x] 调整UI
@@ -456,14 +455,204 @@ lk load-test \
 - [x] 校准模糊度
 - [x] 合并新空间榜单
 - [x] Docker合并本地证书校验
-- [ ] Docker发布新版本
----
+- [x] Docker发布新版本
+- [x] todo修改导出
+  - [x] 数据结构增加done记录完成的任务记录
+- [x] Collapse Header增加背景色，hr标签
+- [x] 新状态
+  - [x] 状态混合，默认在线，用户可自定义新状态
+  - [x] 原始状态struct去除desc, icon
+  - [x] 状态标签
+  - [x] 修复重复更新bug
+  - [x] todo list中增加记录自动切换todo为状态
+  - [x] 用户新增房间状态
+- [x] 更多 -> 应用 (到底是否改成类似Mac的浮窗，感觉视觉重复)
+- [x] Docker测试
+- [x] 更新部署文档的配置
+- [x] 增加tooltip
+  - [x] Send Greeting 打招呼
+  - [x] Countdown 倒计时
+  - [x] To-do list 待办事项
+  - [x] Timer 计时器
+  - [x] Raise Hand 举手
+- [x] todo together
+  - [x] 每个人单行（为第一条todo）
+  - [x] 带有进度 类似：1/3 表示完成度
+  - [x] 点击后可以展开看到详细todo
+- [x] 单条的todo
+  - [x] 设计merge
+  - [x] 去除输入框当disabled时
+- [x] 开关类的使用OFF/ON
+- [x] Recording组件i18n
+- [x] 首个加入者如果没有自己定义名字则使用admin
+- [x] 手机端底部control bar需要增加marginBottom
+- [x] 状态部分 (新分支 dev_0.3.0)
+  - [x] 放在视图右侧
+  - [x] 大小不超过视图的50%
+  - [x] 重新定义状态
+    - [x] 只起到显示的作用
+    - [x] 去除volume/video blur/screen blur的功能性需求
+    - [x] 修改为输入框，可以直接更改
+    - [x] 单条状态，去除历史状态list
+    - [x] 完整处理数据结构
+    - [x] 处理status info 中的显示
+- [x] 用户不在房间中时，离开房间按钮需要disabled
+- [x] 多空间 (soul, twitch, clubhouse)
+  - [x] 短期
+    - [x] 提供一个用户API接口创建一个Space(link)
+- [x] 进入房间前设备检测
+- [x] 举手在control bar上设置入口(zoom)
+- [x] 大文件限制 100MB
+- [x] 浮窗需要滚动条，使用者的电脑尺寸较小时无法显示完全
+- [x] 分开名字更改和状态更改，使用 cursor : pointer
+- [x] 发送对话框 ok -> uploading
+- [x] 发送可以取消
+- [x] 修复名字消失/溢出 
+- [x] 增加打招呼时在子房间时也要有加入按钮
+- [x] 加入子房间发送给房主时需要提示音
+- [x] e2ee的密码不要显示出来
+- [x] 默认子房间
+  - [x] Meeting Room
+  - [x] Coffee Break
+- [x] 名字/分享文本溢出，颜色
+- [x] Vocespace platform 登陆
+- [x] Google 登陆
+- [x] 登陆状态检测
+- [x] 退出登陆
+- [x] 右键slider-disabled
+- [x] 侧边栏房间名布局调整
+- [x] 修复侧边栏房间图标挤占缩小
+- [x] 加入窗口停留时间不够长 -> 10s
+- [x] email更换图标
+- [x] together -> team status 团队进度 默认展开
+- [x] vocespace -> 更多 -> 个人主页
+- [x] right menu增加个人主页选项
 
-- [ ] 少参与者，多观察者 (Egress 实时传输，站点构建)
-- [ ] 用户自定义虚拟形象: 用户提交虚拟形象图片 -> live2d cubism 自动处理 (代码尝试) -> 生成完整动画效果 + 模型数据 -> 存储 -> 返回
-- [ ] 录制时无法应用模糊 (录制是直接获取通道的，我们的模糊并没有替换视频而是 css 模糊)
+--- AI
 
-- [ ] docker 优化
-  - [x] 合并dev_0.2.0
-  - [x] 去除多余UI和功能
-  - [ ] 优化构建
+- [x] AI截图分析
+  - [x] 分析弹窗
+    - [x] 分析频率
+  - [x] 截图
+  - [x] 分析单条
+  - [x] 总结
+  - [x] 导出
+  - [x] 配置
+  - [x] 设置为时间轴/无时间轴选线
+  - [x] 管理员设置截图频率，也在AI分析弹窗中
+  - [x] widget展开后保持名字显示
+  - [x] widget增加AI总结，大小 2x2 todo list <360 * 220>
+  - [x] AI分析需要开启屏幕分享，增加提示弹窗
+  - [x] 总结设置为3～5分钟总结一次
+  - [x] 用户状态检查是否是退出后清理了，持久化应该不清理
+  - [x] AI Worklog source data
+    - [x] Shared Screen。（默认）
+    - [x] To-do List (默认)
+    - [x] Time Spent
+  - [x] AI截图分析开启会议默认开启
+  - [x] 开启屏幕分享i18n
+    - [x] Choose Screen （btn）
+    - [x] Not now（btn）
+    - [x] Your AI worklog will capture screen activity. Please share the screen or window of your task
+    - [x] 您的AI助手需要捕捉屏幕截图，请选择需要进行分析的窗口
+  - [x]flot中去除tab header部分
+- [x] AI Analysis md 的高度需要撑满
+- [x] 默认显示如果用户允许AI截图服务开启
+- [x] checkbox group 没有正常更新 flot  - ai cut
+- [x] track.publish.screen 的right menu的判断有问题
+- [x] AI 截图服务反复提示messageApi
+- [x] messageApi.success(t('ai.cut.success.reload')); 反复提示
+- [x] 截图修改为从用户视频分享流中进行截图
+- [x] 用户视图右上角改为显示所有公开的widget <AppstoreOutlined />
+  - [x] 重写他人浮窗组件
+  - [x] 图标
+- [x] 登陆之后需要隐藏google和email登陆的按钮
+- [x] 将login button修改为block button 放在 名字输入框的上面
+- [x] 左侧登陆状态按钮没有登陆点击跳转登陆页
+- [x] 平台协议
+- [x] platform登陆页右侧title
+  - [x] Ai辅助的远程工作平台
+  一起工作，团队对齐，AI工作总结
+  ---
+  VoceSpace is for Remote Teams
+  AI Worklog, Team spaces, Private Rooms
+- [x] AI屏幕分享请求只留start sharing按钮
+- [x] 在子房间直接离开或刷新屏幕会导致人数残留
+- [x] 侧边栏active人数应该是上线–人数
+- [x] AI总结为空的时候显示Empty状态
+- [x] 修复AI错误关闭和启动，优化接口
+- [x] 与历史数据结合分析
+- [x] 如果正在运行AI分析，进入设置后如果没有关闭也没有更改，不需要reload
+- [x] 时间戳使用截图的时间戳
+- [x] 过滤似乎没有起效(时间戳过滤)
+- [x] AI得到的返回数据不稳定，第一次正确，后面则使用了数组进行返回而且可能缺少字段
+  - [x] 采取直接返回markdown文本进行渲染即可，不要限制返回结构体
+  - [x] 需要大量测试提示词稳定性和返回稳定性
+  - [x] 新的提示词
+  - [x] 分离提示词配置
+- [x] AI分析开启改为按钮
+- [x] prejoin增加一个平台身份状态验证请求的loading
+- [x] 用户不选择公开自己的TODO就无需更改状态
+- [x] 状态的ui部分padding不能被覆盖
+- [x] 提示词和AI总结的多语言支持
+  - [x] 提示词
+  - [x] AI分析
+- [x] 分析报告里可以看到截取的图片
+- [x] AI 分析/TODO List复制粘贴按钮
+  - [x] AI
+  - [x] TODO
+- [x] 自己和他人的Flot的出入口保持一致，只更改target Participant
+- [x] Flot icon 更改为和 FlotCollectionApp icon 相同
+- [x] 状态文字超长改为ellipse
+- [x] 他人的状态和名字控制
+- [x] 展开收起的AI图标去除
+- [x] 他人浮窗数据不显示
+- [x] 手机无需AI分享分析提示
+- [x] ios界面显示不全
+- [ ] AI分析start后点击stop会报错 (没有复现成功)
+- [x] AI分析是否可以更精简些，时间调为某段时间在进行某任务，而不是时间戳
+  - [x] 精简度调节
+  - [x] 时间统计，加在选项里，如果用户开启则增加时间统计部分
+  - [ ] 截图可以多加几张如果任务重复
+  - [x] TODO总结去除footer中的按钮，点击x关闭
+  - [x] 合并Duration和Time Spent
+  - [x] 在团队中增加AI分析的flot的入口 
+  - [x] AI关闭后再启动会导致时间不累加 (历史会清理，导致时间重置)
+  - [x] 优化时间累加
+
+- [x] 登陆使用_self
+- [x] 修复TODO总结弹窗无法关闭
+- [x] 可以看到正在记录的用户的分析（不包含图片）（暂时效果）
+- [x] flot popover -> modal
+
+--- 平台性功能
+- [ ] 只有注册的用户，才可以建立房间
+- [x] 右键他人screen时right menu因该显示他人的right menu不是control menu
+- [ ] 房主固定 owner -》 设置多个管理员 (5) 管理员可以转让/房主设置
+- [ ] 房间设置的话，默认访客（直接输名字）可以进，然后我们让房间创建者可以选择是否允许访客
+- [x] AI分析数据在平台上
+  - [x] widget可以在平台页可见
+  - [x] 平台需要能提供存储todo的数据库接口
+    - [x] 平台接口
+    - [x] 客户端接口
+    - [x] 数据库
+    - [x] 界面
+  - [x] 平台需要能提供存储ai分析的数据库接口
+    - [x] 平台接口
+    - [x] 数据库
+    - [x] 界面
+    - [x] 客户端接口
+- [x] login增加init from从vocespace.com进入进行登陆后直接跳转自己的space
+- [x] email注册失败，google登陆错误
+- [x] 修复退出登陆无法回到登陆页
+- [x] 平台退出和会议端一起退出登陆
+- [x] 会议端退出登陆接口返回登陆页(api)
+- [x] 从会议端使用Google登陆参数会丢失（from="google"）
+- [x] 增加settings页面 参考github settings
+- [x] Quickly create new space -> create new space
+- [x] 平台增加用户设置的字段
+- [x] 本地设置被覆盖了 bug
+- [x] 增加from参数允许space.voce.chat进行登陆
+- [x] 升序排列待办
+- [x] 点击pagination时todo会重复增加
+- [x] todo list可以查询历史，使用分割线分割
