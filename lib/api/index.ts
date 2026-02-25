@@ -32,6 +32,7 @@ import {
   enterSpaceRoomFromLink,
   updateAuthRBACConf,
   deleteSpace,
+  flushdb,
 } from './space';
 
 export const api = {
@@ -63,6 +64,7 @@ export const api = {
   checkHostToken,
   handleWorkMode,
   deleteSpace,
+  flushdb,
   // ---- chat api --------
   fetchLinkPreview,
   getChatMsg,

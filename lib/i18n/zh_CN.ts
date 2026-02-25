@@ -855,6 +855,13 @@ export default {
       during: '时长',
     },
     conf: {
+      flushdb: {
+        title: "清除所有数据",
+        desc: "此操作将清除所有空间和用户数据，且不可恢复，请谨慎操作！此操作不会影响使用平台登陆的用户数据，只会清理游客数据。",
+        confirm: "确认清除",
+        cancel: "取消",
+        success: "所有数据已清除",
+      },
       resolution: '配置全局画质',
       verify: '验证',
       close: '关闭',

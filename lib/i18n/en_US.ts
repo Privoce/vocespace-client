@@ -895,6 +895,13 @@ export default {
       during: 'Duration',
     },
     conf: {
+      flushdb: {
+        title: 'Flush All Data',
+        desc: 'This action will clear all spaces and user data and cannot be undone. Please proceed with caution! This action will not affect users logged in through the platform, only guest data will be cleared.',
+        confirm: 'Confirm',
+        cancel: 'Cancel',
+        success: 'All data has been cleared',
+      },
       resolution: 'Configure global graphics quality',
       verify: 'Verify',
       close: 'Close',

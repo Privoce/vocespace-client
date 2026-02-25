@@ -78,7 +78,7 @@ interface ParticipantTableData {
   isAuth: boolean;
 }
 
-type ActionKey = 'refresh' | 'global_conf' | 'manage_spaces' | 'ac_space';
+type ActionKey = 'refresh' | 'global_conf' | 'manage_spaces' | 'ac_space' | 'flushdb';
 
 export default function Dashboard() {
   const { t } = useI18n();
@@ -116,6 +116,7 @@ export default function Dashboard() {
   );
   const [addWhiteListValue, setAddWhiteListValue] = useState<string>('');
   const [selectOption, setSelectOption] = useState<ActionKey>('refresh');
+  const [flushDbConfirm, setFlushDbConfirm] = useState(false);
   const [createSpaceWhiteList, setCreateSpaceWhiteList] = useState<string>('');
   const VERIFIED_KEY = 'vocespace_host_token_verified';
 
@@ -1009,6 +1010,13 @@ export default function Dashboard() {
                       key: 'ac_space',
                       value: 'ac_space',
                     },
+                    {
+                      label: (
+                        <span style={{ color: 'red' }}>{t('dashboard.conf.flushdb.title')}</span>
+                      ),
+                      value: 'flushdb',
+                      key: 'flushdb',
+                    },
                   ]}
                 ></Select>
                 <Button
@@ -1043,6 +1051,8 @@ export default function Dashboard() {
                       }
                     } else if (selectOption === 'ac_space') {
                       setCreateSpaceConf(true);
+                    } else if (selectOption === 'flushdb') {
+                      setFlushDbConfirm(true);
                     }
                   }}
                 >
@@ -1288,17 +1298,17 @@ export default function Dashboard() {
               }}
               options={[
                 {
-                  label: t("dashboard.conf.create_space_option.all"),
+                  label: t('dashboard.conf.create_space_option.all'),
                   value: 'all',
                   style: { width: '100%' },
                 },
                 {
-                  label: t("dashboard.conf.create_space_option.white"),
+                  label: t('dashboard.conf.create_space_option.white'),
                   value: 'white',
                   style: { width: '100%' },
                 },
                 {
-                  label: t("dashboard.conf.create_space_option.white_platform"),
+                  label: t('dashboard.conf.create_space_option.white_platform'),
                   value: 'white_platform',
                   style: { width: '100%' },
                 },
@@ -1381,6 +1391,44 @@ export default function Dashboard() {
             }}
           ></Input>
         )}
+      </Modal>
+      {/* Flushdb*/}
+      <Modal
+        title={t('dashboard.conf.flushdb.title')}
+        open={flushDbConfirm}
+        onCancel={() => {
+          setFlushDbConfirm(false);
+        }}
+        okText={t('dashboard.conf.flushdb.confirm')}
+        cancelText={t('dashboard.conf.flushdb.cancel')}
+        onOk={async () => {
+          try {
+            const resp = await api.flushdb(hostToken);
+            if (resp.ok) {
+              messageApi.success(t('dashboard.conf.flushdb.success'));
+              // 刷新数据
+              await fetchAllData();
+            } else {
+              const { message } = await resp.json();
+              messageApi.error(message);
+            }
+          } catch (e: any) {
+            console.error(e);
+            messageApi.error(e.message);
+          } finally {
+            setFlushDbConfirm(false);
+            setHostToken('');
+          }
+        }}
+      >
+        <div>{t('dashboard.conf.flushdb.desc')}</div>
+        <Input
+          placeholder={t('dashboard.conf.placeholder')}
+          value={hostToken}
+          onChange={(e) => {
+            setHostToken(e.target.value);
+          }}
+        ></Input>
       </Modal>
       {/* 配置画质 */}
       <Modal
