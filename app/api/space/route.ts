@@ -1359,21 +1359,26 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
 }
 
-const handleCustomerChecker = (user: TokenResult | undefined, spaceInfo: SpaceInfo): boolean => {
+const handleCustomerChecker = (user: TokenResult | undefined, spaceInfo?: SpaceInfo | null): boolean => {
   if (!user) {
     return true;
   }
 
   if (user?.identity === 'customer') {
-    // 客户的情况，我们需要到spaceInfo中检查是否有空余的房间，如果没有则不允许客户进入
-    const hasSpace = spaceInfo.children.some((child) => {
-      return (
-        child.isPrivate &&
-        child.participants.length === 1 && // 私人房间且只有一个参与者（主持人）
-        child.ownerId !== user.id // 房间主持人不是当前用户
-      );
-    });
-    return hasSpace;
+    if (spaceInfo) {
+      // 客户的情况，我们需要到spaceInfo中检查是否有空余的房间，如果没有则不允许客户进入
+      const hasSpace = spaceInfo.children.some((child) => {
+        return (
+          child.isPrivate &&
+          child.participants.length === 1 && // 私人房间且只有一个参与者（主持人）
+          child.ownerId !== user.id // 房间主持人不是当前用户
+        );
+      });
+      return hasSpace;
+    } else {
+      // 没有就不允许
+      return false;
+    }
   }
   return true; // 非客户用户默认允许进入
 };
@@ -1436,9 +1441,7 @@ export async function POST(request: NextRequest) {
           }
         }
       } else {
-        if (spaceInfo) {
-          allowCustomer = handleCustomerChecker(platUser, spaceInfo);
-        }
+        allowCustomer = handleCustomerChecker(platUser, spaceInfo);
       }
       return NextResponse.json({ exist, allowGuest, allowCustomer }, { status: 200 });
     }
