@@ -91,11 +91,11 @@ const PlatformLogin = async (request: NextRequest, auth: AuthType) => {
   );
 
   // 这里我们就不能去返回了，而是进行重定向到对应的space页面，并携带auth参数，让前端去处理
-  // let base = serverUrl || request.nextUrl.origin;
-  let base = 'http://localhost:3000';
-  // if (typeof base === 'string' && !/^https?:\/\//i.test(base)) {
-  //   base = `https://${base}`;
-  // }
+  let base = serverUrl || request.nextUrl.origin;
+  // let base = 'http://localhost:3000';
+  if (typeof base === 'string' && !/^https?:\/\//i.test(base)) {
+    base = `https://${base}`;
+  }
   const redirectUrl = new URL(
     `/${tokenRes.space}?auth=${auth}&details=${encodeURIComponent(
       JSON.stringify(details),
@@ -242,8 +242,8 @@ const verifyWhitList = (name: string, id?: string | null, whiteList?: string[]):
 const isSpaceExist = async (spaceName: string): Promise<boolean> => {
   try {
     // 构建请求 URL（使用配置的 serverUrl 或本地相对路径）
-    // const baseUrl = `https://${serverUrl}` || 'http://localhost:3000';
-    const baseUrl = 'http://localhost:3000';
+    const baseUrl = `https://${serverUrl}` || 'http://localhost:3000';
+    // const baseUrl = 'http://localhost:3000';
     const url = new URL('/api/space', baseUrl);
     url.searchParams.set('spaceName', spaceName);
 
