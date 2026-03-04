@@ -33,10 +33,12 @@ import {
   updateAuthRBACConf,
   deleteSpace,
   flushdb,
+  spaceAllowEnter
 } from './space';
 
 export const api = {
   // ---- space api --------
+  spaceAllowEnter,
   updateAuthRBACConf,
   enterSpaceRoomFromLink,
   enterRoom,

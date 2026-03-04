@@ -91,11 +91,11 @@ const PlatformLogin = async (request: NextRequest, auth: AuthType) => {
   );
 
   // 这里我们就不能去返回了，而是进行重定向到对应的space页面，并携带auth参数，让前端去处理
-  let base = serverUrl || request.nextUrl.origin;
-  // let base = request.nextUrl.origin;
-  if (typeof base === 'string' && !/^https?:\/\//i.test(base)) {
-    base = `https://${base}`;
-  }
+  // let base = serverUrl || request.nextUrl.origin;
+  let base = 'http://localhost:3000';
+  // if (typeof base === 'string' && !/^https?:\/\//i.test(base)) {
+  //   base = `https://${base}`;
+  // }
   const redirectUrl = new URL(
     `/${tokenRes.space}?auth=${auth}&details=${encodeURIComponent(
       JSON.stringify(details),
@@ -109,11 +109,61 @@ const PlatformLogin = async (request: NextRequest, auth: AuthType) => {
       cookie: `${COOKIE_KEY}=${randomParticipantPostfix}; Path=/; HttpOnly; SameSite=Strict; Secure; Expires=${getCookieExpirationTime()}`,
     });
   } else {
-    return NextResponse.redirect(redirectUrl, {
-      headers: {
-        'Set-Cookie': `${COOKIE_KEY}=${randomParticipantPostfix}; Path=/; HttpOnly; SameSite=Strict; Secure; Expires=${getCookieExpirationTime()}`,
-      },
-    });
+    try {
+      const url = new URL('/api/space', base);
+      url.searchParams.append('userCheck', 'true');
+      const response = await fetch(url.toString(), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          spaceName: tokenRes.space,
+          participantId: tokenRes.id,
+          platUser: tokenRes,
+        }),
+      });
+
+      if (response.ok) {
+        const { exist, allowCustomer }: { exist: boolean; allowCustomer: boolean } =
+          await response.json();
+
+        console.error('spaceAllowEnter response in PlatformLogin', { exist, allowCustomer });
+        if (exist) {
+          // 用户存在，这里伴随的是online一定是true，这个检测请求其实直接返回的是online
+          // 不能让用户进入房间
+          redirectUrl.searchParams.append(
+            'error',
+            'Participant is already in the space, please check!',
+          );
+
+          return NextResponse.redirect(redirectUrl, {
+            headers: {
+              'Set-Cookie': `${COOKIE_KEY}=${randomParticipantPostfix}; Path=/; HttpOnly; SameSite=Strict; Secure; Expires=${getCookieExpirationTime()}`,
+            },
+          });
+        } else {
+          if (!allowCustomer) {
+            redirectUrl.searchParams.append(
+              'error',
+              'Customer service is currently busy or offline. Please wait.',
+            );
+          }
+
+          // 不在线或者空间不存在，直接重定向到空间主页，让用户重新进入
+          return NextResponse.redirect(redirectUrl, {
+            headers: {
+              'Set-Cookie': `${COOKIE_KEY}=${randomParticipantPostfix}; Path=/; HttpOnly; SameSite=Strict; Secure; Expires=${getCookieExpirationTime()}`,
+            },
+          });
+        }
+      } else {
+        console.error('Failed to check participant existence:', response);
+      }
+    } catch (e) {
+      console.error('Invalid base URL:', base);
+      return new NextResponse('Internal Server Error', { status: 500 });
+    }
   }
 };
 
@@ -192,8 +242,8 @@ const verifyWhitList = (name: string, id?: string | null, whiteList?: string[]):
 const isSpaceExist = async (spaceName: string): Promise<boolean> => {
   try {
     // 构建请求 URL（使用配置的 serverUrl 或本地相对路径）
-    const baseUrl = `https://${serverUrl}` || 'http://localhost:3000';
-    // const baseUrl = 'http://localhost:3000';
+    // const baseUrl = `https://${serverUrl}` || 'http://localhost:3000';
+    const baseUrl = 'http://localhost:3000';
     const url = new URL('/api/space', baseUrl);
     url.searchParams.set('spaceName', spaceName);
 

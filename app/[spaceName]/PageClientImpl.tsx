@@ -116,6 +116,7 @@ export interface PageClientImplProps extends SearchParams {
   setLoading: (loading: boolean) => void;
   data?: PlatformUser;
   messageApi: MessageInstance;
+  error?: string;
 }
 
 export function PageClientImpl({
@@ -130,6 +131,7 @@ export function PageClientImpl({
   room,
   details,
   messageApi,
+  error,
 }: PageClientImplProps) {
   const { t } = useI18n();
   const [uState, setUState] = useRecoilState(userState);
@@ -215,6 +217,10 @@ export function PageClientImpl({
   useEffect(() => {
     // console.warn('Checking direct join from platform with props:', props);
     if (!data || !details) return;
+    if (error) {
+      messageApi.error(error);
+      return;
+    }
     if (!data.preJoin) {
       setPreJoinChoices({
         username: data.username,

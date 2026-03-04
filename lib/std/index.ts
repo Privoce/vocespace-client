@@ -430,6 +430,10 @@ export interface SearchParams {
    * 用户通过内部用户生成的邀请链接进入指定space的某个子房间时使用
    */
   childRoomEnter?: ChildRoomEnter | string;
+  /**
+   * 错误信息，如果存在错误信息则说明用户无法进入房间，通常是因为token无效或者过期导致的
+   */
+  error?: string;
 }
 
 /**

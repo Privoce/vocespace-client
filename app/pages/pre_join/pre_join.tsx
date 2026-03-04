@@ -22,7 +22,7 @@ import { LangSelect } from '@/app/pages/controls/selects/lang_select';
 import { ulid } from 'ulid';
 import { api } from '@/lib/api';
 import { LoginButtons, LoginStateBtn } from './login';
-import { SpaceInfo } from '@/lib/std/space';
+import { AllowGuest, SpaceInfo } from '@/lib/std/space';
 import { ParticipantPlaceholder2 } from '../participant/placeholder';
 import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 
@@ -258,18 +258,28 @@ export function PreJoin({
       }
     }
 
-    // 加入空间前还需要确定当前空间是否允许游客加入
-    const response = await api.getSpaceInfo(spaceName);
+    // 加入空间前还需要确定当前空间是否加入
+    const response = await api.spaceAllowEnter(spaceName, data?.id || '', data);
     if (!response.ok) {
       throw new Error(`Failed to fetch settings: ${response.status}`);
     }
-    const { settings: spaceInfo }: { settings?: SpaceInfo } = await response.json();
-
-    let allowGuest = (spaceInfo?.allowGuest && spaceInfo.allowGuest === 'allow') || true;
-    // 有房间且房间不允许游客加入
-    if (spaceInfo && !allowGuest && data?.identity === 'guest') {
-      messageApi.error(t('common.guest.not_allow'));
+    const { exist, allowGuest, allowCustomer }: { allowGuest: AllowGuest; exist: boolean; allowCustomer: boolean } = await response.json();
+    if (exist) {
+      // 房间中已经存在该用户
+      messageApi.warning(
+        'User already in the space, please check if you have already joined from another tab or window.',
+      );
       return;
+    } else {
+      //没有房间或用户不在
+      if (allowGuest !== 'allow') {
+        messageApi.error("The space doesn't allow guest to enter, please login first.");
+        return;
+      }
+      if (!allowCustomer) {
+        messageApi.error("Customer service is currently busy or offline. Please wait.");
+        return;
+      }
     }
 
     if (typeof onSubmit === 'function') {

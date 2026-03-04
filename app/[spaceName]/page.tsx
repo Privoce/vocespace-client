@@ -89,6 +89,7 @@ export default function Page({
         data={platformUser}
         details={details}
         messageApi={messageApi}
+        error={searchParams.error}
       />
     </RecoilRoot>
   );

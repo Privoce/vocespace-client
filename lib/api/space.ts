@@ -5,6 +5,7 @@ import {
   connect_endpoint,
   IdentityType,
   RoomType,
+  TokenResult,
   UserDefineStatus,
 } from '../std';
 import {
@@ -563,5 +564,15 @@ export const updateAuthRBACConf = async (spaceName: string, conf: SpaceAuthConf)
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ spaceName, authConf: conf } as UpdateAuthRBACConfBody),
+  });
+};
+
+export const spaceAllowEnter = async (spaceName: string, participantId: string, platUser?: TokenResult) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('userCheck', 'true');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ spaceName, participantId, platUser }),
   });
 };

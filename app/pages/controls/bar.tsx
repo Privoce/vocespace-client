@@ -717,7 +717,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                 (isScreenShareEnabled ? t('common.stop_share') : t('common.share_screen'))}
             </TrackToggle>
           )}
-          {space && visibleControls.microphone && spaceInfo.ai.cut.enabled && showAI && (
+          {/* {space && visibleControls.microphone && spaceInfo.ai.cut.enabled && showAI && (
             // <Reaction
             //   updateSettings={updateSettings}
             //   space={space.name}
@@ -739,7 +739,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               localParticipant={space.localParticipant}
               lastAICutConfig={lastAICutConfig}
             ></Work>
-          )}
+          )} */}
           {visibleControls.chat && !isMobile && (
             <ChatToggle
               controlWidth={controlWidth}

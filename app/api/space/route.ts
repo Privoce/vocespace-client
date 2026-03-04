@@ -7,6 +7,7 @@ import {
   IdentityType,
   isUndefinedString,
   splitPlatformUser,
+  TokenResult,
 } from '@/lib/std';
 import { NextRequest, NextResponse } from 'next/server';
 import Redis from 'ioredis';
@@ -97,6 +98,124 @@ const exportRBAC = (uid: string, spaceInfo?: SpaceInfo, pidentity?: string): Spa
   );
 
   return spaceInfo.auth[identity] || DEFAULT_SPACE_AUTH_CONF.guest;
+};
+
+// 只检测某个用户的真实在线状态，返回是否在线，供前端在用户离开房间时调用，来判断是否真的离开了房间
+const userHeartbeatOnline = async (spaceName: string, participantId: string): Promise<boolean> => {
+  try {
+    let hostname = LIVEKIT_URL!.replace('wss', 'https').replace('ws', 'http');
+    const roomServer = new RoomServiceClient(hostname, LIVEKIT_API_KEY!, LIVEKIT_API_SECRET!);
+    const participants = await roomServer.getParticipant(spaceName, participantId);
+    if (!participants) {
+      // 如果没有找到参与者，说明用户已经离开了房间
+      return false;
+    }
+    return true;
+  } catch (error) {
+    // 当参与者不存在时，getParticipant 会抛出异常
+    // console.error('Error checking participant online status:', error);
+    return false;
+  }
+};
+
+const handleAssistant = async (
+  space: string,
+  room: string | undefined,
+  spaceInfo: SpaceInfo,
+  uid: string,
+  username: string,
+) => {
+  // 助理直接进入自己的私人房间或者创建房间
+  // 这里一般来说，客服都会指定一个房间名
+  const existingRoom =
+    room === '$empty'
+      ? null
+      : spaceInfo.children.find((child) => child.ownerId === uid && child.name === room);
+  // 房间存在
+  if (existingRoom) {
+    // 如果这个房间不是私人房间，且内部已经有超过一个人了，那么设置这个房间为私人房间，并清理内部所有人，再进入
+    if (!existingRoom.isPrivate) {
+      existingRoom.isPrivate = true;
+    }
+
+    if (existingRoom.participants.length >= 1) {
+      existingRoom.participants = [uid];
+    } else {
+      existingRoom.participants.push(uid);
+    }
+    await SpaceManager.setSpaceInfo(space, spaceInfo);
+    return NextResponse.json({ success: true }, { status: 200 });
+  } else {
+    // 创建新的私人房间
+    const newChildRoom: ChildRoom = {
+      name: room || `${username}'s Room`,
+      participants: [uid],
+      ownerId: uid,
+      isPrivate: true,
+    };
+    const { success, error } = await SpaceManager.setChildRoom(space, newChildRoom);
+    if (success) {
+      return NextResponse.json({ success: true }, { status: 200 });
+    } else {
+      return NextResponse.json({ error }, { status: 500 });
+    }
+  }
+};
+
+const handleCustomer = async (
+  space: string,
+  room: string | undefined,
+  spaceInfo: SpaceInfo,
+  uid: string,
+) => {
+  // 这里一般来说，客服都会指定一个房间名
+  const existingRoom =
+    room === '$empty' ? null : spaceInfo.children.find((child) => child.name === room);
+  // 如果是顾客
+  let findFree = false;
+  if (existingRoom) {
+    // 房间存在，我们需要检查这个房间是否满人(一对一场景下，支持2个人在一个房间内)
+    if (existingRoom.participants.length >= 2) {
+      findFree = true;
+    } else {
+      // 没有满人，直接加入
+      existingRoom.participants.push(uid);
+      await SpaceManager.setSpaceInfo(space, spaceInfo);
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+  } else {
+    // 房间不存在，说明客服还没有创建房间, 找空闲房间加入
+    findFree = true;
+  }
+  if (findFree) {
+    // 满人则寻找其他空闲房间，找到一个就让用户进入
+    const freeRoom = spaceInfo.children.find(
+      (child) =>
+        child.isPrivate &&
+        child.participants.length === 1 && // 只有房主一个人
+        child.ownerId === child.participants[0], // 房主在线
+    );
+    if (freeRoom) {
+      freeRoom.participants.push(uid);
+      await SpaceManager.setSpaceInfo(space, spaceInfo);
+      return NextResponse.json({ success: true }, { status: 200 });
+    } else {
+      return NextResponse.json(
+        {
+          error: 'No available rooms, please wait...',
+          code: ERROR_CODE.enterRoom.FullAndWait,
+        },
+        { status: 200 },
+      );
+    }
+  }
+  return NextResponse.json(
+    {
+      error: 'No available rooms, please wait...',
+      code: ERROR_CODE.enterRoom.NotExist,
+    },
+    { status: 200 },
+  );
 };
 
 class SpaceManager {
@@ -1240,6 +1359,25 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
 }
 
+const handleCustomerChecker = (user: TokenResult | undefined, spaceInfo: SpaceInfo): boolean => {
+  if (!user) {
+    return true;
+  }
+
+  if (user?.identity === 'customer') {
+    // 客户的情况，我们需要到spaceInfo中检查是否有空余的房间，如果没有则不允许客户进入
+    const hasSpace = spaceInfo.children.some((child) => {
+      return (
+        child.isPrivate &&
+        child.participants.length === 1 && // 私人房间且只有一个参与者（主持人）
+        child.ownerId !== user.id // 房间主持人不是当前用户
+      );
+    });
+    return hasSpace;
+  }
+  return true; // 非客户用户默认允许进入
+};
+
 // 更新单个参与者设置
 export async function POST(request: NextRequest) {
   try {
@@ -1256,6 +1394,54 @@ export async function POST(request: NextRequest) {
     const isTransfer = request.nextUrl.searchParams.get('transfer') === 'true';
     const authManage = request.nextUrl.searchParams.get('auth');
     const mode = request.nextUrl.searchParams.get('mode');
+    const userCheck = request.nextUrl.searchParams.get('userCheck') === 'true';
+    // 检测用户是否存在于某个空间中 -----------------------------------------------------------------------------
+    if (userCheck) {
+      const {
+        spaceName,
+        participantId,
+        platUser,
+      }: { spaceName: string; participantId: string; platUser?: TokenResult } =
+        await request.json();
+
+      // 在线需要向服务器进行一次心跳，确定真实在线状态，防止用户掉线了但是状态没有更新
+      // 必须先执行，防止数据错误
+      let exist = false;
+      let allowGuest = 'allow';
+      let allowCustomer = true;
+      let online = await userHeartbeatOnline(spaceName, participantId);
+      //如果是在线的状态，我们需要检查redis中这个用户的online状态，如果状态不一致需要进行更新，防止用户掉线了但是状态没有更新
+      let spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (online) {
+        if (!spaceInfo) {
+          // 出现服务器有数据但是redis无数据的情况，说明webrtc服务被嫁接，意思是用户配置了我们的webrtc服务器，但不用我们的redis
+          // 默认用户是在线
+          exist = true;
+        } else {
+          let participant = spaceInfo.participants[participantId];
+          if (!participant) {
+            // 同样的嫁接情况
+            exist = true;
+            allowGuest = spaceInfo.allowGuest;
+            allowCustomer = handleCustomerChecker(platUser, spaceInfo);
+          } else {
+            if (!participant.online) {
+              // 如果用户的在线状态是false，说明用户掉线了但是状态没有更新，我们需要更新状态为true
+              participant.online = true;
+              await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+            }
+            exist = true;
+            allowGuest = spaceInfo.allowGuest;
+            allowCustomer = handleCustomerChecker(platUser, spaceInfo);
+          }
+        }
+      } else {
+        if (spaceInfo) {
+          allowCustomer = handleCustomerChecker(platUser, spaceInfo);
+        }
+      }
+      return NextResponse.json({ exist, allowGuest, allowCustomer }, { status: 200 });
+    }
     // 更新 rbac 配置 -----------------------------------------------------------------------------
     if (isSpace && isUpdate && authManage === 'rbac') {
       const { spaceName, authConf }: UpdateAuthRBACConfBody = await request.json();
@@ -1615,85 +1801,9 @@ export async function POST(request: NextRequest) {
         if (auth === 'c_s') {
           // 判断用户身份
           if (identity === 'assistant') {
-            // 助理直接进入自己的私人房间或者创建房间
-            // 这里一般来说，客服都会指定一个房间名
-            const existingRoom =
-              room === '$empty'
-                ? null
-                : spaceInfo.children.find((child) => child.ownerId === uid && child.name === room);
-            // 房间存在
-            if (existingRoom) {
-              // 如果这个房间不是私人房间，且内部已经有超过一个人了，那么设置这个房间为私人房间，并清理内部所有人，再进入
-              if (!existingRoom.isPrivate) {
-                existingRoom.isPrivate = true;
-              }
-
-              if (existingRoom.participants.length >= 1) {
-                existingRoom.participants = [uid];
-              } else {
-                existingRoom.participants.push(uid);
-              }
-              await SpaceManager.setSpaceInfo(space, spaceInfo);
-              return NextResponse.json({ success: true }, { status: 200 });
-            } else {
-              // 创建新的私人房间
-              const newChildRoom: ChildRoom = {
-                name: room || `${username}'s Room`,
-                participants: [uid],
-                ownerId: uid,
-                isPrivate: true,
-              };
-              const { success, error } = await SpaceManager.setChildRoom(space, newChildRoom);
-              if (success) {
-                return NextResponse.json({ success: true }, { status: 200 });
-              } else {
-                return NextResponse.json({ error }, { status: 500 });
-              }
-            }
+            await handleAssistant(space, room, spaceInfo, uid, username);
           } else if (identity === 'customer') {
-            // 这里一般来说，客服都会指定一个房间名
-            const existingRoom =
-              room === '$empty' ? null : spaceInfo.children.find((child) => child.name === room);
-            // 如果是顾客
-            if (existingRoom) {
-              // 房间存在，我们需要检查这个房间是否满人(一对一场景下，支持2个人在一个房间内)
-              if (existingRoom.participants.length >= 2) {
-                // 满人则寻找其他空闲房间，找到一个就让用户进入
-                const freeRoom = spaceInfo.children.find(
-                  (child) =>
-                    child.isPrivate &&
-                    child.participants.length === 1 && // 只有房主一个人
-                    child.ownerId !== existingRoom.ownerId, // 不能是同一个客服的房间
-                );
-                if (freeRoom) {
-                  freeRoom.participants.push(uid);
-                  await SpaceManager.setSpaceInfo(space, spaceInfo);
-                  return NextResponse.json({ success: true }, { status: 200 });
-                } else {
-                  return NextResponse.json(
-                    {
-                      error: 'No available rooms, please wait...',
-                      code: ERROR_CODE.enterRoom.FullAndWait,
-                    },
-                    { status: 200 },
-                  );
-                }
-              } else {
-                // 没有满人，直接加入
-                existingRoom.participants.push(uid);
-                await SpaceManager.setSpaceInfo(space, spaceInfo);
-                return NextResponse.json({ success: true }, { status: 200 });
-              }
-            } else {
-              // 房间不存在，说明客服还没有创建房间，直接返回错误让用户等待
-              return NextResponse.json(
-                {
-                  error: 'No available rooms, please wait...',
-                  code: ERROR_CODE.enterRoom.NotExist,
-                },
-                { status: 200 },
-              );
-            }
+            await handleCustomer(space, room, spaceInfo, uid);
           } else {
             // 其他身份不在c_s模式下工作
             return NextResponse.json(
@@ -1767,13 +1877,37 @@ export async function POST(request: NextRequest) {
           token = generateToken(DEFAULT_TOKEN_RESULT(space, username, room));
         } else {
           // 是平台用户，数据上添加用户到子房间中
-          if (!targetRoom.participants.includes(platUser.id)) {
-            targetRoom.participants.push(platUser.id);
-            await SpaceManager.setSpaceInfo(space, spaceInfo);
+          // 但需要进行在线状态的验证，防止用户掉线了但是状态没有更新导致用户无法进入房间
+          const realOnline = await userHeartbeatOnline(space, platUser.id);
+          if (realOnline) {
+            let change = false;
+            // 在线状态，那么需要检查redis中这个用户的online状态，如果状态不一致需要进行更新，防止用户掉线了但是状态没有更新
+            let participant = spaceInfo.participants[platUser.id];
+            if (participant) {
+              if (!participant.online) {
+                participant.online = true;
+                change = true;
+                // 将用户加入到子房间中
+                if (!targetRoom.participants.includes(platUser.id)) {
+                  targetRoom.participants.push(platUser.id);
+                  change = true;
+                }
+
+                if (change) {
+                  await SpaceManager.setSpaceInfo(space, spaceInfo);
+                }
+                const { tokenResult, auth } = splitPlatformUser(platUser);
+                token = generateToken(tokenResult);
+                authType = auth;
+              }
+            } else {
+              // 出现服务器有数据但是redis无数据的情况，说明webrtc服务被嫁接，意思是用户配置了我们的webrtc服务器，但不用我们的redis
+              return NextResponse.json(
+                { error: 'Participant is already in the space, please check!' },
+                { status: 404 },
+              );
+            }
           }
-          const { tokenResult, auth } = splitPlatformUser(platUser);
-          token = generateToken(tokenResult);
-          authType = auth;
         }
         url.searchParams.append('auth', authType);
         url.searchParams.append('token', token);
