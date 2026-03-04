@@ -63,11 +63,13 @@ export default function Page({
    */
   React.useEffect(() => {
     if (!isValid) {
-      setTimeout(() => {
-        router.replace(`/${params.spaceName}`);
-      }, 1000);
+      if (!searchParams.error) {
+        setTimeout(() => {
+          router.replace(`/${params.spaceName}`);
+        }, 1000);
+      }
     }
-  }, [isValid]);
+  }, [isValid, searchParams.error]);
 
   // 在客户端检查 localStorage
   React.useEffect(() => {

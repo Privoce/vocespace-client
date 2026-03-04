@@ -1408,13 +1408,15 @@ export async function POST(request: NextRequest) {
         platUser,
       }: { spaceName: string; participantId: string; platUser?: TokenResult } =
         await request.json();
-
+      
       // 在线需要向服务器进行一次心跳，确定真实在线状态，防止用户掉线了但是状态没有更新
       // 必须先执行，防止数据错误
       let exist = false;
       let allowGuest = 'allow';
       let allowCustomer = true;
+      console.warn('Checking user online status with heartbeat:', { spaceName, participantId });
       let online = await userHeartbeatOnline(spaceName, participantId);
+      console.warn('Heartbeat check for user online status:', { spaceName, participantId, online });
       //如果是在线的状态，我们需要检查redis中这个用户的online状态，如果状态不一致需要进行更新，防止用户掉线了但是状态没有更新
       let spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
       if (online) {

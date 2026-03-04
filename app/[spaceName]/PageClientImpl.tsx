@@ -48,6 +48,7 @@ import {
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { DEFAULT_LICENSE } from '@/lib/std/license';
+import { WaitRoom } from '../pages/pre_join/wait';
 
 const TURN_CREDENTIAL = process.env.TURN_CREDENTIAL ?? '';
 const TURN_USERNAME = process.env.TURN_USERNAME ?? '';
@@ -219,19 +220,19 @@ export function PageClientImpl({
     if (!data || !details) return;
     if (error) {
       messageApi.error(error);
-      return;
+    } else {
+      if (!data.preJoin) {
+        setPreJoinChoices({
+          username: data.username,
+          videoEnabled: false,
+          audioEnabled: false,
+          videoDeviceId: '',
+          audioDeviceId: '',
+        });
+        setConnectionDetails(details as ConnectionDetails);
+      }
+      router.replace(`/${spaceName}`);
     }
-    if (!data.preJoin) {
-      setPreJoinChoices({
-        username: data.username,
-        videoEnabled: false,
-        audioEnabled: false,
-        videoDeviceId: '',
-        audioDeviceId: '',
-      });
-      setConnectionDetails(details as ConnectionDetails);
-    }
-    router.replace(`/${spaceName}`);
   }, [data]);
 
   // 当localStorage中有reload这个标志时，需要重登陆
@@ -287,7 +288,9 @@ export function PageClientImpl({
   return (
     <main data-lk-theme="default" style={{ height: '100%' }}>
       {notHolder}
-      {connectionDetails === undefined || preJoinChoices === undefined ? (
+      {error ? (
+        <WaitRoom onSubmit={handlePreJoinSubmit} data={data} messageApi={messageApi}></WaitRoom>
+      ) : connectionDetails === undefined || preJoinChoices === undefined ? (
         <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
           <PreJoin
             defaults={preJoinDefaults}
