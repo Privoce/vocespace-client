@@ -14,14 +14,15 @@ import { api } from '@/lib/api';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
 
-type RolePerm = {
-  key: string;
-  role: string;
-  createRoom: boolean;
-  manageRoom: boolean;
-  manageRole: boolean;
-  controlUser: boolean;
-  recording: boolean;
+type PermissionKey = 'createRoom' | 'manageRoom' | 'manageRole' | 'controlUser' | 'recording' | 'viewRoom';
+
+type PermissionRow = {
+  key: PermissionKey;
+  permLabel: string;
+  owner: boolean;
+  manager: boolean;
+  participant: boolean;
+  guest: boolean;
 };
 
 export interface AuthSettingsProps {
@@ -42,8 +43,8 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
     guest: { ...spaceInfo.auth.guest },
   });
 
-  const renderSwitch = (field: keyof RolePerm) => (_: any, record: RolePerm) => {
-    const roleKey = record.key as keyof SpaceInfo['auth'];
+  const renderSwitch = (roleKey: keyof SpaceInfo['auth']) => (_: any, record: PermissionRow) => {
+    const field = record.key as PermissionKey;
     const checked = Boolean((changeableAuth as any)[roleKey]?.[field]);
     return (
       <Switch
@@ -63,92 +64,97 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
     );
   };
 
-  const columns: ColumnsType<RolePerm> = useMemo(() => {
+  const columns: ColumnsType<PermissionRow> = useMemo(() => {
     return [
       {
         title: 'RBAC',
-        dataIndex: 'role',
-        key: 'role',
+        dataIndex: 'permLabel',
+        key: 'permLabel',
+        width: 140,
+      },
+      {
+        title: 'Owner',
+        dataIndex: 'owner',
+        key: 'owner',
+        render: renderSwitch('owner'),
         width: 100,
       },
       {
-        title: t('auth.createRoom'),
-        dataIndex: 'createRoom',
-        key: 'createRoom',
-        render: renderSwitch('createRoom'),
+        title: 'Manager',
+        dataIndex: 'manager',
+        key: 'manager',
+        render: renderSwitch('manager'),
         width: 100,
       },
       {
-        title: t('auth.manageRoom'),
-        dataIndex: 'manageRoom',
-        key: 'manageRoom',
-        render: renderSwitch('manageRoom'),
-        width: 100,
+        title: 'Participant',
+        dataIndex: 'participant',
+        key: 'participant',
+        render: renderSwitch('participant'),
+        width: 120,
       },
       {
-        title: t('auth.manageRole'),
-        dataIndex: 'manageRole',
-        key: 'manageRole',
-        render: renderSwitch('manageRole'),
-        width: 100,
-      },
-      {
-        title: t('auth.controlUser'),
-        dataIndex: 'controlUser',
-        key: 'controlUser',
-        render: renderSwitch('controlUser'),
-        width: 100,
-      },
-      {
-        title: t('auth.recording'),
-        dataIndex: 'recording',
-        key: 'recording',
-        render: renderSwitch('recording'),
+        title: 'Guest',
+        dataIndex: 'guest',
+        key: 'guest',
+        render: renderSwitch('guest'),
         width: 100,
       },
     ];
   }, [t, changeableAuth, isOwner]);
 
-  const data: RolePerm[] = useMemo(() => {
+  const data: PermissionRow[] = useMemo(() => {
     return [
       {
-        key: 'owner',
-        role: 'Owner',
-        createRoom: changeableAuth.owner.createRoom,
-        manageRoom: changeableAuth.owner.manageRoom,
-        manageRole: changeableAuth.owner.manageRole,
-        controlUser: changeableAuth.owner.controlUser,
-        recording: changeableAuth.owner.recording,
+        key: "viewRoom",
+        permLabel: t('auth.viewRoom'),
+        owner: changeableAuth.owner.viewRoom,
+        manager: changeableAuth.manager.viewRoom,
+        participant: changeableAuth.participant.viewRoom,
+        guest: changeableAuth.guest.viewRoom,
       },
       {
-        key: 'manager',
-        role: 'Manager',
-        createRoom: changeableAuth.manager.createRoom,
-        manageRoom: changeableAuth.manager.manageRoom,
-        manageRole: changeableAuth.manager.manageRole,
-        controlUser: changeableAuth.manager.controlUser,
-        recording: changeableAuth.manager.recording,
+        key: 'createRoom',
+        permLabel: t('auth.createRoom'),
+        owner: changeableAuth.owner.createRoom,
+        manager: changeableAuth.manager.createRoom,
+        participant: changeableAuth.participant.createRoom,
+        guest: changeableAuth.guest.createRoom,
       },
       {
-        key: 'participant',
-        role: 'Participant',
-        createRoom: changeableAuth.participant.createRoom,
-        manageRoom: changeableAuth.participant.manageRoom,
-        manageRole: changeableAuth.participant.manageRole,
-        controlUser: changeableAuth.participant.controlUser,
-        recording: changeableAuth.participant.recording,
+        key: 'manageRoom',
+        permLabel: t('auth.manageRoom'),
+        owner: changeableAuth.owner.manageRoom,
+        manager: changeableAuth.manager.manageRoom,
+        participant: changeableAuth.participant.manageRoom,
+        guest: changeableAuth.guest.manageRoom,
       },
       {
-        key: 'guest',
-        role: 'Guest',
-        createRoom: changeableAuth.guest.createRoom,
-        manageRoom: changeableAuth.guest.manageRoom,
-        manageRole: changeableAuth.guest.manageRole,
-        controlUser: changeableAuth.guest.controlUser,
-        recording: changeableAuth.guest.recording,
+        key: 'manageRole',
+        permLabel: t('auth.manageRole'),
+        owner: changeableAuth.owner.manageRole,
+        manager: changeableAuth.manager.manageRole,
+        participant: changeableAuth.participant.manageRole,
+        guest: changeableAuth.guest.manageRole,
+      },
+      {
+        key: 'controlUser',
+        permLabel: t('auth.controlUser'),
+        owner: changeableAuth.owner.controlUser,
+        manager: changeableAuth.manager.controlUser,
+        participant: changeableAuth.participant.controlUser,
+        guest: changeableAuth.guest.controlUser,
+      },
+      {
+        key: 'recording',
+        permLabel: t('auth.recording'),
+        owner: changeableAuth.owner.recording,
+        manager: changeableAuth.manager.recording,
+        participant: changeableAuth.participant.recording,
+        guest: changeableAuth.guest.recording,
       },
     ];
-  }, [changeableAuth]);
+  }, [changeableAuth, t]);
 
   /**
    * 发送api更新权限设置
@@ -171,7 +177,7 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
 
   return (
     <div className={`${styles.setting_box} ${styles.scroll_box}`}>
-      <Table<RolePerm>
+      <Table<PermissionRow>
         columns={columns}
         dataSource={data}
         pagination={false}

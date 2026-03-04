@@ -4,6 +4,7 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { useEffect, useRef, useState } from 'react';
 import {
   countLevelByConf,
+  CreateSpaceStrategy,
   ReadableConf,
   RTCConf,
   rtcLevelToNumber,
@@ -233,7 +234,31 @@ export function useVoceSpaceConf() {
     return false;
   };
 
-  return { conf, getConf, setConf, checkHostToken };
+  const updateCreateSpaceConf = async (
+    createStrategy: CreateSpaceStrategy,
+    whiteList: string[] | undefined | Set<string>,
+    onError: (error: Error) => void,
+    onSuccess: () => void,
+  ) => {
+    try {
+      const response = await api.updateCreateSpaceConf(createStrategy, whiteList);
+      if (response.ok) {
+        await getConf();
+        onSuccess();
+      } else {
+        const { error } = await response.json();
+        if (error) {
+          throw new Error(error);
+        } else {
+          throw new Error('unknown error');
+        }
+      }
+    } catch (error) {
+      onError(error as Error);
+    }
+  };
+
+  return { conf, getConf, setConf, checkHostToken, updateCreateSpaceConf };
 }
 
 export interface UseRTCConfProps {

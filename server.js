@@ -429,5 +429,21 @@ app.prepare().then(() => {
     })
     .listen(port, () => {
       console.log(`> Ready on http://${hostname}:${port}${basePath}`);
+      // 在这里需要执行用户心跳检测，这样后端就会定时检查用户是否在线，若用户已经离线需要从房间中进行移除
+      // 注意：这个函数依赖livekit server api，所以需要在livekit server启动后才能执行，否则会报错
+      // 经过测试，发现当用户退出房间时可能会失败，导致用户实际已经退出，但服务端数据还存在，所以增加心跳检测
+      // 向/api/space/heartbeat发送请求，触发后端的用户心跳检测
+      const heartUrl = `http://${hostname}:${port}${basePath}/api/space?heartbeat=true`;
+      fetch(heartUrl.toString())
+        .then((response) => {
+          if (!response.ok) {
+            console.error('Failed to trigger user heartbeat check');
+          } else {
+            console.log('User heartbeat check triggered successfully');
+          }
+        })
+        .catch((error) => {
+          console.error('Error triggering user heartbeat check:', error);
+        });
     });
 });

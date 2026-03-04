@@ -23,6 +23,16 @@ import { ai } from './ai';
 
 const SPACE_API = connect_endpoint('/api/space');
 
+export const flushdb = async (hostToken: string) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('flushdb', 'true');
+  return await fetch(url.toString(), {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ hostToken }),
+  });
+};
+
 export const deleteSpace = async (spaceName: string) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('space', 'true');
@@ -33,7 +43,6 @@ export const deleteSpace = async (spaceName: string) => {
     body: JSON.stringify({ spaceName }),
   });
 };
-
 
 /**
  * 加入空间

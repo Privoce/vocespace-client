@@ -287,6 +287,10 @@ export type AllowGuest = 'allow' | 'disable' | 'link';
  */
 export interface SpaceRBACConf {
   /**
+   * 查看房间权限，即是否有房间侧边栏
+   */
+  viewRoom: boolean;
+  /**
    * 创建子房间权限
    * 游客没有权利创建子房间
    */
@@ -372,6 +376,7 @@ export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
   switch (role) {
     case 'owner':
       return {
+        viewRoom: true,
         createRoom: true,
         manageRoom: true,
         manageRole: true,
@@ -381,6 +386,7 @@ export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
     case 'manager':
     case 'assistant':
       return {
+        viewRoom: true,
         createRoom: true,
         manageRoom: true,
         manageRole: false,
@@ -389,6 +395,7 @@ export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
       } as SpaceRBACConf;
     case 'participant':
       return {
+        viewRoom: true,
         createRoom: true,
         manageRoom: false,
         manageRole: false,

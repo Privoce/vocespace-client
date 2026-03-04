@@ -1,8 +1,26 @@
 export default {
   api: {
     token: {
-      out_of_date: 'The token has expired. Please obtain a new one.',
+      out_of_date: 'Token已过期，请重新获取',
     },
+    room: {
+      error: {
+        full_and_wait: '所有房间已满员，请稍微等待',
+        not_exist: '房间不存在或已被删除',
+        invalid_identity_c_s: '无效的身份类型，用户只能是助理或顾客',
+      },
+    },
+  },
+  auth: {
+    createRoom: '创建房间',
+    manageRoom: '管理房间',
+    manageRole: '管理角色',
+    controlUser: '控制用户',
+    recording: '录制空间',
+    save: '保存修改',
+    saveFail: '保存失败，请稍后再试。',
+    saveSuccess: '保存成功',
+    viewRoom: '加入房间',
   },
   common: {
     full_screen: 'Full Screen',
@@ -869,14 +887,43 @@ export default {
       during: 'Duration',
     },
     conf: {
+      flushdb: {
+        title: "清除所有数据",
+        desc: "此操作将清除所有空间和用户数据，且不可恢复，请谨慎操作！此操作不会影响使用平台登陆的用户数据，只会清理游客数据。",
+        confirm: "确认清除",
+        cancel: "取消",
+        success: "所有数据已清除",
+      },
       resolution: 'Configure global graphics quality',
       verify: 'Verify',
       close: 'Close',
+      create_space: '创建新空间',
+      create_space_option: {
+        all: '所有人',
+        white: '指定用户',
+        white_platform: '注册用户和指定用户',
+      },
+      create_space_desc: [
+        '选择一个策略允许创建新的 VoceSpace 空间',
+        '1. 所有人: 允许所有人创建空间',
+        '2. 指定用户：指定用户（通过用户名或者ID指定）能创建空间',
+        '3. 注册用户和指定用户：指定用户和所有平台注册用户能创建空间',
+      ],
+      white_list: '指定用户白名单',
+      add_white_list: '添加',
+      delete_white_list: '删除',
+      white_list_desc: [
+        '用户ID：输入平台用户ID，如57ca4825-cf35-4bc5-a0f9-3b85134005db',
+        'USER-John: 表示允许用户名为John的用户创建空间',
+      ],
+      white_list_exist: '白名单已存在',
+      white_list_not_exist: '白名单不存在',
       placeholder: 'Please enter administrator token',
       error: {
         verify: 'Administrator token error, please try again',
         not_loaded:
           'Configuration not loaded or unable to obtain configuration, please try again later',
+        update: '配置更新失败，请稍后再试',
       },
       success: {
         update: 'Configuration updated',
@@ -890,6 +937,7 @@ export default {
       opt: 'Operation',
       refresh: 'Refresh data',
       global_conf: 'Configure Image Quality (Global)',
+      allow_create_space: '创建空间策略',
       history: {
         title: 'Historical Room Statistics',
         day: 'Daily Ranking',

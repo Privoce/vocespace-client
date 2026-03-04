@@ -66,6 +66,8 @@ import { generateToken, usePlatformUserInfoServer } from '@/lib/hooks/platformTo
 const {
   redis: { enabled, host, port, password, db },
   livekit: { url: LIVEKIT_URL, key: LIVEKIT_API_KEY, secret: LIVEKIT_API_SECRET },
+  create_space,
+  whiteList,
 } = getConfig();
 
 let redisClient: Redis | null = null;
@@ -120,6 +122,20 @@ class SpaceManager {
   // participant redis key
   private static getParticipantKey(space: string, participantId: string): string {
     return `${this.PARTICIPANT_KEY_PREFIX}${space}:${participantId}`;
+  }
+
+  // 完全移除所有数据 相当于执行 flushdb, 只有在重新部署或版本升级出现数据结构不兼容时才需要 -------
+  static async flushdb(): Promise<boolean> {
+    try {
+      if (!redisClient) {
+        return true;
+      }
+      await redisClient.flushdb();
+      return true;
+    } catch (e) {
+      console.error('Error clearing all data from Redis:', e);
+      return false;
+    }
   }
 
   // 删除整个空间 ------------------------------------------------------------------------
@@ -731,85 +747,63 @@ class SpaceManager {
           },
         );
       } else {
-        // 房间存在，这个用户可能是新加入的，我们可以查找房间中是否有这个用户，如果没有则需要将用户记录添加到使用记录中
-        let participant = spaceInfo.participants[participantId];
-        if (!participant) {
-          await this.setSpaceDateRecords(
-            room,
-            { start: spaceInfo.startAt },
-            {
-              [pData.name]: [{ start: startAt }],
-            },
-          );
-        } else {
-          if (init) {
-            // 用户重连或持久化房间用户重新上线，记录新的上线时间
-            await this.setSpaceDateRecords(
-              room,
-              { start: spaceInfo.startAt },
-              {
-                [pData.name]: [{ start: startAt }],
-              },
-            );
-
-            const { isAuth } = usePlatformUserInfoServer({ user: pData });
-            // 这里说明房间存在而且且用户也存在，说明用户可能是重连或房间是持久化的，我们无需大范围数据更新，只需要更新
-            // 用户的最基础设置即可
-            // 由于todo数据连接了平台端数据，所以这里需要更改为平台端的todo数据，但只有在isAuth为true时才更新
-            let appDatas = participant.appDatas;
-            if (isAuth) {
-              appDatas = {
-                ...appDatas,
-                todo: pData.appDatas.todo,
-              };
-            }
-            const isEmptySpace = Object.keys(spaceInfo.participants).length === 0;
-            spaceInfo.participants[participantId] = {
-              ...participant,
-              name: pData.name,
-              volume: pData.volume,
-              version: pData.version,
-              blur: pData.blur,
-              screenBlur: pData.screenBlur,
-              socketId: pData.socketId,
-              startAt: participant.startAt,
-              online: true,
-              appDatas,
-              auth: pData.auth,
-            };
-
-            // 设置auth，如果发现当前空间中没有人/空间ownerId就是当前用户，那必须把auth中的identity设置为owner
-            if (spaceInfo.ownerId === participantId || isEmptySpace) {
-              spaceInfo.participants[participantId].auth = {
-                identity: 'owner',
-                platform: pData.auth?.platform || 'other',
-              };
-            }
-
-            // 用户初始化完成之后通过RBAC获取权限，检查是否需要创建私人房间
-            const { createRoom } = exportRBAC(participantId, spaceInfo);
-            const roomName = `${spaceInfo.participants[participantId].name}'s Room`;
-            if (createRoom && !spaceInfo.children.find((c) => c.name === roomName)) {
-              const room = {
-                name: roomName,
-                isPrivate: true,
-                participants: [],
-                ownerId: participantId,
-              } as ChildRoom;
-
-              spaceInfo.children.push(room);
-            }
-
-            return await this.setSpaceInfo(room, spaceInfo);
-          }
-        }
+        // 房间存在
+        // 用户重连或持久化房间用户重新上线，记录新的上线时间
+        await this.setSpaceDateRecords(
+          room,
+          { start: spaceInfo.startAt },
+          {
+            [pData.name]: [{ start: startAt }],
+          },
+        );
       }
 
+      const isEmptySpace = Object.keys(spaceInfo.participants).length === 0;
       // 更新参与者数据
       spaceInfo.participants[participantId] = {
         ...spaceInfo.participants[participantId],
         ...pData,
+        online: true,
       };
+      // 设置auth，如果发现当前空间中没有人/空间ownerId就是当前用户，那必须把auth中的identity设置为owner
+      if (spaceInfo.ownerId === participantId || isEmptySpace) {
+        spaceInfo.participants[participantId].auth = {
+          identity: 'owner',
+          platform: pData.auth?.platform || 'other',
+        };
+      }
+
+      let participant = spaceInfo.participants[participantId];
+      // init 时进行房间创建
+      if (init) {
+        const { isAuth } = usePlatformUserInfoServer({ user: participant });
+        // 这里说明房间存在而且且用户也存在，说明用户可能是重连或房间是持久化的，我们无需大范围数据更新，只需要更新
+        // 用户的最基础设置即可
+        // 由于todo数据连接了平台端数据，所以这里需要更改为平台端的todo数据，但只有在isAuth为true时才更新
+        let appDatas = participant.appDatas;
+        if (isAuth) {
+          appDatas = {
+            ...appDatas,
+            todo: participant.appDatas.todo,
+          };
+        }
+        spaceInfo.participants[participantId].appDatas = appDatas;
+
+        // 用户初始化完成之后通过RBAC获取权限，检查是否需要创建私人房间
+        const { createRoom } = exportRBAC(participantId, spaceInfo);
+        console.warn(createRoom, 'createRoom after exportRBAC', participantId);
+        const roomName = `${spaceInfo.participants[participantId].name}'s Room`;
+        if (createRoom && !spaceInfo.children.find((c) => c.name === roomName)) {
+          const room = {
+            name: roomName,
+            isPrivate: true,
+            participants: [],
+            ownerId: participantId,
+          } as ChildRoom;
+
+          spaceInfo.children.push(room);
+        }
+      }
 
       // 保存更新后的房间设置
       return await this.setSpaceInfo(room, spaceInfo);
@@ -1142,6 +1136,8 @@ class SpaceManager {
   }
 }
 
+let userHeartbeatInterval: NodeJS.Timeout | null = null;
+
 // 获取房间所有参与者设置
 export async function GET(request: NextRequest) {
   const isAll = request.nextUrl.searchParams.get('all') === 'true';
@@ -1151,6 +1147,20 @@ export async function GET(request: NextRequest) {
   const isChat = request.nextUrl.searchParams.get('chat') === 'true';
   const isHistory = request.nextUrl.searchParams.get('history') === 'true';
   const isCreateSpace = request.nextUrl.searchParams.get('space') === 'create';
+  const isHeartbeat = request.nextUrl.searchParams.get('heartbeat') === 'true';
+  // 心跳接口，检查房间是否存在和用户是否在线 ------------------------------------------------------
+  if (isHeartbeat) {
+    if (!userHeartbeatInterval) {
+      userHeartbeatInterval = setInterval(
+        async () => {
+          await userHeartbeat();
+        },
+        5 * 60 * 1000,
+      ); // 每5分钟执行一次
+    }
+    // 无论如何都返回成功，这里只是一个触发器
+    return NextResponse.json({ success: true }, { status: 200 });
+  }
   // 创建一个新的空间 -------------------------------------------------------------------------------
   if (isCreateSpace) {
     const spaceOwner = request.nextUrl.searchParams.get('owner');
@@ -1563,11 +1573,19 @@ export async function POST(request: NextRequest) {
         if (participantSettings) {
           // 有参与者，判断当前参与者的online状态，如果为false，说明是重连，可以直接使用该名字
           if (participantSettings.online) {
-            // 在线状态，那么不允许使用该名字
-            return NextResponse.json(
-              { success: false, error: 'Participant name already exists' },
-              { status: 200 },
-            );
+            // 在线状态，那么不允许使用该名字, 需要分配一个新的名字给用户，如果是Bob就需要分配Bob 02 这样的名字给用户, 数字用个数类推
+            let newName = participantName;
+            let suffix = 1;
+            const existingNames = Object.values(spaceInfo.participants).map((p) => p.name);
+            while (existingNames.includes(newName)) {
+              suffix += 1;
+              let suffix_str = suffix.toString();
+              if (suffix < 10) {
+                suffix_str = `0${suffix}`;
+              }
+              newName = `${participantName} ${suffix_str}`;
+            }
+            return NextResponse.json({ success: true, name: newName }, { status: 200 });
           } else {
             // 离线状态，允许使用该名字
             return NextResponse.json({ success: true, name: participantName }, { status: 200 });
@@ -1919,7 +1937,28 @@ export async function DELETE(request: NextRequest) {
   const isDeleteParticipant = request.nextUrl.searchParams.get('participant') === 'delete';
   const isSpaceDelete = request.nextUrl.searchParams.get('delete') === 'true';
   const isSpace = request.nextUrl.searchParams.get('space') === 'true';
+  const isFlushDB = request.nextUrl.searchParams.get('flushdb') === 'true';
   try {
+    //执行清理整个redis操作 ---------------------------------------------------------------------------
+    if (isFlushDB) {
+      // 检测hostToken是否正确，只有正确的hostToken才能执行清理操作
+      const { hostToken } = await request.json();
+      if (hostToken !== process.env.HOST_TOKEN) {
+        return NextResponse.json(
+          { success: false, message: 'Invalid host token' },
+          { status: 403 },
+        );
+      }
+      const success = await SpaceManager.flushdb();
+      if (success) {
+        return NextResponse.json({ success: true, message: 'All spaces cleared successfully' });
+      } else {
+        return NextResponse.json(
+          { success: false, message: 'Failed to clear spaces' },
+          { status: 500 },
+        );
+      }
+    }
     // 删除整个Space ---------------------------------------------------------------------------------
     if (isSpaceDelete && isSpace) {
       const { spaceName } = await request.json();
@@ -2070,6 +2109,7 @@ const reallyLeaveSpace = async (spaceName: string, participantId: string): Promi
 // 经过测试，发现当用户退出房间时可能会失败，导致用户实际已经退出，但服务端数据还存在
 // 增加心跳检测，定时检查用户是否在线，若用户已经离线，需要从房间中进行移除, 依赖livekit server api
 const userHeartbeat = async () => {
+  console.log('Running user heartbeat check...');
   try {
     if (
       isUndefinedString(LIVEKIT_API_KEY) ||
@@ -2105,11 +2145,7 @@ const userHeartbeat = async () => {
       });
       // 处理情况1 --------------------------------------------------------------------------------------------
       if (inRedisNotInLK.length > 0) {
-        // 检查房间是否为持久化房间
-        if (redisRoom.persistence) {
-          console.warn(`Skipping participant removal for persistent room: ${room.name}`);
-          continue; // 跳过持久化房间的参与者清理
-        }
+        // 这里直接使用removeParticipant接口进行处理，无需进行额外持久化房间等判断，因为这个接口内部已经有相关逻辑了
         for (const participantId of inRedisNotInLK) {
           await SpaceManager.removeParticipant(room.name, participantId);
         }
@@ -2131,10 +2167,11 @@ const userHeartbeat = async () => {
   }
 };
 
-// 定时任务，每隔5分钟执行一次
-setInterval(
-  async () => {
-    await userHeartbeat();
-  },
-  5 * 60 * 1000,
-); // 每5分钟执行一次
+// 测试发现该代码无法自动执行，所以改为在server.js中在程序启动时执行一次然后进行定时执行
+// // 定时任务，每隔5分钟执行一次
+// setInterval(
+//   async () => {
+//     await userHeartbeat();
+//   },
+//   5 * 1000,
+// ); // 每5分钟执行一次
