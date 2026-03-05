@@ -76,7 +76,7 @@ export function usePlatformUser({ searchParams, messageApi }: UsePlatformUserPro
       const parsedInfo = JSON.parse(storedUserInfo) as PlatformUser;
       // 在此之前先确定数据实效性
       if (!verifyPlatformUser(parsedInfo)) {
-        messageApi.warning(t('api.token.out_of_date'));
+        // messageApi.warning(t('api.token.out_of_date'));
         // 数据无效，清除
         localStorage.removeItem(VOCESPACE_PLATFORM_USER);
       }
@@ -91,7 +91,7 @@ export function usePlatformUser({ searchParams, messageApi }: UsePlatformUserPro
       );
       const connectionDetails: ConnectionDetails = castToConnectionDetails(searchParams.details);
       if (!verifyPlatformUser(platformNewInfo)) {
-        messageApi.warning(t('api.token.out_of_date'));
+        // messageApi.warning(t('api.token.out_of_date'));
         // 数据无效，直接返回
         setPlatformUser(parsedInfo);
         return;
@@ -117,7 +117,7 @@ export function usePlatformUser({ searchParams, messageApi }: UsePlatformUserPro
       const connectionDetails: ConnectionDetails = castToConnectionDetails(searchParams.details);
       if (!verifyPlatformUser(platformNewInfo)) {
         // 数据无效，直接返回
-        messageApi.warning(t('api.token.out_of_date'));
+        // messageApi.warning(t('api.token.out_of_date'));
         return;
       }
       // 数据有效，存储并使用

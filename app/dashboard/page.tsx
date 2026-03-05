@@ -82,6 +82,8 @@ type ActionKey = 'refresh' | 'global_conf' | 'manage_spaces' | 'ac_space' | 'flu
 
 export default function Dashboard() {
   const { t } = useI18n();
+  const [pageSize1, setPageSize1] = useState(10);
+  const [pageSize2, setPageSize2] = useState(10);
   const [currentSpacesData, setCurrentSpacesData] = useState<ParticipantTableData[]>([]);
   const [historySpacesData, setHistorySpacesData] = useState<HistorySpaceData[]>([]);
   const [dailyLeaderboard, setDailyLeaderboard] = useState<{
@@ -1091,9 +1093,12 @@ export default function Dashboard() {
                     dataSource={participants}
                     loading={loading}
                     pagination={{
-                      pageSize: 10,
+                      pageSize: pageSize1,
                       showSizeChanger: true,
                       showQuickJumper: true,
+                      onShowSizeChange(current, size) {
+                        setPageSize1(size);
+                      },
                       showTotal: (total, range) =>
                         `${t('recording.pagation.now')} ${range[0]}-${range[1]} ${t(
                           'recording.pagation.num',
@@ -1122,9 +1127,12 @@ export default function Dashboard() {
                   columns={historySpacesColumns}
                   dataSource={historySpacesData}
                   pagination={{
-                    pageSize: 10,
+                    pageSize: pageSize2,
                     showSizeChanger: true,
                     showQuickJumper: true,
+                    onShowSizeChange(current, size) {
+                      setPageSize2(size);
+                    },
                     showTotal: (total, range) =>
                       `${t('recording.pagation.now')} ${range[0]}-${range[1]} ${t(
                         'recording.pagation.num',
@@ -1158,9 +1166,12 @@ export default function Dashboard() {
                           columns={dailyColumns}
                           dataSource={participants}
                           pagination={{
-                            pageSize: 10,
+                            pageSize: pageSize2,
                             showSizeChanger: true,
                             showQuickJumper: true,
+                            onShowSizeChange(current, size) {
+                              setPageSize2(size);
+                            },
                             showTotal: (total, range) =>
                               `${t('recording.pagation.now')} ${range[0]}-${range[1]} ${t(
                                 'recording.pagation.num',
@@ -1200,9 +1211,12 @@ export default function Dashboard() {
                           columns={weeklyColumns}
                           dataSource={participants}
                           pagination={{
-                            pageSize: 10,
+                            pageSize: pageSize2,
                             showSizeChanger: true,
                             showQuickJumper: true,
+                            onShowSizeChange(current, size) {
+                              setPageSize2(size);
+                            },
                             showTotal: (total, range) =>
                               `${t('recording.pagation.now')} ${range[0]}-${range[1]} ${t(
                                 'recording.pagation.num',
@@ -1242,9 +1256,12 @@ export default function Dashboard() {
                           columns={monthlyColumns}
                           dataSource={participants}
                           pagination={{
-                            pageSize: 10,
+                            pageSize: pageSize2,
                             showSizeChanger: true,
                             showQuickJumper: true,
+                            onShowSizeChange(current, size) {
+                              setPageSize2(size);
+                            },
                             showTotal: (total, range) =>
                               `${t('recording.pagation.now')} ${range[0]}-${range[1]} ${t(
                                 'recording.pagation.num',
