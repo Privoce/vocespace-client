@@ -1,10 +1,11 @@
-import os from 'os';
 import clsx from 'clsx';
 import { Trans } from '../i18n/i18n';
 import { GetProp, UploadProps } from 'antd';
 import { SpaceInfo } from './space';
 import { VideoCodec } from 'livekit-client';
 import { ConnectionDetails } from '../types';
+import { ChatMsgItem } from './chat';
+import { api } from '../api';
 /**
  * Option<T>
  *
@@ -144,7 +145,8 @@ export function isTablet(): boolean {
  * @returns
  */
 export function src(url: string): string {
-  let prefix = process.env.NEXT_PUBLIC_BASE_PATH;
+  const prefix =
+    (typeof process !== 'undefined' ? process.env?.NEXT_PUBLIC_BASE_PATH : undefined) ?? '';
   if (!prefix || prefix === '' || prefix === '/') {
     return url;
   }
@@ -157,7 +159,8 @@ export function src(url: string): string {
  * @returns
  */
 export function connect_endpoint(url: string): string {
-  let prefix = process.env.NEXT_PUBLIC_BASE_PATH;
+  const prefix =
+    (typeof process !== 'undefined' ? process.env?.NEXT_PUBLIC_BASE_PATH : undefined) ?? '';
   if (!prefix || prefix === '' || prefix === '/') {
     return url;
   }
@@ -202,6 +205,8 @@ export const randomColor = (participantId: string): string => {
 };
 
 export const getServerIp = () => {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const os = require('os') as typeof import('os');
   const interfaces = os.networkInterfaces();
   for (const interfaceName in interfaces) {
     const networkInterface = interfaces[interfaceName];
@@ -605,4 +610,98 @@ export const httpServerOrIp = (serverUrl: string) => {
   } else {
     return `https://${serverUrl}`;
   }
+};
+
+// 处理大文件上传（通过 HTTP API）
+export const handleLargeFileUpload = async (
+  file: FileType,
+  params: {
+    spaceName: string;
+    participantIdentity: string;
+    participantName: string;
+  },
+  abortController?: AbortController,
+): Promise<ChatMsgItem> => {
+  try {
+    const response = await api.uploadFile(
+      file,
+      params.spaceName,
+      { identity: params.participantIdentity, name: params.participantName },
+      abortController,
+    );
+
+    if (!response.ok) {
+      throw new Error(`Upload failed: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    console.log('Large file upload success:', result);
+
+    // 创建文件消息，使用服务器返回的 URL
+    let timestamp = Date.now();
+    const fileMessage: ChatMsgItem = {
+      id: timestamp.toString(),
+      sender: {
+        id: params.participantIdentity,
+        name: params.participantName || params.participantIdentity,
+      },
+      message: `file: ${file.name}`,
+      type: 'file',
+      roomName: params.spaceName,
+      file: {
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        url: result.fileUrl, // 使用文件服务 API
+      },
+      timestamp,
+    };
+    return fileMessage;
+  } catch (error) {
+    console.error('Large file upload failed:', error);
+    throw error;
+  }
+};
+
+// 处理小文件上传（通过 Socket）
+export const handleSmallFileUpload = async (
+  file: FileType,
+  params: {
+    spaceName: string;
+    participantIdentity: string;
+    participantName: string;
+  },
+): Promise<ChatMsgItem> => {
+  return new Promise<ChatMsgItem>((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const fileData = e.target?.result;
+      console.log('Small file upload:', file.size, file.name, file.type);
+
+      const fileMessage: ChatMsgItem = {
+        sender: {
+          id: params.participantIdentity,
+          name: params.participantName || params.participantIdentity,
+        },
+        message: null,
+        type: 'file',
+        roomName: params.spaceName,
+        file: {
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          data: fileData,
+        },
+        timestamp: Date.now(),
+      };
+
+      // 发送文件消息
+      // socket.emit('chat_file', fileMessage);
+      resolve(fileMessage);
+    };
+    reader.onerror = () => {
+      reject(new Error('Failed to read file'));
+    };
+    reader.readAsDataURL(file);
+  });
 };

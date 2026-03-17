@@ -87,6 +87,22 @@ import {
 } from '@/lib/api/platform';
 import { useFullScreenBtn } from './widgets/full_screen';
 import { exportRBAC, usePlatformUserInfo, usePlatformUserInfoCheap } from '@/lib/hooks/platform';
+import { TilePlayer } from '../participant/player';
+import { GLayout2 } from '../layout/grid';
+import { CLayout } from '../layout/carousel';
+
+// /**
+//  * 构建一个假的TrackReference，用于让使用者点击后进行某些处理，比如直接输入网址显示图片/视频
+//  * 其实是个功能模块，但由于需要做到布局中，使用ParticipantItem组件进行显示，所以现在测试伪造一个
+//  * TODO：可能后续会换成直接修改外层的布局组件达到这个效果，目前为实验性
+//  */
+// const FakeParticipantTrack = (room: string) : TrackReferencePlaceholder=> {
+//   const idOrName = `fake_track_${room}`;
+//     return {
+//        source: Track.Source.Unknown,
+//     participant: new Participant(idOrName, idOrName, idOrName)
+//     }
+// }
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -968,7 +984,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     ]);
 
     const selfRoom = useMemo(() => {
-      if (!space || space.state !== ConnectionState.Connected || !settings || !settings.children) return;
+      if (!space || space.state !== ConnectionState.Connected || !settings || !settings.children)
+        return;
 
       let selfRoom = settings.children.find((child) => {
         return child.participants.includes(space.localParticipant.identity);
@@ -1092,6 +1109,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       const roomTracks = originTracks.filter((track) =>
         selfRoom.participants.includes(track.participant.identity),
       );
+
+      // roomTracks.push(FakeParticipantTrack(selfRoom.name)); // todo
 
       return roomTracks;
     }, [originTracks, selfRoom]);
@@ -1352,7 +1371,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               >
                 {!focusTrack ? (
                   <div className="lk-grid-layout-wrapper">
-                    <GridLayout tracks={tracks}>
+                    {/* <GridLayout tracks={tracks}>
                       <ParticipantItem
                         space={space}
                         settings={settings}
@@ -1368,7 +1387,29 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                         isFullScreen={isFullScreen}
                         setCollapsed={setCollapsed}
                       ></ParticipantItem>
-                    </GridLayout>
+                    </GridLayout> */}
+                    <GLayout2
+                      tracks={tracks}
+                      messageApi={messageApi}
+                      spaceName={space.name}
+                      room={selfRoom?.name}
+                    >
+                      <ParticipantItem
+                        space={space}
+                        settings={settings}
+                        toSettings={toSettingGeneral}
+                        messageApi={messageApi}
+                        noteApi={noteApi}
+                        setUserStatus={setUserStatus}
+                        updateSettings={updateSettings}
+                        toRenameSettings={toSettingGeneral}
+                        showFlotApp={showFlotApp}
+                        selfRoom={selfRoom}
+                        setIsFullScreen={setIsFullScreen}
+                        isFullScreen={isFullScreen}
+                        setCollapsed={setCollapsed}
+                      ></ParticipantItem>
+                    </GLayout2>
                   </div>
                 ) : (
                   <div className="lk-focus-layout-wrapper">
@@ -1392,7 +1433,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                       ></ParticipantItem>
                     ) : (
                       <FocusLayoutContainer>
-                        <CarouselLayout tracks={carouselTracks}>
+                        {/* <CarouselLayout tracks={carouselTracks}>
                           <ParticipantItem
                             space={space}
                             settings={settings}
@@ -1408,7 +1449,29 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                             setIsFullScreen={setIsFullScreen}
                             setCollapsed={setCollapsed}
                           ></ParticipantItem>
-                        </CarouselLayout>
+                        </CarouselLayout> */}
+                        <CLayout
+                          spaceName={space.name}
+                          room={selfRoom?.name}
+                          tracks={carouselTracks}
+                          messageApi={messageApi}
+                        >
+                          <ParticipantItem
+                            space={space}
+                            settings={settings}
+                            toSettings={toSettingGeneral}
+                            messageApi={messageApi}
+                            noteApi={noteApi}
+                            setUserStatus={setUserStatus}
+                            updateSettings={updateSettings}
+                            toRenameSettings={toSettingGeneral}
+                            showFlotApp={showFlotApp}
+                            selfRoom={selfRoom}
+                            isFullScreen={isFullScreen}
+                            setIsFullScreen={setIsFullScreen}
+                            setCollapsed={setCollapsed}
+                          ></ParticipantItem>
+                        </CLayout>
                         {focusTrack && (
                           <ParticipantItem
                             space={space}

@@ -14,7 +14,7 @@ export interface AnalysisRequestBody {
   blur: boolean;
 }
 
-const BASE_URL = connect_endpoint('/api/ai');
+const getBaseUrl = () => connect_endpoint('/api/ai');
 
 /**
  * 开启AI分析
@@ -25,7 +25,7 @@ const BASE_URL = connect_endpoint('/api/ai');
  * @returns
  */
 const analysis = async (params: AnalysisRequestBody) => {
-  const url = new URL(BASE_URL, window.location.origin);
+  const url = new URL(getBaseUrl(), window.location.origin);
   return await fetch(url.toString(), {
     method: 'POST',
     headers: {
@@ -74,7 +74,7 @@ const unifiedGet = async (
   action: 'stop' | 'md' | 'result',
   isAuth: boolean,
 ): Promise<any> => {
-  const url = new URL(BASE_URL, window.location.origin);
+  const url = new URL(getBaseUrl(), window.location.origin);
   url.searchParams.append('action', action);
   url.searchParams.append('spaceName', spaceName);
   url.searchParams.append('userId', userId);

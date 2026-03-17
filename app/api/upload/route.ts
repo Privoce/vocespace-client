@@ -2,14 +2,81 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { ulid } from 'ulid';
-import { HandleFileSystemBody } from '@/lib/api/chat';
+import { HandleFileSystemBody, HandleTilePlayerFileBody } from '@/lib/api/chat';
 import fs from 'fs/promises';
 
 const uploadDirPath = (roomName: string) => path.join(process.cwd(), 'uploads', roomName);
 
 export async function POST(request: NextRequest) {
   try {
-    let action = request.nextUrl.searchParams.get('action');
+    const action = request.nextUrl.searchParams.get('action');
+    const isTilePlayerFile = request.nextUrl.searchParams.get('tilePlayer') === 'true';
+    // 处理TilePlayer组件的文件操作请求 ------------------------------------------------------------------------------------
+    if (isTilePlayerFile) {
+      const contentType = request.headers.get('content-type') || '';
+
+      let spaceName: string;
+      let ty: HandleTilePlayerFileBody['ty'];
+      let room: string | undefined;
+      let file: File | undefined;
+
+      if (contentType.includes('multipart/form-data')) {
+        // upload 操作：从 FormData 读取真实 File 对象
+        const formData = await request.formData();
+        spaceName = formData.get('spaceName') as string;
+        ty = formData.get('ty') as HandleTilePlayerFileBody['ty'];
+        room = (formData.get('room') as string) || undefined;
+        file = formData.get('file') as File;
+      } else {
+        // ls 等操作：从 JSON 读取
+        const body: Omit<HandleTilePlayerFileBody, 'file'> = await request.json();
+        spaceName = body.spaceName;
+        ty = body.ty;
+        room = body.room;
+      }
+      // 获取文件URL
+      // 这个tile_player文件目前只会是图片文件，并且只会存储在uploads/spaceName/{room?}目录下
+      const dir = room ? path.join(uploadDirPath(spaceName), room) : uploadDirPath(spaceName);
+
+      if (ty === 'ls') {
+        // 直接找dir路径下的文件，如果存在叫tile_player的就返回URL，不存在就返回null
+        try {
+          const files = await fs.readdir(dir);
+          const tilePlayerFile = files.find((file) => file.startsWith('tile_player'));
+          if (tilePlayerFile) {
+            const fileUrl = `/uploads/${spaceName}/${room ? room + '/' : ''}${tilePlayerFile}`;
+            return NextResponse.json({ url: fileUrl });
+          } else {
+            return NextResponse.json({ url: null });
+          }
+        } catch (e) {
+          return NextResponse.json({ url: null });
+        }
+      }
+      // 上传文件，直接把文件命名为tile_player，覆盖之前的文件
+      if (ty === 'upload') {
+        // const formData = await request.formData();
+        // const file = formData.get('file') as File;
+        if (!file) {
+          return NextResponse.json({ error: 'No file received' }, { status: 400 });
+        }
+        // 确保目录存在
+        try {
+          await mkdir(dir, { recursive: true });
+        } catch (error) {
+          console.error('Failed to create upload directory:', error);
+          return NextResponse.json({ error: 'Failed to create upload directory' }, { status: 500 });
+        }
+        const filePath = path.join(dir, 'tile_player' + path.extname(file.name));
+        const bytes = await file.arrayBuffer();
+        const buffer = Buffer.from(bytes);
+        await writeFile(filePath, buffer);
+        return NextResponse.json({
+          success: true,
+          url: `/uploads/${spaceName}/${room ? room + '/' : ''}tile_player${path.extname(file.name)}`,
+        });
+      }
+    }
     // 处理文件系统操作 ------------------------------------------------------------------------------------
     if (action === 'fs') {
       const { spaceName, ty, fileName }: HandleFileSystemBody = await request.json();
@@ -61,8 +128,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ success: true });
     }
-
-    // 处理文件上传 ------------------------------------------------------------------------------------
+    // 处理文件上传(聊天业务) ------------------------------------------------------------------------------------
     const formData = await request.formData();
     const file = formData.get('file') as File;
     const roomName = formData.get('roomName') as string;
@@ -106,8 +172,8 @@ export async function POST(request: NextRequest) {
     // 构建文件访问 URL
     const fileUrl = `/uploads/${roomName}/${fileName}`;
 
-    console.log(`File uploaded successfully: ${filePath}`);
-    console.log(`File URL: ${fileUrl}`);
+    // console.log(`File uploaded successfully: ${filePath}`);
+    // console.log(`File URL: ${fileUrl}`);
 
     return NextResponse.json({
       success: true,

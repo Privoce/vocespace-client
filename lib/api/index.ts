@@ -1,7 +1,20 @@
 import { ai } from './ai';
 import { createRoom, deleteRoom, joinRoom, leaveRoom, updateRoom } from './channel';
-import { fetchLinkPreview, getChatMsg, uploadFile, handleFileSystem } from './chat';
-import { checkHostToken, getConf, reloadConf, reloadLicense, updateAIConf, updateCreateSpaceConf } from './conf';
+import {
+  fetchLinkPreview,
+  getChatMsg,
+  uploadFile,
+  handleFileSystem,
+  handleTilePlayerFile,
+} from './chat';
+import {
+  checkHostToken,
+  getConf,
+  reloadConf,
+  reloadLicense,
+  updateAIConf,
+  updateCreateSpaceConf,
+} from './conf';
 import { checkLicenseByIP, getLicenseByIP } from './license';
 import { sendRecordRequest, updateRecord } from './record';
 import {
@@ -70,6 +83,7 @@ export const api = {
   getChatMsg,
   uploadFile,
   handleFileSystem,
+  handleTilePlayerFile,
   // ---- license api --------
   getLicenseByIP,
   checkLicenseByIP,
