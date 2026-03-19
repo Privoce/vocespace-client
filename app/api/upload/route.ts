@@ -44,7 +44,9 @@ export async function POST(request: NextRequest) {
           const files = await fs.readdir(dir);
           const tilePlayerFile = files.find((file) => file.startsWith('tile_player'));
           if (tilePlayerFile) {
-            const fileUrl = `/uploads/${spaceName}/${room ? room + '/' : ''}${tilePlayerFile}`;
+            const fileStat = await fs.stat(path.join(dir, tilePlayerFile));
+            const mtime = fileStat.mtimeMs;
+            const fileUrl = `/uploads/${spaceName}/${room ? room + '/' : ''}${tilePlayerFile}?t=${mtime}`;
             return NextResponse.json({ url: fileUrl });
           } else {
             return NextResponse.json({ url: null });
@@ -53,6 +55,23 @@ export async function POST(request: NextRequest) {
           return NextResponse.json({ url: null });
         }
       }
+      if (ty === 'rm') {
+        // 删除tile_player文件
+        try {
+          const files = await fs.readdir(dir);
+          const tilePlayerFile = files.find((file) => file.startsWith('tile_player'));
+          if (tilePlayerFile) {
+            await fs.unlink(path.join(dir, tilePlayerFile));
+          }
+          return NextResponse.json({ success: true });
+        } catch (e) {
+          return NextResponse.json(
+            { success: false, error: 'Failed to remove file' },
+            { status: 500 },
+          );
+        }
+      }
+
       // 上传文件，直接把文件命名为tile_player，覆盖之前的文件
       if (ty === 'upload') {
         // const formData = await request.formData();
@@ -71,9 +90,10 @@ export async function POST(request: NextRequest) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
         await writeFile(filePath, buffer);
+        const uploadedAt = Date.now();
         return NextResponse.json({
           success: true,
-          url: `/uploads/${spaceName}/${room ? room + '/' : ''}tile_player${path.extname(file.name)}`,
+          url: `/uploads/${spaceName}/${room ? room + '/' : ''}tile_player${path.extname(file.name)}?t=${uploadedAt}`,
         });
       }
     }

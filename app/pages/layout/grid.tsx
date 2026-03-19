@@ -62,11 +62,9 @@ export function GLayout({ tracks, ...props }: GridLayoutProps) {
 
 export function GLayout2({
   tracks,
-  messageApi,
-  spaceName,
-  room,
+  player,
   ...props
-}: GridLayoutProps & { messageApi: MessageInstance; spaceName: string; room?: string }) {
+}: GridLayoutProps & { player: React.ReactNode }) {
   const gridEl = React.createRef<HTMLDivElement>();
 
   const elementProps = React.useMemo(
@@ -83,7 +81,7 @@ export function GLayout2({
   return (
     <div ref={gridEl} data-lk-pagination={pagination.totalPageCount > 1} {...elementProps}>
       <TrackLoop tracks={pagination.tracks}>{props.children}</TrackLoop>
-      <TilePlayer messageApi={messageApi} spaceName={spaceName} room={room}></TilePlayer>
+      {player}
       {tracks.length > layout.maxTiles && (
         <>
           <PaginationIndicator

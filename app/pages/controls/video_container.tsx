@@ -159,7 +159,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       space?.name || '', // 房间 ID
       space?.localParticipant?.identity || '', // 参与者 ID
     );
-    console.warn(settings);
+    // console.warn(settings);
     const { fromVocespace, platUser, roomEnter, showAI } = usePlatformUserInfo({
       space,
       uid: space?.localParticipant.identity,
@@ -1132,6 +1132,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       .filter((track) => track.publication.source === Track.Source.ScreenShare);
 
     const focusTrack = usePinnedTracks(layoutContext)?.[0];
+    const [focusPlayer, setFocusPlayer] = React.useState<boolean>(false);
     const carouselTracks = tracks.filter((track) => !isEqualTrackRef(track, focusTrack));
 
     React.useEffect(() => {
@@ -1288,6 +1289,22 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             : '100vw'
           : 'calc(100vw - 280px)';
     }, [collapsed, showSideChannel, isActive]);
+    /**
+     * TilePlayer放在这里的原因是，实际只需要在外部传入这个组件即可，防止传入过多参数
+     */
+    const TilePlayerMemo = useMemo(() => {
+      if (space?.name && selfRoom) {
+        return (
+          <TilePlayer
+            spaceName={space.name}
+            room={selfRoom.name}
+            messageApi={messageApi}
+            setShow={setFocusPlayer}
+          />
+        );
+      }
+      return undefined;
+    }, [space?.name, selfRoom]);
 
     useImperativeHandle(ref, () => ({
       clearRoom: () => clearRoom(),
@@ -1370,47 +1387,51 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                 style={{ alignItems: 'space-between', height: '100dvh' }}
               >
                 {!focusTrack ? (
-                  <div className="lk-grid-layout-wrapper">
-                    {/* <GridLayout tracks={tracks}>
-                      <ParticipantItem
-                        space={space}
-                        settings={settings}
-                        toSettings={toSettingGeneral}
-                        messageApi={messageApi}
-                        noteApi={noteApi}
-                        setUserStatus={setUserStatus}
-                        updateSettings={updateSettings}
-                        toRenameSettings={toSettingGeneral}
-                        showFlotApp={showFlotApp}
-                        selfRoom={selfRoom}
-                        setIsFullScreen={setIsFullScreen}
-                        isFullScreen={isFullScreen}
-                        setCollapsed={setCollapsed}
-                      ></ParticipantItem>
-                    </GridLayout> */}
-                    <GLayout2
-                      tracks={tracks}
-                      messageApi={messageApi}
-                      spaceName={space.name}
-                      room={selfRoom?.name}
-                    >
-                      <ParticipantItem
-                        space={space}
-                        settings={settings}
-                        toSettings={toSettingGeneral}
-                        messageApi={messageApi}
-                        noteApi={noteApi}
-                        setUserStatus={setUserStatus}
-                        updateSettings={updateSettings}
-                        toRenameSettings={toSettingGeneral}
-                        showFlotApp={showFlotApp}
-                        selfRoom={selfRoom}
-                        setIsFullScreen={setIsFullScreen}
-                        isFullScreen={isFullScreen}
-                        setCollapsed={setCollapsed}
-                      ></ParticipantItem>
-                    </GLayout2>
-                  </div>
+                  focusPlayer ? (
+                    <div className="lk-focus-layout-wrapper">
+                      {' '}
+                      <FocusLayoutContainer>
+                        <CLayout player={focusPlayer ? undefined : TilePlayerMemo} tracks={tracks}>
+                          <ParticipantItem
+                            space={space}
+                            settings={settings}
+                            toSettings={toSettingGeneral}
+                            messageApi={messageApi}
+                            noteApi={noteApi}
+                            setUserStatus={setUserStatus}
+                            updateSettings={updateSettings}
+                            toRenameSettings={toSettingGeneral}
+                            showFlotApp={showFlotApp}
+                            selfRoom={selfRoom}
+                            isFullScreen={isFullScreen}
+                            setIsFullScreen={setIsFullScreen}
+                            setCollapsed={setCollapsed}
+                          ></ParticipantItem>
+                        </CLayout>
+                        {TilePlayerMemo}
+                      </FocusLayoutContainer>
+                    </div>
+                  ) : (
+                    <div className="lk-grid-layout-wrapper">
+                      <GLayout2 tracks={tracks} player={TilePlayerMemo}>
+                        <ParticipantItem
+                          space={space}
+                          settings={settings}
+                          toSettings={toSettingGeneral}
+                          messageApi={messageApi}
+                          noteApi={noteApi}
+                          setUserStatus={setUserStatus}
+                          updateSettings={updateSettings}
+                          toRenameSettings={toSettingGeneral}
+                          showFlotApp={showFlotApp}
+                          selfRoom={selfRoom}
+                          setIsFullScreen={setIsFullScreen}
+                          isFullScreen={isFullScreen}
+                          setCollapsed={setCollapsed}
+                        ></ParticipantItem>
+                      </GLayout2>
+                    </div>
+                  )
                 ) : (
                   <div className="lk-focus-layout-wrapper">
                     {isFullScreen ? (
@@ -1433,28 +1454,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                       ></ParticipantItem>
                     ) : (
                       <FocusLayoutContainer>
-                        {/* <CarouselLayout tracks={carouselTracks}>
-                          <ParticipantItem
-                            space={space}
-                            settings={settings}
-                            toSettings={toSettingGeneral}
-                            messageApi={messageApi}
-                            noteApi={noteApi}
-                            setUserStatus={setUserStatus}
-                            updateSettings={updateSettings}
-                            toRenameSettings={toSettingGeneral}
-                            showFlotApp={showFlotApp}
-                            selfRoom={selfRoom}
-                            isFullScreen={isFullScreen}
-                            setIsFullScreen={setIsFullScreen}
-                            setCollapsed={setCollapsed}
-                          ></ParticipantItem>
-                        </CarouselLayout> */}
                         <CLayout
-                          spaceName={space.name}
-                          room={selfRoom?.name}
-                          tracks={carouselTracks}
-                          messageApi={messageApi}
+                          player={focusPlayer ? undefined : TilePlayerMemo}
+                          tracks={focusPlayer ? [...carouselTracks, focusTrack] : carouselTracks}
                         >
                           <ParticipantItem
                             space={space}
@@ -1472,25 +1474,27 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                             setCollapsed={setCollapsed}
                           ></ParticipantItem>
                         </CLayout>
-                        {focusTrack && (
-                          <ParticipantItem
-                            space={space}
-                            setUserStatus={setUserStatus}
-                            settings={settings}
-                            toSettings={toSettingGeneral}
-                            trackRef={focusTrack}
-                            messageApi={messageApi}
-                            noteApi={noteApi}
-                            isFocus={isFocus}
-                            updateSettings={updateSettings}
-                            toRenameSettings={toSettingGeneral}
-                            showFlotApp={showFlotApp}
-                            selfRoom={selfRoom}
-                            isFullScreen={isFullScreen}
-                            setIsFullScreen={setIsFullScreen}
-                            setCollapsed={setCollapsed}
-                          ></ParticipantItem>
-                        )}
+                        {focusPlayer
+                          ? TilePlayerMemo
+                          : focusTrack && (
+                              <ParticipantItem
+                                space={space}
+                                setUserStatus={setUserStatus}
+                                settings={settings}
+                                toSettings={toSettingGeneral}
+                                trackRef={focusTrack}
+                                messageApi={messageApi}
+                                noteApi={noteApi}
+                                isFocus={isFocus}
+                                updateSettings={updateSettings}
+                                toRenameSettings={toSettingGeneral}
+                                showFlotApp={showFlotApp}
+                                selfRoom={selfRoom}
+                                isFullScreen={isFullScreen}
+                                setIsFullScreen={setIsFullScreen}
+                                setCollapsed={setCollapsed}
+                              ></ParticipantItem>
+                            )}
                       </FocusLayoutContainer>
                     )}
                   </div>

@@ -39,11 +39,9 @@ export interface CarouselLayoutProps extends React.HTMLAttributes<HTMLMediaEleme
 export function CLayout({
   tracks,
   orientation,
-  messageApi,
-  spaceName,
-  room,
+  player,
   ...props
-}: CarouselLayoutProps & { messageApi: MessageInstance; spaceName: string; room?: string }) {
+}: CarouselLayoutProps & { player: React.ReactNode }) {
   const asideEl = React.useRef<HTMLDivElement>(null);
   const [prevTiles, setPrevTiles] = React.useState(0);
   const { width, height } = useSize(asideEl);
@@ -83,7 +81,7 @@ export function CLayout({
   return (
     <aside key={carouselOrientation} className="lk-carousel" ref={asideEl} {...props}>
       <TrackLoop tracks={sortedTiles}>{props.children}</TrackLoop>
-      <TilePlayer messageApi={messageApi} spaceName={spaceName} room={room}></TilePlayer>
+      {player}
     </aside>
   );
 }
