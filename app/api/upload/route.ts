@@ -19,6 +19,7 @@ export async function POST(request: NextRequest) {
       let ty: HandleTilePlayerFileBody['ty'];
       let room: string | undefined;
       let file: File | undefined;
+      let iframeUrl: string | undefined;
 
       if (contentType.includes('multipart/form-data')) {
         // upload 操作：从 FormData 读取真实 File 对象
@@ -33,28 +34,61 @@ export async function POST(request: NextRequest) {
         spaceName = body.spaceName;
         ty = body.ty;
         room = body.room;
+        iframeUrl = body.iframeUrl;
       }
       // 获取文件URL
       // 这个tile_player文件目前只会是图片文件，并且只会存储在uploads/spaceName/{room?}目录下
       const dir = room ? path.join(uploadDirPath(spaceName), room) : uploadDirPath(spaceName);
+      const metaPath = path.join(dir, 'tile_player_meta.json');
 
       if (ty === 'ls') {
         // 直接找dir路径下的文件，如果存在叫tile_player的就返回URL，不存在就返回null
         try {
           const files = await fs.readdir(dir);
           const tilePlayerFile = files.find((file) => file.startsWith('tile_player'));
+          let mode: 'image' | 'iframe' | 'none' = tilePlayerFile ? 'image' : 'none';
+          let iframeUrl: string | null = null;
+
+          try {
+            const metaRaw = await fs.readFile(metaPath, 'utf-8');
+            const meta = JSON.parse(metaRaw) as { mode?: 'image' | 'iframe' | 'none'; iframeUrl?: string | null };
+            mode = meta.mode || mode;
+            iframeUrl = meta.iframeUrl || null;
+          } catch (e) {
+            // ignore
+          }
+
           if (tilePlayerFile) {
             const fileStat = await fs.stat(path.join(dir, tilePlayerFile));
             const mtime = fileStat.mtimeMs;
             const fileUrl = `/uploads/${spaceName}/${room ? room + '/' : ''}${tilePlayerFile}?t=${mtime}`;
-            return NextResponse.json({ url: fileUrl });
+            return NextResponse.json({ url: fileUrl, iframeUrl, mode });
           } else {
-            return NextResponse.json({ url: null });
+            return NextResponse.json({ url: null, iframeUrl, mode });
           }
         } catch (e) {
-          return NextResponse.json({ url: null });
+          return NextResponse.json({ url: null, iframeUrl: null, mode: 'none' });
         }
       }
+
+      if (ty === 'set_meta') {
+        try {
+          await mkdir(dir, { recursive: true });
+          const meta = {
+            mode: iframeUrl ? 'iframe' : 'none',
+            iframeUrl: iframeUrl || null,
+            updatedAt: Date.now(),
+          };
+          await writeFile(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
+          return NextResponse.json({ success: true });
+        } catch (e) {
+          return NextResponse.json(
+            { success: false, error: 'Failed to set tile player meta' },
+            { status: 500 },
+          );
+        }
+      }
+
       if (ty === 'rm') {
         // 删除tile_player文件
         try {
@@ -62,6 +96,11 @@ export async function POST(request: NextRequest) {
           const tilePlayerFile = files.find((file) => file.startsWith('tile_player'));
           if (tilePlayerFile) {
             await fs.unlink(path.join(dir, tilePlayerFile));
+          }
+          try {
+            await fs.unlink(metaPath);
+          } catch (e) {
+            // ignore
           }
           return NextResponse.json({ success: true });
         } catch (e) {
@@ -90,6 +129,18 @@ export async function POST(request: NextRequest) {
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
         await writeFile(filePath, buffer);
+
+        // 上传图片时将 mode 置为 image，并清除 iframeUrl
+        try {
+          await writeFile(
+            metaPath,
+            JSON.stringify({ mode: 'image', iframeUrl: null, updatedAt: Date.now() }, null, 2),
+            'utf-8',
+          );
+        } catch (e) {
+          // ignore
+        }
+
         const uploadedAt = Date.now();
         return NextResponse.json({
           success: true,

@@ -94,15 +94,17 @@ export const handleFileSystem = async (
 export interface HandleTilePlayerFileBody {
   spaceName: string;
   room?: string;
-  ty: HandleFileSystemType; // 默认为ls
-  file: FileType;
+  ty: HandleFileSystemType | 'set_meta'; // 默认为ls
+  file?: FileType;
+  iframeUrl?: string;
 }
 
 export const handleTilePlayerFile = async (
   spaceName: string,
   room?: string,
-  ty?: HandleFileSystemType,
+  ty?: HandleFileSystemType | 'set_meta',
   file?: FileType,
+  iframeUrl?: string,
 ) => {
   const url = new URL(connect_endpoint('/api/upload'), window.location.origin);
   url.searchParams.append('tilePlayer', 'true');
@@ -125,6 +127,6 @@ export const handleTilePlayerFile = async (
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ spaceName, ty: ty || 'ls', room } as Omit<HandleTilePlayerFileBody, 'file'>),
+    body: JSON.stringify({ spaceName, ty: ty || 'ls', room, iframeUrl } as Omit<HandleTilePlayerFileBody, 'file'>),
   });
 };
