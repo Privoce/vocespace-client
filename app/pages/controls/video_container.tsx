@@ -1299,12 +1299,39 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             spaceName={space.name}
             room={selfRoom.name}
             messageApi={messageApi}
-            setShow={setFocusPlayer}
+            setFocus={setFocusPlayer}
+            focus={focusPlayer}
+            afterFocus={(focus) => {
+              if (focus) {
+                layoutContext?.pin.dispatch?.({
+                  msg: 'clear_pin',
+                });
+              } else {
+                layoutContext?.pin.dispatch?.({
+                  msg: 'set_pin',
+                  trackReference: newPlayerTrack(space.name),
+                });
+              }
+            }}
           />
         );
       }
       return undefined;
-    }, [space?.name, selfRoom]);
+    }, [space?.name, selfRoom, focusPlayer]);
+
+    useEffect(() => {
+      if (
+        focusTrack &&
+        focusTrack.source === Track.Source.Unknown &&
+        focusTrack.participant.name === `${space?.name}_player`
+      ) {
+        setFocusPlayer(true);
+      }
+
+      return () => {
+        setFocusPlayer(false);
+      };
+    }, [focusTrack]);
 
     useImperativeHandle(ref, () => ({
       clearRoom: () => clearRoom(),
@@ -1455,8 +1482,14 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                     ) : (
                       <FocusLayoutContainer>
                         <CLayout
-                          player={focusPlayer ? undefined : TilePlayerMemo}
-                          tracks={focusPlayer ? [...carouselTracks, focusTrack] : carouselTracks}
+                          player={
+                            focusPlayer &&
+                            focusTrack &&
+                            focusTrack.participant.name === `${space.name}_player`
+                              ? undefined
+                              : TilePlayerMemo
+                          }
+                          tracks={carouselTracks}
                         >
                           <ParticipantItem
                             space={space}
@@ -1474,27 +1507,29 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                             setCollapsed={setCollapsed}
                           ></ParticipantItem>
                         </CLayout>
-                        {focusPlayer
-                          ? TilePlayerMemo
-                          : focusTrack && (
-                              <ParticipantItem
-                                space={space}
-                                setUserStatus={setUserStatus}
-                                settings={settings}
-                                toSettings={toSettingGeneral}
-                                trackRef={focusTrack}
-                                messageApi={messageApi}
-                                noteApi={noteApi}
-                                isFocus={isFocus}
-                                updateSettings={updateSettings}
-                                toRenameSettings={toSettingGeneral}
-                                showFlotApp={showFlotApp}
-                                selfRoom={selfRoom}
-                                isFullScreen={isFullScreen}
-                                setIsFullScreen={setIsFullScreen}
-                                setCollapsed={setCollapsed}
-                              ></ParticipantItem>
-                            )}
+                        {focusTrack &&
+                        focusPlayer &&
+                        focusTrack.participant.name === `${space.name}_player` ? (
+                          TilePlayerMemo
+                        ) : (
+                          <ParticipantItem
+                            space={space}
+                            setUserStatus={setUserStatus}
+                            settings={settings}
+                            toSettings={toSettingGeneral}
+                            trackRef={focusTrack}
+                            messageApi={messageApi}
+                            noteApi={noteApi}
+                            isFocus={isFocus}
+                            updateSettings={updateSettings}
+                            toRenameSettings={toSettingGeneral}
+                            showFlotApp={showFlotApp}
+                            selfRoom={selfRoom}
+                            isFullScreen={isFullScreen}
+                            setIsFullScreen={setIsFullScreen}
+                            setCollapsed={setCollapsed}
+                          ></ParticipantItem>
+                        )}
                       </FocusLayoutContainer>
                     )}
                   </div>
@@ -1620,4 +1655,12 @@ export type TrackReferencePlaceholder = {
   participant: Participant;
   publication?: never;
   source: Track.Source;
+};
+
+const newPlayerTrack = (space: string): TrackReferenceOrPlaceholder => {
+  const nameOrId = `${space}_player`;
+  return {
+    participant: new Participant(nameOrId, nameOrId, nameOrId),
+    source: Track.Source.Unknown,
+  } as TrackReferencePlaceholder;
 };

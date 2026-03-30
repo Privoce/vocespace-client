@@ -282,14 +282,14 @@ app.prepare().then(() => {
         if (!file.url) {
           const fileId = Date.now().toString();
           const fileExt = path.extname(file.name);
-          const fileName = `${fileId}${fileExt}`;
+          const fileName = `${sender.id}_${fileId}${fileExt}`;
           const dirPath = path.join(uploadDir, roomName);
           if (!fs.existsSync(dirPath)) {
             fs.mkdirSync(dirPath, { recursive: true });
           }
 
           const filePath = path.join(uploadDir, roomName, fileName);
-          console.log('filePath', filePath);
+          // console.log('filePath', filePath);
           // 处理文件数据
           let fileData;
           if (file.data.startsWith('data:')) {

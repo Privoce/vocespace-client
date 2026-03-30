@@ -51,7 +51,10 @@ export async function POST(request: NextRequest) {
 
           try {
             const metaRaw = await fs.readFile(metaPath, 'utf-8');
-            const meta = JSON.parse(metaRaw) as { mode?: 'image' | 'iframe' | 'none'; iframeUrl?: string | null };
+            const meta = JSON.parse(metaRaw) as {
+              mode?: 'image' | 'iframe' | 'none';
+              iframeUrl?: string | null;
+            };
             mode = meta.mode || mode;
             iframeUrl = meta.iframeUrl || null;
           } catch (e) {
@@ -154,8 +157,9 @@ export async function POST(request: NextRequest) {
       const uploadDir = uploadDirPath(spaceName);
       switch (ty) {
         case 'ls': {
-          // 列出所有文件
-          const files = await fs.readdir(uploadDir);
+          // 列出所有文件（withFileTypes 可以直接判断是否为文件，避免把目录误认为文件）
+          const entries = await fs.readdir(uploadDir, { withFileTypes: true });
+          const files = entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
           return NextResponse.json({ files });
         }
         case 'rm': {
@@ -222,7 +226,7 @@ export async function POST(request: NextRequest) {
 
     // 生成唯一文件名
     const fileExtension = path.extname(file.name);
-    const fileName = `${ulid()}${fileExtension}`;
+    const fileName = `${senderId}_${ulid()}${fileExtension}`;
 
     // 创建上传目录路径：uploads/roomName/
     const uploadDir = uploadDirPath(roomName);

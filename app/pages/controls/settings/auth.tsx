@@ -14,7 +14,7 @@ import { api } from '@/lib/api';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
 
-type PermissionKey = 'createRoom' | 'manageRoom' | 'manageRole' | 'controlUser' | 'recording' | 'viewRoom';
+type PermissionKey = 'createRoom' | 'manageRoom' | 'manageRole' | 'controlUser' | 'recording' | 'viewRoom' | "manageFile";
 
 type PermissionRow = {
   key: PermissionKey;
@@ -152,6 +152,14 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
         manager: changeableAuth.manager.recording,
         participant: changeableAuth.participant.recording,
         guest: changeableAuth.guest.recording,
+      },
+      {
+        key: 'manageFile',
+        permLabel: t('auth.manageFile'),
+        owner: changeableAuth.owner.manageFile,
+        manager: changeableAuth.manager.manageFile,
+        participant: changeableAuth.participant.manageFile,
+        guest: changeableAuth.guest.manageFile,
       },
     ];
   }, [changeableAuth, t]);

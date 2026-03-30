@@ -322,6 +322,11 @@ export interface SpaceRBACConf {
    * 录制空间权限
    */
   recording: boolean;
+  /**
+   * 可以管理Chat聊天中的文件，主要为删除其他人上传的文件
+   * 因为用户自己上传的文件自己可以删除
+   */
+  manageFile: boolean;
 }
 
 /**
@@ -382,6 +387,7 @@ export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
         manageRole: true,
         controlUser: true,
         recording: true,
+        manageFile: true,
       } as SpaceRBACConf;
     case 'manager':
     case 'assistant':
@@ -392,6 +398,7 @@ export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
         manageRole: false,
         controlUser: true,
         recording: true,
+        manageFile: true,
       } as SpaceRBACConf;
     case 'participant':
       return {
@@ -401,6 +408,7 @@ export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
         manageRole: false,
         controlUser: false,
         recording: false,
+        manageFile: false,
       } as SpaceRBACConf;
 
     case 'guest':
@@ -412,6 +420,7 @@ export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
         manageRole: false,
         controlUser: false,
         recording: false,
+        manageFile: false,
       } as SpaceRBACConf;
   }
 };

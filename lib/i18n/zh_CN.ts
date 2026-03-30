@@ -21,6 +21,7 @@ export default {
     saveFail: '保存失败，请稍后再试。',
     saveSuccess: '保存成功',
     viewRoom: '加入房间',
+    manageFile: '管理文件',
   },
   common: {
     full_screen: '全屏',

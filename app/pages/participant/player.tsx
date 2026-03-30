@@ -8,13 +8,15 @@ import { Button, Image, Input, Modal, Spin, Tooltip, Upload } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useEffect, useState } from 'react';
 import { APP_FLOT_PIN_STYLE } from '../apps/app_pin';
-import { FocusToggleIcon } from '@livekit/components-react';
+import { FocusToggleIcon, UnfocusToggleIcon } from '@livekit/components-react';
 
 export interface TilePlayerProps {
   messageApi: MessageInstance;
   spaceName: string;
   room?: string;
-  setShow?: React.Dispatch<React.SetStateAction<boolean>>;
+  setFocus?: React.Dispatch<React.SetStateAction<boolean>>;
+  focus?: boolean;
+  afterFocus?: (focus: boolean) => void;
 }
 
 /**
@@ -22,7 +24,14 @@ export interface TilePlayerProps {
  * 这个组件的作用是占位，展示视频或者图片，点击后用户需要上传视频或图片，这个组件会常驻
  * 其他人加入后就可以直接看到这个组件展示的视频或图片了
  */
-export const TilePlayer = ({ messageApi, spaceName, room, setShow }: TilePlayerProps) => {
+export const TilePlayer = ({
+  messageApi,
+  spaceName,
+  room,
+  setFocus,
+  focus,
+  afterFocus,
+}: TilePlayerProps) => {
   const { t } = useI18n();
 
   const [fileUrl, setFileUrl] = useState<string | null>(null);
@@ -120,81 +129,88 @@ export const TilePlayer = ({ messageApi, spaceName, room, setShow }: TilePlayerP
       }}
     >
       {/* <PlusOutlined style={{ fontSize: 32, color: '#565656' }}></PlusOutlined> */}
-      {fileUrl || showIframe ? (
+
+      <div
+        style={{
+          position: 'relative',
+          height: '100%',
+          width: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      >
+        {/* 聚焦按钮和删除按钮 */}
         <div
           style={{
-            position: 'relative',
-            height: '100%',
-            width: '100%',
+            position: 'absolute',
+            right: 4,
+            top: '4px',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
+            alignItems: 'flex-start',
+            gap: 0,
+            zIndex: 10,
+            height: '100%',
+
+            visibility: toolVis ? 'visible' : 'hidden',
           }}
         >
-          {/* 聚焦按钮和删除按钮 */}
-          <div
-            style={{
-              position: 'absolute',
-              right: 4,
-              top: '4px',
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: 0,
-              zIndex: 10,
-              height: '100%',
-
-              visibility: toolVis ? 'visible' : 'hidden',
+          {fileUrl ? (
+            <button className="lk-button" style={APP_FLOT_PIN_STYLE} onClick={removePlayer}>
+              <SvgResource type="close" svgSize={14}></SvgResource>
+            </button>
+          ) : null}
+          <button
+            className="lk-button"
+            style={APP_FLOT_PIN_STYLE}
+            onClick={() => {
+              setFocus?.((pre) => !pre);
+              afterFocus?.(focus || false);
             }}
           >
-            {fileUrl ? (
-              <button className="lk-button" style={APP_FLOT_PIN_STYLE} onClick={removePlayer}>
-                <SvgResource type="close" svgSize={14}></SvgResource>
-              </button>
-            ) : null}
-            <button
-              className="lk-button"
-              style={APP_FLOT_PIN_STYLE}
-              onClick={() => {
-                setShow?.((pre) => !pre);
-              }}
-            >
-              <FocusToggleIcon></FocusToggleIcon>
-            </button>
-          </div>
-          {showIframe ? (
+            {!focus ? <FocusToggleIcon></FocusToggleIcon> : <UnfocusToggleIcon></UnfocusToggleIcon>}
+          </button>
+        </div>
+
+        {fileUrl || showIframe ? (
+          showIframe ? (
             <IframeWindow url={iframeUrl}></IframeWindow>
           ) : (
             <Image style={{ height: '100%' }} src={fileUrl || undefined} alt="tile player" />
-          )}
-        </div>
-      ) : (
-        <div
-          style={{
-            width: '100%',
-            height: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-evenly',
-            gap: 16,
-          }}
-        >
-          <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="image/*">
-            <Tooltip title={t('common.upload')}>
-              <Button shape="circle" style={{ background: 'transparent', border: 'none' }}>
-                {/* <SvgResource type="add" svgSize={18} color="#565656" /> */}
-                <FileImageOutlined style={{ color: '#565656', fontSize: 24 }}></FileImageOutlined>
+          )
+        ) : (
+          <div
+            style={{
+              width: '100%',
+              height: '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-evenly',
+              gap: 16,
+            }}
+          >
+            <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="image/*">
+              <Tooltip title={t('common.upload')}>
+                <Button shape="circle" style={{ background: 'transparent', border: 'none' }}>
+                  {/* <SvgResource type="add" svgSize={18} color="#565656" /> */}
+                  <FileImageOutlined style={{ color: '#565656', fontSize: 24 }}></FileImageOutlined>
+                </Button>
+              </Tooltip>
+            </Upload>
+            <Tooltip title="Iframe">
+              <Button
+                shape="circle"
+                style={{ background: 'transparent', border: 'none' }}
+                onClick={() => setOpenInputIframe(true)}
+              >
+                <LayoutOutlined style={{ color: '#565656', fontSize: 24 }} />
               </Button>
             </Tooltip>
-          </Upload>
-          <Tooltip title="Iframe">
-            <Button shape="circle" style={{ background: 'transparent', border: 'none' }} onClick={() => setOpenInputIframe(true)}>
-              <LayoutOutlined style={{ color: '#565656', fontSize: 24 }} />
-            </Button>
-          </Tooltip>
-        </div>
-      )}
+          </div>
+        )}
+      </div>
       <Modal
-        title={"Input Iframe URL"}
+        title={'Input Iframe URL'}
         open={openInputIframe}
         onOk={async () => {
           const nextUrl = iframeUrl.trim();

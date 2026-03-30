@@ -10,6 +10,7 @@ import {
   FileOutlined,
   DownloadOutlined,
   DeleteOutlined,
+  FolderOpenFilled,
 } from '@ant-design/icons';
 import * as api from '@/lib/api/chat';
 import React from 'react';
@@ -20,6 +21,7 @@ export interface FSProps {
   space: Room;
   files: string[];
   onFresh: (fresh?: boolean) => Promise<void>;
+  canDeleteRBAC: boolean;
 }
 
 // 获取文件扩展名
@@ -41,7 +43,6 @@ const isVideo = (ext: string): boolean => {
 // 根据文件类型获取图标
 const getFileIcon = (ext: string) => {
   const iconStyle = { fontSize: '48px', color: '#1890ff' };
-
   switch (ext) {
     case 'zip':
     case 'rar':
@@ -60,6 +61,8 @@ const getFileIcon = (ext: string) => {
     case 'ppt':
     case 'pptx':
       return <FilePptOutlined style={iconStyle} />;
+    case '':
+      return <FolderOpenFilled style={iconStyle}></FolderOpenFilled>;
     default:
       return <FileOutlined style={iconStyle} />;
   }
@@ -71,11 +74,15 @@ const FileItem = ({
   filename,
   prefix,
   onFresh,
+  canDeleteRBAC,
+  participantId,
 }: {
   spaceName: string;
   filename: string;
   prefix: string;
   onFresh: (fresh?: boolean) => Promise<void>;
+  canDeleteRBAC: boolean;
+  participantId: string;
 }) => {
   const { t } = useI18n();
   const ext = getFileExtension(filename);
@@ -104,6 +111,14 @@ const FileItem = ({
       icon: <DeleteOutlined style={{ color: 'red' }} />,
       label: <span style={{ color: 'red' }}>{t('recording.delete.title')}</span>,
       onClick: async () => await handleFile('rm'),
+      disabled: (() => {
+        if (filename.includes(participantId)) {
+          //说明就是自己的
+          return false;
+        } else {
+          return !canDeleteRBAC;
+        }
+      })(),
     },
   ];
   return (
@@ -143,19 +158,20 @@ const FileItem = ({
   );
 };
 
-export function FS({ space, files, onFresh }: FSProps) {
+export function FS({ space, files, onFresh, canDeleteRBAC }: FSProps) {
   const prefix = `/uploads/${space.name}/`;
-
   return (
     <div className={styles.fs_container}>
       <div className={styles.files_grid}>
         {files.map((file, index) => (
           <FileItem
             spaceName={space.name}
+            participantId={space.localParticipant.identity}
             key={index}
             filename={file}
             prefix={prefix}
             onFresh={onFresh}
+            canDeleteRBAC={canDeleteRBAC}
           />
         ))}
       </div>

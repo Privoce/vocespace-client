@@ -798,6 +798,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             onClose={onChatClose}
             space={space}
             sendFileConfirm={sendFileConfirm}
+            spaceInfo={spaceInfo}
           ></EnhancedChat>
         )}
         <Drawer

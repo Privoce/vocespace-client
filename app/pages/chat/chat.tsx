@@ -15,8 +15,9 @@ import { ChatMsgItem } from '@/lib/std/chat';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from '../controls/drawer_tools';
 import { FolderOpenOutlined, SnippetsOutlined } from '@ant-design/icons';
 import { api } from '@/lib/api';
-import { FileType } from '@/lib/std';
+import { FileType, isSpaceManager } from '@/lib/std';
 import { FS } from './fs';
+import { handleIdentityType, SpaceInfo } from '@/lib/std/space';
 
 export interface EnhancedChatProps {
   open: boolean;
@@ -25,12 +26,16 @@ export interface EnhancedChatProps {
   space: Room;
   sendFileConfirm: (onOk: (abortController?: AbortController) => Promise<ChatMsgItem>) => void;
   messageApi: MessageInstance;
+  spaceInfo: SpaceInfo;
 }
 
 export interface EnhancedChatExports {}
 
 export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatProps>(
-  ({ open, setOpen, onClose, space, sendFileConfirm, messageApi }: EnhancedChatProps, ref) => {
+  (
+    { open, setOpen, onClose, space, sendFileConfirm, messageApi, spaceInfo }: EnhancedChatProps,
+    ref,
+  ) => {
     const { t } = useI18n();
     const ulRef = React.useRef<HTMLUListElement>(null);
     const bottomRef = React.useRef<HTMLDivElement>(null);
@@ -44,6 +49,15 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
     const dragCounterRef = React.useRef(0);
     const [fsModal, setFsModal] = React.useState(false);
     const [files, setFiles] = React.useState<string[]>([]);
+
+    const canDeleteRBAC = React.useMemo(() => {
+      if (!spaceInfo?.auth) return false;
+
+      let auth = handleIdentityType(
+        spaceInfo.participants[space?.localParticipant.identity]?.auth?.identity || 'guest',
+      );
+      return spaceInfo.auth[auth]?.manageFile || false;
+    }, [spaceInfo?.auth, space?.localParticipant.identity]);
 
     // 处理拖拽事件
     const handleDragEnter = (e: React.DragEvent) => {
@@ -399,7 +413,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
             <Button
               shape="circle"
               style={{ background: 'transparent', border: 'none', marginRight: 12 }}
-              onClick={async () =>await openLocalFileSystem()}
+              onClick={async () => await openLocalFileSystem()}
             >
               <FolderOpenOutlined style={{ fontSize: 18, color: '#fff' }}></FolderOpenOutlined>
             </Button>
@@ -426,7 +440,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
           onCancel={() => setFsModal(false)}
           width={640}
         >
-          <FS space={space} files={files} onFresh={openLocalFileSystem}></FS>
+          <FS space={space} files={files} onFresh={openLocalFileSystem} canDeleteRBAC={canDeleteRBAC}></FS>
         </Modal>
       </Drawer>
     );

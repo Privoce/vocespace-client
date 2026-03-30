@@ -68,8 +68,18 @@ export function GLayout2({
   const gridEl = React.createRef<HTMLDivElement>();
 
   const elementProps = React.useMemo(
-    () => mergeProps(props, { className: 'lk-grid-layout' }),
-    [props],
+    () =>
+      mergeProps(props, {
+        className: 'lk-grid-layout',
+        ...(player != undefined && tracks.length <= 2
+          ? {
+              style: {
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+              },
+            }
+          : {}),
+      }),
+    [props, player],
   );
   const { layout } = useGridLayout(gridEl, tracks.length);
   const pagination = usePagination(layout.maxTiles, tracks);
