@@ -412,9 +412,19 @@ export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
       } as SpaceRBACConf;
 
     case 'guest':
+      return {
+        viewRoom: true,
+        createRoom: false,
+        manageRoom: false,
+        manageRole: false,
+        controlUser: false,
+        recording: false,
+        manageFile: false,
+      } as SpaceRBACConf;
     case 'customer':
     default:
       return {
+        viewRoom: false,
         createRoom: false,
         manageRoom: false,
         manageRole: false,

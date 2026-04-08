@@ -58,6 +58,7 @@ import {
   WsInviteDevice,
   WsParticipant,
   WsSender,
+  WsTilePlayer,
   WsTo,
   WsWave,
 } from '@/lib/std/device';
@@ -87,7 +88,7 @@ import {
 } from '@/lib/api/platform';
 import { useFullScreenBtn } from './widgets/full_screen';
 import { exportRBAC, usePlatformUserInfo, usePlatformUserInfoCheap } from '@/lib/hooks/platform';
-import { TilePlayer } from '../participant/player';
+import { TilePlayer, TilePlayerExports } from '../participant/player';
 import { GLayout2 } from '../layout/grid';
 import { CLayout } from '../layout/carousel';
 
@@ -983,6 +984,25 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       platUser,
     ]);
 
+    const tilePlayerRef = useRef<TilePlayerExports>(null);
+
+    useEffect(() => {
+      // tile player change socket event ----------------------------------------------
+      const handleTilePlayerChange = (msg: WsTilePlayer) => {
+        if (msg.participantId === space?.localParticipant.identity) return;
+        if (space && msg.space === space.name && tilePlayerRef.current) {
+          console.warn('Received tile player change event:', msg);
+          // 触发TilePlayer组件请求后台获取进行更新
+          tilePlayerRef.current.refresh(msg.created, msg.ty);
+        }
+      };
+
+      socket.on('tile_player_change_response', handleTilePlayerChange);
+      return () => {
+        socket.off('tile_player_change_response', handleTilePlayerChange);
+      };
+    }, [space]);
+
     const selfRoom = useMemo(() => {
       if (!space || space.state !== ConnectionState.Connected || !settings || !settings.children)
         return;
@@ -1296,6 +1316,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       if (space?.name && selfRoom) {
         return (
           <TilePlayer
+            ref={tilePlayerRef}
             spaceName={space.name}
             room={selfRoom.name}
             messageApi={messageApi}

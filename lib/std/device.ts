@@ -32,6 +32,11 @@ export interface WsParticipant extends WsBase {
   participantId: string; // 参与者ID
 }
 
+export interface WsTilePlayer extends WsParticipant {
+  ty?: 'image' | 'iframe' | 'nestedBrowser';
+  created: boolean;
+}
+
 export interface WsRemove extends WsBase {
   participants: string[]; // 参与者ID列表
   childRoom: string; // 子房间名
@@ -46,7 +51,7 @@ export interface WsSender extends WsBase {
    * 如果携带此字段，服务器会将消息发送到指定的socket ID，确保消息只发送给特定的连接。
    * 当前用于举手功能，确保主持人与举手者之间的通信
    */
-  senderSocketId?: string; 
+  senderSocketId?: string;
 }
 
 export interface WsTo extends WsSender {
@@ -155,7 +160,7 @@ export interface ToggleProps {
 export function count_video_blur(video_blur: number, size: SizeNum): number {
   const { width, height } = size;
   const minSide = Math.max(width, height);
-  const blurRadius = video_blur * minSide  * 0.05;
+  const blurRadius = video_blur * minSide * 0.05;
 
   return blurRadius;
 }

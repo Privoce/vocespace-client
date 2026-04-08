@@ -377,6 +377,11 @@ app.prepare().then(() => {
     socket.on('re_init', (msg) => {
       io.emit('re_init_response', msg);
     });
+    // [socket: tile player change] --------------------------------------------------------------------------------
+    // 当tilePlayer加载/删除组件时需要触发，通知在房间中的其他用户同步更新
+    socket.on('tile_player_change', (msg) => {
+      io.emit('tile_player_change_response', msg);
+    });
     // [socket: del user] ----------------------------------------------------------------------------------------------------
     socket.on('disconnect', async (_reason) => {
       console.log('Socket disconnected', socket.id);
