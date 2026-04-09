@@ -124,10 +124,10 @@ export const TilePlayer = forwardRef<TilePlayerExports, TilePlayerProps>(
       }
     };
 
-    // 开始时尝试直接通过
+    // 组件加载以及room变化时获取当前的文件URL
     useEffect(() => {
       getFileUrl();
-    }, []);
+    }, [room]);
 
     useImperativeHandle(
       ref,
