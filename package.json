@@ -31,7 +31,7 @@
     "jsonwebtoken": "^9.0.3",
     "link-preview-js": "^3.0.14",
     "live2d-motionsync": "^0.0.4",
-    "livekit-client": "2.9.3",
+    "livekit-client": "2.18.1",
     "livekit-server-sdk": "2.10.1",
     "next": "14.2.35",
     "openai": "^6.7.0",

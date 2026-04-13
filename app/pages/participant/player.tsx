@@ -44,7 +44,7 @@ export const TilePlayer = forwardRef<TilePlayerExports, TilePlayerProps>(
       created: boolean,
       ty?: 'iframe' | 'image' | 'nestedBrowser',
     ) => {
-      console.warn("emit tile player change", { created, ty });
+      // console.warn("emit tile player change", { created, ty });
       socket.emit('tile_player_change', {
         ty,
         created,
@@ -70,7 +70,7 @@ export const TilePlayer = forwardRef<TilePlayerExports, TilePlayerProps>(
           const { url } = await response.json();
           setFileUrl(url);
           setShowIframe(false);
-          console.warn("upload success, emit tile player change", { url });
+          // console.warn("upload success, emit tile player change", { url });
           emitTilePlayerChange(true, 'image');
           // messageApi.success({
           //   content: t('msg.success.file.uploaded'),

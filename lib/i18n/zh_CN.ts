@@ -478,6 +478,7 @@ export default {
             screen: '停止屏幕共享',
           },
           volume: '音量调节',
+          volume_screen: "屏幕共享音量",
           blur: {
             video: '视频虚化',
             screen: '屏幕虚化',

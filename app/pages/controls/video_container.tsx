@@ -1,9 +1,7 @@
 import { isMobile, src, UserDefineStatus, UserStatus } from '@/lib/std';
 import {
-  CarouselLayout,
   ConnectionStateToast,
   FocusLayoutContainer,
-  GridLayout,
   isTrackReference,
   LayoutContextProvider,
   RoomAudioRenderer,
@@ -17,10 +15,12 @@ import {
 } from '@livekit/components-react';
 import {
   ConnectionState,
+  isRemoteTrack,
   LocalTrackPublication,
   Participant,
   ParticipantEvent,
   ParticipantTrackPermission,
+  RemoteAudioTrack,
   Room,
   RoomEvent,
   Track,
@@ -769,6 +769,15 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               } as WsBase);
               break;
             }
+            case ControlType.VolumeScreen: {
+              await updateSettings({
+                volumeScreen: msg.volumeScreen!,
+              });
+              socket.emit('update_user_status', {
+                space: space.name,
+              } as WsBase);
+              break;
+            }
             case ControlType.BlurVideo: {
               await updateSettings({
                 blur: msg.blur!,
@@ -1067,10 +1076,17 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             allowAll: true,
           });
           let volume = settings.participants[rp.identity]?.volume / 100.0;
+          // 屏幕共享的音量设置，默认100%
+          let volumeScreen = (settings.participants[rp.identity]?.volumeScreen || 100.0) / 100.0;
           if (isNaN(volume)) {
             volume = 1.0;
           }
+          // 设置音量
           rp.setVolume(volume);
+          // 设置屏幕共享的音量，必须在订阅之后设置才有效，所以放在这里，并且需要转为RemoteAudioTrack类型才能调用setVolume方法
+          const remote: RemoteAudioTrack = rp.getTrackPublication(Track.Source.ScreenShare)!
+            .audioTrack! as RemoteAudioTrack;
+          remote.setVolume(volumeScreen);
         } else {
           auth.push({
             participantIdentity: rp.identity,
@@ -1146,7 +1162,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     };
 
     const layoutContext = useCreateLayoutContext();
-
     const screenShareTracks = tracks
       .filter(isTrackReference)
       .filter((track) => track.publication.source === Track.Source.ScreenShare);

@@ -106,6 +106,10 @@ export interface ParticipantSettings {
    */
   volume: number;
   /**
+   * 屏幕分享音量
+   */
+  volumeScreen?: number;
+  /**
    * 视频模糊度
    */
   blur: number;

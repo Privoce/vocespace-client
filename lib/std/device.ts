@@ -85,6 +85,7 @@ export enum ControlType {
   MuteVideo = 'mute_video',
   MuteScreen = 'mute_screen',
   Volume = 'volume',
+  VolumeScreen = 'volume_screen',
   BlurVideo = 'blur_video',
   BlurScreen = 'blur_screen',
   Transfer = 'transfer',
@@ -95,6 +96,7 @@ export interface WsControlParticipant extends WsTo {
   type: ControlType;
   username?: string;
   volume?: number; // 音量调节
+  volumeScreen?: number; // 屏幕共享的音量调节
   blur?: number; // 视频或屏幕模糊度
 }
 

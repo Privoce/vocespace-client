@@ -70,6 +70,7 @@ export function useControlRKeyMenu({
   const [isCamDisabled, setIsCamDisabled] = useState(false);
   const [isScreenShareDisabled, setIsScreenShareDisabled] = useState(false);
   const [volume, setVolume] = useState(0.0);
+  const [volumeScreen, setVolumeScreen] = useState(0.0);
   const [blurVideo, setBlurVideo] = useState(0.0);
   const [blurScreen, setBlurScreen] = useState(0.0);
   // const isOwner = useMemo(() => {
@@ -88,7 +89,7 @@ export function useControlRKeyMenu({
 
   // 处理音量、模糊视频和模糊屏幕的调整------------------------------------------------------------
   const handleAdjustment = async (
-    key: 'control.volume' | 'control.blur_video' | 'control.blur_screen',
+    key: 'control.volume' | 'control.blur_video' | 'control.blur_screen' | 'control.volume_screen',
     isSelf = false,
   ) => {
     if (isSelf) {
@@ -104,6 +105,11 @@ export function useControlRKeyMenu({
         } else if (key === 'control.blur_screen') {
           await updateSettings({
             screenBlur: blurScreen,
+          });
+        } else if (key === 'control.volume_screen') {
+          // 调整屏幕分享的音量，控制别人的屏幕分享音量只需要更新自己的设置，因为自己分享的屏幕音量默认就是100%
+          await updateSettings({
+            volumeScreen: volumeScreen,
           });
         }
         socket.emit('update_user_status', {
@@ -136,6 +142,12 @@ export function useControlRKeyMenu({
             ...wsTo,
             type: ControlType.BlurScreen,
             blur: blurScreen,
+          } as WsControlParticipant);
+        } else if (key === 'control.volume_screen') {
+          socket.emit('control_participant', {
+            ...wsTo,
+            type: ControlType.VolumeScreen,
+            volumeScreen: volumeScreen,
           } as WsControlParticipant);
         }
       }
@@ -216,6 +228,40 @@ export function useControlRKeyMenu({
                     onChangeComplete={(e) => {
                       setVolume(e);
                       handleAdjustment('control.volume', true);
+                    }}
+                  ></Slider>
+                </div>
+              </div>
+            ),
+          },
+          {
+            key: 'control.volume_screen',
+            label: (
+              <div>
+                <div className={styles.inline_flex}>
+                  <SvgResource type="volume" svgSize={16} />
+                  <span style={{ marginLeft: '8px' }}>
+                    {t('more.participant.set.control.volume_screen')}
+                  </span>
+                </div>
+                <div
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    e.preventDefault();
+                  }}
+                >
+                  <Slider
+                    disabled={!controlUser}
+                    min={0.0}
+                    max={100.0}
+                    step={1.0}
+                    value={volumeScreen}
+                    onChange={(e) => {
+                      setVolumeScreen(e);
+                    }}
+                    onChangeComplete={(e) => {
+                      setVolumeScreen(e);
+                      handleAdjustment('control.volume_screen', true);
                     }}
                   ></Slider>
                 </div>
@@ -319,7 +365,17 @@ export function useControlRKeyMenu({
         ],
       },
     ];
-  }, [isCamDisabled, isMicDisabled, isScreenShareDisabled, volume, blurVideo, blurScreen, isSelf]);
+  }, [
+    isCamDisabled,
+    isMicDisabled,
+    isScreenShareDisabled,
+    volume,
+    blurVideo,
+    blurScreen,
+    isSelf,
+    selectedParticipant?.isScreenShareEnabled,
+    volumeScreen,
+  ]);
   // 右键他人的菜单选项 -------------------------------------------------------------
   const optItems: MenuProps['items'] = useMemo(() => {
     const controlItems: MenuProps['items'] = [
@@ -349,6 +405,41 @@ export function useControlRKeyMenu({
                 onChangeComplete={(e) => {
                   setVolume(e);
                   handleAdjustment('control.volume');
+                }}
+              ></Slider>
+            </div>
+          </div>
+        ),
+        disabled: !controlUser,
+      },
+      {
+        key: 'control.volume_screen',
+        label: (
+          <div>
+            <div className={styles.inline_flex}>
+              <SvgResource type="volume" svgSize={16} />
+              <span style={{ marginLeft: '8px' }}>
+                {t('more.participant.set.control.volume_screen')}
+              </span>
+            </div>
+            <div
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+              }}
+            >
+              <Slider
+                disabled={!controlUser}
+                min={0.0}
+                max={100.0}
+                step={1.0}
+                value={volumeScreen}
+                onChange={(e) => {
+                  setVolumeScreen(e);
+                }}
+                onChangeComplete={(e) => {
+                  setVolumeScreen(e);
+                  handleAdjustment('control.volume_screen');
                 }}
               ></Slider>
             </div>
@@ -750,6 +841,9 @@ export function useControlRKeyMenu({
     setBlurVideo(spaceInfo.participants[participant.identity]?.blur || 0.0);
     setBlurScreen(spaceInfo.participants[participant.identity]?.screenBlur || 0.0);
     setVolume(spaceInfo.participants[participant.identity]?.volume || 0.0);
+    if (participant.isScreenShareEnabled) {
+      setVolumeScreen(spaceInfo.participants[participant.identity]?.volumeScreen || 100.0);
+    }
   };
 
   return {
