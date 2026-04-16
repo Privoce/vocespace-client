@@ -110,6 +110,12 @@ export interface ParticipantSettings {
    */
   volumeScreen?: number;
   /**
+   * 是否开启了耳返功能
+   * 开启后，用户可以在自己的耳机中听到自己的声音，主要用于调试和工作模式
+   * ** 注意：该功能前端必须判断是否支持耳返功能 **
+   */
+  inEarMonitor?: boolean;
+  /**
    * 视频模糊度
    */
   blur: number;

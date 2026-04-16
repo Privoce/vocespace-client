@@ -9,6 +9,7 @@ import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { TrackMutedIndicator } from '@livekit/components-react';
 import React from 'react';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
+import { MessageInstance } from 'antd/es/message/interface';
 
 export interface ParticipantManageProps {
   open: boolean;
@@ -23,6 +24,7 @@ export interface ParticipantManageProps {
   setUsername: (username: string) => void;
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
+  messageApi: MessageInstance
 }
 
 export function ParticipantManage({
@@ -37,7 +39,8 @@ export function ParticipantManage({
   setOpenNameModal,
   setUsername,
   updateSettings,
-  toRenameSettings
+  toRenameSettings,
+  messageApi,
 }: ParticipantManageProps) {
   const { t } = useI18n();
 
@@ -50,7 +53,8 @@ export function ParticipantManage({
       setOpenNameModal,
       setUsername,
       updateSettings,
-      toRenameSettings
+      toRenameSettings,
+      messageApi,
     } as UseControlRKeyMenuProps);
 
   return (

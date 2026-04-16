@@ -590,10 +590,11 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             isFullScreen={isFullScreen}
             setIsFullScreen={setIsFullScreen}
             setCollapsed={setCollapsed}
+            messageApi={messageApi}
           ></ParticipantTileMini>
         </GLayout>
       );
-    }, [tracks, childRooms, settings, allParticipants]);
+    }, [tracks, childRooms, settings, allParticipants, messageApi]);
 
     const subContext = useCallback(
       (name: string, length: number): ReactNode => {
@@ -627,11 +628,12 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
               isFullScreen={isFullScreen}
               setIsFullScreen={setIsFullScreen}
               setCollapsed={setCollapsed}
+              messageApi={messageApi}
             ></ParticipantTileMini>
           </GLayout>
         );
       },
-      [tracks, childRooms, settings, space, allParticipants],
+      [tracks, childRooms, settings, space, allParticipants, messageApi],
     );
 
     const subChildren: CollapseProps['items'] = useMemo(() => {

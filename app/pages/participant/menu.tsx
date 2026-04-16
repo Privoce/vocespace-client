@@ -2,14 +2,22 @@ import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { Dropdown, MenuProps, Modal, Slider } from 'antd';
-import { Participant, Room, Track } from 'livekit-client';
+import { AudioPresets, createLocalAudioTrack, Participant, Room, Track } from 'livekit-client';
 import { useMemo, useState } from 'react';
 import styles from '@/styles/controls.module.scss';
-import { ControlType, WsBase, WsControlParticipant, WsInviteDevice, WsTo } from '@/lib/std/device';
+import {
+  ControlType,
+  hasHeadphonesConnected,
+  WsBase,
+  WsControlParticipant,
+  WsInviteDevice,
+  WsTo,
+} from '@/lib/std/device';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { isSpaceManager, src } from '@/lib/std';
 import { exportRBAC, usePlatformUserInfo } from '@/lib/hooks/platform';
 import { HomeOutlined } from '@ant-design/icons';
+import { MessageInstance } from 'antd/es/message/interface';
 
 export interface ControlRKeyMenuProps {
   disabled?: boolean;
@@ -51,6 +59,7 @@ export interface UseControlRKeyMenuProps {
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
   isSelf: boolean;
+  messageApi: MessageInstance;
 }
 
 export function useControlRKeyMenu({
@@ -63,9 +72,11 @@ export function useControlRKeyMenu({
   updateSettings,
   toRenameSettings,
   isSelf,
+  messageApi,
 }: UseControlRKeyMenuProps) {
   const { t } = useI18n();
   // 必要的状态和Owner的确定 -------------------------------------------------------------------
+  const [isInEarMonitorOpen, setIsInEarMonitorOpen] = useState(false);
   const [isMicDisabled, setIsMicDisabled] = useState(false);
   const [isCamDisabled, setIsCamDisabled] = useState(false);
   const [isScreenShareDisabled, setIsScreenShareDisabled] = useState(false);
@@ -86,6 +97,39 @@ export function useControlRKeyMenu({
     space: space,
     uid: space?.localParticipant.identity!,
   });
+  // 当前本地用户是否支持耳返功能，耳返功能需要满足以下条件：
+  // 1. 必须是本地用户自己的菜单 (这个会在菜单开启时判断)
+  // 2. 浏览器必须支持AudioWorklet（目前主流浏览器都支持，但仍需判断）
+  // 3. 用户必须有可用的音频输入设备（麦克风），因为耳返功能需要获取麦克风音频流进行处理
+  // 4. 用户必须在空间中开启了麦克风权限，因为即使有麦克风设备，如果没有权限也是无法使用耳返功能的
+  // 5. 用户必须佩戴耳机，因为耳返功能的主要作用是让用户在耳机中听到自己的声音，如果没有佩戴耳机，开启耳返可能会导致声音回馈和回声问题
+  const isLocalEarMonitorSupported = useMemo(() => {
+    if (!space?.localParticipant) return false; // 如果没有本地参与者信息，无法判断支持性，直接返回false
+
+    let supported = true;
+    // 判断浏览器必须支持AudioWorklet
+    if (!window.AudioWorkletNode) {
+      return false; // 立即失败
+    }
+    const localParticipant = space.localParticipant;
+    // 判断是否有可用的音频输入设备（麦克风），判断用户是否开启了麦克风权限并且没有设置成isMuted，并且volume也必须大于0
+    if (localParticipant.audioLevel == 0 || !localParticipant.isMicrophoneEnabled) {
+      // messageApi.warning(t('more.participant.set.control.in_ear_monitor.no_mic'));
+    }
+    // 判断用户是否佩戴耳机，检测耳机是否已连接（有线 / 蓝牙）使用MediaDevices.enumerateDevices() + Audio Output Devices API
+    hasHeadphonesConnected()
+      .then((connected) => {
+        if (!connected) {
+          supported = false;
+          // messageApi.error(t('more.participant.set.control.in_ear_monitor.no_headphone'));
+        }
+      })
+      .catch((_) => {
+        // messageApi.error(t('more.participant.set.control.in_ear_monitor.no_headphone'));
+      });
+
+    return supported;
+  }, [space?.localParticipant]);
 
   // 处理音量、模糊视频和模糊屏幕的调整------------------------------------------------------------
   const handleAdjustment = async (
@@ -199,6 +243,23 @@ export function useControlRKeyMenu({
             ),
             icon: <SvgResource type="screen_close" svgSize={16} />,
             disabled: !isScreenShareDisabled,
+          },
+          {
+            key: 'control.in_ear_monitor',
+            label: (
+              <span style={{ marginLeft: '8px' }}>
+                {isInEarMonitorOpen
+                  ? t('more.participant.set.control.in_ear_monitor.close')
+                  : t('more.participant.set.control.in_ear_monitor.open')}
+              </span>
+            ),
+            icon: (
+              <SvgResource
+                type={isInEarMonitorOpen ? 'in_ear_monitor_close' : 'in_ear_monitor_open'}
+                svgSize={16}
+              />
+            ),
+            disabled: !isLocalEarMonitorSupported,
           },
           {
             key: 'control.volume',
@@ -375,6 +436,8 @@ export function useControlRKeyMenu({
     isSelf,
     selectedParticipant?.isScreenShareEnabled,
     volumeScreen,
+    isInEarMonitorOpen,
+    isLocalEarMonitorSupported,
   ]);
   // 右键他人的菜单选项 -------------------------------------------------------------
   const optItems: MenuProps['items'] = useMemo(() => {
@@ -678,7 +741,7 @@ export function useControlRKeyMenu({
     controlUser,
   ]);
   // 处理自己的菜单点击事件 -------------------------------------------------------------
-  const handleSelfOptClick: MenuProps['onClick'] = (e) => {
+  const handleSelfOptClick: MenuProps['onClick'] = async (e) => {
     if (space?.localParticipant) {
       switch (e.key) {
         case 'safe.remove': {
@@ -714,6 +777,35 @@ export function useControlRKeyMenu({
         case 'control.mute_screen': {
           space.localParticipant.setScreenShareEnabled(false);
           break;
+        }
+        case 'control.in_ear_monitor': {
+          // 如果需要开启耳返，需要重新创建本地音频轨道，并且自己订阅，不需要发给别人，因为耳返只是自己听到自己的声音
+          if (!isInEarMonitorOpen) {
+            const track = await createLocalAudioTrack({
+              echoCancellation: false,
+              noiseSuppression: false,
+              autoGainControl: false,
+              channelCount: 2,
+              sampleRate: 48000,
+            });
+            // 发布轨道,(video_container组件中会进行订阅)
+            await space.localParticipant.publishTrack(track, {
+              name: `${space.localParticipant.identity}_in_ear_monitor_track`, //设置专用轨道名称，方便订阅和取消订阅
+              audioPreset: AudioPresets.musicHighQualityStereo,
+            });
+          } else {
+            // 关闭耳返, 停止并取消发布专用的耳返轨道
+            space.localParticipant.audioTrackPublications.forEach((publication) => {
+              if (
+                publication.trackName === `${space.localParticipant.identity}_in_ear_monitor_track`
+              ) {
+                if (publication.track) {
+                  publication.track.stop();
+                  space.localParticipant.unpublishTrack(publication.track);
+                }
+              }
+            });
+          }
         }
         default:
           break;
@@ -844,6 +936,7 @@ export function useControlRKeyMenu({
     if (participant.isScreenShareEnabled) {
       setVolumeScreen(spaceInfo.participants[participant.identity]?.volumeScreen || 100.0);
     }
+    setIsInEarMonitorOpen(spaceInfo.participants[participant.identity]?.inEarMonitor || false);
   };
 
   return {

@@ -307,3 +307,17 @@ export const loadVideo = async (videoRef: RefObject<HTMLVideoElement>) => {
     console.error('Failed to initialize video:', err);
   }
 };
+
+/**
+ * 用户是否连接了耳机
+ * @returns {Promise<boolean>} 如果连接了耳机返回true，否则返回false
+ */
+export async function hasHeadphonesConnected() {
+  if (!navigator.mediaDevices?.enumerateDevices) return false;
+  const devices = await navigator.mediaDevices.enumerateDevices();
+  // 筛选音频输出设备，判断label是否含耳机关键词
+  const audioOutputs = devices.filter(d => d.kind === 'audiooutput');
+  return audioOutputs.some(d => 
+    /headphone|headset|earphone|耳机|耳麦/i.test(d.label)
+  );
+}

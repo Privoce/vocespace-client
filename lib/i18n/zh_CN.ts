@@ -483,6 +483,13 @@ export default {
             video: '视频虚化',
             screen: '屏幕虚化',
           },
+          in_ear_monitor: {
+            title: '耳返',
+            open: '开启耳返',
+            close: '关闭耳返',
+            no_mic: "无法开启耳返，请检查是否有麦克风设备或是否静音了麦克风",
+            no_headphone: "无法开启耳返，请检查是否有耳机设备",
+          }
         },
         safe: {
           title: '安全',

@@ -847,6 +847,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           setUsername={setUsername}
           updateSettings={updateSettings}
           toRenameSettings={toRenameSettings}
+          messageApi={messageApi}
         ></ParticipantManage>
         {/* ------------- share space modal -------------------------------------------------------- */}
         <Modal

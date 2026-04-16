@@ -1053,6 +1053,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       // 1. 当用户在主房间时，可以订阅所有参与者的视频轨道，但不能订阅子房间用户的音频轨道
       // 2. 当用户在子房间时，可以订阅该子房间内的所有参与者的视频和音频轨道，包括主房间的参与者的视频轨道，但不能订阅主房间参与者的音频轨道
       let auth = [] as ParticipantTrackPermission[];
+      // 预留位置，专为耳返设计，用户需要自己订阅自己的专用耳返的音频轨道，需要测试是否可以自动订阅，这里先预留位置
+
+
       // 远程参与者不在同一房间内，只订阅视频轨道
       let videoTrackSid = space.localParticipant.getTrackPublication(Track.Source.Camera)?.trackSid;
 

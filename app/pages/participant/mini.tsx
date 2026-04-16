@@ -31,6 +31,7 @@ import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { Tooltip } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
 import { FullScreenBtnProps } from '../controls/widgets/full_screen';
+import { MessageInstance } from 'antd/es/message/interface';
 
 export interface ParticipantTileMiniProps extends ParticipantTileProps, FullScreenBtnProps {
   settings: SpaceInfo;
@@ -42,6 +43,7 @@ export interface ParticipantTileMiniProps extends ParticipantTileProps, FullScre
   toRenameSettings: () => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
   showFlotApp: (id?: string, participantName?: string, auth?: AppAuth) => void;
+  messageApi: MessageInstance
 }
 
 export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMiniProps>(
@@ -57,6 +59,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       isFullScreen,
       setIsFullScreen,
       setCollapsed,
+      messageApi,
     }: ParticipantTileMiniProps,
     ref,
   ) => {
@@ -149,6 +152,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
         updateSettings,
         toRenameSettings,
         isSelf: trackReference.participant.identity === localParticipant.identity,
+        messageApi
       } as UseControlRKeyMenuProps);
 
     // 右键菜单可以使用：当不是自己的时候且source不是屏幕分享
