@@ -22,6 +22,8 @@ Steps to get a local dev setup up and running:
 4. Run `pnpm dev` to start the development server and visit [http://localhost:3000](http://localhost:3000) to see the result.
 5. Start development 🎉
 
+**make sure livekit-client use `2.9.x`** or it may cause wss connect error!
+
 ### vocespace.conf.json
 
 ```json

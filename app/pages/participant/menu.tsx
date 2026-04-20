@@ -3,7 +3,7 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { Dropdown, MenuProps, Modal, Slider } from 'antd';
 import { AudioPresets, createLocalAudioTrack, Participant, Room, Track } from 'livekit-client';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import styles from '@/styles/controls.module.scss';
 import {
   ControlType,
@@ -77,6 +77,7 @@ export function useControlRKeyMenu({
   const { t } = useI18n();
   // 必要的状态和Owner的确定 -------------------------------------------------------------------
   const [isInEarMonitorOpen, setIsInEarMonitorOpen] = useState(false);
+  const [isLocalEarMonitorSupported, setIsLocalEarMonitorSupported] = useState(false);
   const [isMicDisabled, setIsMicDisabled] = useState(false);
   const [isCamDisabled, setIsCamDisabled] = useState(false);
   const [isScreenShareDisabled, setIsScreenShareDisabled] = useState(false);
@@ -97,38 +98,46 @@ export function useControlRKeyMenu({
     space: space,
     uid: space?.localParticipant.identity!,
   });
+
+  const checkEarMonitorSupported = async (showMessage = false): Promise<boolean> => {
+    if (!space?.localParticipant) return false; // 如果没有本地参与者信息，无法判断支持性，直接返回false
+
+    let supported = true;
+    // 判断浏览器必须支持AudioWorklet
+    if (!window.AudioWorkletNode) {
+      showMessage &&
+        messageApi.error(t('more.participant.set.control.in_ear_monitor.not_supported'));
+      return false; // 立即失败
+    }
+    const localParticipant = space.localParticipant;
+    // 判断是否有可用的音频输入设备（麦克风），判断用户是否开启了麦克风权限并且没有设置成isMuted，并且volume也必须大于0
+    if (!localParticipant.isMicrophoneEnabled) {
+      showMessage && messageApi.warning(t('more.participant.set.control.in_ear_monitor.no_mic'));
+      supported = false;
+    }
+    // 判断用户是否佩戴耳机，检测耳机是否已连接（有线 / 蓝牙）使用MediaDevices.enumerateDevices() + Audio Output Devices API
+    const connected = await hasHeadphonesConnected();
+    if (!connected) {
+      supported = false;
+      showMessage &&
+        messageApi.error(t('more.participant.set.control.in_ear_monitor.no_headphone'));
+    }
+
+    return supported;
+  };
+
   // 当前本地用户是否支持耳返功能，耳返功能需要满足以下条件：
   // 1. 必须是本地用户自己的菜单 (这个会在菜单开启时判断)
   // 2. 浏览器必须支持AudioWorklet（目前主流浏览器都支持，但仍需判断）
   // 3. 用户必须有可用的音频输入设备（麦克风），因为耳返功能需要获取麦克风音频流进行处理
   // 4. 用户必须在空间中开启了麦克风权限，因为即使有麦克风设备，如果没有权限也是无法使用耳返功能的
   // 5. 用户必须佩戴耳机，因为耳返功能的主要作用是让用户在耳机中听到自己的声音，如果没有佩戴耳机，开启耳返可能会导致声音回馈和回声问题
-  const isLocalEarMonitorSupported = useMemo(() => {
-    if (!space?.localParticipant) return false; // 如果没有本地参与者信息，无法判断支持性，直接返回false
-
-    let supported = true;
-    // 判断浏览器必须支持AudioWorklet
-    if (!window.AudioWorkletNode) {
-      return false; // 立即失败
-    }
-    const localParticipant = space.localParticipant;
-    // 判断是否有可用的音频输入设备（麦克风），判断用户是否开启了麦克风权限并且没有设置成isMuted，并且volume也必须大于0
-    if (localParticipant.audioLevel == 0 || !localParticipant.isMicrophoneEnabled) {
-      // messageApi.warning(t('more.participant.set.control.in_ear_monitor.no_mic'));
-    }
-    // 判断用户是否佩戴耳机，检测耳机是否已连接（有线 / 蓝牙）使用MediaDevices.enumerateDevices() + Audio Output Devices API
-    hasHeadphonesConnected()
-      .then((connected) => {
-        if (!connected) {
-          supported = false;
-          // messageApi.error(t('more.participant.set.control.in_ear_monitor.no_headphone'));
-        }
-      })
-      .catch((_) => {
-        // messageApi.error(t('more.participant.set.control.in_ear_monitor.no_headphone'));
-      });
-
-    return supported;
+  useEffect(() => {
+    const checkSupport = async () => {
+      const supported = await checkEarMonitorSupported();
+      setIsLocalEarMonitorSupported(supported);
+    };
+    checkSupport();
   }, [space?.localParticipant]);
 
   // 处理音量、模糊视频和模糊屏幕的调整------------------------------------------------------------
@@ -259,7 +268,7 @@ export function useControlRKeyMenu({
                 svgSize={16}
               />
             ),
-            disabled: !isLocalEarMonitorSupported,
+            // disabled: !isLocalEarMonitorSupported,
           },
           {
             key: 'control.volume',
@@ -781,6 +790,13 @@ export function useControlRKeyMenu({
         case 'control.in_ear_monitor': {
           // 如果需要开启耳返，需要重新创建本地音频轨道，并且自己订阅，不需要发给别人，因为耳返只是自己听到自己的声音
           if (!isInEarMonitorOpen) {
+            const isSupport = await checkEarMonitorSupported(true);
+            console.warn('耳返支持性检查结果:', isSupport);
+            if (!isSupport) {
+              // messageApi.error(t('more.participant.set.control.in_ear_monitor.not_supported'));
+              return;
+            }
+
             const track = await createLocalAudioTrack({
               echoCancellation: false,
               noiseSuppression: false,
@@ -793,6 +809,10 @@ export function useControlRKeyMenu({
               name: `${space.localParticipant.identity}_in_ear_monitor_track`, //设置专用轨道名称，方便订阅和取消订阅
               audioPreset: AudioPresets.musicHighQualityStereo,
             });
+
+            await updateSettings({
+              inEarMonitor: true,
+            });
           } else {
             // 关闭耳返, 停止并取消发布专用的耳返轨道
             space.localParticipant.audioTrackPublications.forEach((publication) => {
@@ -804,6 +824,10 @@ export function useControlRKeyMenu({
                   space.localParticipant.unpublishTrack(publication.track);
                 }
               }
+            });
+
+            await updateSettings({
+              inEarMonitor: false,
             });
           }
         }

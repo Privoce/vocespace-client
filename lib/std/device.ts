@@ -317,7 +317,8 @@ export async function hasHeadphonesConnected() {
   const devices = await navigator.mediaDevices.enumerateDevices();
   // 筛选音频输出设备，判断label是否含耳机关键词
   const audioOutputs = devices.filter(d => d.kind === 'audiooutput');
-  return audioOutputs.some(d => 
-    /headphone|headset|earphone|耳机|耳麦/i.test(d.label)
+  return audioOutputs.some(d =>
+    d.label &&
+    !/内建扬声器|内建输出|Built-in Output|Internal Speakers/i.test(d.label)
   );
 }

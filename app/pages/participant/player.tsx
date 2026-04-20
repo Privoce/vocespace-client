@@ -258,7 +258,12 @@ export const TilePlayer = forwardRef<TilePlayerExports, TilePlayerProps>(
           title={'Input Iframe URL'}
           open={openInputIframe}
           onOk={async () => {
-            const nextUrl = iframeUrl.trim();
+            let nextUrl = iframeUrl.trim();
+            // 如果nextUrl没有https协议就需要加上
+            if (nextUrl && !/^https?:\/\//i.test(nextUrl)) {
+              nextUrl = 'https://' + nextUrl;
+            }
+
             if (!nextUrl) {
               messageApi.warning({
                 content: 'Iframe URL is required',
