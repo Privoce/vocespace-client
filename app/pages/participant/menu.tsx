@@ -2,7 +2,14 @@ import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { Dropdown, MenuProps, Modal, Slider } from 'antd';
-import { AudioPresets, createLocalAudioTrack, Participant, Room, Track } from 'livekit-client';
+import {
+  AudioPresets,
+  createLocalAudioTrack,
+  LocalAudioTrack,
+  Participant,
+  Room,
+  Track,
+} from 'livekit-client';
 import { useEffect, useMemo, useState } from 'react';
 import styles from '@/styles/controls.module.scss';
 import {
@@ -124,6 +131,80 @@ export function useControlRKeyMenu({
     }
 
     return supported;
+  };
+
+  const creatAudioPlayer = async () => {
+    const track = await createLocalAudioTrack({
+      echoCancellation: false,
+      noiseSuppression: true,
+      autoGainControl: false,
+      channelCount: 2,
+      sampleRate: 48000,
+    });
+
+    // 本地耳返：直接播放
+    setTimeout(() => {
+      // 避免浏览器限制，延迟执行
+      try {
+        const audioElementId = 'local-in-ear-monitor-audio';
+        let audioElement = document.getElementById(audioElementId) as HTMLAudioElement | null;
+        if (!audioElement) {
+          audioElement = track.attach();
+          audioElement.autoplay = true;
+          audioElement.muted = false;
+          audioElement.volume = 1.0;
+          audioElement.id = audioElementId;
+          audioElement.style.display = 'none';
+          document.body.appendChild(audioElement);
+        }
+      } catch (err) {
+        console.warn('耳返本地播放失败:', err);
+      }
+    }, 100);
+  };
+
+  const handleCtrEarMonitorErr = async (
+    isOpen: boolean,
+    audioEl: HTMLElement | HTMLAudioElement | null,
+  ) => {
+    if (isOpen && !audioEl) {
+      // 其他情况说明出现了问题，不能没有audio元素但是状态是开启，或者有audio元素但是状态是关闭，
+      // 这两种情况都需要修正状态，audio得跟着状态走
+      // 没有audio元素但是状态是开启就需要重新创建audio元素
+      await creatAudioPlayer();
+    } else if (!isOpen && audioEl) {
+      // 有audio但状态是关闭的，需要删除audio元素
+      audioEl.remove();
+    }
+  };
+
+  const handleCtrEarMonitor = async (isInEarMonitorOpen: boolean) => {
+    // 获取本地耳返元素
+    if (!space) return;
+    const audioElement = document.getElementById('local-in-ear-monitor-audio');
+
+    if (!isInEarMonitorOpen && !audioElement) {
+      const isSupport = await checkEarMonitorSupported(true);
+      if (!isSupport) {
+        return;
+      }
+      await creatAudioPlayer();
+      await updateSettings({
+        inEarMonitor: true,
+      });
+    } else if (audioElement && isInEarMonitorOpen) {
+      // 关闭耳返
+      audioElement.remove();
+
+      await updateSettings({
+        inEarMonitor: false,
+      });
+    } else {
+      await handleCtrEarMonitorErr(isInEarMonitorOpen, audioElement);
+    }
+    socket.emit('update_user_status', {
+      space: space?.name,
+    } as WsBase);
   };
 
   // 当前本地用户是否支持耳返功能，耳返功能需要满足以下条件：
@@ -789,47 +870,8 @@ export function useControlRKeyMenu({
         }
         case 'control.in_ear_monitor': {
           // 如果需要开启耳返，需要重新创建本地音频轨道，并且自己订阅，不需要发给别人，因为耳返只是自己听到自己的声音
-          if (!isInEarMonitorOpen) {
-            const isSupport = await checkEarMonitorSupported(true);
-            console.warn('耳返支持性检查结果:', isSupport);
-            if (!isSupport) {
-              // messageApi.error(t('more.participant.set.control.in_ear_monitor.not_supported'));
-              return;
-            }
-
-            const track = await createLocalAudioTrack({
-              echoCancellation: false,
-              noiseSuppression: false,
-              autoGainControl: false,
-              channelCount: 2,
-              sampleRate: 48000,
-            });
-            // 发布轨道,(video_container组件中会进行订阅)
-            await space.localParticipant.publishTrack(track, {
-              name: `${space.localParticipant.identity}_in_ear_monitor_track`, //设置专用轨道名称，方便订阅和取消订阅
-              audioPreset: AudioPresets.musicHighQualityStereo,
-            });
-
-            await updateSettings({
-              inEarMonitor: true,
-            });
-          } else {
-            // 关闭耳返, 停止并取消发布专用的耳返轨道
-            space.localParticipant.audioTrackPublications.forEach((publication) => {
-              if (
-                publication.trackName === `${space.localParticipant.identity}_in_ear_monitor_track`
-              ) {
-                if (publication.track) {
-                  publication.track.stop();
-                  space.localParticipant.unpublishTrack(publication.track);
-                }
-              }
-            });
-
-            await updateSettings({
-              inEarMonitor: false,
-            });
-          }
+          await handleCtrEarMonitor(isInEarMonitorOpen);
+          break;
         }
         default:
           break;
@@ -960,7 +1002,11 @@ export function useControlRKeyMenu({
     if (participant.isScreenShareEnabled) {
       setVolumeScreen(spaceInfo.participants[participant.identity]?.volumeScreen || 100.0);
     }
-    setIsInEarMonitorOpen(spaceInfo.participants[participant.identity]?.inEarMonitor || false);
+    const isOpen = spaceInfo.participants[participant.identity]?.inEarMonitor || false;
+    setIsInEarMonitorOpen(isOpen);
+    // 防止错误
+    const audioElement = document.getElementById('local-in-ear-monitor-audio');
+    handleCtrEarMonitorErr(isOpen, audioElement);
   };
 
   return {

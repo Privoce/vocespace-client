@@ -496,6 +496,15 @@ export default {
             video: 'Blur Camera Video',
             screen: 'Blur Shared Screen',
           },
+          in_ear_monitor: {
+            title: 'In-ear monitor',
+            open: 'Enable ear monitors,',
+            close: 'Turn off the earphones',
+            no_mic:
+              'Unable to activate the in-ear monitor. Please check if a microphone device is connected or if the microphone is muted.',
+            no_headphone:
+              'Unable to turn on the in-ear monitor. Please check if an earphone device is connected.',
+          },
         },
         safe: {
           title: 'Admin',

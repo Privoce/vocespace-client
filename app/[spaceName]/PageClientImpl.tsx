@@ -436,6 +436,10 @@ function VideoConferenceComponent(props: {
 
   const router = useRouter();
   const handleOnLeave = React.useCallback(async () => {
+    const audioElement = document.getElementById('local-in-ear-monitor-audio');
+    if (audioElement) {
+      audioElement.remove();
+    }
     setRoomState([]);
     socket.emit('mouse_remove', {
       space: room.name,

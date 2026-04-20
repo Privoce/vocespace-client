@@ -1040,24 +1040,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       // 1. 当用户在主房间时，可以订阅所有参与者的视频轨道，但不能订阅子房间用户的音频轨道
       // 2. 当用户在子房间时，可以订阅该子房间内的所有参与者的视频和音频轨道，包括主房间的参与者的视频轨道，但不能订阅主房间参与者的音频轨道
       let auth = [] as ParticipantTrackPermission[];
-      console.warn("ear track:", space.localParticipant.getTrackPublicationByName(
-          `${space.localParticipant.identity}_in_ear_monitor_track`,
-        ));
-      // 订阅耳返，当用户开启耳返功能会创建一个本地的音频轨道，name为${space.localParticipant.identity}_in_ear_monitor_track
-      // 需要对这个轨道进行特殊处理，允许用户自己订阅，但不允许其他人订阅
-      auth.push({
-        participantIdentity: space.localParticipant.identity,
-        allowAll: false,
-        allowedTrackSids: space.localParticipant.getTrackPublicationByName(
-          `${space.localParticipant.identity}_in_ear_monitor_track`,
-        )?.trackSid
-          ? [
-              space.localParticipant.getTrackPublicationByName(
-                `${space.localParticipant.identity}_in_ear_monitor_track`,
-              )!.trackSid!,
-            ]
-          : [],
-      });
 
       // 远程参与者不在同一房间内，只订阅视频轨道
       let videoTrackSid = space.localParticipant.getTrackPublication(Track.Source.Camera)?.trackSid;
