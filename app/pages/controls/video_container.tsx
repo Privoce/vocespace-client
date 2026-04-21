@@ -1072,9 +1072,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           // 设置音量
           rp.setVolume(volume);
           // 设置屏幕共享的音量，必须在订阅之后设置才有效，所以放在这里，并且需要转为RemoteAudioTrack类型才能调用setVolume方法
-          const remote: RemoteAudioTrack = rp.getTrackPublication(Track.Source.ScreenShare)!
-            .audioTrack! as RemoteAudioTrack;
-          remote.setVolume(volumeScreen);
+          const remoteTrackPub = rp.getTrackPublication(Track.Source.ScreenShare);
+          if (remoteTrackPub && remoteTrackPub.audioTrack) {
+            const remote = remoteTrackPub.audioTrack as RemoteAudioTrack | undefined;
+            if (remote) {
+              remote.setVolume(volumeScreen);
+            }
+          }
         } else {
           auth.push({
             participantIdentity: rp.identity,
