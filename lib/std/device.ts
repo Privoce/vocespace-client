@@ -35,6 +35,9 @@ export interface WsParticipant extends WsBase {
 export interface WsTilePlayer extends WsParticipant {
   ty?: 'image' | 'iframe' | 'nestedBrowser';
   created: boolean;
+  playerId?: string;
+  ownerId?: string;
+  action?: 'create' | 'remove' | 'update';
 }
 
 export interface WsRemove extends WsBase {

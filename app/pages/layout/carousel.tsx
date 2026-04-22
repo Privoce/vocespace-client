@@ -3,8 +3,7 @@ import { getScrollBarWidth } from '@livekit/components-core';
 import { TrackLoop, useVisualStableUpdate } from '@livekit/components-react';
 import * as React from 'react';
 import { useSize } from './hooks';
-import { TilePlayer } from '../participant/player';
-import { MessageInstance } from 'antd/es/message/interface';
+
 
 const MIN_HEIGHT = 130;
 const MIN_WIDTH = 140;
@@ -39,9 +38,9 @@ export interface CarouselLayoutProps extends React.HTMLAttributes<HTMLMediaEleme
 export function CLayout({
   tracks,
   orientation,
-  player,
+  players,
   ...props
-}: CarouselLayoutProps & { player: React.ReactNode }) {
+}: CarouselLayoutProps & { players?: React.ReactNode[] }) {
   const asideEl = React.useRef<HTMLDivElement>(null);
   const [prevTiles, setPrevTiles] = React.useState(0);
   const { width, height } = useSize(asideEl);
@@ -81,7 +80,7 @@ export function CLayout({
   return (
     <aside key={carouselOrientation} className="lk-carousel" ref={asideEl} {...props}>
       <TrackLoop tracks={sortedTiles}>{props.children}</TrackLoop>
-      {player}
+      {players}
     </aside>
   );
 }

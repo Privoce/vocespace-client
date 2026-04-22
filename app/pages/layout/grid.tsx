@@ -9,8 +9,7 @@ import {
 import React from 'react';
 import { PaginationCtl, PaginationInfo } from '../controls/widgets/pagination';
 import { PaginationControl, PaginationIndicator } from './cover';
-import { TilePlayer } from '../participant/player';
-import { MessageInstance } from 'antd/es/message/interface';
+
 
 /**
  *  ## GLayout
@@ -62,16 +61,16 @@ export function GLayout({ tracks, ...props }: GridLayoutProps) {
 
 export function GLayout2({
   tracks,
-  player,
+  players,
   ...props
-}: GridLayoutProps & { player: React.ReactNode }) {
+}: GridLayoutProps & { players?: React.ReactNode[] }) {
   const gridEl = React.createRef<HTMLDivElement>();
 
   const elementProps = React.useMemo(
     () =>
       mergeProps(props, {
         className: 'lk-grid-layout',
-        ...(player != undefined && tracks.length <= 2
+        ...(players && players.length > 0 && tracks.length <= 2
           ? {
               style: {
                 gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
@@ -79,7 +78,7 @@ export function GLayout2({
             }
           : {}),
       }),
-    [props, player],
+    [props, players],
   );
   const { layout } = useGridLayout(gridEl, tracks.length);
   const pagination = usePagination(layout.maxTiles, tracks);
@@ -91,7 +90,7 @@ export function GLayout2({
   return (
     <div ref={gridEl} data-lk-pagination={pagination.totalPageCount > 1} {...elementProps}>
       <TrackLoop tracks={pagination.tracks}>{props.children}</TrackLoop>
-      {player}
+      {players}
       {tracks.length > layout.maxTiles && (
         <>
           <PaginationIndicator

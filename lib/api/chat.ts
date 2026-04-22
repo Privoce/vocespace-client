@@ -97,6 +97,8 @@ export interface HandleTilePlayerFileBody {
   ty: HandleFileSystemType | 'set_meta'; // 默认为ls
   file?: FileType;
   iframeUrl?: string;
+  identity?: string;
+  playerId?: string;
 }
 
 export const handleTilePlayerFile = async (
@@ -105,6 +107,8 @@ export const handleTilePlayerFile = async (
   ty?: HandleFileSystemType | 'set_meta',
   file?: FileType,
   iframeUrl?: string,
+  identity?: string,
+  playerId?: string,
 ) => {
   const url = new URL(connect_endpoint('/api/upload'), window.location.origin);
   url.searchParams.append('tilePlayer', 'true');
@@ -115,6 +119,7 @@ export const handleTilePlayerFile = async (
     formData.append('spaceName', spaceName);
     formData.append('ty', ty);
     if (room) formData.append('room', room);
+    if (identity) formData.append('identity', identity);
     formData.append('file', file as File);
     return await fetch(url.toString(), {
       method: 'POST',
@@ -127,6 +132,13 @@ export const handleTilePlayerFile = async (
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ spaceName, ty: ty || 'ls', room, iframeUrl } as Omit<HandleTilePlayerFileBody, 'file'>),
+    body: JSON.stringify({
+      spaceName,
+      ty: ty || 'ls',
+      room,
+      iframeUrl,
+      identity,
+      playerId,
+    } as Omit<HandleTilePlayerFileBody, 'file'>),
   });
 };

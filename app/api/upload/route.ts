@@ -7,10 +7,22 @@ import fs from 'fs/promises';
 
 const uploadDirPath = (roomName: string) => path.join(process.cwd(), 'uploads', roomName);
 
+interface TilePlayerEntry {
+  id: string;
+  ownerId: string;
+  room?: string;
+  mode: 'image' | 'iframe';
+  fileName?: string | null;
+  iframeUrl?: string | null;
+  createdAt: number;
+  updatedAt: number;
+}
+
 export async function POST(request: NextRequest) {
   try {
     const action = request.nextUrl.searchParams.get('action');
     const isTilePlayerFile = request.nextUrl.searchParams.get('tilePlayer') === 'true';
+
     // 处理TilePlayer组件的文件操作请求 ------------------------------------------------------------------------------------
     if (isTilePlayerFile) {
       const contentType = request.headers.get('content-type') || '';
@@ -20,6 +32,8 @@ export async function POST(request: NextRequest) {
       let room: string | undefined;
       let file: File | undefined;
       let iframeUrl: string | undefined;
+      let identity: string | undefined;
+      let playerId: string | undefined;
 
       if (contentType.includes('multipart/form-data')) {
         // upload 操作：从 FormData 读取真实 File 对象
@@ -28,63 +42,102 @@ export async function POST(request: NextRequest) {
         ty = formData.get('ty') as HandleTilePlayerFileBody['ty'];
         room = (formData.get('room') as string) || undefined;
         file = formData.get('file') as File;
+        identity = (formData.get('identity') as string) || undefined;
       } else {
-        // ls 等操作：从 JSON 读取
+        // ls/rm/set_meta 操作：从 JSON 读取
         const body: Omit<HandleTilePlayerFileBody, 'file'> = await request.json();
         spaceName = body.spaceName;
         ty = body.ty;
         room = body.room;
         iframeUrl = body.iframeUrl;
+        identity = body.identity;
+        playerId = body.playerId;
       }
-      // 获取文件URL
-      // 这个tile_player文件目前只会是图片文件，并且只会存储在uploads/spaceName/{room?}目录下
+
+      // 多 tile_player 目录结构: uploads/{spaceName}/{room?}/tile_players.json + 文件资源
       const dir = room ? path.join(uploadDirPath(spaceName), room) : uploadDirPath(spaceName);
-      const metaPath = path.join(dir, 'tile_player_meta.json');
+      const playersPath = path.join(dir, 'tile_players.json');
+
+      const loadPlayers = async (): Promise<TilePlayerEntry[]> => {
+        try {
+          const raw = await fs.readFile(playersPath, 'utf-8');
+          const data = JSON.parse(raw);
+          return Array.isArray(data) ? data : [];
+        } catch (_e) {
+          return [];
+        }
+      };
+
+      const savePlayers = async (players: TilePlayerEntry[]) => {
+        await mkdir(dir, { recursive: true });
+        await writeFile(playersPath, JSON.stringify(players, null, 2), 'utf-8');
+      };
 
       if (ty === 'ls') {
-        // 直接找dir路径下的文件，如果存在叫tile_player的就返回URL，不存在就返回null
         try {
-          const files = await fs.readdir(dir);
-          const tilePlayerFile = files.find((file) => file.startsWith('tile_player'));
-          let mode: 'image' | 'iframe' | 'none' = tilePlayerFile ? 'image' : 'none';
-          let iframeUrl: string | null = null;
+          const players = await loadPlayers();
+          const result = await Promise.all(
+            players.map(async (player) => {
+              if (player.mode === 'image' && player.fileName) {
+                try {
+                  const stat = await fs.stat(path.join(dir, player.fileName));
+                  return {
+                    ...player,
+                    url: `/uploads/${spaceName}/${room ? room + '/' : ''}${player.fileName}?t=${stat.mtimeMs}`,
+                  };
+                } catch (_e) {
+                  return {
+                    ...player,
+                    url: null,
+                  };
+                }
+              }
 
-          try {
-            const metaRaw = await fs.readFile(metaPath, 'utf-8');
-            const meta = JSON.parse(metaRaw) as {
-              mode?: 'image' | 'iframe' | 'none';
-              iframeUrl?: string | null;
-            };
-            mode = meta.mode || mode;
-            iframeUrl = meta.iframeUrl || null;
-          } catch (e) {
-            // ignore
-          }
+              return {
+                ...player,
+                url: null,
+              };
+            }),
+          );
 
-          if (tilePlayerFile) {
-            const fileStat = await fs.stat(path.join(dir, tilePlayerFile));
-            const mtime = fileStat.mtimeMs;
-            const fileUrl = `/uploads/${spaceName}/${room ? room + '/' : ''}${tilePlayerFile}?t=${mtime}`;
-            return NextResponse.json({ url: fileUrl, iframeUrl, mode });
-          } else {
-            return NextResponse.json({ url: null, iframeUrl, mode });
-          }
-        } catch (e) {
-          return NextResponse.json({ url: null, iframeUrl: null, mode: 'none' });
+          return NextResponse.json({ players: result });
+        } catch (_e) {
+          return NextResponse.json({ players: [] });
         }
       }
 
       if (ty === 'set_meta') {
+        if (!identity) {
+          return NextResponse.json(
+            { success: false, error: 'identity is required' },
+            { status: 400 },
+          );
+        }
+        if (!iframeUrl) {
+          return NextResponse.json(
+            { success: false, error: 'iframeUrl is required' },
+            { status: 400 },
+          );
+        }
+
         try {
-          await mkdir(dir, { recursive: true });
-          const meta = {
-            mode: iframeUrl ? 'iframe' : 'none',
-            iframeUrl: iframeUrl || null,
-            updatedAt: Date.now(),
+          const players = await loadPlayers();
+          const now = Date.now();
+          const id = ulid();
+          const entry: TilePlayerEntry = {
+            id,
+            ownerId: identity,
+            room,
+            mode: 'iframe',
+            iframeUrl,
+            fileName: null,
+            createdAt: now,
+            updatedAt: now,
           };
-          await writeFile(metaPath, JSON.stringify(meta, null, 2), 'utf-8');
-          return NextResponse.json({ success: true });
-        } catch (e) {
+          players.push(entry);
+          await savePlayers(players);
+          return NextResponse.json({ success: true, player: entry });
+        } catch (_e) {
           return NextResponse.json(
             { success: false, error: 'Failed to set tile player meta' },
             { status: 500 },
@@ -93,20 +146,36 @@ export async function POST(request: NextRequest) {
       }
 
       if (ty === 'rm') {
-        // 删除tile_player文件
+        if (!identity || !playerId) {
+          return NextResponse.json(
+            { success: false, error: 'identity and playerId are required' },
+            { status: 400 },
+          );
+        }
+
         try {
-          const files = await fs.readdir(dir);
-          const tilePlayerFile = files.find((file) => file.startsWith('tile_player'));
-          if (tilePlayerFile) {
-            await fs.unlink(path.join(dir, tilePlayerFile));
+          const players = await loadPlayers();
+          const found = players.find((item) => item.id === playerId);
+          if (!found) {
+            return NextResponse.json({ success: false, error: 'Player not found' }, { status: 404 });
           }
-          try {
-            await fs.unlink(metaPath);
-          } catch (e) {
-            // ignore
+
+          if (found.ownerId !== identity) {
+            return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
           }
+
+          if (found.mode === 'image' && found.fileName) {
+            try {
+              await fs.unlink(path.join(dir, found.fileName));
+            } catch (_e) {
+              // ignore file deletion error
+            }
+          }
+
+          const nextPlayers = players.filter((item) => item.id !== playerId);
+          await savePlayers(nextPlayers);
           return NextResponse.json({ success: true });
-        } catch (e) {
+        } catch (_e) {
           return NextResponse.json(
             { success: false, error: 'Failed to remove file' },
             { status: 500 },
@@ -114,43 +183,56 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // 上传文件，直接把文件命名为tile_player，覆盖之前的文件
       if (ty === 'upload') {
-        // const formData = await request.formData();
-        // const file = formData.get('file') as File;
         if (!file) {
           return NextResponse.json({ error: 'No file received' }, { status: 400 });
         }
-        // 确保目录存在
+        if (!identity) {
+          return NextResponse.json({ error: 'identity is required' }, { status: 400 });
+        }
+
+        const id = ulid();
+        const ext = path.extname(file.name);
+        const fileName = `tile_player_${id}${ext}`;
+
         try {
           await mkdir(dir, { recursive: true });
         } catch (error) {
           console.error('Failed to create upload directory:', error);
           return NextResponse.json({ error: 'Failed to create upload directory' }, { status: 500 });
         }
-        const filePath = path.join(dir, 'tile_player' + path.extname(file.name));
+
+        const filePath = path.join(dir, fileName);
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
         await writeFile(filePath, buffer);
 
-        // 上传图片时将 mode 置为 image，并清除 iframeUrl
-        try {
-          await writeFile(
-            metaPath,
-            JSON.stringify({ mode: 'image', iframeUrl: null, updatedAt: Date.now() }, null, 2),
-            'utf-8',
-          );
-        } catch (e) {
-          // ignore
-        }
+        const players = await loadPlayers();
+        const now = Date.now();
+        const entry: TilePlayerEntry = {
+          id,
+          ownerId: identity,
+          room,
+          mode: 'image',
+          fileName,
+          iframeUrl: null,
+          createdAt: now,
+          updatedAt: now,
+        };
 
-        const uploadedAt = Date.now();
+        players.push(entry);
+        await savePlayers(players);
+
         return NextResponse.json({
           success: true,
-          url: `/uploads/${spaceName}/${room ? room + '/' : ''}tile_player${path.extname(file.name)}?t=${uploadedAt}`,
+          player: {
+            ...entry,
+            url: `/uploads/${spaceName}/${room ? room + '/' : ''}${fileName}?t=${now}`,
+          },
         });
       }
     }
+
     // 处理文件系统操作 ------------------------------------------------------------------------------------
     if (action === 'fs') {
       const { spaceName, ty, fileName }: HandleFileSystemBody = await request.json();
@@ -203,6 +285,7 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json({ success: true });
     }
+
     // 处理文件上传(聊天业务) ------------------------------------------------------------------------------------
     const formData = await request.formData();
     const file = formData.get('file') as File;
@@ -247,9 +330,6 @@ export async function POST(request: NextRequest) {
     // 构建文件访问 URL
     const fileUrl = `/uploads/${roomName}/${fileName}`;
 
-    // console.log(`File uploaded successfully: ${filePath}`);
-    // console.log(`File URL: ${fileUrl}`);
-
     return NextResponse.json({
       success: true,
       fileUrl,
@@ -267,7 +347,7 @@ export async function POST(request: NextRequest) {
 }
 
 // 处理 OPTIONS 请求（CORS 预检）
-export async function OPTIONS(request: NextRequest) {
+export async function OPTIONS(_request: NextRequest) {
   return new NextResponse(null, {
     status: 200,
     headers: {

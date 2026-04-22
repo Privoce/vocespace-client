@@ -88,7 +88,7 @@ import {
 } from '@/lib/api/platform';
 import { useFullScreenBtn } from './widgets/full_screen';
 import { exportRBAC, usePlatformUserInfo, usePlatformUserInfoCheap } from '@/lib/hooks/platform';
-import { TilePlayer, TilePlayerExports } from '../participant/player';
+import { TilePlayer, TilePlayerAdd, TilePlayerItem } from '../participant/player';
 import { GLayout2 } from '../layout/grid';
 import { CLayout } from '../layout/carousel';
 
@@ -980,25 +980,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       platUser,
     ]);
 
-    const tilePlayerRef = useRef<TilePlayerExports>(null);
-
-    useEffect(() => {
-      // tile player change socket event ----------------------------------------------
-      const handleTilePlayerChange = (msg: WsTilePlayer) => {
-        if (msg.participantId === space?.localParticipant.identity) return;
-        if (space && msg.space === space.name && tilePlayerRef.current) {
-          console.warn('Received tile player change event:', msg);
-          // 触发TilePlayer组件请求后台获取进行更新
-          tilePlayerRef.current.refresh(msg.created, msg.ty);
-        }
-      };
-
-      socket.on('tile_player_change_response', handleTilePlayerChange);
-      return () => {
-        socket.off('tile_player_change_response', handleTilePlayerChange);
-      };
-    }, [space]);
-
     const selfRoom = useMemo(() => {
       if (!space || space.state !== ConnectionState.Connected || !settings || !settings.children)
         return;
@@ -1024,6 +1005,46 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       }
       return selfRoom;
     }, [settings, space]);
+
+    const [tilePlayerItems, setTilePlayerItems] = useState<TilePlayerItem[]>([]);
+
+    const fetchTilePlayers = useCallback(async () => {
+      if (!space?.name || !selfRoom) return;
+      try {
+        const response = await api.handleTilePlayerFile(
+          space.name,
+          selfRoom.name,
+          'ls',
+          undefined,
+          undefined,
+          space.localParticipant.identity,
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setTilePlayerItems(Array.isArray(data.players) ? data.players : []);
+        }
+      } catch (e) {
+        console.error('fetchTilePlayers error:', e);
+      }
+    }, [space?.name, selfRoom?.name]);
+
+    useEffect(() => {
+      fetchTilePlayers();
+    }, [fetchTilePlayers]);
+
+    useEffect(() => {
+      // tile player change socket event
+      const handleTilePlayerChange = (msg: WsTilePlayer) => {
+        if (msg.participantId === space?.localParticipant.identity) return;
+        if (space && msg.space === space.name) {
+          fetchTilePlayers();
+        }
+      };
+      socket.on('tile_player_change_response', handleTilePlayerChange);
+      return () => {
+        socket.off('tile_player_change_response', handleTilePlayerChange);
+      };
+    }, [space, fetchTilePlayers]);
 
     useLayoutEffect(() => {
       if (!settings || !space || space.state !== ConnectionState.Connected) return;
@@ -1159,7 +1180,19 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       .filter((track) => track.publication.source === Track.Source.ScreenShare);
 
     const focusTrack = usePinnedTracks(layoutContext)?.[0];
-    const [focusPlayer, setFocusPlayer] = React.useState<boolean>(false);
+    const focusedTilePlayerId = useMemo(() => {
+      if (!space?.name || !focusTrack || focusTrack.source !== Track.Source.Unknown) return null;
+
+      const participantName = focusTrack.participant.name || focusTrack.participant.identity;
+      const prefix = `${space.name}_player_`;
+      return participantName.startsWith(prefix) ? participantName.slice(prefix.length) : null;
+    }, [
+      focusTrack?.participant.identity,
+      focusTrack?.participant.name,
+      focusTrack?.source,
+      space?.name,
+    ]);
+    const isTilePlayerFocused = !!focusedTilePlayerId;
     const carouselTracks = tracks.filter((track) => !isEqualTrackRef(track, focusTrack));
 
     React.useEffect(() => {
@@ -1319,47 +1352,96 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     /**
      * TilePlayer放在这里的原因是，实际只需要在外部传入这个组件即可，防止传入过多参数
      */
-    const TilePlayerMemo = useMemo(() => {
-      if (space?.name && selfRoom) {
-        return (
+    const tilePlayerNodes = useMemo((): React.ReactNode[] => {
+      if (!space?.name || !selfRoom) return [];
+      const nodes: React.ReactNode[] = [
+        <TilePlayerAdd
+          key="__add__"
+          spaceName={space.name}
+          room={selfRoom.name}
+          myIdentity={space.localParticipant.identity}
+          messageApi={messageApi}
+          onCreated={fetchTilePlayers}
+        />,
+      ];
+      tilePlayerItems.forEach((item) => {
+        nodes.push(
           <TilePlayer
-            ref={tilePlayerRef}
+            key={item.id}
+            item={item}
             spaceName={space.name}
             room={selfRoom.name}
+            myIdentity={space.localParticipant.identity}
             messageApi={messageApi}
-            setFocus={setFocusPlayer}
-            focus={focusPlayer}
+            focus={focusedTilePlayerId === item.id}
             afterFocus={(focus) => {
               if (focus) {
                 layoutContext?.pin.dispatch?.({
-                  msg: 'clear_pin',
+                  msg: 'set_pin',
+                  trackReference: newPlayerTrack(space.name, item.id),
                 });
               } else {
                 layoutContext?.pin.dispatch?.({
-                  msg: 'set_pin',
-                  trackReference: newPlayerTrack(space.name),
+                  msg: 'clear_pin',
                 });
               }
             }}
-          />
+            onRemoved={fetchTilePlayers}
+          />,
         );
-      }
-      return undefined;
-    }, [space?.name, selfRoom, focusPlayer]);
+      });
+      return nodes;
+    }, [space?.name, selfRoom, tilePlayerItems, focusedTilePlayerId, fetchTilePlayers]);
+
+    const focusedTilePlayerNode = useMemo(() => {
+      if (!space?.name || !selfRoom || !focusedTilePlayerId) return null;
+
+      const focusedItem = tilePlayerItems.find((item) => item.id === focusedTilePlayerId);
+      if (!focusedItem) return null;
+
+      return (
+        <TilePlayer
+          key={`focused_${focusedItem.id}`}
+          item={focusedItem}
+          spaceName={space.name}
+          room={selfRoom.name}
+          myIdentity={space.localParticipant.identity}
+          messageApi={messageApi}
+          focus={true}
+          afterFocus={(focus) => {
+            if (!focus) {
+              layoutContext?.pin.dispatch?.({
+                msg: 'clear_pin',
+              });
+            }
+          }}
+          onRemoved={async () => {
+            layoutContext?.pin.dispatch?.({
+              msg: 'clear_pin',
+            });
+            await fetchTilePlayers();
+          }}
+        />
+      );
+    }, [space?.name, selfRoom, focusedTilePlayerId, tilePlayerItems, fetchTilePlayers]);
+
+    const nonFocusedTilePlayerNodes = useMemo((): React.ReactNode[] => {
+      if (!focusedTilePlayerId) return tilePlayerNodes;
+
+      return tilePlayerNodes.filter((node) => {
+        if (!React.isValidElement(node)) return true;
+        return node.key !== focusedTilePlayerId;
+      });
+    }, [focusedTilePlayerId, tilePlayerNodes]);
 
     useEffect(() => {
-      if (
-        focusTrack &&
-        focusTrack.source === Track.Source.Unknown &&
-        focusTrack.participant.name === `${space?.name}_player`
-      ) {
-        setFocusPlayer(true);
-      }
+      if (!focusedTilePlayerId) return;
+      if (tilePlayerItems.some((item) => item.id === focusedTilePlayerId)) return;
 
-      return () => {
-        setFocusPlayer(false);
-      };
-    }, [focusTrack]);
+      layoutContext?.pin.dispatch?.({
+        msg: 'clear_pin',
+      });
+    }, [focusedTilePlayerId, tilePlayerItems, layoutContext]);
 
     useImperativeHandle(ref, () => ({
       clearRoom: () => clearRoom(),
@@ -1442,51 +1524,25 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                 style={{ alignItems: 'space-between', height: '100dvh' }}
               >
                 {!focusTrack ? (
-                  focusPlayer ? (
-                    <div className="lk-focus-layout-wrapper">
-                      {' '}
-                      <FocusLayoutContainer>
-                        <CLayout player={focusPlayer ? undefined : TilePlayerMemo} tracks={tracks}>
-                          <ParticipantItem
-                            space={space}
-                            settings={settings}
-                            toSettings={toSettingGeneral}
-                            messageApi={messageApi}
-                            noteApi={noteApi}
-                            setUserStatus={setUserStatus}
-                            updateSettings={updateSettings}
-                            toRenameSettings={toSettingGeneral}
-                            showFlotApp={showFlotApp}
-                            selfRoom={selfRoom}
-                            isFullScreen={isFullScreen}
-                            setIsFullScreen={setIsFullScreen}
-                            setCollapsed={setCollapsed}
-                          ></ParticipantItem>
-                        </CLayout>
-                        {TilePlayerMemo}
-                      </FocusLayoutContainer>
-                    </div>
-                  ) : (
-                    <div className="lk-grid-layout-wrapper">
-                      <GLayout2 tracks={tracks} player={TilePlayerMemo}>
-                        <ParticipantItem
-                          space={space}
-                          settings={settings}
-                          toSettings={toSettingGeneral}
-                          messageApi={messageApi}
-                          noteApi={noteApi}
-                          setUserStatus={setUserStatus}
-                          updateSettings={updateSettings}
-                          toRenameSettings={toSettingGeneral}
-                          showFlotApp={showFlotApp}
-                          selfRoom={selfRoom}
-                          setIsFullScreen={setIsFullScreen}
-                          isFullScreen={isFullScreen}
-                          setCollapsed={setCollapsed}
-                        ></ParticipantItem>
-                      </GLayout2>
-                    </div>
-                  )
+                  <div className="lk-grid-layout-wrapper">
+                    <GLayout2 tracks={tracks} players={tilePlayerNodes}>
+                      <ParticipantItem
+                        space={space}
+                        settings={settings}
+                        toSettings={toSettingGeneral}
+                        messageApi={messageApi}
+                        noteApi={noteApi}
+                        setUserStatus={setUserStatus}
+                        updateSettings={updateSettings}
+                        toRenameSettings={toSettingGeneral}
+                        showFlotApp={showFlotApp}
+                        selfRoom={selfRoom}
+                        setIsFullScreen={setIsFullScreen}
+                        isFullScreen={isFullScreen}
+                        setCollapsed={setCollapsed}
+                      ></ParticipantItem>
+                    </GLayout2>
+                  </div>
                 ) : (
                   <div className="lk-focus-layout-wrapper">
                     {isFullScreen ? (
@@ -1510,13 +1566,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                     ) : (
                       <FocusLayoutContainer>
                         <CLayout
-                          player={
-                            focusPlayer &&
-                            focusTrack &&
-                            focusTrack.participant.name === `${space.name}_player`
-                              ? undefined
-                              : TilePlayerMemo
-                          }
+                          players={isTilePlayerFocused ? nonFocusedTilePlayerNodes : tilePlayerNodes}
                           tracks={carouselTracks}
                         >
                           <ParticipantItem
@@ -1535,10 +1585,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                             setCollapsed={setCollapsed}
                           ></ParticipantItem>
                         </CLayout>
-                        {focusTrack &&
-                        focusPlayer &&
-                        focusTrack.participant.name === `${space.name}_player` ? (
-                          TilePlayerMemo
+                        {isTilePlayerFocused ? (
+                          focusedTilePlayerNode
                         ) : (
                           <ParticipantItem
                             space={space}
@@ -1685,8 +1733,8 @@ export type TrackReferencePlaceholder = {
   source: Track.Source;
 };
 
-const newPlayerTrack = (space: string): TrackReferenceOrPlaceholder => {
-  const nameOrId = `${space}_player`;
+const newPlayerTrack = (space: string, playerId: string): TrackReferenceOrPlaceholder => {
+  const nameOrId = `${space}_player_${playerId}`;
   return {
     participant: new Participant(nameOrId, nameOrId, nameOrId),
     source: Track.Source.Unknown,
