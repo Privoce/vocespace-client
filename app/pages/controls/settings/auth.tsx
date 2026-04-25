@@ -3,7 +3,6 @@
 import React, { useMemo } from 'react';
 import styles from '@/styles/controls.module.scss';
 import { Button, Switch, Table, message } from 'antd';
-import { CheckCircleTwoTone, CloseCircleTwoTone } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
 import { SpaceInfo } from '@/lib/std/space';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -14,7 +13,7 @@ import { api } from '@/lib/api';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
 
-type PermissionKey = 'createRoom' | 'manageRoom' | 'manageRole' | 'controlUser' | 'recording' | 'viewRoom' | "manageFile";
+type PermissionKey = 'createRoom' | 'manageRoom' | 'manageRole' | 'controlUser' | 'recording' | 'viewRoom' | "manageFile" | "managePlayer";
 
 type PermissionRow = {
   key: PermissionKey;
@@ -160,6 +159,14 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
         manager: changeableAuth.manager.manageFile,
         participant: changeableAuth.participant.manageFile,
         guest: changeableAuth.guest.manageFile,
+      },
+      {
+        key: 'managePlayer',
+        permLabel: t('auth.managePlayer'),
+        owner: changeableAuth.owner.managePlayer,
+        manager: changeableAuth.manager.managePlayer,
+        participant: changeableAuth.participant.managePlayer,
+        guest: changeableAuth.guest.managePlayer,
       },
     ];
   }, [changeableAuth, t]);

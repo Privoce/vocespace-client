@@ -337,6 +337,11 @@ export interface SpaceRBACConf {
    * 因为用户自己上传的文件自己可以删除
    */
   manageFile: boolean;
+  /**
+   * 可以关闭其他用户的TilePlayer
+   * 用户只能关闭自己的TilePlayer，管理员和房主可以关闭任意用户的TilePlayer
+   */
+  managePlayer: boolean;
 }
 
 /**
@@ -398,6 +403,7 @@ export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
         controlUser: true,
         recording: true,
         manageFile: true,
+        managePlayer: true,
       } as SpaceRBACConf;
     case 'manager':
     case 'assistant':
@@ -409,6 +415,7 @@ export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
         controlUser: true,
         recording: true,
         manageFile: true,
+        managePlayer: true,
       } as SpaceRBACConf;
     case 'participant':
       return {
@@ -419,6 +426,7 @@ export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
         controlUser: false,
         recording: false,
         manageFile: false,
+        managePlayer: false,
       } as SpaceRBACConf;
 
     case 'guest':
@@ -430,6 +438,7 @@ export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
         controlUser: false,
         recording: false,
         manageFile: false,
+        managePlayer: false,
       } as SpaceRBACConf;
     case 'customer':
     default:
@@ -441,6 +450,7 @@ export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
         controlUser: false,
         recording: false,
         manageFile: false,
+        managePlayer: false,
       } as SpaceRBACConf;
   }
 };

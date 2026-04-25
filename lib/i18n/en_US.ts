@@ -22,6 +22,7 @@ export default {
     saveFail: 'Save failed, please try again later',
     saveSuccess: 'Save successful',
     viewRoom: 'View rooms',
+    managePlayer: 'Manage players',
   },
   common: {
     full_screen: 'Full Screen',

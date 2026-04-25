@@ -1367,6 +1367,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       tilePlayerItems.forEach((item) => {
         nodes.push(
           <TilePlayer
+            spaceInfo={settings}
             key={item.id}
             item={item}
             spaceName={space.name}
@@ -1401,6 +1402,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
       return (
         <TilePlayer
+          spaceInfo={settings}
           key={`focused_${focusedItem.id}`}
           item={focusedItem}
           spaceName={space.name}
@@ -1566,7 +1568,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                     ) : (
                       <FocusLayoutContainer>
                         <CLayout
-                          players={isTilePlayerFocused ? nonFocusedTilePlayerNodes : tilePlayerNodes}
+                          players={
+                            isTilePlayerFocused ? nonFocusedTilePlayerNodes : tilePlayerNodes
+                          }
                           tracks={carouselTracks}
                         >
                           <ParticipantItem

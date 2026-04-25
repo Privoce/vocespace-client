@@ -22,6 +22,7 @@ export default {
     saveFail: 'Сохранение не удалось, пожалуйста, попробуйте позже',
     saveSuccess: 'Сохранение успешно',
     viewRoom: 'Просмотр комнат',
+    managePlayer: 'Управление плеерами',
   },
   common: {
     full_screen: 'Полный экран',

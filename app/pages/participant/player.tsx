@@ -6,11 +6,12 @@ import { FileType } from '@/lib/std';
 import { FileImageOutlined, LayoutOutlined } from '@ant-design/icons';
 import { Button, Image, Input, Modal, Spin, Tooltip, Upload } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { APP_FLOT_PIN_STYLE } from '../apps/app_pin';
 import { FocusToggleIcon, UnfocusToggleIcon } from '@livekit/components-react';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsTilePlayer } from '@/lib/std/device';
+import { handleIdentityType, SpaceInfo } from '@/lib/std/space';
 
 // ─── 共享类型 ─────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,7 @@ export interface TilePlayerProps {
   focus?: boolean;
   afterFocus?: (focus: boolean) => void;
   onRemoved?: () => void;
+  spaceInfo: SpaceInfo;
 }
 
 export const TilePlayer = ({
@@ -49,9 +51,16 @@ export const TilePlayer = ({
   focus,
   afterFocus,
   onRemoved,
+  spaceInfo,
 }: TilePlayerProps) => {
   const [toolVis, setToolVis] = useState(false);
-  const canDelete = item.ownerId === myIdentity;
+  // 是否可以被删除，只有RBAC允许或者自己的卡片才可以被删除
+  const canDelete = useMemo(() => {
+    if (!spaceInfo?.auth) return false;
+    let auth = handleIdentityType(spaceInfo.participants[myIdentity]?.auth?.identity || 'guest');
+    const canDeleteRBAC = spaceInfo.auth[auth]?.manageFile || false;
+    return item.ownerId === myIdentity || canDeleteRBAC;
+  }, [spaceInfo?.auth, myIdentity]);
 
   const removePlayer = async () => {
     try {

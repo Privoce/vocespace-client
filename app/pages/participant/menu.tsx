@@ -221,6 +221,35 @@ export function useControlRKeyMenu({
     checkSupport();
   }, [space?.localParticipant]);
 
+  // 监听音频设备变化，耳机断开时自动关闭耳返
+  useEffect(() => {
+    if (!navigator.mediaDevices) return;
+
+    const handleDeviceChange = async () => {
+      const connected = await hasHeadphonesConnected();
+      if (!connected) {
+        // 耳机已断开：更新支持状态
+        setIsLocalEarMonitorSupported(false);
+        // 若耳返正在开启，则自动关闭
+        const audioElement = document.getElementById('local-in-ear-monitor-audio');
+        if (audioElement) {
+          audioElement.remove();
+          await updateSettings({ inEarMonitor: false });
+          setIsInEarMonitorOpen(false);
+          if (space) {
+            socket.emit('update_user_status', { space: space.name } as WsBase);
+          }
+          messageApi.warning(t('more.participant.set.control.in_ear_monitor.no_headphone'));
+        }
+      }
+    };
+
+    navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange);
+    return () => {
+      navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
+    };
+  }, [space, isInEarMonitorOpen]);
+
   // 处理音量、模糊视频和模糊屏幕的调整------------------------------------------------------------
   const handleAdjustment = async (
     key: 'control.volume' | 'control.blur_video' | 'control.blur_screen' | 'control.volume_screen',
