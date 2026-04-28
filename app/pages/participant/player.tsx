@@ -3,7 +3,7 @@ import { SvgResource } from '@/app/resources/svg';
 import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/i18n';
 import { FileType } from '@/lib/std';
-import { FileImageOutlined, LayoutOutlined } from '@ant-design/icons';
+import { FileImageOutlined, GlobalOutlined, LayoutOutlined } from '@ant-design/icons';
 import { Button, Image, Input, Modal, Spin, Tooltip, Upload } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useEffect, useMemo, useState } from 'react';
@@ -18,7 +18,7 @@ import { handleIdentityType, SpaceInfo } from '@/lib/std/space';
 export interface TilePlayerItem {
   id: string;
   ownerId: string;
-  mode: 'image' | 'iframe';
+  mode: 'image' | 'iframe' | 'hyperbeam';
   url?: string | null;
   fileName?: string | null;
   iframeUrl?: string | null;
@@ -58,7 +58,7 @@ export const TilePlayer = ({
   const canDelete = useMemo(() => {
     if (!spaceInfo?.auth) return false;
     let auth = handleIdentityType(spaceInfo.participants[myIdentity]?.auth?.identity || 'guest');
-    const canDeleteRBAC = spaceInfo.auth[auth]?.manageFile || false;
+    const canDeleteRBAC = spaceInfo.auth[auth]?.managePlayer || false;
     return item.ownerId === myIdentity || canDeleteRBAC;
   }, [spaceInfo?.auth, myIdentity]);
 
@@ -138,7 +138,7 @@ export const TilePlayer = ({
       </div>
 
       {/* 内容 */}
-      {item.mode === 'iframe' ? (
+      {item.mode === 'iframe' || item.mode === 'hyperbeam' ? (
         <IframeWindow url={item.iframeUrl || ''} />
       ) : (
         <Image
@@ -172,6 +172,55 @@ export const TilePlayerAdd = ({
   const { t } = useI18n();
   const [openInputIframe, setOpenInputIframe] = useState(false);
   const [inputIframeUrl, setInputIframeUrl] = useState('');
+
+  const createHyperbeamPlayer = async () => {
+    try {
+      const response = await api.handleTilePlayerFile(
+        spaceName,
+        room,
+        'create_hyperbeam',
+        undefined,
+        undefined,
+        myIdentity,
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        socket.emit('tile_player_change', {
+          ty: 'nestedBrowser',
+          created: true,
+          playerId: data.player?.id,
+          ownerId: myIdentity,
+          action: 'create',
+          participantId: myIdentity,
+          space: spaceName,
+        } as WsTilePlayer);
+        onCreated?.();
+        return;
+      }
+
+      const errorData = await response.json().catch(() => ({}));
+
+      if (response.status === 409) {
+        messageApi.warning({
+          content: 'Only one HyperBeam browser is allowed in this space',
+          duration: 3,
+        });
+        return;
+      }
+
+      messageApi.error({
+        content: errorData?.error || 'Failed to create HyperBeam browser',
+        duration: 3,
+      });
+    } catch (e) {
+      console.error('Error creating HyperBeam browser:', e);
+      messageApi.error({
+        content: 'HyperBeam network unreachable, please check server outbound network or proxy',
+        duration: 4,
+      });
+    }
+  };
 
   const handleBeforeUpload = async (file: FileType) => {
     const maxFileSize = 10 * 1024 * 1024;
@@ -237,6 +286,15 @@ export const TilePlayerAdd = ({
             <LayoutOutlined style={{ color: '#565656', fontSize: 24 }} />
           </Button>
         </Tooltip>
+        <Tooltip title="HyperBeam Browser">
+          <Button
+            shape="circle"
+            style={{ background: 'transparent', border: 'none' }}
+            onClick={createHyperbeamPlayer}
+          >
+            <GlobalOutlined style={{ color: '#565656', fontSize: 24 }} />
+          </Button>
+        </Tooltip>
       </div>
 
       <Modal
@@ -281,6 +339,7 @@ export const TilePlayerAdd = ({
       >
         <Input value={inputIframeUrl} onChange={(e) => setInputIframeUrl(e.target.value)} />
       </Modal>
+
     </>
   );
 };

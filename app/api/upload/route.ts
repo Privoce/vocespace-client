@@ -11,12 +11,81 @@ interface TilePlayerEntry {
   id: string;
   ownerId: string;
   room?: string;
-  mode: 'image' | 'iframe';
+  mode: 'image' | 'iframe' | 'hyperbeam';
   fileName?: string | null;
   iframeUrl?: string | null;
+  hyperbeamSessionId?: string | null;
   createdAt: number;
   updatedAt: number;
 }
+
+const HYPERBEAM_API_BASE = process.env.HYPERBEAM_API_BASE || 'https://engine.hyperbeam.com';
+const HYPERBEAM_DEFAULT_START_URL =
+  process.env.HYPERBEAM_DEFAULT_START_URL || 'https://www.google.com/search?q=';
+
+const createHyperbeamSession = async (startUrl?: string) => {
+  const apiKey = process.env.HYPERBEAM_API_KEY;
+  if (!apiKey) {
+    throw new Error('HYPERBEAM_API_KEY is not configured');
+  }
+
+  const body: Record<string, unknown> = {
+    start_url: startUrl || HYPERBEAM_DEFAULT_START_URL,
+  };
+
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 12000);
+
+  let response: Response;
+  try {
+    response = await fetch(`${HYPERBEAM_API_BASE}/v0/vm`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+      signal: controller.signal,
+    });
+  } catch (error) {
+    const reason = error instanceof Error ? error.message : 'unknown network error';
+    throw new Error(`HyperBeam endpoint is unreachable: ${reason}`);
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  const raw = await response.text();
+  let data: Record<string, any> = {};
+  if (raw) {
+    try {
+      data = JSON.parse(raw);
+    } catch (_e) {
+      data = { raw };
+    }
+  }
+
+  if (!response.ok) {
+    const message =
+      typeof data?.error === 'string'
+        ? data.error
+        : typeof data?.message === 'string'
+          ? data.message
+          : `HTTP ${response.status}`;
+    throw new Error(`HyperBeam create session failed: ${message}`);
+  }
+
+  const embedUrl = data?.embed_url || data?.url || data?.vm?.embed_url || null;
+  const sessionId = data?.session_id || data?.id || data?.vm?.id || null;
+
+  if (!embedUrl || !sessionId) {
+    throw new Error('HyperBeam create session response missing embed_url or session id');
+  }
+
+  return {
+    embedUrl,
+    sessionId,
+  };
+};
 
 export async function POST(request: NextRequest) {
   try {
@@ -66,6 +135,40 @@ export async function POST(request: NextRequest) {
         } catch (_e) {
           return [];
         }
+      };
+
+      const loadPlayersByPath = async (targetPath: string): Promise<TilePlayerEntry[]> => {
+        try {
+          const raw = await fs.readFile(targetPath, 'utf-8');
+          const data = JSON.parse(raw);
+          return Array.isArray(data) ? data : [];
+        } catch (_e) {
+          return [];
+        }
+      };
+
+      const countHyperbeamPlayersInSpace = async (): Promise<number> => {
+        const baseSpaceDir = uploadDirPath(spaceName);
+        const filePaths = new Set<string>([path.join(baseSpaceDir, 'tile_players.json')]);
+
+        try {
+          const entries = await fs.readdir(baseSpaceDir, { withFileTypes: true });
+          for (const entry of entries) {
+            if (entry.isDirectory()) {
+              filePaths.add(path.join(baseSpaceDir, entry.name, 'tile_players.json'));
+            }
+          }
+        } catch (_e) {
+          return 0;
+        }
+
+        let count = 0;
+        for (const targetPath of filePaths) {
+          const players = await loadPlayersByPath(targetPath);
+          count += players.filter((player) => player.mode === 'hyperbeam').length;
+        }
+
+        return count;
       };
 
       const savePlayers = async (players: TilePlayerEntry[]) => {
@@ -131,6 +234,7 @@ export async function POST(request: NextRequest) {
             mode: 'iframe',
             iframeUrl,
             fileName: null,
+            hyperbeamSessionId: null,
             createdAt: now,
             updatedAt: now,
           };
@@ -140,6 +244,51 @@ export async function POST(request: NextRequest) {
         } catch (_e) {
           return NextResponse.json(
             { success: false, error: 'Failed to set tile player meta' },
+            { status: 500 },
+          );
+        }
+      }
+
+      if (ty === 'create_hyperbeam') {
+        if (!identity) {
+          return NextResponse.json(
+            { success: false, error: 'identity is required' },
+            { status: 400 },
+          );
+        }
+
+        const totalHyperbeamPlayers = await countHyperbeamPlayersInSpace();
+        if (totalHyperbeamPlayers >= 1) {
+          return NextResponse.json(
+            { success: false, error: 'Only one HyperBeam player is allowed per space' },
+            { status: 409 },
+          );
+        }
+
+        try {
+          const now = Date.now();
+          const id = ulid();
+          const session = await createHyperbeamSession(iframeUrl);
+          const players = await loadPlayers();
+          const entry: TilePlayerEntry = {
+            id,
+            ownerId: identity,
+            room,
+            mode: 'hyperbeam',
+            iframeUrl: session.embedUrl,
+            fileName: null,
+            hyperbeamSessionId: session.sessionId,
+            createdAt: now,
+            updatedAt: now,
+          };
+          players.push(entry);
+          await savePlayers(players);
+          return NextResponse.json({ success: true, player: entry });
+        } catch (e) {
+          console.error('Failed to create HyperBeam player:', e);
+          const message = e instanceof Error ? e.message : 'Failed to create HyperBeam player';
+          return NextResponse.json(
+            { success: false, error: message },
             { status: 500 },
           );
         }
@@ -157,7 +306,10 @@ export async function POST(request: NextRequest) {
           const players = await loadPlayers();
           const found = players.find((item) => item.id === playerId);
           if (!found) {
-            return NextResponse.json({ success: false, error: 'Player not found' }, { status: 404 });
+            return NextResponse.json(
+              { success: false, error: 'Player not found' },
+              { status: 404 },
+            );
           }
 
           if (found.ownerId !== identity) {
@@ -216,6 +368,7 @@ export async function POST(request: NextRequest) {
           mode: 'image',
           fileName,
           iframeUrl: null,
+          hyperbeamSessionId: null,
           createdAt: now,
           updatedAt: now,
         };
