@@ -6,7 +6,7 @@ import { FileType } from '@/lib/std';
 import { FileImageOutlined, GlobalOutlined, LayoutOutlined } from '@ant-design/icons';
 import { Button, Image, Input, Modal, Spin, Tooltip, Upload } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { APP_FLOT_PIN_STYLE } from '../apps/app_pin';
 import { FocusToggleIcon, UnfocusToggleIcon } from '@livekit/components-react';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
@@ -138,7 +138,9 @@ export const TilePlayer = ({
       </div>
 
       {/* 内容 */}
-      {item.mode === 'iframe' || item.mode === 'hyperbeam' ? (
+      {item.mode === 'hyperbeam' ? (
+        <HyperbeamWindow url={item.iframeUrl || ''} messageApi={messageApi} />
+      ) : item.mode === 'iframe' ? (
         <IframeWindow url={item.iframeUrl || ''} />
       ) : (
         <Image
@@ -375,6 +377,103 @@ const IframeWindow = ({ url }: { url: string }) => {
         onLoad={() => setLoading(false)}
         onError={() => setLoading(false)}
       />
+    </div>
+  );
+};
+
+const HyperbeamWindow = ({
+  url,
+  messageApi,
+}: {
+  url: string;
+  messageApi: MessageInstance;
+}) => {
+  const [loading, setLoading] = useState(true);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const hbRef = useRef<any>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    let reconnectTimer: NodeJS.Timeout | null = null;
+
+    const boot = async () => {
+      if (!url || !containerRef.current) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+
+      try {
+        const { default: Hyperbeam } = await import('@hyperbeam/web');
+
+        if (cancelled || !containerRef.current) return;
+
+        hbRef.current?.destroy?.();
+        hbRef.current = await Hyperbeam(containerRef.current, url, {
+          onConnectionStateChange: (event: { state: string }) => {
+            if (event.state === 'playing') {
+              setLoading(false);
+            }
+
+            if (event.state === 'failed') {
+              messageApi.warning({
+                content: 'HyperBeam connection failed, retrying...',
+                duration: 2,
+              });
+              reconnectTimer = setTimeout(() => hbRef.current?.reconnect?.(), 1000);
+            }
+          },
+          onDisconnect: (event: { type: string }) => {
+            if (event.type === 'unknown') {
+              reconnectTimer = setTimeout(() => hbRef.current?.reconnect?.(), 1000);
+            }
+          },
+        });
+
+        if (!cancelled) {
+          setLoading(false);
+        }
+      } catch (error) {
+        console.error('Failed to initialize HyperBeam SDK:', error);
+        messageApi.error({
+          content: 'Failed to load HyperBeam player, please check network and token validity',
+          duration: 3,
+        });
+        setLoading(false);
+      }
+    };
+
+    boot();
+
+    return () => {
+      cancelled = true;
+      if (reconnectTimer) {
+        clearTimeout(reconnectTimer);
+      }
+      hbRef.current?.destroy?.();
+      hbRef.current = null;
+    };
+  }, [url]);
+
+  return (
+    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+      {loading && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            background: '#1f1f1f',
+            zIndex: 1,
+          }}
+        >
+          <Spin size="large" />
+        </div>
+      )}
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }} />
     </div>
   );
 };
