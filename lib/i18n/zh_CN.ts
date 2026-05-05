@@ -22,7 +22,7 @@ export default {
     saveSuccess: '保存成功',
     viewRoom: '加入房间',
     manageFile: '管理文件',
-    managePlayer: '管理播放器',
+    managePlayer: '管理组件',
   },
   common: {
     full_screen: '全屏',

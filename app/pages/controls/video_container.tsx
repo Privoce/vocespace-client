@@ -131,6 +131,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const promptSoundRef = React.useRef<HTMLAudioElement>(null);
     const [isFocus, setIsFocus] = useState(false);
     const [freshPermission, setFreshPermission] = useState(false);
+    const [localTrackVersion, setLocalTrackVersion] = useState(0);
     const [cacheWidgetState, setCacheWidgetState] = useState<WidgetState>();
     const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
     const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
@@ -1119,7 +1120,22 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           space: space.name,
         } as WsBase);
       }
-    }, [space, settings, selfRoom, freshPermission]);
+    }, [space, settings, selfRoom, freshPermission, localTrackVersion]);
+
+    // 监听本地轨道发布/取消发布事件，重新触发订阅权限计算
+    // 修复：用户进入子房间后再开启摄像头时，allowedTrackSids 不会自动更新的问题
+    useEffect(() => {
+      if (!space) return;
+      const onLocalTrackChange = () => {
+        setLocalTrackVersion((v) => v + 1);
+      };
+      space.localParticipant.on(ParticipantEvent.LocalTrackPublished, onLocalTrackChange);
+      space.localParticipant.on(ParticipantEvent.LocalTrackUnpublished, onLocalTrackChange);
+      return () => {
+        space.localParticipant.off(ParticipantEvent.LocalTrackPublished, onLocalTrackChange);
+        space.localParticipant.off(ParticipantEvent.LocalTrackUnpublished, onLocalTrackChange);
+      };
+    }, [space]);
 
     useEffect(() => {
       if (!space || space.state !== ConnectionState.Connected || !settings) return;
