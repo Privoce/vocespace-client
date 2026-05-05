@@ -311,10 +311,10 @@ export async function POST(request: NextRequest) {
               { status: 404 },
             );
           }
-
-          if (found.ownerId !== identity) {
-            return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
-          }
+          
+          // if (found.ownerId !== identity) {
+          //   return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 });
+          // }
 
           if (found.mode === 'image' && found.fileName) {
             try {

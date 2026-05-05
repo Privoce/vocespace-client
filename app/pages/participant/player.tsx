@@ -56,10 +56,15 @@ export const TilePlayer = ({
   const [toolVis, setToolVis] = useState(false);
   // 是否可以被删除，只有RBAC允许或者自己的卡片才可以被删除
   const canDelete = useMemo(() => {
-    if (!spaceInfo?.auth) return false;
+    if (!spaceInfo?.auth) return item.ownerId === myIdentity;
     let auth = handleIdentityType(spaceInfo.participants[myIdentity]?.auth?.identity || 'guest');
     const canDeleteRBAC = spaceInfo.auth[auth]?.managePlayer || false;
-    return item.ownerId === myIdentity || canDeleteRBAC;
+
+    if (item.ownerId === myIdentity) {
+      return true;
+    } else {
+      return canDeleteRBAC;
+    }
   }, [spaceInfo?.auth, myIdentity]);
 
   const removePlayer = async () => {
@@ -341,7 +346,6 @@ export const TilePlayerAdd = ({
       >
         <Input value={inputIframeUrl} onChange={(e) => setInputIframeUrl(e.target.value)} />
       </Modal>
-
     </>
   );
 };
@@ -381,13 +385,7 @@ const IframeWindow = ({ url }: { url: string }) => {
   );
 };
 
-const HyperbeamWindow = ({
-  url,
-  messageApi,
-}: {
-  url: string;
-  messageApi: MessageInstance;
-}) => {
+const HyperbeamWindow = ({ url, messageApi }: { url: string; messageApi: MessageInstance }) => {
   const [loading, setLoading] = useState(true);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hbRef = useRef<any>(null);
