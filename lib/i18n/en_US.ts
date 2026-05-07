@@ -269,7 +269,8 @@ export default {
       rename: 'Rename',
       switch_privacy: 'Set to ',
       active: 'active',
-      share: 'Share',
+      share: 'Copy link to Invite to Room',
+      share_room: 'Share Room',
     },
     join: {
       title: 'Join Room',
@@ -896,6 +897,7 @@ export default {
     save: 'Save',
     host_token_placeholder: 'Host Token',
     verify_and_load: 'Verify and Load',
+    manage_search_placeholder: 'Search by room name',
     logout: 'Logout',
     common: {
       day: 'Day',

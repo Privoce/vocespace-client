@@ -2,15 +2,8 @@ import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { Dropdown, MenuProps, Modal, Slider } from 'antd';
-import {
-  AudioPresets,
-  createLocalAudioTrack,
-  LocalAudioTrack,
-  Participant,
-  Room,
-  Track,
-} from 'livekit-client';
-import { useEffect, useMemo, useState } from 'react';
+import { Participant, Room, Track } from 'livekit-client';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import styles from '@/styles/controls.module.scss';
 import {
   ControlType,
@@ -92,6 +85,8 @@ export function useControlRKeyMenu({
   const [volumeScreen, setVolumeScreen] = useState(0.0);
   const [blurVideo, setBlurVideo] = useState(0.0);
   const [blurScreen, setBlurScreen] = useState(0.0);
+  // 耳返 AudioContext 引用，复用已有麦克风轨道路由到本地输出，不创建新采集流
+  const earMonitorContextRef = useRef<AudioContext | null>(null);
   // const isOwner = useMemo(() => {
   //   return spaceInfo.ownerId === space?.localParticipant.identity;
   // }, [spaceInfo.ownerId, space?.localParticipant.identity]);
@@ -133,78 +128,61 @@ export function useControlRKeyMenu({
     return supported;
   };
 
-  const creatAudioPlayer = async () => {
-    const track = await createLocalAudioTrack({
-      echoCancellation: false,
-      noiseSuppression: true,
-      autoGainControl: false,
-      channelCount: 2,
-      sampleRate: 48000,
+  // 复用已有麦克风轨道，通过 AudioContext 路由到本地输出
+  // 不创建新的麦克风采集流，从根本上避免 B 端听到回声
+  const creatAudioPlayer = () => {
+    if (!space || earMonitorContextRef.current) return;
+
+    let micTrack: MediaStreamTrack | undefined;
+    space.localParticipant.audioTrackPublications.forEach((pub) => {
+      if (pub.source === Track.Source.Microphone && pub.track?.mediaStreamTrack) {
+        micTrack = pub.track.mediaStreamTrack as MediaStreamTrack;
+      }
     });
 
-    // 本地耳返：直接播放
-    setTimeout(() => {
-      // 避免浏览器限制，延迟执行
-      try {
-        const audioElementId = 'local-in-ear-monitor-audio';
-        let audioElement = document.getElementById(audioElementId) as HTMLAudioElement | null;
-        if (!audioElement) {
-          audioElement = track.attach();
-          audioElement.autoplay = true;
-          audioElement.muted = false;
-          audioElement.volume = 1.0;
-          audioElement.id = audioElementId;
-          audioElement.style.display = 'none';
-          document.body.appendChild(audioElement);
-        }
-      } catch (err) {
-        console.warn('耳返本地播放失败:', err);
-      }
-    }, 100);
+    if (!micTrack) return;
+
+    try {
+      const ctx = new AudioContext();
+      const source = ctx.createMediaStreamSource(new MediaStream([micTrack]));
+      source.connect(ctx.destination);
+      earMonitorContextRef.current = ctx;
+    } catch (err) {
+      console.warn('耳返本地播放失败:', err);
+    }
   };
 
-  const handleCtrEarMonitorErr = async (
-    isOpen: boolean,
-    audioEl: HTMLElement | HTMLAudioElement | null,
-  ) => {
-    if (isOpen && !audioEl) {
-      // 其他情况说明出现了问题，不能没有audio元素但是状态是开启，或者有audio元素但是状态是关闭，
-      // 这两种情况都需要修正状态，audio得跟着状态走
-      // 没有audio元素但是状态是开启就需要重新创建audio元素
-      await creatAudioPlayer();
-    } else if (!isOpen && audioEl) {
-      // 有audio但状态是关闭的，需要删除audio元素
-      audioEl.remove();
+  const stopAudioPlayer = async () => {
+    if (earMonitorContextRef.current) {
+      await earMonitorContextRef.current.close();
+      earMonitorContextRef.current = null;
+    }
+  };
+
+  const handleCtrEarMonitorErr = async (isOpen: boolean) => {
+    // 状态与实际播放状态不一致时修正
+    if (isOpen && !earMonitorContextRef.current) {
+      creatAudioPlayer();
+    } else if (!isOpen && earMonitorContextRef.current) {
+      await stopAudioPlayer();
     }
   };
 
   const handleCtrEarMonitor = async (isInEarMonitorOpen: boolean) => {
-    // 获取本地耳返元素
     if (!space) return;
-    const audioElement = document.getElementById('local-in-ear-monitor-audio');
 
-    if (!isInEarMonitorOpen && !audioElement) {
+    if (!isInEarMonitorOpen && !earMonitorContextRef.current) {
       const isSupport = await checkEarMonitorSupported(true);
-      if (!isSupport) {
-        return;
-      }
-      await creatAudioPlayer();
-      await updateSettings({
-        inEarMonitor: true,
-      });
-    } else if (audioElement && isInEarMonitorOpen) {
-      // 关闭耳返
-      audioElement.remove();
-
-      await updateSettings({
-        inEarMonitor: false,
-      });
+      if (!isSupport) return;
+      creatAudioPlayer();
+      await updateSettings({ inEarMonitor: true });
+    } else if (isInEarMonitorOpen && earMonitorContextRef.current) {
+      await stopAudioPlayer();
+      await updateSettings({ inEarMonitor: false });
     } else {
-      await handleCtrEarMonitorErr(isInEarMonitorOpen, audioElement);
+      await handleCtrEarMonitorErr(isInEarMonitorOpen);
     }
-    socket.emit('update_user_status', {
-      space: space?.name,
-    } as WsBase);
+    socket.emit('update_user_status', { space: space.name } as WsBase);
   };
 
   // 当前本地用户是否支持耳返功能，耳返功能需要满足以下条件：
@@ -228,12 +206,9 @@ export function useControlRKeyMenu({
     const handleDeviceChange = async () => {
       const connected = await hasHeadphonesConnected();
       if (!connected) {
-        // 耳机已断开：更新支持状态
         setIsLocalEarMonitorSupported(false);
-        // 若耳返正在开启，则自动关闭
-        const audioElement = document.getElementById('local-in-ear-monitor-audio');
-        if (audioElement) {
-          audioElement.remove();
+        if (earMonitorContextRef.current) {
+          await stopAudioPlayer();
           await updateSettings({ inEarMonitor: false });
           setIsInEarMonitorOpen(false);
           if (space) {
@@ -248,7 +223,7 @@ export function useControlRKeyMenu({
     return () => {
       navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
     };
-  }, [space, isInEarMonitorOpen]);
+  }, [space]);
 
   // 处理音量、模糊视频和模糊屏幕的调整------------------------------------------------------------
   const handleAdjustment = async (
@@ -1033,9 +1008,8 @@ export function useControlRKeyMenu({
     }
     const isOpen = spaceInfo.participants[participant.identity]?.inEarMonitor || false;
     setIsInEarMonitorOpen(isOpen);
-    // 防止错误
-    const audioElement = document.getElementById('local-in-ear-monitor-audio');
-    handleCtrEarMonitorErr(isOpen, audioElement);
+    // 同步实际播放状态与设置状态
+    handleCtrEarMonitorErr(isOpen);
   };
 
   return {

@@ -119,6 +119,7 @@ export default function Dashboard() {
   const [addWhiteListValue, setAddWhiteListValue] = useState<string>('');
   const [selectOption, setSelectOption] = useState<ActionKey>('refresh');
   const [flushDbConfirm, setFlushDbConfirm] = useState(false);
+  const [manageSearchText, setManageSearchText] = useState('');
   const [createSpaceWhiteList, setCreateSpaceWhiteList] = useState<string>('');
   const VERIFIED_KEY = 'vocespace_host_token_verified';
 
@@ -1518,15 +1519,28 @@ export default function Dashboard() {
                 {t('dashboard.logout')}
               </Button>
             </div>
+            <Input.Search
+              placeholder={t('dashboard.manage_search_placeholder')}
+              allowClear
+              value={manageSearchText}
+              onChange={(e) => setManageSearchText(e.target.value)}
+              style={{ marginBottom: 12 }}
+            />
             <Table
               dataSource={
                 manageSpaces
-                  ? Object.entries(manageSpaces).map(([k, v]) => ({
-                      key: k,
-                      space: k,
-                      ownerId: v.ownerId,
-                      ownerName: v.participants?.[v.ownerId]?.name || '',
-                    }))
+                  ? Object.entries(manageSpaces)
+                      .map(([k, v]) => ({
+                        key: k,
+                        space: k,
+                        ownerId: v.ownerId,
+                        ownerName: v.participants?.[v.ownerId]?.name || v.ownerId || '-',
+                      }))
+                      .filter((row) =>
+                        manageSearchText
+                          ? row.space.toLowerCase().includes(manageSearchText.toLowerCase())
+                          : true,
+                      )
                   : []
               }
               loading={manageLoading}

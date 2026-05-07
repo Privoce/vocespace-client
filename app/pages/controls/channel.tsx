@@ -521,6 +521,9 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
         key: 'share',
         label: t('channel.menu.share'),
         disabled: authDisabled,
+        icon: <div style={{ marginRight: 4 }}>
+          <SvgResource type="add_user" svgSize={16} color="#ffffff"></SvgResource>
+        </div>,
         onClick: () => {
           setShareRoomOpen(true);
         },
@@ -665,7 +668,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             }}
           >
             <Dropdown
-              trigger={['contextMenu']}
+              trigger={['hover']}
               menu={{ items: subContextItems }}
               onOpenChange={(open) => {
                 if (open) {
@@ -693,7 +696,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                   ) : (
                     <SvgResource type="public" svgSize={16} color="#aaa"></SvgResource>
                   )}
-                  <Tooltip title={room.name} placement="bottomLeft">
+                  <Tooltip title={room.name} placement="topRight">
                     <div
                     className={styles.room_header_wrapper_title_name_title}
                     style={{ width: room.participants.length > 0 ? '100px' : '160px', maxWidth: '160px' }}

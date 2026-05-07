@@ -257,7 +257,7 @@ export default {
       rename: '重命名',
       switch_privacy: '设为',
       active: '在线',
-      share: '分享',
+      share: '复制链接分享房间',
       share_room: '分享房间',
     },
     join: {
@@ -855,6 +855,7 @@ export default {
     save: '保存',
     host_token_placeholder: 'Host Token',
     verify_and_load: '验证并加载',
+    manage_search_placeholder: '按房间名搜索',
     logout: '注销',
     common: {
       day: '日',

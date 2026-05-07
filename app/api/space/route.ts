@@ -1943,7 +1943,7 @@ export async function DELETE(request: NextRequest) {
     if (isFlushDB) {
       // 检测hostToken是否正确，只有正确的hostToken才能执行清理操作
       const { hostToken } = await request.json();
-      if (hostToken !== process.env.HOST_TOKEN) {
+      if (hostToken !== getConfig().hostToken) {
         return NextResponse.json(
           { success: false, message: 'Invalid host token' },
           { status: 403 },

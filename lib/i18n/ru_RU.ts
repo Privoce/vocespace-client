@@ -262,6 +262,7 @@ export default {
       switch_privacy: 'Установить как',
       active: 'В сети',
       share: 'Поделиться',
+      share_room: 'Поделиться комнатой',
     },
     join: {
       title: 'Присоединиться к комнате',
@@ -860,6 +861,7 @@ export default {
     save: 'Сохранить',
     host_token_placeholder: 'Токен хоста',
     verify_and_load: 'Проверить и загрузить',
+    manage_search_placeholder: 'Поиск по названию комнаты',
     logout: 'Выход из системы',
     common: {
       day: 'День',
