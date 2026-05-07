@@ -1059,7 +1059,7 @@ export default function Dashboard() {
                     }
                   }}
                 >
-                  Handle
+                  Proceed
                 </Button>
               </div>
             </Card>

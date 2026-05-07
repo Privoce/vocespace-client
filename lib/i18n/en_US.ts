@@ -269,7 +269,7 @@ export default {
       rename: 'Rename',
       switch_privacy: 'Set to ',
       active: 'active',
-      share: 'Copy link to Invite to Room',
+      share: 'Share Invite link of',
       share_room: 'Share Room',
     },
     join: {

@@ -257,7 +257,7 @@ export default {
       rename: '重命名',
       switch_privacy: '设为',
       active: '在线',
-      share: '复制链接分享房间',
+      share: '复制链接分享',
       share_room: '分享房间',
     },
     join: {
