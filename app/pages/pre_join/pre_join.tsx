@@ -2,7 +2,6 @@
 
 import {
   MediaDeviceMenu,
-  ParticipantPlaceholder,
   PreJoinProps,
   TrackToggle,
   usePersistentUserChoices,
@@ -11,7 +10,7 @@ import {
 import styles from '@/styles/pre_join.module.scss';
 import React, { useEffect, useMemo, useState } from 'react';
 import { facingModeFromLocalTrack, LocalAudioTrack, LocalVideoTrack, Track } from 'livekit-client';
-import { Input, InputRef, message, Skeleton, Slider, Space, Spin } from 'antd';
+import { Input, InputRef, Modal, message, Skeleton, Slider, Space, Spin } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useRecoilState } from 'recoil';
@@ -32,6 +31,8 @@ export interface PreJoinPropsExt extends PreJoinProps {
   space: string;
   config: VocespaceConfig | ReadableConf;
 }
+
+type MediaPermissionState = PermissionState | 'unsupported';
 
 /**
  * # PreJoin
@@ -83,6 +84,14 @@ export function PreJoin({
   const [videoEnabled, setVideoEnabled] = React.useState<boolean>(userChoices.videoEnabled);
   const [audioDeviceId, setAudioDeviceId] = React.useState<string>(userChoices.audioDeviceId);
   const [videoDeviceId, setVideoDeviceId] = React.useState<string>(userChoices.videoDeviceId);
+  const [hasCameraDevice, setHasCameraDevice] = React.useState(true);
+  const [hasMicrophoneDevice, setHasMicrophoneDevice] = React.useState(true);
+  const [cameraPermission, setCameraPermission] = React.useState<MediaPermissionState>('prompt');
+  const [microphonePermission, setMicrophonePermission] =
+    React.useState<MediaPermissionState>('prompt');
+  const [permissionModalVisible, setPermissionModalVisible] = React.useState(false);
+  const [permissionPromptDismissed, setPermissionPromptDismissed] = React.useState(false);
+  const [hasCheckedPermissions, setHasCheckedPermissions] = React.useState(false);
   const [messageApi, contextHolder] = message.useMessage();
   const [username, setUsername] = React.useState<string>(
     data?.username || userChoices.username || '',
@@ -110,42 +119,113 @@ export function PreJoin({
   }, [username, saveUsername]);
 
   useEffect(() => {
-    const checkDevices = async () => {
-      try {
-        const devices = await navigator.mediaDevices.enumerateDevices();
-        const hasCamera = devices.some((device) => device.kind === 'videoinput');
-        const hasMicrophone = devices.some((device) => device.kind === 'audioinput');
+    const queryPermission = async (
+      name: 'camera' | 'microphone',
+    ): Promise<MediaPermissionState> => {
+      if (!navigator.permissions?.query) {
+        return 'unsupported';
+      }
 
-        // 如果没有对应设备，自动禁用
-        if (!hasCamera && videoEnabled) {
-          setVideoEnabled(false);
-        }
-        if (!hasMicrophone && audioEnabled) {
-          setAudioEnabled(false);
-        }
+      try {
+        const result = await navigator.permissions.query({
+          name: name as PermissionName,
+        });
+        return result.state;
       } catch (error) {
-        console.error('device check fail:', error);
-        // 检测失败时禁用所有设备
-        setVideoEnabled(false);
-        setAudioEnabled(false);
+        console.warn(`permission query fail: ${name}`, error);
+        return 'unsupported';
       }
     };
 
-    if (loading === false) {
-      // 只在加载完成后检测
-      checkDevices();
-    }
-  }, [loading]);
+    const checkDevices = async () => {
+      try {
+        const canQueryDevices = typeof navigator.mediaDevices?.enumerateDevices === 'function';
+        const devices = canQueryDevices ? await navigator.mediaDevices.enumerateDevices() : [];
+        const hasCamera = devices.some((device) => device.kind === 'videoinput');
+        const hasMicrophone = devices.some((device) => device.kind === 'audioinput');
+        const canRequestMedia = typeof navigator.mediaDevices?.getUserMedia === 'function';
+        const assumeMediaDevicesExist = canRequestMedia && devices.length === 0;
+        const nextHasCamera = hasCamera || assumeMediaDevicesExist;
+        const nextHasMicrophone = hasMicrophone || assumeMediaDevicesExist;
+
+        setHasCameraDevice(nextHasCamera);
+        setHasMicrophoneDevice(nextHasMicrophone);
+
+        const [nextCameraPermission, nextMicrophonePermission] = await Promise.all([
+          nextHasCamera
+            ? queryPermission('camera')
+            : Promise.resolve('denied' as PermissionState),
+          nextHasMicrophone
+            ? queryPermission('microphone')
+            : Promise.resolve('denied' as PermissionState),
+        ]);
+
+        setCameraPermission(nextCameraPermission);
+        setMicrophonePermission(nextMicrophonePermission);
+        setHasCheckedPermissions(true);
+
+        if (!nextHasCamera && videoEnabled) {
+          setVideoEnabled(false);
+        }
+        if (!nextHasMicrophone && audioEnabled) {
+          setAudioEnabled(false);
+        }
+
+        const shouldAskPermission =
+          !permissionPromptDismissed &&
+          canRequestMedia &&
+          ((nextHasCamera && nextCameraPermission !== 'granted') ||
+            (nextHasMicrophone && nextMicrophonePermission !== 'granted'));
+
+        setPermissionModalVisible(shouldAskPermission);
+      } catch (error) {
+        console.error('device check fail:', error);
+        const canRequestMedia = typeof navigator.mediaDevices?.getUserMedia === 'function';
+
+        setHasCheckedPermissions(true);
+        setHasCameraDevice(canRequestMedia);
+        setHasMicrophoneDevice(canRequestMedia);
+        setCameraPermission(canRequestMedia ? 'prompt' : 'denied');
+        setMicrophonePermission(canRequestMedia ? 'prompt' : 'denied');
+        setPermissionModalVisible(canRequestMedia && !permissionPromptDismissed);
+      }
+    };
+
+    checkDevices();
+  }, [permissionPromptDismissed]);
 
   const showLoginBtn = useMemo(() => {
     return !data;
   }, [data]);
 
+  const hasCameraPermission = !hasCameraDevice || cameraPermission === 'granted';
+  const hasMicrophonePermission = !hasMicrophoneDevice || microphonePermission === 'granted';
+  const missingPermissions = [
+    hasCameraDevice && !hasCameraPermission ? '摄像头' : null,
+    hasMicrophoneDevice && !hasMicrophonePermission ? '麦克风' : null,
+  ].filter(Boolean) as string[];
+
+  const permissionPlaceholderText = React.useMemo(() => {
+    if (!hasCheckedPermissions) {
+      return '正在检测摄像头权限';
+    }
+    if (hasCameraDevice && !hasCameraPermission) {
+      return '需要授予摄像头权限';
+    }
+    if (missingPermissions.length > 0) {
+      return `需要授予${missingPermissions.join('和')}权限`;
+    }
+    if (!hasCameraDevice) {
+      return '未检测到摄像头';
+    }
+    return '摄像头已关闭';
+  }, [hasCheckedPermissions, hasCameraDevice, hasCameraPermission, missingPermissions]);
+
   // Preview tracks -----------------------------------------------------------------------------------
   const tracks = usePreviewTracks(
     {
-      audio: audioEnabled ? { deviceId: userChoices.audioDeviceId } : false,
-      video: videoEnabled
+      audio: audioEnabled && hasMicrophonePermission ? { deviceId: userChoices.audioDeviceId } : false,
+      video: videoEnabled && hasCameraPermission
         ? { deviceId: userChoices.videoDeviceId, processor: videoProcessor }
         : false,
     },
@@ -312,10 +392,90 @@ export function PreJoin({
     }
   }, [device, volume, blur]);
 
+  const requestMediaPermissions = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: hasMicrophoneDevice,
+        video: hasCameraDevice,
+      });
+
+      stream.getTracks().forEach((track) => track.stop());
+
+      if (hasCameraDevice) {
+        setCameraPermission('granted');
+      }
+      if (hasMicrophoneDevice) {
+        setMicrophonePermission('granted');
+      }
+
+      setPermissionPromptDismissed(false);
+      setPermissionModalVisible(false);
+      messageApi.success('已获得摄像头和麦克风权限');
+    } catch (error) {
+      console.error('request media permissions fail:', error);
+      if (hasCameraDevice) {
+        setCameraPermission('denied');
+      }
+      if (hasMicrophoneDevice) {
+        setMicrophonePermission('denied');
+      }
+      messageApi.error('未获得摄像头和麦克风权限');
+    }
+  };
+
+  const continueWithoutPermissions = () => {
+    if (!hasCameraPermission) {
+      setVideoEnabled(false);
+    }
+    if (!hasMicrophonePermission) {
+      setAudioEnabled(false);
+    }
+    setPermissionPromptDismissed(true);
+    setPermissionModalVisible(false);
+  };
+
+  const handleAudioToggleChange = (enabled: boolean) => {
+    if (enabled && !hasMicrophonePermission) {
+      if (!permissionPromptDismissed) {
+        setPermissionModalVisible(true);
+      }
+      return;
+    }
+    setAudioEnabled(enabled);
+  };
+
+  const handleVideoToggleChange = (enabled: boolean) => {
+    if (enabled && !hasCameraPermission) {
+      if (!permissionPromptDismissed) {
+        setPermissionModalVisible(true);
+      }
+      return;
+    }
+    setVideoEnabled(enabled);
+  };
+
   return (
     <div className={styles.view}>
       {contextHolder}
       <Spin spinning={spinning} percent={percent} fullscreen />
+      <Modal
+        open={permissionModalVisible}
+        centered
+        closable={false}
+        maskClosable={false}
+        title="希望其他参会者看到并听到你吗？"
+        okText="请求授予麦克风和摄像头"
+        cancelText="不授予继续使用"
+        onOk={requestMediaPermissions}
+        onCancel={continueWithoutPermissions}
+      >
+        <div className={styles.view__permission_modal__content}>
+          <p>授予权限后，系统才能预览你的摄像头画面并测试麦克风。</p>
+          {missingPermissions.length > 0 && (
+            <p>当前需要授予：{missingPermissions.join('和')}权限。</p>
+          )}
+        </div>
+      </Modal>
       <span className={styles.view__lang_select}>
         {loading ? (
           <Skeleton.Node
@@ -340,7 +500,7 @@ export function PreJoin({
         )}
         {(!videoTrack || !videoEnabled) && (
           <div className={styles.view__video__placeholder}>
-            <ParticipantPlaceholder />
+            <p className={styles.view__video__permission}>{permissionPlaceholderText}</p>
           </div>
         )}
       </div>
@@ -364,7 +524,7 @@ export function PreJoin({
               className={styles.view__controls__toggle}
               initialState={audioEnabled}
               source={Track.Source.Microphone}
-              onChange={(enabled) => setAudioEnabled(enabled)}
+              onChange={handleAudioToggleChange}
             >
               {micLabel}
             </TrackToggle>
@@ -415,7 +575,7 @@ export function PreJoin({
               className={styles.view__controls__toggle}
               initialState={videoEnabled}
               source={Track.Source.Camera}
-              onChange={(enabled) => setVideoEnabled(enabled)}
+              onChange={handleVideoToggleChange}
             >
               {camLabel}
             </TrackToggle>

@@ -88,6 +88,7 @@ import {
 } from '@/lib/api/platform';
 import { useFullScreenBtn } from './widgets/full_screen';
 import { exportRBAC, usePlatformUserInfo, usePlatformUserInfoCheap } from '@/lib/hooks/platform';
+import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { TilePlayer, TilePlayerAdd, TilePlayerItem } from '../participant/player';
 import { GLayout2 } from '../layout/grid';
 import { CLayout } from '../layout/carousel';
@@ -473,6 +474,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           });
           if (!validLicenseDomain(license.domains, config.serverUrl)) {
             messageApi.error(t('settings.license.invalid_domain'));
+            markExplicitLeaveIntent();
             space.disconnect(true);
             return;
           }
@@ -566,6 +568,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               content: t('common.full_user'),
               duration: 3,
             });
+            markExplicitLeaveIntent();
             space.disconnect(true);
           }
           return;
@@ -674,6 +677,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             content: t('msg.info.remove_participant'),
             duration: 3,
           });
+          markExplicitLeaveIntent();
           space.disconnect(true);
           await onParticipantDisConnected(participant);
         }
@@ -806,6 +810,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                 color="danger"
                 size="small"
                 onClick={async () => {
+                  markExplicitLeaveIntent();
                   space.disconnect(true);
                 }}
               >
@@ -879,6 +884,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         messageApi.success(t('settings.general.conf.reload_env'));
         // 在localstorage中添加一个reload标记，这样退出之后如果有这个标记就可以自动重载
         localStorage.setItem('reload', space.name);
+        markExplicitLeaveIntent();
         space.disconnect(true);
       });
 

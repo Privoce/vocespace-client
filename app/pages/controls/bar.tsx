@@ -39,6 +39,7 @@ import { useWork, Work, WorkModal } from './widgets/work';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/ai';
 import { DEFAULT_WINDOW_ADJUST_WIDTH } from '@/lib/std/window';
 import { usePlatformUserInfo } from '@/lib/hooks/platform';
+import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 
 /** @public */
 export type ControlBarControls = {
@@ -783,7 +784,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         </div>
 
         {visibleControls.leave && (
-          <DisconnectButton style={{ height: 46 }}>
+          <DisconnectButton style={{ height: 46 }} onClick={() => markExplicitLeaveIntent()}>
             {showIcon && <LeaveIcon />}
             {showText && t('common.leave')}
           </DisconnectButton>

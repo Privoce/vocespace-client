@@ -35,10 +35,30 @@
       width: 100%;
       aspect-ratio: 16/8;
       display: inline-flex;
+      flex-direction: column;
       justify-content: center;
       align-items: center;
-      & > * {
-        height: 70%;
+      padding: 1.25rem;
+      text-align: center;
+    }
+    &__permission {
+      margin: 0;
+      color: #d9d9d9;
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 320px;
+    }
+  }
+  &__permission_modal {
+    &__content {
+      color: #d9d9d9;
+      font-size: 14px;
+      line-height: 1.7;
+      p {
+        margin: 0 0 0.5rem;
+      }
+      p:last-child {
+        margin-bottom: 0;
       }
     }
   }

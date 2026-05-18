@@ -697,7 +697,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                   <Popover
                     content={
                       <button className="vocespace_button">
-                        <SvgResource type={'add_user'} svgSize={16}></SvgResource>{t('channel.menu.invite')} {room.name}
+                        <SvgResource type={'add_user'} svgSize={16}></SvgResource>{t('channel.menu.share')} {room.name}
                       </button>
                     }
                     placement="topRight"

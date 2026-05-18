@@ -1,9 +1,13 @@
 'use client';
 
+import BeforeUnloadGuard from '@/app/BeforeUnloadGuard';
 import { VideoContainer, VideoContainerExports } from '@/app/pages/controls/video_container';
 import { decodePassphrase } from '@/lib/client_utils';
 // import { DebugMode } from '@/lib/Debug';
 import { useI18n } from '@/lib/i18n/i18n';
+import {
+  consumeExplicitLeaveIntent,
+} from '@/lib/roomLeaveIntent';
 import { RecordingIndicator } from './RecordingIndicator';
 import { ConnectionDetails } from '@/lib/types';
 import {
@@ -342,6 +346,7 @@ function VideoConferenceComponent(props: {
   const [permissionRequested, setPermissionRequested] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [permissionDevice, setPermissionDevice] = useState<Track.Source | null>(null);
+  const [shouldConfirmLeave, setShouldConfirmLeave] = useState(false);
   const videoContainerRef = React.useRef<VideoContainerExports>(null);
   const resolutions = createRTCQulity(
     {
@@ -381,6 +386,7 @@ function VideoConferenceComponent(props: {
       },
       adaptiveStream: { pixelDensity: 'screen' },
       dynacast: true,
+      disconnectOnPageLeave: false,
       e2ee: e2eeEnabled
         ? {
             keyProvider,
@@ -436,6 +442,11 @@ function VideoConferenceComponent(props: {
 
   const router = useRouter();
   const handleOnLeave = React.useCallback(async () => {
+    setShouldConfirmLeave(false);
+    if (!consumeExplicitLeaveIntent()) {
+      return;
+    }
+
     const audioElement = document.getElementById('local-in-ear-monitor-audio');
     if (audioElement) {
       audioElement.remove();
@@ -455,7 +466,7 @@ function VideoConferenceComponent(props: {
     } as WsBase);
     socket.disconnect();
     router.replace('/');
-  }, [router, room.localParticipant]);
+  }, [room, router]);
   const handleError = React.useCallback((error: Error) => {
     console.error(`${t('msg.error.room.unexpect')}: ${error.message}`);
     if (error.name === 'ConnectionError') {
@@ -573,6 +584,7 @@ function VideoConferenceComponent(props: {
 
   return (
     <>
+      <BeforeUnloadGuard enabled={shouldConfirmLeave} />
       <LiveKitRoom
         connect={e2eeSetupComplete}
         room={room}
@@ -586,6 +598,7 @@ function VideoConferenceComponent(props: {
         onError={handleError}
         onMediaDeviceFailure={handleMediaDeviceFailure}
         onConnected={() => {
+          setShouldConfirmLeave(true);
           videoContainerRef.current?.clearRoom();
         }}
       >

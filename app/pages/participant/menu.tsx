@@ -16,6 +16,7 @@ import {
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { isSpaceManager, src } from '@/lib/std';
 import { exportRBAC, usePlatformUserInfo } from '@/lib/hooks/platform';
+import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { HomeOutlined } from '@ant-design/icons';
 import { MessageInstance } from 'antd/es/message/interface';
 
@@ -845,6 +846,7 @@ export function useControlRKeyMenu({
             okText: t('more.participant.set.safe.leave.confirm'),
             cancelText: t('more.participant.set.safe.leave.cancel'),
             onOk: () => {
+              markExplicitLeaveIntent();
               space.disconnect(true);
             },
           });
