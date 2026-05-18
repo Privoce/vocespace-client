@@ -771,6 +771,7 @@ export default {
         invalid: 'Room does not exist. Please check the room name or link.',
       },
       device: {
+        media_not_granted: 'Camera and microphone access was not granted.',
         in_use: 'The device is currently in use. Please check if other applications are using it.',
         not_found: 'Device not found. Please check if the device is connected and try again.',
         permission_denied: 'Permission access denied',
@@ -806,6 +807,20 @@ export default {
         deny: 'Deny Authorization',
         waiting: 'Requesting...',
         ask: 'Access to your camera and microphone is required. Please select `Allow` to continue using.',
+        pre_join: {
+          modal_title: 'Would you like other participants to see and hear you?',
+          allow_media: 'Request microphone and camera access',
+          continue_without_permission: 'Continue without granting access',
+          modal_desc: 'Granting access lets the system preview your camera and test your microphone.',
+          current_permission_prefix: 'Currently required: ',
+          permission_prefix: 'Permission required for ',
+          permission_suffix: '',
+          permission_suffix_with_period: '.',
+          permission_joiner: ' and ',
+          checking: 'Checking camera permissions',
+          no_camera: 'No camera detected',
+          camera_off: 'Camera is off',
+        },
         permission: {
           how: 'How to enable permission?',
           changed_with_reload:

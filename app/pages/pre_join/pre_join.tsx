@@ -119,8 +119,12 @@ export function PreJoin({
   }, [username, saveUsername]);
 
   useEffect(() => {
+    let isMounted = true;
+    const permissionStatusCleanups: Array<() => void> = [];
+
     const queryPermission = async (
       name: 'camera' | 'microphone',
+      watch = false,
     ): Promise<MediaPermissionState> => {
       if (!navigator.permissions?.query) {
         return 'unsupported';
@@ -130,6 +134,18 @@ export function PreJoin({
         const result = await navigator.permissions.query({
           name: name as PermissionName,
         });
+
+        if (watch) {
+          const handlePermissionChange = () => {
+            void syncPermissions(false);
+          };
+
+          result.addEventListener('change', handlePermissionChange);
+          permissionStatusCleanups.push(() => {
+            result.removeEventListener('change', handlePermissionChange);
+          });
+        }
+
         return result.state;
       } catch (error) {
         console.warn(`permission query fail: ${name}`, error);
@@ -137,7 +153,7 @@ export function PreJoin({
       }
     };
 
-    const checkDevices = async () => {
+    const syncPermissions = async (watchPermissions = false) => {
       try {
         const canQueryDevices = typeof navigator.mediaDevices?.enumerateDevices === 'function';
         const devices = canQueryDevices ? await navigator.mediaDevices.enumerateDevices() : [];
@@ -148,17 +164,25 @@ export function PreJoin({
         const nextHasCamera = hasCamera || assumeMediaDevicesExist;
         const nextHasMicrophone = hasMicrophone || assumeMediaDevicesExist;
 
+        if (!isMounted) {
+          return;
+        }
+
         setHasCameraDevice(nextHasCamera);
         setHasMicrophoneDevice(nextHasMicrophone);
 
         const [nextCameraPermission, nextMicrophonePermission] = await Promise.all([
           nextHasCamera
-            ? queryPermission('camera')
+            ? queryPermission('camera', watchPermissions)
             : Promise.resolve('denied' as PermissionState),
           nextHasMicrophone
-            ? queryPermission('microphone')
+            ? queryPermission('microphone', watchPermissions)
             : Promise.resolve('denied' as PermissionState),
         ]);
+
+        if (!isMounted) {
+          return;
+        }
 
         setCameraPermission(nextCameraPermission);
         setMicrophonePermission(nextMicrophonePermission);
@@ -171,16 +195,26 @@ export function PreJoin({
           setAudioEnabled(false);
         }
 
+        const hasMissingPermission =
+          (nextHasCamera && nextCameraPermission !== 'granted') ||
+          (nextHasMicrophone && nextMicrophonePermission !== 'granted');
         const shouldAskPermission =
           !permissionPromptDismissed &&
           canRequestMedia &&
-          ((nextHasCamera && nextCameraPermission !== 'granted') ||
-            (nextHasMicrophone && nextMicrophonePermission !== 'granted'));
+          hasMissingPermission;
+
+        if (!hasMissingPermission) {
+          setPermissionPromptDismissed(false);
+        }
 
         setPermissionModalVisible(shouldAskPermission);
       } catch (error) {
         console.error('device check fail:', error);
         const canRequestMedia = typeof navigator.mediaDevices?.getUserMedia === 'function';
+
+        if (!isMounted) {
+          return;
+        }
 
         setHasCheckedPermissions(true);
         setHasCameraDevice(canRequestMedia);
@@ -191,7 +225,26 @@ export function PreJoin({
       }
     };
 
-    checkDevices();
+    const handleFocus = () => {
+      void syncPermissions(false);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        void syncPermissions(false);
+      }
+    };
+
+    void syncPermissions(true);
+    window.addEventListener('focus', handleFocus);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      isMounted = false;
+      permissionStatusCleanups.forEach((cleanup) => cleanup());
+      window.removeEventListener('focus', handleFocus);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [permissionPromptDismissed]);
 
   const showLoginBtn = useMemo(() => {
@@ -201,25 +254,24 @@ export function PreJoin({
   const hasCameraPermission = !hasCameraDevice || cameraPermission === 'granted';
   const hasMicrophonePermission = !hasMicrophoneDevice || microphonePermission === 'granted';
   const missingPermissions = [
-    hasCameraDevice && !hasCameraPermission ? '摄像头' : null,
-    hasMicrophoneDevice && !hasMicrophonePermission ? '麦克风' : null,
+    hasCameraDevice && !hasCameraPermission ? t('common.device.camera') : null,
+    hasMicrophoneDevice && !hasMicrophonePermission ? t('common.device.microphone') : null,
   ].filter(Boolean) as string[];
 
   const permissionPlaceholderText = React.useMemo(() => {
     if (!hasCheckedPermissions) {
-      return '正在检测摄像头权限';
-    }
-    if (hasCameraDevice && !hasCameraPermission) {
-      return '需要授予摄像头权限';
+      return t('app.request.device.pre_join.checking');
     }
     if (missingPermissions.length > 0) {
-      return `需要授予${missingPermissions.join('和')}权限`;
+      return `${t('app.request.device.pre_join.permission_prefix')}${missingPermissions.join(
+        t('app.request.device.pre_join.permission_joiner'),
+      )}${t('app.request.device.pre_join.permission_suffix')}`;
     }
     if (!hasCameraDevice) {
-      return '未检测到摄像头';
+      return t('app.request.device.pre_join.no_camera');
     }
-    return '摄像头已关闭';
-  }, [hasCheckedPermissions, hasCameraDevice, hasCameraPermission, missingPermissions]);
+    return t('app.request.device.pre_join.camera_off');
+  }, [hasCheckedPermissions, hasCameraDevice, hasCameraPermission, missingPermissions, t]);
 
   // Preview tracks -----------------------------------------------------------------------------------
   const tracks = usePreviewTracks(
@@ -410,7 +462,7 @@ export function PreJoin({
 
       setPermissionPromptDismissed(false);
       setPermissionModalVisible(false);
-      messageApi.success('已获得摄像头和麦克风权限');
+      messageApi.success(t('app.success.device.granted'));
     } catch (error) {
       console.error('request media permissions fail:', error);
       if (hasCameraDevice) {
@@ -419,7 +471,7 @@ export function PreJoin({
       if (hasMicrophoneDevice) {
         setMicrophonePermission('denied');
       }
-      messageApi.error('未获得摄像头和麦克风权限');
+      messageApi.error(t('app.error.device.media_not_granted'));
     }
   };
 
@@ -463,16 +515,20 @@ export function PreJoin({
         centered
         closable={false}
         maskClosable={false}
-        title="希望其他参会者看到并听到你吗？"
-        okText="请求授予麦克风和摄像头"
-        cancelText="不授予继续使用"
+        title={t('app.request.device.pre_join.modal_title')}
+        okText={t('app.request.device.pre_join.allow_media')}
+        cancelText={t('app.request.device.pre_join.continue_without_permission')}
         onOk={requestMediaPermissions}
         onCancel={continueWithoutPermissions}
       >
         <div className={styles.view__permission_modal__content}>
-          <p>授予权限后，系统才能预览你的摄像头画面并测试麦克风。</p>
+          <p>{t('app.request.device.pre_join.modal_desc')}</p>
           {missingPermissions.length > 0 && (
-            <p>当前需要授予：{missingPermissions.join('和')}权限。</p>
+            <p>
+              {t('app.request.device.pre_join.current_permission_prefix')}
+              {missingPermissions.join(t('app.request.device.pre_join.permission_joiner'))}
+              {t('app.request.device.pre_join.permission_suffix_with_period')}
+            </p>
           )}
         </div>
       </Modal>

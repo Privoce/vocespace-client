@@ -734,6 +734,7 @@ export default {
       },
       device: {
         in_use: '设备已被占用，请检查其他应用程序是否正在使用它。',
+        media_not_granted: '未获得摄像头和麦克风权限',
         not_found: '未找到设备，请检查设备是否连接并重试。',
         permission_denied: '权限访问被拒绝',
         permission_denied_desc: '未获得设备访问权限，请检查浏览器设置。',
@@ -766,6 +767,20 @@ export default {
         deny: '拒绝授权',
         waiting: '请求中...',
         ask: '需要访问您的摄像头和麦克风，请选择`允许`授权以继续使用。',
+        pre_join: {
+          modal_title: '希望其他参会者看到并听到你吗？',
+          allow_media: '请求授予麦克风和摄像头',
+          continue_without_permission: '不授予继续使用',
+          modal_desc: '授予权限后，系统才能预览你的摄像头画面并测试麦克风。',
+          current_permission_prefix: '当前需要授予：',
+          permission_prefix: '需要授予',
+          permission_suffix: '权限',
+          permission_suffix_with_period: '权限。',
+          permission_joiner: '和',
+          checking: '正在检测摄像头权限',
+          no_camera: '未检测到摄像头',
+          camera_off: '摄像头已关闭',
+        },
         permission: {
           how: '如何开启权限？',
           changed_with_reload: '权限更改后，您可能需要刷新页面才能生效。',
