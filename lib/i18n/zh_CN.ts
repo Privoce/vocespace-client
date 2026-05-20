@@ -25,6 +25,10 @@ export default {
     managePlayer: '管理组件',
   },
   common: {
+    wx: {
+      not_support: "很抱歉，当前空间不支持在微信内访问，请使用浏览器打开",
+      to_browser: "在浏览器中打开",
+    },
     full_screen: '全屏',
     guest: {
       not_allow: '很抱歉，当前空间不允许访客加入，请登陆',

@@ -26,6 +26,10 @@ export default {
     managePlayer: 'Manage Widgets',
   },
   common: {
+    wx: {
+      not_support: "Sorry, the current space does not support access within WeChat. Please use a browser to open it.",
+      to_browser: "Open in Browser",
+    },
     full_screen: 'Full Screen',
     guest: {
       not_allow:
