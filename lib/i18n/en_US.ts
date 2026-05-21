@@ -499,6 +499,7 @@ export default {
             screen: 'Stop Screen Sharing',
           },
           volume: 'Volume Adjustment',
+          volume_screen: 'Screen Sharing Volume',
           blur: {
             video: 'Blur Camera Video',
             screen: 'Blur Shared Screen',

@@ -260,17 +260,17 @@ export function PreJoin({
 
   const permissionPlaceholderText = React.useMemo(() => {
     if (!hasCheckedPermissions) {
-      return t('app.request.device.pre_join.checking');
+      return t('msg.request.device.pre_join.checking');
     }
     if (missingPermissions.length > 0) {
-      return `${t('app.request.device.pre_join.permission_prefix')}${missingPermissions.join(
-        t('app.request.device.pre_join.permission_joiner'),
-      )}${t('app.request.device.pre_join.permission_suffix')}`;
+      return `${t('msg.request.device.pre_join.permission_prefix')}${missingPermissions.join(
+        t('msg.request.device.pre_join.permission_joiner'),
+      )}${t('msg.request.device.pre_join.permission_suffix')}`;
     }
     if (!hasCameraDevice) {
-      return t('app.request.device.pre_join.no_camera');
+      return t('msg.request.device.pre_join.no_camera');
     }
-    return t('app.request.device.pre_join.camera_off');
+    return t('msg.request.device.pre_join.camera_off');
   }, [hasCheckedPermissions, hasCameraDevice, hasCameraPermission, missingPermissions, t]);
 
   // Preview tracks -----------------------------------------------------------------------------------
@@ -462,7 +462,7 @@ export function PreJoin({
 
       setPermissionPromptDismissed(false);
       setPermissionModalVisible(false);
-      messageApi.success(t('app.success.device.granted'));
+      messageApi.success(t('msg.success.device.granted'));
     } catch (error) {
       console.error('request media permissions fail:', error);
       if (hasCameraDevice) {
@@ -471,7 +471,7 @@ export function PreJoin({
       if (hasMicrophoneDevice) {
         setMicrophonePermission('denied');
       }
-      messageApi.error(t('app.error.device.media_not_granted'));
+      messageApi.error(t('msg.error.device.media_not_granted'));
     }
   };
 
@@ -515,19 +515,19 @@ export function PreJoin({
         centered
         closable={false}
         maskClosable={false}
-        title={t('app.request.device.pre_join.modal_title')}
-        okText={t('app.request.device.pre_join.allow_media')}
-        cancelText={t('app.request.device.pre_join.continue_without_permission')}
+        title={t('msg.request.device.pre_join.modal_title')}
+        okText={t('msg.request.device.pre_join.allow_media')}
+        cancelText={t('msg.request.device.pre_join.continue_without_permission')}
         onOk={requestMediaPermissions}
         onCancel={continueWithoutPermissions}
       >
         <div className={styles.view__permission_modal__content}>
-          <p>{t('app.request.device.pre_join.modal_desc')}</p>
+          <p>{t('msg.request.device.pre_join.modal_desc')}</p>
           {missingPermissions.length > 0 && (
             <p>
-              {t('app.request.device.pre_join.current_permission_prefix')}
-              {missingPermissions.join(t('app.request.device.pre_join.permission_joiner'))}
-              {t('app.request.device.pre_join.permission_suffix_with_period')}
+              {t('msg.request.device.pre_join.current_permission_prefix')}
+              {missingPermissions.join(t('msg.request.device.pre_join.permission_joiner'))}
+              {t('msg.request.device.pre_join.permission_suffix_with_period')}
             </p>
           )}
         </div>

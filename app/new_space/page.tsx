@@ -14,9 +14,13 @@ export default function Page() {
   const [hq, setHq] = React.useState(false);
 
   useEffect(() => {
-    setTimeout(() => {
+    const timer = window.setTimeout(() => {
       setLoading(false);
     }, 400);
+
+    return () => {
+      window.clearTimeout(timer);
+    };
   }, []);
 
   return (

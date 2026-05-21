@@ -723,7 +723,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number, createRoom: boolean): SpaceI
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
-  version: '0.5.2',
+  version: '0.5.3',
   name: '',
   volume: 100,
   blur: 0.0,

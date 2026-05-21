@@ -1,4 +1,5 @@
 import { I18nProvider } from '@/lib/i18n/i18n';
+import { WeChatAccessGuard } from './WeChatAccessGuard';
 import '../styles/globals.css';
 import '@livekit/components-styles';
 import '@livekit/components-styles/prefabs';
@@ -213,7 +214,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <html lang="en">
         <body>
-          <I18nProvider initialLocale="en">{children}</I18nProvider>
+          <I18nProvider initialLocale="en">
+            <WeChatAccessGuard>{children}</WeChatAccessGuard>
+          </I18nProvider>
         </body>
       </html>
     </ConfigProvider>
