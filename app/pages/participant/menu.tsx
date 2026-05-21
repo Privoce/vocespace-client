@@ -407,7 +407,6 @@ export function useControlRKeyMenu({
                   }}
                 >
                   <Slider
-                    disabled={!controlUser}
                     min={0.0}
                     max={100.0}
                     step={1.0}

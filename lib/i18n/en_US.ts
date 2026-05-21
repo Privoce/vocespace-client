@@ -506,8 +506,8 @@ export default {
           },
           in_ear_monitor: {
             title: 'In-ear monitor',
-            open: 'Enable ear monitors,',
-            close: 'Turn off the earphones',
+            open: 'Enable hearback',
+            close: 'Turn off the hearback',
             no_mic:
               'Unable to activate the in-ear monitor. Please check if a microphone device is connected or if the microphone is muted.',
             no_headphone:

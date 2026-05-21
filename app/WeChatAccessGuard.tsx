@@ -1,7 +1,8 @@
 'use client';
 
 import { useI18n } from '@/lib/i18n/i18n';
-import { Button, Result } from 'antd';
+import { src } from '@/lib/std';
+import { Button, Image, Result } from 'antd';
 import React from 'react';
 
 export function WeChatAccessGuard({ children }: { children: React.ReactNode }) {
@@ -22,9 +23,7 @@ export function WeChatAccessGuard({ children }: { children: React.ReactNode }) {
         status="warning"
         title={t('common.wx.not_support')}
         extra={
-          <Button type="primary" onClick={toBrowser}>
-            {t('common.wx.to_browser')}
-          </Button>
+          <Image src={src("/wxClick.png")}></Image>
         }
       />
     );
