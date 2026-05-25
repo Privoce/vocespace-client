@@ -152,7 +152,8 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
         updateSettings,
         toRenameSettings,
         isSelf: trackReference.participant.identity === localParticipant.identity,
-        messageApi
+        messageApi,
+        isScreenShare: trackReference.source === Track.Source.ScreenShare || trackReference.source === Track.Source.ScreenShareAudio,
       } as UseControlRKeyMenuProps);
 
     // 右键菜单可以使用：当不是自己的时候且source不是屏幕分享

@@ -20,7 +20,6 @@ import {
   Participant,
   ParticipantEvent,
   ParticipantTrackPermission,
-  RemoteAudioTrack,
   Room,
   RoomEvent,
   Track,
@@ -761,15 +760,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               } as WsBase);
               break;
             }
-            case ControlType.VolumeScreen: {
-              await updateSettings({
-                volumeScreen: msg.volumeScreen!,
-              });
-              socket.emit('update_user_status', {
-                space: space.name,
-              } as WsBase);
-              break;
-            }
             case ControlType.BlurVideo: {
               await updateSettings({
                 blur: msg.blur!,
@@ -1083,6 +1073,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       if (shareTackSid) {
         allowedTrackSids.push(shareTackSid);
       }
+      const localScreenShareVolumes =
+        settings.participants[space.localParticipant.identity]?.screenShareVolumes || {};
       // 遍历所有的远程参与者，根据规则进行处理
       space.remoteParticipants.forEach((rp) => {
         // 由于我们已经可以从selfRoom中获取当前用户所在的房间信息，所以通过selfRoom进行判断
@@ -1093,20 +1085,14 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           });
           let volume = settings.participants[rp.identity]?.volume / 100.0;
           // 屏幕共享的音量设置，默认100%
-          let volumeScreen = (settings.participants[rp.identity]?.volumeScreen || 100.0) / 100.0;
+          let volumeScreen = (localScreenShareVolumes[rp.identity] ?? 100.0) / 100.0;
           if (isNaN(volume)) {
             volume = 1.0;
           }
           // 设置音量
           rp.setVolume(volume);
-          // 设置屏幕共享的音量，必须在订阅之后设置才有效，所以放在这里，并且需要转为RemoteAudioTrack类型才能调用setVolume方法
-          const remoteTrackPub = rp.getTrackPublication(Track.Source.ScreenShare);
-          if (remoteTrackPub && remoteTrackPub.audioTrack) {
-            const remote = remoteTrackPub.audioTrack as RemoteAudioTrack | undefined;
-            if (remote) {
-              remote.setVolume(volumeScreen);
-            }
-          }
+          // LiveKit 将屏幕分享音频作为独立的 ScreenShareAudio source 管理。
+          rp.setVolume(volumeScreen, Track.Source.ScreenShareAudio);
         } else {
           auth.push({
             participantIdentity: rp.identity,

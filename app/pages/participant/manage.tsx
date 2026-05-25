@@ -55,6 +55,7 @@ export function ParticipantManage({
       updateSettings,
       toRenameSettings,
       messageApi,
+      isScreenShare: false,
     } as UseControlRKeyMenuProps);
 
   return (

@@ -40,7 +40,7 @@ import { AppFlotIconCollect } from '../apps/app_pin';
 import { ParticipantTileMiniProps } from './mini';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
-import { Tooltip } from 'antd';
+import { Slider, Tooltip } from 'antd';
 import { FullScreenBtnProps } from '../controls/widgets/full_screen';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps, FullScreenBtnProps {
@@ -92,7 +92,9 @@ export const ParticipantItem: (
     const [virtualMask, setVirtualMask] = useRecoilState(virtualMaskState);
     const [remoteMask, setRemoteMask] = React.useState(false);
     const [deleyMask, setDelayMask] = React.useState(virtualMask);
-
+    const isScreenShare =
+      trackReference.source === Track.Source.ScreenShare ||
+      trackReference.source === Track.Source.ScreenShareAudio;
     /**
      * 设置举手状态
      * @param raise
@@ -164,6 +166,7 @@ export const ParticipantItem: (
       initialBlur: 0.0,
     });
     const [loading, setLoading] = React.useState(true);
+    const [screenShareVolume, setScreenShareVolume] = React.useState(100);
     const currentParticipant: ParticipantSettings | undefined = useMemo(() => {
       return settings.participants[trackReference.participant.identity];
     }, [settings.participants, trackReference.participant.identity]);
@@ -183,6 +186,29 @@ export const ParticipantItem: (
       }
     }, [currentParticipant]);
 
+    useEffect(() => {
+      const localScreenShareVolumes =
+        settings.participants[localParticipant.identity]?.screenShareVolumes || {};
+      setScreenShareVolume(localScreenShareVolumes[trackReference.participant.identity] ?? 100);
+    }, [
+      localParticipant.identity,
+      settings.participants,
+      trackReference.participant.identity,
+    ]);
+
+    const handleScreenShareVolumeChange = React.useCallback(
+      async (value: number) => {
+        const currentLocalParticipant = settings.participants[localParticipant.identity];
+        await updateSettings({
+          screenShareVolumes: {
+            ...(currentLocalParticipant?.screenShareVolumes || {}),
+            [trackReference.participant.identity]: value,
+          },
+        });
+      },
+      [localParticipant.identity, settings.participants, trackReference.participant.identity, updateSettings],
+    );
+
     const handleSubscribe = React.useCallback(
       (subscribed: boolean) => {
         if (
@@ -199,7 +225,7 @@ export const ParticipantItem: (
     );
 
     const videoFilter = React.useMemo(() => {
-      return settings.participants[trackReference.participant.identity]?.virtual?.enabled ?? false
+      return (settings.participants[trackReference.participant.identity]?.virtual?.enabled ?? false)
         ? `none`
         : `blur(${blurValue}px)`;
     }, [settings.participants, trackReference.participant.identity, blurValue]);
@@ -587,6 +613,7 @@ export const ParticipantItem: (
         toRenameSettings,
         isSelf: trackReference.participant.identity === localParticipant.identity,
         messageApi,
+        isScreenShare,
       } as UseControlRKeyMenuProps);
     // 右键菜单可以使用：当不是自己的时候且source不是屏幕分享
     const showSelfControlMenu = useMemo(() => {
@@ -698,6 +725,22 @@ export const ParticipantItem: (
                         >
                           <ScreenShareIcon style={{ marginRight: '0.25rem' }} />
                           <ParticipantName>&apos;s screen</ParticipantName>
+                          {trackReference.source === Track.Source.ScreenShare && (
+                            <Slider
+                              style={{ width: 100, margin: '0 8px' }}
+                              min={0}
+                              max={100}
+                              step={1}
+                              value={screenShareVolume}
+                              onChange={(value) => {
+                                setScreenShareVolume(value);
+                              }}
+                              onChangeComplete={(value) => {
+                                setScreenShareVolume(value);
+                                void handleScreenShareVolumeChange(value);
+                              }}
+                            ></Slider>
+                          )}
                         </div>
                       )}
                     </div>
@@ -777,12 +820,15 @@ function throttle<T extends (...args: any[]) => any>(func: T, limit: number) {
       lastRan = now;
     } else {
       clearTimeout(lastFunc);
-      lastFunc = setTimeout(() => {
-        if (Date.now() - lastRan >= limit) {
-          func.apply(context, args);
-          lastRan = Date.now();
-        }
-      }, limit - (now - lastRan));
+      lastFunc = setTimeout(
+        () => {
+          if (Date.now() - lastRan >= limit) {
+            func.apply(context, args);
+            lastRan = Date.now();
+          }
+        },
+        limit - (now - lastRan),
+      );
     }
   };
 }

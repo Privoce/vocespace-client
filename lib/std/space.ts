@@ -106,9 +106,10 @@ export interface ParticipantSettings {
    */
   volume: number;
   /**
-   * 屏幕分享音量
+    * 当前用户对不同参与者屏幕分享音量的本地偏好
+    * key为参与者ID，value为音量值，范围0-100
    */
-  volumeScreen?: number;
+    screenShareVolumes?: Record<string, number>;
   /**
    * 是否开启了耳返功能
    * 开启后，用户可以在自己的耳机中听到自己的声音，主要用于调试和工作模式
@@ -726,6 +727,7 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   version: '0.5.3',
   name: '',
   volume: 100,
+  screenShareVolumes: {},
   blur: 0.0,
   screenBlur: 0.0,
   status: 'settings.general.status.online',
