@@ -40,7 +40,7 @@ import { AppFlotIconCollect } from '../apps/app_pin';
 import { ParticipantTileMiniProps } from './mini';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
-import { Slider, Tooltip } from 'antd';
+import { Button, Popover, Slider, Tooltip } from 'antd';
 import { FullScreenBtnProps } from '../controls/widgets/full_screen';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps, FullScreenBtnProps {
@@ -190,11 +190,7 @@ export const ParticipantItem: (
       const localScreenShareVolumes =
         settings.participants[localParticipant.identity]?.screenShareVolumes || {};
       setScreenShareVolume(localScreenShareVolumes[trackReference.participant.identity] ?? 100);
-    }, [
-      localParticipant.identity,
-      settings.participants,
-      trackReference.participant.identity,
-    ]);
+    }, [localParticipant.identity, settings.participants, trackReference.participant.identity]);
 
     const handleScreenShareVolumeChange = React.useCallback(
       async (value: number) => {
@@ -206,7 +202,12 @@ export const ParticipantItem: (
           },
         });
       },
-      [localParticipant.identity, settings.participants, trackReference.participant.identity, updateSettings],
+      [
+        localParticipant.identity,
+        settings.participants,
+        trackReference.participant.identity,
+        updateSettings,
+      ],
     );
 
     const handleSubscribe = React.useCallback(
@@ -726,20 +727,28 @@ export const ParticipantItem: (
                           <ScreenShareIcon style={{ marginRight: '0.25rem' }} />
                           <ParticipantName>&apos;s screen</ParticipantName>
                           {trackReference.source === Track.Source.ScreenShare && (
-                            <Slider
-                              style={{ width: 100, margin: '0 8px' }}
-                              min={0}
-                              max={100}
-                              step={1}
-                              value={screenShareVolume}
-                              onChange={(value) => {
-                                setScreenShareVolume(value);
-                              }}
-                              onChangeComplete={(value) => {
-                                setScreenShareVolume(value);
-                                void handleScreenShareVolumeChange(value);
-                              }}
-                            ></Slider>
+                            <Popover
+                              style={{ background: 'transparent' }}
+                              content={
+                                <Slider
+                                  vertical
+                                  style={{ height: 100, margin: '0 8px' }}
+                                  min={0}
+                                  max={100}
+                                  step={1}
+                                  value={screenShareVolume}
+                                  onChange={(value) => {
+                                    setScreenShareVolume(value);
+                                  }}
+                                  onChangeComplete={(value) => {
+                                    setScreenShareVolume(value);
+                                    void handleScreenShareVolumeChange(value);
+                                  }}
+                                ></Slider>
+                              }
+                            >
+                              <div style={{margin: "auto 4px", cursor: 'pointer'}}><SvgResource type="volume" svgSize={18}></SvgResource></div>
+                            </Popover>
                           )}
                         </div>
                       )}
