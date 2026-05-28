@@ -10,7 +10,7 @@ import {
 import styles from '@/styles/pre_join.module.scss';
 import React, { useEffect, useMemo, useState } from 'react';
 import { facingModeFromLocalTrack, LocalAudioTrack, LocalVideoTrack, Track } from 'livekit-client';
-import { Input, InputRef, Modal, message, Skeleton, Slider, Space, Spin } from 'antd';
+import { Input, InputRef, Modal, message, Skeleton, Slider, Space, Spin, Button } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useRecoilState } from 'recoil';
@@ -199,9 +199,7 @@ export function PreJoin({
           (nextHasCamera && nextCameraPermission !== 'granted') ||
           (nextHasMicrophone && nextMicrophonePermission !== 'granted');
         const shouldAskPermission =
-          !permissionPromptDismissed &&
-          canRequestMedia &&
-          hasMissingPermission;
+          !permissionPromptDismissed && canRequestMedia && hasMissingPermission;
 
         if (!hasMissingPermission) {
           setPermissionPromptDismissed(false);
@@ -265,7 +263,7 @@ export function PreJoin({
     if (missingPermissions.length > 0) {
       return `${t('msg.request.device.pre_join.permission_prefix')}${missingPermissions.join(
         t('msg.request.device.pre_join.permission_joiner'),
-      )}${t('msg.request.device.pre_join.permission_suffix')}`;
+      )}`;
     }
     if (!hasCameraDevice) {
       return t('msg.request.device.pre_join.no_camera');
@@ -276,10 +274,12 @@ export function PreJoin({
   // Preview tracks -----------------------------------------------------------------------------------
   const tracks = usePreviewTracks(
     {
-      audio: audioEnabled && hasMicrophonePermission ? { deviceId: userChoices.audioDeviceId } : false,
-      video: videoEnabled && hasCameraPermission
-        ? { deviceId: userChoices.videoDeviceId, processor: videoProcessor }
-        : false,
+      audio:
+        audioEnabled && hasMicrophonePermission ? { deviceId: userChoices.audioDeviceId } : false,
+      video:
+        videoEnabled && hasCameraPermission
+          ? { deviceId: userChoices.videoDeviceId, processor: videoProcessor }
+          : false,
     },
     onError,
   );
@@ -513,13 +513,16 @@ export function PreJoin({
       <Modal
         open={permissionModalVisible}
         centered
-        closable={false}
+        closable={true}
         maskClosable={false}
         title={t('msg.request.device.pre_join.modal_title')}
-        okText={t('msg.request.device.pre_join.allow_media')}
-        cancelText={t('msg.request.device.pre_join.continue_without_permission')}
         onOk={requestMediaPermissions}
         onCancel={continueWithoutPermissions}
+        footer={[
+          <Button type="primary" key={"request"} onClick={requestMediaPermissions}>
+            {t('msg.request.device.pre_join.allow_media')}
+          </Button>,
+        ]}
       >
         <div className={styles.view__permission_modal__content}>
           <p>{t('msg.request.device.pre_join.modal_desc')}</p>
@@ -527,7 +530,6 @@ export function PreJoin({
             <p>
               {t('msg.request.device.pre_join.current_permission_prefix')}
               {missingPermissions.join(t('msg.request.device.pre_join.permission_joiner'))}
-              {t('msg.request.device.pre_join.permission_suffix_with_period')}
             </p>
           )}
         </div>

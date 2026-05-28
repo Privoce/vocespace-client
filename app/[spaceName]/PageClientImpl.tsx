@@ -491,9 +491,11 @@ function VideoConferenceComponent(props: {
             break;
           case MediaDeviceFailure.PermissionDenied:
             if (
-              permissionDevice === Track.Source.Camera ||
-              permissionDevice === Track.Source.Microphone
+              !permissionOpened &&
+              (permissionDevice === Track.Source.Camera ||
+                permissionDevice === Track.Source.Microphone)
             ) {
+              setPermissionOpened(true);
               props.notApi.open({
                 duration: 3,
                 message: t('msg.error.device.permission_denied_title'),
@@ -503,7 +505,10 @@ function VideoConferenceComponent(props: {
                     <Button
                       type="primary"
                       size="small"
-                      onClick={() => setPermissionModalVisible(true)}
+                      onClick={() => {
+                        setPermissionModalVisible(true);
+                        setPermissionOpened(false);
+                      }}
                     >
                       {t('msg.request.device.allow')}
                     </Button>
@@ -512,10 +517,6 @@ function VideoConferenceComponent(props: {
                 onClose: () => setPermissionOpened(false),
               });
             }
-            // if (!permissionOpened) {
-            //   setPermissionOpened(true);
-
-            // }
             break;
           case MediaDeviceFailure.Other:
             props.messageApi.error(t('msg.error.device.other'));

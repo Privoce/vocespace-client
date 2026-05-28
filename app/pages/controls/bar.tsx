@@ -2,14 +2,13 @@ import { useI18n } from '@/lib/i18n/i18n';
 import {
   DisconnectButton,
   LeaveIcon,
-  MediaDeviceMenu,
   TrackToggle,
   useLocalParticipantPermissions,
   useMaybeLayoutContext,
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { Button, Drawer, Input, message, Modal } from 'antd';
+import { Button, Drawer, Input, message, Modal, Popover } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
@@ -27,7 +26,7 @@ import { isMobile as is_mobile, isSpaceManager, UserStatus } from '@/lib/std';
 import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';
 import { ChatToggle } from './toggles/chat_toggle';
 import { MoreButton } from './toggles/more_button';
-import { ControlType, WsBase, WsControlParticipant, WsTo } from '@/lib/std/device';
+import { ControlType, MediaDeviceKind, WsBase, WsControlParticipant, WsTo } from '@/lib/std/device';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from './drawer_tools';
 import { ParticipantManage } from '../participant/manage';
 import { api } from '@/lib/api';
@@ -40,6 +39,7 @@ import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/
 import { DEFAULT_WINDOW_ADJUST_WIDTH } from '@/lib/std/window';
 import { usePlatformUserInfo } from '@/lib/hooks/platform';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
+import { DevicesSelector } from '@/app/api/devices/device_selector';
 
 /** @public */
 export type ControlBarControls = {
@@ -209,6 +209,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const browserSupportsScreenSharing = supportsScreenSharing();
 
     const [isScreenShareEnabled, setIsScreenShareEnabled] = React.useState(false);
+    const [audioMenuOpen, setAudioMenuOpen] = React.useState(false);
+    const [videoMenuOpen, setVideoMenuOpen] = React.useState(false);
 
     const onScreenShareChange = React.useCallback(
       (enabled: boolean) => {
@@ -227,6 +229,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       saveVideoInputDeviceId,
       saveUsername,
     } = usePersistentUserChoices({ preventSave: !saveUserChoices });
+    const space = useMaybeRoomContext();
 
     const microphoneOnChange = React.useCallback(
       (enabled: boolean, isUserInitiated: boolean) =>
@@ -240,8 +243,11 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       [saveVideoInputEnabled],
     );
 
+    const renderDeviceMenuTrigger = React.useCallback(() => {
+      return <button className="lk-button lk-button-menu" type="button" aria-label="devices" />;
+    }, []);
+
     // settings ------------------------------------------------------------------------------------------
-    const space = useMaybeRoomContext();
     const { showAI } = usePlatformUserInfo({
       space,
       uid: space?.localParticipant.identity,
@@ -667,13 +673,30 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                 {showText && t('common.device.microphone')}
               </TrackToggle>
               <div className="lk-button-group-menu">
-                <MediaDeviceMenu
-                  style={{ height: 46, padding: controlSize === 'small' ? 7 : 15 }}
-                  kind="audioinput"
-                  onActiveDeviceChange={(_kind, deviceId) =>
-                    saveAudioInputDeviceId(deviceId ?? 'default')
+                <Popover
+                  trigger="click"
+                  open={audioMenuOpen}
+                  onOpenChange={setAudioMenuOpen}
+                  content={
+                    <DevicesSelector
+                      enabled={audioMenuOpen}
+                      kind={MediaDeviceKind.AudioInput}
+                      preferredDeviceId={userChoices.audioDeviceId}
+                      requestPermissions
+                      err={(error) => {
+                        setPermissionDevice(Track.Source.Microphone);
+                        onDeviceError?.({ source: Track.Source.Microphone, error });
+                      }}
+                      onDeviceChanged={(deviceId) => {
+                        saveAudioInputDeviceId(deviceId ?? 'default');
+                        setAudioMenuOpen(false);
+                      }}
+                    />
                   }
-                />
+                  placement="top"
+                >
+                  {renderDeviceMenuTrigger()}
+                </Popover>
               </div>
             </div>
           )}
@@ -692,13 +715,30 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                 {showText && t('common.device.camera')}
               </TrackToggle>
               <div className="lk-button-group-menu">
-                <MediaDeviceMenu
-                  style={{ height: 46, padding: controlSize === 'small' ? 7 : 15 }}
-                  kind="videoinput"
-                  onActiveDeviceChange={(_kind, deviceId) =>
-                    saveVideoInputDeviceId(deviceId ?? 'default')
+                <Popover
+                  trigger="click"
+                  open={videoMenuOpen}
+                  onOpenChange={setVideoMenuOpen}
+                  content={
+                    <DevicesSelector
+                      enabled={videoMenuOpen}
+                      kind={MediaDeviceKind.VideoInput}
+                      preferredDeviceId={userChoices.videoDeviceId}
+                      requestPermissions
+                      err={(error) => {
+                        setPermissionDevice(Track.Source.Camera);
+                        onDeviceError?.({ source: Track.Source.Camera, error });
+                      }}
+                      onDeviceChanged={(deviceId) => {
+                        saveVideoInputDeviceId(deviceId ?? 'default');
+                        setVideoMenuOpen(false);
+                      }}
+                    />
                   }
-                />
+                  placement="top"
+                >
+                  {renderDeviceMenuTrigger()}
+                </Popover>
               </div>
             </div>
           )}
