@@ -747,7 +747,7 @@ export const ParticipantItem: (
                                 ></Slider>
                               }
                             >
-                              <div style={{margin: "auto 4px", cursor: 'pointer'}}><SvgResource type="volume" svgSize={18}></SvgResource></div>
+                              <div style={{margin: "auto 4px", cursor: 'pointer'}}><SvgResource type="volume" svgSize={20}></SvgResource></div>
                             </Popover>
                           )}
                         </div>

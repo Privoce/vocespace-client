@@ -341,12 +341,12 @@ function VideoConferenceComponent(props: {
   const keyProvider = new ExternalE2EEKeyProvider();
   const [e2eeSetupComplete, setE2eeSetupComplete] = React.useState(false);
   const [roomState, setRoomState] = useRecoilState(roomStatusState);
-  const [permissionOpened, setPermissionOpened] = useState(false);
   const [permissionModalVisible, setPermissionModalVisible] = useState(false);
   const [permissionRequested, setPermissionRequested] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
   const [permissionDevice, setPermissionDevice] = useState<Track.Source | null>(null);
   const [shouldConfirmLeave, setShouldConfirmLeave] = useState(false);
+  const permissionNoticeShownRef = React.useRef(false);
   const videoContainerRef = React.useRef<VideoContainerExports>(null);
   const resolutions = createRTCQulity(
     {
@@ -491,11 +491,12 @@ function VideoConferenceComponent(props: {
             break;
           case MediaDeviceFailure.PermissionDenied:
             if (
-              !permissionOpened &&
+              !permissionNoticeShownRef.current &&
+              !permissionModalVisible &&
               (permissionDevice === Track.Source.Camera ||
                 permissionDevice === Track.Source.Microphone)
             ) {
-              setPermissionOpened(true);
+              permissionNoticeShownRef.current = true;
               props.notApi.open({
                 duration: 3,
                 message: t('msg.error.device.permission_denied_title'),
@@ -507,14 +508,12 @@ function VideoConferenceComponent(props: {
                       size="small"
                       onClick={() => {
                         setPermissionModalVisible(true);
-                        setPermissionOpened(false);
                       }}
                     >
                       {t('msg.request.device.allow')}
                     </Button>
                   </Space>
                 ),
-                onClose: () => setPermissionOpened(false),
               });
             }
             break;
@@ -524,7 +523,7 @@ function VideoConferenceComponent(props: {
         }
       }
     },
-    [permissionDevice],
+    [permissionDevice, permissionModalVisible, props.messageApi, props.notApi, t],
   );
 
   // 请求权限的函数 - 将在用户点击按钮时直接触发
@@ -542,6 +541,7 @@ function VideoConferenceComponent(props: {
 
       // 权限已获取，通知用户
       props.messageApi.success(t('msg.success.device.granted'));
+      permissionNoticeShownRef.current = false;
 
       // 关闭模态框
       setPermissionModalVisible(false);
