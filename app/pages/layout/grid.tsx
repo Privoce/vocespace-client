@@ -1,4 +1,4 @@
-import { mergeProps } from '@/lib/std';
+import { isMobile, mergeProps } from '@/lib/std';
 import {
   GridLayoutProps,
   TrackLoop,
@@ -65,12 +65,13 @@ export function GLayout2({
   ...props
 }: GridLayoutProps & { players?: React.ReactNode[] }) {
   const gridEl = React.createRef<HTMLDivElement>();
+  const shouldForceTwoColumns = !isMobile() && !!players && players.length > 0 && tracks.length <= 2;
 
   const elementProps = React.useMemo(
     () =>
       mergeProps(props, {
         className: 'lk-grid-layout',
-        ...(players && players.length > 0 && tracks.length <= 2
+        ...(shouldForceTwoColumns
           ? {
               style: {
                 gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
@@ -78,7 +79,7 @@ export function GLayout2({
             }
           : {}),
       }),
-    [props, players],
+    [props, shouldForceTwoColumns],
   );
   const { layout } = useGridLayout(gridEl, tracks.length);
   const pagination = usePagination(layout.maxTiles, tracks);
