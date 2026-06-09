@@ -110,6 +110,14 @@ class SpaceManager {
   private static SPACE_DATE_RECORDS_KEY_PREFIX = 'space:date:records:';
   // 聊天记录 redis key 前缀
   private static CHAT_KEY_PREFIX = 'chat:';
+  // 心跳日志 redis key 前缀
+  private static HEARTBEAT_LOG_KEY_PREFIX = 'heartbeat:log:';
+  // 心跳日志最大保留条数
+  private static MAX_HEARTBEAT_LOGS = 200;
+  // 清理记录 redis key 前缀 (按日期存储)
+  private static CLEANUP_RECORD_KEY_PREFIX = 'cleanup:record:';
+  // 清理记录最大保留条数（每天）
+  private static MAX_CLEANUP_RECORDS_PER_DAY = 500;
 
   private static getChatKey(space: string): string {
     return `${this.CHAT_KEY_PREFIX}${space}`;
@@ -1134,6 +1142,157 @@ class SpaceManager {
       };
     }
   }
+
+  // 心跳日志相关方法 -----------------------------------------------------------------------
+  // 添加心跳日志
+  static async addHeartbeatLog(
+    message: string,
+    type: 'info' | 'warn' | 'error' = 'info',
+  ): Promise<void> {
+    try {
+      if (!redisClient) {
+        console.warn('Redis client not available, skipping heartbeat log');
+        return;
+      }
+
+      const key = `${this.HEARTBEAT_LOG_KEY_PREFIX}latest`;
+      const logEntry = {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: Date.now(),
+        message,
+        type,
+      };
+
+      // 使用 list 结构存储日志，左推入
+      await redisClient.lpush(key, JSON.stringify(logEntry));
+      // 保留最新的 MAX_HEARTBEAT_LOGS 条
+      await redisClient.ltrim(key, 0, this.MAX_HEARTBEAT_LOGS - 1);
+    } catch (error) {
+      console.error('Error adding heartbeat log:', error);
+    }
+  }
+
+  // 获取心跳日志
+  static async getHeartbeatLogs(limit: number = 100): Promise<any[]> {
+    try {
+      if (!redisClient) {
+        return [];
+      }
+
+      const key = `${this.HEARTBEAT_LOG_KEY_PREFIX}latest`;
+      const logs = await redisClient.lrange(key, 0, limit - 1);
+
+      return logs.map((logStr) => {
+        const log = JSON.parse(logStr);
+        // 将时间戳转换为 Date 对象
+        log.timestamp = new Date(log.timestamp);
+        return log;
+      });
+    } catch (error) {
+      console.error('Error getting heartbeat logs:', error);
+      return [];
+    }
+  }
+
+  // 清空心跳日志
+  static async clearHeartbeatLogs(): Promise<boolean> {
+    try {
+      if (!redisClient) {
+        return false;
+      }
+
+      const key = `${this.HEARTBEAT_LOG_KEY_PREFIX}latest`;
+      await redisClient.del(key);
+      return true;
+    } catch (error) {
+      console.error('Error clearing heartbeat logs:', error);
+      return false;
+    }
+  }
+
+  // 清理记录相关方法 -----------------------------------------------------------------------
+  // 添加清理记录
+  static async addCleanupRecord(
+    roomName: string,
+    userCount: number,
+    strategy: 'ghost_room' | 'redis_no_livekit',
+  ): Promise<void> {
+    try {
+      if (!redisClient) {
+        console.warn('Redis client not available, skipping cleanup record');
+        return;
+      }
+
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      const key = `${this.CLEANUP_RECORD_KEY_PREFIX}${today}`;
+      const record = {
+        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        timestamp: Date.now(),
+        roomName,
+        userCount,
+        strategy,
+      };
+
+      // 使用 list 结构存储记录，左推入
+      await redisClient.lpush(key, JSON.stringify(record));
+      // 保留最新的 MAX_CLEANUP_RECORDS_PER_DAY 条
+      await redisClient.ltrim(key, 0, this.MAX_CLEANUP_RECORDS_PER_DAY - 1);
+    } catch (error) {
+      console.error('Error adding cleanup record:', error);
+    }
+  }
+
+  // 获取今日清理记录
+  static async getTodayCleanupRecords(page: number = 1, pageSize: number = 10): Promise<{
+    records: any[];
+    total: number;
+  }> {
+    try {
+      if (!redisClient) {
+        return { records: [], total: 0 };
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      const key = `${this.CLEANUP_RECORD_KEY_PREFIX}${today}`;
+
+      // 获取所有记录
+      const allRecords = await redisClient.lrange(key, 0, -1);
+      const total = allRecords.length;
+
+      // 分页
+      const start = (page - 1) * pageSize;
+      const end = start + pageSize - 1;
+      const pageRecords = allRecords.slice(start, end + 1);
+
+      const records = pageRecords.map((recordStr) => {
+        const record = JSON.parse(recordStr);
+        record.timestamp = new Date(record.timestamp);
+        return record;
+      });
+
+      return { records, total };
+    } catch (error) {
+      console.error('Error getting cleanup records:', error);
+      return { records: [], total: 0 };
+    }
+  }
+
+  // 清空今日清理记录
+  static async clearTodayCleanupRecords(): Promise<boolean> {
+    try {
+      if (!redisClient) {
+        return false;
+      }
+
+      const today = new Date().toISOString().split('T')[0];
+      const key = `${this.CLEANUP_RECORD_KEY_PREFIX}${today}`;
+      await redisClient.del(key);
+      return true;
+    } catch (error) {
+      console.error('Error clearing cleanup records:', error);
+      return false;
+    }
+  }
 }
 
 let userHeartbeatInterval: NodeJS.Timeout | null = null;
@@ -1148,6 +1307,33 @@ export async function GET(request: NextRequest) {
   const isHistory = request.nextUrl.searchParams.get('history') === 'true';
   const isCreateSpace = request.nextUrl.searchParams.get('space') === 'create';
   const isHeartbeat = request.nextUrl.searchParams.get('heartbeat') === 'true';
+  const isHeartbeatLog = request.nextUrl.searchParams.get('heartbeatLog') === 'true';
+  const isClearHeartbeatLog = request.nextUrl.searchParams.get('clearHeartbeatLog') === 'true';
+  const isCleanupRecords = request.nextUrl.searchParams.get('cleanupRecords') === 'true';
+  const isClearCleanupRecords = request.nextUrl.searchParams.get('clearCleanupRecords') === 'true';
+  // 获取心跳日志 --------------------------------------------------------------------------
+  if (isHeartbeatLog) {
+    const limit = parseInt(request.nextUrl.searchParams.get('limit') || '100', 10);
+    const logs = await SpaceManager.getHeartbeatLogs(limit);
+    return NextResponse.json({ logs }, { status: 200 });
+  }
+  // 清空心跳日志 --------------------------------------------------------------------------
+  if (isClearHeartbeatLog) {
+    const success = await SpaceManager.clearHeartbeatLogs();
+    return NextResponse.json({ success }, { status: 200 });
+  }
+  // 获取今日清理记录 ----------------------------------------------------------------------
+  if (isCleanupRecords) {
+    const page = parseInt(request.nextUrl.searchParams.get('page') || '1', 10);
+    const pageSize = parseInt(request.nextUrl.searchParams.get('pageSize') || '10', 10);
+    const { records, total } = await SpaceManager.getTodayCleanupRecords(page, pageSize);
+    return NextResponse.json({ records, total, page, pageSize }, { status: 200 });
+  }
+  // 清空今日清理记录 ----------------------------------------------------------------------
+  if (isClearCleanupRecords) {
+    const success = await SpaceManager.clearTodayCleanupRecords();
+    return NextResponse.json({ success }, { status: 200 });
+  }
   // 心跳接口，检查房间是否存在和用户是否在线 ------------------------------------------------------
   if (isHeartbeat) {
     if (!userHeartbeatInterval) {
@@ -2109,69 +2295,183 @@ const reallyLeaveSpace = async (spaceName: string, participantId: string): Promi
 // 经过测试，发现当用户退出房间时可能会失败，导致用户实际已经退出，但服务端数据还存在
 // 增加心跳检测，定时检查用户是否在线，若用户已经离线，需要从房间中进行移除, 依赖livekit server api
 const userHeartbeat = async () => {
+  const startTime = Date.now();
   console.log('Running user heartbeat check...');
+  await SpaceManager.addHeartbeatLog('开始执行用户心跳检测...', 'info');
+
   try {
     if (
       isUndefinedString(LIVEKIT_API_KEY) ||
       isUndefinedString(LIVEKIT_API_SECRET) ||
       isUndefinedString(LIVEKIT_URL)
     ) {
+      console.warn("URL: ", LIVEKIT_URL);
       console.warn('LiveKit API credentials are not set, skipping user heartbeat check.');
+      await SpaceManager.addHeartbeatLog('LiveKit API 配置未设置，跳过心跳检测', 'warn');
       return;
     }
+
     let hostname = LIVEKIT_URL!.replace('wss', 'https').replace('ws', 'http');
     const roomServer = new RoomServiceClient(hostname, LIVEKIT_API_KEY!, LIVEKIT_API_SECRET!);
-    // 列出所有房间
-    const currentRooms = await roomServer.listRooms();
-    for (const room of currentRooms) {
-      // 列出房间中所有的参与者，然后和redis中的参与者进行对比
+    
+    // 获取 LiveKit 中的所有房间
+    const lkRooms = await roomServer.listRooms();
+    const lkRoomNames = new Set(lkRooms.map((r) => r.name));
+    await SpaceManager.addHeartbeatLog(`LiveKit 中有 ${lkRooms.length} 个活跃房间`, 'info');
+
+    // 获取 Redis 中的所有房间
+    const redisRooms = await SpaceManager.getAllSpaces();
+    const redisRoomNames = Object.keys(redisRooms);
+    await SpaceManager.addHeartbeatLog(`Redis 中有 ${redisRoomNames.length} 个房间`, 'info');
+
+    let totalRemoved = 0;
+    let totalReInit = 0;
+    let totalGhostRooms = 0;
+
+    // 场景1: 清理 Redis 中存在但 LiveKit 中不存在的幽灵房间
+    const ghostRooms = redisRoomNames.filter((name) => !lkRoomNames.has(name));
+    if (ghostRooms.length > 0) {
+      await SpaceManager.addHeartbeatLog(
+        `发现 ${ghostRooms.length} 个幽灵房间 (Redis有但LiveKit无): [${ghostRooms.join(', ')}]`,
+        'warn',
+      );
+
+      for (const roomName of ghostRooms) {
+        const redisRoom = redisRooms[roomName];
+        const participantCount = Object.keys(redisRoom.participants).length;
+        await SpaceManager.addHeartbeatLog(
+          `清理幽灵房间 [${roomName}]，包含 ${participantCount} 个参与者`,
+          'warn',
+        );
+
+        // 删除整个房间
+        try {
+          await SpaceManager.deleteSpace(roomName, Date.now());
+          await SpaceManager.addHeartbeatLog(
+            `✓ 已删除幽灵房间: ${roomName}`,
+            'info',
+          );
+          // 记录清理数据
+          await SpaceManager.addCleanupRecord(roomName, participantCount, 'ghost_room');
+          totalGhostRooms++;
+          totalRemoved += participantCount;
+        } catch (deleteError) {
+          await SpaceManager.addHeartbeatLog(
+            `✗ 删除幽灵房间 ${roomName} 失败: ${deleteError instanceof Error ? deleteError.message : '未知错误'}`,
+            'error',
+          );
+        }
+      }
+    }
+
+    // 场景2: 处理 LiveKit 和 Redis 都存在的房间，对比参与者
+    for (const room of lkRooms) {
       const roomParticipants = await roomServer.listParticipants(room.name);
       const redisRoom = await SpaceManager.getSpaceInfo(room.name);
       if (!redisRoom) {
-        continue; // 如果redis中没有这个房间，跳过 (本地开发环境和正式环境使用的redis不同，但服务器是相同的)
+        await SpaceManager.addHeartbeatLog(
+          `房间 [${room.name}] 在 Redis 中不存在，跳过`,
+          'warn',
+        );
+        continue;
       }
-      const redisParticipants = Object.keys(redisRoom.participants);
-      // 有两种情况: 1. redis中有参与者但livekit中没有, 2. livekit中有参与者但redis中没有
-      // 情况1: 说明参与者已经离开了房间，但redis中没有清除，需要从redis中删除
-      // 情况2: 说明参与者实际是在房间中的，但是redis中没有初始化成功，这时候就需要告知参与者进行初始化 (socket.io)
 
-      // 首先获取两种情况的参与者
+      const redisParticipants = Object.keys(redisRoom.participants);
+      
+      // 打印调试信息
+      const lkIdentities = roomParticipants.map((p) => p.identity);
+      await SpaceManager.addHeartbeatLog(
+        `房间 [${room.name}] - LiveKit 参与者: [${lkIdentities.join(', ')}]`,
+        'info',
+      );
+      await SpaceManager.addHeartbeatLog(
+        `房间 [${room.name}] - Redis 参与者: [${redisParticipants.join(', ')}]`,
+        'info',
+      );
+
+      // 找出 Redis 中有但 LiveKit 中没有的参与者（已离线）
       const inRedisNotInLK = redisParticipants.filter((p) => {
         return !roomParticipants.some((lkParticipant) => lkParticipant.identity === p);
       });
 
+      // 找出 LiveKit 中有但 Redis 中没有的参与者（需要重新初始化）
       const inLKNotInRedis = roomParticipants.filter((lkParticipant) => {
         return !redisParticipants.includes(lkParticipant.identity);
       });
-      // 处理情况1 --------------------------------------------------------------------------------------------
+
+      await SpaceManager.addHeartbeatLog(
+        `房间 [${room.name}] - 需要清理 (Redis有但LiveKit无): [${inRedisNotInLK.join(', ')}]`,
+        'info',
+      );
+      await SpaceManager.addHeartbeatLog(
+        `房间 [${room.name}] - 需要重新初始化 (LiveKit有但Redis无): [${inLKNotInRedis.map((p) => p.identity).join(', ')}]`,
+        'info',
+      );
+
+      // 清理离线用户
       if (inRedisNotInLK.length > 0) {
-        // 这里直接使用removeParticipant接口进行处理，无需进行额外持久化房间等判断，因为这个接口内部已经有相关逻辑了
+        await SpaceManager.addHeartbeatLog(
+          `房间 [${room.name}] 发现 ${inRedisNotInLK.length} 个离线用户需要清理: ${inRedisNotInLK.join(', ')}`,
+          'warn',
+        );
+
         for (const participantId of inRedisNotInLK) {
-          await SpaceManager.removeParticipant(room.name, participantId);
+          try {
+            await SpaceManager.removeParticipant(room.name, participantId);
+            const participantName = redisRoom.participants[participantId]?.name || participantId;
+            await SpaceManager.addHeartbeatLog(
+              `✓ 已从房间 [${room.name}] 移除离线用户: ${participantName} (${participantId})`,
+              'info',
+            );
+            totalRemoved++;
+          } catch (removeError) {
+            await SpaceManager.addHeartbeatLog(
+              `✗ 移除用户 ${participantId} 失败: ${removeError instanceof Error ? removeError.message : '未知错误'}`,
+              'error',
+            );
+          }
         }
+        // 记录清理数据（有Redis无LiveKit的参与者）
+        await SpaceManager.addCleanupRecord(room.name, inRedisNotInLK.length, 'redis_no_livekit');
       }
 
-      // 处理情况2 --------------------------------------------------------------------------------------------
+      // 重新初始化用户
       if (inLKNotInRedis.length > 0) {
+        const identities = inLKNotInRedis.map((p) => p.identity).join(', ');
+        await SpaceManager.addHeartbeatLog(
+          `房间 [${room.name}] 发现 ${inLKNotInRedis.length} 个用户需要重新初始化: ${identities}`,
+          'warn',
+        );
+
         for (const participant of inLKNotInRedis) {
           socket.emit('re_init', {
             space: room.name,
             participantId: participant.identity,
           } as WsParticipant);
+          await SpaceManager.addHeartbeatLog(
+            `✓ 已发送重新初始化请求给用户: ${participant.identity}`,
+            'info',
+          );
+          totalReInit++;
         }
       }
+
+      if (inRedisNotInLK.length === 0 && inLKNotInRedis.length === 0) {
+        await SpaceManager.addHeartbeatLog(
+          `房间 [${room.name}] 状态正常，无需处理`,
+          'info',
+        );
+      }
     }
+
+    const duration = ((Date.now() - startTime) / 1000).toFixed(2);
+    const summary = `心跳检测完成: 耗时 ${duration}s, 清理 ${totalGhostRooms} 个幽灵房间, 清理 ${totalRemoved} 个离线用户, 重新初始化 ${totalReInit} 个用户`;
+    await SpaceManager.addHeartbeatLog(summary, 'info');
+    console.log(summary);
   } catch (error) {
+    const errorMsg = `心跳检测出错: ${error instanceof Error ? error.message : '未知错误'}`;
     console.error('Error in userHeartbeat:', error);
+    await SpaceManager.addHeartbeatLog(errorMsg, 'error');
     // 网络错误或LiveKit服务器不可达时，记录错误但不中断定时任务
   }
 };
-
-// 测试发现该代码无法自动执行，所以改为在server.js中在程序启动时执行一次然后进行定时执行
-// // 定时任务，每隔5分钟执行一次
-// setInterval(
-//   async () => {
-//     await userHeartbeat();
-//   },
-//   5 * 1000,
-// ); // 每5分钟执行一次
