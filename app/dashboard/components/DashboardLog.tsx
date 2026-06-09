@@ -42,8 +42,8 @@ const LOG_BADGE_STATUS: Record<LogType, 'success' | 'warning' | 'error' | 'defau
 };
 
 const STRATEGY_LABELS: Record<CleanupRecord['strategy'], string> = {
-  ghost_room: '幽灵房间',
-  redis_no_livekit: '有Redis无LiveKit',
+  ghost_room: 'dashboard.log.strategy.ghost_room',
+  redis_no_livekit: 'dashboard.log.strategy.redis_no_livekit',
 };
 
 const getBaseUrl = () => connect_endpoint('/api/space');
@@ -186,20 +186,20 @@ export const DashboardLog: React.FC<DashboardLogProps> = ({
   // 清理记录表格列定义
   const cleanupColumns: ColumnsType<CleanupRecord> = [
     {
-      title: '时间',
+      title: t('dashboard.log.columns.time'),
       dataIndex: 'timestamp',
       key: 'timestamp',
       width: 120,
       render: (timestamp: Date) => formatTime(timestamp),
     },
     {
-      title: '清理的房间',
+      title: t('dashboard.log.columns.room'),
       dataIndex: 'roomName',
       key: 'roomName',
       ellipsis: true,
     },
     {
-      title: '清理用户数',
+      title: t('dashboard.log.columns.user_count'),
       dataIndex: 'userCount',
       key: 'userCount',
       width: 100,
@@ -207,18 +207,18 @@ export const DashboardLog: React.FC<DashboardLogProps> = ({
       sorter: (a, b) => a.userCount - b.userCount,
     },
     {
-      title: '清理策略',
+      title: t('dashboard.log.columns.strategy'),
       dataIndex: 'strategy',
       key: 'strategy',
       width: 150,
       render: (strategy: CleanupRecord['strategy']) => (
         <Tag color={strategy === 'ghost_room' ? 'orange' : 'blue'}>
-          {STRATEGY_LABELS[strategy]}
+          {t(STRATEGY_LABELS[strategy])}
         </Tag>
       ),
       filters: [
-        { text: '幽灵房间', value: 'ghost_room' },
-        { text: '有Redis无LiveKit', value: 'redis_no_livekit' },
+        { text: t('dashboard.log.strategy.ghost_room'), value: 'ghost_room' },
+        { text: t('dashboard.log.strategy.redis_no_livekit'), value: 'redis_no_livekit' },
       ],
       onFilter: (value, record) => record.strategy === String(value),
     },
@@ -228,18 +228,18 @@ export const DashboardLog: React.FC<DashboardLogProps> = ({
     <>
       {/* 清理记录表格 */}
       <Card
-        title="今日清理记录"
+        title={t('dashboard.log.cleanup_title')}
         extra={
           <Space>
             <Button size="small" onClick={() => fetchCleanupRecords(cleanupPage)}>
-              Refresh
+              {t('dashboard.log.refresh')}
             </Button>
             <Button
               size="small"
               onClick={clearCleanupRecords}
               disabled={cleanupRecords.length === 0}
             >
-              Clear
+              {t('dashboard.log.clear')}
             </Button>
           </Space>
         }
@@ -256,9 +256,9 @@ export const DashboardLog: React.FC<DashboardLogProps> = ({
             total: cleanupTotal,
             onChange: (page) => fetchCleanupRecords(page),
             showSizeChanger: false,
-            showTotal: (total) => `共 ${total} 条`,
+            showTotal: (total) => t('dashboard.log.pagination_total', { total }),
           }}
-          locale={{ emptyText: '暂无清理记录' }}
+          locale={{ emptyText: t('dashboard.log.no_cleanup') }}
           size="small"
         />
       </Card>
@@ -267,7 +267,7 @@ export const DashboardLog: React.FC<DashboardLogProps> = ({
       <Card
         title={
           <Space>
-            {title || t('dashboard.log.title') || 'Heartbeat Logs'}
+            {title || t('dashboard.log.title')}
             {latestLog && (
               <Badge
                 status={LOG_BADGE_STATUS[latestLog.type]}
@@ -284,17 +284,17 @@ export const DashboardLog: React.FC<DashboardLogProps> = ({
         extra={
           <Space>
             <Button size="small" loading={loading} onClick={fetchLogs}>
-              Refresh
+              {t('dashboard.log.refresh')}
             </Button>
             <Button
               size="small"
               onClick={() => setAutoScroll(!autoScroll)}
               type={autoScroll ? 'primary' : 'default'}
             >
-              {autoScroll ? 'Auto Scroll ON' : 'Auto Scroll OFF'}
+              {autoScroll ? t('dashboard.log.auto_scroll_on') : t('dashboard.log.auto_scroll_off')}
             </Button>
             <Button size="small" onClick={clearLogs} disabled={logs.length === 0}>
-              Clear
+              {t('dashboard.log.clear')}
             </Button>
           </Space>
         }
@@ -315,7 +315,7 @@ export const DashboardLog: React.FC<DashboardLogProps> = ({
         >
           {logs.length === 0 ? (
             <div style={{ color: '#666', textAlign: 'center', padding: '20px 0' }}>
-              {loading ? 'Loading...' : 'No logs yet'}
+              {loading ? t('dashboard.log.loading') : t('dashboard.log.no_logs')}
             </div>
           ) : (
             logs.map((log) => (

@@ -45,7 +45,7 @@ export const ActiveSpacesSection: React.FC<ActiveSpacesSectionProps> = ({
       render: (name: string, record) => (
         <Space align="center">
           <span>{name}</span>
-          {record.isOwner && '(host)'}
+          {record.isOwner && t('dashboard.host_label')}
           {record.isRecording && (
             <SvgResource type="record" svgSize={16} color="#ffffff"></SvgResource>
           )}
@@ -57,7 +57,7 @@ export const ActiveSpacesSection: React.FC<ActiveSpacesSectionProps> = ({
       dataIndex: 'status',
       key: 'status',
       width: 120,
-      render: (status: boolean) => <span>{status ? 'Online' : 'Offline'}</span>,
+      render: (status: boolean) => <span>{status ? t('dashboard.status.online') : t('dashboard.status.offline')}</span>,
     },
     {
       title: (

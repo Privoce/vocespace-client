@@ -68,7 +68,7 @@ export const DashboardActions: React.FC<DashboardActionsProps> = ({
           ]}
         ></Select>
         <Button type="primary" loading={loading} onClick={onProceed}>
-          Proceed
+          {t('dashboard.proceed')}
         </Button>
       </div>
     </Card>

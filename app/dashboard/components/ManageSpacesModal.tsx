@@ -109,10 +109,10 @@ export const ManageSpacesModal: React.FC<ManageSpacesModalProps> = ({
             loading={manageLoading}
             pagination={{ pageSize: 8 }}
             columns={[
-              { title: 'Space', dataIndex: 'space', key: 'space', width: 200 },
-              { title: 'Owner', dataIndex: 'ownerName', key: 'ownerName', width: 140 },
+              { title: t('dashboard.manage.space'), dataIndex: 'space', key: 'space', width: 200 },
+              { title: t('dashboard.manage.owner'), dataIndex: 'ownerName', key: 'ownerName', width: 140 },
               {
-                title: 'Actions',
+                title: t('dashboard.manage.actions'),
                 fixed: 'right',
                 key: 'actions',
                 render: (_: any, record: any) => (
@@ -159,7 +159,7 @@ export const ManageSpacesModal: React.FC<ManageSpacesModalProps> = ({
               <div style={{ minWidth: 120 }}>{editingOwnerSpace}</div>
               <Select
                 style={{ minWidth: 240 }}
-                placeholder="new owner"
+                placeholder={t('dashboard.manage.new_owner_placeholder')}
                 value={selectedNewOwner || undefined}
                 onChange={(val) => onSelectedNewOwnerChange(val)}
               >

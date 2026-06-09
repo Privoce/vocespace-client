@@ -568,18 +568,18 @@ export default function Dashboard() {
         records = r.records;
       }
 
-      let md = `- 空间: ${spaceName}\n`;
-      md += `- 子房间:\n`;
+      let md = `- ${t('dashboard.export.space_label')}: ${spaceName}\n`;
+      md += `- ${t('dashboard.export.children_label')}:\n`;
       if (spaceInfo.children && spaceInfo.children.length > 0) {
         for (const child of spaceInfo.children) {
           const users = child.participants.join(', ');
           md += `    - ${child.name}: ${users}\n`;
         }
       } else {
-        md += '    - 无\n';
+        md += `    - ${t('dashboard.export.none')}\n`;
       }
 
-      md += `- 用户:\n`;
+      md += `- ${t('dashboard.export.users_label')}:\n`;
       if (records && records[spaceName]) {
         const participants = records[spaceName].participants || {};
         for (const [pname, precords] of Object.entries(participants)) {
@@ -705,15 +705,15 @@ export default function Dashboard() {
   const menuItems = [
     {
       key: 'home',
-      label: '首页',
+      label: t('dashboard.menu.home'),
     },
     {
       key: 'history',
-      label: '历史记录',
+      label: t('dashboard.menu.history'),
     },
     {
       key: 'log',
-      label: '日志',
+      label: t('dashboard.menu.log'),
     },
   ];
 
@@ -738,7 +738,7 @@ export default function Dashboard() {
           <LangSelect></LangSelect>
         </div>
         <div style={{ marginBottom: 16 }}>
-          <Title level={2}>VoceSpace Dashboard</Title>
+          <Title level={2}>{t('dashboard.title')}</Title>
           <DashboardStats
             totalSpaces={totalSpaces}
             totalParticipants={totalParticipants}
@@ -781,7 +781,7 @@ export default function Dashboard() {
           </>
         )}
 
-        {menuTab === 'log' && <DashboardLog title={"Space Cleanup Log"}></DashboardLog>}
+        {menuTab === 'log' && <DashboardLog title={t('dashboard.log.title')}></DashboardLog>}
 
         <GlobalConfModal
           open={openConf}
