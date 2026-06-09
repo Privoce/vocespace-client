@@ -647,7 +647,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         {...htmlProps}
         className={styles.controls}
         style={{
-          marginBottom: 'auto',
+          marginBottom: isMobile ? 'auto' :  4,
         }}
       >
         {contextHolder}

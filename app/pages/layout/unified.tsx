@@ -74,8 +74,9 @@ export interface UnifiedLayoutState<TEntity extends LayoutEntity = LayoutEntity>
   prevPage: () => void;
 }
 
-export interface UnifiedLayoutProps<TEntity extends LayoutEntity = LayoutEntity>
-  extends React.HTMLAttributes<HTMLDivElement> {
+export interface UnifiedLayoutProps<
+  TEntity extends LayoutEntity = LayoutEntity,
+> extends React.HTMLAttributes<HTMLDivElement> {
   entities: TEntity[];
   focusEntity?: TEntity | null;
   layoutType?: 'grid' | 'focus';
@@ -89,10 +90,7 @@ export interface UnifiedLayoutProps<TEntity extends LayoutEntity = LayoutEntity>
   enableFlip?: boolean;
   transitionDuration?: number;
   transitionEasing?: string;
-  renderEntity: (
-    entity: TEntity,
-    state: UnifiedLayoutRenderState<TEntity>,
-  ) => React.ReactNode;
+  renderEntity: (entity: TEntity, state: UnifiedLayoutRenderState<TEntity>) => React.ReactNode;
   renderOverlay?: (state: UnifiedLayoutState<TEntity>) => React.ReactNode;
   renderEmpty?: React.ReactNode | (() => React.ReactNode);
   onPageChange?: (page: number) => void;
@@ -155,7 +153,9 @@ export class LayoutComputer<TEntity extends LayoutEntity = LayoutEntity> {
 
     if (this.fullScreen) {
       const fullScreenEntity =
-        activeFocusEntity ?? this.getEntitiesForCurrentPage(this.entities, 1)[0] ?? this.entities[0];
+        activeFocusEntity ??
+        this.getEntitiesForCurrentPage(this.entities, 1)[0] ??
+        this.entities[0];
       this.layoutNodes = fullScreenEntity
         ? [
             {
@@ -501,7 +501,9 @@ export class LayoutComputer<TEntity extends LayoutEntity = LayoutEntity> {
       return null;
     }
 
-    const matchedEntity = this.entities.find((entity) => this.isSameEntity(entity, currentFocusEntity));
+    const matchedEntity = this.entities.find((entity) =>
+      this.isSameEntity(entity, currentFocusEntity),
+    );
     if (!matchedEntity) {
       this.focusEntity = null;
       return null;
@@ -622,7 +624,10 @@ export interface UseReplaceLivekitTrackResult<
  * 这个 hook 不要求具体类型一定来自 LiveKit，只要求外部能提供稳定 id 提取函数。
  * 当 focusTrack 不在 tracks 列表中时，也可以选择追加进去，以适配被 pin 的 placeholder 场景。
  */
-export function useReplaceLivekitTrack<TTrack, TEntity extends LayoutEntity = LayoutEntity<TTrack>>({
+export function useReplaceLivekitTrack<
+  TTrack,
+  TEntity extends LayoutEntity = LayoutEntity<TTrack>,
+>({
   tracks,
   focusTrack = null,
   getTrackId,
@@ -694,14 +699,7 @@ function buildEntityStyle<TEntity extends LayoutEntity>(
     transitionEasing: string;
   },
 ): React.CSSProperties {
-  const {
-    width,
-    height,
-    hiddenScale,
-    enableFlip,
-    transitionDuration,
-    transitionEasing,
-  } = options;
+  const { width, height, hiddenScale, enableFlip, transitionDuration, transitionEasing } = options;
   const hiddenOffsetX = Math.max(width + LAYOUT_GAP * 2, 64);
   const hiddenOffsetY = Math.max(height + LAYOUT_GAP * 2, 64);
   const translateX = node?.x ?? hiddenOffsetX;
@@ -755,11 +753,11 @@ export function UnifiedLayout<TEntity extends LayoutEntity = LayoutEntity>({
   ...props
 }: UnifiedLayoutProps<TEntity>) {
   const containerRef = React.useRef<HTMLDivElement>(null);
-  const entityElementRefs = React.useRef(new Map<string, HTMLDivElement>());
-  const previousRectSnapshots = React.useRef(
-    new Map<string, { rect: DOMRect; visible: boolean }>(),
-  );
-  const activeAnimations = React.useRef(new Map<string, Animation>());
+  // const entityElementRefs = React.useRef(new Map<string, HTMLDivElement>());
+  // const previousRectSnapshots = React.useRef(
+  //   new Map<string, { rect: DOMRect; visible: boolean }>(),
+  // );
+  // const activeAnimations = React.useRef(new Map<string, Animation>());
   const { width, height } = useSize(containerRef);
   const isControlledPage = typeof page === 'number';
   const [internalPage, setInternalPage] = React.useState(defaultPage);
@@ -786,7 +784,17 @@ export function UnifiedLayout<TEntity extends LayoutEntity = LayoutEntity>({
       layoutType: computer.getLayoutType(),
       focusEntity: computer.getFocusEntity(),
     };
-  }, [currentPage, deviceType, entities, focusEntity, fullScreen, height, layoutType, pageSize, width]);
+  }, [
+    currentPage,
+    deviceType,
+    entities,
+    focusEntity,
+    fullScreen,
+    height,
+    layoutType,
+    pageSize,
+    width,
+  ]);
 
   const setPage = React.useCallback(
     (nextPage: number) => {
@@ -827,132 +835,132 @@ export function UnifiedLayout<TEntity extends LayoutEntity = LayoutEntity>({
     ? entities
     : computedLayout.nodes.map((node) => node.entity);
 
-  React.useLayoutEffect(() => {
-    if (!enableFlip || typeof window === 'undefined') {
-      const nextSnapshots = new Map<string, { rect: DOMRect; visible: boolean }>();
-      renderedEntities.forEach((entity) => {
-        const element = entityElementRefs.current.get(entity.id);
-        if (!element) return;
-        nextSnapshots.set(entity.id, {
-          rect: element.getBoundingClientRect(),
-          visible: nodeById.has(entity.id),
-        });
-      });
-      previousRectSnapshots.current = nextSnapshots;
-      return;
-    }
+  // React.useLayoutEffect(() => {
+  //   if (!enableFlip || typeof window === 'undefined') {
+  //     const nextSnapshots = new Map<string, { rect: DOMRect; visible: boolean }>();
+  //     renderedEntities.forEach((entity) => {
+  //       const element = entityElementRefs.current.get(entity.id);
+  //       if (!element) return;
+  //       nextSnapshots.set(entity.id, {
+  //         rect: element.getBoundingClientRect(),
+  //         visible: nodeById.has(entity.id),
+  //       });
+  //     });
+  //     previousRectSnapshots.current = nextSnapshots;
+  //     return;
+  //   }
 
-    const nextSnapshots = new Map<string, { rect: DOMRect; visible: boolean }>();
+  //   const nextSnapshots = new Map<string, { rect: DOMRect; visible: boolean }>();
 
-    renderedEntities.forEach((entity) => {
-      const element = entityElementRefs.current.get(entity.id);
-      if (!element) return;
+  //   renderedEntities.forEach((entity) => {
+  //     const element = entityElementRefs.current.get(entity.id);
+  //     if (!element) return;
 
-      const currentRect = element.getBoundingClientRect();
-      const isVisible = nodeById.has(entity.id);
-      const previousSnapshot = previousRectSnapshots.current.get(entity.id);
-      const activeAnimation = activeAnimations.current.get(entity.id);
+  //     const currentRect = element.getBoundingClientRect();
+  //     const isVisible = nodeById.has(entity.id);
+  //     const previousSnapshot = previousRectSnapshots.current.get(entity.id);
+  //     const activeAnimation = activeAnimations.current.get(entity.id);
 
-      activeAnimation?.cancel();
-      activeAnimations.current.delete(entity.id);
+  //     activeAnimation?.cancel();
+  //     activeAnimations.current.delete(entity.id);
 
-      const previousVisible = previousSnapshot?.visible ?? false;
-      const hasGeometryChange = !!previousSnapshot && (previousVisible || isVisible);
+  //     const previousVisible = previousSnapshot?.visible ?? false;
+  //     const hasGeometryChange = !!previousSnapshot && (previousVisible || isVisible);
 
-      if (hasGeometryChange && previousSnapshot) {
-        const deltaX = previousSnapshot.rect.left - currentRect.left;
-        const deltaY = previousSnapshot.rect.top - currentRect.top;
-        const scaleX = currentRect.width ? previousSnapshot.rect.width / currentRect.width : 1;
-        const scaleY = currentRect.height ? previousSnapshot.rect.height / currentRect.height : 1;
-        const fromOpacity = previousVisible ? 1 : 0;
-        const toOpacity = isVisible ? 1 : 0;
+  //     if (hasGeometryChange && previousSnapshot) {
+  //       const deltaX = previousSnapshot.rect.left - currentRect.left;
+  //       const deltaY = previousSnapshot.rect.top - currentRect.top;
+  //       const scaleX = currentRect.width ? previousSnapshot.rect.width / currentRect.width : 1;
+  //       const scaleY = currentRect.height ? previousSnapshot.rect.height / currentRect.height : 1;
+  //       const fromOpacity = previousVisible ? 1 : 0;
+  //       const toOpacity = isVisible ? 1 : 0;
 
-        if (
-          Math.abs(deltaX) > 0.5 ||
-          Math.abs(deltaY) > 0.5 ||
-          Math.abs(scaleX - 1) > 0.01 ||
-          Math.abs(scaleY - 1) > 0.01 ||
-          fromOpacity !== toOpacity
-        ) {
-          const animation = element.animate(
-            [
-              {
-                transform: `translate(${deltaX}px, ${deltaY}px) scale(${scaleX}, ${scaleY})`,
-                opacity: fromOpacity,
-              },
-              {
-                transform: 'translate(0px, 0px) scale(1, 1)',
-                opacity: toOpacity,
-              },
-            ],
-            {
-              duration: transitionDuration,
-              easing: transitionEasing,
-              fill: 'both',
-              composite: 'add',
-            },
-          );
+  //       if (
+  //         Math.abs(deltaX) > 0.5 ||
+  //         Math.abs(deltaY) > 0.5 ||
+  //         Math.abs(scaleX - 1) > 0.01 ||
+  //         Math.abs(scaleY - 1) > 0.01 ||
+  //         fromOpacity !== toOpacity
+  //       ) {
+  //         const animation = element.animate(
+  //           [
+  //             {
+  //               transform: `translate(${deltaX}px, ${deltaY}px) scale(${scaleX}, ${scaleY})`,
+  //               opacity: fromOpacity,
+  //             },
+  //             {
+  //               transform: 'translate(0px, 0px) scale(1, 1)',
+  //               opacity: toOpacity,
+  //             },
+  //           ],
+  //           {
+  //             duration: transitionDuration,
+  //             easing: transitionEasing,
+  //             fill: 'both',
+  //             composite: 'add',
+  //           },
+  //         );
 
-          animation.onfinish = () => {
-            if (activeAnimations.current.get(entity.id) === animation) {
-              activeAnimations.current.delete(entity.id);
-            }
-          };
-          animation.oncancel = () => {
-            if (activeAnimations.current.get(entity.id) === animation) {
-              activeAnimations.current.delete(entity.id);
-            }
-          };
+  //         animation.onfinish = () => {
+  //           if (activeAnimations.current.get(entity.id) === animation) {
+  //             activeAnimations.current.delete(entity.id);
+  //           }
+  //         };
+  //         animation.oncancel = () => {
+  //           if (activeAnimations.current.get(entity.id) === animation) {
+  //             activeAnimations.current.delete(entity.id);
+  //           }
+  //         };
 
-          activeAnimations.current.set(entity.id, animation);
-        }
-      } else if (isVisible) {
-        const animation = element.animate(
-          [
-            {
-              transform: `scale(${hiddenScale})`,
-              opacity: 0,
-            },
-            {
-              transform: 'scale(1)',
-              opacity: 1,
-            },
-          ],
-          {
-            duration: transitionDuration,
-            easing: transitionEasing,
-            fill: 'both',
-            composite: 'add',
-          },
-        );
+  //         activeAnimations.current.set(entity.id, animation);
+  //       }
+  //     } else if (isVisible) {
+  //       const animation = element.animate(
+  //         [
+  //           {
+  //             transform: `scale(${hiddenScale})`,
+  //             opacity: 0,
+  //           },
+  //           {
+  //             transform: 'scale(1)',
+  //             opacity: 1,
+  //           },
+  //         ],
+  //         {
+  //           duration: transitionDuration,
+  //           easing: transitionEasing,
+  //           fill: 'both',
+  //           composite: 'add',
+  //         },
+  //       );
 
-        animation.onfinish = () => {
-          if (activeAnimations.current.get(entity.id) === animation) {
-            activeAnimations.current.delete(entity.id);
-          }
-        };
-        animation.oncancel = () => {
-          if (activeAnimations.current.get(entity.id) === animation) {
-            activeAnimations.current.delete(entity.id);
-          }
-        };
+  //       animation.onfinish = () => {
+  //         if (activeAnimations.current.get(entity.id) === animation) {
+  //           activeAnimations.current.delete(entity.id);
+  //         }
+  //       };
+  //       animation.oncancel = () => {
+  //         if (activeAnimations.current.get(entity.id) === animation) {
+  //           activeAnimations.current.delete(entity.id);
+  //         }
+  //       };
 
-        activeAnimations.current.set(entity.id, animation);
-      }
+  //       activeAnimations.current.set(entity.id, animation);
+  //     }
 
-      nextSnapshots.set(entity.id, {
-        rect: currentRect,
-        visible: isVisible,
-      });
-    });
+  //     nextSnapshots.set(entity.id, {
+  //       rect: currentRect,
+  //       visible: isVisible,
+  //     });
+  //   });
 
-    previousRectSnapshots.current = nextSnapshots;
+  //   previousRectSnapshots.current = nextSnapshots;
 
-    return () => {
-      activeAnimations.current.forEach((animation) => animation.cancel());
-      activeAnimations.current.clear();
-    };
-  }, [enableFlip, hiddenScale, nodeById, renderedEntities, transitionDuration, transitionEasing]);
+  //   return () => {
+  //     activeAnimations.current.forEach((animation) => animation.cancel());
+  //     activeAnimations.current.clear();
+  //   };
+  // }, [enableFlip, hiddenScale, nodeById, renderedEntities, transitionDuration, transitionEasing]);
 
   const layoutState = React.useMemo<UnifiedLayoutState<TEntity>>(
     () => ({
@@ -997,13 +1005,13 @@ export function UnifiedLayout<TEntity extends LayoutEntity = LayoutEntity>({
         return (
           <div
             key={entity.id}
-            ref={(element) => {
-              if (element) {
-                entityElementRefs.current.set(entity.id, element);
-              } else {
-                entityElementRefs.current.delete(entity.id);
-              }
-            }}
+            // ref={(element) => {
+            //   if (element) {
+            //     entityElementRefs.current.set(entity.id, element);
+            //   } else {
+            //     entityElementRefs.current.delete(entity.id);
+            //   }
+            // }}
             data-layout-entity-id={entity.id}
             data-layout-area={renderState.area}
             data-layout-visible={renderState.isVisible}
@@ -1016,9 +1024,7 @@ export function UnifiedLayout<TEntity extends LayoutEntity = LayoutEntity>({
               transitionEasing,
             })}
           >
-            <div style={{ width: '100%', height: '100%' }}>
-              {renderEntity(entity, renderState)}
-            </div>
+            <div style={{ width: '100%', height: '100%' }}>{renderEntity(entity, renderState)}</div>
           </div>
         );
       })}

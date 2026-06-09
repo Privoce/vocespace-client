@@ -88,11 +88,7 @@ import { useFullScreenBtn } from './widgets/full_screen';
 import { exportRBAC, usePlatformUserInfo, usePlatformUserInfoCheap } from '@/lib/hooks/platform';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { TilePlayer, TilePlayerAdd, TilePlayerItem } from '../participant/player';
-import {
-  LayoutEntity,
-  UnifiedLayout,
-  useReplaceLivekitTrack,
-} from '../layout/unified';
+import { LayoutEntity, UnifiedLayout, useReplaceLivekitTrack } from '../layout/unified';
 import { PaginationControl, PaginationIndicator } from '../layout/cover';
 
 export interface VideoContainerProps extends VideoConferenceProps {
@@ -1363,38 +1359,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             : '100vw'
           : 'calc(100vw - 280px)';
     }, [collapsed, showSideChannel, isActive]);
-    const focusedTilePlayerNode = useMemo(() => {
-      if (!space?.name || !selfRoom || !focusedTilePlayerId) return null;
-
-      const focusedItem = tilePlayerItems.find((item) => item.id === focusedTilePlayerId);
-      if (!focusedItem) return null;
-
-      return (
-        <TilePlayer
-          spaceInfo={settings}
-          key={`focused_${focusedItem.id}`}
-          item={focusedItem}
-          spaceName={space.name}
-          room={selfRoom.name}
-          myIdentity={space.localParticipant.identity}
-          messageApi={messageApi}
-          focus={true}
-          afterFocus={(focus) => {
-            if (!focus) {
-              layoutContext?.pin.dispatch?.({
-                msg: 'clear_pin',
-              });
-            }
-          }}
-          onRemoved={async () => {
-            layoutContext?.pin.dispatch?.({
-              msg: 'clear_pin',
-            });
-            await fetchTilePlayers();
-          }}
-        />
-      );
-    }, [space?.name, selfRoom, focusedTilePlayerId, tilePlayerItems, fetchTilePlayers]);
 
     const { entities: trackEntities, focusEntity: focusedTrackEntity } = useReplaceLivekitTrack<
       TrackReferenceOrPlaceholder,
@@ -1411,6 +1375,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         label: track.participant?.identity,
         payload: track,
       }),
+      appendFocusTrack: !isTilePlayerFocused,
     });
 
     const tilePlayerEntities = useMemo((): VideoLayoutEntity[] => {
@@ -1436,34 +1401,32 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       ];
 
       tilePlayerItems.forEach((item) => {
-        const playerNode =
-          focusedTilePlayerId === item.id && focusedTilePlayerNode ? (
-            focusedTilePlayerNode
-          ) : (
-            <TilePlayer
-              spaceInfo={settings}
-              key={item.id}
-              item={item}
-              spaceName={space.name}
-              room={selfRoom.name}
-              myIdentity={space.localParticipant.identity}
-              messageApi={messageApi}
-              focus={focusedTilePlayerId === item.id}
-              afterFocus={(focus) => {
-                if (focus) {
-                  layoutContext?.pin.dispatch?.({
-                    msg: 'set_pin',
-                    trackReference: newPlayerTrack(space.name, item.id),
-                  });
-                } else {
-                  layoutContext?.pin.dispatch?.({
-                    msg: 'clear_pin',
-                  });
-                }
-              }}
-              onRemoved={fetchTilePlayers}
-            />
-          );
+        const isFocused = focusedTilePlayerId === item.id;
+        const playerNode = (
+          <TilePlayer
+            spaceInfo={settings}
+            key={item.id}
+            item={item}
+            spaceName={space.name}
+            room={selfRoom.name}
+            myIdentity={space.localParticipant.identity}
+            messageApi={messageApi}
+            focus={isFocused}
+            afterFocus={(focus) => {
+              if (focus) {
+                layoutContext?.pin.dispatch?.({
+                  msg: 'set_pin',
+                  trackReference: newPlayerTrack(space.name, item.id),
+                });
+              } else {
+                layoutContext?.pin.dispatch?.({
+                  msg: 'clear_pin',
+                });
+              }
+            }}
+            onRemoved={fetchTilePlayers}
+          />
+        );
 
         entities.push({
           id: `tile-player:${item.id}`,
@@ -1478,7 +1441,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     }, [
       fetchTilePlayers,
       focusedTilePlayerId,
-      focusedTilePlayerNode,
       layoutContext,
       messageApi,
       selfRoom,
@@ -1640,11 +1602,19 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             >
               <div
                 className="lk-video-conference-inner"
-                style={{ alignItems: 'space-between', height: '100dvh' }}
+                style={{ alignItems: 'flex-start', height: '100dvh', gap: 8 }}
               >
                 <div
                   className={focusTrack ? 'lk-focus-layout-wrapper' : 'lk-grid-layout-wrapper'}
-                  style={{ position: 'relative', flex: 1, minHeight: 0 }}
+                  style={{
+                    position: 'relative',
+                    flex: 1,
+                    minHeight: 0,
+                    height: 'calc(100% - 16px)',
+                    width: 'calc(100% - 8px)',
+                    padding: '8px 0px 0px 8px',
+                    marginBottom: 0,
+                  }}
                 >
                   <UnifiedLayout
                     entities={unifiedEntities}
