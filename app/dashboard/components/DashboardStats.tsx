@@ -23,12 +23,12 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
   return (
     <Row gutter={16}>
       <Col span={4}>
-        <Card>
+        <Card style={{ height: '100%' }}>
           <Statistic title={t('dashboard.count.room')} value={totalSpaces} />
         </Card>
       </Col>
       <Col span={4}>
-        <Card>
+        <Card style={{ height: '100%' }}>
           <Statistic
             title={t('dashboard.count.participant')}
             value={totalParticipants}
@@ -37,7 +37,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
         </Card>
       </Col>
       <Col span={4}>
-        <Card>
+        <Card style={{ height: '100%' }}>
           <Statistic
             title={t('dashboard.count.online_participant')}
             value={onlineParticipants}
@@ -46,7 +46,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
         </Card>
       </Col>
       <Col span={4}>
-        <Card>
+        <Card style={{ height: '100%' }}>
           <Statistic
             title={t('dashboard.count.platform')}
             value={authParticipants}

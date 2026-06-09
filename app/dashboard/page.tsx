@@ -23,6 +23,7 @@ import {
   CreateSpaceStrategyModal,
   FlushDbModal,
   DashboardLog,
+  DashboardRecording,
 } from './components';
 
 const { Title } = Typography;
@@ -712,6 +713,10 @@ export default function Dashboard() {
       label: t('dashboard.menu.history'),
     },
     {
+      key: 'recording',
+      label: t('dashboard.menu.recording'),
+    },
+    {
       key: 'log',
       label: t('dashboard.menu.log'),
     },
@@ -782,6 +787,8 @@ export default function Dashboard() {
         )}
 
         {menuTab === 'log' && <DashboardLog title={t('dashboard.log.title')}></DashboardLog>}
+
+        {menuTab === 'recording' && <DashboardRecording />}
 
         <GlobalConfModal
           open={openConf}

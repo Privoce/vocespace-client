@@ -20,7 +20,7 @@ export const DashboardActions: React.FC<DashboardActionsProps> = ({
   const { t } = useI18n();
 
   return (
-    <Card>
+    <Card style={{height: "100%"}}>
       <div style={{ marginBottom: '9px' }}>{t('dashboard.count.opt')}</div>
       <div
         style={{
