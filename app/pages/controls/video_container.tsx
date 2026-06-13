@@ -1,7 +1,6 @@
 import { isMobile, src, UserDefineStatus, UserStatus } from '@/lib/std';
 import {
   ConnectionStateToast,
-  FocusLayoutContainer,
   isTrackReference,
   LayoutContextProvider,
   RoomAudioRenderer,
@@ -89,8 +88,8 @@ import { useFullScreenBtn } from './widgets/full_screen';
 import { exportRBAC, usePlatformUserInfo, usePlatformUserInfoCheap } from '@/lib/hooks/platform';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { TilePlayer, TilePlayerAdd, TilePlayerItem } from '../participant/player';
-import { GLayout2 } from '../layout/grid';
-import { CLayout } from '../layout/carousel';
+import { LayoutEntity, UnifiedLayout, useReplaceLivekitTrack } from '../layout/unified';
+import { PaginationControl, PaginationIndicator } from '../layout/cover';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -102,6 +101,10 @@ export interface VideoContainerProps extends VideoConferenceProps {
 export interface VideoContainerExports {
   clearRoom: () => Promise<void>;
 }
+
+type VideoLayoutEntity = LayoutEntity<TrackReferenceOrPlaceholder | React.ReactNode> & {
+  category: 'track' | 'tile-player' | 'tile-player-add';
+};
 
 export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerProps>(
   (
@@ -1201,7 +1204,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       space?.name,
     ]);
     const isTilePlayerFocused = !!focusedTilePlayerId;
-    const carouselTracks = tracks.filter((track) => !isEqualTrackRef(track, focusTrack));
 
     React.useEffect(() => {
       // If screen share tracks are published, and no pin is set explicitly, auto set the screen share.
@@ -1357,23 +1359,50 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             : '100vw'
           : 'calc(100vw - 280px)';
     }, [collapsed, showSideChannel, isActive]);
-    /**
-     * TilePlayer放在这里的原因是，实际只需要在外部传入这个组件即可，防止传入过多参数
-     */
-    const tilePlayerNodes = useMemo((): React.ReactNode[] => {
+
+    const { entities: trackEntities, focusEntity: focusedTrackEntity } = useReplaceLivekitTrack<
+      TrackReferenceOrPlaceholder,
+      VideoLayoutEntity
+    >({
+      tracks,
+      focusTrack: focusTrack ?? null,
+      getTrackId: (track) => getTrackReferenceIdSafe(track),
+      mapTrackToEntity: (track, id) => ({
+        id,
+        category: 'track',
+        type: 'participant',
+        source: `${track.source ?? track.publication?.source ?? Track.Source.Unknown}`,
+        label: track.participant?.identity,
+        payload: track,
+      }),
+      appendFocusTrack: !isTilePlayerFocused,
+    });
+
+    const tilePlayerEntities = useMemo((): VideoLayoutEntity[] => {
       if (!space?.name || !selfRoom) return [];
-      const nodes: React.ReactNode[] = [
-        <TilePlayerAdd
-          key="__add__"
-          spaceName={space.name}
-          room={selfRoom.name}
-          myIdentity={space.localParticipant.identity}
-          messageApi={messageApi}
-          onCreated={fetchTilePlayers}
-        />,
+
+      const entities: VideoLayoutEntity[] = [
+        {
+          id: 'tile-player:add',
+          category: 'tile-player-add',
+          type: 'tile-player-add',
+          label: 'tile-player-add',
+          payload: (
+            <TilePlayerAdd
+              key="__add__"
+              spaceName={space.name}
+              room={selfRoom.name}
+              myIdentity={space.localParticipant.identity}
+              messageApi={messageApi}
+              onCreated={fetchTilePlayers}
+            />
+          ),
+        },
       ];
+
       tilePlayerItems.forEach((item) => {
-        nodes.push(
+        const isFocused = focusedTilePlayerId === item.id;
+        const playerNode = (
           <TilePlayer
             spaceInfo={settings}
             key={item.id}
@@ -1382,7 +1411,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             room={selfRoom.name}
             myIdentity={space.localParticipant.identity}
             messageApi={messageApi}
-            focus={focusedTilePlayerId === item.id}
+            focus={isFocused}
             afterFocus={(focus) => {
               if (focus) {
                 layoutContext?.pin.dispatch?.({
@@ -1396,53 +1425,95 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               }
             }}
             onRemoved={fetchTilePlayers}
-          />,
+          />
         );
+
+        entities.push({
+          id: `tile-player:${item.id}`,
+          category: 'tile-player',
+          type: 'tile-player',
+          label: item.id,
+          payload: playerNode,
+        });
       });
-      return nodes;
-    }, [space?.name, selfRoom, tilePlayerItems, focusedTilePlayerId, fetchTilePlayers]);
 
-    const focusedTilePlayerNode = useMemo(() => {
-      if (!space?.name || !selfRoom || !focusedTilePlayerId) return null;
+      return entities;
+    }, [
+      fetchTilePlayers,
+      focusedTilePlayerId,
+      layoutContext,
+      messageApi,
+      selfRoom,
+      settings,
+      space?.localParticipant.identity,
+      space?.name,
+      tilePlayerItems,
+    ]);
 
-      const focusedItem = tilePlayerItems.find((item) => item.id === focusedTilePlayerId);
-      if (!focusedItem) return null;
-
+    const focusedTilePlayerEntity = useMemo(() => {
+      if (!focusedTilePlayerId) return null;
       return (
-        <TilePlayer
-          spaceInfo={settings}
-          key={`focused_${focusedItem.id}`}
-          item={focusedItem}
-          spaceName={space.name}
-          room={selfRoom.name}
-          myIdentity={space.localParticipant.identity}
-          messageApi={messageApi}
-          focus={true}
-          afterFocus={(focus) => {
-            if (!focus) {
-              layoutContext?.pin.dispatch?.({
-                msg: 'clear_pin',
-              });
-            }
-          }}
-          onRemoved={async () => {
-            layoutContext?.pin.dispatch?.({
-              msg: 'clear_pin',
-            });
-            await fetchTilePlayers();
-          }}
-        />
+        tilePlayerEntities.find((entity) => entity.id === `tile-player:${focusedTilePlayerId}`) ??
+        null
       );
-    }, [space?.name, selfRoom, focusedTilePlayerId, tilePlayerItems, fetchTilePlayers]);
+    }, [focusedTilePlayerId, tilePlayerEntities]);
 
-    const nonFocusedTilePlayerNodes = useMemo((): React.ReactNode[] => {
-      if (!focusedTilePlayerId) return tilePlayerNodes;
+    const unifiedEntities = useMemo(
+      () => [...trackEntities, ...tilePlayerEntities],
+      [tilePlayerEntities, trackEntities],
+    );
 
-      return tilePlayerNodes.filter((node) => {
-        if (!React.isValidElement(node)) return true;
-        return node.key !== focusedTilePlayerId;
-      });
-    }, [focusedTilePlayerId, tilePlayerNodes]);
+    const unifiedFocusEntity = isTilePlayerFocused ? focusedTilePlayerEntity : focusedTrackEntity;
+
+    const unifiedPageSize = useMemo(() => {
+      if (isTilePlayerFocused || focusedTrackEntity) {
+        return isMobile() ? 4 : 5;
+      }
+      return isMobile() ? 4 : 9;
+    }, [focusedTrackEntity, isTilePlayerFocused]);
+
+    const renderUnifiedEntity = useCallback(
+      (entity: VideoLayoutEntity, state: { isFocus: boolean }) => {
+        if (entity.category === 'track') {
+          return (
+            <ParticipantItem
+              trackRef={entity.payload as TrackReferenceOrPlaceholder}
+              space={space!}
+              settings={settings}
+              toSettings={toSettingGeneral}
+              messageApi={messageApi}
+              noteApi={noteApi}
+              setUserStatus={setUserStatus}
+              updateSettings={updateSettings}
+              toRenameSettings={toSettingGeneral}
+              showFlotApp={showFlotApp}
+              selfRoom={selfRoom}
+              isFullScreen={isFullScreen}
+              setIsFullScreen={setIsFullScreen}
+              setCollapsed={setCollapsed}
+              isFocus={state.isFocus || isFocus}
+            />
+          );
+        }
+
+        return entity.payload as React.ReactNode;
+      },
+      [
+        isFocus,
+        isFullScreen,
+        messageApi,
+        noteApi,
+        selfRoom,
+        setCollapsed,
+        setIsFullScreen,
+        setUserStatus,
+        settings,
+        showFlotApp,
+        space,
+        toSettingGeneral,
+        updateSettings,
+      ],
+    );
 
     useEffect(() => {
       if (!focusedTilePlayerId) return;
@@ -1531,97 +1602,63 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             >
               <div
                 className="lk-video-conference-inner"
-                style={{ alignItems: 'space-between', height: '100dvh' }}
+                style={{ alignItems: 'flex-start', height: '100dvh', gap: 8 }}
               >
-                {!focusTrack ? (
-                  <div className="lk-grid-layout-wrapper">
-                    <GLayout2 tracks={tracks} players={tilePlayerNodes}>
-                      <ParticipantItem
-                        space={space}
-                        settings={settings}
-                        toSettings={toSettingGeneral}
-                        messageApi={messageApi}
-                        noteApi={noteApi}
-                        setUserStatus={setUserStatus}
-                        updateSettings={updateSettings}
-                        toRenameSettings={toSettingGeneral}
-                        showFlotApp={showFlotApp}
-                        selfRoom={selfRoom}
-                        setIsFullScreen={setIsFullScreen}
-                        isFullScreen={isFullScreen}
-                        setCollapsed={setCollapsed}
-                      ></ParticipantItem>
-                    </GLayout2>
-                  </div>
-                ) : (
-                  <div className="lk-focus-layout-wrapper">
-                    {isFullScreen ? (
-                      <ParticipantItem
-                        space={space}
-                        setUserStatus={setUserStatus}
-                        settings={settings}
-                        toSettings={toSettingGeneral}
-                        trackRef={focusTrack}
-                        messageApi={messageApi}
-                        noteApi={noteApi}
-                        isFocus={isFocus}
-                        updateSettings={updateSettings}
-                        toRenameSettings={toSettingGeneral}
-                        showFlotApp={showFlotApp}
-                        selfRoom={selfRoom}
-                        isFullScreen={isFullScreen}
-                        setIsFullScreen={setIsFullScreen}
-                        setCollapsed={setCollapsed}
-                      ></ParticipantItem>
-                    ) : (
-                      <FocusLayoutContainer>
-                        <CLayout
-                          players={
-                            isTilePlayerFocused ? nonFocusedTilePlayerNodes : tilePlayerNodes
-                          }
-                          tracks={carouselTracks}
+                <div
+                  className={focusTrack ? 'lk-focus-layout-wrapper' : 'lk-grid-layout-wrapper'}
+                  style={{
+                    position: 'relative',
+                    flex: 1,
+                    minHeight: 0,
+                    height: 'calc(100% - 16px)',
+                    width: 'calc(100% - 8px)',
+                    padding: '8px 0px 0px 8px',
+                    marginBottom: 0,
+                  }}
+                >
+                  <UnifiedLayout
+                    entities={unifiedEntities}
+                    focusEntity={unifiedFocusEntity}
+                    layoutType={unifiedFocusEntity ? 'focus' : 'grid'}
+                    deviceType={isMobile() ? 'mobile' : 'desktop'}
+                    fullScreen={isFullScreen}
+                    pageSize={unifiedPageSize}
+                    preserveOffscreen
+                    className="lk-unified-layout-stage"
+                    style={{ width: '100%', height: '100%' }}
+                    renderEntity={renderUnifiedEntity}
+                    renderOverlay={({ currentPage, totalPages, nextPage, prevPage }) => {
+                      if (totalPages <= 1) return null;
+
+                      return (
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: 12,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            zIndex: 30,
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            gap: 8,
+                          }}
                         >
-                          <ParticipantItem
-                            space={space}
-                            settings={settings}
-                            toSettings={toSettingGeneral}
-                            messageApi={messageApi}
-                            noteApi={noteApi}
-                            setUserStatus={setUserStatus}
-                            updateSettings={updateSettings}
-                            toRenameSettings={toSettingGeneral}
-                            showFlotApp={showFlotApp}
-                            selfRoom={selfRoom}
-                            isFullScreen={isFullScreen}
-                            setIsFullScreen={setIsFullScreen}
-                            setCollapsed={setCollapsed}
-                          ></ParticipantItem>
-                        </CLayout>
-                        {isTilePlayerFocused ? (
-                          focusedTilePlayerNode
-                        ) : (
-                          <ParticipantItem
-                            space={space}
-                            setUserStatus={setUserStatus}
-                            settings={settings}
-                            toSettings={toSettingGeneral}
-                            trackRef={focusTrack}
-                            messageApi={messageApi}
-                            noteApi={noteApi}
-                            isFocus={isFocus}
-                            updateSettings={updateSettings}
-                            toRenameSettings={toSettingGeneral}
-                            showFlotApp={showFlotApp}
-                            selfRoom={selfRoom}
-                            isFullScreen={isFullScreen}
-                            setIsFullScreen={setIsFullScreen}
-                            setCollapsed={setCollapsed}
-                          ></ParticipantItem>
-                        )}
-                      </FocusLayoutContainer>
-                    )}
-                  </div>
-                )}
+                          <PaginationIndicator
+                            totalPageCount={totalPages}
+                            currentPage={currentPage}
+                          />
+                          <PaginationControl
+                            totalPageCount={totalPages}
+                            currentPage={currentPage}
+                            nextPage={nextPage}
+                            prevPage={prevPage}
+                          />
+                        </div>
+                      );
+                    }}
+                  />
+                </div>
                 <Controls
                   ref={controlsRef}
                   setUserStatus={setUserStatus}
