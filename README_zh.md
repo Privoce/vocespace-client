@@ -4,9 +4,28 @@
 
 # VoceSpace
 
+[![Version](https://img.shields.io/badge/version-0.5.3-blue.svg)](./log/CHANGELOG.md)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](package.json)
+
+VoceSpace 是一个基于 WebRTC 的开源视频会议平台，提供高质量的音视频通信、AI 智能分析、虚拟角色、房间管理和录制存储等功能。
+
 ## 演示
 
 访问 [vocespace 演示](https://space.voce.chat/rooms/bby6-x55t) 试用。
+
+## 技术栈
+
+- **前端框架**: Next.js 14 (App Router) + React 18
+- **UI 组件**: Ant Design 5
+- **实时通信**: LiveKit + Socket.IO
+- **状态管理**: Recoil
+- **数据持久化**: Redis (ioredis)
+- **对象存储**: AWS S3 SDK v3
+- **虚拟角色**: Live2D (pixi-live2d-display)
+- **AI 集成**: OpenAI SDK (支持多模态模型)
+- **国际化**: 内置 i18n (中文/英文/俄语)
+- **部署**: Docker + Nginx
 
 ## 开发环境设置
 
@@ -14,9 +33,18 @@
 
 1. 运行 `pnpm install` 安装所有依赖项。
 2. 将 `.env.example` 复制到项目根目录，并将其重命名为 `.env.local`。
-3. 创建配置文件`vocespace.conf.json`
+3. 创建配置文件 `vocespace.conf.json`（参考下方配置说明）。
 4. 运行 `pnpm dev` 启动开发服务器，并访问 [http://localhost:3000](http://localhost:3000) 查看结果。
-5. 开始开发 🎉
+5. 开始开发
+
+### 常用命令
+
+```bash
+pnpm dev       # 启动开发服务器
+pnpm build     # 构建生产版本
+pnpm start     # 启动生产服务器
+pnpm lint      # 运行代码检查
+```
 
 ### vocespace.conf.json
 
@@ -54,7 +82,7 @@
   },
   "serverUrl": "your-domain.com",
   "hostToken": "your-host-token",
-  "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E",
+  "license": "your-license-token",
   "ai": {
     "enabled": true,
     "apiKey": "your-ai-api-key",
@@ -69,7 +97,7 @@
 
 VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富的自定义选项。
 
-### 🎥 加入前体验
+### 加入前体验
 
 **基本控制**
 - [x] 麦克风预览和测试
@@ -93,7 +121,7 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 端到端加密 (E2EE)
 - [x] 设备权限检测和引导
 
-### 💬 房间体验
+### 房间体验
 
 **核心功能**
 - [x] 高质量音视频通信 (4K@60fps, 2M 编码）
@@ -126,7 +154,7 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 用户之间挥手通知和房间邀请
 - [x] 用户状态指示器和自定义状态
 - [x] 实时用户状态同步和更新
-- [x] 多语言支持（中/英）
+- [x] 多语言支持（中/英/俄）
 - [x] 按首字母搜索和排序参与者
 - [x] 右键菜单用于用户管理
 - [x] 带有广播通知的举手功能
@@ -134,7 +162,7 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 举手排队和状态显示
 - [x] 反应表情快捷发送
 
-### 🏢 空间和房间管理
+### 空间和房间管理
 
 **多房间架构**
 - [x] 主空间，包含无限个子房间
@@ -157,7 +185,7 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 房间内用户轨道订阅权限控制
 - [x] 子房间用户隔离和音频过滤
 
-### 🤖 AI 功能
+### AI 功能
 
 **AI 截图分析与工作日志**
 - [x] 自动屏幕截图和 AI 分析
@@ -183,12 +211,12 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 每位用户的虚拟角色模型隔离
 
 **音频增强**
-- [x] AI 降噪
+- [x] Krisp AI 降噪
 - [x] 实时音频处理
 - [x] 音量标准化
 - [x] 可自定义新用户加入提示音
 
-### 🎬 录音和媒体
+### 录音和媒体
 
 **房间录音**
 - [x] 4K 画质的全房间录音功能
@@ -196,9 +224,10 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 参与者录音请求及审批流程
 - [x] 实时录音通知
 - [x] 自动 S3 存储集成
+- [x] S3 文件自动清理（7 天后自动删除，防止存储费用增长）
 - [x] 下载链接，有效期 3 天
 - [x] 支持移动端录音，并带有权限检测
-- [x] 录音管理面板
+- [x] 录音管理面板（Dashboard 和独立页面）
 
 **文件管理**
 - [x] 聊天中文件拖放共享
@@ -207,7 +236,7 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 安全的文件存储和检索
 - [x] 文件大小和类型验证
 
-### 🎮 内置应用
+### 内置应用
 
 **效率应用**
 - [x] 带任务管理功能的待办事项列表应用
@@ -231,7 +260,7 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 自动上传配置选项
 - [x] 每用户应用数据隔离
 
-### 🔧 高级设置
+### 高级设置
 
 **音频配置**
 - [x] 设备选择和切换
@@ -239,6 +268,7 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 实时音质调节
 - [x] 屏幕共享音频切换
 - [x] 可自定义通知声音
+- [x] 耳返功能
 
 **视频配置**
 - [x] 摄像头设备管理
@@ -265,7 +295,7 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 动态全局配置支持
 - [x] 主持人配置热重载功能
 
-### 🔒 安全与隐私
+### 安全与隐私
 
 **加密与安全**
 - [x] 支持端到端加密 (E2EE)
@@ -276,6 +306,7 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] License 证书验证系统
 - [x] 域名和人数限制控制
 - [x] 临时证书和正式证书支持
+- [x] 微信访问拦截（引导使用浏览器打开）
 
 **权限与访问控制**
 - [x] 设备权限管理
@@ -286,7 +317,7 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 举手发言权限控制
 - [x] 应用数据访问权限管理
 
-### 🏗️ 技术特性
+### 技术特性
 
 **性能与可靠性**
 - [x] 客户端性能监控
@@ -306,6 +337,7 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 自定义 Express + Next.js 服务器架构
 - [x] 支持水平扩展
 - [x] 服务器心跳检测和健康监控
+- [x] S3 文件自动清理任务（持久化到 uploads/S3_clean.json，服务器重启自动恢复）
 
 **数据管理**
 - [x] 用户会话管理和唯一 ID 生成
@@ -315,8 +347,10 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 自动数据清理和生命周期管理
 - [x] 持久化房间数据保留
 - [x] 用户离线检测和清理机制
+- [x] 幽灵用户自动清理（心跳检测，每 5 分钟）
+- [x] 清理记录持久化和审计
 
-### 📊 分析与监控
+### 分析与监控
 
 **使用情况分析**
 - [x] 实时活跃房间监控
@@ -336,6 +370,11 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 全局配置管理和热重载
 - [x] 用户管理和审核工具
 - [x] 主持人令牌身份验证
+- [x] 心跳日志实时监控（DashboardLog 组件）
+- [x] 清理记录表格展示（时间/房间/用户数/策略）
+- [x] 空间导出功能
+- [x] 数据库清理 (FlushDB)
+- [x] 创建空间策略管理（白名单/权限控制）
 
 **开发与部署**
 - [x] Docker 容器化和一键部署
@@ -347,9 +386,44 @@ VoceSpace 提供全面的视频会议体验，拥有先进的 AI 功能和丰富
 - [x] 多环境配置文件支持
 - [x] 快速本地部署文档
 - [x] Egress 录制服务集成
+- [x] Nginx 反向代理配置
 
-有关详细的功能规范和实现说明，请参阅 [FEATURE.md](./log/FEATURE.md) 和 [TODO.md](./log/TODO.md)。
+## 项目结构
 
-### 变更日志
-
-请参阅 [CHANGELOG](./log/CHANGELOG.md)
+```
+vocespace/
+├── app/                      # Next.js App Router
+│   ├── [spaceName]/          # 空间主页面（动态路由）
+│   ├── api/                  # API 路由
+│   │   ├── ai/               # AI 分析接口
+│   │   ├── chat/             # 聊天接口
+│   │   ├── conf/             # 配置管理接口
+│   │   ├── connection-details/ # LiveKit 连接详情
+│   │   ├── record/           # 录制管理接口
+│   │   ├── s3/               # S3 存储接口
+│   │   ├── space/            # 空间管理接口
+│   │   └── webhook/          # LiveKit Webhook
+│   ├── dashboard/            # 管理仪表盘
+│   ├── recording/            # 录制管理页面
+│   ├── new_space/            # 创建空间页面
+│   └── pages/                # 房间内部组件
+│       ├── apps/             # 内置应用（待办、计时器等）
+│       ├── chat/             # 聊天组件
+│       ├── controls/         # 控制栏和设置
+│       ├── layout/           # 布局组件
+│       ├── participant/      # 参与者组件
+│       └── pre_join/         # 加入前页面
+├── lib/                      # 共享库
+│   ├── ai/                   # AI 分析工具
+│   ├── api/                  # API 客户端
+│   ├── i18n/                 # 国际化 (zh_CN, en_US, ru_RU)
+│   ├── std/                  # 标准工具和类型
+│   └── s3-clean.ts           # S3 文件清理任务管理
+├── deploy/                   # 部署配置
+│   ├── docker/               # Docker 相关
+│   ├── nginx/                # Nginx 配置
+│   └── shell/                # 部署脚本
+├── public/                   # 静态资源
+├── server.js                 # 自定义服务器（Express + Socket.IO）
+└── vocespace.conf.json       # 项目配置文件
+```

@@ -3,6 +3,7 @@ import { EgressClient, EncodedFileOutput, S3Upload } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
 import { getConfig } from '../conf/conf';
 import { isUndefinedString } from '@/lib/std';
+import { addCleanTask } from '@/lib/s3-clean';
 
 const {
   livekit: { key: LIVEKIT_API_KEY, secret: LIVEKIT_API_SECRET, url: LIVEKIT_URL },
@@ -122,6 +123,9 @@ export async function POST(req: NextRequest) {
           layout: 'speaker',
         },
       );
+
+      // 添加 7 天后清理该 S3 文件的任务
+      addCleanTask(fileOutput.filepath);
 
       return NextResponse.json(
         {

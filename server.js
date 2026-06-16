@@ -11,6 +11,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import express from 'express';
 import Redis from 'ioredis';
+import { rebuildCleanTasks } from './lib/s3-clean';
 
 const __filename = fileURLToPath(import.meta.url);
 const __cfg = path.dirname(__filename);
@@ -450,5 +451,8 @@ app.prepare().then(() => {
         .catch((error) => {
           console.error('Error triggering user heartbeat check:', error);
         });
+
+      // 重建 S3 文件清理任务
+      rebuildCleanTasks();
     });
 });

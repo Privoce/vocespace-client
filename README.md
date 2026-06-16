@@ -4,13 +4,28 @@
 
 # VoceSpace
 
-Private-hosted 4K Video Conferencing at 60 FPS
+[![Version](https://img.shields.io/badge/version-0.5.3-blue.svg)](./log/CHANGELOG.md)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](package.json)
 
-Experience crystal-clear video meetings with 4K resolution, 60 FPS smooth performance, and 2M encoding for unmatched quality. Perfect for professional presentations and remote collaboration.
+VoceSpace is an open-source video conferencing platform based on WebRTC, providing high-quality audio/video communication, AI-powered analysis, virtual characters, room management, and recording storage.
 
 ## Demo
 
 Give it a try at [vocespace demo](https://space.voce.chat/rooms/bby6-x55t)
+
+## Tech Stack
+
+- **Frontend Framework**: Next.js 14 (App Router) + React 18
+- **UI Components**: Ant Design 5
+- **Real-time Communication**: LiveKit + Socket.IO
+- **State Management**: Recoil
+- **Data Persistence**: Redis (ioredis)
+- **Object Storage**: AWS S3 SDK v3
+- **Virtual Characters**: Live2D (pixi-live2d-display)
+- **AI Integration**: OpenAI SDK (multimodal models)
+- **Internationalization**: Built-in i18n (Chinese/English/Russian)
+- **Deployment**: Docker + Nginx
 
 ## Dev Setup
 
@@ -18,9 +33,18 @@ Steps to get a local dev setup up and running:
 
 1. Run `pnpm install` to install all dependencies.
 2. Copy `.env.example` in the project root and rename it to `.env.local`.
-3. Create the configuration file `vocespace.conf.json`
+3. Create the configuration file `vocespace.conf.json` (see configuration reference below).
 4. Run `pnpm dev` to start the development server and visit [http://localhost:3000](http://localhost:3000) to see the result.
-5. Start development 🎉
+5. Start development
+
+### Common Commands
+
+```bash
+pnpm dev       # Start development server
+pnpm build     # Build production version
+pnpm start     # Start production server
+pnpm lint      # Run code linting
+```
 
 **make sure livekit-client use `2.9.x`** or it may cause wss connect error!
 
@@ -60,7 +84,7 @@ Steps to get a local dev setup up and running:
   },
   "serverUrl": "your-domain.com",
   "hostToken": "your-host-token",
-  "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjQ4OTEzMzQ0MDAsImNyZWF0ZWRfYXQiOjE3MzU2NjA4MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJmcmVlIiwiaWQiOiI2NGUyMjYwZS0xMzQwLTQxNjQtOWNmZC0zMGUwMjhlYTg0ZWQifQ.T0vIHUCxv9j75lb92RDDaegpPO9W9hxWEXqZVidwL0E",
+  "license": "your-license-token",
   "ai": {
     "enabled": true,
     "apiKey": "your-ai-api-key",
@@ -75,7 +99,7 @@ Steps to get a local dev setup up and running:
 
 VoceSpace offers a comprehensive video conferencing experience with advanced AI-powered features and extensive customization options.
 
-### 🎥 Pre-Join Experience
+### Pre-Join Experience
 
 **Basic Controls**
 
@@ -101,7 +125,7 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] End-to-End Encryption (E2EE)
 - [x] Device Permission Detection and Bootstrapping
 
-### 💬 Room Experience
+### Room Experience
 
 **Core Features**
 
@@ -137,7 +161,7 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] Hand gesture notification and room invitation between users
 - [x] User status indicator and custom status
 - [x] Real-time user status synchronization and updates
-- [x] Multi-language support (Chinese/English)
+- [x] Multi-language support (Chinese/English/Russian)
 - [x] Search and sort participants by first letter
 - [x] Right-click menu for user management
 - [x] Hand-raising function with broadcast notification
@@ -145,7 +169,7 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] Hand-raising queue and status display
 - [x] Quick sending of reaction emoticons
 
-### 🏢 Space and Room Management
+### Space and Room Management
 
 **Multi-room Architecture**
 
@@ -170,7 +194,7 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] In-room user track subscription permission control
 - [x] Sub-room user isolation and audio filtering
 
-### 🤖 AI Features
+### AI Features
 
 **AI Screenshot Analysis and Work Log**
 
@@ -199,12 +223,12 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 
 **Audio Enhancement**
 
-- [x] AI noise reduction
+- [x] Krisp AI noise reduction
 - [x] Real-time audio processing
 - [x] Volume normalization
 - [x] Customizable new user joining notification sound
 
-### 🎬 Recording and Media
+### Recording and Media
 
 **Room Recording**
 
@@ -213,9 +237,10 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] Participant recording requests and approval process
 - [x] Real-time recording notifications
 - [x] Automatic S3 storage integration
+- [x] S3 file auto-cleanup (automatically deleted after 7 days to prevent storage cost growth)
 - [x] Download link, valid for 3 days
 - [x] Supports mobile recording with permission detection
-- [x] Recording management panel
+- [x] Recording management panel (Dashboard and standalone page)
 
 **File Management**
 
@@ -225,7 +250,7 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] Secure file storage and retrieval
 - [x] File size and type verification
 
-### 🎮 Built-in Applications
+### Built-in Applications
 
 **Productivity Applications**
 
@@ -251,7 +276,7 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] Automatic upload configuration option
 - [x] Per-user app data isolation
 
-### 🔧 Advanced Settings
+### Advanced Settings
 
 **Audio Configuration**
 
@@ -260,6 +285,7 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] Real-time audio quality adjustment
 - [x] Screen sharing audio switching
 - [x] Customizable notification sounds
+- [x] Audio monitoring (loopback)
 
 **Video Configuration**
 
@@ -289,7 +315,7 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] Dynamic global configuration support
 - [x] Host configuration with hot reload function
 
-### 🔒 Security and Privacy
+### Security and Privacy
 
 **Encryption and Security**
 
@@ -301,6 +327,7 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] License Certificate Verification System
 - [x] Domain and Participant Limit Control
 - [x] Temporary and Official Certificate Support
+- [x] WeChat access blocking (redirect to browser)
 
 **Permissions and Access Control**
 
@@ -312,7 +339,7 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] Hand-Raising Speaking Permission Control
 - [x] Application Data Access Permission Management
 
-### 🏗️ Technical Features
+### Technical Features
 
 **Performance and Reliability**
 
@@ -334,6 +361,7 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] Custom Express + Next.js Server Architecture
 - [x] Support for Horizontal Scaling
 - [x] Server Heartbeat Detection and Health Monitoring
+- [x] S3 File Auto-Cleanup Task (persisted to uploads/S3_clean.json, auto-restored on server restart)
 
 **Data Management**
 
@@ -344,8 +372,10 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] Automatic Data Cleanup and Lifecycle Management
 - [x] Persistent Room Data Retention
 - [x] User Offline Detection and Cleanup Mechanism
+- [x] Ghost User Auto-Cleanup (heartbeat detection, every 5 minutes)
+- [x] Cleanup Record Persistence and Auditing
 
-### 📊 Analysis and Monitoring
+### Analysis and Monitoring
 
 **Usage Analysis**
 
@@ -367,6 +397,11 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] Global Configuration Management and Hot Reload
 - [x] User Management and Approval Tools
 - [x] Host Token Authentication
+- [x] Heartbeat Log Real-time Monitoring (DashboardLog component)
+- [x] Cleanup Record Table Display (time/room/user count/strategy)
+- [x] Space Export Function
+- [x] Database Cleanup (FlushDB)
+- [x] Create Space Policy Management (whitelist/permission control)
 
 **Development and Deployment**
 
@@ -379,9 +414,45 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] Multi-Environment Configuration File Support
 - [x] Quick Local Deployment Documentation
 - [x] Egress Recording Service Integration
+- [x] Nginx Reverse Proxy Configuration
 
-For detailed feature specifications and implementation notes, see [FEATURE.md](./log/FEATURE.md) and [TODO.md](./log/TODO.md).
+## Project Structure
 
-### CHANGELOG
+```
+vocespace/
+├── app/                      # Next.js App Router
+│   ├── [spaceName]/          # Space main page (dynamic route)
+│   ├── api/                  # API routes
+│   │   ├── ai/               # AI analysis endpoints
+│   │   ├── chat/             # Chat endpoints
+│   │   ├── conf/             # Configuration management endpoints
+│   │   ├── connection-details/ # LiveKit connection details
+│   │   ├── record/           # Recording management endpoints
+│   │   ├── s3/               # S3 storage endpoints
+│   │   ├── space/            # Space management endpoints
+│   │   └── webhook/          # LiveKit Webhook
+│   ├── dashboard/            # Admin dashboard
+│   ├── recording/            # Recording management page
+│   ├── new_space/            # Create space page
+│   └── pages/                # Room internal components
+│       ├── apps/             # Built-in apps (todo, timer, etc.)
+│       ├── chat/             # Chat components
+│       ├── controls/         # Control bar and settings
+│       ├── layout/           # Layout components
+│       ├── participant/      # Participant components
+│       └── pre_join/         # Pre-join page
+├── lib/                      # Shared libraries
+│   ├── ai/                   # AI analysis tools
+│   ├── api/                  # API clients
+│   ├── i18n/                 # Internationalization (zh_CN, en_US, ru_RU)
+│   ├── std/                  # Standard utilities and types
+│   └── s3-clean.ts           # S3 file cleanup task management
+├── deploy/                   # Deployment configuration
+│   ├── docker/               # Docker related
+│   ├── nginx/                # Nginx configuration
+│   └── shell/                # Deployment scripts
+├── public/                   # Static assets
+├── server.js                 # Custom server (Express + Socket.IO)
+└── vocespace.conf.json       # Project configuration file
+```
 
-See [CHANGELOG](./log/CHANGELOG.md)
