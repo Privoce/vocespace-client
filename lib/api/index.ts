@@ -18,6 +18,12 @@ import {
 import { checkLicenseByIP, getLicenseByIP } from './license';
 import { sendRecordRequest, updateRecord } from './record';
 import {
+  testS3Connection,
+  getS3Records,
+  generateS3DownloadUrl,
+  deleteS3Object,
+} from './s3';
+import {
   allSpaceInfos,
   checkUsername,
   createSpace,
@@ -90,6 +96,11 @@ export const api = {
   // ---- recording api --------
   sendRecordRequest,
   updateRecord,
+  // ---- s3 api --------
+  testS3Connection,
+  getS3Records,
+  generateS3DownloadUrl,
+  deleteS3Object,
   // ---- channel api --------
   createRoom,
   deleteRoom,

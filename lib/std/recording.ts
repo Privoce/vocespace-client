@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { connect_endpoint, isUndefinedString } from '.';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useI18n } from '../i18n/i18n';
+import { api } from '../api';
 
 export enum RecordState {
   // 获取环境变量状态，表示需要获取环境变量
@@ -78,7 +79,7 @@ export function useRecordingEnv(messageApi: MessageInstance) {
 
   const try_connectS3 = useCallback(async () => {
     try {
-      const response = await fetch(`${env?.server_host}/api/s3/connect`);
+      const response = await api.testS3Connection();
       if (response.ok) {
         const data = await response.json();
         if (data.success) {
@@ -93,7 +94,7 @@ export function useRecordingEnv(messageApi: MessageInstance) {
       console.error('S3连接测试失败:', error);
       setState(RecordState.UnAvailable);
     }
-  }, [env]);
+  }, []);
 
   useEffect(() => {
     switch (state) {

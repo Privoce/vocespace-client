@@ -11,6 +11,7 @@ import { MessageInstance } from 'antd/es/message/interface';
 import { useMemo, useState } from 'react';
 import { EnvData, RecordData } from '@/lib/std/recording';
 import { useI18n } from '@/lib/i18n/i18n';
+import { api } from '@/lib/api';
 
 const { Text } = Typography;
 const { confirm } = Modal;
@@ -44,7 +45,7 @@ export function RecordingTable({
   };
 
   const copyDownloadLink = async (record: RecordData) => {
-    const response = await fetch(`${env?.server_host}/api/s3/download?key=${record.key}`);
+    const response = await api.generateS3DownloadUrl(record.key);
     if (response.ok) {
       const {
         success,
@@ -83,9 +84,7 @@ export function RecordingTable({
       onOk: async () => {
         setLoading(true);
         try {
-          const response = await fetch(`${env?.server_host}/api/s3/delete?key=${record.key}`, {
-            method: 'DELETE',
-          });
+          const response = await api.deleteS3Object(record.key);
 
           if (response.ok) {
             const { success }: { success: boolean } = await response.json();
@@ -111,7 +110,7 @@ export function RecordingTable({
 
   // 下载文件
   const handleDownload = async (record: RecordData) => {
-    const response = await fetch(`${env?.server_host}/api/s3/download?key=${record.key}`);
+    const response = await api.generateS3DownloadUrl(record.key);
     if (response.ok) {
       const {
         success,

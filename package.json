@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "@ant-design/icons": "5.x",
+    "@aws-sdk/client-s3": "^3.1068.0",
+    "@aws-sdk/s3-request-presigner": "^3.1068.0",
     "@datadog/browser-logs": "^5.23.3",
     "@hyperbeam/web": "^0.0.38",
     "@iarna/toml": "^2.2.5",
