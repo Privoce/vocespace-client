@@ -11,7 +11,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import express from 'express';
 import Redis from 'ioredis';
-import { rebuildCleanTasks } from './lib/s3-clean';
+import { rebuildCleanTasks } from './lib/s3-clean.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __cfg = path.dirname(__filename);
