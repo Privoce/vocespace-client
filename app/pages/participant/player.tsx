@@ -6,7 +6,7 @@ import { FileType } from '@/lib/std';
 import { FileImageOutlined, GlobalOutlined, LayoutOutlined } from '@ant-design/icons';
 import { Button, Image, Input, Modal, Spin, Tooltip, Upload } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { APP_FLOT_PIN_STYLE } from '../apps/app_pin';
 import { FocusToggleIcon, UnfocusToggleIcon } from '@livekit/components-react';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
@@ -390,6 +390,45 @@ const HyperbeamWindow = ({ url, messageApi }: { url: string; messageApi: Message
   const containerRef = useRef<HTMLDivElement | null>(null);
   const hbRef = useRef<any>(null);
 
+  // Thorough cleanup function to stop all audio/video and clear container
+  const cleanupHyperbeam = useCallback(() => {
+    // Stop and destroy Hyperbeam instance
+    if (hbRef.current) {
+      try {
+        // Try to stop media streams first
+        if (hbRef.current.stop) {
+          hbRef.current.stop();
+        }
+        // Then destroy
+        if (hbRef.current.destroy) {
+          hbRef.current.destroy();
+        }
+      } catch (e) {
+        console.warn('Error during Hyperbeam cleanup:', e);
+      }
+      hbRef.current = null;
+    }
+
+    // Clear container and remove all child elements to ensure no lingering audio/video
+    if (containerRef.current) {
+      // Find and pause all audio/video elements before removing
+      const mediaElements = containerRef.current.querySelectorAll('audio, video');
+      mediaElements.forEach((el) => {
+        try {
+          (el as HTMLMediaElement).pause();
+          (el as HTMLMediaElement).srcObject = null;
+          (el as HTMLMediaElement).src = '';
+          (el as HTMLMediaElement).load();
+        } catch (e) {
+          // ignore
+        }
+      });
+
+      // Clear all children
+      containerRef.current.innerHTML = '';
+    }
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     let reconnectTimer: NodeJS.Timeout | null = null;
@@ -407,7 +446,9 @@ const HyperbeamWindow = ({ url, messageApi }: { url: string; messageApi: Message
 
         if (cancelled || !containerRef.current) return;
 
-        hbRef.current?.destroy?.();
+        // Clean up any existing instance before creating new one
+        cleanupHyperbeam();
+
         hbRef.current = await Hyperbeam(containerRef.current, url, {
           onConnectionStateChange: (event: { state: string }) => {
             if (event.state === 'playing') {
@@ -448,11 +489,11 @@ const HyperbeamWindow = ({ url, messageApi }: { url: string; messageApi: Message
       cancelled = true;
       if (reconnectTimer) {
         clearTimeout(reconnectTimer);
+        reconnectTimer = null;
       }
-      hbRef.current?.destroy?.();
-      hbRef.current = null;
+      cleanupHyperbeam();
     };
-  }, [url]);
+  }, [url, cleanupHyperbeam, messageApi]);
 
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
