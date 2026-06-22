@@ -17,6 +17,7 @@ import {
   DashboardActions,
   ActiveSpacesSection,
   HistorySpacesSection,
+  HistoryStats,
   LeaderboardSection,
   GlobalConfModal,
   ManageSpacesModal,
@@ -86,6 +87,11 @@ export default function Dashboard() {
   const [onlineParticipants, setOnlineParticipants] = useState(0);
   const [authParticipants, setAuthParticipants] = useState(0);
   const [activeRecordings, setActiveRecordings] = useState(0);
+  // History stats
+  const [historyTotalRooms, setHistoryTotalRooms] = useState(0);
+  const [historyTotalUsers, setHistoryTotalUsers] = useState(0);
+  const [historyPlatformUsers, setHistoryPlatformUsers] = useState(0);
+  const [historyAvgDuration, setHistoryAvgDuration] = useState('0h 0m');
   const [messageApi, contextHolder] = message.useMessage();
   const [openConf, setOpenConf] = useState(false);
   const [createSpaceConf, setCreateSpaceConf] = useState(false);
@@ -271,6 +277,11 @@ export default function Dashboard() {
     const weeklyData: { [spaceId: string]: LeaderboardData[] } = {};
     const monthlyData: { [spaceId: string]: LeaderboardData[] } = {};
 
+    // History stats aggregation
+    const allUsers = new Set<string>();
+    const platformUsers = new Set<string>();
+    let totalDurationAll = 0;
+
     const now = new Date();
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const todayEnd = todayStart + 24 * 60 * 60 * 1000 - 1;
@@ -357,6 +368,14 @@ export default function Dashboard() {
             total: totalDuration,
             period: monthlyDuration,
           };
+
+          // Aggregate for history stats
+          allUsers.add(participantName);
+          totalDurationAll += totalDuration;
+          // Check if user is a platform user (contains platform identifier)
+          if (participantName.startsWith('platform_') || participantName.includes('@')) {
+            platformUsers.add(participantName);
+          }
         }
       });
 
@@ -408,6 +427,22 @@ export default function Dashboard() {
     setDailyLeaderboard(dailyData);
     setWeeklyLeaderboard(weeklyData);
     setMonthlyLeaderboard(monthlyData);
+
+    // Set history stats
+    const totalRooms = Object.keys(records).length;
+    const totalUsers = allUsers.size;
+    const platformUserCount = platformUsers.size;
+    const avgDuration =
+      totalUsers > 0
+        ? `${Math.floor(totalDurationAll / totalUsers / 3600000)}h ${Math.floor(
+            (totalDurationAll / totalUsers % 3600000) / 60000,
+          )}m`
+        : '0h 0m';
+
+    setHistoryTotalRooms(totalRooms);
+    setHistoryTotalUsers(totalUsers);
+    setHistoryPlatformUsers(platformUserCount);
+    setHistoryAvgDuration(avgDuration);
   };
 
   useEffect(() => {
@@ -744,20 +779,29 @@ export default function Dashboard() {
         </div>
         <div style={{ marginBottom: 16 }}>
           <Title level={2}>{t('dashboard.title')}</Title>
-          <DashboardStats
-            totalSpaces={totalSpaces}
-            totalParticipants={totalParticipants}
-            onlineParticipants={onlineParticipants}
-            authParticipants={authParticipants}
-            action={
-              <DashboardActions
-                selectOption={selectOption}
-                loading={loading}
-                onOptionChange={(v) => setSelectOption(v)}
-                onProceed={handleProceed}
-              />
-            }
-          />
+          {menuTab === 'history' ? (
+            <HistoryStats
+              totalRooms={historyTotalRooms}
+              totalUsers={historyTotalUsers}
+              platformUsers={historyPlatformUsers}
+              avgDuration={historyAvgDuration}
+            />
+          ) : (
+            <DashboardStats
+              totalSpaces={totalSpaces}
+              totalParticipants={totalParticipants}
+              onlineParticipants={onlineParticipants}
+              authParticipants={authParticipants}
+              action={
+                <DashboardActions
+                  selectOption={selectOption}
+                  loading={loading}
+                  onOptionChange={(v) => setSelectOption(v)}
+                  onProceed={handleProceed}
+                />
+              }
+            />
+          )}
         </div>
 
         {menuTab === 'home' && (

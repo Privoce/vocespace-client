@@ -990,6 +990,12 @@ export default {
           today: "Today's Duration",
         },
         empty: 'No Records',
+        stats: {
+          rooms: 'Total Rooms',
+          total_users: 'Total Users',
+          platform_users: 'Platform Users',
+          avg_duration: 'Average Duration',
+        },
       },
     },
     active: {

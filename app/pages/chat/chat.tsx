@@ -259,9 +259,9 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
     };
 
     // 处理回车键事件
-    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-      // 只有在不处于输入法组合状态且按下回车键时才发送消息
-      if (e.key === 'Enter' && !isComposing) {
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      // 回车发送消息，Shift+Enter 换行
+      if (e.key === 'Enter' && !e.shiftKey && !isComposing) {
         e.preventDefault();
         sendMsg();
       }
@@ -402,36 +402,45 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
         </div>
 
         <div className={styles.tool}>
-          <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="*">
-            <Tooltip title={t('common.upload')}>
-              <Button shape="circle" style={{ background: 'transparent', border: 'none' }}>
-                <SvgResource type="add" svgSize={18} color="#fff" />
-              </Button>
-            </Tooltip>
-          </Upload>
-          <Tooltip title={t('common.files')}>
-            <Button
-              shape="circle"
-              style={{ background: 'transparent', border: 'none', marginRight: 12 }}
-              onClick={async () => await openLocalFileSystem()}
-            >
-              <FolderOpenOutlined style={{ fontSize: 18, color: '#fff' }}></FolderOpenOutlined>
+          <Input.TextArea
+            value={value}
+            placeholder={t('common.chat_placeholder')}
+            onChange={(e) => setValue(e.target.value)}
+            onCompositionStart={() => setIsComposing(true)}
+            onCompositionEnd={() => setIsComposing(false)}
+            onKeyDown={handleKeyDown}
+            rows={3}
+            style={{
+              backgroundColor: '#333',
+              resize: 'none',
+              border: 'none',
+              borderRadius: '8px',
+              color: '#fff',
+            }}
+          />
+          <div className={styles.tool_bottom}>
+            <div className={styles.tool_left}>
+              <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="*">
+                <Tooltip title={t('common.upload')}>
+                  <Button shape="circle" style={{ background: 'transparent', border: 'none' }}>
+                    <SvgResource type="add" svgSize={18} color="#fff" />
+                  </Button>
+                </Tooltip>
+              </Upload>
+              <Tooltip title={t('common.files')}>
+                <Button
+                  shape="circle"
+                  style={{ background: 'transparent', border: 'none' }}
+                  onClick={async () => await openLocalFileSystem()}
+                >
+                  <FolderOpenOutlined style={{ fontSize: 18, color: '#fff' }}></FolderOpenOutlined>
+                </Button>
+              </Tooltip>
+            </div>
+            <Button type="primary" onClick={sendMsg}>
+              {t('common.send')}
             </Button>
-          </Tooltip>
-          <div className={styles.tool_input}>
-            <Input
-              value={value}
-              placeholder={t('common.chat_placeholder')}
-              onChange={(e) => setValue(e.target.value)}
-              onCompositionStart={() => setIsComposing(true)}
-              onCompositionEnd={() => setIsComposing(false)}
-              onKeyDown={handleKeyDown}
-              style={{ paddingRight: 0, backgroundColor: '#333' }}
-            />
           </div>
-          <Button style={{ border: 'none' }} type="primary" onClick={sendMsg}>
-            {t('common.send')}
-          </Button>
         </div>
         <Modal
           open={fsModal}
@@ -493,7 +502,14 @@ function ChatMsgItemCmp({ isLocal, msg, downloadFile, isImg }: ChatMsgItemProps)
       // 添加链接前的普通文本
       if (startIndex > lastIndex) {
         const textBefore = originText.substring(lastIndex, startIndex);
-        parts.push(<span key={`text-${linkIndex}-before`}>{textBefore}</span>);
+        // 处理文本中的换行符
+        const textWithBreaks = textBefore.split('\n').map((line, idx, arr) => (
+          <React.Fragment key={`text-${linkIndex}-before-${idx}`}>
+            {line}
+            {idx < arr.length - 1 && <br />}
+          </React.Fragment>
+        ));
+        parts.push(<span key={`text-${linkIndex}-before`}>{textWithBreaks}</span>);
       }
 
       // 添加链接
@@ -522,12 +538,24 @@ function ChatMsgItemCmp({ isLocal, msg, downloadFile, isImg }: ChatMsgItemProps)
     // 添加最后剩余的普通文本
     if (lastIndex < originText.length) {
       const textAfter = originText.substring(lastIndex);
-      parts.push(<span key={`text-${linkIndex}-after`}>{textAfter}</span>);
+      // 处理文本中的换行符
+      const textWithBreaks = textAfter.split('\n').map((line, idx, arr) => (
+        <React.Fragment key={`text-${linkIndex}-after-${idx}`}>
+          {line}
+          {idx < arr.length - 1 && <br />}
+        </React.Fragment>
+      ));
+      parts.push(<span key={`text-${linkIndex}-after`}>{textWithBreaks}</span>);
     }
 
-    // 如果没有找到任何链接，返回原始文本
+    // 如果没有找到任何链接，返回原始文本并处理换行符
     if (parts.length === 0) {
-      return originText;
+      return originText.split('\n').map((line, idx, arr) => (
+        <React.Fragment key={`text-${idx}`}>
+          {line}
+          {idx < arr.length - 1 && <br />}
+        </React.Fragment>
+      ));
     }
 
     return <>{parts}</>;

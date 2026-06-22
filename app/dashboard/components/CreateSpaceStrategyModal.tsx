@@ -63,7 +63,7 @@ export const CreateSpaceStrategyModal: React.FC<CreateSpaceStrategyModalProps> =
 
   return (
     <Modal
-      title={t('dashboard.conf.create_space_title')}
+      title={t('dashboard.conf.create_space')}
       open={open}
       onCancel={onCancel}
       footer={

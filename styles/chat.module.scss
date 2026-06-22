@@ -1,5 +1,5 @@
 .msg {
-  height: calc(100% - 60px);
+  height: calc(100% - 146px);
   overflow-y: scroll;
   scrollbar-width: thin;
   margin: 0 0 0 24px;
@@ -126,13 +126,21 @@
 .tool {
   background-color: #1e1e1e;
   padding: 12px;
-  height: fit-content;
-  display: inline-flex;
-  align-items: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   width: 100%;
-  justify-content: space-between;
-  &_input {
-    width: calc(100% - 112px);
+
+  &_bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &_left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
 }
 

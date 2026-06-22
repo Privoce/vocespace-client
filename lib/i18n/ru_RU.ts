@@ -941,6 +941,12 @@ export default {
           today: 'Время сегодня',
         },
         empty: 'Нет данных',
+        stats: {
+          rooms: 'Всего комнат',
+          total_users: 'Всего пользователей',
+          platform_users: 'Пользователей платформы',
+          avg_duration: 'Среднее время',
+        },
       },
     },
     active: {

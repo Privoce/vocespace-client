@@ -2,6 +2,7 @@ export { DashboardStats } from './DashboardStats';
 export { DashboardActions } from './DashboardActions';
 export { ActiveSpacesSection } from './ActiveSpacesSection';
 export { HistorySpacesSection } from './HistorySpacesSection';
+export { HistoryStats } from './HistoryStats';
 export { LeaderboardSection } from './LeaderboardSection';
 export { GlobalConfModal } from './GlobalConfModal';
 export { ManageSpacesModal } from './ManageSpacesModal';

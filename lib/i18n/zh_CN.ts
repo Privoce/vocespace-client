@@ -946,6 +946,12 @@ export default {
           today: '今日使用时长',
         },
         empty: '暂无记录',
+        stats: {
+          rooms: '历史房间数',
+          total_users: '历史所有用户数',
+          platform_users: '历史平台用户数',
+          avg_duration: '平均使用总时长',
+        },
       },
     },
     active: {
