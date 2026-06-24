@@ -83,6 +83,9 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
     const [modelBg, setModelBg] = useState<ModelBg>(ModelBg.ClassRoom);
     const [openShareAudio, setOpenShareAudio] = useState<boolean>(uState.openShareAudio);
     const [openPromptSound, setOpenPromptSound] = useState<boolean>(uState.openPromptSound);
+    const [noiseSuppression, setNoiseSuppression] = useState(uState.audioProcessing?.noiseSuppression ?? true);
+    const [echoCancellation, setEchoCancellation] = useState(uState.audioProcessing?.echoCancellation ?? true);
+    const [autoGainControl, setAutoGainControl] = useState(uState.audioProcessing?.autoGainControl ?? true);
     const [compare, setCompare] = useState(false);
     const virtualSettingsRef = useRef<VirtualSettingsExports>(null);
     const { env, state, isConnected } = useRecordingEnv(messageApi);
@@ -162,7 +165,19 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
       {
         key: 'audio',
         label: <TabItem type="audio" label={t('settings.audio.title')}></TabItem>,
-        children: <AudioSettings volume={volume} setVolume={setVolume}></AudioSettings>,
+        children: (
+          <AudioSettings
+            volume={volume}
+            setVolume={setVolume}
+            noiseSuppression={noiseSuppression}
+            setNoiseSuppression={setNoiseSuppression}
+            echoCancellation={echoCancellation}
+            setEchoCancellation={setEchoCancellation}
+            autoGainControl={autoGainControl}
+            setAutoGainControl={setAutoGainControl}
+            localParticipant={localParticipant}
+          ></AudioSettings>
+        ),
       },
       {
         key: 'video',
@@ -280,6 +295,11 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
         },
         openShareAudio,
         openPromptSound,
+        audioProcessing: {
+          noiseSuppression,
+          echoCancellation,
+          autoGainControl,
+        },
       },
     }));
 

@@ -150,6 +150,14 @@ export interface ParticipantSettings {
    */
   openPromptSound: boolean;
   /**
+   * 音频处理设置
+   */
+  audioProcessing: {
+    noiseSuppression: boolean;
+    echoCancellation: boolean;
+    autoGainControl: boolean;
+  };
+  /**
    * 用户应用同步
    */
   sync: AppKey[];
@@ -724,7 +732,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number, createRoom: boolean): SpaceI
 });
 
 export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
-  version: '0.5.3',
+  version: '0.5.4',
   name: '',
   volume: 100,
   screenShareVolumes: {},
@@ -740,6 +748,11 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   },
   openPromptSound: true,
   openShareAudio: true,
+  audioProcessing: {
+    noiseSuppression: true,
+    echoCancellation: true,
+    autoGainControl: true,
+  },
   sync: ['todo'], // 默认同步待办事项
   appAuth: 'read',
   appDatas: {},
@@ -781,6 +794,11 @@ export interface SettingState {
   };
   openShareAudio: boolean;
   openPromptSound: boolean;
+  audioProcessing: {
+    noiseSuppression: boolean;
+    echoCancellation: boolean;
+    autoGainControl: boolean;
+  };
 }
 
 export const getState = (uState: ParticipantSettings): SettingState => {
@@ -795,5 +813,6 @@ export const getState = (uState: ParticipantSettings): SettingState => {
     },
     openShareAudio: uState.openShareAudio,
     openPromptSound: uState.openPromptSound,
+    audioProcessing: uState.audioProcessing,
   };
 };

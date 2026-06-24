@@ -1215,7 +1215,7 @@ class SpaceManager {
   static async addCleanupRecord(
     roomName: string,
     userCount: number,
-    strategy: 'ghost_room' | 'redis_no_livekit',
+    strategy: 'ghost_room' | 'redis_no_livekit' | 'persistent_room_cleanup',
   ): Promise<void> {
     try {
       if (!redisClient) {
@@ -2327,6 +2327,7 @@ const userHeartbeat = async () => {
     let totalRemoved = 0;
     let totalReInit = 0;
     let totalGhostRooms = 0;
+    let totalPersistentRoomCleanups = 0;
 
     // 场景1: 清理 Redis 中存在但 LiveKit 中不存在的幽灵房间
     const ghostRooms = redisRoomNames.filter((name) => !lkRoomNames.has(name));
@@ -2339,27 +2340,59 @@ const userHeartbeat = async () => {
       for (const roomName of ghostRooms) {
         const redisRoom = redisRooms[roomName];
         const participantCount = Object.keys(redisRoom.participants).length;
-        await SpaceManager.addHeartbeatLog(
-          `清理幽灵房间 [${roomName}]，包含 ${participantCount} 个参与者`,
-          'warn',
-        );
 
-        // 删除整个房间
-        try {
-          await SpaceManager.deleteSpace(roomName, Date.now());
+        // 检查是否为持久化房间
+        if (redisRoom.persistence) {
           await SpaceManager.addHeartbeatLog(
-            `✓ 已删除幽灵房间: ${roomName}`,
+            `持久化房间 [${roomName}] 在 LiveKit 中不存在，仅清理参与者数据，保留房间配置`,
             'info',
           );
-          // 记录清理数据
-          await SpaceManager.addCleanupRecord(roomName, participantCount, 'ghost_room');
-          totalGhostRooms++;
-          totalRemoved += participantCount;
-        } catch (deleteError) {
+
+          // 持久化房间：只清理参与者，保留房间数据
+          for (const participantId of Object.keys(redisRoom.participants)) {
+            try {
+              await SpaceManager.removeParticipant(roomName, participantId);
+              const participantName = redisRoom.participants[participantId]?.name || participantId;
+              await SpaceManager.addHeartbeatLog(
+                `✓ 已从持久化房间 [${roomName}] 移除参与者: ${participantName} (${participantId})`,
+                'info',
+              );
+              totalRemoved++;
+            } catch (removeError) {
+              await SpaceManager.addHeartbeatLog(
+                `✗ 移除持久化房间参与者 ${participantId} 失败: ${removeError instanceof Error ? removeError.message : '未知错误'}`,
+                'error',
+              );
+            }
+          }
+          // 记录清理数据（持久化房间清理参与者）
+          if (participantCount > 0) {
+            await SpaceManager.addCleanupRecord(roomName, participantCount, 'persistent_room_cleanup');
+            totalPersistentRoomCleanups++;
+          }
+        } else {
+          // 非持久化房间：删除整个房间
           await SpaceManager.addHeartbeatLog(
-            `✗ 删除幽灵房间 ${roomName} 失败: ${deleteError instanceof Error ? deleteError.message : '未知错误'}`,
-            'error',
+            `清理幽灵房间 [${roomName}]，包含 ${participantCount} 个参与者`,
+            'warn',
           );
+
+          try {
+            await SpaceManager.deleteSpace(roomName, Date.now());
+            await SpaceManager.addHeartbeatLog(
+              `✓ 已删除幽灵房间: ${roomName}`,
+              'info',
+            );
+            // 记录清理数据
+            await SpaceManager.addCleanupRecord(roomName, participantCount, 'ghost_room');
+            totalGhostRooms++;
+            totalRemoved += participantCount;
+          } catch (deleteError) {
+            await SpaceManager.addHeartbeatLog(
+              `✗ 删除幽灵房间 ${roomName} 失败: ${deleteError instanceof Error ? deleteError.message : '未知错误'}`,
+              'error',
+            );
+          }
         }
       }
     }
@@ -2465,7 +2498,7 @@ const userHeartbeat = async () => {
     }
 
     const duration = ((Date.now() - startTime) / 1000).toFixed(2);
-    const summary = `心跳检测完成: 耗时 ${duration}s, 清理 ${totalGhostRooms} 个幽灵房间, 清理 ${totalRemoved} 个离线用户, 重新初始化 ${totalReInit} 个用户`;
+    const summary = `心跳检测完成: 耗时 ${duration}s, 清理 ${totalGhostRooms} 个幽灵房间, 清理 ${totalPersistentRoomCleanups} 个持久化房间参与者, 清理 ${totalRemoved} 个离线用户, 重新初始化 ${totalReInit} 个用户`;
     await SpaceManager.addHeartbeatLog(summary, 'info');
     console.log(summary);
   } catch (error) {

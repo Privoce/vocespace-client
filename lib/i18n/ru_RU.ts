@@ -649,6 +649,9 @@ export default {
       title: 'Аудио',
       volume: 'Громкость',
       device: 'Аудиоустройство',
+      noise_suppression: 'Шумоподавление',
+      echo_cancellation: 'Эхоподавление',
+      auto_gain_control: 'Автоматическая регулировка усиления',
     },
     video: {
       title: 'Видео',
@@ -1001,6 +1004,7 @@ export default {
       strategy: {
         ghost_room: 'Призрачная комната',
         redis_no_livekit: 'Redis без LiveKit',
+        persistent_room_cleanup: 'Очистка постоянной комнаты',
       },
     },
     export: {

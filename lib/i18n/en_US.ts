@@ -688,6 +688,9 @@ export default {
       title: 'Audio',
       volume: 'Volume',
       device: 'Audio Device',
+      noise_suppression: 'Noise Suppression',
+      echo_cancellation: 'Echo Cancellation',
+      auto_gain_control: 'Auto Gain Control',
     },
     video: {
       title: 'Video',
@@ -1050,6 +1053,7 @@ export default {
       strategy: {
         ghost_room: 'Ghost Room',
         redis_no_livekit: 'Redis w/o LiveKit',
+        persistent_room_cleanup: 'Persistent Room Cleanup',
       },
     },
     export: {

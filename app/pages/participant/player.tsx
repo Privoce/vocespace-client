@@ -375,6 +375,7 @@ const IframeWindow = ({ url }: { url: string }) => {
         </div>
       )}
       <iframe
+        allow='clipboard-read; clipboard-write'
         title="tile-iframe"
         src={url}
         style={{ width: '100%', height: '100%', border: 'none' }}

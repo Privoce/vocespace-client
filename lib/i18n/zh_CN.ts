@@ -651,6 +651,9 @@ export default {
       title: '音频',
       volume: '音量',
       device: '音频设备',
+      noise_suppression: '降噪',
+      echo_cancellation: '回声消除',
+      auto_gain_control: '自动增益',
     },
     video: {
       title: '视频',
@@ -1006,6 +1009,7 @@ export default {
       strategy: {
         ghost_room: '幽灵房间',
         redis_no_livekit: '有Redis无LiveKit',
+        persistent_room_cleanup: '持久化房间清理',
       },
     },
     export: {
