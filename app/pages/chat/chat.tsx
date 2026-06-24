@@ -8,14 +8,13 @@ import { ulid } from 'ulid';
 import { Room } from 'livekit-client';
 import { chatMsgState, socket } from '@/app/[spaceName]/PageClientImpl';
 import { MessageInstance } from 'antd/es/message/interface';
-import { useLinkPreview } from './link_preview';
 import Dragger from 'antd/es/upload/Dragger';
 import { useRecoilState } from 'recoil';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from '../controls/drawer_tools';
 import { FolderOpenOutlined, SnippetsOutlined } from '@ant-design/icons';
 import { api } from '@/lib/api';
-import { FileType, isSpaceManager } from '@/lib/std';
+import { FileType } from '@/lib/std';
 import { FS } from './fs';
 import { handleIdentityType, SpaceInfo } from '@/lib/std/space';
 
@@ -40,9 +39,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
     const ulRef = React.useRef<HTMLUListElement>(null);
     const bottomRef = React.useRef<HTMLDivElement>(null);
     const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
-    // const [messages, setMessages] = React.useState<ChatMsgItem[]>([]);
     const [value, setValue] = React.useState('');
-    const [unhandleMsgCount, setUnhandleMsgCount] = React.useState(0);
     // 添加输入法组合状态跟踪
     const [isComposing, setIsComposing] = React.useState(false);
     const [dragOver, setDragOver] = React.useState(false);
@@ -302,16 +299,6 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
     }, [chatMsg.msgs]);
 
     const msgList = React.useMemo(() => {
-      // return chatMsg.msgs.map((msg) => (
-      //   <ChatMsgItemCmp
-      //     key={msg.id || ulid()}
-      //     isLocal={isLocal(msg.sender.id)}
-      //     msg={msg}
-      //     downloadFile={downloadFile}
-      //     isImg={isImg}
-      //   ></ChatMsgItemCmp>
-      // ));
-
       let msgItemNodes: React.ReactNode[] = [];
 
       chatMsg.msgs.forEach((msg, index) => {
@@ -468,19 +455,6 @@ function ChatMsgItemCmp({ isLocal, msg, downloadFile, isImg }: ChatMsgItemProps)
   const flexEnd = isLocal ? { justifyContent: 'flex-end' } : {};
   const textAlignPos = isLocal ? 'end' : 'left';
   const itemClass = isLocal ? styles.msg_item_wrapper : styles.msg_item__remote_wrapper;
-
-  // 判断是否有URL，这里只需要判断URL的基本格式(http/https)
-  const containsUrl = (text: string) => {
-    // 正则表达式：匹配常见的 URL 格式
-    const urlRegex =
-      /https?:\/\/[\w\-_]+(\.[\w\-_]+)+(?:[\w\-\.,@?^=%&:/~\+#]*[\w\-\@?^=%&/~\+#])?/i;
-    return urlRegex.test(text);
-  };
-
-  // const { link, linkPreview } = useLinkPreview({
-  //   text: msg.message || undefined,
-  //   isLocal,
-  // });
 
   const mixLinkText = (originText: string, previewLink?: string) => {
     // URL 正则表达式，匹配 http 和 https 链接
