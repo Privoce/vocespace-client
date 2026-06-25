@@ -10,3 +10,4 @@ export { CreateSpaceStrategyModal } from './CreateSpaceStrategyModal';
 export { FlushDbModal } from './FlushDbModal';
 export { DashboardLog, type LogEntry, type LogType } from './DashboardLog';
 export { DashboardRecording } from './DashboardRecording';
+export { DashboardLicense } from './DashboardLicense';

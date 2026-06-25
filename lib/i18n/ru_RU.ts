@@ -970,6 +970,7 @@ export default {
       history: 'История',
       recording: 'Записи',
       log: 'Журнал',
+      license: 'Лицензия',
     },
     title: 'VoceSpace Dashboard',
     proceed: 'Выполнить',
@@ -994,7 +995,7 @@ export default {
       loading: 'Загрузка...',
       no_logs: 'Записей пока нет',
       no_cleanup: 'Записей очистки нет',
-      pagination_total: 'Всего {{total}}',
+      pagination_total: 'Всего',
       columns: {
         time: 'Время',
         room: 'Комната',

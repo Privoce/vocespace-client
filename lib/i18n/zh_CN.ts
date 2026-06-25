@@ -975,6 +975,7 @@ export default {
       history: '历史记录',
       recording: '录制管理',
       log: '日志',
+      license: '许可证',
     },
     title: 'VoceSpace Dashboard',
     proceed: '执行',
@@ -999,7 +1000,7 @@ export default {
       loading: '加载中...',
       no_logs: '暂无日志',
       no_cleanup: '暂无清理记录',
-      pagination_total: '共 {{total}} 条',
+      pagination_total: '共',
       columns: {
         time: '时间',
         room: '清理的房间',

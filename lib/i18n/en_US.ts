@@ -1019,6 +1019,7 @@ export default {
       history: 'History',
       recording: 'Recording',
       log: 'Log',
+      license: 'License',
     },
     title: 'VoceSpace Dashboard',
     proceed: 'Proceed',
@@ -1043,7 +1044,7 @@ export default {
       loading: 'Loading...',
       no_logs: 'No logs yet',
       no_cleanup: 'No cleanup records',
-      pagination_total: 'Total {{total}}',
+      pagination_total: 'Total',
       columns: {
         time: 'Time',
         room: 'Room',

@@ -25,6 +25,7 @@ import {
   FlushDbModal,
   DashboardLog,
   DashboardRecording,
+  DashboardLicense,
 } from './components';
 
 const { Title } = Typography;
@@ -755,6 +756,10 @@ export default function Dashboard() {
       key: 'log',
       label: t('dashboard.menu.log'),
     },
+    {
+      key: "license",
+      label: t('dashboard.menu.license'),
+    }
   ];
 
   const changeMenu: MenuProps['onClick'] = (e) => {
@@ -787,7 +792,7 @@ export default function Dashboard() {
               avgDuration={historyAvgDuration}
             />
           ) : (
-            <DashboardStats
+            menuTab !== "license" && <DashboardStats
               totalSpaces={totalSpaces}
               totalParticipants={totalParticipants}
               onlineParticipants={onlineParticipants}
@@ -833,6 +838,8 @@ export default function Dashboard() {
         {menuTab === 'log' && <DashboardLog title={t('dashboard.log.title')}></DashboardLog>}
 
         {menuTab === 'recording' && <DashboardRecording />}
+        
+        {menuTab === "license" && <DashboardLicense messageApi={messageApi}  />}
 
         <GlobalConfModal
           open={openConf}

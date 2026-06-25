@@ -94,28 +94,31 @@ export const DashboardLog: React.FC<DashboardLogProps> = ({
   }, [maxLogs]);
 
   // 获取清理记录
-  const fetchCleanupRecords = useCallback(async (page: number = 1) => {
-    try {
-      setCleanupLoading(true);
-      const response = await fetch(
-        `${getBaseUrl()}?cleanupRecords=true&page=${page}&pageSize=${cleanupPageSize}`,
-      );
-      if (response.ok) {
-        const { records, total } = await response.json();
-        const convertedRecords = records.map((record: any) => ({
-          ...record,
-          timestamp: new Date(record.timestamp),
-        }));
-        setCleanupRecords(convertedRecords);
-        setCleanupTotal(total);
-        setCleanupPage(page);
+  const fetchCleanupRecords = useCallback(
+    async (page: number = 1) => {
+      try {
+        setCleanupLoading(true);
+        const response = await fetch(
+          `${getBaseUrl()}?cleanupRecords=true&page=${page}&pageSize=${cleanupPageSize}`,
+        );
+        if (response.ok) {
+          const { records, total } = await response.json();
+          const convertedRecords = records.map((record: any) => ({
+            ...record,
+            timestamp: new Date(record.timestamp),
+          }));
+          setCleanupRecords(convertedRecords);
+          setCleanupTotal(total);
+          setCleanupPage(page);
+        }
+      } catch (error) {
+        console.error('Failed to fetch cleanup records:', error);
+      } finally {
+        setCleanupLoading(false);
       }
-    } catch (error) {
-      console.error('Failed to fetch cleanup records:', error);
-    } finally {
-      setCleanupLoading(false);
-    }
-  }, [cleanupPageSize]);
+    },
+    [cleanupPageSize],
+  );
 
   // 清空日志
   const clearLogs = async () => {
@@ -256,7 +259,7 @@ export const DashboardLog: React.FC<DashboardLogProps> = ({
             total: cleanupTotal,
             onChange: (page) => fetchCleanupRecords(page),
             showSizeChanger: false,
-            showTotal: (total) => t('dashboard.log.pagination_total', { total }),
+            showTotal: () => t('dashboard.log.pagination_total', { total: cleanupTotal }),
           }}
           locale={{ emptyText: t('dashboard.log.no_cleanup') }}
           size="small"

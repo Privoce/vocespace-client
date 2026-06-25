@@ -73,14 +73,16 @@ export enum LicenseStatus {
 
 export const licenseStatus = (license: License): LicenseStatus => {
   const now = Date.now();
+
+  if (now > license.expires_at * 1000) {
+    return LicenseStatus.Expired;
+  }
+
   if (license.isTmp) {
     return LicenseStatus.Tmp;
-  } else {
-    if (now > license.expires_at * 1000) {
-      return LicenseStatus.Expired;
-    }
-    return LicenseStatus.Valid;
   }
+
+  return LicenseStatus.Valid;
 };
 
 export const licenseStatusStr = (status: LicenseStatus): string => {

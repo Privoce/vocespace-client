@@ -37,7 +37,7 @@ export function AudioSettings({
     const micPublication = localParticipant.getTrackPublication(Track.Source.Microphone);
     const micTrack = micPublication?.track?.mediaStreamTrack;
     if (!micTrack) return;
-
+    // 应用音频处理约束
     micTrack
       .applyConstraints({
         noiseSuppression,
@@ -84,7 +84,7 @@ export function AudioSettings({
       <div className={styles.setting_box}>
         <div>{t('settings.audio.echo_cancellation')}:</div>
         <Radio.Group
-        size="large"
+          size="large"
           block
           className={styles.common_space}
           value={echoCancellation}
