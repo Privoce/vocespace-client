@@ -26,6 +26,7 @@ import {
   DashboardLog,
   DashboardRecording,
   DashboardLicense,
+  DashboardLicenseManage,
 } from './components';
 
 const { Title } = Typography;
@@ -66,9 +67,11 @@ interface ParticipantTableData {
 
 type ActionKey = 'refresh' | 'global_conf' | 'manage_spaces' | 'ac_space' | 'flushdb';
 
+type MenuTab = 'home' | 'license' | 'licenseManage' | 'recording' | 'log' | 'history';
+
 export default function Dashboard() {
   const { t } = useI18n();
-  const [menuTab, setMenuTab] = useState('home');
+  const [menuTab, setMenuTab] = useState<MenuTab>('home');
   const [pageSize1, setPageSize1] = useState(10);
   const [pageSize2, setPageSize2] = useState(10);
   const [currentSpacesData, setCurrentSpacesData] = useState<ParticipantTableData[]>([]);
@@ -98,6 +101,8 @@ export default function Dashboard() {
   const [createSpaceConf, setCreateSpaceConf] = useState(false);
   const [isHostManager, setIsHostManager] = useState(false);
   const [hostToken, setHostToken] = useState('');
+  const [webhookEnabled, setWebhookEnabled] = useState(false);
+  const [licenseManageVisible, setLicenseManageVisible] = useState(false);
   const [openManage, setOpenManage] = useState(false);
   const [manageLoading, setManageLoading] = useState(false);
   const [manageSpaces, setManageSpaces] = useState<SpaceInfoMap | null>(null);
@@ -436,7 +441,7 @@ export default function Dashboard() {
     const avgDuration =
       totalUsers > 0
         ? `${Math.floor(totalDurationAll / totalUsers / 3600000)}h ${Math.floor(
-            (totalDurationAll / totalUsers % 3600000) / 60000,
+            ((totalDurationAll / totalUsers) % 3600000) / 60000,
           )}m`
         : '0h 0m';
 
@@ -449,6 +454,18 @@ export default function Dashboard() {
   useEffect(() => {
     getConf();
     fetchAllData();
+
+    // 查询 WEBHOOK 状态
+    fetch('/api/webhook/status')
+      .then((r) => r.json())
+      .then((data) => {
+        setWebhookEnabled(data.webhook);
+        setLicenseManageVisible(data.webhook);
+      })
+      .catch(() => {
+        setWebhookEnabled(false);
+        setLicenseManageVisible(false);
+      });
 
     const interval = setInterval(() => {
       fetchAllData();
@@ -757,13 +774,21 @@ export default function Dashboard() {
       label: t('dashboard.menu.log'),
     },
     {
-      key: "license",
+      key: 'license',
       label: t('dashboard.menu.license'),
-    }
+    },
+    ...(licenseManageVisible
+      ? [
+          {
+            key: 'licenseManage',
+            label: t('dashboard.menu.licenseManage'),
+          },
+        ]
+      : []),
   ];
 
   const changeMenu: MenuProps['onClick'] = (e) => {
-    setMenuTab(e.key);
+    setMenuTab(e.key as MenuTab);
   };
 
   return (
@@ -791,8 +816,8 @@ export default function Dashboard() {
               platformUsers={historyPlatformUsers}
               avgDuration={historyAvgDuration}
             />
-          ) : (
-            menuTab !== "license" && <DashboardStats
+          ) : menuTab === 'licenseManage' ? null : menuTab !== 'license' ? (
+            <DashboardStats
               totalSpaces={totalSpaces}
               totalParticipants={totalParticipants}
               onlineParticipants={onlineParticipants}
@@ -806,7 +831,7 @@ export default function Dashboard() {
                 />
               }
             />
-          )}
+          ) : null}
         </div>
 
         {menuTab === 'home' && (
@@ -838,8 +863,10 @@ export default function Dashboard() {
         {menuTab === 'log' && <DashboardLog title={t('dashboard.log.title')}></DashboardLog>}
 
         {menuTab === 'recording' && <DashboardRecording />}
-        
-        {menuTab === "license" && <DashboardLicense messageApi={messageApi}  />}
+
+        {menuTab === 'license' && <DashboardLicense messageApi={messageApi} />}
+
+        {menuTab === 'licenseManage' && <DashboardLicenseManage />}
 
         <GlobalConfModal
           open={openConf}

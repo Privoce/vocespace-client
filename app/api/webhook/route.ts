@@ -2,56 +2,65 @@
 // test: stripe trigger payment_intent.succeeded
 import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
+import { createLicense } from '@/lib/db/license';
+import { sendEmail, fmtContentBuy } from '@/lib/email';
 
 const SECRET_KEY = process.env.STRIPE_SECRET_KEY ?? '';
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ?? '';
 const WEBHOOK = process.env.WEBHOOK ?? false;
 
+const SITE_URL = process.env.SITE_URL || 'https://vocespace.com';
+const VOCESPACE_API = 'https://vocespace.com';
+
 // 为用户侧构建一个stripe session, 让用户跳转到stripe的支付页面
 // 参数: session_ip=IP
 export async function GET(request: NextRequest) {
-  if (!WEBHOOK) {
-    return NextResponse.json({ error: 'Webhook is not enabled' }, { status: 400 });
-  }
-  const stripe = new Stripe(SECRET_KEY);
   const ip = request.nextUrl.searchParams.get('session_ip');
   if (!ip) {
     return NextResponse.json({ error: 'session_ip is required' }, { status: 400 });
-  } else {
-    // 创建session, product: prod_S8YXSKlgQvaYdH, price: price_1REHPyGGoUDRyc3jW5AlM49w
-    try {
-      const session = await stripe.checkout.sessions.create({
-        mode: 'payment',
-        // mode: "subscription",
-        payment_method_types: [
-          'card',
-          'alipay',
-          'link',
-          'wechat_pay',
-          // 'klarna',
-          'cashapp',
-        ],
-        payment_method_options: {
-          wechat_pay: {
-            client: 'web',
-          },
+  }
+
+  // WEBHOOK=false 时，代理到 vocespace.com 处理
+  if (!WEBHOOK) {
+    const proxyUrl = `${VOCESPACE_API}/api/webhook?session_ip=${encodeURIComponent(ip)}`;
+    const proxyRes = await fetch(proxyUrl, { method: 'GET' });
+    const data = await proxyRes.json();
+    return NextResponse.json(data, { status: proxyRes.status });
+  }
+
+  const stripe = new Stripe(SECRET_KEY);
+  // 创建session, product: prod_S8YXSKlgQvaYdH, price: price_1REHPyGGoUDRyc3jW5AlM49w
+  try {
+    const session = await stripe.checkout.sessions.create({
+      mode: 'payment',
+      // mode: "subscription",
+      payment_method_types: [
+        'card',
+        'alipay',
+        'link',
+        'wechat_pay',
+        // 'klarna',
+        'cashapp',
+      ],
+      payment_method_options: {
+        wechat_pay: {
+          client: 'web',
         },
-        line_items: [
-          {
-            price: 'price_1REHPyGGoUDRyc3jW5AlM49w',
-            quantity: 1,
-          },
-        ],
-        metadata: {
-          server_ip: ip,
+      },
+      line_items: [
+        {
+          price: 'price_1REHPyGGoUDRyc3jW5AlM49w',
+          quantity: 1,
         },
-        // default success url
-        success_url: 'https://vocespace.com',
-      });
-      return NextResponse.json({ url: session.url }, { status: 200 });
-    } catch (error) {
-      return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
-    }
+      ],
+      metadata: {
+        server_ip: ip,
+      },
+      success_url: SITE_URL,
+    });
+    return NextResponse.json({ url: session.url }, { status: 200 });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
   }
 }
 
@@ -59,7 +68,7 @@ export async function POST(request: Request) {
   if (!WEBHOOK) {
     return NextResponse.json({ error: 'Webhook is not enabled' }, { status: 400 });
   }
-
+  // 验证stripe webhook signature
   const stripe = new Stripe(SECRET_KEY);
   const sig: any = request.headers.get('stripe-signature');
   const rawBody = await request.arrayBuffer();
@@ -77,13 +86,9 @@ export async function POST(request: Request) {
   switch (event.type) {
     case 'payment_intent.succeeded':
       const paymentIntentSucceeded = event.data.object;
-      // now we get the payment intent, then send to the api server, which will store user info and generate a license value for the user
-      // then the user will get a email(contain license value) from api server
       if (paymentIntentSucceeded.status === 'succeeded') {
-        // paySuccessAndSendToServer(paymentIntentSucceeded);
-        // console.warn(paymentIntentSucceeded);
+        // 可在此处处理payment_intent逻辑
       }
-
       break;
     case 'checkout.session.completed':
       const session = event.data.object;
@@ -101,6 +106,7 @@ export async function POST(request: Request) {
         }
 
         if (session.customer_email) {
+          // 直接调用本地 license 创建逻辑，不再请求外部服务器
           paySuccessAndSendToServer({
             email: session.customer_email,
             created: session.created,
@@ -108,7 +114,6 @@ export async function POST(request: Request) {
           });
         }
       }
-
       break;
     default:
       console.log(`Unhandled event type ${event.type}`);
@@ -127,17 +132,19 @@ const paySuccessAndSendToServer = async ({
   created: number;
   domains: string;
 }) => {
-  const url = 'https://space.voce.chat/api/license'; // test
-  const info = {
-    email,
-    created_at: created,
-    domains,
-  };
-  await fetch(url, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(info),
-  });
+  try {
+    const license = await createLicense(email, domains, created);
+    // 通过 smtp 发送邮件给用户
+    const sent = await sendEmail(
+      'han@privoce.com',
+      email,
+      'VoceSpace License',
+      fmtContentBuy(license.value),
+    );
+    if (!sent) {
+      console.error(`Failed to send license email to ${email}`);
+    }
+  } catch (err) {
+    console.error('Failed to create license from webhook:', err);
+  }
 };

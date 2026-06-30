@@ -15,7 +15,7 @@ import {
   updateAIConf,
   updateCreateSpaceConf,
 } from './conf';
-import { checkLicenseByIP, getLicenseByIP } from './license';
+import { checkLicenseByIP, getLicenseByIP, getAllLicenses, createLicense, updateLicense, deleteAllLicenses, validateLicenseValue } from './license';
 import { sendRecordRequest, updateRecord } from './record';
 import {
   testS3Connection,
@@ -93,6 +93,11 @@ export const api = {
   // ---- license api --------
   getLicenseByIP,
   checkLicenseByIP,
+  getAllLicenses,
+  createLicense,
+  updateLicense,
+  deleteAllLicenses,
+  validateLicenseValue,
   // ---- recording api --------
   sendRecordRequest,
   updateRecord,
