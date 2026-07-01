@@ -1,9 +1,10 @@
-import initSqlJs, { Database as SqlJsDatabase } from 'sql.js';
 import fs from 'fs';
 import path from 'path';
 import jwt from 'jsonwebtoken';
 
-const DB_PATH = path.join(process.cwd(), 'vocespace_license.db');
+const DB_DIR = path.join(process.cwd(), 'sql');
+const SHARD_PREFIX = 'licenses';
+const MAX_PER_SHARD = 1000;
 const LICENSE_SECRET = process.env.LICENSE_SECRET || 'privoce_vocespace_secret_key';
 
 export interface LicenseRow {
@@ -25,51 +26,101 @@ export interface LicenseClaims {
   id: string;
 }
 
-let _db: SqlJsDatabase | null = null;
-let _initPromise: Promise<void> | null = null;
+// --- Shard utilities ---
 
-async function getDb(): Promise<SqlJsDatabase> {
-  if (!_db) {
-    if (!_initPromise) {
-      _initPromise = initDb();
+function shardFileName(index: number): string {
+  return index === 0 ? `${SHARD_PREFIX}.json` : `${SHARD_PREFIX}.${index}.json`;
+}
+
+function shardFilePath(index: number): string {
+  return path.join(DB_DIR, shardFileName(index));
+}
+
+/** List all existing shard file paths, sorted by index ascending */
+function getShardFiles(): string[] {
+  if (!fs.existsSync(DB_DIR)) {
+    fs.mkdirSync(DB_DIR, { recursive: true });
+    return [];
+  }
+  const files = fs.readdirSync(DB_DIR);
+  const shardFiles: { index: number; name: string }[] = [];
+
+  for (const f of files) {
+    // Match licenses.json (index 0) and licenses.{n}.json (index n)
+    const match = f.match(new RegExp(`^${SHARD_PREFIX}(?:\\.(\\d+))?\\.json$`));
+    if (match) {
+      const index = match[1] !== undefined ? parseInt(match[1], 10) : 0;
+      shardFiles.push({ index, name: f });
     }
-    await _initPromise;
-  }
-  return _db!;
-}
-
-async function initDb(): Promise<void> {
-  const SQL = await initSqlJs();
-
-  if (fs.existsSync(DB_PATH)) {
-    const buffer = fs.readFileSync(DB_PATH);
-    _db = new SQL.Database(buffer);
-  } else {
-    _db = new SQL.Database();
   }
 
-  _db.run(`
-    CREATE TABLE IF NOT EXISTS license (
-      id TEXT PRIMARY KEY,
-      email TEXT NOT NULL,
-      domains TEXT NOT NULL,
-      created_at INTEGER NOT NULL,
-      expires_at INTEGER NOT NULL,
-      value TEXT NOT NULL,
-      ilimit TEXT NOT NULL
-    )
-  `);
-
-  saveDb();
+  shardFiles.sort((a, b) => a.index - b.index);
+  return shardFiles.map((sf) => path.join(DB_DIR, sf.name));
 }
 
-function saveDb() {
-  if (_db) {
-    const data = _db.export();
-    const buffer = Buffer.from(data);
-    fs.writeFileSync(DB_PATH, buffer);
+/** Read a single shard file */
+function readShard(filePath: string): LicenseRow[] {
+  try {
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, 'utf-8');
+      return JSON.parse(raw);
+    }
+  } catch {
+    // corrupted file, return empty
+  }
+  return [];
+}
+
+/** Read all shard files and merge into one array */
+function readAll(): LicenseRow[] {
+  const files = getShardFiles();
+  const all: LicenseRow[] = [];
+  for (const f of files) {
+    all.push(...readShard(f));
+  }
+  return all;
+}
+
+/**
+ * Write all licenses, distributing across shard files.
+ * Each shard holds at most MAX_PER_SHARD records.
+ * Existing shard files that are no longer needed are deleted.
+ */
+function writeAll(licenses: LicenseRow[]): void {
+  if (!fs.existsSync(DB_DIR)) {
+    fs.mkdirSync(DB_DIR, { recursive: true });
+  }
+
+  const existingFiles = getShardFiles();
+  const neededShards = Math.ceil(licenses.length / MAX_PER_SHARD) || 1;
+
+  // Write each shard
+  for (let i = 0; i < neededShards; i++) {
+    const start = i * MAX_PER_SHARD;
+    const end = Math.min(start + MAX_PER_SHARD, licenses.length);
+    const chunk = licenses.slice(start, end);
+    const fp = shardFilePath(i);
+    fs.writeFileSync(fp, JSON.stringify(chunk, null, 2), 'utf-8');
+  }
+
+  // Delete orphaned shard files
+  for (const existingFile of existingFiles) {
+    const baseName = path.basename(existingFile);
+    // Check if this file is still needed
+    let isNeeded = false;
+    for (let i = 0; i < neededShards; i++) {
+      if (baseName === shardFileName(i)) {
+        isNeeded = true;
+        break;
+      }
+    }
+    if (!isNeeded) {
+      fs.unlinkSync(existingFile);
+    }
   }
 }
+
+// --- Public API ---
 
 export function generateLicenseValue(
   id: string,
@@ -113,61 +164,52 @@ export async function createLicense(
   email: string,
   domains: string,
   created_at: number,
+  ilimit: string = 'pro',
 ): Promise<LicenseRow> {
   const expires_at = created_at + 60 * 60 * 24 * 365; // 1 year
   const id = crypto.randomUUID();
-  const ilimit = 'pro';
   const value = generateLicenseValue(id, email, domains, created_at, expires_at, ilimit);
 
-  const db = await getDb();
-  db.run(
-    'INSERT INTO license (id, email, domains, created_at, expires_at, value, ilimit) VALUES (?, ?, ?, ?, ?, ?, ?)',
-    [id, email, domains, created_at, expires_at, value, ilimit],
-  );
-  saveDb();
+  const licenses = readAll();
+  const row: LicenseRow = { id, email, domains, created_at, expires_at, value, ilimit };
+  licenses.push(row);
+  writeAll(licenses);
 
+  return row;
+}
+
+/**
+ * Generate a license value without writing to DB (for free licenses)
+ */
+export function generateLicenseOnly(
+  email: string,
+  domains: string,
+  created_at: number,
+  ilimit: string = 'free',
+): LicenseRow {
+  const expires_at = created_at + 60 * 60 * 24 * 365; // 1 year
+  const id = crypto.randomUUID();
+  const value = generateLicenseValue(id, email, domains, created_at, expires_at, ilimit);
   return { id, email, domains, created_at, expires_at, value, ilimit };
 }
 
 export async function getLicenseByValue(value: string): Promise<LicenseRow | undefined> {
-  const db = await getDb();
-  const stmt = db.prepare('SELECT * FROM license WHERE value = ?');
-  stmt.bind([value]);
-  if (stmt.step()) {
-    const row = stmt.getAsObject() as any;
-    stmt.free();
-    return {
-      id: row.id,
-      email: row.email,
-      domains: row.domains,
-      created_at: row.created_at,
-      expires_at: row.expires_at,
-      value: row.value,
-      ilimit: row.ilimit,
-    };
+  const files = getShardFiles();
+  for (const f of files) {
+    const rows = readShard(f);
+    const found = rows.find((l) => l.value === value);
+    if (found) return found;
   }
-  stmt.free();
   return undefined;
 }
 
 export async function getLicenseByDomain(domain: string): Promise<LicenseRow | undefined> {
-  const db = await getDb();
-  const stmt = db.prepare('SELECT * FROM license WHERE domains = ?');
-  stmt.bind([domain]);
-  if (stmt.step()) {
-    const row = stmt.getAsObject() as any;
-    stmt.free();
-    return {
-      id: row.id,
-      email: row.email,
-      domains: row.domains,
-      created_at: row.created_at,
-      expires_at: row.expires_at,
-      value: row.value,
-      ilimit: row.ilimit,
-    };
+  const files = getShardFiles();
+  for (const f of files) {
+    const rows = readShard(f);
+    const found = rows.find((l) => l.domains === domain);
+    if (found) return found;
   }
-  stmt.free();
   return undefined;
 }
 
@@ -177,25 +219,11 @@ export async function updateLicense(
   newDomains?: string,
   newEmail?: string,
 ): Promise<LicenseRow | undefined> {
-  const db = await getDb();
-  const stmt = db.prepare('SELECT * FROM license WHERE value = ? AND email = ?');
-  stmt.bind([value, email]);
-  let license: LicenseRow | undefined;
-  if (stmt.step()) {
-    const row = stmt.getAsObject() as any;
-    license = {
-      id: row.id,
-      email: row.email,
-      domains: row.domains,
-      created_at: row.created_at,
-      expires_at: row.expires_at,
-      value: row.value,
-      ilimit: row.ilimit,
-    };
-  }
-  stmt.free();
-  if (!license) return undefined;
+  const licenses = readAll();
+  const idx = licenses.findIndex((l) => l.value === value && l.email === email);
+  if (idx === -1) return undefined;
 
+  const license = licenses[idx];
   const updatedDomains = newDomains && newDomains !== '' && newDomains !== license.domains
     ? newDomains
     : license.domains;
@@ -203,34 +231,28 @@ export async function updateLicense(
     ? newEmail
     : license.email;
 
-  db.run('UPDATE license SET domains = ?, email = ? WHERE id = ?', [updatedDomains, updatedEmail, license.id]);
-  saveDb();
+  licenses[idx] = { ...license, domains: updatedDomains, email: updatedEmail };
+  writeAll(licenses);
 
-  return { ...license, domains: updatedDomains, email: updatedEmail };
+  return licenses[idx];
+}
+
+export async function deleteLicenseById(id: string): Promise<void> {
+  const licenses = readAll();
+  const filtered = licenses.filter((l) => l.id !== id);
+  if (filtered.length !== licenses.length) {
+    writeAll(filtered);
+  }
 }
 
 export async function deleteAllLicenses(): Promise<void> {
-  const db = await getDb();
-  db.run('DELETE FROM license');
-  saveDb();
+  const files = getShardFiles();
+  for (const f of files) {
+    fs.unlinkSync(f);
+  }
 }
 
 export async function getAllLicenses(): Promise<LicenseRow[]> {
-  const db = await getDb();
-  const results: LicenseRow[] = [];
-  const stmt = db.prepare('SELECT * FROM license ORDER BY created_at DESC');
-  while (stmt.step()) {
-    const row = stmt.getAsObject() as any;
-    results.push({
-      id: row.id,
-      email: row.email,
-      domains: row.domains,
-      created_at: row.created_at,
-      expires_at: row.expires_at,
-      value: row.value,
-      ilimit: row.ilimit,
-    });
-  }
-  stmt.free();
-  return results;
+  const licenses = readAll();
+  return licenses.sort((a, b) => b.created_at - a.created_at);
 }

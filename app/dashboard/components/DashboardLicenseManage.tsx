@@ -27,13 +27,18 @@ import {
   message,
   Space,
   Typography,
+  Descriptions,
 } from 'antd';
-import { CheckCircleOutlined, CloseCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import {
+  CheckCircleOutlined,
+  CloseCircleOutlined,
+  ExclamationCircleOutlined,
+} from '@ant-design/icons';
 import TextArea from 'antd/es/input/TextArea';
 import { useI18n } from '@/lib/i18n/i18n';
 import { api } from '@/lib/api';
 
-const { Title, Text } = Typography;
+const { Title } = Typography;
 
 interface LicenseRecord {
   id: string;
@@ -67,6 +72,48 @@ const isValidLicense = (expiresAt: number): boolean => {
   return Math.floor(Date.now() / 1000) < expiresAt;
 };
 
+interface LicenseDetailCardProps {
+  license: any;
+  lm: (key: string) => string;
+  showValue?: boolean;
+  title?: string;
+}
+
+/** 证书详情卡片 — 展示邮箱/域名/类型/创建/过期/ID */
+const LicenseDetailCard: React.FC<LicenseDetailCardProps> = ({ license, lm, showValue, title }) => {
+  const itemStyle = { color: '#fff' };
+
+  return (
+    <div style={{ marginTop: 16 }}>
+      <Descriptions title={title} bordered size="small" column={1}>
+        {showValue && license.value && (
+          <Descriptions.Item label={lm('licenseValue')} style={itemStyle}>
+            <div style={{ wordBreak: 'break-all', maxWidth: 480 }}>{license.value}</div>
+          </Descriptions.Item>
+        )}
+        <Descriptions.Item label={lm('tableEmail')} style={itemStyle}>
+          {license.email || '-'}
+        </Descriptions.Item>
+        <Descriptions.Item label={lm('tableDomains')} style={itemStyle}>
+          {license.domains || '-'}
+        </Descriptions.Item>
+        <Descriptions.Item label={lm('tableType')} style={itemStyle}>
+          {license.ilimit || license.limit || '-'}
+        </Descriptions.Item>
+        <Descriptions.Item label={lm('tableCreated')} style={itemStyle}>
+          {license.created_at ? fmtDate(license.created_at) : '-'}
+        </Descriptions.Item>
+        <Descriptions.Item label={lm('tableExpires')} style={itemStyle}>
+          {license.expires_at ? fmtDate(license.expires_at) : '-'}
+        </Descriptions.Item>
+        <Descriptions.Item label={lm('fieldId')} style={itemStyle}>
+          {license.id || '-'}
+        </Descriptions.Item>
+      </Descriptions>
+    </div>
+  );
+};
+
 interface DashboardLicenseManageProps {
   isHostManager?: boolean;
   hostToken?: string;
@@ -81,17 +128,21 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
   // 生成证书表单
   const [createForm] = Form.useForm();
   const [createLoading, setCreateLoading] = useState(false);
+  const [createdLicense, setCreatedLicense] = useState<any>(null);
 
   // 更新证书表单
   const [updateForm] = Form.useForm();
   const [updateLoading, setUpdateLoading] = useState(false);
+  const [updatedLicense, setUpdatedLicense] = useState<any>(null);
 
   // 验证证书
   const [validateValue, setValidateValue] = useState('');
   const [validateResult, setValidateResult] = useState<{
     valid: boolean;
     msg: string;
-    license?: LicenseRecord;
+    license?: any;
+    invalidFields?: string[];
+    inDb?: boolean;
   } | null>(null);
   const [validateLoading, setValidateLoading] = useState(false);
 
@@ -109,6 +160,16 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
   const [isHostManager, setIsHostManager] = useState(false);
 
   const lm = (key: string) => t(`dashboard.licenseManage.${key}`);
+
+  // 字段映射
+  const fieldLabelMap: Record<string, string> = {
+    email: lm('fieldEmail'),
+    domains: lm('fieldDomains'),
+    created_at: lm('fieldCreatedAt'),
+    expires_at: lm('fieldExpiresAt'),
+    limit: lm('fieldLimit'),
+    id: lm('fieldId'),
+  };
 
   // hostToken验证
   const verifyToken = async (token: string): Promise<boolean> => {
@@ -193,6 +254,7 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
       title: lm('tableType'),
       dataIndex: 'ilimit',
       key: 'ilimit',
+      width: 100,
       render: (limit: string) => <Tag color={licenseTypeColor(limit)}>{limit}</Tag>,
     },
     {
@@ -215,6 +277,7 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
     {
       title: lm('tableStatus'),
       key: 'status',
+      width: 140,
       render: (_: any, record: LicenseRecord) =>
         isValidLicense(record.expires_at) ? (
           <Tag icon={<CheckCircleOutlined />} color="success">
@@ -245,47 +308,66 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
           >
             {lm('tabUpdate')}
           </Button>
-          <Button
-            size="small"
-            onClick={() => setExtendModal({ open: true, record })}
-          >
+          <Button size="small" onClick={() => setExtendModal({ open: true, record })}>
             {lm('extendTitle')}
+          </Button>
+          <Button size="small" danger onClick={() => handleDelete(record)}>
+            {lm('deleteBtn')}
           </Button>
         </Space>
       ),
     },
   ];
 
+  // 删除证书
+  const handleDelete = async (record: LicenseRecord) => {
+    Modal.confirm({
+      title: lm('deleteConfirmTitle'),
+      content: lm('deleteConfirmContent').replace('{email}', record.email),
+      okText: lm('deleteBtn'),
+      cancelText: t('dashboard.conf.cancel') || 'Cancel',
+      okButtonProps: { danger: true },
+      onOk: async () => {
+        try {
+          const resp = await api.deleteAllLicenses(hostToken, record.id);
+          const data = await resp.json();
+          if (resp.ok && data.success) {
+            message.success(lm('deleteSuccess'));
+            await fetchLicenses();
+          } else {
+            message.error(data.error || lm('deleteFailed'));
+          }
+        } catch (err) {
+          console.error(err);
+          message.error(lm('deleteFailed'));
+        }
+      },
+    });
+  };
+
   // 创建证书
-  const handleCreate = async () => {
+  const [importLoading, setImportLoading] = useState(false);
+
+  const handleCreate = async (sendEmail: boolean) => {
     try {
       const values = await createForm.validateFields();
       setCreateLoading(true);
+      setCreatedLicense(null);
       const resp = await api.createLicense(
         {
           email: values.email,
           domains: values.domains,
+          ilimit: values.ilimit || 'pro',
+          sendEmail,
         },
         hostToken,
       );
       const data = await resp.json();
       if (resp.ok && data.success) {
-        message.success(lm('createSuccess').replace('{value}', data.license_value?.substring(0, 20) || ''));
-        Modal.success({
-          title: lm('createModalTitle'),
-          content: (
-            <div>
-              <Text strong>{lm('licenseValue')}:</Text>
-              <Text copyable style={{ display: 'block', wordBreak: 'break-all', marginTop: 8 }}>
-                {data.license_value}
-              </Text>
-              <Text type="secondary" style={{ display: 'block', marginTop: 8 }}>
-                {data.email_sent ? lm('emailSent') : lm('emailFailed')}
-              </Text>
-            </div>
-          ),
-          width: 600,
-        });
+        setCreatedLicense(data.license);
+        message.success(
+          lm('createSuccess').replace('{value}', data.license_value?.substring(0, 20) || ''),
+        );
         createForm.resetFields();
         await fetchLicenses();
       } else {
@@ -298,25 +380,53 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
     }
   };
 
+  // 导入证书到数据库
+  const handleImportToDb = async () => {
+    if (!validateValue.trim()) return;
+    setImportLoading(true);
+    try {
+      const resp = await api.createLicense(
+        { value: validateValue.trim(), sendEmail: false },
+        hostToken,
+      );
+      const data = await resp.json();
+      if (resp.ok && data.success) {
+        message.success(lm('importToDbSuccess'));
+        setValidateResult(null);
+        setValidateValue('');
+        await fetchLicenses();
+      } else {
+        message.error(data.error || lm('importToDbError'));
+      }
+    } catch (err) {
+      console.error(err);
+      message.error(lm('importToDbError'));
+    } finally {
+      setImportLoading(false);
+    }
+  };
+
   // 更新证书
-  const handleUpdate = async () => {
+  const handleUpdate = async (sendEmail: boolean = false) => {
     try {
       const values = await updateForm.validateFields();
       setUpdateLoading(true);
+      setUpdatedLicense(null);
       const resp = await api.updateLicense(
         {
           email: values.email,
           value: values.value,
           newDomains: values.newDomains,
           newEmail: values.newEmail,
+          sendEmail,
         },
         hostToken,
       );
       const data = await resp.json();
       if (resp.ok && data.success) {
-        message.success(lm('updateSuccess'));
+        setUpdatedLicense(data.license);
+        message.success(sendEmail ? lm('updateAndSendSuccess') : lm('updateSuccess'));
         updateForm.resetFields();
-        setActiveTab('view');
         await fetchLicenses();
       } else {
         message.error(data.error || lm('updateFailed'));
@@ -367,17 +477,41 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
     setValidateResult(null);
     try {
       const resp = await api.validateLicenseValue(validateValue.trim());
+      const data = await resp.json();
       if (resp.ok) {
-        const data = await resp.json();
-        setValidateResult({
-          valid: isValidLicense(data.expires_at),
-          msg: isValidLicense(data.expires_at) ? lm('validateValid') : lm('validateExpired'),
-          license: data,
-        });
-      } else if (resp.status === 403) {
-        setValidateResult({ valid: false, msg: lm('validateInvalid') });
-      } else if (resp.status === 404) {
-        setValidateResult({ valid: false, msg: lm('validateNotFound') });
+        if (data.inDb && data.license) {
+          // 数据库中的记录
+          setValidateResult({
+            valid: data.valid,
+            msg: data.valid ? lm('validateValid') : lm('validateExpired'),
+            license: data.license,
+            invalidFields: data.invalidFields,
+            inDb: true,
+          });
+        } else if (data.inDb === false && data.claims) {
+          // 不在数据库中，解析JWT字段
+          if (data.valid) {
+            setValidateResult({
+              valid: true,
+              msg: lm('validateNotInDb'),
+              license: data.claims,
+              invalidFields: undefined,
+              inDb: false,
+            });
+          } else {
+            setValidateResult({
+              valid: false,
+              msg: lm('validateInvalid'),
+              license: data.claims,
+              invalidFields: data.invalidFields,
+              inDb: false,
+            });
+          }
+        } else {
+          setValidateResult({ valid: false, msg: lm('validateFailed') });
+        }
+      } else if (resp.status === 400) {
+        setValidateResult({ valid: false, msg: 'Invalid JWT token' });
       } else {
         setValidateResult({ valid: false, msg: lm('validateFailed') });
       }
@@ -393,9 +527,7 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
       <div style={{ padding: 24 }}>
         <Title level={4}>{lm('title')}</Title>
         <Card>
-          <Text type="secondary" style={{ display: 'block', marginBottom: 16 }}>
-            {lm('enterToken')}
-          </Text>
+          <span style={{ display: 'block', marginBottom: 16 }}>{lm('enterToken')}</span>
           <Space>
             <Input.Password
               placeholder={t('dashboard.conf.placeholder')}
@@ -452,7 +584,11 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
             </Col>
             <Col span={6}>
               <Card>
-                <Statistic title={lm('statsPro')} value={stats.proCount} suffix={`/ ${stats.total}`} />
+                <Statistic
+                  title={lm('statsPro')}
+                  value={stats.proCount}
+                  suffix={`/ ${stats.total}`}
+                />
               </Card>
             </Col>
           </Row>
@@ -462,6 +598,17 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
             rowKey="id"
             loading={loading}
             pagination={{ pageSize: 10 }}
+            expandable={{
+              expandedRowRender: (record: LicenseRecord) => (
+                <div style={{ maxWidth: 600 }}>
+                  <span>{lm('licenseValue')}:</span>
+                  <div style={{ wordBreak: 'break-all', marginTop: 4, fontFamily: 'monospace', fontSize: 12 }}>
+                    {record.value}
+                  </div>
+                </div>
+              ),
+              rowExpandable: () => true,
+            }}
           />
         </div>
       ),
@@ -471,11 +618,7 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
       label: lm('tabCreate'),
       children: (
         <Card>
-          <Form
-            form={createForm}
-            layout="vertical"
-            style={{ maxWidth: 500 }}
-          >
+          <Form form={createForm} layout="vertical" style={{ maxWidth: 500 }}>
             <Form.Item
               name="email"
               label={lm('formEmail')}
@@ -490,12 +633,27 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
             >
               <Input placeholder={lm('formDomainsPlaceholder')} />
             </Form.Item>
+            <Form.Item name="ilimit" label={lm('formType')} initialValue="pro">
+              <Select
+                options={[
+                  { value: 'free', label: lm('typeFree') },
+                  { value: 'pro', label: lm('typePro') },
+                  { value: 'enterprise', label: lm('typeEnterprise') },
+                ]}
+              />
+            </Form.Item>
             <Form.Item>
-              <Button type="primary" onClick={handleCreate} loading={createLoading}>
-                {lm('createBtn')}
-              </Button>
+              <Space>
+                <Button type="primary" onClick={() => handleCreate(true)} loading={createLoading}>
+                  {lm('generateBtn')}
+                </Button>
+                <Button onClick={() => handleCreate(false)} loading={createLoading}>
+                  {lm('generateOnlyBtn')}
+                </Button>
+              </Space>
             </Form.Item>
           </Form>
+          {createdLicense && <LicenseDetailCard license={createdLicense} lm={lm} showValue />}
         </Card>
       ),
     },
@@ -504,11 +662,7 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
       label: lm('tabUpdate'),
       children: (
         <Card>
-          <Form
-            form={updateForm}
-            layout="vertical"
-            style={{ maxWidth: 500 }}
-          >
+          <Form form={updateForm} layout="vertical" style={{ maxWidth: 500 }}>
             <Form.Item
               name="email"
               label={lm('updateOriginalEmail')}
@@ -530,11 +684,17 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
               <Input placeholder={lm('updateNewEmail')} />
             </Form.Item>
             <Form.Item>
-              <Button type="primary" onClick={handleUpdate} loading={updateLoading}>
-                {lm('updateBtn')}
-              </Button>
+              <Space>
+                <Button type="primary" onClick={() => handleUpdate(false)} loading={updateLoading}>
+                  {lm('updateBtn')}
+                </Button>
+                <Button onClick={() => handleUpdate(true)} loading={updateLoading}>
+                  {lm('updateAndSendBtn')}
+                </Button>
+              </Space>
             </Form.Item>
           </Form>
+          {updatedLicense && <LicenseDetailCard license={updatedLicense} lm={lm} showValue />}
         </Card>
       ),
     },
@@ -557,11 +717,7 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
             {lm('validateBtn')}
           </Button>
           {validateResult && (
-            <Card
-              size="small"
-              style={{ marginTop: 16 }}
-              variant="outlined"
-            >
+            <Card size="small" style={{ marginTop: 16 }} variant="outlined">
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 {validateResult.valid ? (
                   <CheckCircleOutlined style={{ color: '#52c41a', fontSize: 20 }} />
@@ -570,14 +726,34 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
                 )}
                 <span style={{ fontWeight: 500 }}>{validateResult.msg}</span>
               </div>
-              {validateResult.license && (
-                <div style={{ marginTop: 12 }}>
-                  <div><Text strong>{lm('tableEmail')}:</Text> {validateResult.license.email}</div>
-                  <div><Text strong>{lm('tableDomains')}:</Text> {validateResult.license.domains}</div>
-                  <div><Text strong>{lm('tableType')}:</Text> {validateResult.license.ilimit}</div>
-                  <div><Text strong>{lm('tableCreated')}:</Text> {fmtDate(validateResult.license.created_at)}</div>
-                  <div><Text strong>{lm('tableExpires')}:</Text> {fmtDate(validateResult.license.expires_at)}</div>
+
+              {/* 入库按钮：有效证书且不在数据库时显示 */}
+              {validateResult.inDb === false && validateResult.valid && (
+                <div style={{ marginTop: 16 }}>
+                  <Button type="primary" onClick={handleImportToDb} loading={importLoading}>
+                    {lm('importToDb')}
+                  </Button>
                 </div>
+              )}
+
+              {/* 字段错误列表 */}
+              {validateResult.invalidFields && validateResult.invalidFields.length > 0 && (
+                <div style={{ marginTop: 16 }}>
+                  <Descriptions title="Invalid Fields" bordered size="small" column={1}>
+                    {validateResult.invalidFields.map((field) => (
+                      <Descriptions.Item key={field} label={fieldLabelMap[field] || field}>
+                        <Tag color="error" icon={<CloseCircleOutlined />}>
+                          Invalid
+                        </Tag>
+                      </Descriptions.Item>
+                    ))}
+                  </Descriptions>
+                </div>
+              )}
+
+              {/* 证书信息 */}
+              {validateResult.license && (
+                <LicenseDetailCard license={validateResult.license} lm={lm} />
               )}
             </Card>
           )}
@@ -602,13 +778,13 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
         {extendModal.record && (
           <div>
             <p>
-              <Text strong>{lm('tableEmail')}:</Text> {extendModal.record.email}
+              <span>{lm('tableEmail')}:</span> {extendModal.record.email}
             </p>
             <p>
-              <Text strong>{lm('extendCurrentExpires')}:</Text> {fmtDate(extendModal.record.expires_at)}
+              <span>{lm('extendCurrentExpires')}:</span> {fmtDate(extendModal.record.expires_at)}
             </p>
             <div style={{ marginTop: 16 }}>
-              <Text>{lm('extendBy')}:</Text>
+              <span>{lm('extendBy')}:</span>
               <Select
                 value={extendDays}
                 onChange={setExtendDays}

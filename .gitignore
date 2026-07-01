@@ -52,4 +52,7 @@ vocespace.*
 /deploy/sge_deploy
 /public/license
 
-/prompt/useless/**
+/prompt/useless/**public/sql-wasm.wasm
+sql/
+
+**/useless/

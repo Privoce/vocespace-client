@@ -47,7 +47,7 @@ export const getAllLicenses = async (hostToken: string) => {
  * @param hostToken 管理员令牌
  */
 export const createLicense = async (
-  params: { email: string; domains: string; created_at?: number },
+  params: { email?: string; domains?: string; created_at?: number; ilimit?: string; sendEmail?: boolean; value?: string },
   hostToken: string,
 ) => {
   const url = new URL(LICENSE_API_URL, window.location.origin);
@@ -61,6 +61,9 @@ export const createLicense = async (
       email: params.email,
       domains: params.domains,
       created_at: params.created_at || Math.floor(Date.now() / 1000),
+      ilimit: params.ilimit,
+      sendEmail: params.sendEmail,
+      value: params.value,
     }),
   });
 };
@@ -71,7 +74,7 @@ export const createLicense = async (
  * @param hostToken 管理员令牌
  */
 export const updateLicense = async (
-  params: { email: string; value: string; newDomains?: string; newEmail?: string },
+  params: { email: string; value: string; newDomains?: string; newEmail?: string; sendEmail?: boolean },
   hostToken: string,
 ) => {
   const url = new URL(LICENSE_API_URL, window.location.origin);
@@ -86,12 +89,14 @@ export const updateLicense = async (
 };
 
 /**
- * 删除所有证书（测试用）
+ * 删除证书
+ * @param id 证书ID（为空时删除所有）
  * @param hostToken 管理员令牌
  */
-export const deleteAllLicenses = async (hostToken: string) => {
+export const deleteAllLicenses = async (hostToken: string, id?: string) => {
   const url = new URL(LICENSE_API_URL, window.location.origin);
   url.searchParams.append('hostToken', hostToken);
+  if (id) url.searchParams.append('id', id);
   return await fetch(url.toString(), {
     method: 'DELETE',
   });
