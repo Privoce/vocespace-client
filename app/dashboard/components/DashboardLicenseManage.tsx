@@ -28,6 +28,7 @@ import {
   Space,
   Typography,
   Descriptions,
+  TableColumnsType,
 } from 'antd';
 import {
   CheckCircleOutlined,
@@ -37,6 +38,7 @@ import {
 import TextArea from 'antd/es/input/TextArea';
 import { useI18n } from '@/lib/i18n/i18n';
 import { api } from '@/lib/api';
+import { fmtDate, LicenseDetailCard } from './LicenseDetailCard';
 
 const { Title } = Typography;
 
@@ -49,11 +51,6 @@ interface LicenseRecord {
   value: string;
   ilimit: string;
 }
-
-const fmtDate = (ts: number): string => {
-  const d = new Date(ts * 1000);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
-};
 
 const licenseTypeColor = (limit: string) => {
   switch (limit) {
@@ -70,48 +67,6 @@ const licenseTypeColor = (limit: string) => {
 
 const isValidLicense = (expiresAt: number): boolean => {
   return Math.floor(Date.now() / 1000) < expiresAt;
-};
-
-interface LicenseDetailCardProps {
-  license: any;
-  lm: (key: string) => string;
-  showValue?: boolean;
-  title?: string;
-}
-
-/** 证书详情卡片 — 展示邮箱/域名/类型/创建/过期/ID */
-const LicenseDetailCard: React.FC<LicenseDetailCardProps> = ({ license, lm, showValue, title }) => {
-  const itemStyle = { color: '#fff' };
-
-  return (
-    <div style={{ marginTop: 16 }}>
-      <Descriptions title={title} bordered size="small" column={1}>
-        {showValue && license.value && (
-          <Descriptions.Item label={lm('licenseValue')} style={itemStyle}>
-            <div style={{ wordBreak: 'break-all', maxWidth: 480 }}>{license.value}</div>
-          </Descriptions.Item>
-        )}
-        <Descriptions.Item label={lm('tableEmail')} style={itemStyle}>
-          {license.email || '-'}
-        </Descriptions.Item>
-        <Descriptions.Item label={lm('tableDomains')} style={itemStyle}>
-          {license.domains || '-'}
-        </Descriptions.Item>
-        <Descriptions.Item label={lm('tableType')} style={itemStyle}>
-          {license.ilimit || license.limit || '-'}
-        </Descriptions.Item>
-        <Descriptions.Item label={lm('tableCreated')} style={itemStyle}>
-          {license.created_at ? fmtDate(license.created_at) : '-'}
-        </Descriptions.Item>
-        <Descriptions.Item label={lm('tableExpires')} style={itemStyle}>
-          {license.expires_at ? fmtDate(license.expires_at) : '-'}
-        </Descriptions.Item>
-        <Descriptions.Item label={lm('fieldId')} style={itemStyle}>
-          {license.id || '-'}
-        </Descriptions.Item>
-      </Descriptions>
-    </div>
-  );
 };
 
 interface DashboardLicenseManageProps {
@@ -237,10 +192,11 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
   }, [licenses]);
 
   // 表格列定义
-  const columns = [
+  const columns: TableColumnsType<any> = [
     {
       title: lm('tableEmail'),
       dataIndex: 'email',
+      fixed: 'left',
       key: 'email',
       ellipsis: true,
     },
@@ -292,6 +248,7 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
     {
       title: lm('tableActions'),
       key: 'actions',
+      fixed: 'right',
       render: (_: any, record: LicenseRecord) => (
         <Space>
           <Button
@@ -593,6 +550,8 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
             </Col>
           </Row>
           <Table
+            
+            scroll={{ x: 'max-content' }}
             dataSource={licenses}
             columns={columns}
             rowKey="id"
@@ -602,7 +561,14 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
               expandedRowRender: (record: LicenseRecord) => (
                 <div style={{ maxWidth: 600 }}>
                   <span>{lm('licenseValue')}:</span>
-                  <div style={{ wordBreak: 'break-all', marginTop: 4, fontFamily: 'monospace', fontSize: 12 }}>
+                  <div
+                    style={{
+                      wordBreak: 'break-all',
+                      marginTop: 4,
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                    }}
+                  >
                     {record.value}
                   </div>
                 </div>
@@ -759,6 +725,11 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
           )}
         </Card>
       ),
+    },
+    {
+      key: 'production',
+      label: '创建产品',
+      children: <Card>暂未实现</Card>,
     },
   ];
 

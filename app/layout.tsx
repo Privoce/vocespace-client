@@ -178,6 +178,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             headerBg: '#2c2c2c',
             footerBg: '#1E1E1E',
             colorBgContainer: '#1E1E1E',
+            stickyScrollBarBg: '#aaa',
           },
           Menu: {
             itemActiveBg: '#22CCEE',

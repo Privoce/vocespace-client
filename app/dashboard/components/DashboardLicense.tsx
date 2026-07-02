@@ -397,6 +397,7 @@ export function DashboardLicense({ messageApi }: { messageApi: MessageInstance }
           src="https://static.readdy.ai/image/736cb33f85ee328c22e5d7e17bec9c40/1e18fe5f59b60ead0da50d1d023aab98.png"
           style={{ width: '120px', margin: '8px 0' }}
         ></img>
+        <div>Email: han@privoce.com</div>
       </div>
     </div>
   );
