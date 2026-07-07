@@ -13,7 +13,8 @@ import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
 import { useUserStore, useRoomStore } from '@/lib/store';
-import { Settings, SettingsExports, TabKey } from './settings/settings';
+import { Settings, TabKey } from './settings/settings';
+import type { SettingsExports } from './settings/settings';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { ReadableConf } from '@/lib/std/conf';
@@ -35,6 +36,7 @@ import { DEFAULT_WINDOW_ADJUST_WIDTH } from '@/lib/std/window';
 import { usePlatformUserInfo } from '@/lib/hooks/platform';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { DevicesSelector } from '@/app/api/devices/device_selector';
+import { useControlsSettings, useControlsRecord, useControlsChat } from './hooks/index';
 
 /** @public */
 export type ControlBarControls = {
@@ -130,7 +132,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
   ) => {
     const { t } = useI18n();
     const [isChatOpen, setIsChatOpen] = React.useState(false);
-    const [settingVis, setSettingVis] = React.useState(false);
     const layoutContext = useMaybeLayoutContext();
     const inviteTextRef = React.useRef<HTMLDivElement>(null);
     const enhanceChatRef = React.useRef<EnhancedChatExports>(null);
@@ -254,150 +255,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         } as WsBase);
       },
     });
-    const [key, setKey] = React.useState<TabKey>('general');
-    const settingsRef = React.useRef<SettingsExports>(null);
-    const [messageApi, contextHolder] = message.useMessage();
-    const uState = useUserStore();
-    const virtualMask = useRoomStore((s) => s.virtualMask);
-    const closeSetting = async () => {
-      if (settingsRef.current && space) {
-        settingsRef.current.removeVideo();
-        // 更新用户名 ------------------------------------------------------
-        const newName = settingsRef.current.username;
-        if (
-          newName !== '' &&
-          newName !== (space.localParticipant?.name || space.localParticipant.identity)
-        ) {
-          saveUsername(newName);
-          await space.localParticipant?.setMetadata(JSON.stringify({ name: newName }));
-          await space.localParticipant.setName(newName);
-          messageApi.success(t('msg.success.user.username.change'));
-          await updateSettings({
-            name: newName,
-          });
-        } else if (newName == (space.localParticipant?.name || space.localParticipant.identity)) {
-        } else {
-          messageApi.error(t('msg.error.user.username.change'));
-        }
-        // 更新其他设置 ------------------------------------------------
-        // await updateSettings(settingsRef.current.state);
-        if (!equal(getState(uState), settingsRef.current.state)) {
-          await updateSettings(settingsRef.current.state);
-          // 通知socket，进行状态的更新 -----------------------------------
-          socket.emit('update_user_status', {
-            space: space.name,
-          } as WsBase);
-        }
-        socket.emit('reload_virtual', {
-          identity: space.localParticipant.identity,
-          roomId: space.name,
-          reloading: false,
-        });
-      }
-      useRoomStore.getState().setVirtualMask(false);
-    };
-
-    // 打开设置面板 -----------------------------------------------------------
-    const openSettings = async (tab: TabKey, isDefineStatus?: boolean) => {
-      setKey(tab);
-      setSettingVis(true);
-      if (settingsRef.current && tab === 'video') {
-        await settingsRef.current.startVideo();
-      }
-      if (isDefineStatus) {
-        if (settingsRef.current) {
-          settingsRef.current.setAppendStatus(true);
-        } else {
-          let finish = false;
-          const interval = setInterval(() => {
-            if (settingsRef.current && !finish) {
-              settingsRef.current.setAppendStatus(true);
-              finish = true;
-              clearInterval(interval);
-            }
-          }, 300);
-        }
-      }
-    };
-
-    // [chat] -----------------------------------------------------------------------------------------------------
-    const [chatOpen, setChatOpen] = React.useState(false);
-    const onChatClose = () => {
-      setChatOpen(false);
-    };
-    const sendFileConfirm = (onOk: (abortController?: AbortController) => Promise<ChatMsgItem>) => {
-      const modal = Modal.confirm({
-        title: t('common.send'),
-        content: t('common.send_file_or'),
-        okText: t('common.send'),
-        cancelText: t('common.cancel'),
-        onOk: async () => {
-          modal.destroy();
-          await sendingFile(onOk);
-        },
-      });
-    };
-
-    const sendingFile = async (
-      onOk: (abortController?: AbortController) => Promise<ChatMsgItem>,
-    ) => {
-      // 创建 AbortController 来控制上传取消
-      const abortController = new AbortController();
-      let isUploading = false;
-
-      const sending = Modal.confirm({
-        title: t('common.send'),
-        content: t('common.sending'),
-        okText: (
-          <Button type="primary" loading>
-            {t('common.sending')}
-          </Button>
-        ),
-        cancelText: t('common.cancel'),
-        onCancel: () => {
-          // 如果正在上传，则中断上传
-          if (isUploading) {
-            abortController.abort();
-            messageApi.info({
-              content: t('msg.info.file.upload_cancelled'),
-              duration: 2,
-            });
-          }
-        },
-      });
-
-      try {
-        isUploading = true;
-        // 传递 abortController 给上传函数
-        const fileMessage = await onOk(abortController);
-        isUploading = false;
-
-        if (fileMessage) {
-          sending.destroy();
-          socket.emit('chat_file', fileMessage);
-          messageApi.success({
-            content: t('msg.success.file.upload'),
-            duration: 2,
-          });
-        }
-      } catch (error: any) {
-        isUploading = false;
-        sending.destroy();
-
-        if (error.name === 'AbortError') {
-          // 用户取消了上传
-          console.log('Upload cancelled by user');
-        } else {
-          // 其他错误
-          // messageApi.error({
-          //   content: `${t('msg.error.file.upload')}: ${error.message}`,
-          //   duration: 3,
-          // });
-          console.error(error);
-        }
-      }
-    };
-
     // [more] -----------------------------------------------------------------------------------------------------
     const [openMore, setOpenMore] = React.useState(false);
     const [moreType, setMoreType] = React.useState<'record' | 'participant'>('record');
@@ -406,117 +263,34 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [username, setUsername] = React.useState<string>('');
     const [openNameModal, setOpenNameModal] = React.useState(false);
     const remoteApp = useRoomStore((s) => s.remoteApp);
-    // const [openAppModal, setOpenAppModal] = React.useState(false);
     const participantList = React.useMemo(() => {
       return Object.entries(spaceInfo.participants);
     }, [spaceInfo]);
     const isManager = React.useMemo(() => {
-      // return spaceInfo.ownerId === space?.localParticipant.identity;
       return isSpaceManager(spaceInfo, space?.localParticipant.identity || '').isManager;
     }, [spaceInfo.ownerId, space?.localParticipant.identity]);
 
-    // [record] -----------------------------------------------------------------------------------------------------
-    const [openRecordModal, setOpenRecordModal] = React.useState(false);
-    const [isDownload, setIsDownload] = React.useState(false);
-    const isRecording = React.useMemo(() => {
-      return spaceInfo.record.active;
-    }, [spaceInfo.record]);
-
-    const onClickRecord = async () => {
-      if (!space && isManager) return;
-
-      if (!isRecording) {
-        setOpenRecordModal(true);
-      } else {
-        // 停止录制
-        if (spaceInfo.record.egressId && spaceInfo.record.egressId !== '') {
-          const response = await api.sendRecordRequest({
-            spaceName: space!.name,
-            type: 'stop',
-            egressId: spaceInfo.record.egressId,
-          });
-
-          if (!response.ok) {
-            let { error } = await response.json();
-            messageApi.error(error);
-          } else {
-            messageApi.success(t('msg.success.record.stop'));
-            setIsDownload(true);
-            await updateRecord(false);
-            setOpenRecordModal(true);
-          }
-        }
-      }
-    };
-
-    const startRecord = async () => {
-      if (isRecording || !space) return;
-
-      if (isManager) {
-        // host request to start recording
-        const response = await api.sendRecordRequest({
-          spaceName: space.name,
-          type: 'start',
-        });
-        if (!response.ok) {
-          let { error } = await response.json();
-          messageApi.error(error);
-        } else {
-          let { egressId, filePath } = await response.json();
-          messageApi.success(t('msg.success.record.start'));
-          const res = await updateRecord(true, egressId, filePath);
-          // 这里有可能是房间数据出现问题，需要让所有参与者重新提供数据并重新updateRecord
-          if (!res) {
-            console.error('Failed to update record settings');
-            socket.emit('refetch_room', {
-              space: space.name,
-              record: {
-                active: true,
-                egressId,
-                filePath,
-              },
-            });
-          }
-          socket.emit('recording', {
-            space: space.name,
-          });
-        }
-        // console.warn(spaceInfo);
-      } else {
-        // participant request to start recording
-        socket.emit('req_record', {
-          space: space.name,
-          senderName: space.localParticipant.name,
-          senderId: space.localParticipant.identity,
-          receiverId: spaceInfo.ownerId,
-          socketId: spaceInfo.participants[spaceInfo.ownerId].socketId,
-        } as WsTo);
-      }
-    };
-
-    const recordModalOnOk = async () => {
-      if (!space) return;
-
-      if (isDownload) {
-        // copy link to clipboard
-        // 创建一个新recording页面，相当于点击了a标签的href
-        window.open(
-          `${window.location.origin}/recording?room=${encodeURIComponent(space.name)}`,
-          '_blank',
-        );
-        setIsDownload(false);
-      } else {
-        await startRecord();
-      }
-      setOpenRecordModal(false);
-    };
-
-    const recordModalOnCancel = () => {
-      if (isDownload) {
-        setIsDownload(false);
-      }
-      setOpenRecordModal(false);
-    };
+    const [messageApi, contextHolder] = message.useMessage();
+    const uState = useUserStore();
+    const {
+      settingVis, setSettingVis,
+      key, setKey,
+      settingsRef,
+      closeSetting, openSettings,
+    } = useControlsSettings({ space, saveUsername, updateSettings });
+    const {
+      openRecordModal, setOpenRecordModal,
+      isDownload, setIsDownload,
+      isRecording,
+      onClickRecord,
+      recordModalOnOk,
+      recordModalOnCancel,
+    } = useControlsRecord({ space, isManager, spaceInfo, updateRecord });
+    const {
+      chatOpen, setChatOpen,
+      onChatClose,
+      sendFileConfirm, sendingFile,
+    } = useControlsChat();
 
     const onClickApp = async () => {
       if (!space) return;

@@ -42,6 +42,8 @@ import { NotificationInstance } from 'antd/es/notification/interface';
 import { useI18n } from '@/lib/i18n/i18n';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { useUserStore, useLicenseStore, useRoomStore } from '@/lib/store';
+import { useUserStatus, useRoomLicense, useRoomSubscription } from './hooks/index';
+import { useAICutService } from './hooks/use-ai-cut';
 import {
   ControlType,
   WsBase,
@@ -122,46 +124,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const uState = useUserStore();
     const [collapsed, setCollapsed] = useState(isMobile());
     const uLicenseState = useLicenseStore();
-
-    const hasRoomLicense = useMemo(() => {
-      if (!config.roomLicenses || !space?.name) return false;
-      const entry = config.roomLicenses.find((r) => r.name === space.name);
-      if (!entry) return false;
-      try {
-        // Parse JWT locally to check expiry — no need for heavy imports
-        const parts = entry.license.split('.');
-        if (parts.length !== 3) return false;
-        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-        const now = Math.floor(Date.now() / 1000);
-        return payload.expires_at > now;
-      } catch {
-        return false;
-      }
-    }, [config.roomLicenses, space?.name]);
-
-    const toBuyRoomLicense = useCallback(async () => {
-      const isCircleIp =
-        config.serverUrl === 'localhost' ||
-        config.serverUrl.startsWith('192.168.') ||
-        config.serverUrl === '127.0.0.1';
-      if (isCircleIp) {
-        window.open('https://buy.stripe.com/fZu3cveyR76afv6bPi6c01m', '_blank');
-      } else {
-        const response = await api.getLicenseByIP(config.serverUrl, 'room');
-        if (response.ok) {
-          const { url } = await response.json();
-          if (url) {
-            window.open(url, '_blank');
-          }
-        } else {
-          messageApi.warning({
-            content: 'Failed to get session url',
-            duration: 2,
-          });
-          window.open('https://buy.stripe.com/fZu3cveyR76afv6bPi6c01m', '_blank');
-        }
-      }
-    }, [config.serverUrl, messageApi]);
+    const { hasRoomLicense, toBuyRoomLicense } = useRoomLicense(config, space, messageApi);
 
     const controlsRef = React.useRef<ControlBarExport>(null);
     const waveAudioRef = React.useRef<HTMLAudioElement>(null);
@@ -200,207 +163,36 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       return exportRBAC(space?.localParticipant.identity, settings).viewRoom;
     }, [space, settings]);
     const [openApp, setOpenApp] = useState<boolean>(false);
-    // const [targetAppKey, setTargetAppKey] = useState<AppKey | undefined>(undefined);
-    // const [openSingleApp, setOpenSingleApp] = useState<boolean>(false);
     const isActive = true;
-    const aiCutServiceRef = React.useRef<AICutService>(new AICutService());
-    const [noteStateForAICutService, setNoteStateForAICutService] = useState({
-      openAIService: false,
-      noteClosed: false,
-      hasAsked: !settings?.ai?.cut?.enabled || false, // 如果设置中enabled为true表示需要询问，否则不需要询问
-    });
-    const [aiCutAnalysisRes, setAICutAnalysisRes] = useState<AICutAnalysisRes>(
-      DEFAULT_AI_CUT_ANALYSIS_RES,
-    );
-    const aiCutAnalysisIntervalId = useRef<NodeJS.Timeout | null>(null);
     const showFlotApp = (id?: string, participantName?: string, auth?: AppAuth) => {
       useRoomStore.getState().setRemoteApp({
         participantId: id,
         participantName,
         auth: auth || 'read',
       });
-
       setOpenApp(!openApp);
     };
-    const reloadResult = async () => {
-      const response = await api.ai.getAnalysisRes(
-        space!.name,
-        space!.localParticipant.identity,
-        usePlatformUserInfoCheap({ user: settings.participants[space?.localParticipant.identity!] })
-          .isAuth,
-      );
-      if (response.ok) {
-        const { res }: { res: AICutAnalysisRes } = await response.json();
-        setAICutAnalysisRes(res);
-        messageApi.success(t('ai.cut.success.reload'));
-      } else {
-        messageApi.error(t('ai.cut.error.reload'));
-      }
-    };
-    const stopAICutService = async (space: Room) => {
-      aiCutServiceRef.current.stop();
-      aiCutServiceRef.current.clearScreenshots();
-      if (aiCutAnalysisIntervalId.current) {
-        clearInterval(aiCutAnalysisIntervalId.current);
-        aiCutAnalysisIntervalId.current = null;
-      }
-      const response = await api.ai.stop(space.name, space.localParticipant.identity);
-      if (response.ok) {
-        // messageApi.success(t('ai.cut.success.stop'));
-      }
-    };
-    // 开启或关闭AI截屏服务 --------------------------------------------------------
-    const startOrStopAICutAnalysis = useCallback(
-      async (freq: number, conf: AICutParticipantConf, reload?: boolean) => {
-        if (!space || !space.localParticipant) return;
-        if (conf.enabled) {
-          await aiCutServiceRef.current.start(
-            freq,
-            conf.spent,
-            space.localParticipant,
-            reload,
-            async (lastScreenShot) => {
-              if (space && space.localParticipant) {
-                let todos: string[] = [];
-                if (conf.todo) {
-                  todos =
-                    uState.appDatas.todo
-                      ?.map((todo) => todo.items.filter((item) => !item.done))
-                      .flat()
-                      .map((item) => item.title) || [];
-                }
 
-                const response = await api.ai.analysis({
-                  spaceName: space.name,
-                  userId: space.localParticipant.identity,
-                  screenShot: lastScreenShot,
-                  todos,
-                  freq: freq,
-                  lang: locale,
-                  extraction: conf.extraction,
-                  isAuth: usePlatformUserInfoCheap({ user: uState }).isAuth,
-                  blur: conf.blur,
-                });
-
-                if (!response.ok) {
-                  messageApi.warning(t('ai.cut.error.start'));
-                  // 停止AI截屏服务
-                  stopAICutService(space);
-                  await updateSettings({
-                    ai: {
-                      cut: {
-                        ...conf,
-                        enabled: false,
-                      },
-                    },
-                  });
-                  socket.emit('update_user_status', {
-                    space: space.name,
-                  } as WsBase);
-                  return;
-                }
-              }
-            },
-            () => {
-              messageApi.success(t('ai.cut.success.start'));
-            },
-            (e) => {
-              console.error('Failed to start AI Cut Service:', e);
-              messageApi.warning(t('ai.cut.error.start'));
-            },
-          );
-          // 如果已有定时器，先清除，避免重复创建多个定时器
-          if (aiCutAnalysisIntervalId.current) {
-            try {
-              clearInterval(aiCutAnalysisIntervalId.current as unknown as number);
-            } catch (e) {
-              // ignore
-            }
-            aiCutAnalysisIntervalId.current = null;
-          }
-
-          aiCutAnalysisIntervalId.current = setInterval(
-            async () => {
-              await reloadResult();
-            },
-            (freq + 2) * 60 * 1000,
-          ); //增加2分钟的缓冲时间
-        } else {
-          // 停止截图服务并停止AI分析
-          stopAICutService(space);
-        }
-
-        await updateSettings({
-          ai: {
-            cut: { ...conf },
-          },
-        });
-        socket.emit('update_user_status', {
-          space: space.name,
-        } as WsBase);
-      },
-      [space, settings, uState, t, updateSettings, aiCutAnalysisIntervalId, locale],
-    );
-
-    const openAIServiceAskNote = () => {
-      // 提示用户开启屏幕共享权限, 关闭后判断开启还是关闭AI服务
-      noteApi.open({
-        message: t('ai.cut.ask_permission_title'),
-        description: t('ai.cut.ask_permission'),
-        duration: 10,
-        onClose: async () => {
-          // 用户关闭弹窗或超时关闭，默认不开启AI服务
-          setNoteStateForAICutService({
-            openAIService: false,
-            noteClosed: true,
-            hasAsked: true,
-          });
-        },
-        actions: (
-          <div style={{ display: 'inline-flex', gap: 16 }}>
-            <Button
-              type="primary"
-              onClick={() => {
-                // 用户选择开启屏幕共享和AI服务
-                space?.localParticipant.setScreenShareEnabled(true);
-                setNoteStateForAICutService({
-                  hasAsked: true,
-                  openAIService: true,
-                  noteClosed: true,
-                });
-                noteApi.destroy();
-              }}
-            >
-              {t('common.start_sharing')}
-            </Button>
-          </div>
-        ),
-      });
-    };
-
-    // 监控AI截屏服务状态 --------------------------------------------------------
-    // 用户需要确保至少开启屏幕共享，如果关闭则需要提示用户，如果用户确定关闭则要停止AI截屏服务
-    // 手机无需AI分享分析提示
-    useEffect(() => {
-      // 完成初始化并没有询问过用户时显示弹窗并询问
-      if (!settings) return;
-      if (
-        !init &&
-        (settings.ai.cut.enabled === undefined ? !noteStateForAICutService.hasAsked : false) &&
-        !isMobile()
-      ) {
-        openAIServiceAskNote();
-      }
-    }, [init, noteStateForAICutService.hasAsked, settings]);
-
-    useEffect(() => {
-      if (noteStateForAICutService.noteClosed) {
-        startOrStopAICutAnalysis(settings.ai.cut.freq, {
-          ...uState.ai.cut,
-          enabled: noteStateForAICutService.openAIService,
-        });
-      }
-    }, [noteStateForAICutService.noteClosed, noteStateForAICutService.openAIService]);
+    const {
+      aiCutServiceRef,
+      aiCutAnalysisRes,
+      noteStateForAICutService,
+      setNoteStateForAICutService,
+      startOrStopAICutAnalysis,
+      stopAICutService,
+      openAIServiceAskNote,
+      reloadResult,
+      fetchPlatformData,
+    } = useAICutService({
+      space,
+      settings,
+      uState,
+      messageApi,
+      noteApi,
+      fromVocespace,
+      updateSettings,
+      locale,
+    });
 
     useEffect(() => {
       if (!space) return;
@@ -425,37 +217,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         setInit(true);
       });
 
-      // 从平台端获取数据 ai总结/todos ---------------------------------------------------------------
-      const fetchPlatformData = async (isAuth: boolean) => {
-        // todos ----
-        let identity = space.localParticipant.identity;
-        if (isAuth) {
-          const aiResponse = await platformAPI.ai.getAIAnalysis(identity, todayTimeStamp());
-          const response = await platformAPI.todo.getTodos(identity);
-          if (aiResponse.ok) {
-            const { data }: { data: PlarformAICutAnalysis } = await aiResponse.json();
-            setAICutAnalysisRes(convertPlatformToACARes(data));
-          } else {
-            setAICutAnalysisRes(DEFAULT_AI_CUT_ANALYSIS_RES);
-          }
-
-          if (response.ok) {
-            const { todos }: { todos: PlatformTodos[] } = await response.json();
-            const items: SpaceTodo[] = todos.map((todo) => {
-              return {
-                items: todo.items,
-                date: Number(todo.date),
-              };
-            });
-
-            // 更新本地数据
-            return items;
-          }
-        }
-
-        return [];
-      };
-
+      // 从平台端获取数据 ai总结/todos (moved to useAICutService hook)
       const syncSettings = async () => {
         const todos = await fetchPlatformData(fromVocespace);
         // 将当前参与者的基础设置发送到服务器 ----------------------------------------------------------
@@ -1089,72 +851,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       fetchSettings();
     }, [settings, space, freshPermission]);
 
-    useEffect(() => {
-      if (!space || space.state !== ConnectionState.Connected || !selfRoom) return;
-
-      // 判断当前自己在哪个房间中，在不同的房间中设置不同用户的订阅权限
-      // 订阅规则:
-      // 1. 当用户在主房间时，可以订阅所有参与者的视频轨道，但不能订阅子房间用户的音频轨道
-      // 2. 当用户在子房间时，可以订阅该子房间内的所有参与者的视频和音频轨道，包括主房间的参与者的视频轨道，但不能订阅主房间参与者的音频轨道
-      let auth = [] as ParticipantTrackPermission[];
-
-      // 远程参与者不在同一房间内，只订阅视频轨道
-      let videoTrackSid = space.localParticipant.getTrackPublication(Track.Source.Camera)?.trackSid;
-
-      let shareTackSid = space.localParticipant.getTrackPublication(
-        Track.Source.ScreenShare,
-      )?.trackSid;
-
-      let allowedTrackSids = [];
-      if (videoTrackSid) {
-        allowedTrackSids.push(videoTrackSid);
-      }
-      if (shareTackSid) {
-        allowedTrackSids.push(shareTackSid);
-      }
-      const localScreenShareVolumes =
-        settings.participants[space.localParticipant.identity]?.screenShareVolumes || {};
-      // 遍历所有的远程参与者，根据规则进行处理
-      space.remoteParticipants.forEach((rp) => {
-        // 由于我们已经可以从selfRoom中获取当前用户所在的房间信息，所以通过selfRoom进行判断
-        if (selfRoom.participants.includes(rp.identity)) {
-          auth.push({
-            participantIdentity: rp.identity,
-            allowAll: true,
-          });
-          let volume = settings.participants[rp.identity]?.volume / 100.0;
-          // 屏幕共享的音量设置，默认100%
-          let volumeScreen = (localScreenShareVolumes[rp.identity] ?? 100.0) / 100.0;
-          if (isNaN(volume)) {
-            volume = 1.0;
-          }
-          // 设置音量
-          rp.setVolume(volume);
-          // LiveKit 将屏幕分享音频作为独立的 ScreenShareAudio source 管理。
-          rp.setVolume(volumeScreen, Track.Source.ScreenShareAudio);
-        } else {
-          auth.push({
-            participantIdentity: rp.identity,
-            allowAll: false,
-            allowedTrackSids,
-          });
-        }
-      });
-
-      // 设置房间订阅权限 ------------------------------------------------
-      space.localParticipant.setTrackSubscriptionPermissions(false, auth);
-      if (freshPermission) {
-        fetchSettings().then(() => {
-          setFreshPermission(false);
-        });
-        socket.emit('update_user_status', {
-          space: space.name,
-        } as WsBase);
-      }
-    }, [space, settings, selfRoom, freshPermission, localTrackVersion]);
+    useRoomSubscription({ space, settings, selfRoom, freshPermission, localTrackVersion, fetchSettings });
 
     // 监听本地轨道发布/取消发布事件，重新触发订阅权限计算
-    // 修复：用户进入子房间后再开启摄像头时，allowedTrackSids 不会自动更新的问题
     useEffect(() => {
       if (!space) return;
       const onLocalTrackChange = () => {
@@ -1299,60 +998,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     };
 
     // [user status] ------------------------------------------------------------------------------------------
-    const setUserStatus = async (status: UserStatus | string) => {
-      let newStatus = {
-        status,
-      };
-      switch (status) {
-        case UserStatus.Online: {
-          if (space) {
-            space.localParticipant.setMicrophoneEnabled(true);
-            space.localParticipant.setCameraEnabled(true);
-            space.localParticipant.setScreenShareEnabled(false);
-            if (uState.volume == 0) {
-              const newVolume = 80;
-              Object.assign(newStatus, { volume: newVolume });
-            }
-          }
-          break;
-        }
-        case UserStatus.Leisure: {
-          Object.assign(newStatus, { blur: 0.15, screenBlur: 0.15 });
-          break;
-        }
-        case UserStatus.Busy: {
-          Object.assign(newStatus, { blur: 0.15, screenBlur: 0.15, volume: 0 });
-          break;
-        }
-        case UserStatus.Offline: {
-          if (space) {
-            space.localParticipant.setMicrophoneEnabled(false);
-            space.localParticipant.setCameraEnabled(false);
-            space.localParticipant.setScreenShareEnabled(false);
-          }
-          break;
-        }
-        default: {
-          if (space) {
-            const statusSettings = uRoomStatusState.find((item) => item.id === status);
-            if (statusSettings) {
-              Object.assign(newStatus, {
-                volume: statusSettings.volume,
-                blur: statusSettings.blur,
-                screenBlur: statusSettings.screenBlur,
-              });
-            }
-          }
-          break;
-        }
-      }
-      await updateSettings(newStatus);
-      if (space) {
-        socket.emit('update_user_status', {
-          space: space.name,
-        } as WsBase);
-      }
-    };
+    const { setUserStatus } = useUserStatus(space, updateSettings);
 
     const clearRoom = async () => {
       // 退出是设置init为true
