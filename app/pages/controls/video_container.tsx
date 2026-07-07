@@ -35,20 +35,13 @@ import React, {
   useState,
 } from 'react';
 import { ControlBarExport, Controls } from './bar';
-import { useRecoilState } from 'recoil';
 import { ParticipantItem } from '../participant/tile';
 import { useSpaceInfo } from '@/lib/hooks/space';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { useI18n } from '@/lib/i18n/i18n';
-import {
-  chatMsgState,
-  licenseState,
-  RemoteTargetApp,
-  roomStatusState,
-  socket,
-  userState,
-} from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { useUserStore, useLicenseStore, useRoomStore } from '@/lib/store';
 import {
   ControlType,
   WsBase,
@@ -126,15 +119,25 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [init, setInit] = useState(true);
     const { t, locale } = useI18n();
     const { setIsFullScreen, isFullScreen } = useFullScreenBtn();
-    const [uState, setUState] = useRecoilState(userState);
+    const uState = useUserStore();
     const [collapsed, setCollapsed] = useState(isMobile());
-    const [uLicenseState, setULicenseState] = useRecoilState(licenseState);
+    const uLicenseState = useLicenseStore();
 
     const hasRoomLicense = useMemo(() => {
-      if (!uLicenseState.room) return false;
-      const now = Date.now();
-      return now <= uLicenseState.room.expires_at * 1000;
-    }, [uLicenseState.room]);
+      if (!config.roomLicenses || !space?.name) return false;
+      const entry = config.roomLicenses.find((r) => r.name === space.name);
+      if (!entry) return false;
+      try {
+        // Parse JWT locally to check expiry — no need for heavy imports
+        const parts = entry.license.split('.');
+        if (parts.length !== 3) return false;
+        const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+        const now = Math.floor(Date.now() / 1000);
+        return payload.expires_at > now;
+      } catch {
+        return false;
+      }
+    }, [config.roomLicenses, space?.name]);
 
     const toBuyRoomLicense = useCallback(async () => {
       const isCircleIp =
@@ -167,10 +170,10 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [freshPermission, setFreshPermission] = useState(false);
     const [localTrackVersion, setLocalTrackVersion] = useState(0);
     const [cacheWidgetState, setCacheWidgetState] = useState<WidgetState>();
-    const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
-    const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
+    const chatMsg = useRoomStore((s) => s.chatMsg);
+    const uRoomStatusState = useRoomStore((s) => s.roomStatusList);
     const channelRef = React.useRef<ChannelExports>(null);
-    const [remoteApp, setRemoteApp] = useRecoilState(RemoteTargetApp);
+    const remoteApp = useRoomStore((s) => s.remoteApp);
     const {
       settings,
       updateSettings,
@@ -211,7 +214,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     );
     const aiCutAnalysisIntervalId = useRef<NodeJS.Timeout | null>(null);
     const showFlotApp = (id?: string, participantName?: string, auth?: AppAuth) => {
-      setRemoteApp({
+      useRoomStore.getState().setRemoteApp({
         participantId: id,
         participantName,
         auth: auth || 'read',
@@ -487,7 +490,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           let othersMsgLength = msgs.filter(
             (msg) => msg.id !== space.localParticipant.identity,
           ).length;
-          setChatMsg((prev) => ({
+          useRoomStore.getState().setChatMsg((prev) => ({
             unhandled: prev.unhandled + othersMsgLength,
             msgs: [...prev.msgs, ...msgs],
           }));
@@ -512,14 +515,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             return;
           }
 
-          setULicenseState(prev => ({
-            ...prev,
+          useLicenseStore.setState({
             space: {
               ...license,
               isAnalysis: true,
               personLimit: getLicensePersonLimit(license.limit, license.isTmp),
             },
-          }));
+          });
         }
       };
 
@@ -655,7 +657,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         'new_user_status_response',
         (msg: { status: UserDefineStatus[]; space: string }) => {
           if (space.name === msg.space) {
-            setURoomStatusState(msg.status);
+            useRoomStore.getState().setRoomStatusList(msg.status);
           }
         },
       );
@@ -872,7 +874,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       // [用户获取到其他参与者聊天信息事件] ------------------------------------------------
       socket.on('chat_msg_response', (msg: ChatMsgItem) => {
         if (msg.roomName === space.name) {
-          setChatMsg((prev) => {
+          useRoomStore.getState().setChatMsg((prev) => {
             if (controlsRef.current && controlsRef.current.isChatOpen) {
               return {
                 unhandled: 0,
@@ -891,7 +893,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       socket.on('chat_file_response', (msg: ChatMsgItem) => {
         console.warn(msg);
         if (msg.roomName === space.name) {
-          setChatMsg((prev) => {
+          useRoomStore.getState().setChatMsg((prev) => {
             // 使用函数式更新来获取最新的 messages 状态
             const existingFile = prev.msgs.find((m) => m.id === msg.id);
             if (!existingFile) {
@@ -1170,7 +1172,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       if (!space || space.state !== ConnectionState.Connected || !settings) return;
       // 同步settings中当前参与者的数据到uState中 -----------------------------------------------------
       if (settings.participants[space.localParticipant.identity]) {
-        setUState((prev) => {
+        useUserStore.setState((prev) => {
           let newState = {
             ...prev,
             ...settings.participants[space.localParticipant.identity],
@@ -1724,6 +1726,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   startOrStopAICutAnalysis={startOrStopAICutAnalysis}
                   openAIServiceAskNote={openAIServiceAskNote}
                   downloadAIMdReport={FlotLayoutRef.current?.downloadAIMdReport}
+                  config={config}
                 ></Controls>
               </div>
               {SettingsComponent && (

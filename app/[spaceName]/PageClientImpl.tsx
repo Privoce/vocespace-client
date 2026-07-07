@@ -30,28 +30,20 @@ import {
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { PreJoin } from '@/app/pages/pre_join/pre_join';
-import { atom, useRecoilState } from 'recoil';
-import { PlatformUser, SearchParams, UserDefineStatus } from '@/lib/std';
+import { PlatformUser, SearchParams } from '@/lib/std';
 import io from 'socket.io-client';
-import { ChatMsgItem } from '@/lib/std/chat';
 import {
-  AppAuth,
-  DEFAULT_PARTICIPANT_SETTINGS,
   PARTICIPANT_SETTINGS_KEY,
   ParticipantSettings,
   VOCESPACE_PLATFORM_USER,
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
 import { WsBase, WsTo } from '@/lib/std/device';
-import {
-  createRTCQulity,
-  DEFAULT_VOCESPACE_CONFIG,
-  ReadableConf,
-  VocespaceConfig,
-} from '@/lib/std/conf';
+import { createRTCQulity, DEFAULT_VOCESPACE_CONFIG, ReadableConf, VocespaceConfig } from '@/lib/std/conf';
+import { useUserStore } from '@/lib/store/user';
+import { useRoomStore } from '@/lib/store/room';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
-import { DEFAULT_LICENSE, License } from '@/lib/std/license';
 
 const TURN_CREDENTIAL = process.env.TURN_CREDENTIAL ?? '';
 const TURN_USERNAME = process.env.TURN_USERNAME ?? '';
@@ -66,61 +58,16 @@ export const socket = io({
   transports: ['websocket', 'polling'],
 });
 
-export const userState = atom({
-  key: 'userState',
-  default: {
-    ...DEFAULT_PARTICIPANT_SETTINGS,
-  } as ParticipantSettings,
-});
-
-export const roomStatusState = atom({
-  key: 'roomStatusState',
-  default: [] as UserDefineStatus[],
-});
-
-export interface LicenseWithAnalysis extends License {
-  isAnalysis: boolean;
-  personLimit: number;
-}
-
-export const licenseState = atom({
-  key: 'licenseState',
-  default: {
-    space: {
-      ...DEFAULT_LICENSE,
-      isAnalysis: false,
-      personLimit: 5,
-    } as LicenseWithAnalysis,
-    room: null as LicenseWithAnalysis | null,
-  },
-});
-
-export const roomIdTmpState = atom({
-  key: 'roomIdTmpState',
-  default: '',
-});
-
-export const virtualMaskState = atom({
-  key: 'virtualMaskState',
-  default: false,
-});
-
-export const chatMsgState = atom({
-  key: 'chatMsgState',
-  default: {
-    msgs: [] as ChatMsgItem[],
-    unhandled: 0,
-  },
-});
-
-export const RemoteTargetApp = atom({
-  key: 'RemoteTargetApp',
-  default: {
-    participantId: undefined as string | undefined,
-    participantName: undefined as string | undefined,
-    auth: 'read' as AppAuth,
-  },
-});
+export { useUserStore as userState } from '@/lib/store/user';
+export { useLicenseStore as licenseState } from '@/lib/store/license';
+export type { LicenseWithAnalysis } from '@/lib/store/license';
+export {
+  useRoomStore as roomStatusState,
+  useRoomStore as virtualMaskState,
+  useRoomStore as chatMsgState,
+  useRoomStore as RemoteTargetApp,
+} from '@/lib/store/room';
+export { useSpaceStore as roomIdTmpState } from '@/lib/store/space';
 
 export interface PageClientImplProps extends SearchParams {
   spaceName: string;
@@ -144,7 +91,7 @@ export function PageClientImpl({
   messageApi,
 }: PageClientImplProps) {
   const { t } = useI18n();
-  const [uState, setUState] = useRecoilState(userState);
+  const uState = useUserStore();
   const [notApi, notHolder] = notification.useNotification();
   const [isReload, setIsReload] = useState(false);
   const router = useRouter();
@@ -251,13 +198,13 @@ export function PageClientImpl({
         localStorage.removeItem(VOCESPACE_PLATFORM_USER);
         return;
       }
-      setUState(storedSettings);
+      useUserStore.setState(storedSettings);
     }
     const reloadRoom = localStorage.getItem('reload');
     if (reloadRoom) {
       if (storedSettingsStr) {
         const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
-        setUState(storedSettings);
+        useUserStore.setState(storedSettings);
       } else {
         // 没有则存到localStorage中
         localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
@@ -348,7 +295,7 @@ function VideoConferenceComponent(props: {
   const e2eeEnabled = !!(e2eePassphrase && worker);
   const keyProvider = new ExternalE2EEKeyProvider();
   const [e2eeSetupComplete, setE2eeSetupComplete] = React.useState(false);
-  const [roomState, setRoomState] = useRecoilState(roomStatusState);
+  const roomState = useRoomStore((s) => s.roomStatusList);
   const [permissionModalVisible, setPermissionModalVisible] = useState(false);
   const [permissionRequested, setPermissionRequested] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
@@ -459,7 +406,7 @@ function VideoConferenceComponent(props: {
     if (audioElement) {
       audioElement.remove();
     }
-    setRoomState([]);
+    useRoomStore.getState().setRoomStatusList([]);
     socket.emit('mouse_remove', {
       space: room.name,
       senderName: room.localParticipant.name || room.localParticipant.identity,

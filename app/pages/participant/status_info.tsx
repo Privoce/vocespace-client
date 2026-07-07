@@ -3,8 +3,7 @@ import { ItemType } from 'antd/es/menu/interface';
 import { useMemo } from 'react';
 import styles from '@/styles/controls.module.scss';
 import { SvgResource } from '@/app/resources/svg';
-import { useRecoilState } from 'recoil';
-import { roomStatusState, userState } from '@/app/[spaceName]/PageClientImpl';
+import { useRoomStore, useUserStore } from '@/lib/store';
 import { Trans } from '@/lib/i18n/i18n';
 import { UserStatus } from '@/lib/std';
 import { SpaceInfo } from '@/lib/std/space';
@@ -61,8 +60,8 @@ export function useStatusInfo({
   disabled=false,
   trackReference,
 }: UseStatusInfoProps) {
-  const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
-  const [uState, setUState] = useRecoilState(userState);
+  const uRoomStatusState = useRoomStore((s) => s.roomStatusList);
+  const uState = useUserStore();
   const userStatusDisply = useMemo(() => {
     let status = settings.participants[trackReference.participant.identity]?.status;
     let item: {

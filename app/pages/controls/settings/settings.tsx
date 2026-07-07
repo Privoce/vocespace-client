@@ -3,8 +3,7 @@ import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { MessageInstance } from 'antd/es/message/interface';
 import { ModelBg, ModelRole } from '@/lib/std/virtual';
 import { useI18n } from '@/lib/i18n/i18n';
-import { useRecoilState } from 'recoil';
-import { userState } from '@/app/[spaceName]/PageClientImpl';
+import { useUserStore } from '@/lib/store';
 import { LocalParticipant, Room } from 'livekit-client';
 import { LicenseControl } from './license';
 import { AudioSettings } from './audio';
@@ -74,7 +73,7 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
     const { t } = useI18n();
     const [username, setUsername] = useState(uname);
     const [appendStatus, setAppendStatus] = useState(false);
-    const [uState, setUState] = useRecoilState(userState);
+    const uState = useUserStore();
     const [volume, setVolume] = useState(uState.volume);
     const [videoBlur, setVideoBlur] = useState(uState.blur);
     const [screenBlur, setScreenBlur] = useState(uState.screenBlur);

@@ -1,11 +1,12 @@
-import { licenseState, LicenseWithAnalysis, socket } from '@/app/[spaceName]/PageClientImpl';
+import { LicenseWithAnalysis } from '@/lib/store/license';
+import { useLicenseStore, useRoomStore } from '@/lib/store';
+import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { useI18n } from '@/lib/i18n/i18n';
 import styles from '@/styles/controls.module.scss';
 import { Button, Descriptions, Input, Modal, Tag } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useEffect, useMemo, useState } from 'react';
-import { useRecoilState } from 'recoil';
 import { Calendly } from '../widgets/calendly';
 import { api } from '@/lib/api';
 import {
@@ -32,7 +33,7 @@ export function LicenseControl({
   space: string;
 }) {
   const { t } = useI18n();
-  const [userLicense, setUserLicense] = useRecoilState(licenseState);
+  const userLicense = useLicenseStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [calendlyOpen, setCalendlyOpen] = useState(false);
   const [licenseValue, setLicenseValue] = useState<string>('');
@@ -62,14 +63,13 @@ export function LicenseControl({
           return;
         }
 
-        setUserLicense(prev => ({
-          ...prev,
+        useLicenseStore.setState({
           room: {
             ...license,
             isAnalysis: true,
             personLimit: getLicensePersonLimit(license.limit, license.isTmp),
           },
-        }));
+        });
       }
     }
   };
@@ -155,6 +155,7 @@ export function LicenseControl({
     const { color, text: statusText, icon: statusIcon } = licenseStatusTag(status);
     return (
       <Descriptions
+        styles={{label: {color: "#8f8f8f", whiteSpace: "nowrap"},  root: {width: "100%"}}}
         title={
           <>
             <span>{t('settings.license.title')}</span>
@@ -206,14 +207,13 @@ export function LicenseControl({
     if (response.ok) {
       const data = await response.json();
       if (data.success) {
-        setUserLicense(prev => ({
-          ...prev,
+        useLicenseStore.setState({
           room: {
             ...validatedLicense,
             isAnalysis: true,
             personLimit: getLicensePersonLimit(validatedLicense.limit, validatedLicense.isTmp),
           } as LicenseWithAnalysis,
-        }));
+        });
         setIsModalOpen(false);
         setLicenseValue('');
         messageApi.success({

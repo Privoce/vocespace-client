@@ -12,16 +12,11 @@ import { Button, Drawer, Input, message, Modal, Popover } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
+import { useUserStore, useRoomStore } from '@/lib/store';
 import { Settings, SettingsExports, TabKey } from './settings/settings';
-import { useRecoilState } from 'recoil';
-import {
-  chatMsgState,
-  RemoteTargetApp,
-  socket,
-  userState,
-  virtualMaskState,
-} from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { ReadableConf } from '@/lib/std/conf';
 import { isMobile as is_mobile, isSpaceManager, UserStatus } from '@/lib/std';
 import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';
 import { ChatToggle } from './toggles/chat_toggle';
@@ -81,6 +76,7 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   ) => Promise<void>;
   openAIServiceAskNote: () => void;
   downloadAIMdReport?: () => Promise<void>;
+  config: ReadableConf;
 }
 
 export interface ControlBarExport {
@@ -127,6 +123,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       startOrStopAICutAnalysis,
       openAIServiceAskNote,
       downloadAIMdReport,
+      config,
       ...props
     }: ControlBarProps,
     ref,
@@ -137,7 +134,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const layoutContext = useMaybeLayoutContext();
     const inviteTextRef = React.useRef<HTMLDivElement>(null);
     const enhanceChatRef = React.useRef<EnhancedChatExports>(null);
-    const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
+    const chatMsg = useRoomStore((s) => s.chatMsg);
     const controlLeftRef = React.useRef<HTMLDivElement>(null);
     const [aiCutModalOpen, setAICutModalOpen] = React.useState(false);
     const aiCutServiceRef = React.useRef<AICutService>(new AICutService());
@@ -260,8 +257,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [key, setKey] = React.useState<TabKey>('general');
     const settingsRef = React.useRef<SettingsExports>(null);
     const [messageApi, contextHolder] = message.useMessage();
-    const [uState, setUState] = useRecoilState(userState);
-    const [virtualMask, setVirtualMask] = useRecoilState(virtualMaskState);
+    const uState = useUserStore();
+    const virtualMask = useRoomStore((s) => s.virtualMask);
     const closeSetting = async () => {
       if (settingsRef.current && space) {
         settingsRef.current.removeVideo();
@@ -297,7 +294,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           reloading: false,
         });
       }
-      setVirtualMask(false);
+      useRoomStore.getState().setVirtualMask(false);
     };
 
     // 打开设置面板 -----------------------------------------------------------
@@ -408,7 +405,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [selectedParticipant, setSelectedParticipant] = React.useState<Participant | null>(null);
     const [username, setUsername] = React.useState<string>('');
     const [openNameModal, setOpenNameModal] = React.useState(false);
-    const [remoteApp, setRemoteApp] = useRecoilState(RemoteTargetApp);
+    const remoteApp = useRoomStore((s) => s.remoteApp);
     // const [openAppModal, setOpenAppModal] = React.useState(false);
     const participantList = React.useMemo(() => {
       return Object.entries(spaceInfo.participants);
@@ -523,7 +520,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
 
     const onClickApp = async () => {
       if (!space) return;
-      setRemoteApp({
+      useRoomStore.getState().setRemoteApp({
         participantId: space.localParticipant.identity,
         participantName: space.localParticipant.name,
         auth: 'write',
@@ -795,6 +792,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             <MoreButton
               space={space}
               spaceInfo={spaceInfo}
+              config={config}
               size={controlSize}
               controlWidth={controlWidth}
               setOpenMore={setOpenMore}

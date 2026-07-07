@@ -3,7 +3,6 @@
 import * as React from 'react';
 import { PageClientImpl } from './PageClientImpl';
 import { isVideoCodec } from '@/lib/types';
-import { RecoilRoot } from 'recoil';
 import { SearchParams } from '@/lib/std';
 import { usePlatformUser } from '@/lib/hooks/platform';
 import useMessage from 'antd/es/message/useMessage';
@@ -75,7 +74,7 @@ export default function Page({
   }, []); // 只在组件挂载时运行一次
 
   return (
-    <RecoilRoot>
+    <>
       {contextHolder}
       <PageClientImpl
         spaceName={params.spaceName}
@@ -90,6 +89,6 @@ export default function Page({
         details={details}
         messageApi={messageApi}
       />
-    </RecoilRoot>
+    </>
   );
 }

@@ -8,8 +8,8 @@ import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import VirtualRoleCanvas from '@/app/pages/virtual_role/live2d';
 import { src } from '@/lib/std';
-import { useRecoilState } from 'recoil';
-import { socket, virtualMaskState } from '@/app/[spaceName]/PageClientImpl';
+import { useRoomStore } from '@/lib/store';
+import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { LocalParticipant } from 'livekit-client';
 import { TabItem } from './tab_item';
 import { SelectedMask } from './mask';
@@ -59,7 +59,7 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
     const [model_selected_index, set_model_selected_index] = useState(0);
     const [bg_selected_index, set_bg_selected_index] = useState(0);
     const [showBlur, setShowBlur] = useState(true);
-    const [virtualMask, setVirtualMask] = useRecoilState(virtualMaskState);
+    const virtualMask = useRoomStore((s) => s.virtualMask);
     const { blurValue, setVideoBlur } = useVideoBlur({
       videoRef,
       initialBlur: blur,
@@ -88,7 +88,7 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
       if (close && videoRef.current && !videoRef.current.srcObject) {
         loadVideo(videoRef);
         if (modelRole != ModelRole.None) {
-          setVirtualMask(true);
+          useRoomStore.getState().setVirtualMask(true);
           reloadVirtual();
           setCompare(true);
         }
@@ -170,7 +170,7 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
                       reloadVirtual();
                       set_model_selected_index(index);
                       setModelRole(item.name as ModelRole);
-                      setVirtualMask(true);
+                      useRoomStore.getState().setVirtualMask(true);
                       if (compare && item.name != ModelRole.None) {
                         // 这里需要将外部视频进行遮罩
                         setCompare(false);
@@ -227,7 +227,7 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
                     onClick={() => {
                       reloadVirtual();
                       set_bg_selected_index(index);
-                      setVirtualMask(true);
+                      useRoomStore.getState().setVirtualMask(true);
                       setModelBg(item.src as ModelBg);
                       if (compare && modelRole != ModelRole.None) {
                         setCompare(false);

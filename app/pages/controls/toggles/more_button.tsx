@@ -9,9 +9,7 @@ import { useLocalParticipant } from '@livekit/components-react';
 import { HomeOutlined, RobotOutlined } from '@ant-design/icons';
 import { Room } from 'livekit-client';
 import { SpaceInfo } from '@/lib/std/space';
-import { useRecoilValue } from 'recoil';
-import { licenseState } from '@/app/[spaceName]/PageClientImpl';
-import { licenseStatus, LicenseStatus } from '@/lib/std/license';
+import { ReadableConf } from '@/lib/std/conf';
 
 export interface MoreButtonProps {
   space: Room;
@@ -33,6 +31,7 @@ export interface MoreButtonProps {
   };
   size: SizeType;
   spaceInfo: SpaceInfo;
+  config: ReadableConf;
 }
 
 export interface MoreButtonInnerProps extends MoreButtonProps {
@@ -57,6 +56,7 @@ export function MoreButtonInner({
   setIsDot,
   size,
   spaceInfo,
+  config,
 }: MoreButtonInnerProps) {
   const { t } = useI18n();
 
@@ -73,13 +73,20 @@ export function MoreButtonInner({
     uid: localParticipant.identity,
   });
 
-  const uLicenseState = useRecoilValue(licenseState);
   const hasRoomLicense = useMemo(() => {
-    return (
-      uLicenseState.room &&
-      licenseStatus(uLicenseState.room) === LicenseStatus.Valid
-    );
-  }, [uLicenseState.room]);
+    if (!config.roomLicenses || !space?.name) return false;
+    const entry = config.roomLicenses.find((r) => r.name === space.name);
+    if (!entry) return false;
+    try {
+      const parts = entry.license.split('.');
+      if (parts.length !== 3) return false;
+      const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
+      const now = Math.floor(Date.now() / 1000);
+      return payload.expires_at > now;
+    } catch {
+      return false;
+    }
+  }, [config.roomLicenses, space?.name]);
 
   const onClickChatMsg = () => {
     if (chat && chat.visible) {

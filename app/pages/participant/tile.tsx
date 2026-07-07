@@ -21,13 +21,8 @@ import {
 import { ConnectionState, Participant, Track } from 'livekit-client';
 import React, { useEffect, useMemo, useState } from 'react';
 import VirtualRoleCanvas from '../virtual_role/live2d';
-import { useRecoilState } from 'recoil';
-import {
-  RemoteTargetApp,
-  socket,
-  userState,
-  virtualMaskState,
-} from '@/app/[spaceName]/PageClientImpl';
+import { useUserStore, useRoomStore } from '@/lib/store';
+import { socket } from '@/app/[spaceName]/PageClientImpl';
 import styles from '@/styles/controls.module.scss';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -77,9 +72,9 @@ export const ParticipantItem: (
     const { t } = useI18n();
     const { localParticipant } = useLocalParticipant();
     const videoRef = React.useRef<HTMLVideoElement>(null);
-    const [uState, setUState] = useRecoilState(userState);
+    const uState = useUserStore();
     // const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
-    const [appsData, setAppsData] = useRecoilState(RemoteTargetApp);
+    const appsData = useRoomStore((s) => s.remoteApp);
     const trackReference = useEnsureTrackRef(trackRef);
     const isEncrypted = useIsEncrypted(trackReference.participant);
     const layoutContext = useMaybeLayoutContext();
@@ -89,7 +84,7 @@ export const ParticipantItem: (
     }, [localParticipant, trackReference]);
     const [lastMousePos, setLastMousePos] = React.useState({ x: 0, y: 0 });
     const [virtualReady, setVirtualReady] = React.useState(false);
-    const [virtualMask, setVirtualMask] = useRecoilState(virtualMaskState);
+    const virtualMask = useRoomStore((s) => s.virtualMask);
     const [remoteMask, setRemoteMask] = React.useState(false);
     const [deleyMask, setDelayMask] = React.useState(virtualMask);
     const isScreenShare =

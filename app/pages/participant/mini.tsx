@@ -20,8 +20,8 @@ import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'r
 import { isTrackReferencePinned } from './tile';
 import { AppAuth, ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { useVideoBlur, WsBase, WsSender, WsWave } from '@/lib/std/device';
-import { useRecoilState } from 'recoil';
-import { RemoteTargetApp, socket } from '@/app/[spaceName]/PageClientImpl';
+import { useRoomStore } from '@/lib/store';
+import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { isSpaceManager, UserStatus } from '@/lib/std';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { StatusInfo, useStatusInfo } from './status_info';
@@ -67,7 +67,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
     const trackReference = useEnsureTrackRef(trackRef);
     const { localParticipant } = useLocalParticipant();
     const videoRef = useRef<HTMLVideoElement>(null);
-    const [appsData, setAppsData] = useRecoilState(RemoteTargetApp);
+    const appsData = useRoomStore((s) => s.remoteApp);
     const layoutContext = useMaybeLayoutContext();
     const autoManageSubscription = useFeatureContext()?.autoSubscription;
     const isEncrypted = useIsEncrypted(trackReference.participant);

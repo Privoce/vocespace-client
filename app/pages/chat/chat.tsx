@@ -6,10 +6,10 @@ import styles from '@/styles/chat.module.scss';
 import { useI18n } from '@/lib/i18n/i18n';
 import { ulid } from 'ulid';
 import { Room } from 'livekit-client';
-import { chatMsgState, socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { useRoomStore } from '@/lib/store';
 import { MessageInstance } from 'antd/es/message/interface';
 import Dragger from 'antd/es/upload/Dragger';
-import { useRecoilState } from 'recoil';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from '../controls/drawer_tools';
 import { FolderOpenOutlined, SnippetsOutlined } from '@ant-design/icons';
@@ -38,7 +38,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
     const { t } = useI18n();
     const ulRef = React.useRef<HTMLUListElement>(null);
     const bottomRef = React.useRef<HTMLDivElement>(null);
-    const [chatMsg, setChatMsg] = useRecoilState(chatMsgState);
+    const chatMsg = useRoomStore((s) => s.chatMsg);
     const [value, setValue] = React.useState('');
     // 添加输入法组合状态跟踪
     const [isComposing, setIsComposing] = React.useState(false);
@@ -93,7 +93,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
 
     React.useEffect(() => {
       if (open) {
-        setChatMsg((prev) => ({
+        useRoomStore.getState().setChatMsg((prev) => ({
           unhandled: 0,
           msgs: prev.msgs,
         }));
@@ -127,7 +127,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
         timestamp: Date.now(),
       };
 
-      setChatMsg((prev) => ({
+      useRoomStore.getState().setChatMsg((prev) => ({
         unhandled: prev.unhandled,
         msgs: [...prev.msgs, newMsg],
       }));

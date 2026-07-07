@@ -40,7 +40,7 @@ import { TodoTogether } from './todo_together';
 import { AICutAnalysisMdTabsExports, AICutAnalysisMdTabs } from './ai_analysis_md';
 import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
 import { CopyButton } from '../controls/widgets/copy';
-import { useRecoilState } from 'recoil';
+import { useRoomStore } from '@/lib/store';
 import { AICutService } from '@/lib/ai/cut';
 import { DEFAULT_DRAWER_PROP, DrawerCloser, DrawerHeader } from '../controls/drawer_tools';
 import {
@@ -60,13 +60,13 @@ export interface FlotButtonProps {
 
 export function FlotButton({ style, openApp, setOpenApp }: FlotButtonProps) {
   const { localParticipant } = useLocalParticipant();
-  const [targetParticipant, setTargetParticipant] = useRecoilState(RemoteTargetApp);
+  const targetParticipant = useRoomStore((s) => s.remoteApp);
 
   return (
     <Button
       onClick={async () => {
         if (!openApp && targetParticipant.participantId !== localParticipant.identity) {
-          setTargetParticipant({
+          useRoomStore.getState().setRemoteApp({
             participantId: localParticipant.identity,
             participantName: localParticipant.name,
             auth: 'write',
@@ -140,7 +140,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
     const AICutAnalysisMdTabsRef = useRef<AICutAnalysisMdTabsExports>(null);
     const [containerHeight, setContainerHeight] = useState<number>(0);
     const { localParticipant } = useLocalParticipant();
-    const [targetParticipant, setTargetParticipant] = useRecoilState(RemoteTargetApp);
+    const targetParticipant = useRoomStore((s) => s.remoteApp);
     const [fetchData, setFetchData] = useState<boolean>(false);
     const isSelf = useMemo(() => {
       return localParticipant.identity === targetParticipant.participantId;

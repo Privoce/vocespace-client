@@ -2,8 +2,7 @@ import { Select, SelectProps } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { Trans, useI18n } from '@/lib/i18n/i18n';
 import { UserDefineStatus, UserStatus } from '@/lib/std';
-import { useRecoilState } from 'recoil';
-import { roomStatusState, userState } from '@/app/[spaceName]/PageClientImpl';
+import { useRoomStore, useUserStore } from '@/lib/store';
 import { SvgResource, SvgType } from '@/app/resources/svg';
 import styles from '@/styles/controls.module.scss';
 import { BaseOptionType } from 'antd/es/select';
@@ -39,8 +38,8 @@ export function StatusSelect({
   localParticipant,
 }: StatusSelectProps) {
   const { t } = useI18n();
-  const [state, setState] = useRecoilState(userState);
-  const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
+  const state = useUserStore();
+  const uRoomStatusState = useRoomStore((s) => s.roomStatusList);
   const [active, setActive] = useState<string>(state.status);
 
   useEffect(() => {

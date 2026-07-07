@@ -13,8 +13,7 @@ import { facingModeFromLocalTrack, LocalAudioTrack, LocalVideoTrack, Track } fro
 import { Input, InputRef, Modal, message, Skeleton, Slider, Space, Spin, Button } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
-import { useRecoilState } from 'recoil';
-import { userState } from '@/app/[spaceName]/PageClientImpl';
+import { useUserStore } from '@/lib/store';
 import { PlatformUser, src } from '@/lib/std';
 import { useVideoBlur } from '@/lib/std/device';
 import { LangSelect } from '@/app/pages/controls/selects/lang_select';
@@ -410,7 +409,7 @@ export function PreJoin({
   };
 
   // volume --------------------------------------------------------------------------------------
-  const [device, setDevice] = useRecoilState(userState);
+  const device = useUserStore();
   const [volume, setVolume] = React.useState(device.volume);
   const [blur, setBlur] = React.useState(device.blur);
   const [play, setPlay] = React.useState(false);
@@ -617,7 +616,7 @@ export function PreJoin({
               value={volume}
               onChange={(e) => {
                 setVolume(e);
-                setDevice({ ...device, volume: e });
+                useUserStore.setState({ volume: e });
               }}
             ></Slider>
             <button
@@ -663,7 +662,7 @@ export function PreJoin({
               onChange={(e) => {
                 setBlur(e);
                 setVideoBlur(e);
-                setDevice({ ...device, blur: e });
+                useUserStore.setState({ blur: e });
               }}
             ></Slider>
           </div>
