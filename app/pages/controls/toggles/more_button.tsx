@@ -9,6 +9,9 @@ import { useLocalParticipant } from '@livekit/components-react';
 import { HomeOutlined, RobotOutlined } from '@ant-design/icons';
 import { Room } from 'livekit-client';
 import { SpaceInfo } from '@/lib/std/space';
+import { useRecoilValue } from 'recoil';
+import { licenseState } from '@/app/[spaceName]/PageClientImpl';
+import { licenseStatus, LicenseStatus } from '@/lib/std/license';
 
 export interface MoreButtonProps {
   space: Room;
@@ -70,6 +73,14 @@ export function MoreButtonInner({
     uid: localParticipant.identity,
   });
 
+  const uLicenseState = useRecoilValue(licenseState);
+  const hasRoomLicense = useMemo(() => {
+    return (
+      uLicenseState.room &&
+      licenseStatus(uLicenseState.room) === LicenseStatus.Valid
+    );
+  }, [uLicenseState.room]);
+
   const onClickChatMsg = () => {
     if (chat && chat.visible) {
       chat.onClicked();
@@ -84,8 +95,8 @@ export function MoreButtonInner({
         key: 'app',
         icon: <SvgResource type="app" svgSize={16} />,
       },
-      // 录屏功能
-      ...(recording
+      // 录屏功能（需要有效的房间证书）
+      ...(recording && hasRoomLicense
         ? [
             {
               label: (

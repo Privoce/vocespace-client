@@ -15,6 +15,7 @@ export interface LicenseRow {
   expires_at: number;
   value: string;
   ilimit: string;
+  roomName?: string;
 }
 
 export interface LicenseClaims {
@@ -24,6 +25,7 @@ export interface LicenseClaims {
   domains: string;
   limit: string;
   id: string;
+  roomName?: string;
 }
 
 // --- Shard utilities ---
@@ -129,6 +131,7 @@ export function generateLicenseValue(
   timestamp: number,
   expires_at: number,
   limit: string,
+  roomName?: string,
 ): string {
   const payload: LicenseClaims = {
     email,
@@ -138,6 +141,9 @@ export function generateLicenseValue(
     limit,
     id,
   };
+  if (roomName) {
+    payload.roomName = roomName;
+  }
   return jwt.sign(payload, LICENSE_SECRET, { algorithm: 'HS256' });
 }
 
@@ -165,13 +171,14 @@ export async function createLicense(
   domains: string,
   created_at: number,
   ilimit: string = 'pro',
+  roomName?: string,
 ): Promise<LicenseRow> {
   const expires_at = created_at + 60 * 60 * 24 * 365; // 1 year
   const id = crypto.randomUUID();
-  const value = generateLicenseValue(id, email, domains, created_at, expires_at, ilimit);
+  const value = generateLicenseValue(id, email, domains, created_at, expires_at, ilimit, roomName);
 
   const licenses = readAll();
-  const row: LicenseRow = { id, email, domains, created_at, expires_at, value, ilimit };
+  const row: LicenseRow = { id, email, domains, created_at, expires_at, value, ilimit, roomName };
   licenses.push(row);
   writeAll(licenses);
 
@@ -186,11 +193,12 @@ export function generateLicenseOnly(
   domains: string,
   created_at: number,
   ilimit: string = 'free',
+  roomName?: string,
 ): LicenseRow {
   const expires_at = created_at + 60 * 60 * 24 * 365; // 1 year
   const id = crypto.randomUUID();
-  const value = generateLicenseValue(id, email, domains, created_at, expires_at, ilimit);
-  return { id, email, domains, created_at, expires_at, value, ilimit };
+  const value = generateLicenseValue(id, email, domains, created_at, expires_at, ilimit, roomName);
+  return { id, email, domains, created_at, expires_at, value, ilimit, roomName };
 }
 
 export async function getLicenseByValue(value: string): Promise<LicenseRow | undefined> {

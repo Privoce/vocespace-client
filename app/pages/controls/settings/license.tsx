@@ -1,8 +1,7 @@
-import { licenseState, socket } from '@/app/[spaceName]/PageClientImpl';
+import { licenseState, LicenseWithAnalysis, socket } from '@/app/[spaceName]/PageClientImpl';
 import { useI18n } from '@/lib/i18n/i18n';
 import styles from '@/styles/controls.module.scss';
-import { Button, Descriptions, Input, Modal, Radio, RadioChangeEvent, Tag } from 'antd';
-import { CheckboxGroupProps } from 'antd/es/checkbox';
+import { Button, Descriptions, Input, Modal, Tag } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useEffect, useMemo, useState } from 'react';
@@ -22,88 +21,72 @@ import {
   CloseCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
-import { DEFAULT_VOCESPACE_CONFIG, ReadableConf, VocespaceConfig } from '@/lib/std/conf';
+import { DEFAULT_VOCESPACE_CONFIG, ReadableConf } from '@/lib/std/conf';
 import { WsBase } from '@/lib/std/device';
-import { isSpaceManager } from '@/lib/std';
-import { SpaceInfo } from '@/lib/std/space';
-import { LocalParticipant } from 'livekit-client';
-
-type ModelKey = 'update' | 'renew' | 'server';
-type OptionValue = 'renew' | 'custom';
 
 export function LicenseControl({
   messageApi,
   space,
-  spaceInfo,
-  localParticipant,
 }: {
   messageApi: MessageInstance;
   space: string;
-  spaceInfo: SpaceInfo;
-  localParticipant: LocalParticipant;
 }) {
   const { t } = useI18n();
   const [userLicense, setUserLicense] = useRecoilState(licenseState);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [calendlyOpen, setCalendlyOpen] = useState(false);
-  const [key, setKey] = useState<ModelKey>('renew');
-  const [value, setValue] = useState<OptionValue>('renew');
   const [licenseValue, setLicenseValue] = useState<string>('');
   const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
   const [ipAddress, setIpAddress] = useState<string | undefined>(undefined);
-  const isOwner = useMemo(() => {
-    return isSpaceManager(spaceInfo, localParticipant.identity).ty === 'Owner';
-  }, [spaceInfo, localParticipant]);
 
-  const getConfig = async () => {
-    const response = await api.getConf();
-    if (response.ok) {
-      const configData: ReadableConf = await response.json();
-      setConfig(configData);
-      setIpAddress(configData.serverUrl);
-    } else {
-      console.error(t('msg.error.conf_load'));
+  const roomLicense = userLicense.room;
+
+  const validRoomLicense = async () => {
+    if (!roomLicense?.isAnalysis) {
+      const response = await api.getConf();
+      if (!response.ok) return;
+      const confData: ReadableConf = await response.json();
+      setConfig(confData);
+      setIpAddress(confData.serverUrl);
+
+      const roomLicenseEntry = confData.roomLicenses?.find((r) => r.name === space);
+      if (roomLicenseEntry) {
+        const license = analyzeLicense(roomLicenseEntry.license, (_e) => {
+          messageApi.error({
+            content: t('settings.license.invalid') + t('settings.license.default_license'),
+            duration: 8,
+          });
+        });
+        if (!validLicenseDomain(license.domains, confData.serverUrl)) {
+          messageApi.error(t('settings.license.invalid_domain'));
+          return;
+        }
+
+        setUserLicense(prev => ({
+          ...prev,
+          room: {
+            ...license,
+            isAnalysis: true,
+            personLimit: getLicensePersonLimit(license.limit, license.isTmp),
+          },
+        }));
+      }
     }
   };
 
   useEffect(() => {
     if (!ipAddress) {
-      getConfig();
+      validRoomLicense();
     }
   }, [ipAddress]);
 
-  const okText = useMemo(() => {
-    if (key === 'renew') {
-      if (value === 'renew') {
-        return t('settings.license.buy');
-      } else {
-        return t('settings.license.meeting');
-      }
-    } else if (key === 'update') {
-      return t('settings.license.update');
-    } else {
-      return t('settings.license.buy');
-    }
-  }, [key, value]);
-
-  const modelTitle = useMemo(() => {
-    switch (key) {
-      case 'renew':
-        return t('settings.license.renew');
-      case 'update':
-        return t('settings.license.update');
-      default:
-        return t('settings.license.renew');
-    }
-  }, [key]);
-
   const toBuyPage = async () => {
     if (isCircleIp) {
-      window.open('https://buy.stripe.com/bJeaEX9ex2PUer2aLe6c00O', '_blank');
+      window.open('https://buy.stripe.com/fZu3cveyR76afv6bPi6c01m', '_blank');
     } else {
-      // 请求 在space.voce.chat/api/webhook?session_ip=IP, 让官方服务器通过stripe的api获取用户的session
+      // 请求 在space.voce.chat/api/webhook?session_ip=IP&license_type=room, 让官方服务器通过stripe的api获取用户的session
       // 然后用户侧获取到session.url进行跳转
-      const response = await api.getLicenseByIP(config.serverUrl);
+      const response = await api.getLicenseByIP(config.serverUrl, 'room');
       if (response.ok) {
         const { url } = await response.json();
         if (url) {
@@ -114,7 +97,7 @@ export function LicenseControl({
           content: 'Failed to get session url',
           duration: 2,
         });
-        window.open('https://buy.stripe.com/bJeaEX9ex2PUer2aLe6c00O', '_blank');
+        window.open('https://buy.stripe.com/fZu3cveyR76afv6bPi6c01m', '_blank');
       }
     }
   };
@@ -126,47 +109,49 @@ export function LicenseControl({
     return `${year}-${month}-${day}`;
   };
 
+  const status = useMemo(() => {
+    if (!roomLicense) return LicenseStatus.Expired;
+    return licenseStatus(roomLicense);
+  }, [roomLicense]);
+
   const items = useMemo(() => {
-    let items = [
+    let descriptionItems = [
       {
         key: 1,
         label: t('settings.license.signed'),
-        children: userLicense.isAnalysis ? 'Yes' : 'No',
+        children: roomLicense?.isAnalysis ? 'Yes' : 'No',
       },
       {
         key: 2,
         label: t('settings.license.domains'),
-        children: userLicense.domains,
+        children: roomLicense?.domains || '-',
       },
       {
         key: 3,
         label: t('settings.license.limit'),
-        children: userLicense.limit,
+        children: roomLicense?.limit || '-',
       },
       {
         key: 4,
         label: t('settings.license.person'),
-        children: getLicensePersonLimit(userLicense.limit, userLicense.isTmp).toString(),
+        children: roomLicense ? getLicensePersonLimit(roomLicense.limit, roomLicense.isTmp).toString() : '-',
       },
       {
         key: 5,
         label: t('settings.license.created_at'),
-        children: fmtDate(new Date(userLicense.created_at * 1000)),
+        children: roomLicense?.created_at ? fmtDate(new Date(roomLicense.created_at * 1000)) : '-',
       },
       {
         key: 6,
         label: t('settings.license.expires_at'),
-        children: fmtDate(new Date(userLicense.expires_at * 1000)),
+        children: roomLicense?.expires_at ? fmtDate(new Date(roomLicense.expires_at * 1000)) : '-',
       },
       {
         key: 7,
         label: t('settings.license.value'),
-        children: userLicense.value,
+        children: roomLicense?.value || '-',
       },
     ];
-    const now_timestamp = new Date().getTime();
-    const valid = userLicense.value !== '' && userLicense.expires_at < now_timestamp;
-    const status = licenseStatus(userLicense);
     const { color, text: statusText, icon: statusIcon } = licenseStatusTag(status);
     return (
       <Descriptions
@@ -180,72 +165,55 @@ export function LicenseControl({
         }
         bordered
         column={1}
-        styles={{
-          label: { color: valid ? '#8c8c8c' : '#fdd', minWidth: '120px' },
-        }}
-        items={items}
+        items={descriptionItems}
       />
     );
-  }, [userLicense, t]);
+  }, [roomLicense, t, status]);
 
-  const options: CheckboxGroupProps<string>['options'] = [
-    {
-      label: t('settings.license.license_pro'),
-      value: 'renew',
-    },
-    {
-      label: t('settings.license.license_custom'),
-      value: 'custom',
-    },
-  ];
-
-  const onChange = ({ target: { value } }: RadioChangeEvent) => {
-    setValue(value);
-  };
-
-  const onOk = async () => {
-    if (key === 'renew') {
-      if (value === 'renew') {
-        // renew license
-        if (isCircleIp) {
-          setKey('server');
-        } else {
-          toBuyPage();
-        }
-      } else {
-        setIsModalOpen(false);
-        setCalendlyOpen(true);
-        return;
-      }
-    } else if (key === 'update') {
-      // 使用本地校验的方式验证证书合理性
-      let isDefault = false;
-
-      let validatedLicense = analyzeLicense(licenseValue, (_e) => {
-        isDefault = true;
-        messageApi.error({
-          content: t('settings.license.invalid') + t('settings.license.default_license'),
-          duration: 8,
-        });
-        return;
+  const onUpdate = async () => {
+    if (!licenseValue || licenseValue.trim() === '') {
+      messageApi.error({
+        content: t('settings.license.invalid'),
+        duration: 3,
       });
-      if (!isDefault) {
-        if (!validLicenseDomain(validatedLicense.domains, config.serverUrl)) {
-          messageApi.error({
-            content: t('settings.license.invalid_domain'),
-            duration: 3,
-          });
-          return;
-        }
-      }
+      return;
+    }
 
-      const response = await api.reloadLicense(licenseValue);
-      if (response.ok) {
-        setUserLicense({
-          ...validatedLicense,
-          isAnalysis: true,
-          personLimit: getLicensePersonLimit(validatedLicense.limit, validatedLicense.isTmp),
+    // 使用本地校验的方式验证证书合理性
+    let isDefault = false;
+
+    let validatedLicense = analyzeLicense(licenseValue, (_e) => {
+      isDefault = true;
+      messageApi.error({
+        content: t('settings.license.invalid') + t('settings.license.default_license'),
+        duration: 8,
+      });
+      return;
+    });
+
+    if (!isDefault) {
+      if (!validLicenseDomain(validatedLicense.domains, config.serverUrl)) {
+        messageApi.error({
+          content: t('settings.license.invalid_domain'),
+          duration: 3,
         });
+        return;
+      }
+    }
+
+    // 将房间证书写入配置文件
+    const response = await api.reloadRoomLicense(licenseValue, space);
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        setUserLicense(prev => ({
+          ...prev,
+          room: {
+            ...validatedLicense,
+            isAnalysis: true,
+            personLimit: getLicensePersonLimit(validatedLicense.limit, validatedLicense.isTmp),
+          } as LicenseWithAnalysis,
+        }));
         setIsModalOpen(false);
         setLicenseValue('');
         messageApi.success({
@@ -259,18 +227,17 @@ export function LicenseControl({
           } as WsBase);
         }, 2000);
       } else {
-        const { error } = await response.json();
         messageApi.error({
-          content: error || t('settings.license.invalid'),
+          content: data.error || t('settings.license.invalid'),
           duration: 4,
         });
       }
     } else {
-      // book meeting
-      // setIsModalOpen(false);
-      // setCalendlyOpen(true);
-      toBuyPage();
-      return;
+      const { error } = await response.json();
+      messageApi.error({
+        content: error || t('settings.license.invalid'),
+        duration: 4,
+      });
     }
   };
 
@@ -296,38 +263,31 @@ export function LicenseControl({
         <Calendly></Calendly>
       </Modal>
       <Modal
-        title={modelTitle}
+        title={t('settings.license.update')}
         closable
         open={isModalOpen}
-        onOk={onOk}
-        okText={okText}
+        onOk={onUpdate}
+        okText={t('settings.license.update')}
         cancelText={t('common.cancel')}
         onCancel={() => {
           setIsModalOpen(false);
         }}
       >
-        {key === 'server' && (
+        {isCircleIp ? (
           <>
-            {isCircleIp ? (
-              <>
-                <div>{t('settings.license.circle_ip')}</div>
-                <Input
-                  style={{ color: '#888', marginTop: '8px' }}
-                  disabled
-                  type="text"
-                  size="large"
-                  value={ipAddress}
-                  onChange={(e) => {
-                    setIpAddress(e.target.value);
-                  }}
-                ></Input>
-              </>
-            ) : (
-              <div>{t('settings.license.confirm_ip')}</div>
-            )}
+            <div>{t('settings.license.circle_ip')}</div>
+            <Input
+              style={{ color: '#888', marginTop: '8px' }}
+              disabled
+              type="text"
+              size="large"
+              value={ipAddress}
+              onChange={(e) => {
+                setIpAddress(e.target.value);
+              }}
+            ></Input>
           </>
-        )}
-        {key === 'update' && (
+        ) : (
           <TextArea
             rows={5}
             placeholder={t('settings.license.input')}
@@ -337,55 +297,29 @@ export function LicenseControl({
             }}
           />
         )}
-        {key === 'renew' && (
-          <>
-            <div style={{ marginBottom: '8px' }}>{t('settings.license.price_select')}</div>
-            <Radio.Group
-              size="large"
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '8px',
-              }}
-              options={options}
-              onChange={onChange}
-              value={value}
-              optionType="button"
-            />
-          </>
-        )}
       </Modal>
-      {items}
-      {isOwner && (
-        <div className={styles.setting_box} style={{ gap: '8px', display: 'flex' }}>
-          <Button
-            type="primary"
-            onClick={() => {
-              setIsModalOpen(true);
-              setKey('renew');
-            }}
-          >
-            {t('settings.license.renew')}
-          </Button>
-          <Button
-            type="default"
-            onClick={() => {
-              setIsModalOpen(true);
-              setKey('update');
-            }}
-          >
-            {t('settings.license.update')}
-          </Button>
+      {roomLicense ? (
+        items
+      ) : (
+        <div style={{ padding: '24px 0', color: '#888' }}>
+          {t('settings.license.no_room_license')}
         </div>
       )}
-
-      <div className={styles.gift_box}>
-        <h2>{t('settings.license.gift.title')}</h2>
-        <div>{t('settings.license.gift.desc')}</div>
-        <img
-          src="https://static.readdy.ai/image/736cb33f85ee328c22e5d7e17bec9c40/1e18fe5f59b60ead0da50d1d023aab98.png"
-          style={{ width: '120px', margin: '8px 0' }}
-        ></img>
+      <div className={styles.setting_box} style={{ gap: '8px', display: 'flex' }}>
+        <Button
+          type="primary"
+          onClick={toBuyPage}
+        >
+          {t('settings.license.buy')}
+        </Button>
+        <Button
+          type="default"
+          onClick={() => {
+            setIsModalOpen(true);
+          }}
+        >
+          {t('settings.license.update')}
+        </Button>
       </div>
     </div>
   );

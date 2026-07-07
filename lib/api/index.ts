@@ -12,6 +12,7 @@ import {
   getConf,
   reloadConf,
   reloadLicense,
+  reloadRoomLicense,
   updateAIConf,
   updateCreateSpaceConf,
 } from './conf';
@@ -117,6 +118,7 @@ export const api = {
   reloadConf,
   updateCreateSpaceConf,
   reloadLicense,
+  reloadRoomLicense,
   // ---- platform api --------
   getUserMeta,
   ai,

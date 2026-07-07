@@ -51,7 +51,7 @@ import {
 } from '@/lib/std/conf';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
-import { DEFAULT_LICENSE } from '@/lib/std/license';
+import { DEFAULT_LICENSE, License } from '@/lib/std/license';
 
 const TURN_CREDENTIAL = process.env.TURN_CREDENTIAL ?? '';
 const TURN_USERNAME = process.env.TURN_USERNAME ?? '';
@@ -78,12 +78,20 @@ export const roomStatusState = atom({
   default: [] as UserDefineStatus[],
 });
 
+export interface LicenseWithAnalysis extends License {
+  isAnalysis: boolean;
+  personLimit: number;
+}
+
 export const licenseState = atom({
   key: 'licenseState',
   default: {
-    ...DEFAULT_LICENSE,
-    isAnalysis: false,
-    personLimit: 5,
+    space: {
+      ...DEFAULT_LICENSE,
+      isAnalysis: false,
+      personLimit: 5,
+    } as LicenseWithAnalysis,
+    room: null as LicenseWithAnalysis | null,
   },
 });
 

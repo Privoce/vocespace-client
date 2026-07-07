@@ -1,6 +1,6 @@
 // 获取动态配置
 import { NextRequest, NextResponse } from 'next/server';
-import { getConfig, setStoredConf, setConfigEnv, setConfigLicense, writeBackConfig } from './conf';
+import { getConfig, setStoredConf, setConfigEnv, setConfigLicense, setConfigRoomLicense, writeBackConfig } from './conf';
 import { AIConf, clearReadableConf, RTCConf } from '@/lib/std/conf';
 import { UpdateCreateSpaceConfBody } from '@/lib/api/conf';
 
@@ -9,7 +9,14 @@ export async function GET(request: NextRequest) {
   let config = getConfig();
   setStoredConf(config);
   const readableConfig = clearReadableConf(config, hostToken);
-  return NextResponse.json(readableConfig, { status: 200 });
+  return NextResponse.json(readableConfig, {
+    status: 200,
+    headers: {
+      'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+      'Pragma': 'no-cache',
+      'Expires': '0',
+    },
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -93,20 +100,47 @@ export async function POST(request: NextRequest) {
         );
       }
     }
-  } else {
-    const env: RTCConf = await request.json();
+  }
 
-    const { success, error } = setConfigEnv(env);
-    if (success) {
-      return NextResponse.json({ success }, { status: 200 });
-    } else {
+  const isRoomLicense = request.nextUrl.searchParams.get('room_license') === 'true';
+  if (isRoomLicense) {
+    const { license, roomName } = await request.json();
+    if (!license || license.trim() === '' || !roomName) {
       return NextResponse.json(
         {
-          success,
-          error,
+          success: false,
+          error: 'license or roomName is empty',
         },
-        { status: 500 },
+        { status: 200 },
       );
+    } else {
+      const { success, error } = setConfigRoomLicense(license, roomName);
+      if (success) {
+        return NextResponse.json({ success: true }, { status: 200 });
+      } else {
+        return NextResponse.json(
+          {
+            success,
+            error,
+          },
+          { status: 500 },
+        );
+      }
     }
+  }
+
+  const env: RTCConf = await request.json();
+
+  const { success, error } = setConfigEnv(env);
+  if (success) {
+    return NextResponse.json({ success }, { status: 200 });
+  } else {
+    return NextResponse.json(
+      {
+        success,
+        error,
+      },
+      { status: 500 },
+    );
   }
 }

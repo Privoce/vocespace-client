@@ -6,10 +6,12 @@ const LICENSE_API_URL = connect_endpoint('/api/license');
  * 请求创建Stripe支付session（获取支付链接）
  * 请求本地API，由后端根据WEBHOOT环境变量决定本地处理还是转发到vocespace.com
  * @param ip 服务器IP地址/域名
+ * @param licenseType 证书类型 'room' | 'pro'
  */
-export const getLicenseByIP = async (ip: string) => {
+export const getLicenseByIP = async (ip: string, licenseType: string = 'pro') => {
   const url = new URL(connect_endpoint('/api/webhook'), window.location.origin);
   url.searchParams.set('session_ip', ip);
+  url.searchParams.set('license_type', licenseType);
   return await fetch(url.toString(), {
     method: 'GET',
   });
@@ -47,7 +49,7 @@ export const getAllLicenses = async (hostToken: string) => {
  * @param hostToken 管理员令牌
  */
 export const createLicense = async (
-  params: { email?: string; domains?: string; created_at?: number; ilimit?: string; sendEmail?: boolean; value?: string },
+  params: { email?: string; domains?: string; created_at?: number; ilimit?: string; sendEmail?: boolean; value?: string; roomName?: string },
   hostToken: string,
 ) => {
   const url = new URL(LICENSE_API_URL, window.location.origin);
@@ -64,6 +66,7 @@ export const createLicense = async (
       ilimit: params.ilimit,
       sendEmail: params.sendEmail,
       value: params.value,
+      roomName: params.roomName,
     }),
   });
 };

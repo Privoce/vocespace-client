@@ -7,6 +7,9 @@ export const getConfig = (): VocespaceConfig => {
     const configPath = join(process.cwd(), 'vocespace.conf.json');
     const configContent = readFileSync(configPath, 'utf-8');
     const config = JSON.parse(configContent) as VocespaceConfig;
+    if (!config.roomLicenses) {
+      config.roomLicenses = [];
+    }
     return config;
   } catch (error) {
     console.error('Error reading vocespace.conf.json:', error);
@@ -34,6 +37,23 @@ export const setConfigLicense = (license: string): { success: boolean; error?: E
   // 更新vocespace.conf.json
   let config: VocespaceConfig = getConfig();
   config.license = license;
+  // 设置到文件中
+  return writeBackConfig(config);
+};
+
+export const setConfigRoomLicense = (license: string, roomName: string): { success: boolean; error?: Error } => {
+  // 更新vocespace.conf.json
+  let config: VocespaceConfig = getConfig();
+  if (!config.roomLicenses) {
+    config.roomLicenses = [];
+  }
+  // 如果已存在同名房间证书，替换；否则追加
+  const idx = config.roomLicenses.findIndex((r) => r.name === roomName);
+  if (idx >= 0) {
+    config.roomLicenses[idx] = { name: roomName, license };
+  } else {
+    config.roomLicenses.push({ name: roomName, license });
+  }
   // 设置到文件中
   return writeBackConfig(config);
 };

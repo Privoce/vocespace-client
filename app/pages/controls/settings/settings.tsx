@@ -258,8 +258,6 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
           <LicenseControl
             messageApi={messageApi}
             space={space.name}
-            spaceInfo={spaceInfo}
-            localParticipant={localParticipant}
           ></LicenseControl>
         ),
       },

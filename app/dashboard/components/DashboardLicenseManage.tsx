@@ -42,6 +42,9 @@ import { fmtDate, LicenseDetailCard } from './LicenseDetailCard';
 
 const { Title } = Typography;
 
+export type LicenseType = 'free' | 'pro' | 'enterprise' | 'room';
+export const LICENSE_TYPES: LicenseType[] = ['free', 'pro', 'enterprise', 'room'];
+
 interface LicenseRecord {
   id: string;
   email: string;
@@ -49,7 +52,8 @@ interface LicenseRecord {
   created_at: number;
   expires_at: number;
   value: string;
-  ilimit: string;
+  ilimit: LicenseType;
+  roomName?: string;
 }
 
 const licenseTypeColor = (limit: string) => {
@@ -60,6 +64,8 @@ const licenseTypeColor = (limit: string) => {
       return 'blue';
     case 'enterprise':
       return 'gold';
+    case 'room':
+      return 'purple';
     default:
       return 'default';
   }
@@ -188,7 +194,8 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
     const valid = licenses.filter((l) => isValidLicense(l.expires_at)).length;
     const expired = total - valid;
     const proCount = licenses.filter((l) => l.ilimit === 'pro').length;
-    return { total, valid, expired, proCount };
+    const roomCount = licenses.filter((l) => l.ilimit === 'room').length;
+    return { total, valid, expired, proCount, roomCount };
   }, [licenses]);
 
   // 表格列定义
@@ -316,6 +323,7 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
           domains: values.domains,
           ilimit: values.ilimit || 'pro',
           sendEmail,
+          roomName: values.roomName,
         },
         hostToken,
       );
@@ -516,12 +524,12 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
       children: (
         <div>
           <Row gutter={16} style={{ marginBottom: 24 }}>
-            <Col span={6}>
+            <Col span={4}>
               <Card>
                 <Statistic title={lm('statsTotal')} value={stats.total} />
               </Card>
             </Col>
-            <Col span={6}>
+            <Col span={4}>
               <Card>
                 <Statistic
                   title={lm('statsValid')}
@@ -530,7 +538,7 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
                 />
               </Card>
             </Col>
-            <Col span={6}>
+            <Col span={4}>
               <Card>
                 <Statistic
                   title={lm('statsExpired')}
@@ -539,11 +547,20 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
                 />
               </Card>
             </Col>
-            <Col span={6}>
+            <Col span={4}>
               <Card>
                 <Statistic
                   title={lm('statsPro')}
                   value={stats.proCount}
+                  suffix={`/ ${stats.total}`}
+                />
+              </Card>
+            </Col>
+            <Col span={4}>
+              <Card>
+                <Statistic
+                  title={lm('statsRoom')}
+                  value={stats.roomCount}
                   suffix={`/ ${stats.total}`}
                 />
               </Card>
@@ -601,12 +618,31 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
             </Form.Item>
             <Form.Item name="ilimit" label={lm('formType')} initialValue="pro">
               <Select
-                options={[
-                  { value: 'free', label: lm('typeFree') },
-                  { value: 'pro', label: lm('typePro') },
-                  { value: 'enterprise', label: lm('typeEnterprise') },
-                ]}
+                onChange={() => {
+                  // Clear roomName when type changes away from 'room'
+                  createForm.setFieldValue('roomName', undefined);
+                }}
+                options={LICENSE_TYPES.map((type) => ({
+                  value: type,
+                  label: lm(`type${type.charAt(0).toUpperCase()}${type.slice(1)}`),
+                }))}
               />
+            </Form.Item>
+            <Form.Item
+              noStyle
+              shouldUpdate={(prev, cur) => prev.ilimit !== cur.ilimit}
+            >
+              {({ getFieldValue }) =>
+                getFieldValue('ilimit') === 'room' ? (
+                  <Form.Item
+                    name="roomName"
+                    label={lm('formRoomName')}
+                    rules={[{ required: true, message: lm('formRoomNameRequired') }]}
+                  >
+                    <Input placeholder="my-room-name" />
+                  </Form.Item>
+                ) : null
+              }
             </Form.Item>
             <Form.Item>
               <Space>
@@ -725,11 +761,6 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
           )}
         </Card>
       ),
-    },
-    {
-      key: 'production',
-      label: '创建产品',
-      children: <Card>暂未实现</Card>,
     },
   ];
 

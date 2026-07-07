@@ -1,6 +1,6 @@
 import { PresetStatusColorType } from 'antd/es/_util/colors';
 
-export type LicenseLimit = 'free' | 'pro' | 'enterprise';
+export type LicenseLimit = 'free' | 'pro' | 'enterprise' | 'room';
 
 export interface LicenseClaims {
   /**
@@ -48,9 +48,11 @@ export const getLicensePersonLimit = (licenseLimit: LicenseLimit, isTmp?: boolea
     case 'free':
       return 5;
     case 'pro':
-      return isTmp ? 20 : 9999;
+      return 20;
     case 'enterprise':
-      return isTmp ? 20 : 9999;
+      return 9999;
+    case 'room':
+      return 5;
     default:
       return 5;
   }

@@ -46,6 +46,23 @@ export const reloadLicense = async (license: string): Promise<Response> => {
   });
 };
 
+/**
+ * 更新房间证书（写入配置文件）
+ * @param license 房间证书JWT值
+ * @param roomName 房间名称
+ */
+export const reloadRoomLicense = async (license: string, roomName: string): Promise<Response> => {
+  const url = new URL(CONF_API_URL, window.location.origin);
+  url.searchParams.append('room_license', 'true');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ license, roomName }),
+  });
+};
+
 export const updateAIConf = async (aiConf: AIConf): Promise<Response> => {
   const url = new URL(CONF_API_URL, window.location.origin);
   url.searchParams.append('ai', 'true');

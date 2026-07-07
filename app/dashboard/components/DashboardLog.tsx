@@ -41,9 +41,10 @@ const LOG_BADGE_STATUS: Record<LogType, 'success' | 'warning' | 'error' | 'defau
   error: 'error',
 };
 
-const STRATEGY_LABELS: Record<CleanupRecord['strategy'], string> = {
+const STRATEGY_LABELS: Record<string, string> = {
   ghost_room: 'dashboard.log.strategy.ghost_room',
   redis_no_livekit: 'dashboard.log.strategy.redis_no_livekit',
+  persistent_room_cleanup: 'dashboard.log.strategy.persistent_room_cleanup',
 };
 
 const getBaseUrl = () => connect_endpoint('/api/space');

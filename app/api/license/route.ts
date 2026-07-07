@@ -89,13 +89,14 @@ export async function DELETE(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const { email, domains, created_at, ilimit, sendEmail: sendEmailOpt, value } = body as {
+  const { email, domains, created_at, ilimit, sendEmail: sendEmailOpt, value, roomName } = body as {
     email?: string;
     domains?: string;
     created_at?: number;
     ilimit?: string;
     sendEmail?: boolean;
     value?: string;
+    roomName?: string;
   };
 
   let licenseRow;
@@ -133,11 +134,11 @@ export async function POST(request: NextRequest) {
 
     if (type === 'free') {
       // Free licenses are not stored in DB
-      licenseRow = generateLicenseOnly(email, domains, ts, type);
+      licenseRow = generateLicenseOnly(email, domains, ts, type, roomName);
     } else {
-      // Pro/enterprise licenses are stored in DB
+      // Pro/enterprise/room licenses are stored in DB
       try {
-        licenseRow = await createLicense(email, domains, ts, type);
+        licenseRow = await createLicense(email, domains, ts, type, roomName);
       } catch (err: any) {
         return NextResponse.json({ error: `Failed to create license: ${err.message}` }, { status: 500 });
       }

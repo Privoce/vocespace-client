@@ -60,7 +60,7 @@ import {
   WsTo,
   WsWave,
 } from '@/lib/std/device';
-import { Button } from 'antd';
+import { Button, Alert } from 'antd';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { Channel, ChannelExports } from './channel';
 import {
@@ -129,6 +129,37 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [uState, setUState] = useRecoilState(userState);
     const [collapsed, setCollapsed] = useState(isMobile());
     const [uLicenseState, setULicenseState] = useRecoilState(licenseState);
+
+    const hasRoomLicense = useMemo(() => {
+      if (!uLicenseState.room) return false;
+      const now = Date.now();
+      return now <= uLicenseState.room.expires_at * 1000;
+    }, [uLicenseState.room]);
+
+    const toBuyRoomLicense = useCallback(async () => {
+      const isCircleIp =
+        config.serverUrl === 'localhost' ||
+        config.serverUrl.startsWith('192.168.') ||
+        config.serverUrl === '127.0.0.1';
+      if (isCircleIp) {
+        window.open('https://buy.stripe.com/fZu3cveyR76afv6bPi6c01m', '_blank');
+      } else {
+        const response = await api.getLicenseByIP(config.serverUrl, 'room');
+        if (response.ok) {
+          const { url } = await response.json();
+          if (url) {
+            window.open(url, '_blank');
+          }
+        } else {
+          messageApi.warning({
+            content: 'Failed to get session url',
+            duration: 2,
+          });
+          window.open('https://buy.stripe.com/fZu3cveyR76afv6bPi6c01m', '_blank');
+        }
+      }
+    }, [config.serverUrl, messageApi]);
+
     const controlsRef = React.useRef<ControlBarExport>(null);
     const waveAudioRef = React.useRef<HTMLAudioElement>(null);
     const promptSoundRef = React.useRef<HTMLAudioElement>(null);
@@ -467,7 +498,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
       // 从config中获取license进行校验 -------------------------------------------------------------------
       const validLicense = async () => {
-        if (!uLicenseState.isAnalysis) {
+        if (!uLicenseState.space.isAnalysis) {
           const license = analyzeLicense(config.license, (_e) => {
             messageApi.error({
               content: t('settings.license.invalid') + t('settings.license.default_license'),
@@ -481,11 +512,14 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             return;
           }
 
-          setULicenseState({
-            ...license,
-            isAnalysis: true,
-            personLimit: getLicensePersonLimit(license.limit, license.isTmp),
-          });
+          setULicenseState(prev => ({
+            ...prev,
+            space: {
+              ...license,
+              isAnalysis: true,
+              personLimit: getLicensePersonLimit(license.limit, license.isTmp),
+            },
+          }));
         }
       };
 
@@ -564,7 +598,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       // 房间事件监听器 --------------------------------------------------------------------------------
       const onParticipantConnected = async (participant: Participant) => {
         // 通过许可证判断人数
-        if (space.remoteParticipants.size >= uLicenseState.personLimit - 1) {
+        if (space.remoteParticipants.size >= uLicenseState.space.personLimit - 1) {
           if (space.localParticipant.identity === participant.identity) {
             messageApi.error({
               content: t('common.full_user'),
@@ -1604,6 +1638,20 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                 className="lk-video-conference-inner"
                 style={{ alignItems: 'flex-start', height: '100dvh', gap: 8 }}
               >
+                {!hasRoomLicense && (
+                  <Alert
+                    type="warning"
+                    showIcon
+                    closable
+                    message={
+                      <span>
+                        {t('settings.license.no_room_license')}
+                        ，<a onClick={toBuyRoomLicense}>{t('settings.license.buy_room_license')}</a>
+                      </span>
+                    }
+                    style={{ margin: '8px 8px 0 8px', flexShrink: 0, width: "calc(100% - 16px)" }}
+                  />
+                )}
                 <div
                   className={focusTrack ? 'lk-focus-layout-wrapper' : 'lk-grid-layout-wrapper'}
                   style={{

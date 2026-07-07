@@ -76,6 +76,13 @@ export interface ReadableConf {
    * 创建空间的策略
    */
   create_space: CreateSpaceStrategy;
+  /**
+   * 房间证书列表
+   */
+  roomLicenses?: {
+    name: string;
+    license: string;
+  }[];
 }
 
 export interface VocespaceConfig {
@@ -114,8 +121,6 @@ export interface VocespaceConfig {
   roomLicenses?: {
     name: string;
     license: string;
-    /** 房间许可证密钥，也是房间的密码，用户可以设置也可以不设置，如果设置的话用户必须输入密码才能进入房间 */
-    secret?: string;
   }[];
   /**
    * 服务器的许可证，用于验证用户令牌是否有效, 所有人都会有默认100年的免费许可证
@@ -179,6 +184,7 @@ export const clearReadableConf = (
     license: conf.license,
     create_space: conf.create_space,
     whiteList: conf.whiteList,
+    roomLicenses: conf.roomLicenses,
   };
   // 如果hostToken正确，则传递AI配置
   if (hostToken && hostToken === conf.hostToken && conf.ai) {

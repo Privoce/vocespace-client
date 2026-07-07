@@ -39,6 +39,11 @@ export const LicenseDetailCard: React.FC<LicenseDetailCardProps> = ({ license, l
         <Descriptions.Item label={lm('tableExpires')} style={itemStyle}>
           {license.expires_at ? fmtDate(license.expires_at) : '-'}
         </Descriptions.Item>
+        {license.roomName && (
+          <Descriptions.Item label={lm('formRoomName')} style={itemStyle}>
+            {license.roomName}
+          </Descriptions.Item>
+        )}
         <Descriptions.Item label={lm('fieldId')} style={itemStyle}>
           {license.id || '-'}
         </Descriptions.Item>

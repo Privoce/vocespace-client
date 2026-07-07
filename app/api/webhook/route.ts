@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { createLicense } from '@/lib/db/license';
 import { sendEmail, fmtContentBuy } from '@/lib/email';
+import { getConfig, setConfigRoomLicense, writeBackConfig } from '@/app/api/conf/conf';
 
 const SECRET_KEY = process.env.STRIPE_SECRET_KEY ?? '';
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ?? '';
@@ -16,6 +17,7 @@ const VOCESPACE_API = 'https://vocespace.com';
 // 参数: session_ip=IP
 export async function GET(request: NextRequest) {
   const ip = request.nextUrl.searchParams.get('session_ip');
+  const licenseType = request.nextUrl.searchParams.get('license_type') || 'room';
   if (!ip) {
     return NextResponse.json({ error: 'session_ip is required' }, { status: 400 });
   }
@@ -29,7 +31,9 @@ export async function GET(request: NextRequest) {
   }
 
   const stripe = new Stripe(SECRET_KEY);
-  // 创建session, product: prod_S8YXSKlgQvaYdH, price: price_1REHPyGGoUDRyc3jW5AlM49w
+  // 创建session, product: prod_S8YXSKlgQvaYdH, 
+  // pro证书: price_1REHPyGGoUDRyc3jW5AlM49w
+  // room证书: price_1TqCPGGGoUDRyc3jjpRg67VD
   try {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -49,12 +53,13 @@ export async function GET(request: NextRequest) {
       },
       line_items: [
         {
-          price: 'price_1REHPyGGoUDRyc3jW5AlM49w',
+          price: licenseType === 'pro' ? 'price_1REHPyGGoUDRyc3jW5AlM49w' : 'price_1TqCPGGGoUDRyc3jjpRg67VD',
           quantity: 1,
         },
       ],
       metadata: {
         server_ip: ip,
+        license_type: licenseType,
       },
       success_url: SITE_URL,
     });
@@ -105,13 +110,36 @@ export async function POST(request: Request) {
           domains = session.custom_fields[0].text?.value;
         }
 
-        if (session.customer_email) {
-          // 直接调用本地 license 创建逻辑，不再请求外部服务器
-          paySuccessAndSendToServer({
-            email: session.customer_email,
-            created: session.created,
-            domains,
-          });
+        const licenseType = session.metadata?.license_type || 'pro';
+        if (licenseType === 'room') {
+          // 房间证书：生成 license 并写入配置
+          const email = session.customer_email || '';
+          const created = session.created;
+          const serverIp = session.metadata?.server_ip || '';
+          const license = await createLicense(email, domains, created, 'room', serverIp);
+          // 使用 server_ip 作为房间名写入 config
+          if (serverIp) {
+            setConfigRoomLicense(license.value, serverIp);
+          }
+          try {
+            await sendEmail(
+              'han@privoce.com',
+              email,
+              'VoceSpace Room License',
+              fmtContentBuy(license.value),
+            );
+          } catch (err) {
+            console.error('Failed to send room license email:', err);
+          }
+        } else {
+          if (session.customer_email) {
+            // 直接调用本地 license 创建逻辑，不再请求外部服务器
+            paySuccessAndSendToServer({
+              email: session.customer_email,
+              created: session.created,
+              domains,
+            });
+          }
         }
       }
       break;

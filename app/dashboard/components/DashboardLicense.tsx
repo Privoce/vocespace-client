@@ -47,15 +47,16 @@ export function DashboardLicense({ messageApi }: { messageApi: MessageInstance }
   const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
   const [ipAddress, setIpAddress] = useState<string | undefined>(undefined);
 
-  const validLicense = async () => {
+  const validLicense = async (configData?: ReadableConf) => {
+    const conf = configData || config;
     if (!userLicense.isAnalysis) {
-      const license = analyzeLicense(config.license, (_e) => {
+      const license = analyzeLicense(conf.license, (_e) => {
         messageApi.error({
           content: t('settings.license.invalid') + t('settings.license.default_license'),
           duration: 8,
         });
       });
-      if (!validLicenseDomain(license.domains, config.serverUrl)) {
+      if (!validLicenseDomain(license.domains, conf.serverUrl)) {
         messageApi.error(t('settings.license.invalid_domain'));
         return;
       }
@@ -74,6 +75,7 @@ export function DashboardLicense({ messageApi }: { messageApi: MessageInstance }
       const configData: ReadableConf = await response.json();
       setConfig(configData);
       setIpAddress(configData.serverUrl);
+      return configData;
     } else {
       console.error(t('msg.error.conf_load'));
     }
@@ -81,8 +83,11 @@ export function DashboardLicense({ messageApi }: { messageApi: MessageInstance }
 
   useEffect(() => {
     if (!ipAddress) {
-      getConfig();
-      validLicense();
+      getConfig().then((configData) => {
+        if (configData) {
+          validLicense(configData);
+        }
+      });
     }
   }, [ipAddress]);
 

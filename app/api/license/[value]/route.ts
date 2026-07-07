@@ -84,7 +84,7 @@ export async function GET(
   }
 
   // validate limit
-  if (!claims.limit || !['free', 'pro', 'enterprise'].includes(claims.limit)) {
+  if (!claims.limit || !['free', 'pro', 'enterprise', 'room'].includes(claims.limit)) {
     invalidFields.push('limit');
   }
 
