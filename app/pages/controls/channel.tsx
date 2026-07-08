@@ -565,6 +565,23 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       border: 'none',
     };
 
+    const shareRoomToClipboard = () => {
+      if (!selectedRoom) {
+        return;
+      }
+      // 复制到剪贴板
+      navigator.clipboard.writeText(
+        `https://${config.serverUrl}/${space.name}?childRoomEnter=${encodeChildRoomEnter(
+          space.name,
+          selectedRoom.name,
+          space.localParticipant.identity,
+        )}`,
+      );
+      messageApi.success({
+        content: t('common.copy.success'),
+      });
+    };
+
     const mainContext: ReactNode = useMemo(() => {
       let allChildParticipants = childRooms.reduce((acc, room) => {
         return acc.concat(room.participants);
@@ -696,8 +713,9 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                   )}
                   <Popover
                     content={
-                      <button className="vocespace_button">
-                        <SvgResource type={'add_user'} svgSize={16}></SvgResource>{t('channel.menu.share')} {room.name}
+                      <button className="vocespace_button" onClick={shareRoomToClipboard}>
+                        <SvgResource type={'add_user'} svgSize={16}></SvgResource>
+                        {t('channel.menu.share')} {room.name}
                       </button>
                     }
                     placement="topRight"
@@ -995,19 +1013,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             onCancel={() => setShareRoomOpen(false)}
             okText={t('recording.copy.title')}
             cancelText={t('common.cancel')}
-            onOk={() => {
-              // 复制到剪贴板
-              navigator.clipboard.writeText(
-                `https://${config.serverUrl}/${space.name}?childRoomEnter=${encodeChildRoomEnter(
-                  space.name,
-                  selectedRoom.name,
-                  space.localParticipant.identity,
-                )}`,
-              );
-              messageApi.success({
-                content: t('common.copy.success'),
-              });
-            }}
+            onOk={shareRoomToClipboard}
           >
             <p>
               {`https://${config.serverUrl}/${space.name}?childRoomEnter=${encodeChildRoomEnter(

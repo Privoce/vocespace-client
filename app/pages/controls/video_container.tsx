@@ -85,6 +85,7 @@ import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { TilePlayer, TilePlayerAdd, TilePlayerItem } from '../participant/player';
 import { LayoutEntity, UnifiedLayout, useReplaceLivekitTrack } from '../layout/unified';
 import { PaginationControl, PaginationIndicator } from '../layout/cover';
+import { LicenseAlert } from './widgets/license_alert';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -851,7 +852,14 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       fetchSettings();
     }, [settings, space, freshPermission]);
 
-    useRoomSubscription({ space, settings, selfRoom, freshPermission, localTrackVersion, fetchSettings });
+    useRoomSubscription({
+      space,
+      settings,
+      selfRoom,
+      freshPermission,
+      localTrackVersion,
+      fetchSettings,
+    });
 
     // 监听本地轨道发布/取消发布事件，重新触发订阅权限计算
     useEffect(() => {
@@ -1287,18 +1295,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                 style={{ alignItems: 'flex-start', height: '100dvh', gap: 8 }}
               >
                 {!hasRoomLicense && (
-                  <Alert
-                    type="warning"
-                    showIcon
-                    closable
-                    message={
-                      <span>
-                        {t('settings.license.no_room_license')}
-                        ，<a onClick={toBuyRoomLicense}>{t('settings.license.buy_room_license')}</a>
-                      </span>
-                    }
-                    style={{ margin: '8px 8px 0 8px', flexShrink: 0, width: "calc(100% - 16px)" }}
-                  />
+                  <LicenseAlert toBuyRoomLicense={toBuyRoomLicense}></LicenseAlert>
                 )}
                 <div
                   className={focusTrack ? 'lk-focus-layout-wrapper' : 'lk-grid-layout-wrapper'}

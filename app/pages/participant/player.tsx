@@ -357,6 +357,11 @@ const IframeWindow = ({ url }: { url: string }) => {
   useEffect(() => {
     setLoading(true);
   }, [url]);
+
+  const handleLoad = () => {
+    setLoading(false);
+  };
+
   return (
     <div style={{ width: '100%', height: '100%', position: 'relative' }}>
       {loading && (
@@ -375,11 +380,11 @@ const IframeWindow = ({ url }: { url: string }) => {
         </div>
       )}
       <iframe
-        allow='clipboard-read; clipboard-write'
+        allow="clipboard-read; clipboard-write"
         title="tile-iframe"
         src={url}
         style={{ width: '100%', height: '100%', border: 'none' }}
-        onLoad={() => setLoading(false)}
+        onLoad={handleLoad}
         onError={() => setLoading(false)}
       />
     </div>
