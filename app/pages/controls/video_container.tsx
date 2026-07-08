@@ -14,12 +14,9 @@ import {
 } from '@livekit/components-react';
 import {
   ConnectionState,
-  isRemoteTrack,
   LocalTrackPublication,
   Participant,
   ParticipantEvent,
-  ParticipantTrackPermission,
-  Room,
   RoomEvent,
   Track,
   TrackPublication,
@@ -41,7 +38,7 @@ import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { useI18n } from '@/lib/i18n/i18n';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { useUserStore, useLicenseStore, useRoomStore } from '@/lib/store';
+import { useUserStore, useLicenseStore, useRoomStore, useSpaceStore } from '@/lib/store';
 import { useUserStatus, useRoomLicense, useRoomSubscription } from './hooks/index';
 import { useAICutService } from './hooks/use-ai-cut';
 import {
@@ -55,30 +52,16 @@ import {
   WsTo,
   WsWave,
 } from '@/lib/std/device';
-import { Button, Alert } from 'antd';
+import { Button} from 'antd';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { Channel, ChannelExports } from './channel';
-import {
-  AICutParticipantConf,
-  AppAuth,
-  PARTICIPANT_SETTINGS_KEY,
-  SpaceTodo,
-  todayTimeStamp,
-} from '@/lib/std/space';
+import { AppAuth, PARTICIPANT_SETTINGS_KEY } from '@/lib/std/space';
 import { FlotButton, FlotLayout, FlotLayoutExports } from '../apps/flot';
 import { api } from '@/lib/api';
 import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
-import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
+import { ReadableConf } from '@/lib/std/conf';
 import { acceptRaise, RaiseHandler, rejectRaise } from './widgets/raise';
 import { audio } from '@/lib/audio';
-import { AICutService } from '@/lib/ai/cut';
-import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES, Extraction } from '@/lib/ai/analysis';
-import {
-  convertPlatformToACARes,
-  PlarformAICutAnalysis,
-  platformAPI,
-  PlatformTodos,
-} from '@/lib/api/platform';
 import { useFullScreenBtn } from './widgets/full_screen';
 import { exportRBAC, usePlatformUserInfo, usePlatformUserInfoCheap } from '@/lib/hooks/platform';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
@@ -123,7 +106,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const { t, locale } = useI18n();
     const { setIsFullScreen, isFullScreen } = useFullScreenBtn();
     const uState = useUserStore();
-    const [collapsed, setCollapsed] = useState(isMobile());
+    const collapsed = useSpaceStore((s) => s.collapsed);
+    const deviceType = useSpaceStore((s) => s.deviceType);
     const uLicenseState = useLicenseStore();
     const { hasRoomLicense, toBuyRoomLicense } = useRoomLicense(config, space, messageApi);
 
@@ -1014,8 +998,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     };
 
     const showFlot = useMemo(() => {
-      return !isMobile() ? true : collapsed;
-    }, [collapsed]);
+      return deviceType === 'desktop' ? true : collapsed;
+    }, [collapsed, deviceType]);
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
@@ -1115,6 +1099,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               }
             }}
             onRemoved={fetchTilePlayers}
+            isFullScreen={isFullScreen}
+            setIsFullScreen={setIsFullScreen}
           />
         );
 
@@ -1131,9 +1117,11 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     }, [
       fetchTilePlayers,
       focusedTilePlayerId,
+      isFullScreen,
       layoutContext,
       messageApi,
       selfRoom,
+      setIsFullScreen,
       settings,
       space?.localParticipant.identity,
       space?.name,
@@ -1180,7 +1168,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               selfRoom={selfRoom}
               isFullScreen={isFullScreen}
               setIsFullScreen={setIsFullScreen}
-              setCollapsed={setCollapsed}
               isFocus={state.isFocus || isFocus}
             />
           );
@@ -1194,7 +1181,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         messageApi,
         noteApi,
         selfRoom,
-        setCollapsed,
         setIsFullScreen,
         setUserStatus,
         settings,
@@ -1262,8 +1248,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             settings={settings}
             onUpdate={handleUpdateRoom}
             tracks={originTracks}
-            collapsed={collapsed}
-            setCollapsed={setCollapsed}
             messageApi={messageApi}
             isActive={isActive}
             updateSettings={updateSettings}
@@ -1313,7 +1297,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                     entities={unifiedEntities}
                     focusEntity={unifiedFocusEntity}
                     layoutType={unifiedFocusEntity ? 'focus' : 'grid'}
-                    deviceType={isMobile() ? 'mobile' : 'desktop'}
+                    deviceType={deviceType}
                     fullScreen={isFullScreen}
                     pageSize={unifiedPageSize}
                     preserveOffscreen
@@ -1361,8 +1345,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   fetchSettings={fetchSettings}
                   updateRecord={updateRecord}
                   setPermissionDevice={setPermissionDevice}
-                  collapsed={collapsed}
-                  setCollapsed={setCollapsed}
                   openApp={openApp}
                   setOpenApp={setOpenApp}
                   toRenameSettings={toSettingGeneral}

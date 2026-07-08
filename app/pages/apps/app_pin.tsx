@@ -64,7 +64,6 @@ export function AppFlotIconCollect({
   participant,
   contextUndefined,
   style = { right: '32px', backgroundColor: 'transparent', padding: 0 },
-  setCollapsed,
   isFullScreen,
   setIsFullScreen,
   trackReference,
@@ -81,7 +80,6 @@ export function AppFlotIconCollect({
       {trackReference?.source === Track.Source.ScreenShare && (
         <FullScreenBtn
           trackReference={trackReference}
-          setCollapsed={setCollapsed}
           setIsFullScreen={setIsFullScreen}
           isFullScreen={isFullScreen}
         ></FullScreenBtn>
@@ -92,7 +90,6 @@ export function AppFlotIconCollect({
       {trackReference?.source === Track.Source.ScreenShare && (
         <FullScreenBtn
           trackReference={trackReference}
-          setCollapsed={setCollapsed}
           setIsFullScreen={setIsFullScreen}
           isFullScreen={isFullScreen}
         ></FullScreenBtn>

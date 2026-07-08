@@ -3,7 +3,13 @@ import { SvgResource } from '@/app/resources/svg';
 import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/i18n';
 import { FileType } from '@/lib/std';
-import { FileImageOutlined, GlobalOutlined, LayoutOutlined } from '@ant-design/icons';
+import {
+  FileImageOutlined,
+  FullscreenExitOutlined,
+  FullscreenOutlined,
+  GlobalOutlined,
+  LayoutOutlined,
+} from '@ant-design/icons';
 import { Button, Image, Input, Modal, Spin, Tooltip, Upload } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -12,6 +18,7 @@ import { FocusToggleIcon, UnfocusToggleIcon } from '@livekit/components-react';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsTilePlayer } from '@/lib/std/device';
 import { handleIdentityType, SpaceInfo } from '@/lib/std/space';
+import { useSpaceStore } from '@/lib/store';
 
 // ─── 共享类型 ─────────────────────────────────────────────────────────────────
 
@@ -39,6 +46,8 @@ export interface TilePlayerProps {
   afterFocus?: (focus: boolean) => void;
   onRemoved?: () => void;
   spaceInfo: SpaceInfo;
+  isFullScreen?: boolean;
+  setIsFullScreen?: (isFullScreen: boolean) => void;
 }
 
 export const TilePlayer = ({
@@ -52,8 +61,11 @@ export const TilePlayer = ({
   afterFocus,
   onRemoved,
   spaceInfo,
+  isFullScreen,
+  setIsFullScreen,
 }: TilePlayerProps) => {
   const [toolVis, setToolVis] = useState(false);
+  const setCollapsed = useSpaceStore((state) => state.setCollapsed);
   // 是否可以被删除，只有RBAC允许或者自己的卡片才可以被删除
   const canDelete = useMemo(() => {
     if (!spaceInfo?.auth) return item.ownerId === myIdentity;
@@ -97,6 +109,21 @@ export const TilePlayer = ({
     }
   };
 
+  const showFullScreen =
+    item.mode === 'iframe' || item.mode === 'hyperbeam' || item.mode === 'image';
+
+  const handleFullScreen = () => {
+    if (!isFullScreen) {
+      // 进入全屏前先将当前 tile player 设为焦点
+      if (!focus) {
+        setFocus?.(() => true);
+        afterFocus?.(true);
+      }
+    }
+    setIsFullScreen?.(!isFullScreen);
+    setCollapsed(!isFullScreen);
+  };
+
   return (
     <div
       className="vocespace_full_size lk-participant-tile"
@@ -128,6 +155,13 @@ export const TilePlayer = ({
           <button className="lk-button" style={APP_FLOT_PIN_STYLE} onClick={removePlayer}>
             <SvgResource type="close" svgSize={16} />
           </button>
+        )}
+        {showFullScreen && setIsFullScreen && (
+          <Tooltip placement="bottom" title={isFullScreen ? '退出全屏' : '全屏'}>
+            <button className="lk-button" style={APP_FLOT_PIN_STYLE} onClick={handleFullScreen}>
+              {isFullScreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+            </button>
+          </Tooltip>
         )}
         <button
           className="lk-button"

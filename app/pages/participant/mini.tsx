@@ -58,7 +58,6 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       showFlotApp,
       isFullScreen,
       setIsFullScreen,
-      setCollapsed,
       messageApi,
     }: ParticipantTileMiniProps,
     ref,
@@ -387,7 +386,6 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
               participant={currentParticipant}
               isFullScreen={isFullScreen}
               setIsFullScreen={setIsFullScreen}
-              setCollapsed={setCollapsed}
               trackReference={trackReference}
             ></AppFlotIconCollect>
           </ParticipantTile>

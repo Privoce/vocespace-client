@@ -58,6 +58,7 @@ import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 import { audio } from '@/lib/audio';
 import { FullScreenBtnProps } from './widgets/full_screen';
 import { exportRBAC } from '@/lib/hooks/platform';
+import { useSpaceStore } from '@/lib/store';
 
 interface ChannelProps extends FullScreenBtnProps {
   // roomName: string;
@@ -67,8 +68,6 @@ interface ChannelProps extends FullScreenBtnProps {
   onUpdate: () => Promise<void>;
   tracks: TrackReferenceOrPlaceholder[];
   settings: SpaceInfo;
-  collapsed: boolean;
-  setCollapsed: (collapsed: boolean) => void;
   isActive?: boolean;
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
@@ -94,8 +93,6 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       localParticipantId,
       onUpdate,
       tracks,
-      collapsed,
-      setCollapsed,
       isActive = false,
       updateSettings,
       toRenameSettings,
@@ -107,6 +104,8 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
     ref,
   ) => {
     const { t } = useI18n();
+    const collapsed = useSpaceStore((s) => s.collapsed);
+    const setCollapsed = useSpaceStore((s) => s.setCollapsed);
 
     const { token } = theme.useToken();
     const [selected, setSelected] = useState<'main' | 'sub'>('main');
@@ -607,7 +606,6 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             showFlotApp={showFlotApp}
             isFullScreen={isFullScreen}
             setIsFullScreen={setIsFullScreen}
-            setCollapsed={setCollapsed}
             messageApi={messageApi}
           ></ParticipantTileMini>
         </GLayout>
@@ -645,7 +643,6 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
               showFlotApp={showFlotApp}
               isFullScreen={isFullScreen}
               setIsFullScreen={setIsFullScreen}
-              setCollapsed={setCollapsed}
               messageApi={messageApi}
             ></ParticipantTileMini>
           </GLayout>

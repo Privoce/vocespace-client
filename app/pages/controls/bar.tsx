@@ -8,13 +8,12 @@ import {
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { Button, Drawer, Input, message, Modal, Popover } from 'antd';
+import {  Drawer, Input, message, Modal, Popover } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
 import { useUserStore, useRoomStore } from '@/lib/store';
 import { Settings, TabKey } from './settings/settings';
-import type { SettingsExports } from './settings/settings';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { ReadableConf } from '@/lib/std/conf';
@@ -27,8 +26,6 @@ import { DEFAULT_DRAWER_PROP, DrawerCloser } from './drawer_tools';
 import { ParticipantManage } from '../participant/manage';
 import { api } from '@/lib/api';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
-import equal from 'fast-deep-equal';
-import { ChatMsgItem } from '@/lib/std/chat';
 import { AICutService } from '@/lib/ai/cut';
 import { useWork, Work, WorkModal } from './widgets/work';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/ai';
@@ -66,8 +63,6 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   fetchSettings: () => Promise<void>;
   updateRecord: (active: boolean, egressId?: string, filePath?: string) => Promise<boolean>;
   setPermissionDevice: (device: Track.Source) => void;
-  collapsed: boolean;
-  setCollapsed: (collapsed: boolean) => void;
   openApp: boolean;
   setOpenApp: (open: boolean) => void;
   toRenameSettings: () => void;
@@ -117,8 +112,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       fetchSettings,
       updateRecord,
       setPermissionDevice,
-      collapsed,
-      setCollapsed,
       openApp,
       setOpenApp,
       toRenameSettings,
@@ -272,25 +265,19 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
 
     const [messageApi, contextHolder] = message.useMessage();
     const uState = useUserStore();
+    const { settingVis, setSettingVis, key, setKey, settingsRef, closeSetting, openSettings } =
+      useControlsSettings({ space, saveUsername, updateSettings });
     const {
-      settingVis, setSettingVis,
-      key, setKey,
-      settingsRef,
-      closeSetting, openSettings,
-    } = useControlsSettings({ space, saveUsername, updateSettings });
-    const {
-      openRecordModal, setOpenRecordModal,
-      isDownload, setIsDownload,
+      openRecordModal,
+      setOpenRecordModal,
+      isDownload,
+      setIsDownload,
       isRecording,
       onClickRecord,
       recordModalOnOk,
       recordModalOnCancel,
     } = useControlsRecord({ space, isManager, spaceInfo, updateRecord });
-    const {
-      chatOpen, setChatOpen,
-      onChatClose,
-      sendFileConfirm, sendingFile,
-    } = useControlsChat();
+    const { chatOpen, setChatOpen, onChatClose, sendFileConfirm, sendingFile } = useControlsChat();
 
     const onClickApp = async () => {
       if (!space) return;
@@ -418,7 +405,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         {...htmlProps}
         className={styles.controls}
         style={{
-          marginBottom: isMobile ? 'auto' :  4,
+          marginBottom: isMobile ? 'auto' : 4,
         }}
       >
         {contextHolder}

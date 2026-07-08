@@ -65,7 +65,6 @@ export const ParticipantItem: (
       selfRoom,
       isFullScreen,
       setIsFullScreen,
-      setCollapsed,
     }: ParticipantItemProps,
     ref,
   ) {
@@ -774,7 +773,6 @@ export const ParticipantItem: (
               participant={currentParticipant}
               isFullScreen={isFullScreen}
               setIsFullScreen={setIsFullScreen}
-              setCollapsed={setCollapsed}
               trackReference={trackReference}
             ></AppFlotIconCollect>
           </ParticipantTile>
