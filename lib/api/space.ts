@@ -565,3 +565,15 @@ export const updateAuthRBACConf = async (spaceName: string, conf: SpaceAuthConf)
     body: JSON.stringify({ spaceName, authConf: conf } as UpdateAuthRBACConfBody),
   });
 };
+
+export const uploadIframeUrl = async (spaceName: string, iframeUrl: string) => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.append('space', 'true');
+  url.searchParams.append('update', 'true');
+  url.searchParams.append('iframe', 'url');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ spaceName, iframeUrl }),
+  });
+};

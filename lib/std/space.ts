@@ -547,6 +547,10 @@ export interface SpaceInfo {
    * 空间的RBAC认证配置
    */
   auth: SpaceAuthConf;
+  /**
+   * iframe URLs，存储空间内访问的iframe URL列表
+   */
+  iframeUrls?: string[];
 }
 
 export interface TodoItem {

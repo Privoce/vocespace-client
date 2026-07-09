@@ -1439,6 +1439,7 @@ export async function POST(request: NextRequest) {
     const isUpdateSpacePersistence = request.nextUrl.searchParams.get('persistence') === 'update';
     const isUpdate = request.nextUrl.searchParams.get('update') === 'true';
     const isUpdateAllowGuest = request.nextUrl.searchParams.get('allowGuest') === 'update';
+    const isIframe = request.nextUrl.searchParams.get('iframe') === 'url';
     const isTransfer = request.nextUrl.searchParams.get('transfer') === 'true';
     const authManage = request.nextUrl.searchParams.get('auth');
     const mode = request.nextUrl.searchParams.get('mode');
@@ -1565,6 +1566,30 @@ export async function POST(request: NextRequest) {
       if (!success) {
         return NextResponse.json(
           { error: 'Failed to update allow guest setting' },
+          { status: 500 },
+        );
+      }
+      return NextResponse.json({ success: true }, { status: 200 });
+    }
+
+    // 更新 iframe URL 记录 --------------------------------------------------------------------
+    if (isSpace && isUpdate && isIframe) {
+      const { spaceName, iframeUrl }: { spaceName: string; iframeUrl: string } =
+        await request.json();
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      if (!spaceInfo) {
+        return NextResponse.json({ error: 'Space not found' }, { status: 404 });
+      }
+      if (!spaceInfo.iframeUrls) {
+        spaceInfo.iframeUrls = [];
+      }
+      if (!spaceInfo.iframeUrls.includes(iframeUrl)) {
+        spaceInfo.iframeUrls.push(iframeUrl);
+      }
+      const success = await SpaceManager.setSpaceInfo(spaceName, spaceInfo);
+      if (!success) {
+        return NextResponse.json(
+          { error: 'Failed to update iframe URLs' },
           { status: 500 },
         );
       }

@@ -1,6 +1,7 @@
 'use client';
 import { SvgResource } from '@/app/resources/svg';
 import { api } from '@/lib/api';
+import { uploadIframeUrl } from '@/lib/api/space';
 import { useI18n } from '@/lib/i18n/i18n';
 import { FileType } from '@/lib/std';
 import {
@@ -10,7 +11,7 @@ import {
   GlobalOutlined,
   LayoutOutlined,
 } from '@ant-design/icons';
-import { Button, Image, Input, Modal, Spin, Tooltip, Upload } from 'antd';
+import { Button, Image, Modal, Select, Spin, Tooltip, Upload } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { APP_FLOT_PIN_STYLE } from '../apps/app_pin';
@@ -180,7 +181,14 @@ export const TilePlayer = ({
       {item.mode === 'hyperbeam' ? (
         <HyperbeamWindow url={item.iframeUrl || ''} messageApi={messageApi} />
       ) : item.mode === 'iframe' ? (
-        <IframeWindow url={item.iframeUrl || ''} />
+        <IframeWindow
+          url={item.iframeUrl || ''}
+          onLoad={() => {
+            if (item.iframeUrl) {
+              uploadIframeUrl(spaceName, item.iframeUrl).catch(() => {});
+            }
+          }}
+        />
       ) : (
         <Image
           style={{ width: '100%', height: '100%', objectFit: 'contain' }}
@@ -201,6 +209,7 @@ export interface TilePlayerAddProps {
   myIdentity: string;
   messageApi: MessageInstance;
   onCreated?: () => void;
+  iframeUrls?: string[];
 }
 
 export const TilePlayerAdd = ({
@@ -209,6 +218,7 @@ export const TilePlayerAdd = ({
   myIdentity,
   messageApi,
   onCreated,
+  iframeUrls,
 }: TilePlayerAddProps) => {
   const { t } = useI18n();
   const [openInputIframe, setOpenInputIframe] = useState(false);
@@ -360,6 +370,8 @@ export const TilePlayerAdd = ({
           );
           if (response.ok) {
             const data = await response.json();
+            // 保存成功后上传 URL 到服务端记录
+            uploadIframeUrl(spaceName, nextUrl).catch(() => {});
             socket.emit('tile_player_change', {
               ty: 'iframe',
               created: true,
@@ -378,7 +390,19 @@ export const TilePlayerAdd = ({
         }}
         onCancel={() => setOpenInputIframe(false)}
       >
-        <Input value={inputIframeUrl} onChange={(e) => setInputIframeUrl(e.target.value)} />
+        <Select
+          styles={{root: {width: "100%"}}}
+          showSearch
+          mode="tags"
+          maxCount={1}
+          placeholder="Search or input iframe URL"
+          value={inputIframeUrl ? [inputIframeUrl] : []}
+          onChange={(val: string[]) => setInputIframeUrl(val[val.length - 1] || '')}
+          filterOption={(input: string, option?: { value: string }) =>
+            (option?.value as string).toLowerCase().includes(input.toLowerCase())
+          }
+          options={(iframeUrls || []).map((url) => ({ value: url, label: url }))}
+        />
       </Modal>
     </>
   );
@@ -386,7 +410,7 @@ export const TilePlayerAdd = ({
 
 // ─── iframe 加载窗口 ─────────────────────────────────────────────────────────
 
-const IframeWindow = ({ url }: { url: string }) => {
+const IframeWindow = ({ url, onLoad }: { url: string; onLoad?: () => void }) => {
   const [loading, setLoading] = useState(true);
   useEffect(() => {
     setLoading(true);
@@ -394,6 +418,7 @@ const IframeWindow = ({ url }: { url: string }) => {
 
   const handleLoad = () => {
     setLoading(false);
+    onLoad?.();
   };
 
   return (

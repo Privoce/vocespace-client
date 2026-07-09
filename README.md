@@ -19,7 +19,7 @@ Give it a try at [vocespace demo](https://space.voce.chat/rooms/bby6-x55t)
 - **Frontend Framework**: Next.js 14 (App Router) + React 18
 - **UI Components**: Ant Design 5
 - **Real-time Communication**: LiveKit + Socket.IO
-- **State Management**: Recoil
+- **State Management**: Zustand
 - **Data Persistence**: Redis (ioredis)
 - **Object Storage**: AWS S3 SDK v3
 - **Virtual Characters**: Live2D (pixi-live2d-display)

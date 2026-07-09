@@ -1068,7 +1068,11 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               room={selfRoom.name}
               myIdentity={space.localParticipant.identity}
               messageApi={messageApi}
-              onCreated={fetchTilePlayers}
+              onCreated={() => {
+                fetchTilePlayers();
+                fetchSettings();
+              }}
+              iframeUrls={settings.iframeUrls}
             />
           ),
         },
