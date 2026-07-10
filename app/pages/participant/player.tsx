@@ -370,8 +370,8 @@ export const TilePlayerAdd = ({
           );
           if (response.ok) {
             const data = await response.json();
-            // 保存成功后上传 URL 到服务端记录
-            uploadIframeUrl(spaceName, nextUrl).catch(() => {});
+            // 先持久化 URL，再刷新本地和远端视图，避免 fetchSettings 读到旧值
+            await uploadIframeUrl(spaceName, nextUrl);
             socket.emit('tile_player_change', {
               ty: 'iframe',
               created: true,

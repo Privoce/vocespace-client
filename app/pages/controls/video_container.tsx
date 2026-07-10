@@ -821,6 +821,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         if (msg.participantId === space?.localParticipant.identity) return;
         if (space && msg.space === space.name) {
           fetchTilePlayers();
+          fetchSettings();
         }
       };
       socket.on('tile_player_change_response', handleTilePlayerChange);
