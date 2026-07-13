@@ -15,11 +15,16 @@ import { Button, Image, Modal, Select, Spin, Tooltip, Upload } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { APP_FLOT_PIN_STYLE } from '../apps/app_pin';
-import { FocusToggleIcon, UnfocusToggleIcon } from '@livekit/components-react';
+import {
+  FocusToggleIcon,
+  UnfocusToggleIcon,
+  useMaybeLayoutContext,
+} from '@livekit/components-react';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsTilePlayer } from '@/lib/std/device';
 import { handleIdentityType, SpaceInfo } from '@/lib/std/space';
 import { useSpaceStore } from '@/lib/store';
+import { Participant, Track } from 'livekit-client';
 
 // ─── 共享类型 ─────────────────────────────────────────────────────────────────
 
@@ -66,6 +71,7 @@ export const TilePlayer = ({
   setIsFullScreen,
 }: TilePlayerProps) => {
   const [toolVis, setToolVis] = useState(false);
+  const layoutContext = useMaybeLayoutContext();
   const setCollapsed = useSpaceStore((state) => state.setCollapsed);
   // 是否可以被删除，只有RBAC允许或者自己的卡片才可以被删除
   const canDelete = useMemo(() => {
@@ -114,15 +120,47 @@ export const TilePlayer = ({
     item.mode === 'iframe' || item.mode === 'hyperbeam' || item.mode === 'image';
 
   const handleFullScreen = () => {
-    if (!isFullScreen) {
-      // 进入全屏前先将当前 tile player 设为焦点
-      if (!focus) {
-        setFocus?.(() => true);
-        afterFocus?.(true);
-      }
+    const nextIsFullScreen = !isFullScreen;
+    const playerTrackReference = {
+      participant: new Participant(
+        `${spaceName}_player_${item.id}`,
+        `${spaceName}_player_${item.id}`,
+        `${spaceName}_player_${item.id}`,
+      ),
+      source: Track.Source.Unknown,
+    };
+    const isPinned =
+      layoutContext?.pin.state?.some(
+        (pinnedTrackReference) =>
+          pinnedTrackReference.participant.identity === playerTrackReference.participant.identity &&
+          pinnedTrackReference.source === playerTrackReference.source,
+      ) ?? false;
+
+    if (nextIsFullScreen) {
+      layoutContext?.pin.dispatch?.({
+        msg: 'set_pin',
+        trackReference: playerTrackReference,
+      });
+    } else if (isPinned) {
+      layoutContext?.pin.dispatch?.({
+        msg: 'clear_pin',
+      });
     }
-    setIsFullScreen?.(!isFullScreen);
-    setCollapsed(!isFullScreen);
+
+    setIsFullScreen?.(nextIsFullScreen);
+    setCollapsed(nextIsFullScreen);
+  };
+
+  const handleFocusToggle = () => {
+    const nextFocus = !focus;
+
+    if (!nextFocus && isFullScreen) {
+      setIsFullScreen?.(false);
+      setCollapsed(false);
+    }
+
+    setFocus?.(() => nextFocus);
+    afterFocus?.(nextFocus);
   };
 
   return (
@@ -167,11 +205,7 @@ export const TilePlayer = ({
         <button
           className="lk-button"
           style={APP_FLOT_PIN_STYLE}
-          onClick={() => {
-            const next = !focus;
-            setFocus?.(() => next);
-            afterFocus?.(next);
-          }}
+          onClick={handleFocusToggle}
         >
           {!focus ? <FocusToggleIcon /> : <UnfocusToggleIcon />}
         </button>

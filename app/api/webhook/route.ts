@@ -34,6 +34,7 @@ export async function GET(request: NextRequest) {
   // 创建session, product: prod_S8YXSKlgQvaYdH, 
   // pro证书: price_1REHPyGGoUDRyc3jW5AlM49w
   // room证书: price_1TqCPGGGoUDRyc3jjpRg67VD
+  // 测试：price_1TrfgNGGoUDRyc3jDRy4VJke
   try {
     const session = await stripe.checkout.sessions.create({
       mode: 'payment',
@@ -53,7 +54,8 @@ export async function GET(request: NextRequest) {
       },
       line_items: [
         {
-          price: licenseType === 'pro' ? 'price_1REHPyGGoUDRyc3jW5AlM49w' : 'price_1TqCPGGGoUDRyc3jjpRg67VD',
+          // price: licenseType === 'pro' ? 'price_1REHPyGGoUDRyc3jW5AlM49w' : 'price_1TqCPGGGoUDRyc3jjpRg67VD',
+          price: 'price_1TrfgNGGoUDRyc3jDRy4VJke',
           quantity: 1,
         },
       ],
