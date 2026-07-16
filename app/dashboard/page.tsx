@@ -477,7 +477,7 @@ export default function Dashboard() {
   const handleVerifyHostAndLoad = async (tokenOverride?: string) => {
     try {
       setManageLoading(true);
-      const token = tokenOverride ?? hostToken;
+      const token = typeof tokenOverride === 'string' ? tokenOverride : hostToken;
 
       const saved = getVerified();
       if (saved && saved.token === token && Date.now() - saved.at < 3600_000) {

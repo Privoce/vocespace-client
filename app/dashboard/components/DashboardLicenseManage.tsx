@@ -289,7 +289,7 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
       title: lm('deleteConfirmTitle'),
       content: lm('deleteConfirmContent').replace('{email}', record.email),
       okText: lm('deleteBtn'),
-      cancelText: t('dashboard.conf.cancel') || 'Cancel',
+      cancelText: t('common.cancel') || 'Cancel',
       okButtonProps: { danger: true },
       onOk: async () => {
         try {

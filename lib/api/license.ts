@@ -18,6 +18,28 @@ export const getLicenseByIP = async (ip: string, licenseType: string = 'pro') =>
 };
 
 /**
+ * 取消当前服务器对应的 Stripe 订阅。
+ * @param ip 当前服务器 IP/域名
+ * @param email 购买证书的用户邮箱
+ * @param licenseType 证书类型
+ */
+export const cancelLicenseSubscription = async (
+  ip: string,
+  email: string,
+  licenseType: string = 'pro',
+  returnUrl?: string,
+) => {
+  const url = new URL(connect_endpoint('/api/webhook'), window.location.origin);
+  url.searchParams.set('session_ip', ip);
+  url.searchParams.set('email', email);
+  url.searchParams.set('license_type', licenseType);
+  url.searchParams.set('return_url', returnUrl || window.location.href);
+  return await fetch(url.toString(), {
+    method: 'DELETE',
+  });
+};
+
+/**
  * 检查服务器的license是否有效
  * 请求本地API，由后端根据WEBHOOK环境变量决定本地处理还是转发到vocespace.com
  * @param ip 服务器IP地址/域名

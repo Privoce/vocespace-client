@@ -37,6 +37,9 @@ export function LicenseControl({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [calendlyOpen, setCalendlyOpen] = useState(false);
   const [licenseValue, setLicenseValue] = useState<string>('');
+  const [cancelingSubscription, setCancelingSubscription] = useState(false);
+  const [cancelModalOpen, setCancelModalOpen] = useState(false);
+  const [cancelEmail, setCancelEmail] = useState('');
   const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
   const [ipAddress, setIpAddress] = useState<string | undefined>(undefined);
 
@@ -99,6 +102,72 @@ export function LicenseControl({
         });
         window.open('https://buy.stripe.com/fZu3cveyR76afv6bPi6c01m', '_blank');
       }
+    }
+  };
+
+  const onCancelSubscription = async () => {
+    if (!roomLicense?.email) {
+      messageApi.error({
+        content: t('settings.license.cancel_missing_email'),
+        duration: 3,
+      });
+      return;
+    }
+
+    if (!cancelEmail.trim()) {
+      messageApi.error({
+        content: t('settings.license.cancel_email_required'),
+        duration: 3,
+      });
+      return;
+    }
+
+    if (cancelEmail.trim().toLowerCase() !== roomLicense.email.trim().toLowerCase()) {
+      messageApi.error({
+        content: t('settings.license.cancel_email_mismatch'),
+        duration: 3,
+      });
+      return;
+    }
+
+    setCancelingSubscription(true);
+    try {
+      const response = await api.cancelLicenseSubscription(
+        config.serverUrl,
+        roomLicense.email,
+        'room',
+        window.location.href,
+      );
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok) {
+        messageApi.error({
+          content: data?.error || t('settings.license.cancel_error'),
+          duration: 4,
+        });
+        return;
+      }
+
+      setCancelModalOpen(false);
+      setCancelEmail('');
+
+      if (data?.url) {
+        window.open(data.url, '_blank');
+      }
+
+      messageApi.success({
+        content: data?.alreadyCanceled
+          ? t('settings.license.cancel_already_success')
+          : t('settings.license.cancel_portal_success'),
+        duration: 3,
+      });
+    } catch (error) {
+      messageApi.error({
+        content: t('settings.license.cancel_error'),
+        duration: 4,
+      });
+    } finally {
+      setCancelingSubscription(false);
     }
   };
 
@@ -298,6 +367,30 @@ export function LicenseControl({
           />
         )}
       </Modal>
+      <Modal
+        title={t('settings.license.cancel_subscription')}
+        closable
+        open={cancelModalOpen}
+        onOk={onCancelSubscription}
+        okText={t('settings.license.cancel_subscription')}
+        okButtonProps={{ danger: true, loading: cancelingSubscription }}
+        cancelText={t('common.cancel')}
+        onCancel={() => {
+          if (cancelingSubscription) return;
+          setCancelModalOpen(false);
+          setCancelEmail('');
+        }}
+      >
+        <div style={{ marginBottom: '12px' }}>{t('settings.license.cancel_email_desc')}</div>
+        <Input
+          type="email"
+          value={cancelEmail}
+          placeholder={t('settings.license.cancel_email_placeholder')}
+          onChange={(e) => {
+            setCancelEmail(e.target.value);
+          }}
+        />
+      </Modal>
       {roomLicense ? (
         items
       ) : (
@@ -312,6 +405,18 @@ export function LicenseControl({
         >
           {t('settings.license.buy')}
         </Button>
+        {roomLicense && (
+          <Button
+            danger
+            loading={cancelingSubscription}
+            onClick={() => {
+              setCancelEmail('');
+              setCancelModalOpen(true);
+            }}
+          >
+            {t('settings.license.cancel_subscription')}
+          </Button>
+        )}
         <Button
           type="default"
           onClick={() => {

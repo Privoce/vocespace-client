@@ -16,7 +16,16 @@ import {
   updateAIConf,
   updateCreateSpaceConf,
 } from './conf';
-import { checkLicenseByIP, getLicenseByIP, getAllLicenses, createLicense, updateLicense, deleteAllLicenses, validateLicenseValue } from './license';
+import {
+  cancelLicenseSubscription,
+  checkLicenseByIP,
+  getLicenseByIP,
+  getAllLicenses,
+  createLicense,
+  updateLicense,
+  deleteAllLicenses,
+  validateLicenseValue,
+} from './license';
 import { sendRecordRequest, updateRecord } from './record';
 import {
   testS3Connection,
@@ -93,6 +102,7 @@ export const api = {
   handleTilePlayerFile,
   // ---- license api --------
   getLicenseByIP,
+  cancelLicenseSubscription,
   checkLicenseByIP,
   getAllLicenses,
   createLicense,

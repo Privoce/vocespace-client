@@ -67,7 +67,9 @@ export const ManageSpacesModal: React.FC<ManageSpacesModalProps> = ({
           />
           <Button
             loading={manageLoading}
-            onClick={onVerifyAndLoad}
+            onClick={() => {
+              void onVerifyAndLoad();
+            }}
             type="primary"
           >
             {t('dashboard.verify_and_load')}

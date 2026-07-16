@@ -643,6 +643,18 @@ export default {
       default_license:
         '为保证您的使用，当前系统已为您加载默认证书，默认证书仅支持5人以下的临时房间使用，若需要更多用户名额，请购买专业版证书。',
       update_success: '证书更新成功',
+      cancel_subscription: '取消订阅',
+      cancel_confirm_title: '取消当前订阅',
+      cancel_confirm_desc: '确认要取消当前 Stripe 订阅吗？取消后将在当前计费周期结束时停止续费。',
+      cancel_success: '已成功取消订阅，当前计费周期结束后将停止续费。',
+      cancel_portal_success: '已打开 Stripe 订阅管理页面，请在页面中完成退订。',
+      cancel_already_success: '当前订阅已经处于取消状态。',
+      cancel_error: '取消订阅失败，请稍后重试。',
+      cancel_missing_email: '当前证书缺少购买邮箱，无法取消订阅。',
+      cancel_email_desc: '请输入购买订阅时使用的邮箱地址，以验证退订操作。',
+      cancel_email_placeholder: '请输入购买邮箱',
+      cancel_email_required: '请输入购买订阅时使用的邮箱地址。',
+      cancel_email_mismatch: '输入的邮箱与当前证书记录的购买邮箱不一致。',
       no_room_license: '当前房间未购买房间证书',
       buy_room_license: '购买证书',
       circle_ip:

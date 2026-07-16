@@ -680,6 +680,22 @@ export default {
       default_license:
         'To ensure your use, the current system has loaded a default certificate for you. The default certificate only supports temporary rooms with fewer than 5 people. If you would like to host more users, please purchase a professional certificate.',
       update_success: 'The certificate was updated successfully',
+      cancel_subscription: 'Cancel Subscription',
+      cancel_confirm_title: 'Cancel current subscription',
+      cancel_confirm_desc:
+        'Are you sure you want to cancel the current Stripe subscription? Renewal will stop at the end of the current billing period.',
+      cancel_success:
+        'The subscription has been canceled successfully. Renewal will stop at the end of the current billing period.',
+      cancel_portal_success:
+        'The Stripe subscription management page has been opened. Please complete the cancellation there.',
+      cancel_already_success: 'The current subscription is already scheduled for cancellation.',
+      cancel_error: 'Failed to cancel the subscription. Please try again later.',
+      cancel_missing_email: 'The current license is missing the buyer email, so the subscription cannot be canceled.',
+      cancel_email_desc:
+        'Please enter the email address used when purchasing the subscription to verify this cancellation request.',
+      cancel_email_placeholder: 'Please enter the purchase email',
+      cancel_email_required: 'Please enter the email address used to purchase the subscription.',
+      cancel_email_mismatch: 'The entered email does not match the buyer email recorded for the current license.',
       no_room_license: 'This room has not purchased a room license yet',
       buy_room_license: 'Buy license',
       circle_ip:
