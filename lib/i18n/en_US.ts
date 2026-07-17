@@ -197,6 +197,20 @@ export default {
   reaction: {
     title: 'Reaction', //flag - where is this?
   },
+  avo: {
+    title: 'Design',
+    preview_desc: 'Preview updates instantly. Save writes the current AVO params to your user data.',
+    style: 'Style',
+    color: 'Color',
+    energy: 'Energy',
+    shuffle: 'Shuffle',
+    reset: 'Reset',
+    styles: {
+      blob: 'Blob',
+      ring: 'Orbit',
+      wave: 'Pulse',
+    },
+  },
   recording: {
     title: 'Saved Recordings',
     empty: 'No recordings saved yet',

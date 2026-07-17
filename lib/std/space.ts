@@ -89,6 +89,14 @@ export interface AuthPlatform {
   platform: AuthType;
 }
 
+export interface ParticipantAvoParams {
+  name: string;
+  variant: number;
+  hue: number;
+  style: 'blob' | 'ring' | 'wave';
+  energy: number;
+}
+
 /**
  * Participant settings in Space
  */
@@ -207,6 +215,8 @@ export interface ParticipantSettings {
    * 是否开启了工作模式
    */
   work: ParticipantWorkConf;
+  /** 用户自行设计的AVO头像 */
+  avo?: Partial<ParticipantAvoParams>;
 }
 
 export interface SpaceTimeRecord {

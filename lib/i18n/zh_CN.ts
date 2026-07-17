@@ -185,6 +185,20 @@ export default {
   reaction: {
     title: '反应',
   },
+  avo: {
+    title: '设计',
+    preview_desc: '预览会实时更新，点击保存后会把当前 AVO 参数写入用户数据。',
+    style: '样式',
+    color: '颜色',
+    energy: '活力',
+    shuffle: '随机生成',
+    reset: '重置',
+    styles: {
+      blob: 'Blob',
+      ring: 'Orbit',
+      wave: 'Pulse',
+    },
+  },
   recording: {
     title: '录制记录',
     empty: '暂无录制记录',

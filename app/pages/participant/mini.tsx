@@ -26,6 +26,7 @@ import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './
 import { StatusInfo, useStatusInfo } from './status_info';
 import { useI18n } from '@/lib/i18n/i18n';
 import { AppFlotIconCollect } from '../apps/app_pin';
+import { ParticipantAvoPlaceholder } from './avo';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { Tooltip } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
@@ -251,7 +252,16 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
               className="lk-participant-placeholder"
               style={{ border: '1px solid #111', zIndex: 110 }}
             >
-              <ParticipantPlaceholder />
+              {currentParticipant?.avo ? (
+                <ParticipantAvoPlaceholder
+                  name={currentParticipant?.name || trackReference.participant.name || 'guest'}
+                  avo={currentParticipant?.avo}
+                  audioLevel={trackReference.participant.audioLevel}
+                  interactive={trackReference.participant.identity === localParticipant.identity}
+                />
+              ) : (
+                <ParticipantPlaceholder />
+              )}
             </div>
             <div
               className="lk-participant-metadata"
@@ -382,6 +392,8 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
               showApp={showApp}
               participant={currentParticipant}
               trackReference={trackReference}
+              spaceName={space.name}
+              updateSettings={updateSettings}
             ></AppFlotIconCollect>
           </ParticipantTile>
         }

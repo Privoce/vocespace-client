@@ -32,6 +32,7 @@ import { ChildRoom, ParticipantSettings } from '@/lib/std/space';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { AppFlotIconCollect } from '../apps/app_pin';
+import { ParticipantAvoPlaceholder } from './avo';
 import { ParticipantTileMiniProps } from './mini';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
@@ -236,7 +237,16 @@ export const ParticipantItem: (
             >
               {deleyMask && (
                 <div className="lk-participant-placeholder" style={{ opacity: 1, zIndex: 1000 }}>
-                  <ParticipantPlaceholder />
+                  {currentParticipant?.avo ? (
+                    <ParticipantAvoPlaceholder
+                      name={currentParticipant?.name || trackReference.participant.name || 'guest'}
+                      avo={currentParticipant?.avo}
+                      audioLevel={trackReference.participant.audioLevel}
+                      interactive={isLocal}
+                    />
+                  ) : (
+                    <ParticipantPlaceholder />
+                  )}
                 </div>
               )}
               {isLocal && uState.virtual.enabled && !virtualMask && (
@@ -643,7 +653,16 @@ export const ParticipantItem: (
           <ParticipantTile ref={ref} trackRef={trackReference}>
             {deviceTrack}
             <div className="lk-participant-placeholder">
-              <ParticipantPlaceholder />
+              {currentParticipant?.avo ? (
+                <ParticipantAvoPlaceholder
+                  name={currentParticipant?.name || trackReference.participant.name || 'guest'}
+                  avo={currentParticipant?.avo}
+                  audioLevel={trackReference.participant.audioLevel}
+                  interactive={isLocal}
+                />
+              ) : (
+                <ParticipantPlaceholder />
+              )}
             </div>
             <div
               className="lk-participant-metadata"
@@ -773,6 +792,8 @@ export const ParticipantItem: (
               showApp={showApp}
               participant={currentParticipant}
               trackReference={trackReference}
+              spaceName={space.name}
+              updateSettings={updateSettings}
             ></AppFlotIconCollect>
           </ParticipantTile>
         }
