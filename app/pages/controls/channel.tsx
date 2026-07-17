@@ -56,11 +56,10 @@ import {
 import { DEFAULT_DRAWER_PROP } from './drawer_tools';
 import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
 import { audio } from '@/lib/audio';
-import { FullScreenBtnProps } from './widgets/full_screen';
 import { exportRBAC } from '@/lib/hooks/platform';
 import { useSpaceStore } from '@/lib/store';
 
-interface ChannelProps extends FullScreenBtnProps {
+interface ChannelProps {
   // roomName: string;
   space: Room;
   messageApi: MessageInstance;
@@ -98,14 +97,13 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       toRenameSettings,
       setUserStatus,
       showFlotApp,
-      isFullScreen,
-      setIsFullScreen,
     }: ChannelProps,
     ref,
   ) => {
     const { t } = useI18n();
     const collapsed = useSpaceStore((s) => s.collapsed);
     const setCollapsed = useSpaceStore((s) => s.setCollapsed);
+    const isFullScreen = useSpaceStore((s) => s.isFullScreen);
 
     const { token } = theme.useToken();
     const [selected, setSelected] = useState<'main' | 'sub'>('main');
@@ -604,8 +602,6 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             toRenameSettings={toRenameSettings}
             setUserStatus={setUserStatus}
             showFlotApp={showFlotApp}
-            isFullScreen={isFullScreen}
-            setIsFullScreen={setIsFullScreen}
             messageApi={messageApi}
           ></ParticipantTileMini>
         </GLayout>
@@ -641,8 +637,6 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
               toRenameSettings={toRenameSettings}
               setUserStatus={setUserStatus}
               showFlotApp={showFlotApp}
-              isFullScreen={isFullScreen}
-              setIsFullScreen={setIsFullScreen}
               messageApi={messageApi}
             ></ParticipantTileMini>
           </GLayout>

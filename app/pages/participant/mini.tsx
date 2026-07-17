@@ -20,7 +20,6 @@ import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'r
 import { isTrackReferencePinned } from './tile';
 import { AppAuth, ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { useVideoBlur, WsBase, WsSender, WsWave } from '@/lib/std/device';
-import { useRoomStore } from '@/lib/store';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { isSpaceManager, UserStatus } from '@/lib/std';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
@@ -30,10 +29,9 @@ import { AppFlotIconCollect } from '../apps/app_pin';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { Tooltip } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
-import { FullScreenBtnProps } from '../controls/widgets/full_screen';
 import { MessageInstance } from 'antd/es/message/interface';
 
-export interface ParticipantTileMiniProps extends ParticipantTileProps, FullScreenBtnProps {
+export interface ParticipantTileMiniProps extends ParticipantTileProps {
   settings: SpaceInfo;
   /**
    * host room name
@@ -43,7 +41,7 @@ export interface ParticipantTileMiniProps extends ParticipantTileProps, FullScre
   toRenameSettings: () => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
   showFlotApp: (id?: string, participantName?: string, auth?: AppAuth) => void;
-  messageApi: MessageInstance
+  messageApi: MessageInstance;
 }
 
 export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMiniProps>(
@@ -56,8 +54,6 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       toRenameSettings,
       setUserStatus,
       showFlotApp,
-      isFullScreen,
-      setIsFullScreen,
       messageApi,
     }: ParticipantTileMiniProps,
     ref,
@@ -66,7 +62,6 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
     const trackReference = useEnsureTrackRef(trackRef);
     const { localParticipant } = useLocalParticipant();
     const videoRef = useRef<HTMLVideoElement>(null);
-    const appsData = useRoomStore((s) => s.remoteApp);
     const layoutContext = useMaybeLayoutContext();
     const autoManageSubscription = useFeatureContext()?.autoSubscription;
     const isEncrypted = useIsEncrypted(trackReference.participant);
@@ -118,7 +113,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
     }, [space, localParticipant, trackReference, settings.participants]);
 
     const videoFilter = useMemo(() => {
-      return settings.participants[trackReference.participant.identity]?.virtual?.enabled ?? false
+      return (settings.participants[trackReference.participant.identity]?.virtual?.enabled ?? false)
         ? `none`
         : `blur(${blurValue}px)`;
     }, [settings.participants, trackReference.participant.identity, blurValue]);
@@ -152,7 +147,9 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
         toRenameSettings,
         isSelf: trackReference.participant.identity === localParticipant.identity,
         messageApi,
-        isScreenShare: trackReference.source === Track.Source.ScreenShare || trackReference.source === Track.Source.ScreenShareAudio,
+        isScreenShare:
+          trackReference.source === Track.Source.ScreenShare ||
+          trackReference.source === Track.Source.ScreenShareAudio,
       } as UseControlRKeyMenuProps);
 
     // 右键菜单可以使用：当不是自己的时候且source不是屏幕分享
@@ -384,8 +381,6 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
               contextUndefined={false}
               showApp={showApp}
               participant={currentParticipant}
-              isFullScreen={isFullScreen}
-              setIsFullScreen={setIsFullScreen}
               trackReference={trackReference}
             ></AppFlotIconCollect>
           </ParticipantTile>

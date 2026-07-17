@@ -11,7 +11,7 @@ import {
   GlobalOutlined,
   LayoutOutlined,
 } from '@ant-design/icons';
-import { Button, Image, Modal, Select, Spin, Tooltip, Upload } from 'antd';
+import { AutoComplete, Button, Image, Modal, Spin, Tooltip, Upload } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { APP_FLOT_PIN_STYLE } from '../apps/app_pin';
@@ -52,8 +52,6 @@ export interface TilePlayerProps {
   afterFocus?: (focus: boolean) => void;
   onRemoved?: () => void;
   spaceInfo: SpaceInfo;
-  isFullScreen?: boolean;
-  setIsFullScreen?: (isFullScreen: boolean) => void;
 }
 
 export const TilePlayer = ({
@@ -67,12 +65,12 @@ export const TilePlayer = ({
   afterFocus,
   onRemoved,
   spaceInfo,
-  isFullScreen,
-  setIsFullScreen,
 }: TilePlayerProps) => {
   const [toolVis, setToolVis] = useState(false);
   const layoutContext = useMaybeLayoutContext();
   const setCollapsed = useSpaceStore((state) => state.setCollapsed);
+  const isFullScreen = useSpaceStore((state) => state.isFullScreen);
+  const setIsFullScreen = useSpaceStore((state) => state.setIsFullScreen);
   // 是否可以被删除，只有RBAC允许或者自己的卡片才可以被删除
   const canDelete = useMemo(() => {
     if (!spaceInfo?.auth) return item.ownerId === myIdentity;
@@ -156,6 +154,7 @@ export const TilePlayer = ({
     if (isFullScreen) {
       setIsFullScreen?.(false);
       setCollapsed(false);
+      return;
     }
 
     if (focus) {
@@ -208,7 +207,7 @@ export const TilePlayer = ({
             <SvgResource type="close" svgSize={16} />
           </button>
         )}
-        {!isActiveView && showFullScreen && setIsFullScreen && (
+        {!isFullScreen && showFullScreen && (
           <Tooltip placement="bottom" title={isFullScreen ? '退出全屏' : '全屏'}>
             <button className="lk-button" style={APP_FLOT_PIN_STYLE} onClick={handleFullScreen}>
               {isFullScreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
@@ -437,17 +436,17 @@ export const TilePlayerAdd = ({
         }}
         onCancel={() => setOpenInputIframe(false)}
       >
-        <Select
-          styles={{root: {width: "100%"}}}
-          showSearch
-          maxCount={1}
+        <AutoComplete
+          style={{ width: '100%' }}
           placeholder="Search or input iframe URL"
-          value={inputIframeUrl ? [inputIframeUrl] : []}
-          onChange={(val: string[]) => setInputIframeUrl(val[val.length - 1] || '')}
-          filterOption={(input: string, option?: { value: string }) =>
-            (option?.value as string).toLowerCase().includes(input.toLowerCase())
+          value={inputIframeUrl}
+          onChange={setInputIframeUrl}
+          filterOption={(inputValue: string, option?: { value?: string | number }) =>
+            String(option?.value || '')
+              .toLowerCase()
+              .includes(inputValue.toLowerCase())
           }
-          options={(iframeUrls || []).map((url) => ({ value: url, label: url }))}
+          options={(iframeUrls || []).map((url) => ({ value: url }))}
         />
       </Modal>
     </>

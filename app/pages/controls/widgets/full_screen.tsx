@@ -1,14 +1,11 @@
 import { FullscreenExitOutlined, FullscreenOutlined } from '@ant-design/icons';
-import { forwardRef, useState } from 'react';
+import { forwardRef } from 'react';
 import { APP_FLOT_PIN_STYLE } from '../../apps/app_pin';
 import {
-  FocusToggleIcon,
-  UnfocusToggleIcon,
   LayoutContext,
   LayoutContextType,
   TrackReferenceOrPlaceholder,
   useEnsureTrackRef,
-  useMaybeLayoutContext,
   useMaybeTrackRefContext,
 } from '@livekit/components-react';
 import { isTrackReferencePinned } from '../../participant/tile';
@@ -16,15 +13,13 @@ import { Tooltip } from 'antd';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useSpaceStore } from '@/lib/store';
 
-export interface FullScreenBtnProps {
-  isFullScreen: boolean;
-  setIsFullScreen: (isFullScreen: boolean) => void;
-}
+export interface FullScreenBtnProps {}
 
 export interface FullScreenBtnExports {}
 
 export const useFullScreenBtn = () => {
-  const [isFullScreen, setIsFullScreen] = useState(false);
+  const isFullScreen = useSpaceStore((state) => state.isFullScreen);
+  const setIsFullScreen = useSpaceStore((state) => state.setIsFullScreen);
   return {
     isFullScreen,
     setIsFullScreen,
@@ -33,16 +28,11 @@ export const useFullScreenBtn = () => {
 
 export const FullScreenBtn = forwardRef<
   FullScreenBtnExports,
-  FullScreenBtnProps & { trackReference?: TrackReferenceOrPlaceholder }
+  { trackReference?: TrackReferenceOrPlaceholder }
 >(
-  (
-    {
-      isFullScreen,
-      setIsFullScreen,
-      trackReference,
-    }: FullScreenBtnProps & { trackReference?: TrackReferenceOrPlaceholder },
-    ref,
-  ) => {
+  ({ trackReference }: { trackReference?: TrackReferenceOrPlaceholder }, ref) => {
+    const isFullScreen = useSpaceStore((state) => state.isFullScreen);
+    const setIsFullScreen = useSpaceStore((state) => state.setIsFullScreen);
     const trackRefFromContext = useMaybeTrackRefContext();
     const trackRef = useEnsureTrackRef(trackReference ?? trackRefFromContext);
 
@@ -63,8 +53,10 @@ export const FullScreenBtn = forwardRef<
   },
 );
 
-interface FullScreenBtnPinProps extends FullScreenBtnProps {
+interface FullScreenBtnPinProps {
   layoutContext?: LayoutContextType;
+  isFullScreen: boolean;
+  setIsFullScreen: (isFullScreen: boolean) => void;
   trackRef: TrackReferenceOrPlaceholder;
 }
 
@@ -77,26 +69,20 @@ export const FullScreenBtnPin = ({
   const { t } = useI18n();
   const setCollapsed = useSpaceStore((s) => s.setCollapsed);
   const isPinned = isTrackReferencePinned(trackRef, layoutContext?.pin.state);
-  const isActiveView = isFullScreen || isPinned;
 
   const handleToggleView = () => {
-    if (isActiveView) {
-      if (isPinned) {
-        layoutContext?.pin.dispatch?.({
-          msg: 'clear_pin',
-        });
-      }
-      if (isFullScreen) {
-        setCollapsed(false);
-        setIsFullScreen(false);
-      }
+    if (isFullScreen) {
+      setCollapsed(false);
+      setIsFullScreen(false);
       return;
     }
 
-    layoutContext?.pin.dispatch?.({
-      msg: 'set_pin',
-      trackReference: trackRef,
-    });
+    if (!isPinned) {
+      layoutContext?.pin.dispatch?.({
+        msg: 'set_pin',
+        trackReference: trackRef,
+      });
+    }
     setCollapsed(true);
     setIsFullScreen(true);
   };
@@ -104,7 +90,7 @@ export const FullScreenBtnPin = ({
   return (
     <Tooltip placement="bottom" title={t('common.full_screen')}>
       <button className="lk-button" style={APP_FLOT_PIN_STYLE} onClick={handleToggleView}>
-        {isActiveView ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+        {isFullScreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
       </button>
     </Tooltip>
   );

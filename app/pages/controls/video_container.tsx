@@ -52,7 +52,7 @@ import {
   WsTo,
   WsWave,
 } from '@/lib/std/device';
-import { Button} from 'antd';
+import { Button } from 'antd';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { Channel, ChannelExports } from './channel';
 import { AppAuth, PARTICIPANT_SETTINGS_KEY } from '@/lib/std/space';
@@ -104,7 +104,10 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const FlotLayoutRef = useRef<FlotLayoutExports>(null);
     const [init, setInit] = useState(true);
     const { t, locale } = useI18n();
-    const { setIsFullScreen, isFullScreen } = useFullScreenBtn();
+    const isFullScreen = useSpaceStore((s) => s.isFullScreen);
+    const setIsFullScreen = useSpaceStore((s) => s.setIsFullScreen);
+    const isFocus = useSpaceStore((s) => s.isFocus);
+    const setIsFocus = useSpaceStore((s) => s.setIsFocus);
     const uState = useUserStore();
     const collapsed = useSpaceStore((s) => s.collapsed);
     const deviceType = useSpaceStore((s) => s.deviceType);
@@ -114,14 +117,11 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const controlsRef = React.useRef<ControlBarExport>(null);
     const waveAudioRef = React.useRef<HTMLAudioElement>(null);
     const promptSoundRef = React.useRef<HTMLAudioElement>(null);
-    const [isFocus, setIsFocus] = useState(false);
     const [freshPermission, setFreshPermission] = useState(false);
     const [localTrackVersion, setLocalTrackVersion] = useState(0);
     const [cacheWidgetState, setCacheWidgetState] = useState<WidgetState>();
     const chatMsg = useRoomStore((s) => s.chatMsg);
-    const uRoomStatusState = useRoomStore((s) => s.roomStatusList);
     const channelRef = React.useRef<ChannelExports>(null);
-    const remoteApp = useRoomStore((s) => s.remoteApp);
     const {
       settings,
       updateSettings,
@@ -951,6 +951,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         )
       ) {
         layoutContext.pin.dispatch?.({ msg: 'clear_pin' });
+        setIsFocus(false);
         lastAutoFocusedScreenShareTrack.current = null;
       }
       if (focusTrack && !isTrackReference(focusTrack)) {
@@ -980,6 +981,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       // 需要更新用户视图Layout，因为发现在focus layout下切换房间会导致视图没有更新，依然看到上一个房间的视图
       if (focusTrack) {
         layoutContext.pin.dispatch?.({ msg: 'clear_pin' });
+        setIsFocus(false);
       }
 
       // 通知其他参与者更新用户状态
@@ -1104,8 +1106,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               }
             }}
             onRemoved={fetchTilePlayers}
-            isFullScreen={isFullScreen}
-            setIsFullScreen={setIsFullScreen}
           />
         );
 
@@ -1171,8 +1171,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               toRenameSettings={toSettingGeneral}
               showFlotApp={showFlotApp}
               selfRoom={selfRoom}
-              isFullScreen={isFullScreen}
-              setIsFullScreen={setIsFullScreen}
               isFocus={state.isFocus || isFocus}
             />
           );
@@ -1222,7 +1220,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           <FlotButton
             openApp={openApp}
             setOpenApp={setOpenApp}
-            style={{ position: 'absolute', top: '50px', right: '0px', zIndex: 1111 }}
+            style={{ position: 'absolute', top: '30px', right: '0px', zIndex: 1111 }}
           ></FlotButton>
         )}
         {showFlot && space && settings.participants[space.localParticipant.identity] && (
@@ -1259,8 +1257,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             toRenameSettings={toSettingGeneral}
             setUserStatus={setUserStatus}
             showFlotApp={showFlotApp}
-            isFullScreen={isFullScreen}
-            setIsFullScreen={setIsFullScreen}
           ></Channel>
         )}
         {/* 主视口 */}

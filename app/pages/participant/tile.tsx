@@ -6,7 +6,6 @@ import {
   LockLockedIcon,
   ParticipantName,
   ParticipantPlaceholder,
-  ParticipantTile,
   PinState,
   ScreenShareIcon,
   TrackMutedIndicator,
@@ -18,10 +17,11 @@ import {
   useMaybeLayoutContext,
   VideoTrack,
 } from '@livekit/components-react';
+import { ParticipantTile } from './core';
 import { ConnectionState, Participant, Track } from 'livekit-client';
 import React, { useEffect, useMemo, useState } from 'react';
 import VirtualRoleCanvas from '../virtual_role/live2d';
-import { useUserStore, useRoomStore } from '@/lib/store';
+import { useUserStore, useRoomStore, useSpaceStore } from '@/lib/store';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import styles from '@/styles/controls.module.scss';
 import { SvgResource } from '@/app/resources/svg';
@@ -35,10 +35,9 @@ import { AppFlotIconCollect } from '../apps/app_pin';
 import { ParticipantTileMiniProps } from './mini';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
-import { Button, Popover, Slider, Tooltip } from 'antd';
-import { FullScreenBtnProps } from '../controls/widgets/full_screen';
+import { Popover, Slider, Tooltip } from 'antd';
 
-export interface ParticipantItemProps extends ParticipantTileMiniProps, FullScreenBtnProps {
+export interface ParticipantItemProps extends ParticipantTileMiniProps {
   toSettings?: (isDefineStatus?: boolean) => void;
   messageApi: MessageInstance;
   noteApi?: NotificationInstance;
@@ -63,8 +62,6 @@ export const ParticipantItem: (
       toRenameSettings,
       showFlotApp,
       selfRoom,
-      isFullScreen,
-      setIsFullScreen,
     }: ParticipantItemProps,
     ref,
   ) {
@@ -77,6 +74,8 @@ export const ParticipantItem: (
     const trackReference = useEnsureTrackRef(trackRef);
     const isEncrypted = useIsEncrypted(trackReference.participant);
     const layoutContext = useMaybeLayoutContext();
+    const isFullScreen = useSpaceStore((state) => state.isFullScreen);
+    const setFullScreen = useSpaceStore((state) => state.setIsFullScreen);
     const autoManageSubscription = useFeatureContext()?.autoSubscription;
     const isLocal = React.useMemo(() => {
       return localParticipant.identity === trackReference.participant.identity;
@@ -741,7 +740,9 @@ export const ParticipantItem: (
                                 ></Slider>
                               }
                             >
-                              <div style={{margin: "auto 4px", cursor: 'pointer'}}><SvgResource type="volume" svgSize={20}></SvgResource></div>
+                              <div style={{ margin: 'auto 4px', cursor: 'pointer' }}>
+                                <SvgResource type="volume" svgSize={20}></SvgResource>
+                              </div>
                             </Popover>
                           )}
                         </div>
@@ -771,10 +772,7 @@ export const ParticipantItem: (
             <AppFlotIconCollect
               showApp={showApp}
               participant={currentParticipant}
-              isFullScreen={isFullScreen}
-              setIsFullScreen={setIsFullScreen}
               trackReference={trackReference}
-              isFocus={isFocus}
             ></AppFlotIconCollect>
           </ParticipantTile>
         }

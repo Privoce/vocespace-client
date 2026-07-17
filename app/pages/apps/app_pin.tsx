@@ -1,9 +1,10 @@
 import { useI18n } from '@/lib/i18n/i18n';
+import { useSpaceStore } from '@/lib/store';
 import { AppKey, ParticipantSettings } from '@/lib/std/space';
 import { AppstoreOutlined } from '@ant-design/icons';
 import { LayoutContext, TrackReferenceOrPlaceholder } from '@livekit/components-react';
 import { Tooltip } from 'antd';
-import { FullScreenBtn, FullScreenBtnProps } from '../controls/widgets/full_screen';
+import { FullScreenBtn } from '../controls/widgets/full_screen';
 import { Track } from 'livekit-client';
 
 export interface AppPinProps {
@@ -51,13 +52,12 @@ export function AppFlotPin({ pin, style = APP_FLOT_PIN_STYLE }: AppPinProps) {
   );
 }
 
-export interface AppFlotIconCollectProps extends FullScreenBtnProps {
+export interface AppFlotIconCollectProps {
   showApp: () => void;
   participant?: ParticipantSettings;
   style?: React.CSSProperties;
   contextUndefined?: boolean;
   trackReference?: TrackReferenceOrPlaceholder;
-  isFocus?: boolean;
 }
 
 export function AppFlotIconCollect({
@@ -65,11 +65,9 @@ export function AppFlotIconCollect({
   participant,
   contextUndefined,
   style = { right: '32px', backgroundColor: 'transparent', padding: 0 },
-  isFullScreen,
-  setIsFullScreen,
   trackReference,
-  isFocus,
 }: AppFlotIconCollectProps) {
+  const isFullScreen = useSpaceStore((s) => s.isFullScreen);
   return participant && participant.sync ? (
     <div className="lk-focus-toggle-button" style={style}>
       {participant.sync.length > 0 && trackReference?.source !== Track.Source.ScreenShare && (
@@ -79,22 +77,14 @@ export function AppFlotIconCollect({
           contextUndefined={contextUndefined}
         ></AppFlotIcon>
       )}
-      {trackReference?.source === Track.Source.ScreenShare && !isFocus && (
-        <FullScreenBtn
-          trackReference={trackReference}
-          setIsFullScreen={setIsFullScreen}
-          isFullScreen={isFullScreen}
-        ></FullScreenBtn>
+      {trackReference?.source === Track.Source.ScreenShare && !isFullScreen && (
+        <FullScreenBtn trackReference={trackReference}></FullScreenBtn>
       )}
     </div>
   ) : (
     <div>
-      {trackReference?.source === Track.Source.ScreenShare && !isFocus && (
-        <FullScreenBtn
-          trackReference={trackReference}
-          setIsFullScreen={setIsFullScreen}
-          isFullScreen={isFullScreen}
-        ></FullScreenBtn>
+      {trackReference?.source === Track.Source.ScreenShare && !isFullScreen && (
+        <FullScreenBtn trackReference={trackReference}></FullScreenBtn>
       )}
     </div>
   );
