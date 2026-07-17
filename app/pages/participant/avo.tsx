@@ -46,9 +46,9 @@ export function normalizeAvoParams(
     energy: 0.6,
   };
 
-  if (typeof window !== 'undefined' && window.Avo?.normalizeParams) {
+  if (typeof window !== 'undefined' && (window as any).Avo?.normalizeParams) {
     try {
-      return window.Avo.normalizeParams({
+      return (window as any).Avo.normalizeParams({
         ...fallback,
         ...(avo || {}),
         name: avo?.name || fallback.name,
