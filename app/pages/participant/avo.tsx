@@ -9,7 +9,7 @@ import type p5 from 'p5';
 
 const { Text } = Typography;
 
-let p5Loader: Promise<typeof import('p5')> | null = null;
+let p5Loader: Promise<{ default: typeof p5 }> | null = null;
 
 async function loadP5Module() {
   if (!p5Loader) {
