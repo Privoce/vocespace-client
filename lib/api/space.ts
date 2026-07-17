@@ -191,7 +191,9 @@ export const defineUserStatus = async (
 export const getSpaceInfo = async (spaceName: string) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('spaceName', spaceName);
-  return await fetch(url.toString());
+  return await fetch(url.toString(), {
+    cache: 'no-store',
+  });
 };
 
 export interface UpdateOwnerIdBody {

@@ -20,6 +20,7 @@ import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'r
 import { isTrackReferencePinned } from './tile';
 import { AppAuth, ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { useVideoBlur, WsBase, WsSender, WsWave } from '@/lib/std/device';
+import { useUserStore } from '@/lib/store/user';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { isSpaceManager, UserStatus } from '@/lib/std';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
@@ -98,6 +99,21 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
     const currentParticipant: ParticipantSettings | undefined = useMemo(() => {
       return settings.participants[trackReference.participant.identity];
     }, [settings.participants, trackReference.participant.identity]);
+    const uState = useUserStore();
+    const localAvo = useMemo(() => {
+      if (trackReference.participant.identity !== localParticipant.identity) {
+        return currentParticipant?.avo;
+      }
+
+      return uState.avo || currentParticipant?.avo;
+    }, [currentParticipant?.avo, localParticipant.identity, trackReference.participant.identity, uState.avo]);
+    const avoRenderKey = useMemo(() => {
+      if (!localAvo) {
+        return 'placeholder';
+      }
+
+      return `${localAvo.variant ?? 'none'}:${localAvo.hue ?? 'none'}:${localAvo.style ?? 'none'}:${localAvo.energy ?? 'none'}`;
+    }, [localAvo]);
 
     const userType = useMemo(() => {
       return isSpaceManager(settings, trackReference.participant.identity).ty;
@@ -252,12 +268,14 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
               className="lk-participant-placeholder"
               style={{ border: '1px solid #111', zIndex: 110 }}
             >
-              {currentParticipant?.avo ? (
+              {localAvo ? (
                 <ParticipantAvoPlaceholder
+                  key={`mini-${avoRenderKey}`}
                   name={currentParticipant?.name || trackReference.participant.name || 'guest'}
-                  avo={currentParticipant?.avo}
+                  avo={localAvo}
                   audioLevel={trackReference.participant.audioLevel}
                   interactive={trackReference.participant.identity === localParticipant.identity}
+                  style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
                 />
               ) : (
                 <ParticipantPlaceholder />

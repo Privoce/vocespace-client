@@ -164,6 +164,20 @@ export const ParticipantItem: (
     const currentParticipant: ParticipantSettings | undefined = useMemo(() => {
       return settings.participants[trackReference.participant.identity];
     }, [settings.participants, trackReference.participant.identity]);
+    const localAvo = useMemo(() => {
+      if (!isLocal) {
+        return currentParticipant?.avo;
+      }
+
+      return uState.avo || currentParticipant?.avo;
+    }, [currentParticipant?.avo, isLocal, uState.avo]);
+    const avoRenderKey = useMemo(() => {
+      if (!localAvo) {
+        return 'placeholder';
+      }
+
+      return `${localAvo.variant ?? 'none'}:${localAvo.hue ?? 'none'}:${localAvo.style ?? 'none'}:${localAvo.energy ?? 'none'}`;
+    }, [localAvo]);
 
     const userType = useMemo(() => {
       return isSpaceManager(settings, trackReference.participant.identity).ty;
@@ -239,8 +253,9 @@ export const ParticipantItem: (
                 <div className="lk-participant-placeholder" style={{ opacity: 1, zIndex: 1000 }}>
                   {currentParticipant?.avo ? (
                     <ParticipantAvoPlaceholder
+                      key={`delayed-${avoRenderKey}`}
                       name={currentParticipant?.name || trackReference.participant.name || 'guest'}
-                      avo={currentParticipant?.avo}
+                      avo={localAvo}
                       audioLevel={trackReference.participant.audioLevel}
                       interactive={isLocal}
                     />
@@ -429,6 +444,9 @@ export const ParticipantItem: (
       virtualMask,
       remoteMask,
       isLocal,
+      localAvo,
+      currentParticipant?.name,
+      avoRenderKey,
       deleyMask,
       virtualReady,
       videoFilter,
@@ -653,10 +671,11 @@ export const ParticipantItem: (
           <ParticipantTile ref={ref} trackRef={trackReference}>
             {deviceTrack}
             <div className="lk-participant-placeholder">
-              {currentParticipant?.avo ? (
+              {localAvo && !(trackReference.source === Track.Source.Camera && deleyMask && currentParticipant?.avo) ? (
                 <ParticipantAvoPlaceholder
+                  key={`main-${avoRenderKey}`}
                   name={currentParticipant?.name || trackReference.participant.name || 'guest'}
-                  avo={currentParticipant?.avo}
+                  avo={localAvo}
                   audioLevel={trackReference.participant.audioLevel}
                   interactive={isLocal}
                 />

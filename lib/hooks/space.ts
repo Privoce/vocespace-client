@@ -75,6 +75,24 @@ export function useSpaceInfo(spaceName: string, participantId: string) {
     async (newSettings: Partial<ParticipantSettings>, record?: RecordSettings, init = false) => {
       if (!spaceName || !participantId) return;
       try {
+        setSettings((prevSettings) => {
+          const currentParticipant = prevSettings.participants?.[participantId];
+          if (!currentParticipant) {
+            return prevSettings;
+          }
+
+          return {
+            ...prevSettings,
+            participants: {
+              ...prevSettings.participants,
+              [participantId]: {
+                ...currentParticipant,
+                ...newSettings,
+              },
+            },
+          };
+        });
+
         const response = await api.updateSpaceParticipant(
           spaceName,
           participantId,

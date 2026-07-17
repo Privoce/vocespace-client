@@ -2,7 +2,7 @@
 
 import React, { useCallback, useRef, useState, type CSSProperties } from 'react';
 import { useI18n } from '@/lib/i18n/i18n';
-import { useSpaceStore } from '@/lib/store';
+import { useSpaceStore, useUserStore } from '@/lib/store';
 import { AppKey, ParticipantAvoParams, ParticipantSettings } from '@/lib/std/space';
 import { AppstoreOutlined, BgColorsOutlined } from '@ant-design/icons';
 import {
@@ -108,6 +108,7 @@ export function AppFlotIconCollect({
         );
         const success = await updateSettings({ avo: normalized });
         if (success !== false) {
+          useUserStore.setState({ avo: normalized });
           socket.emit('update_user_status', {
             space: spaceName,
           } as WsBase);
