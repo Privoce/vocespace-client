@@ -99,8 +99,8 @@ async function mountAvoRuntime(
     scale?: number;
   },
 ): Promise<AvoHandle> {
-  // 仅移除容器内的 canvas 元素，不触碰 React 渲染的内容（如 ParticipantPlaceholder）
-  container.querySelectorAll('canvas').forEach((el) => el.remove());
+  // 清空容器，确保没有任何残留元素
+  container.innerHTML = '';
 
   const p5Module = await loadP5Module();
   const P5Ctor = p5Module.default;
@@ -288,6 +288,10 @@ export function ParticipantAvoPlaceholder({
     }
   }
 
+  // 使用 generation 机制防止异步竞态：每次 effect 重运行时递增世代号，
+  // 旧世代的异步 continuation 会检测到世代不匹配并提前退出
+  const mountGenRef = React.useRef(0);
+
   React.useEffect(() => {
     if (!hasAvo && fallbackToPlaceholder) {
       safeDestroy();
@@ -296,11 +300,11 @@ export function ParticipantAvoPlaceholder({
       return;
     }
 
-    let cancelled = false;
+    const thisGen = ++mountGenRef.current;
 
     const mountAvo = async () => {
       try {
-        if (cancelled || !containerRef.current) {
+        if (mountGenRef.current !== thisGen || !containerRef.current) {
           return;
         }
 
@@ -311,6 +315,14 @@ export function ParticipantAvoPlaceholder({
           interactive,
           scale: 0.62,
         });
+
+        // 创建后再次检查，如果已被新世代取代则销毁
+        if (mountGenRef.current !== thisGen) {
+          safeDestroy();
+          handleRef.current = null;
+          return;
+        }
+
         handleRef.current.setParams(params);
         setReady(true);
       } catch (error) {
@@ -321,7 +333,7 @@ export function ParticipantAvoPlaceholder({
     void mountAvo();
 
     return () => {
-      cancelled = true;
+      mountGenRef.current += 1; // 递增世代号以取消当前世代的异步操作
       safeDestroy();
       handleRef.current = null;
     };
@@ -337,7 +349,6 @@ export function ParticipantAvoPlaceholder({
 
   return (
     <div
-      ref={containerRef}
       className={className}
       style={{
         position: 'relative',
@@ -350,7 +361,30 @@ export function ParticipantAvoPlaceholder({
         ...style,
       }}
     >
-      {(!ready || (fallbackToPlaceholder && !hasAvo)) && <ParticipantPlaceholder />}
+      {(!ready || (fallbackToPlaceholder && !hasAvo)) && (
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1,
+          }}
+        >
+          <ParticipantPlaceholder />
+        </div>
+      )}
+      <div
+        ref={containerRef}
+        style={{
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      />
     </div>
   );
 }

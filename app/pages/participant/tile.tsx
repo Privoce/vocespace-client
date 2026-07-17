@@ -251,17 +251,7 @@ export const ParticipantItem: (
             >
               {deleyMask && (
                 <div className="lk-participant-placeholder" style={{ opacity: 1, zIndex: 1000 }}>
-                  {currentParticipant?.avo ? (
-                    <ParticipantAvoPlaceholder
-                      key={`delayed-${avoRenderKey}`}
-                      name={currentParticipant?.name || trackReference.participant.name || 'guest'}
-                      avo={localAvo}
-                      audioLevel={trackReference.participant.audioLevel}
-                      interactive={isLocal}
-                    />
-                  ) : (
-                    <ParticipantPlaceholder />
-                  )}
+                  <ParticipantPlaceholder />
                 </div>
               )}
               {isLocal && uState.virtual.enabled && !virtualMask && (
@@ -671,7 +661,7 @@ export const ParticipantItem: (
           <ParticipantTile ref={ref} trackRef={trackReference}>
             {deviceTrack}
             <div className="lk-participant-placeholder">
-              {localAvo && !(trackReference.source === Track.Source.Camera && deleyMask && currentParticipant?.avo) ? (
+              {localAvo ? (
                 <ParticipantAvoPlaceholder
                   key={`main-${avoRenderKey}`}
                   name={currentParticipant?.name || trackReference.participant.name || 'guest'}
