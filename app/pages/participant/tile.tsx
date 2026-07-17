@@ -774,6 +774,7 @@ export const ParticipantItem: (
               isFullScreen={isFullScreen}
               setIsFullScreen={setIsFullScreen}
               trackReference={trackReference}
+              isFocus={isFocus}
             ></AppFlotIconCollect>
           </ParticipantTile>
         }

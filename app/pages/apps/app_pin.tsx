@@ -57,6 +57,7 @@ export interface AppFlotIconCollectProps extends FullScreenBtnProps {
   style?: React.CSSProperties;
   contextUndefined?: boolean;
   trackReference?: TrackReferenceOrPlaceholder;
+  isFocus?: boolean;
 }
 
 export function AppFlotIconCollect({
@@ -67,6 +68,7 @@ export function AppFlotIconCollect({
   isFullScreen,
   setIsFullScreen,
   trackReference,
+  isFocus,
 }: AppFlotIconCollectProps) {
   return participant && participant.sync ? (
     <div className="lk-focus-toggle-button" style={style}>
@@ -77,7 +79,7 @@ export function AppFlotIconCollect({
           contextUndefined={contextUndefined}
         ></AppFlotIcon>
       )}
-      {trackReference?.source === Track.Source.ScreenShare && (
+      {trackReference?.source === Track.Source.ScreenShare && !isFocus && (
         <FullScreenBtn
           trackReference={trackReference}
           setIsFullScreen={setIsFullScreen}
@@ -87,7 +89,7 @@ export function AppFlotIconCollect({
     </div>
   ) : (
     <div>
-      {trackReference?.source === Track.Source.ScreenShare && (
+      {trackReference?.source === Track.Source.ScreenShare && !isFocus && (
         <FullScreenBtn
           trackReference={trackReference}
           setIsFullScreen={setIsFullScreen}

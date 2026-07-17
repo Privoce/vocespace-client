@@ -118,6 +118,7 @@ export const TilePlayer = ({
 
   const showFullScreen =
     item.mode === 'iframe' || item.mode === 'hyperbeam' || item.mode === 'image';
+  const isActiveView = !!focus || !!isFullScreen;
 
   const handleFullScreen = () => {
     const nextIsFullScreen = !isFullScreen;
@@ -149,6 +150,18 @@ export const TilePlayer = ({
 
     setIsFullScreen?.(nextIsFullScreen);
     setCollapsed(nextIsFullScreen);
+  };
+
+  const handleExitView = () => {
+    if (isFullScreen) {
+      setIsFullScreen?.(false);
+      setCollapsed(false);
+    }
+
+    if (focus) {
+      setFocus?.(() => false);
+      afterFocus?.(false);
+    }
   };
 
   const handleFocusToggle = () => {
@@ -195,7 +208,7 @@ export const TilePlayer = ({
             <SvgResource type="close" svgSize={16} />
           </button>
         )}
-        {showFullScreen && setIsFullScreen && (
+        {!isActiveView && showFullScreen && setIsFullScreen && (
           <Tooltip placement="bottom" title={isFullScreen ? '退出全屏' : '全屏'}>
             <button className="lk-button" style={APP_FLOT_PIN_STYLE} onClick={handleFullScreen}>
               {isFullScreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
@@ -205,9 +218,9 @@ export const TilePlayer = ({
         <button
           className="lk-button"
           style={APP_FLOT_PIN_STYLE}
-          onClick={handleFocusToggle}
+          onClick={isActiveView ? handleExitView : handleFocusToggle}
         >
-          {!focus ? <FocusToggleIcon /> : <UnfocusToggleIcon />}
+          {!isActiveView ? <FocusToggleIcon /> : <UnfocusToggleIcon />}
         </button>
       </div>
 

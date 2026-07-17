@@ -10,6 +10,10 @@ interface SpaceState {
   /** 侧边栏是否折叠 */
   collapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
+  isFocus: boolean;
+  isFullScreen: boolean;
+  setIsFocus: (isFocus: boolean) => void;
+  setIsFullScreen: (isFullScreen: boolean) => void;
 }
 
 export const useSpaceStore = create<SpaceState>()((set) => ({
@@ -18,4 +22,8 @@ export const useSpaceStore = create<SpaceState>()((set) => ({
   deviceType: isMobile() ? 'mobile' : 'desktop',
   collapsed: isMobile(),
   setCollapsed: (collapsed) => set({ collapsed }),
+  isFocus: false,
+  isFullScreen: false,
+  setIsFocus: (isFocus) => set({ isFocus }),
+  setIsFullScreen: (isFullScreen) => set({ isFullScreen }),
 }));

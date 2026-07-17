@@ -1,7 +1,9 @@
-import { ExpandOutlined, FullscreenExitOutlined, FullscreenOutlined } from '@ant-design/icons';
-import { forwardRef, useMemo, useState } from 'react';
+import { FullscreenExitOutlined, FullscreenOutlined } from '@ant-design/icons';
+import { forwardRef, useState } from 'react';
 import { APP_FLOT_PIN_STYLE } from '../../apps/app_pin';
 import {
+  FocusToggleIcon,
+  UnfocusToggleIcon,
   LayoutContext,
   LayoutContextType,
   TrackReferenceOrPlaceholder,
@@ -74,28 +76,35 @@ export const FullScreenBtnPin = ({
 }: FullScreenBtnPinProps) => {
   const { t } = useI18n();
   const setCollapsed = useSpaceStore((s) => s.setCollapsed);
+  const isPinned = isTrackReferencePinned(trackRef, layoutContext?.pin.state);
+  const isActiveView = isFullScreen || isPinned;
+
+  const handleToggleView = () => {
+    if (isActiveView) {
+      if (isPinned) {
+        layoutContext?.pin.dispatch?.({
+          msg: 'clear_pin',
+        });
+      }
+      if (isFullScreen) {
+        setCollapsed(false);
+        setIsFullScreen(false);
+      }
+      return;
+    }
+
+    layoutContext?.pin.dispatch?.({
+      msg: 'set_pin',
+      trackReference: trackRef,
+    });
+    setCollapsed(true);
+    setIsFullScreen(true);
+  };
+
   return (
     <Tooltip placement="bottom" title={t('common.full_screen')}>
-      <button
-        className="lk-button"
-        style={APP_FLOT_PIN_STYLE}
-        onClick={() => {
-          if (!isFullScreen) {
-            layoutContext?.pin.dispatch?.({
-              msg: 'set_pin',
-              trackReference: trackRef,
-            });
-          } else if (isFullScreen && isTrackReferencePinned(trackRef, layoutContext?.pin.state)) {
-            layoutContext?.pin.dispatch?.({
-              msg: 'clear_pin',
-            });
-          }
-
-          setCollapsed(!isFullScreen);
-          setIsFullScreen(!isFullScreen);
-        }}
-      >
-        {isFullScreen ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
+      <button className="lk-button" style={APP_FLOT_PIN_STYLE} onClick={handleToggleView}>
+        {isActiveView ? <FullscreenExitOutlined /> : <FullscreenOutlined />}
       </button>
     </Tooltip>
   );
