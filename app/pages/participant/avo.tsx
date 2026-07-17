@@ -135,7 +135,7 @@ async function mountAvoRuntime(
       pointerY = p.mouseY;
     };
 
-    p.mouseOut = () => {
+    (p as any).mouseOut = () => {
       pointerInside = false;
     };
 
