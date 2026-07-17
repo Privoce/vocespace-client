@@ -99,6 +99,78 @@ const exportRBAC = (uid: string, spaceInfo?: SpaceInfo, pidentity?: string): Spa
   return spaceInfo.auth[identity] || DEFAULT_SPACE_AUTH_CONF.guest;
 };
 
+const verifyCreateWhitelist = (name: string, id?: string | null, entries?: string[]): boolean => {
+  if (!entries || entries.length === 0) {
+    return false;
+  }
+
+  const trimmedName = name.trim();
+  const trimmedId = id?.trim();
+
+  if (!trimmedName && !trimmedId) {
+    return false;
+  }
+
+  if (entries.includes('*')) {
+    return true;
+  }
+
+  const normalizedName = trimmedName.toLowerCase();
+  const normalizedId = trimmedId?.toLowerCase();
+
+  for (const rawEntry of entries) {
+    const entry = rawEntry.trim().toLowerCase();
+    if (entry.startsWith('user-')) {
+      const whitelistId = entry.slice('user-'.length);
+      if (normalizedName === whitelistId) {
+        return true;
+      }
+
+      if (
+        normalizedId &&
+        (normalizedId === entry ||
+          normalizedId === whitelistId ||
+          normalizedId.startsWith(`${whitelistId}__`))
+      ) {
+        return true;
+      }
+      continue;
+    }
+
+    if (entry === normalizedName) {
+      return true;
+    }
+
+    if (normalizedId && entry === normalizedId) {
+      return true;
+    }
+  }
+
+  return false;
+};
+
+const canCreateSpaceForParticipant = (name: string, participantId?: string | null): boolean => {
+  const { create_space: createMode, whiteList: currentWhiteList } = getConfig();
+
+  if (createMode === 'all') {
+    return true;
+  }
+
+  if (createMode === 'white') {
+    return verifyCreateWhitelist(name, participantId, currentWhiteList);
+  }
+
+  if (createMode === 'white_platform') {
+    if (participantId) {
+      return true;
+    }
+
+    return verifyCreateWhitelist(name, participantId, currentWhiteList);
+  }
+
+  return false;
+};
+
 class SpaceManager {
   // 空间 redis key 前缀
   private static SPACE_KEY_PREFIX = 'space:';
@@ -740,6 +812,15 @@ class SpaceManager {
       // 房间不存在说明是第一次创建
       let startAt = Date.now();
       if (!spaceInfo) {
+        if (!canCreateSpaceForParticipant(pData.name, participantId)) {
+          console.warn('Blocked room creation for non-whitelisted participant', {
+            room,
+            participantId,
+            participantName: pData.name,
+          });
+          return false;
+        }
+
         const { createRoom } = usePlatformUserInfoServer({ user: pData });
 
         spaceInfo = {
@@ -1420,7 +1501,13 @@ export async function GET(request: NextRequest) {
   // 获取某个房间的数据 ---------------------------------------------------------------------------------
   if (spaceName) {
     const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
-    return NextResponse.json({ settings: spaceInfo || { participants: {} } }, { status: 200 });
+    return NextResponse.json(
+      {
+        exists: !!spaceInfo,
+        settings: spaceInfo || { participants: {} },
+      },
+      { status: 200 },
+    );
   }
 
   return NextResponse.json({ error: 'Invalid request' }, { status: 400 });

@@ -427,7 +427,6 @@ export const TilePlayerAdd = ({
         <Select
           styles={{root: {width: "100%"}}}
           showSearch
-          mode="tags"
           maxCount={1}
           placeholder="Search or input iframe URL"
           value={inputIframeUrl ? [inputIframeUrl] : []}

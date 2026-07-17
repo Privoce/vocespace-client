@@ -156,45 +156,56 @@ const verifyWhitList = (name: string, id?: string | null, whiteList?: string[]):
     return false;
   }
 
+  const trimmedName = name.trim();
+  const trimmedId = id?.trim();
+
+  if (!trimmedName && !trimmedId) {
+    return false;
+  }
+
   if (whiteList.includes('*')) {
     return true;
   }
 
-  const normalize = (item: string) => item.replace(/^USER-/i, '');
+  const normalize = (item: string) => item.trim().toLowerCase();
+  const normalizedName = trimmedName.toLowerCase();
+  const normalizedId = trimmedId?.toLowerCase();
+  const normalizedEntries = whiteList.map((item) => normalize(item));
 
-  if (!id) {
-    // 没有 ID，先精确匹配白名单项或 USER-<name>，再做前缀/包含容错匹配
-    if (whiteList.includes(name)) return true;
-    if (whiteList.includes(`USER-${name}`)) return true;
-    if (
-      whiteList.some((item) => {
-        const n = normalize(item);
-        return n === name || n.startsWith(name) || name.startsWith(n);
-      })
-    )
+  for (const entry of normalizedEntries) {
+    if (entry.startsWith('user-')) {
+      const normalizedWhitelistId = entry.slice('user-'.length);
+      if (normalizedName === normalizedWhitelistId) {
+        return true;
+      }
+
+      if (
+        normalizedId &&
+        (normalizedId === entry ||
+          normalizedId === normalizedWhitelistId ||
+          normalizedId.startsWith(`${normalizedWhitelistId}__`))
+      ) {
+        return true;
+      }
+      continue;
+    }
+
+    if (entry === normalizedName) {
       return true;
-  } else {
-    // 有 ID 优先检查 ID，其次做类似的名称容错匹配
-    if (whiteList.includes(id)) return true;
-    if (
-      whiteList.some((item) => {
-        const n = normalize(item);
-        return n === name || n.startsWith(name) || name.startsWith(n);
-      })
-    )
+    }
+
+    if (normalizedId && entry === normalizedId) {
       return true;
+    }
   }
 
   return false;
 };
 
 // 向 /api/space 接口查询空间是否存在
-const isSpaceExist = async (spaceName: string): Promise<boolean> => {
+const isSpaceExist = async (request: NextRequest, spaceName: string): Promise<boolean> => {
   try {
-    // 构建请求 URL（使用配置的 serverUrl 或本地相对路径）
-    const baseUrl = `https://${serverUrl}` || 'http://localhost:3000';
-    // const baseUrl = 'http://localhost:3000';
-    const url = new URL('/api/space', baseUrl);
+    const url = new URL('/api/space', request.nextUrl.origin);
     url.searchParams.set('spaceName', spaceName);
 
     const response = await fetch(url.toString(), {
@@ -208,11 +219,13 @@ const isSpaceExist = async (spaceName: string): Promise<boolean> => {
       return false;
     }
 
-    const { settings }: { settings: SpaceInfo } = await response.json();
-    console.warn(Object.keys(settings.participants || {}).length);
-    // 根据 /api/space 的返回格式判断空间是否存在
-    // 假设返回的数据结构中有空间信息，则表示存在
-    return Object.keys(settings.participants || {}).length > 0;
+    const { exists, settings }: { exists?: boolean; settings?: SpaceInfo } = await response.json();
+
+    if (typeof exists === 'boolean') {
+      return exists;
+    }
+
+    return !!settings;
   } catch (error) {
     console.error('Failed to check space existence:', error);
     return false;
@@ -230,7 +243,7 @@ export async function GET(request: NextRequest) {
     const uIdentity = request.nextUrl.searchParams.get('identity');
     // with auth id (from vocespace platform)
     const auth = request.nextUrl.searchParams.get('auth') as AuthType | null;
-    const existSpace = await isSpaceExist(spaceName || '');
+    const existSpace = await isSpaceExist(request, spaceName || '');
     if (!existSpace) {
       // 测试得出没有每次都获取新的config，所以重新获取一次配置
       const { create_space, whiteList } = getConfig();
