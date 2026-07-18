@@ -15,7 +15,8 @@ import { FullScreenBtn } from '../controls/widgets/full_screen';
 import { Track } from 'livekit-client';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
-import { normalizeAvoParams, ParticipantAvoEditorModal } from '../participant/avo';
+import { normalizeAvoParams } from '../participant/avo';
+import { ParticipantAvoEditorModal } from '../participant/avo_conf';
 
 export interface AppPinProps {
   appKey: AppKey;

@@ -530,6 +530,9 @@ export default {
   },
   settings: {
     title: '设置',
+    profile: {
+      title: '个人设置',
+    },
     auth: {
       title: '权限',
     },

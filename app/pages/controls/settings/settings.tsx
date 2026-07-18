@@ -17,9 +17,10 @@ import { RecordData, RecordResponse, useRecordingEnv } from '@/lib/std/recording
 import { ulid } from 'ulid';
 import { ReloadOutlined } from '@ant-design/icons';
 import { AppSettings } from './app';
-import { ParticipantSettings, SettingState, SpaceInfo } from '@/lib/std/space';
+import { ParticipantAvoParams, ParticipantSettings, SettingState, SpaceInfo } from '@/lib/std/space';
 import { AISettings } from './ai';
 import { AuthSettings } from './auth';
+import { ProfileSettings } from './profile';
 
 export interface SettingsProps {
   username: string;
@@ -46,6 +47,7 @@ export interface SettingsExports {
 
 export type TabKey =
   | 'general'
+  | 'profile'
   | 'audio'
   | 'video'
   | 'screen'
@@ -131,13 +133,21 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
             localParticipant={localParticipant}
             messageApi={messageApi}
             appendStatus={appendStatus}
-            username={username}
-            setUsername={setUsername}
             openPromptSound={openPromptSound}
             setOpenPromptSound={setOpenPromptSound}
             spaceInfo={spaceInfo}
           ></GeneralSettings>
         ),
+      },
+      {
+        key: "profile",
+        label: <TabItem type="setting" label={t('settings.profile.title')}></TabItem>,
+        children: <ProfileSettings
+          username={username}
+          setUsername={setUsername}
+          avo={uState.avo}
+          onSave={(params: ParticipantAvoParams) => { void updateSettings({ avo: params }); }}
+        ></ProfileSettings>
       },
       {
         key: 'auth',

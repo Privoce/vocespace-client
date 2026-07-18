@@ -973,7 +973,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     ]);
 
     const toSettingGeneral = (isDefineStatus?: boolean) => {
-      controlsRef.current?.openSettings('general', isDefineStatus);
+      controlsRef.current?.openSettings('profile', isDefineStatus);
     };
     // [room update handler] --------------------------------------------------------------------------------------
     const handleUpdateRoom = async () => {

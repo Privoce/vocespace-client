@@ -16,8 +16,6 @@ export interface GeneralSettingsProps {
   localParticipant: LocalParticipant;
   messageApi: MessageInstance;
   appendStatus: boolean;
-  username: string;
-  setUsername: (username: string) => void;
   openPromptSound: boolean;
   setOpenPromptSound: (open: boolean) => void;
   spaceInfo: SpaceInfo;
@@ -29,8 +27,6 @@ export function GeneralSettings({
   localParticipant,
   messageApi,
   appendStatus,
-  username,
-  setUsername,
   openPromptSound,
   setOpenPromptSound,
 }: GeneralSettingsProps) {
@@ -101,15 +97,6 @@ export function GeneralSettings({
 
   return (
     <div className={`${styles.setting_box} ${styles.scroll_box}`}>
-      <div>{t('settings.general.username')}:</div>
-      <Input
-        size="large"
-        className={styles.common_space}
-        value={username}
-        onChange={(e: any) => {
-          setUsername(e.target.value);
-        }}
-      ></Input>
       <div className={styles.common_space}>{t('settings.general.lang')}:</div>
       <LangSelect style={{ width: '100%' }}></LangSelect>
       <div className={styles.common_space}>{t('settings.general.status.title')}:</div>
