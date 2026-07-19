@@ -473,7 +473,9 @@ async function mountAvoRuntime(
   opts: {
     params: ParticipantAvoParams;
     getLevel?: () => number;
+    getLevelRef?: { current: () => number };
     interactive?: boolean;
+    isFocused?: boolean;
     scale?: number;
   },
 ): Promise<AvoHandle> {
@@ -485,15 +487,40 @@ async function mountAvoRuntime(
 
   let params = { ...opts.params };
   const getLevel = opts.getLevel ?? (() => 0);
+  const getLevelRef = opts.getLevelRef;
   const scale = opts.scale ?? 0.62;
   const interactive = opts.interactive ?? false;
+  const isFocused = opts.isFocused ?? false;
   const creature = new Creature();
   creature.applyParams(params);
+
+  let visibilityCleanup: (() => void) | null = null;
+  let silentStartTime = 0;
+  let smoothLevel = 0;
 
   const sketch = new P5Ctor((p: p5) => {
     p.setup = () => {
       const c = p.createCanvas(container.clientWidth || 160, container.clientHeight || 160);
+      p.pixelDensity(1);
       if (interactive && c && c.style) c.style('cursor', 'pointer');
+
+      // 固定 30fps
+      p.frameRate(30);
+
+      // Page Visibility API: 页面不可见时停止循环
+      const onVisibilityChange = () => {
+        if (document.hidden) {
+          p.noLoop();
+        } else {
+          silentStartTime = 0;
+          p.loop();
+          p.frameRate(30);
+        }
+      };
+      document.addEventListener('visibilitychange', onVisibilityChange);
+      visibilityCleanup = () => {
+        document.removeEventListener('visibilitychange', onVisibilityChange);
+      };
     };
 
     p.draw = () => {
@@ -501,7 +528,34 @@ async function mountAvoRuntime(
       const w = p.width;
       const h = p.height;
       const t = p.millis() / 1000;
-      const level = Math.max(0, Math.min(1, getLevel()));
+      // 优先使用 getLevelRef（实时音视频通道），否则回退到 getLevel
+      const rawLevel = Math.max(0, Math.min(1,
+        getLevelRef ? getLevelRef.current() : getLevel(),
+      ));
+
+      // 音频电平平滑（attack 快 / decay 慢），使动画响应更明显
+      smoothLevel += (rawLevel - smoothLevel) * (rawLevel > smoothLevel ? 0.35 : 0.12);
+
+      // 音频静默节流：电平持续 < 0.05 超过 5 秒，降帧至 8fps
+      if (smoothLevel < 0.05) {
+        if (silentStartTime === 0) {
+          silentStartTime = t;
+        } else if (t - silentStartTime > 5) {
+          p.frameRate(18);
+        }
+      } else {
+        silentStartTime = 0;
+        p.frameRate(30);
+      }
+
+      // 将平滑电平映射为动画驱动强度：
+      // - 低于噪音底噪（0.04）→ 无动画
+      // - 超过底噪 → 直接从 0.6 起跳，小声说话也有强烈动画
+      const SPEAKING_FLOOR = 0.04;
+      const animationLevel = smoothLevel <= SPEAKING_FLOOR
+        ? 0
+        : 0.6 + (smoothLevel - SPEAKING_FLOOR) / (1 - SPEAKING_FLOOR) * 0.4;
+
       const inside =
         interactive &&
         p.mouseX >= 0 &&
@@ -514,7 +568,7 @@ async function mountAvoRuntime(
         : 0;
       creature.render(p, w / 2, h / 2, Math.min(w, h) * scale, {
         t,
-        level,
+        level: animationLevel,
         pointer,
         pointerSpeed,
       });
@@ -552,6 +606,7 @@ async function mountAvoRuntime(
       creature.applyParams(params);
     },
     destroy() {
+      visibilityCleanup?.();
       ro.disconnect();
       try {
         sketch.remove();
@@ -566,7 +621,9 @@ export interface ParticipantAvoPlaceholderProps {
   name: string;
   avo?: Partial<ParticipantAvoParams>;
   audioLevel?: number;
+  participant?: { audioLevel: number };
   interactive?: boolean;
+  isFocused?: boolean;
   className?: string;
   style?: React.CSSProperties;
   fallbackToPlaceholder?: boolean;
@@ -576,7 +633,9 @@ export function ParticipantAvoPlaceholder({
   name,
   avo,
   audioLevel = 0,
+  participant,
   interactive = false,
+  isFocused = false,
   className,
   style,
   fallbackToPlaceholder = true,
@@ -591,6 +650,13 @@ export function ParticipantAvoPlaceholder({
   const hasAvo = hasCustomAvoParams(avo);
 
   levelRef.current = audioLevel;
+
+  // getLevelRef 在每帧被 p5 draw 调用，实时读取 participant.audioLevel
+  const getLevelRef = React.useRef<() => number>(() => levelRef.current);
+  // 每次渲染时根据 participant 是否存在更新 getter
+  getLevelRef.current = participant
+    ? () => (participant as { audioLevel: number }).audioLevel ?? 0
+    : () => levelRef.current;
 
   const params = React.useMemo(() => normalizeAvoParams(avo, name), [avo, name]);
 
@@ -625,8 +691,9 @@ export function ParticipantAvoPlaceholder({
         safeDestroy();
         handleRef.current = await mountAvoRuntime(containerRef.current, {
           params,
-          getLevel: () => levelRef.current,
+          getLevelRef,
           interactive,
+          isFocused,
           scale: 0.62,
         });
 

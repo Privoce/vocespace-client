@@ -667,7 +667,9 @@ export const ParticipantItem: (
                   name={currentParticipant?.name || trackReference.participant.name || 'guest'}
                   avo={localAvo}
                   audioLevel={trackReference.participant.audioLevel}
+                  participant={trackReference.participant}
                   interactive={isLocal}
+                  isFocused={!!isFocus}
                 />
               ) : (
                 <ParticipantPlaceholder />
