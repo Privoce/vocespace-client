@@ -17,6 +17,7 @@ import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
 import { normalizeAvoParams } from '../participant/avo';
 import { ParticipantAvoEditorModal } from '../participant/avo_conf';
+import { SvgResource } from '@/app/resources/svg';
 
 export interface AppPinProps {
   appKey: AppKey;
@@ -96,20 +97,19 @@ export function AppFlotIconCollect({
     trackReference?.source === Track.Source.Camera;
 
   const handleSaveAvo = useCallback(
-    async (avoParams: ParticipantAvoParams) => {
+    async (avoParamsList: ParticipantAvoParams[]) => {
       if (!participant || !updateSettings || !spaceName) {
         return;
       }
 
       setAvoSaving(true);
       try {
-        const normalized = normalizeAvoParams(
-          avoParams,
-          participant.name || localParticipant.name || 'guest',
+        const normalizedList = avoParamsList.map((a) =>
+          normalizeAvoParams(a, a.name || participant.name || localParticipant.name || 'guest'),
         );
-        const success = await updateSettings({ avo: normalized });
+        const success = await updateSettings({ avoList: normalizedList });
         if (success !== false) {
-          useUserStore.setState({ avo: normalized });
+          useUserStore.setState({ avoList: normalizedList });
           socket.emit('update_user_status', {
             space: spaceName,
           } as WsBase);
@@ -138,7 +138,7 @@ export function AppFlotIconCollect({
             style={APP_FLOT_PIN_STYLE}
             onClick={() => setAvoModalOpen(true)}
           >
-            <BgColorsOutlined />
+            <SvgResource type="smile" svgSize={16} />
           </button>
         </Tooltip>
       )}
@@ -149,7 +149,7 @@ export function AppFlotIconCollect({
         <ParticipantAvoEditorModal
           open={avoModalOpen}
           name={participant.name || localParticipant.name || 'guest'}
-          avo={participant.avo}
+          avoList={participant.avoList}
           saving={avoSaving}
           onCancel={() => setAvoModalOpen(false)}
           onSave={handleSaveAvo}
@@ -173,7 +173,7 @@ export function AppFlotIconCollect({
             <ParticipantAvoEditorModal
               open={avoModalOpen}
               name={participant.name || localParticipant.name || 'guest'}
-              avo={participant.avo}
+              avoList={participant.avoList}
               saving={avoSaving}
               onCancel={() => setAvoModalOpen(false)}
               onSave={handleSaveAvo}

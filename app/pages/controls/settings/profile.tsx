@@ -9,15 +9,15 @@ import styles from '@/styles/controls.module.scss';
 export interface ProfileSettingsProps {
   username: string;
   setUsername: (username: string) => void;
-  avo?: Partial<ParticipantAvoParams>;
+  avoList?: ParticipantAvoParams[];
   saving?: boolean;
-  onSave: (params: ParticipantAvoParams) => void | Promise<void>;
+  onSave: (params: ParticipantAvoParams[]) => void | Promise<void>;
 }
 
 export const ProfileSettings = ({
   username,
   setUsername,
-  avo,
+  avoList,
   saving,
   onSave,
 }: ProfileSettingsProps) => {
@@ -39,7 +39,7 @@ export const ProfileSettings = ({
       <AvoConfigPanel
         direction="vertical"
         name={username}
-        avo={avo}
+        avoList={avoList}
         saving={saving}
         onSave={onSave}
       />

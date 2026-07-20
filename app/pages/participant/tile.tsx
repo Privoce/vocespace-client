@@ -165,12 +165,15 @@ export const ParticipantItem: (
       return settings.participants[trackReference.participant.identity];
     }, [settings.participants, trackReference.participant.identity]);
     const localAvo = useMemo(() => {
-      if (!isLocal) {
-        return currentParticipant?.avo;
-      }
+      const list = !isLocal
+        ? currentParticipant?.avoList
+        : (uState.avoList || currentParticipant?.avoList);
 
-      return uState.avo || currentParticipant?.avo;
-    }, [currentParticipant?.avo, isLocal, uState.avo]);
+      if (!list || list.length === 0) return undefined;
+
+      // 优先取 isUsed=true 的项，否则取第一项
+      return list.find((a) => a.isUsed) ?? list[0];
+    }, [currentParticipant?.avoList, isLocal, uState.avoList]);
     const avoRenderKey = useMemo(() => {
       if (!localAvo) {
         return 'placeholder';

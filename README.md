@@ -169,6 +169,18 @@ VoceSpace offers a comprehensive video conferencing experience with advanced AI-
 - [x] Hand-raising queue and status display
 - [x] Quick sending of reaction emoticons
 
+**AVO Dynamic Avatar**
+
+- [x] Dynamic voice-driven avatar based on p5.js
+- [x] Three animation styles: Blob (morphing sphere), Orbit (orbiting particles), Pulse (ripple waves)
+- [x] Microphone audio-driven animation effects
+- [x] Multiple color hue selection
+- [x] Energy parameter adjustment
+- [x] Support for multiple AVO presets
+- [x] AVO configuration export/import (JSON format)
+- [x] Display Name customization
+- [x] Performance optimization: frame rate limiting, page visibility detection, Retina display optimization, audio silence throttling
+
 ### Space and Room Management
 
 **Multi-room Architecture**

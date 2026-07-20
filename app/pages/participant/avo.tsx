@@ -57,6 +57,7 @@ export function normalizeAvoParams(
     hue: 193,
     style: 'blob',
     energy: 0.6,
+    isUsed: false,
   };
 
   if (typeof window !== 'undefined' && (window as any).Avo?.normalizeParams) {
@@ -497,6 +498,7 @@ async function mountAvoRuntime(
   let visibilityCleanup: (() => void) | null = null;
   let silentStartTime = 0;
   let smoothLevel = 0;
+  let persistLevel = 0; // 缓出用，声音结束后平滑衰减
 
   const sketch = new P5Ctor((p: p5) => {
     p.setup = () => {
@@ -552,9 +554,12 @@ async function mountAvoRuntime(
       // - 低于噪音底噪（0.04）→ 无动画
       // - 超过底噪 → 直接从 0.6 起跳，小声说话也有强烈动画
       const SPEAKING_FLOOR = 0.04;
-      const animationLevel = smoothLevel <= SPEAKING_FLOOR
+      const targetLevel = smoothLevel <= SPEAKING_FLOOR
         ? 0
         : 0.6 + (smoothLevel - SPEAKING_FLOOR) / (1 - SPEAKING_FLOOR) * 0.4;
+
+      // 缓出：声音结束后 persistLevel 缓慢衰减到 0，而非骤停
+      persistLevel += (targetLevel - persistLevel) * (targetLevel > persistLevel ? 0.35 : 0.04);
 
       const inside =
         interactive &&
@@ -568,7 +573,7 @@ async function mountAvoRuntime(
         : 0;
       creature.render(p, w / 2, h / 2, Math.min(w, h) * scale, {
         t,
-        level: animationLevel,
+        level: persistLevel,
         pointer,
         pointerSpeed,
       });
@@ -777,5 +782,6 @@ export function randomizeAvo(name: string): ParticipantAvoParams {
     hue: AVO_PALETTE[Math.floor(Math.random() * AVO_PALETTE.length)],
     style: AVO_STYLES[Math.floor(Math.random() * AVO_STYLES.length)],
     energy: Math.round((0.4 + Math.random() * 0.5) * 20) / 20,
+    isUsed: false,
   };
 }

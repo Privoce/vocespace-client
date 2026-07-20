@@ -101,12 +101,14 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
     }, [settings.participants, trackReference.participant.identity]);
     const uState = useUserStore();
     const localAvo = useMemo(() => {
-      if (trackReference.participant.identity !== localParticipant.identity) {
-        return currentParticipant?.avo;
-      }
+      const list = trackReference.participant.identity !== localParticipant.identity
+        ? currentParticipant?.avoList
+        : (uState.avoList || currentParticipant?.avoList);
 
-      return uState.avo || currentParticipant?.avo;
-    }, [currentParticipant?.avo, localParticipant.identity, trackReference.participant.identity, uState.avo]);
+      if (!list || list.length === 0) return undefined;
+
+      return list.find((a) => a.isUsed) ?? list[0];
+    }, [currentParticipant?.avoList, localParticipant.identity, trackReference.participant.identity, uState.avoList]);
     const avoRenderKey = useMemo(() => {
       if (!localAvo) {
         return 'placeholder';

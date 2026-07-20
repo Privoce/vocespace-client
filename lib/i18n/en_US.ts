@@ -199,6 +199,7 @@ export default {
   },
   avo: {
     title: 'Design',
+    displayName: 'Display Name',
     preview_desc: 'Preview updates instantly. Save writes the current AVO params to your user data.',
     style: 'Style',
     color: 'Color',
@@ -210,6 +211,14 @@ export default {
       ring: 'Orbit',
       wave: 'Pulse',
     },
+    presets: 'Presets',
+    load: 'Load',
+    delete: 'Delete',
+    addPreset: 'Add',
+    export: 'Export',
+    import: 'Import',
+    importInvalid: 'Invalid JSON file',
+    importSuccess: 'Imported successfully',
   },
   recording: {
     title: 'Saved Recordings',
@@ -548,6 +557,9 @@ export default {
   },
   settings: {
     title: 'Settings',
+    profile: {
+      title: 'AVO',
+    },
     auth: {
       title: 'Permissions',
     },

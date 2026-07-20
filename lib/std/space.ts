@@ -95,6 +95,7 @@ export interface ParticipantAvoParams {
   hue: number;
   style: 'blob' | 'ring' | 'wave';
   energy: number;
+  isUsed: boolean;
 }
 
 /**
@@ -215,8 +216,8 @@ export interface ParticipantSettings {
    * 是否开启了工作模式
    */
   work: ParticipantWorkConf;
-  /** 用户自行设计的AVO头像 */
-  avo?: Partial<ParticipantAvoParams>;
+  /** 用户自行设计的AVO头像列表 */
+  avoList?: ParticipantAvoParams[];
 }
 
 export interface SpaceTimeRecord {

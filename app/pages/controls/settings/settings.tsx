@@ -141,12 +141,12 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
       },
       {
         key: "profile",
-        label: <TabItem type="setting" label={t('settings.profile.title')}></TabItem>,
+        label: <TabItem type="smile" label={t('settings.profile.title')}></TabItem>,
         children: <ProfileSettings
           username={username}
           setUsername={setUsername}
-          avo={uState.avo}
-          onSave={(params: ParticipantAvoParams) => { void updateSettings({ avo: params }); }}
+          avoList={uState.avoList}
+          onSave={(params: ParticipantAvoParams[]) => { void updateSettings({ avoList: params }); }}
         ></ProfileSettings>
       },
       {
