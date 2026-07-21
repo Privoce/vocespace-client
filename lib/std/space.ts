@@ -791,10 +791,10 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   avoList: [
     {
       name: 'guest',
-      variant: 0,
-      hue: 193,
+      variant: 268470,
+      hue: 214,
       style: 'blob',
-      energy: 0.6,
+      energy: 0.8,
       isUsed: true,
       enabled: true,
     },

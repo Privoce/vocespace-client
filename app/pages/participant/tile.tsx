@@ -28,7 +28,7 @@ import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { isSpaceManager, randomColor } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
-import { ChildRoom, ParticipantSettings } from '@/lib/std/space';
+import { ChildRoom, DEFAULT_PARTICIPANT_SETTINGS, ParticipantAvoParams, ParticipantSettings } from '@/lib/std/space';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { AppFlotIconCollect } from '../apps/app_pin';
@@ -169,9 +169,8 @@ export const ParticipantItem: (
         ? currentParticipant?.avoList
         : (uState.avoList || currentParticipant?.avoList);
 
-      if (!list || list.length === 0) return undefined;
-
-      const active = list.find((a) => a.isUsed) ?? list[0];
+      const effectiveList: ParticipantAvoParams[] = list && list.length > 0 ? list : DEFAULT_PARTICIPANT_SETTINGS.avoList!;
+      const active = effectiveList.find((a) => a.isUsed) ?? effectiveList[0];
       return active.enabled ? active : undefined;
     }, [currentParticipant?.avoList, isLocal, uState.avoList]);
     const avoRenderKey = useMemo(() => {

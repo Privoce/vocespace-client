@@ -18,7 +18,7 @@ import {
 import { ConnectionState, Participant, Room, Track } from 'livekit-client';
 import { forwardRef, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { isTrackReferencePinned } from './tile';
-import { AppAuth, ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { AppAuth, ChildRoom, DEFAULT_PARTICIPANT_SETTINGS, ParticipantAvoParams, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { useVideoBlur, WsBase, WsSender, WsWave } from '@/lib/std/device';
 import { useUserStore } from '@/lib/store/user';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
@@ -105,9 +105,8 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
         ? currentParticipant?.avoList
         : (uState.avoList || currentParticipant?.avoList);
 
-      if (!list || list.length === 0) return undefined;
-
-      const active = list.find((a) => a.isUsed) ?? list[0];
+      const effectiveList: ParticipantAvoParams[] = list && list.length > 0 ? list : DEFAULT_PARTICIPANT_SETTINGS.avoList!;
+      const active = effectiveList.find((a) => a.isUsed) ?? effectiveList[0];
       return active.enabled ? active : undefined;
     }, [currentParticipant?.avoList, localParticipant.identity, trackReference.participant.identity, uState.avoList]);
     const avoRenderKey = useMemo(() => {
