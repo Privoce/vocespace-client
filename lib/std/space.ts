@@ -96,6 +96,7 @@ export interface ParticipantAvoParams {
   style: 'blob' | 'ring' | 'wave';
   energy: number;
   isUsed: boolean;
+  enabled: boolean;
 }
 
 /**
@@ -768,7 +769,7 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
     echoCancellation: true,
     autoGainControl: true,
   },
-  sync: ['todo'], // 默认同步待办事项
+  sync: ['todo'],
   appAuth: 'read',
   appDatas: {},
   raiseHand: false,
@@ -787,6 +788,17 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
     identity: 'participant',
   },
   work: DEFAULT_PARTICIPANT_WORK_CONF,
+  avoList: [
+    {
+      name: 'guest',
+      variant: 0,
+      hue: 193,
+      style: 'blob',
+      energy: 0.6,
+      isUsed: true,
+      enabled: true,
+    },
+  ],
 };
 
 /**

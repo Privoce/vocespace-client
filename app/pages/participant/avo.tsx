@@ -58,6 +58,7 @@ export function normalizeAvoParams(
     style: 'blob',
     energy: 0.6,
     isUsed: false,
+    enabled: true,
   };
 
   if (typeof window !== 'undefined' && (window as any).Avo?.normalizeParams) {
@@ -758,7 +759,7 @@ export function ParticipantAvoPlaceholder({
             zIndex: 1,
           }}
         >
-          <ParticipantPlaceholder />
+          <ParticipantPlaceholder height={200} />
         </div>
       )}
       <div
@@ -783,5 +784,6 @@ export function randomizeAvo(name: string): ParticipantAvoParams {
     style: AVO_STYLES[Math.floor(Math.random() * AVO_STYLES.length)],
     energy: Math.round((0.4 + Math.random() * 0.5) * 20) / 20,
     isUsed: false,
+    enabled: true,
   };
 }

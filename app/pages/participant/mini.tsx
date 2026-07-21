@@ -107,7 +107,8 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
 
       if (!list || list.length === 0) return undefined;
 
-      return list.find((a) => a.isUsed) ?? list[0];
+      const active = list.find((a) => a.isUsed) ?? list[0];
+      return active.enabled ? active : undefined;
     }, [currentParticipant?.avoList, localParticipant.identity, trackReference.participant.identity, uState.avoList]);
     const avoRenderKey = useMemo(() => {
       if (!localAvo) {
@@ -276,7 +277,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                   name={currentParticipant?.name || trackReference.participant.name || 'guest'}
                   avo={localAvo}
                   audioLevel={trackReference.participant.audioLevel}
-                  interactive={trackReference.participant.identity === localParticipant.identity}
+                  interactive={true}
                   style={{ width: '100%', height: '100%', maxWidth: '100%', maxHeight: '100%' }}
                 />
               ) : (

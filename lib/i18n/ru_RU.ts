@@ -210,6 +210,9 @@ export default {
     import: 'Импорт',
     importInvalid: 'Неверный файл JSON',
     importSuccess: 'Импорт завершен',
+    enabled: 'ВКЛ',
+    disabled: 'ВЫКЛ',
+    saveAsPreset: 'Сохранить как пресет',
   },
   recording: {
     title: 'Записи',

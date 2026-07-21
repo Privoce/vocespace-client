@@ -171,8 +171,8 @@ export const ParticipantItem: (
 
       if (!list || list.length === 0) return undefined;
 
-      // 优先取 isUsed=true 的项，否则取第一项
-      return list.find((a) => a.isUsed) ?? list[0];
+      const active = list.find((a) => a.isUsed) ?? list[0];
+      return active.enabled ? active : undefined;
     }, [currentParticipant?.avoList, isLocal, uState.avoList]);
     const avoRenderKey = useMemo(() => {
       if (!localAvo) {
@@ -671,7 +671,7 @@ export const ParticipantItem: (
                   avo={localAvo}
                   audioLevel={trackReference.participant.audioLevel}
                   participant={trackReference.participant}
-                  interactive={isLocal}
+                  interactive={true}
                   isFocused={!!isFocus}
                 />
               ) : (

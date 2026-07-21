@@ -219,6 +219,9 @@ export default {
     import: 'Import',
     importInvalid: 'Invalid JSON file',
     importSuccess: 'Imported successfully',
+    enabled: 'ON',
+    disabled: 'OFF',
+    saveAsPreset: 'Save as Preset',
   },
   recording: {
     title: 'Saved Recordings',

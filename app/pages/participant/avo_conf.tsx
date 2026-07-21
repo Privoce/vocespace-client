@@ -29,8 +29,8 @@ const { Text } = Typography;
 const basicButtonStyle = {
   width: 'calc(50% - 8px)',
   backgroundColor: 'transparent',
-  border: "1px solid #8c8c8c",
-  color: "#fff"
+  border: '1px solid #8c8c8c',
+  color: '#fff',
 };
 
 export interface AvoConfigPanelProps {
@@ -86,7 +86,7 @@ export function AvoConfigPanel({
 
   const previewKey = React.useMemo(
     () =>
-      `${selectedAvo.variant}:${selectedAvo.hue}:${selectedAvo.style}:${selectedAvo.energy}:${selectedAvo.name}`,
+      `${selectedAvo.enabled}:${selectedAvo.variant}:${selectedAvo.hue}:${selectedAvo.style}:${selectedAvo.energy}:${selectedAvo.name}`,
     [selectedAvo],
   );
 
@@ -101,15 +101,6 @@ export function AvoConfigPanel({
     },
     [selectedIndex],
   );
-
-  // 添加新项
-  const addItem = React.useCallback(() => {
-    setDraftList((prev) => [
-      ...prev,
-      normalizeAvoParams(undefined, selectedAvo.name || name || 'guest'),
-    ]);
-    setSelectedIndex(draftList.length);
-  }, [draftList.length, name, selectedAvo.name]);
 
   // 删除指定项
   const deleteItem = React.useCallback(
@@ -131,9 +122,7 @@ export function AvoConfigPanel({
   // 加载指定项到编辑器（更新选中索引，并标记为当前使用）
   const loadItem = React.useCallback((idx: number) => {
     setSelectedIndex(idx);
-    setDraftList((prev) =>
-      prev.map((item, i) => ({ ...item, isUsed: i === idx })),
-    );
+    setDraftList((prev) => prev.map((item, i) => ({ ...item, isUsed: i === idx })));
   }, []);
 
   // 导出 JSON
@@ -188,9 +177,9 @@ export function AvoConfigPanel({
         <ParticipantAvoPlaceholder
           key={previewKey}
           name={selectedAvo.name}
-          avo={selectedAvo}
+          avo={selectedAvo.enabled ? selectedAvo : undefined}
           interactive
-          fallbackToPlaceholder={false}
+          fallbackToPlaceholder={!selectedAvo.enabled}
         />
       </div>
       {/* Display Name 输入框 */}
@@ -209,11 +198,32 @@ export function AvoConfigPanel({
 
   const controlsSection = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
-      {/* 样式 */}
+      <Flex justify="space-between" align="center">
+        <Text strong>{t('avo.title')}</Text>
+        <Radio.Group
+          optionType="button"
+          buttonStyle="solid"
+          value={selectedAvo.enabled}
+          onChange={(event) => {
+            const enabled = event.target.value;
+            updateCurrent({ enabled });
+            onSave([
+              ...draftList.slice(0, selectedIndex),
+              { ...draftList[selectedIndex], enabled },
+              ...draftList.slice(selectedIndex + 1),
+            ]);
+          }}
+        >
+          <Radio.Button value={true}>{t('avo.enabled') || 'ON'}</Radio.Button>
+          <Radio.Button value={false}>{t('avo.disabled') || 'OFF'}</Radio.Button>
+        </Radio.Group>
+      </Flex>
+
       <div>
         <Text strong>{t('avo.style')}</Text>
-        <div style={{ marginTop: 8 }}>
+        <div style={{ width: '100%' }}>
           <Radio.Group
+            block
             optionType="button"
             buttonStyle="solid"
             value={selectedAvo.style}
@@ -230,18 +240,13 @@ export function AvoConfigPanel({
         </div>
       </div>
 
-      {/* 颜色 */}
       <div>
         <Text strong>{t('avo.color')}</Text>
         <div
           style={{
-            // display: 'grid',
-            // gridTemplateColumns: 'repeat(4, minmax(0, 1fr))',
             display: 'flex',
             flexWrap: 'wrap',
             justifyContent: 'space-between',
-            gap: 8,
-            marginTop: 8,
           }}
         >
           {AVO_PALETTE.map((hue) => {
@@ -266,20 +271,17 @@ export function AvoConfigPanel({
         </div>
       </div>
 
-      {/* 能量 */}
       <div>
         <Text strong>{t('avo.energy')}</Text>
-        <div style={{ marginTop: 8 }}>
-          <Slider
-            min={0.1}
-            max={1}
-            step={0.05}
-            value={selectedAvo.energy}
-            onChange={(value) => updateCurrent({ energy: Number(value) })}
-          />
-        </div>
+        <Slider
+          min={0.1}
+          max={1}
+          step={0.05}
+          value={selectedAvo.energy}
+          onChange={(value) => updateCurrent({ energy: Number(value) })}
+        />
       </div>
-      {/* 底部操作栏 */}
+
       <div
         style={{
           display: 'flex',
@@ -311,8 +313,21 @@ export function AvoConfigPanel({
         </Flex>
         <div style={{ flex: 1 }} />
 
-        <Button block type="primary" loading={saving} onClick={() => onSave(draftList)}>
-          {t('dashboard.save')}
+        <Button
+          block
+          type="primary"
+          loading={saving}
+          onClick={() => {
+            const newItem = {
+              ...selectedAvo,
+              variant: Math.floor(Math.random() * 1_000_000),
+              isUsed: false,
+            };
+            setDraftList((prev) => [...prev, newItem]);
+            onSave([...draftList, newItem]);
+          }}
+        >
+          {t('avo.saveAsPreset') || 'Save as Preset'}
         </Button>
         <Flex justify="space-between" style={{ width: '100%' }}>
           <Button
@@ -337,16 +352,21 @@ export function AvoConfigPanel({
         </Flex>
       </div>
 
-      {/* AVO 列表 */}
       {draftList.length > 0 && (
         <div>
           <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
             <Text strong>{t('avo.presets') || 'Presets'}</Text>
-            <Button style={{ marginTop: 8 }} onClick={addItem}>
-              + {t('avo.addPreset') || 'Add'}
-            </Button>
           </div>
-          <div style={{ marginTop: 8, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div
+            style={{
+              margin: '8px 0',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 8,
+              height: 164,
+              overflowY: 'auto',
+            }}
+          >
             {draftList.map((item, idx) => (
               <div
                 key={`${idx}-${item.variant}`}
@@ -360,7 +380,6 @@ export function AvoConfigPanel({
                   border: '1px solid rgba(255,255,255,0.06)',
                 }}
               >
-                {/* 左侧静态形象 */}
                 <div
                   style={{
                     width: 64,
@@ -380,7 +399,6 @@ export function AvoConfigPanel({
                     fallbackToPlaceholder={false}
                   />
                 </div>
-                {/* 中间名称 */}
                 <div
                   style={{
                     flex: 1,
@@ -404,7 +422,6 @@ export function AvoConfigPanel({
                   </div>
                   <div style={{ opacity: 0.6, fontSize: 12 }}>{item.style}</div>
                 </div>
-                {/* 右侧操作 */}
                 <Space size={4}>
                   <Button
                     size="small"
@@ -420,7 +437,6 @@ export function AvoConfigPanel({
                       color: '#da3535ff',
                       border: '1px solid #da3535ff',
                     }}
-                    // disabled={draftList.length <= 1}
                     onClick={() => deleteItem(idx)}
                   >
                     {t('avo.delete') || 'Delete'}

@@ -207,6 +207,9 @@ export default {
     import: '导入',
     importInvalid: '无效的JSON文件',
     importSuccess: '导入成功',
+    enabled: '开启',
+    disabled: '关闭',
+    saveAsPreset: '保存为预设',
   },
   recording: {
     title: '录制记录',

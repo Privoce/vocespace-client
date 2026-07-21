@@ -113,7 +113,6 @@ export function AppFlotIconCollect({
           socket.emit('update_user_status', {
             space: spaceName,
           } as WsBase);
-          setAvoModalOpen(false);
         }
       } finally {
         setAvoSaving(false);
