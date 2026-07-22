@@ -28,13 +28,17 @@ export interface EnhancedChatProps {
   spaceInfo: SpaceInfo;
 }
 
+export interface ChatPanelProps {
+  space: Room;
+  sendFileConfirm: (onOk: (abortController?: AbortController) => Promise<ChatMsgItem>) => void;
+  messageApi: MessageInstance;
+  spaceInfo: SpaceInfo;
+}
+
 export interface EnhancedChatExports {}
 
-export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatProps>(
-  (
-    { open, setOpen, onClose, space, sendFileConfirm, messageApi, spaceInfo }: EnhancedChatProps,
-    ref,
-  ) => {
+export const ChatPanel = React.forwardRef<EnhancedChatExports, ChatPanelProps>(
+  ({ space, sendFileConfirm, messageApi, spaceInfo }: ChatPanelProps, ref) => {
     const { t } = useI18n();
     const ulRef = React.useRef<HTMLUListElement>(null);
     const bottomRef = React.useRef<HTMLDivElement>(null);
@@ -92,21 +96,19 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
     };
 
     React.useEffect(() => {
-      if (open) {
-        useRoomStore.getState().setChatMsg((prev) => ({
-          unhandled: 0,
-          msgs: prev.msgs,
-        }));
+      useRoomStore.getState().setChatMsg((prev) => ({
+        unhandled: 0,
+        msgs: prev.msgs,
+      }));
 
-        if (bottomRef.current) {
+      if (bottomRef.current) {
+        requestAnimationFrame(() => {
           requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-              scrollToBottom();
-            });
+            scrollToBottom();
           });
-        }
+        });
       }
-    }, [open, bottomRef]);
+    }, [bottomRef]);
 
     // [send methods] ----------------------------------------------------------------------------
     const sendMsg = async () => {
@@ -344,23 +346,18 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
     };
 
     return (
-      <Drawer
-        {...DEFAULT_DRAWER_PROP}
-        title={t('common.chat')}
-        onClose={onClose}
-        open={open}
-        extra={DrawerCloser({
-          on_clicked: () => setOpen(false),
-        })}
-        styles={{
-          body: {
-            ...DEFAULT_DRAWER_PROP.styles?.body,
-            padding: 0,
-          },
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          height: '100%',
+          width: '100%',
+          background: '#1a1a1a',
         }}
       >
         <div
           className={styles.msg}
+          style={{ flex: 1, minHeight: 0, position: 'relative' }}
           onDragEnter={handleDragEnter}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -438,6 +435,51 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
         >
           <FS space={space} files={files} onFresh={openLocalFileSystem} canDeleteRBAC={canDeleteRBAC}></FS>
         </Modal>
+      </div>
+    );
+  },
+);
+
+export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatProps>(
+  (
+    { open, setOpen, onClose, space, sendFileConfirm, messageApi, spaceInfo }: EnhancedChatProps,
+    ref,
+  ) => {
+    const { t } = useI18n();
+    const chatMsg = useRoomStore((s) => s.chatMsg);
+
+    React.useEffect(() => {
+      if (open) {
+        useRoomStore.getState().setChatMsg((prev) => ({
+          unhandled: 0,
+          msgs: prev.msgs,
+        }));
+      }
+    }, [open]);
+
+    return (
+      <Drawer
+        {...DEFAULT_DRAWER_PROP}
+        title={t('common.chat')}
+        onClose={onClose}
+        open={open}
+        extra={DrawerCloser({
+          on_clicked: () => setOpen(false),
+        })}
+        styles={{
+          body: {
+            ...DEFAULT_DRAWER_PROP.styles?.body,
+            padding: 0,
+          },
+        }}
+      >
+        <ChatPanel
+          ref={ref}
+          space={space}
+          sendFileConfirm={sendFileConfirm}
+          messageApi={messageApi}
+          spaceInfo={spaceInfo}
+        />
       </Drawer>
     );
   },

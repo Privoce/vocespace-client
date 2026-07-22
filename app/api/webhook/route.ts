@@ -119,8 +119,8 @@ export async function GET(request: NextRequest) {
       },
       line_items: [
         {
-          // price: licenseType === 'pro' ? 'price_1REHPyGGoUDRyc3jW5AlM49w' : 'price_1TqCPGGGoUDRyc3jjpRg67VD',
-          price: 'price_1TrfgNGGoUDRyc3jDRy4VJke',
+          price: licenseType === 'pro' ? 'price_1REHPyGGoUDRyc3jW5AlM49w' : 'price_1TqCPGGGoUDRyc3jjpRg67VD',
+          // price: 'price_1TrfgNGGoUDRyc3jDRy4VJke',
           quantity: 1,
         },
       ],

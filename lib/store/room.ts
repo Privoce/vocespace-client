@@ -23,11 +23,14 @@ interface RoomState {
   virtualMask: boolean;
   /** 远程应用目标 */
   remoteApp: RemoteApp;
+  /** 聊天面板是否打开 */
+  chatOpen: boolean;
 
   setRoomStatusList: (list: UserDefineStatus[]) => void;
   setChatMsg: (chatMsg: ChatMsgState | ((prev: ChatMsgState) => ChatMsgState)) => void;
   setVirtualMask: (v: boolean) => void;
   setRemoteApp: (app: Partial<RemoteApp>) => void;
+  setChatOpen: (open: boolean) => void;
 }
 
 export const useRoomStore = create<RoomState>()((set) => ({
@@ -39,6 +42,7 @@ export const useRoomStore = create<RoomState>()((set) => ({
     participantName: undefined,
     auth: 'read' as AppAuth,
   },
+  chatOpen: false,
 
   setRoomStatusList: (roomStatusList) => set({ roomStatusList }),
   setChatMsg: (chatMsg) =>
@@ -49,4 +53,5 @@ export const useRoomStore = create<RoomState>()((set) => ({
     ),
   setVirtualMask: (virtualMask) => set({ virtualMask }),
   setRemoteApp: (partial) => set((s) => ({ remoteApp: { ...s.remoteApp, ...partial } })),
+  setChatOpen: (chatOpen) => set({ chatOpen }),
 }));

@@ -69,6 +69,8 @@ import { TilePlayer, TilePlayerAdd, TilePlayerItem } from '../participant/player
 import { LayoutEntity, UnifiedLayout, useReplaceLivekitTrack } from '../layout/unified';
 import { PaginationControl, PaginationIndicator } from '../layout/cover';
 import { LicenseAlert } from './widgets/license_alert';
+import { ChatPanel } from '@/app/pages/chat/chat';
+import { useControlsChat } from './hooks';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -121,6 +123,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const [localTrackVersion, setLocalTrackVersion] = useState(0);
     const [cacheWidgetState, setCacheWidgetState] = useState<WidgetState>();
     const chatMsg = useRoomStore((s) => s.chatMsg);
+    const { chatOpen, setChatOpen, sendFileConfirm } = useControlsChat();
     const channelRef = React.useRef<ChannelExports>(null);
     const {
       settings,
@@ -1012,19 +1015,14 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      // 如果拖拽的文件数量大于0，则表示是文件拖拽，如果文件拖拽就需要让<Controls />组件开启聊天的Drawer
       if (e.dataTransfer.files.length > 0) {
-        if (controlsRef.current) {
-          controlsRef.current.setChatOpen(true);
-        }
+        setChatOpen(true);
       }
     };
     const handleDrag = (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       e.stopPropagation();
-      if (controlsRef.current) {
-        controlsRef.current.setChatOpen(true);
-      }
+      setChatOpen(true);
     };
 
     const mainViewWidth = useMemo(() => {
@@ -1277,65 +1275,95 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             >
               <div
                 className="lk-video-conference-inner"
-                style={{ alignItems: 'flex-start', height: '100dvh', gap: 8 }}
+                style={{
+                  alignItems: 'flex-start',
+                  height: '100dvh',
+                  gap: 8,
+                  flexDirection: 'column',
+                }}
               >
                 {!hasRoomLicense && (
                   <LicenseAlert toBuyRoomLicense={toBuyRoomLicense}></LicenseAlert>
                 )}
-                <div
-                  className={focusTrack ? 'lk-focus-layout-wrapper' : 'lk-grid-layout-wrapper'}
-                  style={{
-                    position: 'relative',
-                    flex: 1,
-                    minHeight: 0,
-                    height: 'calc(100% - 16px)',
-                    width: 'calc(100% - 8px)',
-                    padding: '8px 0px 0px 8px',
-                    marginBottom: 0,
-                  }}
-                >
-                  <UnifiedLayout
-                    entities={unifiedEntities}
-                    focusEntity={unifiedFocusEntity}
-                    layoutType={unifiedFocusEntity ? 'focus' : 'grid'}
-                    deviceType={deviceType}
-                    fullScreen={isFullScreen}
-                    pageSize={unifiedPageSize}
-                    preserveOffscreen
-                    className="lk-unified-layout-stage"
-                    style={{ width: '100%', height: '100%' }}
-                    renderEntity={renderUnifiedEntity}
-                    renderOverlay={({ currentPage, totalPages, nextPage, prevPage }) => {
-                      if (totalPages <= 1) return null;
-
-                      return (
-                        <div
-                          style={{
-                            position: 'absolute',
-                            bottom: 12,
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            zIndex: 30,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            gap: 8,
-                          }}
-                        >
-                          <PaginationIndicator
-                            totalPageCount={totalPages}
-                            currentPage={currentPage}
-                          />
-                          <PaginationControl
-                            totalPageCount={totalPages}
-                            currentPage={currentPage}
-                            nextPage={nextPage}
-                            prevPage={prevPage}
-                          />
-                        </div>
-                      );
+                <div style={{ display: 'flex', flex: 1, width: '100%', minHeight: 0 }}>
+                  <div
+                    className={focusTrack ? 'lk-focus-layout-wrapper' : 'lk-grid-layout-wrapper'}
+                    style={{
+                      position: 'relative',
+                      flex: 1,
+                      minHeight: 0,
+                      height: '100%',
+                      width: chatOpen ? 'calc(100% - 288px)' : '100%',
+                      padding: '0px 0px 0px 8px',
+                      marginBottom: 0,
+                      transition: 'width 0.3s ease-in-out',
                     }}
-                  />
+                  >
+                    <UnifiedLayout
+                      entities={unifiedEntities}
+                      focusEntity={unifiedFocusEntity}
+                      layoutType={unifiedFocusEntity ? 'focus' : 'grid'}
+                      deviceType={deviceType}
+                      fullScreen={isFullScreen}
+                      pageSize={unifiedPageSize}
+                      preserveOffscreen
+                      className="lk-unified-layout-stage"
+                      style={{ width: '100%', height: '100%' }}
+                      renderEntity={renderUnifiedEntity}
+                      renderOverlay={({ currentPage, totalPages, nextPage, prevPage }) => {
+                        if (totalPages <= 1) return null;
+
+                        return (
+                          <div
+                            style={{
+                              position: 'absolute',
+                              bottom: 12,
+                              left: '50%',
+                              transform: 'translateX(-50%)',
+                              zIndex: 30,
+                              display: 'flex',
+                              flexDirection: 'column',
+                              alignItems: 'center',
+                              gap: 8,
+                            }}
+                          >
+                            <PaginationIndicator
+                              totalPageCount={totalPages}
+                              currentPage={currentPage}
+                            />
+                            <PaginationControl
+                              totalPageCount={totalPages}
+                              currentPage={currentPage}
+                              nextPage={nextPage}
+                              prevPage={prevPage}
+                            />
+                          </div>
+                        );
+                      }}
+                    />
+                  </div>
+                  {!isMobile() && (
+                    <div
+                      style={{
+                        width: chatOpen ? 280 : 0,
+                        height: '100%',
+                        overflow: 'hidden',
+                        transition: 'width 0.3s ease-in-out',
+                        flexShrink: 0,
+                        borderLeft: '1px dashed #8f8f8f',
+                        borderRadius: '0.5em',
+                      }}
+                    >
+                      {chatOpen && space && (
+                        <ChatPanel
+                          space={space}
+                          sendFileConfirm={sendFileConfirm}
+                          messageApi={messageApi}
+                          spaceInfo={settings}
+                        />
+                      )}
+                    </div>
+                  )}
                 </div>
                 <Controls
                   ref={controlsRef}

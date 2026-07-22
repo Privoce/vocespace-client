@@ -18,7 +18,7 @@ import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { ReadableConf } from '@/lib/std/conf';
 import { isMobile as is_mobile, isSpaceManager, UserStatus } from '@/lib/std';
-import { EnhancedChat, EnhancedChatExports } from '@/app/pages/chat/chat';
+
 import { ChatToggle } from './toggles/chat_toggle';
 import { MoreButton } from './toggles/more_button';
 import { ControlType, MediaDeviceKind, WsBase, WsControlParticipant, WsTo } from '@/lib/std/device';
@@ -127,7 +127,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [isChatOpen, setIsChatOpen] = React.useState(false);
     const layoutContext = useMaybeLayoutContext();
     const inviteTextRef = React.useRef<HTMLDivElement>(null);
-    const enhanceChatRef = React.useRef<EnhancedChatExports>(null);
+
     const chatMsg = useRoomStore((s) => s.chatMsg);
     const controlLeftRef = React.useRef<HTMLDivElement>(null);
     const [aiCutModalOpen, setAICutModalOpen] = React.useState(false);
@@ -277,7 +277,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       recordModalOnOk,
       recordModalOnCancel,
     } = useControlsRecord({ space, isManager, spaceInfo, updateRecord });
-    const { chatOpen, setChatOpen, onChatClose, sendFileConfirm, sendingFile } = useControlsChat();
+    const { chatOpen, setChatOpen } = useControlsChat();
 
     const onClickApp = async () => {
       if (!space) return;
@@ -589,18 +589,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
           </DisconnectButton>
         )}
         {/* <StartMediaButton /> */}
-        {space && (
-          <EnhancedChat
-            ref={enhanceChatRef}
-            messageApi={messageApi}
-            open={chatOpen}
-            setOpen={setChatOpen}
-            onClose={onChatClose}
-            space={space}
-            sendFileConfirm={sendFileConfirm}
-            spaceInfo={spaceInfo}
-          ></EnhancedChat>
-        )}
         <Drawer
           {...DEFAULT_DRAWER_PROP}
           title={t('common.setting')}

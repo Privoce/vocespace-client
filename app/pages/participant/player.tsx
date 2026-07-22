@@ -10,6 +10,7 @@ import {
   FullscreenOutlined,
   GlobalOutlined,
   LayoutOutlined,
+  MessageOutlined,
 } from '@ant-design/icons';
 import { AutoComplete, Button, Image, Modal, Spin, Tooltip, Upload } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
@@ -23,7 +24,7 @@ import {
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsTilePlayer } from '@/lib/std/device';
 import { handleIdentityType, SpaceInfo } from '@/lib/std/space';
-import { useSpaceStore } from '@/lib/store';
+import { useSpaceStore, useRoomStore } from '@/lib/store';
 import { Participant, Track } from 'livekit-client';
 
 // ─── 共享类型 ─────────────────────────────────────────────────────────────────
@@ -269,6 +270,8 @@ export const TilePlayerAdd = ({
   const { t } = useI18n();
   const [openInputIframe, setOpenInputIframe] = useState(false);
   const [inputIframeUrl, setInputIframeUrl] = useState('');
+  const chatOpen = useRoomStore((s) => s.chatOpen);
+  const setChatOpen = useRoomStore((s) => s.setChatOpen);
 
   const createHyperbeamPlayer = async () => {
     try {
@@ -361,10 +364,13 @@ export const TilePlayerAdd = ({
         style={{
           border: '1px dashed #565656',
           borderRadius: '0.5em',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-evenly',
+          display: 'grid',
+          gridTemplateColumns: '1fr 1fr',
+          gridTemplateRows: '1fr 1fr',
+          placeItems: 'center',
           background: '#202020',
+          gap: '8px',
+          padding: '16px',
         }}
       >
         <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="image/*">
@@ -390,6 +396,15 @@ export const TilePlayerAdd = ({
             onClick={createHyperbeamPlayer}
           >
             <GlobalOutlined style={{ color: '#565656', fontSize: 24 }} />
+          </Button>
+        </Tooltip>
+        <Tooltip title={t('common.chat')}>
+          <Button
+            shape="circle"
+            style={{ background: 'transparent', border: 'none' }}
+            onClick={() => setChatOpen(!chatOpen)}
+          >
+            <SvgResource type="chat" svgSize={24} color={'#565656'} />
           </Button>
         </Tooltip>
       </div>
