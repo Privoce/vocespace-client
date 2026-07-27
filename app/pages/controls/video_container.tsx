@@ -69,7 +69,7 @@ import { TilePlayer, TilePlayerAdd, TilePlayerItem } from '../participant/player
 import { LayoutEntity, UnifiedLayout, useReplaceLivekitTrack } from '../layout/unified';
 import { PaginationControl, PaginationIndicator } from '../layout/cover';
 import { LicenseAlert } from './widgets/license_alert';
-import { ChatPanel } from '@/app/pages/chat/chat';
+import { ChatPanel, EnhancedChat } from '@/app/pages/chat/chat';
 import { useControlsChat } from './hooks';
 
 export interface VideoContainerProps extends VideoConferenceProps {
@@ -1293,7 +1293,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                       flex: 1,
                       minHeight: 0,
                       height: '100%',
-                      width: chatOpen ? 'calc(100% - 288px)' : '100%',
+                      width: chatOpen ? 'calc(100% - 308px)' : '100%',
                       padding: '0px 0px 0px 8px',
                       marginBottom: 0,
                       transition: 'width 0.3s ease-in-out',
@@ -1342,7 +1342,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                       }}
                     />
                   </div>
-                  {!isMobile() && (
+                  {!isMobile() && chatOpen && space && (
                     <div
                       style={{
                         width: chatOpen ? 280 : 0,
@@ -1350,18 +1350,18 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                         overflow: 'hidden',
                         transition: 'width 0.3s ease-in-out',
                         flexShrink: 0,
-                        borderLeft: '1px dashed #8f8f8f',
+                        // borderLeft: '1px dashed #8f8f8f',
                         borderRadius: '0.5em',
+                        marginLeft: 4,
                       }}
                     >
-                      {chatOpen && space && (
-                        <ChatPanel
-                          space={space}
-                          sendFileConfirm={sendFileConfirm}
-                          messageApi={messageApi}
-                          spaceInfo={settings}
-                        />
-                      )}
+                      <ChatPanel
+                        space={space}
+                        sendFileConfirm={sendFileConfirm}
+                        messageApi={messageApi}
+                        spaceInfo={settings}
+                        onClose={() => setChatOpen(false)}
+                      />
                     </div>
                   )}
                 </div>
@@ -1390,6 +1390,17 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                 >
                   <SettingsComponent />
                 </div>
+              )}
+              {isMobile() && chatOpen && space && (
+                <EnhancedChat
+                  open={chatOpen}
+                  setOpen={setChatOpen}
+                  onClose={() => setChatOpen(false)}
+                  space={space}
+                  sendFileConfirm={sendFileConfirm}
+                  messageApi={messageApi}
+                  spaceInfo={settings}
+                />
               )}
             </LayoutContextProvider>
           )}

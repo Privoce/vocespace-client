@@ -93,7 +93,8 @@ class ChatManager {
   static async deleteChatMessages(room) {
     try {
       if (!redisClient) {
-        throw new Error('Redis client is not initialized');
+        console.warn('Redis client is not initialized, skipping deleteChatMessages');
+        return false;
       }
       const chatKey = this.getChatKey(room);
       // Delete the chat key from Redis
@@ -113,7 +114,8 @@ class ChatManager {
   static async getChatMessages(room) {
     try {
       if (!redisClient) {
-        throw new Error('Redis client is not initialized');
+        console.warn('Redis client is not initialized, skipping getChatMessages');
+        return [];
       }
       const chatKey = this.getChatKey(room);
       const messages = await redisClient.get(chatKey);
@@ -131,7 +133,8 @@ class ChatManager {
   static async setChatMessage(room, msg) {
     try {
       if (!redisClient) {
-        throw new Error('Redis client is not initialized');
+        console.warn('Redis client is not initialized, skipping setChatMessage');
+        return;
       }
       const msgs = await this.getChatMessages(room);
       msgs.push(msg);
@@ -271,8 +274,12 @@ app.prepare().then(() => {
     });
     // [socket: chat message event] -------------------------------------------------------------------------------------
     socket.on('chat_msg', (msg) => {
-      // store in redis
-      ChatManager.setChatMessage(msg.roomName, msg);
+      // store in redis if enabled
+      if (redisClient) {
+        ChatManager.setChatMessage(msg.roomName, msg).catch((err) => {
+          console.error('Error setting chat message to Redis:', err);
+        });
+      }
       socket.broadcast.emit('chat_msg_response', msg);
     });
     // [socket: chat file event] ----------------------------------------------------------------------------------------
@@ -327,8 +334,12 @@ app.prepare().then(() => {
             },
           };
         }
-        // store in redis
-        ChatManager.setChatMessage(roomName, fileMessage);
+        // store in redis if enabled
+        if (redisClient) {
+          ChatManager.setChatMessage(roomName, fileMessage).catch((err) => {
+            console.error('Error setting chat file message to Redis:', err);
+          });
+        }
         io.emit('chat_file_response', fileMessage);
       } catch (error) {
         console.error('文件处理失败', error);

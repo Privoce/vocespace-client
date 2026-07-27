@@ -16,6 +16,8 @@ import {
 import { UploadOutlined, DownloadOutlined } from '@ant-design/icons';
 import type { ParticipantAvoParams } from '@/lib/std/space';
 import { useI18n } from '@/lib/i18n/i18n';
+import { isMobile } from '@/lib/std';
+import equal from 'fast-deep-equal';
 import {
   ParticipantAvoPlaceholder,
   normalizeAvoParams,
@@ -33,6 +35,10 @@ const basicButtonStyle = {
   color: '#fff',
 };
 
+export interface AvoConfigPanelExports {
+  state: ParticipantAvoParams[];
+}
+
 export interface AvoConfigPanelProps {
   /** 整体布局方向 */
   direction: 'horizontal' | 'vertical';
@@ -42,14 +48,10 @@ export interface AvoConfigPanelProps {
   onSave: (params: ParticipantAvoParams[]) => void | Promise<void>;
 }
 
-export function AvoConfigPanel({
-  direction,
-  name,
-  avoList,
-  saving = false,
-  onSave,
-}: AvoConfigPanelProps) {
+export const AvoConfigPanel = React.forwardRef<AvoConfigPanelExports, AvoConfigPanelProps>(
+  ({ direction, name, avoList, saving = false, onSave }: AvoConfigPanelProps, ref) => {
   const { t } = useI18n();
+  const mobile = isMobile();
 
   // 当前编辑的列表
   const [draftList, setDraftList] = React.useState<ParticipantAvoParams[]>(() => {
@@ -184,7 +186,7 @@ export function AvoConfigPanel({
       </div>
       {/* Display Name 输入框 */}
       <div style={{ marginTop: 12 }}>
-        <Text strong>{t('avo.displayName') || 'Display Name'}</Text>
+        <Text strong style={{ fontSize: mobile ? 12 : undefined }}>{t('avo.displayName') || 'Display Name'}</Text>
         <Input
           size="large"
           value={selectedAvo.name}
@@ -199,7 +201,7 @@ export function AvoConfigPanel({
   const controlsSection = (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
       <Flex justify="space-between" align="center">
-        <Text strong>{t('avo.title')}</Text>
+        <Text strong style={{ fontSize: mobile ? 12 : undefined }}>{t('avo.title')}</Text>
         <Radio.Group
           optionType="button"
           buttonStyle="solid"
@@ -220,7 +222,7 @@ export function AvoConfigPanel({
       </Flex>
 
       <div>
-        <Text strong>{t('avo.style')}</Text>
+        <Text strong style={{ fontSize: mobile ? 12 : undefined }}>{t('avo.style')}</Text>
         <div style={{ width: '100%' }}>
           <Radio.Group
             block
@@ -241,7 +243,7 @@ export function AvoConfigPanel({
       </div>
 
       <div>
-        <Text strong>{t('avo.color')}</Text>
+        <Text strong style={{ fontSize: mobile ? 12 : undefined }}>{t('avo.color')}</Text>
         <div
           style={{
             display: 'flex',
@@ -272,7 +274,7 @@ export function AvoConfigPanel({
       </div>
 
       <div>
-        <Text strong>{t('avo.energy')}</Text>
+        <Text strong style={{ fontSize: mobile ? 12 : undefined }}>{t('avo.energy')}</Text>
         <Slider
           min={0.1}
           max={1}
@@ -355,7 +357,7 @@ export function AvoConfigPanel({
       {draftList.length > 0 && (
         <div>
           <div style={{ display: 'flex', width: '100%', justifyContent: 'space-between' }}>
-            <Text strong>{t('avo.presets') || 'Presets'}</Text>
+            <Text strong style={{ fontSize: mobile ? 12 : undefined }}>{t('avo.presets') || 'Presets'}</Text>
           </div>
           <div
             style={{
@@ -450,6 +452,10 @@ export function AvoConfigPanel({
     </div>
   );
 
+  React.useImperativeHandle(ref, () => ({
+    state: draftList,
+  }));
+
   if (direction === 'horizontal') {
     return (
       <div
@@ -466,14 +472,13 @@ export function AvoConfigPanel({
     );
   }
 
-  // vertical 纵向布局
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
       {previewSection}
       {controlsSection}
     </div>
   );
-}
+});
 
 // ----------------------------------------------------------------
 // 原来的 Modal，使用 AvoConfigPanel（横向），footer 由 panel 内 save 按钮处理
@@ -496,16 +501,30 @@ export function ParticipantAvoEditorModal({
   onCancel,
   onSave,
 }: ParticipantAvoEditorModalProps) {
+  const panelRef = React.useRef<AvoConfigPanelExports>(null);
+
+  const handleCancel = React.useCallback(async () => {
+    if (panelRef.current && avoList) {
+      const currentState = panelRef.current.state;
+      const originalState = avoList.map((a) => normalizeAvoParams(a, a.name || name || 'guest'));
+      if (!equal(currentState, originalState)) {
+        await onSave(currentState);
+      }
+    }
+    onCancel();
+  }, [avoList, name, onSave, onCancel]);
+
   return (
     <Modal
       title={useI18n().t('avo.title')}
       open={open}
       width={900}
       footer={null}
-      onCancel={onCancel}
+      onCancel={handleCancel}
     >
       <AvoConfigPanel
-        direction="horizontal"
+        ref={panelRef}
+        direction={isMobile() ? 'vertical' : 'horizontal'}
         name={name}
         avoList={avoList}
         saving={saving}

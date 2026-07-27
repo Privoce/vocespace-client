@@ -393,7 +393,15 @@ export async function POST(request: NextRequest) {
       switch (ty) {
         case 'ls': {
           // 列出所有文件（withFileTypes 可以直接判断是否为文件，避免把目录误认为文件）
-          const entries = await fs.readdir(uploadDir, { withFileTypes: true });
+          let entries;
+          try {
+            entries = await fs.readdir(uploadDir, { withFileTypes: true });
+          } catch (error: any) {
+            if (error.code === 'ENOENT') {
+              return NextResponse.json({ files: [] });
+            }
+            throw error;
+          }
           const files = entries.filter((entry) => entry.isFile()).map((entry) => entry.name);
           return NextResponse.json({ files });
         }

@@ -311,10 +311,11 @@ export function LicenseControl({
   };
 
   const isCircleIp = useMemo(() => {
+    const url = config.serverUrl || '';
     return (
-      config.serverUrl === 'localhost' ||
-      config.serverUrl.startsWith('192.168.') ||
-      config.serverUrl === '127.0.0.1'
+      url === 'localhost' ||
+      url.startsWith('192.168.') ||
+      url === '127.0.0.1'
     );
   }, [config.serverUrl]);
 

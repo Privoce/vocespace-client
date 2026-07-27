@@ -680,6 +680,7 @@ export default {
         success: 'State saved successfully',
         fail: 'Failed to save state',
       },
+      manage_dashboard: 'Dashboard',
     },
     license: {
       title: 'License',

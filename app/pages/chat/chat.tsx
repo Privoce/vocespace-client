@@ -12,7 +12,12 @@ import { MessageInstance } from 'antd/es/message/interface';
 import Dragger from 'antd/es/upload/Dragger';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from '../controls/drawer_tools';
-import { FolderOpenOutlined, SnippetsOutlined } from '@ant-design/icons';
+import {
+  FolderOpenOutlined,
+  SnippetsOutlined,
+  CloseOutlined,
+  SendOutlined,
+} from '@ant-design/icons';
 import { api } from '@/lib/api';
 import { FileType } from '@/lib/std';
 import { FS } from './fs';
@@ -33,12 +38,13 @@ export interface ChatPanelProps {
   sendFileConfirm: (onOk: (abortController?: AbortController) => Promise<ChatMsgItem>) => void;
   messageApi: MessageInstance;
   spaceInfo: SpaceInfo;
+  onClose?: () => void;
 }
 
 export interface EnhancedChatExports {}
 
 export const ChatPanel = React.forwardRef<EnhancedChatExports, ChatPanelProps>(
-  ({ space, sendFileConfirm, messageApi, spaceInfo }: ChatPanelProps, ref) => {
+  ({ space, sendFileConfirm, messageApi, spaceInfo, onClose }: ChatPanelProps, ref) => {
     const { t } = useI18n();
     const ulRef = React.useRef<HTMLUListElement>(null);
     const bottomRef = React.useRef<HTMLDivElement>(null);
@@ -151,14 +157,15 @@ export const ChatPanel = React.forwardRef<EnhancedChatExports, ChatPanelProps>(
 
       sendFileConfirm(async (abortController?: AbortController): Promise<ChatMsgItem> => {
         try {
-          // 对于大文件，使用分块上传或直接上传到服务器
+          let fileMessage: ChatMsgItem;
           if (file.size > 1 * 1024 * 1024) {
-            // 大于1MB的文件
-            return await handleLargeFileUpload(file, abortController);
+            fileMessage = await handleLargeFileUpload(file, abortController);
           } else {
-            // 小文件直接通过 Socket 发送
-            return await handleSmallFileUpload(file);
+            fileMessage = await handleSmallFileUpload(file);
           }
+          // 广播给其他用户，服务端会处理文件保存并广播 chat_file_response 给所有人
+          socket.emit('chat_file', fileMessage);
+          return fileMessage;
         } catch (e) {
           messageApi.error({
             content: `${t('msg.error.file.upload')}: ${e}`,
@@ -356,6 +363,26 @@ export const ChatPanel = React.forwardRef<EnhancedChatExports, ChatPanelProps>(
         }}
       >
         <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '12px 16px',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+          }}
+        >
+          <span style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{t('common.chat')}</span>
+          {onClose && (
+            <Button
+              type="text"
+              size="small"
+              icon={<CloseOutlined style={{ fontSize: 14, color: '#888' }} />}
+              onClick={onClose}
+              style={{ width: 28, height: 28 }}
+            />
+          )}
+        </div>
+        <div
           className={styles.msg}
           style={{ flex: 1, minHeight: 0, position: 'relative' }}
           onDragEnter={handleDragEnter}
@@ -385,7 +412,12 @@ export const ChatPanel = React.forwardRef<EnhancedChatExports, ChatPanelProps>(
           </Dragger>
         </div>
 
-        <div className={styles.tool}>
+        <div
+          style={{
+            padding: '8px 8px 4px 8px',
+            background: '#202020',
+          }}
+        >
           <Input.TextArea
             value={value}
             placeholder={t('common.chat_placeholder')}
@@ -393,37 +425,46 @@ export const ChatPanel = React.forwardRef<EnhancedChatExports, ChatPanelProps>(
             onCompositionStart={() => setIsComposing(true)}
             onCompositionEnd={() => setIsComposing(false)}
             onKeyDown={handleKeyDown}
-            rows={3}
+            rows={1}
+            autoSize={{ minRows: 2, maxRows: 3 }}
             style={{
-              backgroundColor: '#333',
+              background: '#202020',
               resize: 'none',
               border: 'none',
-              borderRadius: '8px',
               color: '#fff',
+              fontSize: 14,
+              padding: '0px 0',
+              width: '100%',
             }}
           />
-          <div className={styles.tool_bottom}>
-            <div className={styles.tool_left}>
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              marginTop: 4,
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center' }}>
               <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="*">
                 <Tooltip title={t('common.upload')}>
-                  <Button shape="circle" style={{ background: 'transparent', border: 'none' }}>
-                    <SvgResource type="add" svgSize={18} color="#fff" />
+                  <Button type="text" size="small" style={{ color: '#888', width: 32, height: 32 }}>
+                    <SvgResource type="add" svgSize={14} color="#888" />
                   </Button>
                 </Tooltip>
               </Upload>
               <Tooltip title={t('common.files')}>
                 <Button
-                  shape="circle"
-                  style={{ background: 'transparent', border: 'none' }}
+                  type="text"
+                  size="small"
+                  style={{ color: '#888', width: 32, height: 32 }}
                   onClick={async () => await openLocalFileSystem()}
                 >
-                  <FolderOpenOutlined style={{ fontSize: 18, color: '#fff' }}></FolderOpenOutlined>
+                  <FolderOpenOutlined style={{ fontSize: 14 }} />
                 </Button>
               </Tooltip>
             </div>
-            <Button type="primary" onClick={sendMsg}>
-              {t('common.send')}
-            </Button>
+            <Button type="primary" onClick={sendMsg} icon={<SendOutlined></SendOutlined>}></Button>
           </div>
         </div>
         <Modal
@@ -433,7 +474,12 @@ export const ChatPanel = React.forwardRef<EnhancedChatExports, ChatPanelProps>(
           onCancel={() => setFsModal(false)}
           width={640}
         >
-          <FS space={space} files={files} onFresh={openLocalFileSystem} canDeleteRBAC={canDeleteRBAC}></FS>
+          <FS
+            space={space}
+            files={files}
+            onFresh={openLocalFileSystem}
+            canDeleteRBAC={canDeleteRBAC}
+          ></FS>
         </Modal>
       </div>
     );

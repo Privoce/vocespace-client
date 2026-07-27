@@ -652,6 +652,7 @@ export default {
           fail: 'Не удалось создать статус',
         },
       },
+      manage_dashboard: 'Панель управления',
     },
     license: {
       title: 'Лицензия',

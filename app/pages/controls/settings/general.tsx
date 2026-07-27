@@ -200,6 +200,13 @@ export function GeneralSettings({
           </Radio.Group>
         </>
       )}
+      {/* 访问管理后台 */}
+      <div className={styles.common_space}>
+        {t('settings.general.manage_dashboard') || 'Dashboard'}:
+      </div>
+      <Button size="large" type='primary' block onClick={() => window.open(`/dashboard`, '_blank')}>
+        {t('settings.general.manage_dashboard') || 'Dashboard'}
+      </Button>
     </div>
   );
 }

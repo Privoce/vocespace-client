@@ -791,10 +791,10 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
   avoList: [
     {
       name: 'guest',
-      variant: 268470,
-      hue: 214,
-      style: 'blob',
-      energy: 0.8,
+      variant: Math.floor(Math.random() * 1_000_000),
+      hue: [193, 214, 235, 172, 151, 43, 13, 343][Math.floor(Math.random() * 8)],
+      style: (['blob', 'ring', 'wave'] as const)[Math.floor(Math.random() * 3)],
+      energy: Math.round((0.4 + Math.random() * 0.5) * 20) / 20,
       isUsed: true,
       enabled: true,
     },

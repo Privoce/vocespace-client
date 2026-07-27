@@ -645,6 +645,7 @@ export default {
           fail: '创建新状态失败',
         },
       },
+      manage_dashboard: '管理后台',
     },
     license: {
       title: '证书',
