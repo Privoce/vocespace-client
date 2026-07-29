@@ -1,3 +1,4 @@
+/* DOCKER: AI cut analysis disabled
 import { AICutDeps, Extraction } from '@/lib/ai/analysis';
 import { useI18n } from '@/lib/i18n/i18n';
 import { SpaceInfo } from '@/lib/std/space';
@@ -215,3 +216,4 @@ export function AICutAnalysisSettingsPanel({
     </div>
   );
 }
+*/

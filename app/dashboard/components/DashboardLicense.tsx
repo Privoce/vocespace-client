@@ -296,7 +296,7 @@ export function DashboardLicense({ messageApi }: { messageApi: MessageInstance }
   const isCircleIp = useMemo(() => {
     return (
       config.serverUrl === 'localhost' ||
-      config.serverUrl.startsWith('192.168.') ||
+      config.serverUrl?.startsWith('192.168.') ||
       config.serverUrl === '127.0.0.1'
     );
   }, [config.serverUrl]);

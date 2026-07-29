@@ -39,7 +39,8 @@ export function StatusInfo({ disabled = false, items, children }: StatusInfoProp
 }
 
 export interface UseStatusInfoProps {
-  toRenameSettings?: (isDefineStatus?: boolean) => void;
+  toRenameSettings?: () => void;
+  toSettings?: (isDefineStatus?: boolean) => void;
   username: string;
   t: Trans;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
@@ -55,6 +56,7 @@ export function useStatusInfo({
   toRenameSettings,
   username,
   t,
+  toSettings,
   setUserStatus,
   settings,
   disabled=false,
@@ -110,7 +112,7 @@ export function useStatusInfo({
         label: (
           <div
             onClick={(_e) => {
-              toRenameSettings && toRenameSettings(true);
+              toSettings && toSettings(true);
             }}
           >
             <div className={styles.status_item_inline} style={{ width: '220px', height: '38px' }}>

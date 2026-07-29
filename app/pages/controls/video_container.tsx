@@ -39,8 +39,8 @@ import { NotificationInstance } from 'antd/es/notification/interface';
 import { useI18n } from '@/lib/i18n/i18n';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { useUserStore, useLicenseStore, useRoomStore, useSpaceStore } from '@/lib/store';
-import { useUserStatus, useRoomLicense, useRoomSubscription } from './hooks/index';
-import { useAICutService } from './hooks/use-ai-cut';
+import { useUserStatus, /* DOCKER: useRoomLicense, */ useRoomSubscription } from './hooks/index';
+/* DOCKER: */ // import { useAICutService } from './hooks/use-ai-cut';
 import {
   ControlType,
   WsBase,
@@ -68,7 +68,7 @@ import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { TilePlayer, TilePlayerAdd, TilePlayerItem } from '../participant/player';
 import { LayoutEntity, UnifiedLayout, useReplaceLivekitTrack } from '../layout/unified';
 import { PaginationControl, PaginationIndicator } from '../layout/cover';
-import { LicenseAlert } from './widgets/license_alert';
+/* DOCKER: import { LicenseAlert } from './widgets/license_alert'; */
 import { ChatPanel, EnhancedChat } from '@/app/pages/chat/chat';
 import { useControlsChat } from './hooks';
 
@@ -114,7 +114,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const collapsed = useSpaceStore((s) => s.collapsed);
     const deviceType = useSpaceStore((s) => s.deviceType);
     const uLicenseState = useLicenseStore();
-    const { hasRoomLicense, toBuyRoomLicense } = useRoomLicense(config, space, messageApi);
+    /* DOCKER: const { hasRoomLicense, toBuyRoomLicense } = useRoomLicense(config, space, messageApi); */
 
     const controlsRef = React.useRef<ControlBarExport>(null);
     const waveAudioRef = React.useRef<HTMLAudioElement>(null);
@@ -137,7 +137,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       space?.localParticipant?.identity || '', // 参与者 ID
     );
     // console.warn(settings);
-    const { fromVocespace, platUser, roomEnter, showAI } = usePlatformUserInfo({
+    const { fromVocespace, platUser, roomEnter } = usePlatformUserInfo({
       space,
       uid: space?.localParticipant.identity,
       onEnterRoom: () => {
@@ -161,26 +161,27 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       setOpenApp(!openApp);
     };
 
-    const {
-      aiCutServiceRef,
-      aiCutAnalysisRes,
-      noteStateForAICutService,
-      setNoteStateForAICutService,
-      startOrStopAICutAnalysis,
-      stopAICutService,
-      openAIServiceAskNote,
-      reloadResult,
-      fetchPlatformData,
-    } = useAICutService({
-      space,
-      settings,
-      uState,
-      messageApi,
-      noteApi,
-      fromVocespace,
-      updateSettings,
-      locale,
-    });
+    /* DOCKER: AI cut analysis disabled */
+    // const {
+    //   aiCutServiceRef,
+    //   aiCutAnalysisRes,
+    //   noteStateForAICutService,
+    //   setNoteStateForAICutService,
+    //   startOrStopAICutAnalysis,
+    //   stopAICutService,
+    //   openAIServiceAskNote,
+    //   reloadResult,
+    //   fetchPlatformData,
+    // } = useAICutService({
+    //   space,
+    //   settings,
+    //   uState,
+    //   messageApi,
+    //   noteApi,
+    //   fromVocespace,
+    //   updateSettings,
+    //   locale,
+    // });
 
     useEffect(() => {
       if (!space) return;
@@ -207,7 +208,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
 
       // 从平台端获取数据 ai总结/todos (moved to useAICutService hook)
       const syncSettings = async () => {
-        const todos = await fetchPlatformData(fromVocespace);
+        const todos = await /* DOCKER: fetchPlatformData replaced */ (async () => [] as any[])();
         // 将当前参与者的基础设置发送到服务器 ----------------------------------------------------------
         await updateSettings(
           {
@@ -276,12 +277,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       };
 
       if (init) {
+        /* DOCKER: AI cut analysis disabled */
         // 重置AI截图询问状态，允许在新会话中重新询问
-        setNoteStateForAICutService({
-          openAIService: false,
-          noteClosed: false,
-          hasAsked: false,
-        });
+        // setNoteStateForAICutService({
+        //   openAIService: false,
+        //   noteClosed: false,
+        //   hasAsked: false,
+        // });
 
         // 获取历史聊天记录
         validLicense().then(() => {
@@ -976,7 +978,10 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     ]);
 
     const toSettingGeneral = (isDefineStatus?: boolean) => {
-      controlsRef.current?.openSettings('profile', isDefineStatus);
+      controlsRef.current?.openSettings('general', isDefineStatus);
+    };
+    const toRenameSettings = () => {
+      controlsRef.current?.openSettings('profile');
     };
     // [room update handler] --------------------------------------------------------------------------------------
     const handleUpdateRoom = async () => {
@@ -1166,7 +1171,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               noteApi={noteApi}
               setUserStatus={setUserStatus}
               updateSettings={updateSettings}
-              toRenameSettings={toSettingGeneral}
+              toRenameSettings={toRenameSettings}
               showFlotApp={showFlotApp}
               selfRoom={selfRoom}
               isFocus={state.isFocus || isFocus}
@@ -1188,6 +1193,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         showFlotApp,
         space,
         toSettingGeneral,
+        toRenameSettings,
         updateSettings,
       ],
     );
@@ -1223,19 +1229,12 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         )}
         {showFlot && space && settings.participants[space.localParticipant.identity] && (
           <FlotLayout
-            showAI={showAI}
             ref={FlotLayoutRef}
             space={space.name}
             messageApi={messageApi}
             openApp={openApp}
             spaceInfo={settings}
             setOpenApp={setOpenApp}
-            showAICutAnalysisSettings={controlsRef.current?.showAICutAnalysisSettings}
-            reloadResult={reloadResult}
-            aiCutAnalysisRes={aiCutAnalysisRes}
-            startOrStopAICutAnalysis={startOrStopAICutAnalysis}
-            openAIServiceAskNote={openAIServiceAskNote}
-            cutInstance={aiCutServiceRef.current}
             updateSettings={updateSettings}
           ></FlotLayout>
         )}
@@ -1252,7 +1251,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             messageApi={messageApi}
             isActive={isActive}
             updateSettings={updateSettings}
-            toRenameSettings={toSettingGeneral}
+            toRenameSettings={toRenameSettings}
+            toSettings={toSettingGeneral}
             setUserStatus={setUserStatus}
             showFlotApp={showFlotApp}
           ></Channel>
@@ -1282,9 +1282,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   flexDirection: 'column',
                 }}
               >
-                {!hasRoomLicense && (
+                {/* DOCKER: {!hasRoomLicense && (
                   <LicenseAlert toBuyRoomLicense={toBuyRoomLicense}></LicenseAlert>
-                )}
+                )} */}
                 <div style={{ display: 'flex', flex: 1, width: '100%', minHeight: 0 }}>
                   <div
                     className={focusTrack ? 'lk-focus-layout-wrapper' : 'lk-grid-layout-wrapper'}
@@ -1376,9 +1376,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                   openApp={openApp}
                   setOpenApp={setOpenApp}
                   toRenameSettings={toSettingGeneral}
-                  startOrStopAICutAnalysis={startOrStopAICutAnalysis}
-                  openAIServiceAskNote={openAIServiceAskNote}
-                  downloadAIMdReport={FlotLayoutRef.current?.downloadAIMdReport}
+                  startOrStopAICutAnalysis={/* DOCKER: */ undefined}
+                  openAIServiceAskNote={/* DOCKER: */ undefined}
+                  downloadAIMdReport={/* DOCKER: */ undefined}
                   config={config}
                 ></Controls>
               </div>

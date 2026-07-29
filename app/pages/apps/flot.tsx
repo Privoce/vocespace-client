@@ -37,15 +37,14 @@ import { RemoteTargetApp, socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
 import { DEFAULT_COLLAPSE_HEADER_STYLES } from '../controls/collapse_tools';
 import { TodoTogether } from './todo_together';
-import { AICutAnalysisMdTabsExports, AICutAnalysisMdTabs } from './ai_analysis_md';
-import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
+/* DOCKER: */ // import { AICutAnalysisMdTabsExports, AICutAnalysisMdTabs } from './ai_analysis_md';
+/* DOCKER: */ // import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
 import { CopyButton } from '../controls/widgets/copy';
 import { useRoomStore } from '@/lib/store';
-import { AICutService } from '@/lib/ai/cut';
+/* DOCKER: */ // import { AICutService } from '@/lib/ai/cut';
 import { DEFAULT_DRAWER_PROP, DrawerCloser, DrawerHeader } from '../controls/drawer_tools';
+/* DOCKER: */ // import { convertPlatformToACARes, PlarformAICutAnalysis, platformAPI, PlatformTodos } from '@/lib/api/platform';
 import {
-  convertPlatformToACARes,
-  PlarformAICutAnalysis,
   platformAPI,
   PlatformTodos,
 } from '@/lib/api/platform';
@@ -95,27 +94,15 @@ export interface FlotLayoutProps {
   setOpenApp: (open: boolean) => void;
   spaceInfo: SpaceInfo;
   space: string;
-  showAICutAnalysisSettings?: (open: boolean) => void;
-  aiCutAnalysisRes?: AICutAnalysisRes;
-  reloadResult?: () => Promise<void>;
-  startOrStopAICutAnalysis?: (
-    freq: number,
-    conf: AICutParticipantConf,
-    reload?: boolean,
-  ) => Promise<void>;
-  openAIServiceAskNote?: () => void;
-  cutInstance: AICutService;
   updateSettings: (
     newSettings: Partial<ParticipantSettings>,
     record?: RecordSettings,
     init?: boolean,
   ) => Promise<boolean | undefined>;
-  showAI: boolean;
 }
 
-export interface FlotLayoutExports {
-  downloadAIMdReport?: () => Promise<void>;
-}
+// eslint-disable-next-line @typescript-eslint/no-empty-object-type
+export interface FlotLayoutExports {}
 
 export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
   (
@@ -125,19 +112,12 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
       spaceInfo,
       space,
       setOpenApp,
-      showAICutAnalysisSettings,
-      reloadResult,
-      startOrStopAICutAnalysis,
-      openAIServiceAskNote,
-      aiCutAnalysisRes,
-      cutInstance,
       updateSettings,
-      showAI,
     }: FlotLayoutProps,
     ref,
   ) => {
     const flotAppItemRef = useRef<FlotAppExports>(null);
-    const AICutAnalysisMdTabsRef = useRef<AICutAnalysisMdTabsExports>(null);
+    /* DOCKER: */ // const AICutAnalysisMdTabsRef = useRef<AICutAnalysisMdTabsExports>(null);
     const [containerHeight, setContainerHeight] = useState<number>(0);
     const { localParticipant } = useLocalParticipant();
     const targetParticipant = useRoomStore((s) => s.remoteApp);
@@ -145,9 +125,9 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
     const isSelf = useMemo(() => {
       return localParticipant.identity === targetParticipant.participantId;
     }, [localParticipant.identity, targetParticipant.participantId]);
-    const [remoteAnalysisRes, setRemoteAnalysisRes] = useState<AICutAnalysisRes>(
-      DEFAULT_AI_CUT_ANALYSIS_RES,
-    );
+    /* DOCKER: */ // const [remoteAnalysisRes, setRemoteAnalysisRes] = useState<AICutAnalysisRes>(
+    /* DOCKER: */ //   DEFAULT_AI_CUT_ANALYSIS_RES,
+    /* DOCKER: */ // );
 
     // phone: window.innerWidth <= 728,
     // pad: window.innerWidth > 728 && window.innerWidth <= 1024,
@@ -159,71 +139,70 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
     } = useMemo(() => {
       if (window.innerWidth <= 728) {
         return {
-          span1: showAI ? 24 : 0,
+          span1: 0,
           span2: 24,
           ty: 'phone',
         };
       } else if (window.innerWidth > 728 && window.innerWidth <= 1024) {
         return {
-          span1: showAI ? 12 : 0,
-          span2: showAI ? 12 : 24,
+          span1: 0,
+          span2: 24,
           ty: 'pad',
         };
       } else {
         return {
-          span1: showAI ? 16 : 0,
-          span2: showAI ? 8 : 24,
+          span1: 0,
+          span2: 24,
           ty: 'desktop',
         };
       }
-    }, [window.innerWidth, showAI]);
+    }, [window.innerWidth]);
 
-    const getRemoteAICutAnalysisRes = async (participantId: string) => {
-      if (participantId && !isSelf) {
-        // 发起请求获取结果
-        if (
-          targetParticipant.participantId &&
-          usePlatformUserInfoCheap({
-            user: spaceInfo.participants[targetParticipant.participantId],
-          }).isAuth
-        ) {
-          // 如果是认证用户则从平台获取
-          const aiResponse = await platformAPI.ai.getAIAnalysis(
-            targetParticipant.participantId,
-            todayTimeStamp(),
-          );
-          if (aiResponse.ok) {
-            const { data }: { data: PlarformAICutAnalysis } = await aiResponse.json();
-            return convertPlatformToACARes(data);
-          }
-        } else {
-          const response = await api.ai.getAnalysisRes(
-            space,
-            participantId,
-            usePlatformUserInfoCheap({ user: spaceInfo.participants[participantId] }).isAuth,
-          );
-          if (response.ok) {
-            const { res }: { res: AICutAnalysisRes } = await response.json();
-            return res;
-          }
-        }
-      }
-      return DEFAULT_AI_CUT_ANALYSIS_RES;
-    };
+    /* DOCKER: AI cut analysis disabled */
+    // const getRemoteAICutAnalysisRes = async (participantId: string) => {
+    //   if (participantId && !isSelf) {
+    //     if (
+    //       targetParticipant.participantId &&
+    //       usePlatformUserInfoCheap({
+    //         user: spaceInfo.participants[targetParticipant.participantId],
+    //       }).isAuth
+    //     ) {
+    //       const aiResponse = await platformAPI.ai.getAIAnalysis(
+    //         targetParticipant.participantId,
+    //         todayTimeStamp(),
+    //       );
+    //       if (aiResponse.ok) {
+    //         const { data }: { data: PlarformAICutAnalysis } = await aiResponse.json();
+    //         return convertPlatformToACARes(data);
+    //       }
+    //     } else {
+    //       const response = await api.ai.getAnalysisRes(
+    //         space,
+    //         participantId,
+    //         usePlatformUserInfoCheap({ user: spaceInfo.participants[participantId] }).isAuth,
+    //       );
+    //       if (response.ok) {
+    //         const { res }: { res: AICutAnalysisRes } = await response.json();
+    //         return res;
+    //       }
+    //     }
+    //   }
+    //   return DEFAULT_AI_CUT_ANALYSIS_RES;
+    // };
 
-    useEffect(() => {
-      if (
-        !isSelf &&
-        targetParticipant.participantId &&
-        usePlatformUserInfoCheap({ user: spaceInfo.participants[targetParticipant.participantId] })
-          .isAuth
-      ) {
-        // console.warn('Fetching remote AI Cut Analysis Result for', targetParticipant.participantId);
-        getRemoteAICutAnalysisRes(targetParticipant.participantId).then((res) => {
-          setRemoteAnalysisRes(res);
-        });
-      }
-    }, [isSelf, targetParticipant, spaceInfo.participants]);
+    /* DOCKER: AI cut analysis disabled */
+    // useEffect(() => {
+    //   if (
+    //     !isSelf &&
+    //     targetParticipant.participantId &&
+    //     usePlatformUserInfoCheap({ user: spaceInfo.participants[targetParticipant.participantId] })
+    //       .isAuth
+    //   ) {
+    //     getRemoteAICutAnalysisRes(targetParticipant.participantId).then((res) => {
+    //       setRemoteAnalysisRes(res);
+    //     });
+    //   }
+    // }, [isSelf, targetParticipant, spaceInfo.participants]);
 
     const toPersonalPlatform = () => {
       let id = targetParticipant.participantId || localParticipant.identity;
@@ -281,9 +260,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
       }
     }, [openApp]);
 
-    useImperativeHandle(ref, () => ({
-      downloadAIMdReport: AICutAnalysisMdTabsRef.current?.downloadMdReport,
-    }));
+    useImperativeHandle(ref, () => ({}));
 
     return (
       <Drawer
@@ -320,7 +297,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
             setOpenApp(false);
           },
         })}
-        width={showAI ? 1168 : 420}
+        width={420}
         styles={{
           body: {
             padding: '0 24px',
@@ -329,7 +306,8 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
         }}
       >
         <Row gutter={8} style={{ height: '100%' }}>
-          {layoutType.ty !== 'phone' && showAI && (
+          {/* DOCKER: AI cut analysis disabled */}
+          {/* {layoutType.ty !== 'phone' && showAI && (
             <Col span={layoutType.span1}>
               <AICutAnalysisMdTabs
                 ref={AICutAnalysisMdTabsRef}
@@ -342,22 +320,17 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
                 openAIServiceAskNote={openAIServiceAskNote}
                 messageApi={messageApi}
                 isSelf={isSelf}
-                style={{
-                  height: '100%',
-                  width: '100%',
-                }}
-                isAuthed={
-                  usePlatformUserInfoCheap({
-                    user: spaceInfo.participants[
-                      targetParticipant.participantId || localParticipant.identity
-                    ],
-                  }).isAuth
-                }
+                style={{ height: '100%', width: '100%' }}
+                isAuthed={usePlatformUserInfoCheap({
+                  user: spaceInfo.participants[
+                    targetParticipant.participantId || localParticipant.identity
+                  ],
+                }).isAuth}
                 cutInstance={cutInstance}
                 userId={targetParticipant.participantId || localParticipant.identity}
               ></AICutAnalysisMdTabs>
             </Col>
-          )}
+          )} */}
           <Col
             span={layoutType.span2}
             style={{
@@ -377,7 +350,8 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
               participantId={targetParticipant.participantId || localParticipant.identity}
               isSelf={isSelf}
             />
-            {layoutType.ty === 'phone' && showAI && (
+            {/* DOCKER: AI cut analysis disabled */}
+            {/* {layoutType.ty === 'phone' && showAI && (
               <AICutAnalysisMdTabs
                 result={isSelf ? aiCutAnalysisRes : remoteAnalysisRes}
                 reloadResult={reloadResult}
@@ -388,21 +362,16 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
                 openAIServiceAskNote={openAIServiceAskNote}
                 messageApi={messageApi}
                 isSelf={isSelf}
-                style={{
-                  height: '100%',
-                  width: '100%',
-                }}
-                isAuthed={
-                  usePlatformUserInfoCheap({
-                    user: spaceInfo.participants[
-                      targetParticipant.participantId || localParticipant.identity
-                    ],
-                  }).isAuth
-                }
+                style={{ height: '100%', width: '100%' }}
+                isAuthed={usePlatformUserInfoCheap({
+                  user: spaceInfo.participants[
+                    targetParticipant.participantId || localParticipant.identity
+                  ],
+                }).isAuth}
                 cutInstance={cutInstance}
                 userId={targetParticipant.participantId || localParticipant.identity}
               ></AICutAnalysisMdTabs>
-            )}
+            )} */}
           </Col>
         </Row>
       </Drawer>

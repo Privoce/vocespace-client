@@ -43,9 +43,10 @@ export function LicenseControl({
   const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
   const [ipAddress, setIpAddress] = useState<string | undefined>(undefined);
 
-  const roomLicense = userLicense.room;
+  /* DOCKER: const roomLicense = userLicense.room; */
 
   const validRoomLicense = async () => {
+    /* DOCKER: room license disabled
     if (!roomLicense?.isAnalysis) {
       const response = await api.getConf();
       if (!response.ok) return;
@@ -75,6 +76,7 @@ export function LicenseControl({
         });
       }
     }
+    */
   };
 
   useEffect(() => {
@@ -89,7 +91,8 @@ export function LicenseControl({
     } else {
       // 请求 在space.voce.chat/api/webhook?session_ip=IP&license_type=room, 让官方服务器通过stripe的api获取用户的session
       // 然后用户侧获取到session.url进行跳转
-      const response = await api.getLicenseByIP(config.serverUrl, 'room');
+      /* DOCKER: const response = await api.getLicenseByIP(config.serverUrl, 'room'); */
+      const response = await api.getLicenseByIP(config.serverUrl, 'space');
       if (response.ok) {
         const { url } = await response.json();
         if (url) {
@@ -105,6 +108,7 @@ export function LicenseControl({
     }
   };
 
+  /* DOCKER: room type disabled
   const onCancelSubscription = async () => {
     if (!roomLicense?.email) {
       messageApi.error({
@@ -170,6 +174,7 @@ export function LicenseControl({
       setCancelingSubscription(false);
     }
   };
+  */
 
   const fmtDate = (date: Date): string => {
     let year = date.getFullYear();
@@ -178,11 +183,14 @@ export function LicenseControl({
     return `${year}-${month}-${day}`;
   };
 
+  /* DOCKER: room license disabled
   const status = useMemo(() => {
     if (!roomLicense) return LicenseStatus.Expired;
     return licenseStatus(roomLicense);
   }, [roomLicense]);
+  */
 
+  /* DOCKER: room license disabled
   const items = useMemo(() => {
     let descriptionItems = [
       {
@@ -239,6 +247,7 @@ export function LicenseControl({
       />
     );
   }, [roomLicense, t, status]);
+  */
 
   const onUpdate = async () => {
     if (!licenseValue || licenseValue.trim() === '') {
@@ -277,11 +286,11 @@ export function LicenseControl({
       const data = await response.json();
       if (data.success) {
         useLicenseStore.setState({
-          room: {
+          /* DOCKER: room: {
             ...validatedLicense,
             isAnalysis: true,
             personLimit: getLicensePersonLimit(validatedLicense.limit, validatedLicense.isTmp),
-          } as LicenseWithAnalysis,
+          } as LicenseWithAnalysis, */
         });
         setIsModalOpen(false);
         setLicenseValue('');
@@ -372,7 +381,7 @@ export function LicenseControl({
         title={t('settings.license.cancel_subscription')}
         closable
         open={cancelModalOpen}
-        onOk={onCancelSubscription}
+        /* DOCKER: onOk={onCancelSubscription} */
         okText={t('settings.license.cancel_subscription')}
         okButtonProps={{ danger: true, loading: cancelingSubscription }}
         cancelText={t('common.cancel')}
@@ -392,6 +401,7 @@ export function LicenseControl({
           }}
         />
       </Modal>
+      {/* DOCKER: room license disabled
       {roomLicense ? (
         items
       ) : (
@@ -399,6 +409,7 @@ export function LicenseControl({
           {t('settings.license.no_room_license')}
         </div>
       )}
+      */}
       <div className={styles.setting_box} style={{ gap: '8px', display: 'flex' }}>
         <Button
           type="primary"
@@ -406,6 +417,7 @@ export function LicenseControl({
         >
           {t('settings.license.buy')}
         </Button>
+        {/* DOCKER: room license disabled
         {roomLicense && (
           <Button
             danger
@@ -418,6 +430,7 @@ export function LicenseControl({
             {t('settings.license.cancel_subscription')}
           </Button>
         )}
+        */}
         <Button
           type="default"
           onClick={() => {

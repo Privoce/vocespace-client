@@ -73,7 +73,7 @@ export function MoreButtonInner({
     uid: localParticipant.identity,
   });
 
-  const hasRoomLicense = useMemo(() => {
+  /* DOCKER: const hasRoomLicense = useMemo(() => {
     if (!config.roomLicenses || !space?.name) return false;
     const entry = config.roomLicenses.find((r) => r.name === space.name);
     if (!entry) return false;
@@ -86,7 +86,7 @@ export function MoreButtonInner({
     } catch {
       return false;
     }
-  }, [config.roomLicenses, space?.name]);
+  }, [config.roomLicenses, space?.name]); */
 
   const onClickChatMsg = () => {
     if (chat && chat.visible) {
@@ -103,7 +103,7 @@ export function MoreButtonInner({
         icon: <SvgResource type="app" svgSize={16} />,
       },
       // 录屏功能（需要有效的房间证书）
-      ...(recording && hasRoomLicense
+      ...(recording /* DOCKER: && hasRoomLicense */
         ? [
             {
               label: (

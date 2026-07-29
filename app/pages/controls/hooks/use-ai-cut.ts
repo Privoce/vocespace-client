@@ -1,3 +1,4 @@
+/* DOCKER: AI cut analysis disabled
 import { useRef, useState, useCallback, useEffect } from 'react';
 import type { Room } from 'livekit-client';
 import { api } from '@/lib/api';
@@ -120,7 +121,7 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
           },
         );
         if (aiCutAnalysisIntervalId.current) {
-          try { clearInterval(aiCutAnalysisIntervalId.current as unknown as number); } catch { /* ignore */ }
+          try { clearInterval(aiCutAnalysisIntervalId.current as unknown as number); } catch { }
           aiCutAnalysisIntervalId.current = null;
         }
         aiCutAnalysisIntervalId.current = setInterval(() => { reloadResult(); }, (freq + 2) * 60 * 1000);
@@ -195,3 +196,4 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
     fetchPlatformData,
   };
 }
+*/

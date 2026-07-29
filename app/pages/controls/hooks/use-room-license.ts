@@ -1,3 +1,4 @@
+/* DOCKER: room license disabled */
 import { useMemo, useCallback } from 'react';
 import type { Room } from 'livekit-client';
 import { api } from '@/lib/api';
@@ -46,3 +47,4 @@ export function useRoomLicense(config: ReadableConf, space: Room | null | undefi
 
   return { hasRoomLicense, toBuyRoomLicense };
 }
+/* DOCKER: end room license disabled */

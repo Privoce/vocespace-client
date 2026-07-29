@@ -224,7 +224,7 @@ export default {
     saveAsPreset: 'Save as Preset',
   },
   recording: {
-    title: 'Saved Recordings',
+    title: 'Recordings',
     empty: 'No recordings saved yet',
     fresh: 'Refresh list',
     search: {

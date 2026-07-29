@@ -1,3 +1,4 @@
+/* DOCKER: AI cut analysis disabled
 'use client';
 
 import { AICutDeps } from '@/lib/ai/analysis';
@@ -317,3 +318,4 @@ export function AISettings({
     </div>
   );
 }
+*/

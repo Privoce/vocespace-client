@@ -5,7 +5,7 @@ import { ModelBg, ModelRole } from '@/lib/std/virtual';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useUserStore } from '@/lib/store';
 import { LocalParticipant, Room } from 'livekit-client';
-import { LicenseControl } from './license';
+import { DashboardLicense } from '../../../dashboard/components/DashboardLicense';
 import { AudioSettings } from './audio';
 import { GeneralSettings } from './general';
 import { TabItem } from './tab_item';
@@ -18,7 +18,7 @@ import { ulid } from 'ulid';
 import { ReloadOutlined } from '@ant-design/icons';
 import { AppSettings } from './app';
 import { ParticipantAvoParams, ParticipantSettings, SettingState, SpaceInfo } from '@/lib/std/space';
-import { AISettings } from './ai';
+// import { AISettings } from './ai';
 import { AuthSettings } from './auth';
 import { ProfileSettings } from './profile';
 
@@ -154,23 +154,23 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
         label: <TabItem type="auth" label={t('settings.auth.title')}></TabItem>,
         children: <AuthSettings spaceInfo={spaceInfo} space={space} messageApi={messageApi}></AuthSettings>,
       },
-      ...(showAI
-        ? [
-            {
-              key: 'ai',
-              label: <TabItem type="ai" svgSize={16} label={t('settings.ai.title')}></TabItem>,
-              children: (
-                <AISettings
-                  space={space}
-                  messageApi={messageApi}
-                  spaceInfo={spaceInfo}
-                  localParticipant={localParticipant}
-                  updateSettings={updateSettings}
-                ></AISettings>
-              ),
-            },
-          ]
-        : []),
+      // ...(showAI
+      //   ? [
+      //       {
+      //         key: 'ai',
+      //         label: <TabItem type="ai" svgSize={16} label={t('settings.ai.title')}></TabItem>,
+      //         children: (
+      //           <AISettings
+      //             space={space}
+      //             messageApi={messageApi}
+      //             spaceInfo={spaceInfo}
+      //             localParticipant={localParticipant}
+      //             updateSettings={updateSettings}
+      //           ></AISettings>
+      //         ),
+      //       },
+      //     ]
+      //   : []),
       {
         key: 'audio',
         label: <TabItem type="audio" label={t('settings.audio.title')}></TabItem>,
@@ -264,10 +264,9 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
         key: 'license',
         label: <TabItem type="license" label={t('settings.license.title')}></TabItem>,
         children: (
-          <LicenseControl
+          <DashboardLicense
             messageApi={messageApi}
-            space={space.name}
-          ></LicenseControl>
+          ></DashboardLicense>
         ),
       },
       {

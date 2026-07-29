@@ -28,7 +28,7 @@ import { api } from '@/lib/api';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
 import { AICutService } from '@/lib/ai/cut';
 import { useWork, Work, WorkModal } from './widgets/work';
-import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/ai';
+/* DOCKER: */ // import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/ai';
 import { DEFAULT_WINDOW_ADJUST_WIDTH } from '@/lib/std/window';
 import { usePlatformUserInfo } from '@/lib/hooks/platform';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
@@ -66,19 +66,18 @@ export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
   openApp: boolean;
   setOpenApp: (open: boolean) => void;
   toRenameSettings: () => void;
-  startOrStopAICutAnalysis: (
+  startOrStopAICutAnalysis?: (
     freq: number,
     conf: AICutParticipantConf,
     reload?: boolean,
   ) => Promise<void>;
-  openAIServiceAskNote: () => void;
+  openAIServiceAskNote?: () => void;
   downloadAIMdReport?: () => Promise<void>;
   config: ReadableConf;
 }
 
 export interface ControlBarExport {
   openSettings: (key: TabKey, isDefineStatus?: boolean) => void;
-  showAICutAnalysisSettings: (open: boolean) => void;
   isChatOpen: boolean;
   setChatOpen: (open: boolean) => void;
 }
@@ -130,8 +129,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
 
     const chatMsg = useRoomStore((s) => s.chatMsg);
     const controlLeftRef = React.useRef<HTMLDivElement>(null);
-    const [aiCutModalOpen, setAICutModalOpen] = React.useState(false);
-    const aiCutServiceRef = React.useRef<AICutService>(new AICutService());
+    /* DOCKER: */ // const [aiCutModalOpen, setAICutModalOpen] = React.useState(false);
+    /* DOCKER: */ // const aiCutServiceRef = React.useRef<AICutService>(new AICutService());
     const [controlWidth, setControlWidth] = React.useState(
       controlLeftRef.current ? controlLeftRef.current.clientWidth : window.innerWidth,
     );
@@ -289,80 +288,70 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       setOpenApp(true);
     };
 
-    // ai -----------------------------------------------------------------------------------------
-    const {
-      aiCutDeps,
-      setAICutDeps,
-      extraction,
-      setExtraction,
-      cutFreq,
-      setCutFreq,
-      cutBlur,
-      setCutBlur,
-      isServiceOpen,
-      setIsServiceOpen,
-      aiCutOptions,
-      aiCutOptionsChange,
-    } = useAICutAnalysisSettings({
-      space,
-      spaceInfo,
-    });
-
-    const onClickAI = async () => {
-      setAICutModalOpen(true);
-    };
-
-    const saveAICutServiceSettings = async () => {
-      const response = await api.updateSpaceInfo(space!.name, {
-        ai: {
-          cut: {
-            ...spaceInfo.ai.cut,
-            freq: cutFreq,
-          },
-        },
-      });
-
-      if (!response.ok) {
-        let { error } = await response.json();
-        messageApi.error(error);
-        setAICutModalOpen(false);
-        return;
-      }
-      // await updateSettings({
-      //   ai: {
-      //     cut: {
-      //       enabled: isServiceOpen,
-      //       todo: aiCutDeps.includes('todo'),
-      //       spent: aiCutDeps.includes('spent'),
-      //     },
-      //   },
-      // });
-
-      setAICutModalOpen(false);
-      if (space && !space.localParticipant.isScreenShareEnabled && isServiceOpen) {
-        openAIServiceAskNote();
-      }
-      const includeSpent = aiCutDeps.includes('spent');
-      const includeTodo = aiCutDeps.includes('todo');
-      let reload = true;
-      // 判断，如果spent, todo的选中状态或cutFreq与之前不同则需要reload
-      const { spent, todo } = spaceInfo.participants[space!.localParticipant.identity]?.ai.cut;
-      if (spent === includeSpent && todo === includeTodo && spaceInfo.ai.cut.freq === cutFreq) {
-        reload = false;
-      }
-
-      await startOrStopAICutAnalysis(
-        cutFreq,
-        {
-          enabled: isServiceOpen,
-          spent: includeSpent,
-          todo: includeTodo,
-          extraction,
-          blur: cutBlur,
-        },
-        reload,
-      );
-    };
+    /* DOCKER: AI cut analysis disabled */
+    // const {
+    //   aiCutDeps,
+    //   setAICutDeps,
+    //   extraction,
+    //   setExtraction,
+    //   cutFreq,
+    //   setCutFreq,
+    //   cutBlur,
+    //   setCutBlur,
+    //   isServiceOpen,
+    //   setIsServiceOpen,
+    //   aiCutOptions,
+    //   aiCutOptionsChange,
+    // } = useAICutAnalysisSettings({
+    //   space,
+    //   spaceInfo,
+    // });
+    //
+    // const onClickAI = async () => {
+    //   setAICutModalOpen(true);
+    // };
+    //
+    // const saveAICutServiceSettings = async () => {
+    //   const response = await api.updateSpaceInfo(space!.name, {
+    //     ai: {
+    //       cut: {
+    //         ...spaceInfo.ai.cut,
+    //         freq: cutFreq,
+    //       },
+    //     },
+    //   });
+    //
+    //   if (!response.ok) {
+    //     let { error } = await response.json();
+    //     messageApi.error(error);
+    //     setAICutModalOpen(false);
+    //     return;
+    //   }
+    //
+    //   setAICutModalOpen(false);
+    //   if (space && !space.localParticipant.isScreenShareEnabled && isServiceOpen) {
+    //     openAIServiceAskNote();
+    //   }
+    //   const includeSpent = aiCutDeps.includes('spent');
+    //   const includeTodo = aiCutDeps.includes('todo');
+    //   let reload = true;
+    //   const { spent, todo } = spaceInfo.participants[space!.localParticipant.identity]?.ai.cut;
+    //   if (spent === includeSpent && todo === includeTodo && spaceInfo.ai.cut.freq === cutFreq) {
+    //     reload = false;
+    //   }
+    //
+    //   await startOrStopAICutAnalysis(
+    //     cutFreq,
+    //     {
+    //       enabled: isServiceOpen,
+    //       spent: includeSpent,
+    //       todo: includeTodo,
+    //       extraction,
+    //       blur: cutBlur,
+    //     },
+    //     reload,
+    //   );
+    // };
 
     // --- work -----------------------------------------------------------------------------------------
     const {
@@ -370,23 +359,16 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       setOpenModal: setWorkModalOpen,
       enabled: workEnabled,
       setEnabled: setWorkEnabled,
-      isUseAI,
-      setIsUseAI,
-      isSync,
-      setIsSync,
       videoBlur,
       setVideoBlur,
       screenBlur,
       setScreenBlur,
       handleWorkMode,
       startOrStopWork,
-      lastAICutConfig,
     } = useWork({
       space,
       spaceInfo,
       messageApi,
-      startOrStopAICutAnalysis,
-      downloadAIMdReport,
     });
 
     React.useImperativeHandle(
@@ -394,8 +376,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       () =>
         ({
           openSettings,
-          showAICutAnalysisSettings: setAICutModalOpen,
-          isChatOpen: chatOpen, // 使用 chatOpen 而不是 isChatOpen，因为 chatOpen 是实际控制聊天窗口的状态
+          isChatOpen: chatOpen,
           setChatOpen,
         }) as ControlBarExport,
     );
@@ -536,7 +517,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               space={space.name}
               startOrStopWork={startOrStopWork}
               localParticipant={space.localParticipant}
-              lastAICutConfig={lastAICutConfig}
             ></Work>
           )}
           {visibleControls.chat && !isMobile && (
@@ -561,7 +541,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               onSettingOpen={async () => {
                 setSettingVis(true);
               }}
-              onClickAI={onClickAI}
+              onClickAI={/* DOCKER: */ undefined}
               onClickRecord={onClickRecord}
               onClickManage={fetchSettings}
               onClickApp={onClickApp}
@@ -721,8 +701,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             <div>{isManager ? t('more.record.desc') : t('more.record.request')}</div>
           )}
         </Modal>
-        {/* -------------------- ai cut modal --------------------------------------------------- */}
-        {showAI && (
+        {/* DOCKER: AI cut analysis disabled */}
+        {/* {showAI && (
           <Modal
             open={aiCutModalOpen}
             title={t('ai.cut.title')}
@@ -748,9 +728,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
               aiCutOptionsChange={aiCutOptionsChange}
               isManager={isManager}
             ></AICutAnalysisSettingsPanel>
-            {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
           </Modal>
-        )}
+        )} */}
         {/* ------------------ work ----------------------------------------------------- */}
         {space && showAI && (
           <WorkModal
@@ -760,10 +739,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             setOpen={setWorkModalOpen}
             isStartWork={workEnabled}
             setIsStartWork={setWorkEnabled}
-            isUseAI={isUseAI}
-            setIsUseAI={setIsUseAI}
-            isSync={isSync}
-            setIsSync={setIsSync}
+
             videoBlur={videoBlur}
             setVideoBlur={setVideoBlur}
             screenBlur={screenBlur}
@@ -772,6 +748,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             updateSettings={updateSettings}
           ></WorkModal>
         )}
+
+        {/* DOCKER: AI cut analysis disabled */}
       </div>
     );
   },

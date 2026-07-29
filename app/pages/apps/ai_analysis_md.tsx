@@ -1,3 +1,4 @@
+/* DOCKER: AI cut analysis disabled
 import { AICutAnalysisRes, AICutAnalysisResLine } from '@/lib/ai/analysis';
 import { Button, Empty, Image, Tag, Tooltip } from 'antd';
 import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
@@ -305,7 +306,7 @@ export const AICutAnalysisMdTabs = forwardRef<AICutAnalysisMdTabsExports, AICutA
             <div>
               {contentSections.map((section, index) => (
                 <div key={index} style={{ marginBottom: '32px' }}>
-                  {/* 标题和时间戳 */}
+            
                   {section.name && (
                     <h2 style={{ color: '#fff', fontSize: '18px', marginBottom: '8px' }}>
                       {section.name}
@@ -329,19 +330,19 @@ export const AICutAnalysisMdTabs = forwardRef<AICutAnalysisMdTabsExports, AICutA
                       <span>{`${t('ai.cut.time.duration')}: ${section.duration}`}</span>
                     </p>
                   )}
-                  {/* 内容（markdown 渲染） */}
+        
                   <div style={{ marginBottom: '16px' }}>
                     <ReactMarkdown>{section.content}</ReactMarkdown>
                   </div>
 
-                  {/* 截图（直接渲染 img 标签） */}
+                
                   <ScreenShot
                     section={section}
                     isAuthed={isAuthed}
                     userId={userId}
                     blur={spaceInfo.participants[userId]?.ai.cut.blur || false}
                   />
-                  {/* 分隔线 */}
+          
                   {index < contentSections.length - 1 && (
                     <hr style={{ border: 'none', borderTop: '1px solid #333', margin: '24px 0' }} />
                   )}
@@ -430,3 +431,4 @@ function ScreenShotImage({ src, blur = false }: { src?: string; blur?: boolean }
     />
   );
 }
+*/

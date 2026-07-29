@@ -70,6 +70,7 @@ interface ChannelProps {
   isActive?: boolean;
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
+  toSettings?: (isDefineStatus?: boolean) => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
   showFlotApp: () => void;
   config: ReadableConf;
@@ -95,6 +96,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       isActive = false,
       updateSettings,
       toRenameSettings,
+      toSettings,
       setUserStatus,
       showFlotApp,
     }: ChannelProps,
@@ -600,6 +602,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             space={space}
             updateSettings={updateSettings}
             toRenameSettings={toRenameSettings}
+            toSettings={toSettings}
             setUserStatus={setUserStatus}
             showFlotApp={showFlotApp}
             messageApi={messageApi}

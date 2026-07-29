@@ -8,9 +8,9 @@ export interface LicenseWithAnalysis extends License {
 
 interface LicenseState {
   space: LicenseWithAnalysis;
-  room: LicenseWithAnalysis | null;
+  /* DOCKER: room: LicenseWithAnalysis | null; */
   setSpace: (space: LicenseWithAnalysis) => void;
-  setRoom: (room: LicenseWithAnalysis | null) => void;
+  /* DOCKER: setRoom: (room: LicenseWithAnalysis | null) => void; */
 }
 
 export const useLicenseStore = create<LicenseState>()((set) => ({
@@ -19,7 +19,7 @@ export const useLicenseStore = create<LicenseState>()((set) => ({
     isAnalysis: false,
     personLimit: 5,
   },
-  room: null,
+  /* DOCKER: room: null, */
   setSpace: (space) => set({ space }),
-  setRoom: (room) => set({ room }),
+  /* DOCKER: setRoom: (room) => set({ room }), */
 }));

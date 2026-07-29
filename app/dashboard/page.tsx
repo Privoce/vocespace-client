@@ -26,7 +26,7 @@ import {
   DashboardLog,
   DashboardRecording,
   DashboardLicense,
-  DashboardLicenseManage,
+  /* DOCKER: DashboardLicenseManage, */
 } from './components';
 
 const { Title } = Typography;
@@ -102,7 +102,7 @@ export default function Dashboard() {
   const [isHostManager, setIsHostManager] = useState(false);
   const [hostToken, setHostToken] = useState('');
   const [webhookEnabled, setWebhookEnabled] = useState(false);
-  const [licenseManageVisible, setLicenseManageVisible] = useState(false);
+  /* DOCKER: const [licenseManageVisible, setLicenseManageVisible] = useState(false); */
   const [openManage, setOpenManage] = useState(false);
   const [manageLoading, setManageLoading] = useState(false);
   const [manageSpaces, setManageSpaces] = useState<SpaceInfoMap | null>(null);
@@ -460,11 +460,11 @@ export default function Dashboard() {
       .then((r) => r.json())
       .then((data) => {
         setWebhookEnabled(data.webhook);
-        setLicenseManageVisible(data.webhook);
+        /* DOCKER: setLicenseManageVisible(data.webhook); */
       })
       .catch(() => {
         setWebhookEnabled(false);
-        setLicenseManageVisible(false);
+        /* DOCKER: setLicenseManageVisible(false); */
       });
 
     const interval = setInterval(() => {
@@ -777,14 +777,14 @@ export default function Dashboard() {
       key: 'license',
       label: t('dashboard.menu.license'),
     },
-    ...(licenseManageVisible
+    /* DOCKER:...(licenseManageVisible
       ? [
           {
             key: 'licenseManage',
             label: t('dashboard.menu.licenseManage'),
           },
         ]
-      : []),
+      : []), */
   ];
 
   const changeMenu: MenuProps['onClick'] = (e) => {
@@ -866,7 +866,7 @@ export default function Dashboard() {
 
         {menuTab === 'license' && <DashboardLicense messageApi={messageApi} />}
 
-        {menuTab === 'licenseManage' && <DashboardLicenseManage />}
+        {/* DOCKER: {menuTab === 'licenseManage' && <DashboardLicenseManage />} */}
 
         <GlobalConfModal
           open={openConf}
