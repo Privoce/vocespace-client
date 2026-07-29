@@ -1350,7 +1350,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                         overflow: 'hidden',
                         transition: 'width 0.3s ease-in-out',
                         flexShrink: 0,
-                        // borderLeft: '1px dashed #8f8f8f',
                         borderRadius: '0.5em',
                         marginLeft: 4,
                       }}

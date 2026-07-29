@@ -19,7 +19,7 @@ import {
   SendOutlined,
 } from '@ant-design/icons';
 import { api } from '@/lib/api';
-import { FileType } from '@/lib/std';
+import { FileType, isMobile } from '@/lib/std';
 import { FS } from './fs';
 import { handleIdentityType, SpaceInfo } from '@/lib/std/space';
 
@@ -362,26 +362,28 @@ export const ChatPanel = React.forwardRef<EnhancedChatExports, ChatPanelProps>(
           background: '#1a1a1a',
         }}
       >
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '12px 16px',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-          }}
-        >
-          <span style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{t('common.chat')}</span>
-          {onClose && (
-            <Button
-              type="text"
-              size="small"
-              icon={<CloseOutlined style={{ fontSize: 14, color: '#888' }} />}
-              onClick={onClose}
-              style={{ width: 28, height: 28 }}
-            />
-          )}
-        </div>
+        {!isMobile() && (
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '12px 16px',
+              borderBottom: '1px solid rgba(255,255,255,0.06)',
+            }}
+          >
+            <span style={{ fontSize: 14, fontWeight: 600, color: '#fff' }}>{t('common.chat')}</span>
+            {onClose && (
+              <Button
+                type="text"
+                size="small"
+                icon={<CloseOutlined style={{ fontSize: 14, color: '#888' }} />}
+                onClick={onClose}
+                style={{ width: 28, height: 28 }}
+              />
+            )}
+          </div>
+        )}
         <div
           className={styles.msg}
           style={{ flex: 1, minHeight: 0, position: 'relative' }}
