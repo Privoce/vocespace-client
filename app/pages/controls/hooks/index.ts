@@ -1,6 +1,6 @@
 export { useUserStatus } from './use-user-status';
 /* DOCKER: export { useRoomLicense } from './use-room-license'; */
-export { useAICutService } from './use-ai-cut';
+// export { useAICutService } from './use-ai-cut';
 export { useRoomSubscription } from './use-room-subscription';
 export { useControlsSettings } from './use-controls-settings';
 export { useControlsRecord } from './use-controls-record';
