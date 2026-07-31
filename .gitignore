@@ -43,6 +43,7 @@ yarn-error.log*
 
 live_meet-livemeet-prod.tar
 livekit_1.8.4_linux_arm64.tar.gz
+livekit_1.8.4_linux_amd64.tar.gz
 
 /deploy/server_private/*
 

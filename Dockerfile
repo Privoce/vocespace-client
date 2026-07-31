@@ -9,12 +9,12 @@ WORKDIR /app
 # 安装依赖阶段 -----------------------------------------------------------------
 FROM base AS deps
 # 安装构建工具 -----------------------------------------------------------------
-RUN apk add --no-cache libc6-compat git
+RUN apk add --no-cache libc6-compat git curl
 # 复制 package.json 相关文件 ---------------------------------------------------
 COPY package.json ./
 # COPY package-lock.json* ./
 # COPY yarn.lock* ./
-COPY next.config.js ./
+COPY next.config.cjs ./
 COPY pnpm-lock.yaml* ./
 COPY entrypoint.sh ./entrypoint.sh
 
@@ -39,12 +39,12 @@ RUN echo "LIVEKIT_API_KEY=${LIVEKIT_API_KEY}" > .env.local \
     && echo "LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}" >> .env.local \
     && echo "LIVEKIT_URL=${LIVEKIT_URL}" >> .env.local 
 
-# 配置 next.config.js 启用 standalone 输出
-RUN sed -i 's/output: undefined/output: "standalone"/g' next.config.js || echo 'output already set'
+# 配置 next.config.cjs 启用 standalone 输出
+RUN grep -q 'output: "standalone"' next.config.cjs && echo "standalone already configured" || sed -i 's/output: undefined/output: "standalone"/g' next.config.cjs
 
 # 构建项目 ---------------------------------------------------------------------
 ENV NODE_OPTIONS="--max-old-space-size=8192"
-ENV NODE_ENV production
+ENV NODE_ENV=production
 RUN pnpm build
 # 删除构建缓存
 RUN rm -rf .next/cache
@@ -53,16 +53,23 @@ RUN rm -rf .next/cache
 FROM node:23-alpine AS runner
 WORKDIR /app
 # 设置为生产环境 ----------------------------------------------------------------
-ENV NODE_ENV production
+ENV NODE_ENV=production
 # 安装必要工具
 RUN apk add --no-cache bash tar supervisor 
 
-# 复制预下载的 LiveKit 服务器二进制包
-COPY livekit_1.8.4_linux_arm64.tar.gz /tmp/
-# 解压二进制文件到 /usr/local/bin 目录
-RUN tar -xzf /tmp/livekit_1.8.4_linux_arm64.tar.gz -C /usr/local/bin --wildcards --no-anchored "livekit*" && \
+# 动态下载并安装 LiveKit 服务器（支持多架构）
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ] || [ "$ARCH" = "amd64" ]; then \
+        LIVEKIT_ARCH="amd64"; \
+    elif [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then \
+        LIVEKIT_ARCH="arm64"; \
+    else \
+        echo "Unsupported architecture: $ARCH" && exit 1; \
+    fi && \
+    curl -L -o /tmp/livekit.tar.gz "https://github.com/livekit/livekit/releases/download/v1.8.4/livekit-server-linux-${LIVEKIT_ARCH}.tar.gz" && \
+    tar -xzf /tmp/livekit.tar.gz -C /usr/local/bin --wildcards --no-anchored "livekit*" && \
     chmod +x /usr/local/bin/livekit-server && \
-    rm /tmp/livekit_1.8.4_linux_arm64.tar.gz
+    rm /tmp/livekit.tar.gz
 
 # 添加非root用户 ---------------------------------------------------------------
 RUN addgroup --system --gid 1001 nodejs
