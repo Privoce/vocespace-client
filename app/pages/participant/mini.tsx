@@ -39,8 +39,9 @@ export interface ParticipantTileMiniProps extends ParticipantTileProps {
    * host room name
    */
   space: Room;
+  toSettings?: () => void;
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
-  toRenameSettings: () => void;
+  toRenameSettings?: (isDefineStatus?: boolean) => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
   showFlotApp: (id?: string, participantName?: string, auth?: AppAuth) => void;
   messageApi: MessageInstance;
@@ -54,6 +55,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       space,
       updateSettings,
       toRenameSettings,
+      toSettings,
       setUserStatus,
       showFlotApp,
       messageApi,
@@ -181,6 +183,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       trackReference,
       t,
       toRenameSettings,
+      toSettings,
       setUserStatus,
       settings,
       disabled: trackReference.participant.identity !== localParticipant.identity,

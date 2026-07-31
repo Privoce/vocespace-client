@@ -39,7 +39,6 @@ import { NotificationInstance } from 'antd/es/notification/interface';
 import { Popover, Slider, Tooltip } from 'antd';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps {
-  toSettings?: (isDefineStatus?: boolean) => void;
   messageApi: MessageInstance;
   noteApi?: NotificationInstance;
   isFocus?: boolean;
@@ -449,7 +448,8 @@ export const ParticipantItem: (
       username: localParticipant.name || '',
       trackReference,
       settings,
-      toRenameSettings: toSettings,
+      toRenameSettings ,
+      toSettings,
       t,
       setUserStatus,
       disabled: trackReference.participant.identity !== localParticipant.identity,

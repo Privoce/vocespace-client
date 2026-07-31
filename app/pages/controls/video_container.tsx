@@ -975,8 +975,11 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       tracks,
     ]);
 
-    const toSettingGeneral = (isDefineStatus?: boolean) => {
+    const toRenameSetting = (isDefineStatus?: boolean) => {
       controlsRef.current?.openSettings('profile', isDefineStatus);
+    };
+    const toSettingGeneral = () => {
+      controlsRef.current?.openSettings('general');
     };
     // [room update handler] --------------------------------------------------------------------------------------
     const handleUpdateRoom = async () => {
@@ -1166,7 +1169,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               noteApi={noteApi}
               setUserStatus={setUserStatus}
               updateSettings={updateSettings}
-              toRenameSettings={toSettingGeneral}
+              toRenameSettings={toRenameSetting}
               showFlotApp={showFlotApp}
               selfRoom={selfRoom}
               isFocus={state.isFocus || isFocus}
@@ -1252,7 +1255,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             messageApi={messageApi}
             isActive={isActive}
             updateSettings={updateSettings}
-            toRenameSettings={toSettingGeneral}
+            toRenameSettings={toRenameSetting}
+            toSettings={toSettingGeneral}
             setUserStatus={setUserStatus}
             showFlotApp={showFlotApp}
           ></Channel>

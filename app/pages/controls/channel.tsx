@@ -69,7 +69,8 @@ interface ChannelProps {
   settings: SpaceInfo;
   isActive?: boolean;
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
-  toRenameSettings: () => void;
+  toRenameSettings?: (isDefineStatus?: boolean) => void;
+  toSettings?: () => void;
   setUserStatus: (status: UserStatus | string) => Promise<void>;
   showFlotApp: () => void;
   config: ReadableConf;
@@ -95,6 +96,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       isActive = false,
       updateSettings,
       toRenameSettings,
+      toSettings,
       setUserStatus,
       showFlotApp,
     }: ChannelProps,
@@ -600,13 +602,14 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             space={space}
             updateSettings={updateSettings}
             toRenameSettings={toRenameSettings}
+            toSettings={toSettings}
             setUserStatus={setUserStatus}
             showFlotApp={showFlotApp}
             messageApi={messageApi}
           ></ParticipantTileMini>
         </GLayout>
       );
-    }, [tracks, childRooms, settings, allParticipants, messageApi]);
+    }, [tracks, childRooms, settings, allParticipants, messageApi, toRenameSettings, toSettings]);
 
     const subContext = useCallback(
       (name: string, length: number): ReactNode => {
@@ -635,6 +638,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
               space={space}
               updateSettings={updateSettings}
               toRenameSettings={toRenameSettings}
+              toSettings={toSettings}
               setUserStatus={setUserStatus}
               showFlotApp={showFlotApp}
               messageApi={messageApi}
@@ -642,7 +646,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
           </GLayout>
         );
       },
-      [tracks, childRooms, settings, space, allParticipants, messageApi],
+      [tracks, childRooms, settings, space, allParticipants, messageApi, toRenameSettings, toSettings],
     );
 
     const subChildren: CollapseProps['items'] = useMemo(() => {
