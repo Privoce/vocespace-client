@@ -69,5 +69,13 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "sharp",
+      "canvas",
+      "cbor-extract",
+      "@parcel/watcher"
+    ]
   }
 }

@@ -56,11 +56,11 @@ ENV NODE_ENV=production
 RUN apk add --no-cache bash tar supervisor 
 
 # 复制预下载的 LiveKit 服务器二进制包
-COPY livekit_1.8.4_linux_arm64.tar.gz /tmp/
+COPY livekit_1.8.4_linux_amd64.tar.gz /tmp/
 # 解压二进制文件到 /usr/local/bin 目录
-RUN tar -xzf /tmp/livekit_1.8.4_linux_arm64.tar.gz -C /usr/local/bin --wildcards --no-anchored "livekit*" && \
+RUN tar -xzf /tmp/livekit_1.8.4_linux_amd64.tar.gz -C /usr/local/bin --wildcards --no-anchored "livekit*" && \
     chmod +x /usr/local/bin/livekit-server && \
-    rm /tmp/livekit_1.8.4_linux_arm64.tar.gz
+    rm /tmp/livekit_1.8.4_linux_amd64.tar.gz
 
 # 添加非root用户 ---------------------------------------------------------------
 RUN addgroup --system --gid 1001 nodejs

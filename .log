@@ -1,0 +1,53 @@
+#25 DONE 226.0s
+
+#26 [builder 6/7] RUN echo "=== Checking .next directory ===" && ls -la .next/ &&     echo "=== Checking required-server-files.json ===" &&     cat .next/required-server-files.json | head -20 &&     echo "=== Checking standalone ===" &&     ls -la .next/standalone 2>/dev/null || echo "standalone not found"
+#26 0.106 === Checking .next directory ===
+#26 0.109 total 5564
+#26 0.109 drwxr-xr-x    6 root     root          4096 Jul 31 19:02 .
+#26 0.109 drwxr-xr-x    1 root     root          4096 Jul 31 18:59 ..
+#26 0.109 -rw-r--r--    1 root     root            21 Jul 31 19:02 BUILD_ID
+#26 0.109 -rw-r--r--    1 root     root          5383 Jul 31 19:01 app-build-manifest.json
+#26 0.109 -rw-r--r--    1 root     root           738 Jul 31 19:02 app-path-routes-manifest.json
+#26 0.109 -rw-r--r--    1 root     root           968 Jul 31 19:01 build-manifest.json
+#26 0.109 drwxr-xr-x    4 root     root          4096 Jul 31 19:01 cache
+#26 0.109 -rw-r--r--    1 root     root            94 Jul 31 19:02 export-marker.json
+#26 0.109 -rw-r--r--    1 root     root           511 Jul 31 19:02 images-manifest.json
+#26 0.109 -rw-r--r--    1 root     root         10220 Jul 31 19:02 next-minimal-server.js.nft.json
+#26 0.109 -rw-r--r--    1 root     root         75486 Jul 31 19:02 next-server.js.nft.json
+#26 0.109 -rw-r--r--    1 root     root            20 Jul 31 18:59 package.json
+#26 0.109 -rw-r--r--    1 root     root          1698 Jul 31 19:02 prerender-manifest.json
+#26 0.109 -rw-r--r--    1 root     root           798 Jul 31 19:01 react-loadable-manifest.json
+#26 0.109 -rw-r--r--    1 root     root          4532 Jul 31 19:02 required-server-files.json
+#26 0.109 -rw-r--r--    1 root     root          1679 Jul 31 18:59 routes-manifest.json
+#26 0.109 drwxr-xr-x    5 root     root          4096 Jul 31 19:02 server
+#26 0.109 drwxr-xr-x    5 root     root          4096 Jul 31 19:01 static
+#26 0.109 -rw-r--r--    1 root     root       5528459 Jul 31 19:02 trace
+#26 0.109 drwxr-xr-x    3 root     root          4096 Jul 31 19:00 types
+#26 0.109 === Checking required-server-files.json ===
+#26 0.111 {"version":1,"config":{"env":{},"webpack":null,"eslint":{"ignoreDuringBuilds":false},"typescript":{"ignoreBuildErrors":false,"tsconfigPath":"tsconfig.json"},"distDir":".next","cleanDistDir":true,"assetPrefix":"","cacheMaxMemorySize":52428800,"configOrigin":"default","useFileSystemPublicRoutes":true,"generateEtags":true,"pageExtensions":["tsx","ts","jsx","js"],"poweredByHeader":true,"compress":true,"analyticsId":"","images":{"deviceSizes":[640,750,828,1080,1200,1920,2048,3840],"imageSizes":[16,32,48,64,96,128,256,384],"path":"/_next/image","loader":"default","loaderFile":"","domains":[],"disableStaticImages":false,"minimumCacheTTL":60,"formats":["image/webp"],"dangerouslyAllowSVG":false,"contentSecurityPolicy":"script-src 'none'; frame-src 'none'; sandbox;","contentDispositionType":"inline","remotePatterns":[],"unoptimized":false},"devIndicators":{"buildActivity":true,"buildActivityPosition":"bottom-right"},"onDemandEntries":{"maxInactiveAge":60000,"pagesBufferLength":5},"amp":{"canonicalBase":""},"basePath":"","sassOptions":{},"trailingSlash":false,"i18n":null,"productionBrowserSourceMaps":false,"optimizeFonts":true,"excludeDefaultMomentLocales":true,"serverRuntimeConfig":{},"publicRuntimeConfig":{},"reactProductionProfiling":false,"reactStrictMode":null,"httpAgentOptions":{"keepAlive":true},"outputFileTracing":true,"staticPageGenerationTimeout":60,"swcMinify":true,"modularizeImports":{"@mui/icons-material":{"transform":"@mui/icons-material/{{member}}"},"lodash":{"transform":"lodash/{{member}}"}},"experimental":{"multiZoneDraftMode":false,"prerenderEarlyExit":false,"serverMinification":true,"serverSourceMaps":false,"linkNoTouchStart":false,"caseSensitiveRoutes":false,"clientRouterFilter":true,"clientRouterFilterRedirects":false,"fetchCacheKeyPrefix":"","middlewarePrefetch":"flexible","optimisticClientCache":true,"manualClientBasePath":false,"cpus":3,"memoryBasedWorkersCount":false,"isrFlushToDisk":true,"workerThreads":false,"optimizeCss":false,"nextScriptWorkers":false,"scrollRestoration":false,"externalDir":false,"disableOptimizedLoading":false,"gzipSize":true,"craCompat":false,"esmExternals":true,"fullySpecified":false,"outputFileTracingRoot":"/app","swcTraceProfiling":false,"forceSwcTransforms":false,"largePageDataBytes":128000,"adjustFontFallbacks":false,"adjustFontFallbacksWithSizeAdjust":false,"typedRoutes":false,"instrumentationHook":false,"bundlePagesExternals":false,"parallelServerCompiles":false,"parallelServerBuildTraces":false,"ppr":false,"missingSuspenseWithCSRBailout":true,"optimizeServerReact":true,"useEarlyImport":false,"staleTimes":{"dynamic":30,"static":300},"optimizePackageImports":["lucide-react","date-fns","lodash-es","ramda","antd","react-bootstrap","ahooks","@ant-design/icons","@headlessui/react","@headlessui-float/react","@heroicons/react/20/solid","@heroicons/react/24/solid","@heroicons/react/24/outline","@visx/visx","@tremor/react","rxjs","@mui/material","@mui/icons-material","recharts","react-use","@material-ui/core","@material-ui/icons","@tabler/icons-react","mui-core","react-icons/ai","react-icons/bi","react-icons/bs","react-icons/cg","react-icons/ci","react-icons/di","react-icons/fa","react-icons/fa6","react-icons/fc","react-icons/fi","react-icons/gi","react-icons/go","react-icons/gr","react-icons/hi","react-icons/hi2","react-icons/im","react-icons/io","react-icons/io5","react-icons/lia","react-icons/lib","react-icons/lu","react-icons/md","react-icons/pi","react-icons/ri","react-icons/rx","react-icons/si","react-icons/sl","react-icons/tb","react-icons/tfi","react-icons/ti","react-icons/vsc","react-icons/wi"],"trustHostHeader":false,"isExperimentalCompile":false},"configFileName":"next.config.js"},"appDir":"/app","relativeAppDir":"","files":[".next/routes-manifest.json",".next/server/pages-manifest.json",".next/build-manifest.json",".next/prerender-manifest.json",".next/server/middleware-manifest.json",".next/server/middleware-build-manifest.js",".next/server/middleware-react-loadable-manifest.js",".next/server/app-paths-manifest.json",".next/app-path-routes-manifest.json",".next/app-build-manifest.json",".next/server/server-reference-manifest.js",".next/server/server-reference-manifest.json",".next/react-loadable-manifest.json",".next/server/font-manifest.json",".next/BUILD_ID",".next/server/next-font-manifest.js",".next/server/next-font-manifest.json"],"ignore":["node_modules/.pnpm/next@14.2.35_react-dom@18.3.1_react@18.3.1__react@18.3.1_sass@1.85.1/node_modules/next/dist/compiled/@ampproject/toolbox-optimizer/**/*"]}=== Checking standalone ===
+#26 0.113 standalone not found
+#26 DONE 0.1s
+
+#27 [builder 7/7] RUN rm -rf .next/cache
+#27 DONE 0.2s
+
+#28 [runner  9/15] COPY --from=builder --chown=nextjs:nodejs /app/entrypoint.sh /app/entrypoint.sh
+#28 DONE 0.0s
+
+#29 [runner 10/15] RUN chmod +x /app/entrypoint.sh
+#29 DONE 0.1s
+
+#30 [runner 11/15] COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+#30 ERROR: failed to calculate checksum of ref oyan7vuedszcxw5sxcnkhzvoa::u7eihuckwnv51dpl712vzpigr: "/app/.next/standalone": not found
+------
+ > [runner 11/15] COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./:
+------
+Dockerfile:95
+--------------------
+  93 |
+  94 |     # 复制整个应用 ------------------------------------------------------------------
+  95 | >>> COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+  96 |     COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+  97 |     COPY --from=builder --chown=nextjs:nodejs /app/public ./public
+--------------------
+ERROR: failed to build: failed to solve: failed to compute cache key: failed to calculate checksum of ref oyan7vuedszcxw5sxcnkhzvoa::u7eihuckwnv51dpl712vzpigr: "/app/.next/standalone": not found
