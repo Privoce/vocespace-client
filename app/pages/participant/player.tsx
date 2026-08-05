@@ -472,9 +472,46 @@ export const TilePlayerAdd = ({
 
 const IframeWindow = ({ url, onLoad }: { url: string; onLoad?: () => void }) => {
   const [loading, setLoading] = useState(true);
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const [iframeScale, setIframeScale] = useState(1);
+  const iframeViewport = useMemo(() => ({ width: 1440, height: 900 }), []);
+
   useEffect(() => {
     setLoading(true);
   }, [url]);
+
+  useEffect(() => {
+    if (!containerRef.current) {
+      return;
+    }
+
+    const updateScale = () => {
+      if (!containerRef.current) {
+        return;
+      }
+
+      const { clientWidth, clientHeight } = containerRef.current;
+      if (!clientWidth || !clientHeight) {
+        return;
+      }
+
+      setIframeScale(
+        Math.min(clientWidth / iframeViewport.width, clientHeight / iframeViewport.height),
+      );
+    };
+
+    updateScale();
+
+    const observer = new ResizeObserver(() => {
+      updateScale();
+    });
+
+    observer.observe(containerRef.current);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [iframeViewport]);
 
   const handleLoad = () => {
     setLoading(false);
@@ -482,7 +519,10 @@ const IframeWindow = ({ url, onLoad }: { url: string; onLoad?: () => void }) => 
   };
 
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
+    <div
+      ref={containerRef}
+      style={{ width: '100%', height: '100%', position: 'relative', overflow: 'hidden' }}
+    >
       {loading && (
         <div
           style={{
@@ -498,14 +538,31 @@ const IframeWindow = ({ url, onLoad }: { url: string; onLoad?: () => void }) => 
           <Spin size="large" />
         </div>
       )}
-      <iframe
-        allow="clipboard-read; clipboard-write"
-        title="tile-iframe"
-        src={url}
-        style={{ width: '100%', height: '100%', border: 'none' }}
-        onLoad={handleLoad}
-        onError={() => setLoading(false)}
-      />
+      <div
+        style={{
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          width: iframeViewport.width,
+          height: iframeViewport.height,
+          transform: `translate(-50%, -50%) scale(${iframeScale})`,
+          transformOrigin: 'center center',
+        }}
+      >
+        <iframe
+          allow="clipboard-read; clipboard-write"
+          title="tile-iframe"
+          src={url}
+          style={{
+            width: iframeViewport.width,
+            height: iframeViewport.height,
+            border: 'none',
+            background: '#fff',
+          }}
+          onLoad={handleLoad}
+          onError={() => setLoading(false)}
+        />
+      </div>
     </div>
   );
 };

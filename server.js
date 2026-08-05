@@ -269,6 +269,9 @@ app.prepare().then(() => {
     // - on: "mouse_click"
     // - emit: "mouse_click_response"
     // - msg: WsTo/WsSender
+    socket.on('mouse_click', (msg) => {
+      socket.broadcast.emit('mouse_click_response', msg);
+    });
     socket.on('mouse_remove', (msg) => {
       socket.broadcast.emit('mouse_remove_response', msg);
     });
