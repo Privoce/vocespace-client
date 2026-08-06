@@ -1,5 +1,12 @@
 import { isTrackReferencePlaceholder } from '@/app/pages/controls/video_container';
-import { MouseMove, useVideoBlur, WsBase, WsMouseClick, WsMouseMove, WsWave } from '@/lib/std/device';
+import {
+  MouseMove,
+  useVideoBlur,
+  WsBase,
+  WsMouseClick,
+  WsMouseMove,
+  WsWave,
+} from '@/lib/std/device';
 import {
   AudioTrack,
   isTrackReference,
@@ -28,7 +35,12 @@ import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { isSpaceManager } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
-import { ChildRoom, DEFAULT_PARTICIPANT_SETTINGS, ParticipantAvoParams, ParticipantSettings } from '@/lib/std/space';
+import {
+  ChildRoom,
+  DEFAULT_PARTICIPANT_SETTINGS,
+  ParticipantAvoParams,
+  ParticipantSettings,
+} from '@/lib/std/space';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { AppFlotIconCollect } from '../apps/app_pin';
@@ -169,9 +181,10 @@ export const ParticipantItem: (
     const localAvo = useMemo(() => {
       const list = !isLocal
         ? currentParticipant?.avoList
-        : (uState.avoList || currentParticipant?.avoList);
+        : uState.avoList || currentParticipant?.avoList;
 
-      const effectiveList: ParticipantAvoParams[] = list && list.length > 0 ? list : DEFAULT_PARTICIPANT_SETTINGS.avoList!;
+      const effectiveList: ParticipantAvoParams[] =
+        list && list.length > 0 ? list : DEFAULT_PARTICIPANT_SETTINGS.avoList!;
       const active = effectiveList.find((a) => a.isUsed) ?? effectiveList[0];
       return active.enabled ? active : undefined;
     }, [currentParticipant?.avoList, isLocal, uState.avoList]);
@@ -286,7 +299,10 @@ export const ParticipantItem: (
               }}
             >
               {deleyMask && (
-                <div className="lk-participant-placeholder" style={{ opacity: 1, zIndex: 1000, height: '100%', width: '100%' }}>
+                <div
+                  className="lk-participant-placeholder"
+                  style={{ opacity: 1, zIndex: 1000, height: '100%', width: '100%' }}
+                >
                   <ParticipantPlaceholder />
                 </div>
               )}
@@ -396,7 +412,7 @@ export const ParticipantItem: (
       username: localParticipant.name || '',
       trackReference,
       settings,
-      toRenameSettings ,
+      toRenameSettings,
       toSettings,
       t,
       setUserStatus,
@@ -586,11 +602,7 @@ export const ParticipantItem: (
             setRemotePopKey(Date.now());
           }
         };
-        const handleMouseRemoveResponse = ({
-          senderId,
-          receiverId,
-          space: spaceName,
-        }: WsWave) => {
+        const handleMouseRemoveResponse = ({ senderId, receiverId, space: spaceName }: WsWave) => {
           // 删除状态
           if (space.name == spaceName && receiverId === trackReference.participant.identity) {
             setRemoteCursors((prev) => {
@@ -681,7 +693,11 @@ export const ParticipantItem: (
         children={
           <ParticipantTile ref={ref} trackRef={trackReference}>
             {deviceTrack}
-            <div className="lk-participant-placeholder" ref={avoContainerRef} style={{ position: 'relative', height: '100%', width: '100%' }}>
+            <div
+              className="lk-participant-placeholder"
+              ref={avoContainerRef}
+             
+            >
               {localAvo ? (
                 <ParticipantAvoPlaceholder
                   key={`main-${avoRenderKey}`}
@@ -691,11 +707,15 @@ export const ParticipantItem: (
                   participant={trackReference.participant}
                   interactive={true}
                   isFocused={!!isFocus}
-                  remotePointer={primaryRemoteCursor ? {
-                    x: primaryRemoteCursor.x,
-                    y: primaryRemoteCursor.y,
-                    speed: 4,
-                  } : null}
+                  remotePointer={
+                    primaryRemoteCursor
+                      ? {
+                          x: primaryRemoteCursor.x,
+                          y: primaryRemoteCursor.y,
+                          speed: 4,
+                        }
+                      : null
+                  }
                   remotePopKey={remotePopKey}
                 />
               ) : (
