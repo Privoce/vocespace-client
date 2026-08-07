@@ -91,11 +91,9 @@ const PlatformLogin = async (request: NextRequest, auth: AuthType) => {
   );
 
   // 这里我们就不能去返回了，而是进行重定向到对应的space页面，并携带auth参数，让前端去处理
-  let base = serverUrl || request.nextUrl.origin;
+  const base = serverUrl || request.nextUrl.origin;
+  // 如果 serverUrl 是裸域名，根据请求协议自动补充协议前缀
   // let base = request.nextUrl.origin;
-  if (typeof base === 'string' && !/^https?:\/\//i.test(base)) {
-    base = `https://${base}`;
-  }
   const redirectUrl = new URL(
     `/${tokenRes.space}?auth=${auth}&details=${encodeURIComponent(
       JSON.stringify(details),
@@ -202,10 +200,13 @@ const verifyWhitList = (name: string, id?: string | null, whiteList?: string[]):
   return false;
 };
 
+// 内部 API 请求使用本地地址，避免走 HTTPS 导致 SSL 问题
+const INTERNAL_API_BASE = process.env.INTERNAL_API_URL || 'http://localhost:3000';
+
 // 向 /api/space 接口查询空间是否存在
 const isSpaceExist = async (request: NextRequest, spaceName: string): Promise<boolean> => {
   try {
-    const url = new URL('/api/space', request.nextUrl.origin);
+    const url = new URL('/api/space', INTERNAL_API_BASE);
     url.searchParams.set('spaceName', spaceName);
 
     const response = await fetch(url.toString(), {
