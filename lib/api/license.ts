@@ -132,7 +132,8 @@ export const deleteAllLicenses = async (hostToken: string, id?: string) => {
  * @param value 证书JWT值
  */
 export const validateLicenseValue = async (value: string) => {
-  const url = new URL(`${LICENSE_API_URL}/${encodeURIComponent(value)}`, window.location.origin);
+  const url = new URL(LICENSE_API_URL, window.location.origin);
+  url.searchParams.append('value', value);
   return await fetch(url.toString(), {
     method: 'GET',
   });
