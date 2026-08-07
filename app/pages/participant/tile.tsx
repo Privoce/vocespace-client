@@ -1,5 +1,12 @@
 import { isTrackReferencePlaceholder } from '@/app/pages/controls/video_container';
-import { MouseMove, useVideoBlur, WsBase, WsMouseMove, WsWave } from '@/lib/std/device';
+import {
+  MouseMove,
+  useVideoBlur,
+  WsBase,
+  WsMouseClick,
+  WsMouseMove,
+  WsWave,
+} from '@/lib/std/device';
 import {
   AudioTrack,
   isTrackReference,
@@ -26,20 +33,25 @@ import { socket } from '@/app/[spaceName]/PageClientImpl';
 import styles from '@/styles/controls.module.scss';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
-import { isSpaceManager, randomColor } from '@/lib/std';
+import { isSpaceManager } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
-import { ChildRoom, DEFAULT_PARTICIPANT_SETTINGS, ParticipantAvoParams, ParticipantSettings } from '@/lib/std/space';
+import {
+  ChildRoom,
+  DEFAULT_PARTICIPANT_SETTINGS,
+  ParticipantAvoParams,
+  ParticipantSettings,
+} from '@/lib/std/space';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { AppFlotIconCollect } from '../apps/app_pin';
-import { ParticipantAvoPlaceholder } from './avo';
+import { getAvoPrimaryColor, ParticipantAvoPlaceholder } from './avo';
 import { ParticipantTileMiniProps } from './mini';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { Popover, Slider, Tooltip } from 'antd';
+import { getPointerMappingRect, ParticipantMouseEffect, PointerMappingTarget } from './effect';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps {
-  toSettings?: (isDefineStatus?: boolean) => void;
   messageApi: MessageInstance;
   noteApi?: NotificationInstance;
   isFocus?: boolean;
@@ -69,6 +81,7 @@ export const ParticipantItem: (
     const { t } = useI18n();
     const { localParticipant } = useLocalParticipant();
     const videoRef = React.useRef<HTMLVideoElement>(null);
+    const avoContainerRef = React.useRef<HTMLDivElement>(null);
     const uState = useUserStore();
     // const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
     const appsData = useRoomStore((s) => s.remoteApp);
@@ -82,6 +95,7 @@ export const ParticipantItem: (
       return localParticipant.identity === trackReference.participant.identity;
     }, [localParticipant, trackReference]);
     const [lastMousePos, setLastMousePos] = React.useState({ x: 0, y: 0 });
+    const [remotePopKey, setRemotePopKey] = React.useState(0);
     const [virtualReady, setVirtualReady] = React.useState(false);
     const virtualMask = useRoomStore((s) => s.virtualMask);
     const [remoteMask, setRemoteMask] = React.useState(false);
@@ -167,12 +181,24 @@ export const ParticipantItem: (
     const localAvo = useMemo(() => {
       const list = !isLocal
         ? currentParticipant?.avoList
-        : (uState.avoList || currentParticipant?.avoList);
+        : uState.avoList || currentParticipant?.avoList;
 
-      const effectiveList: ParticipantAvoParams[] = list && list.length > 0 ? list : DEFAULT_PARTICIPANT_SETTINGS.avoList!;
+      const effectiveList: ParticipantAvoParams[] =
+        list && list.length > 0 ? list : DEFAULT_PARTICIPANT_SETTINGS.avoList!;
       const active = effectiveList.find((a) => a.isUsed) ?? effectiveList[0];
       return active.enabled ? active : undefined;
     }, [currentParticipant?.avoList, isLocal, uState.avoList]);
+    const localCursorColor = useMemo(() => {
+      const localParticipantSettings = settings.participants[localParticipant.identity];
+      const localAvoList = uState.avoList || localParticipantSettings?.avoList;
+      const effectiveList =
+        localAvoList && localAvoList.length > 0
+          ? localAvoList
+          : DEFAULT_PARTICIPANT_SETTINGS.avoList!;
+      const active = effectiveList.find((item) => item.isUsed) ?? effectiveList[0];
+
+      return getAvoPrimaryColor(active, localParticipant.name || localParticipant.identity);
+    }, [localParticipant.identity, localParticipant.name, settings.participants, uState.avoList]);
     const avoRenderKey = useMemo(() => {
       if (!localAvo) {
         return 'placeholder';
@@ -180,6 +206,27 @@ export const ParticipantItem: (
 
       return `${localAvo.variant ?? 'none'}:${localAvo.hue ?? 'none'}:${localAvo.style ?? 'none'}:${localAvo.energy ?? 'none'}`;
     }, [localAvo]);
+    const pointerMappingTarget = useMemo<PointerMappingTarget | null>(() => {
+      if (trackReference.source === Track.Source.ScreenShare) {
+        return 'screen-share';
+      }
+
+      if (trackReference.source === Track.Source.Camera && localAvo) {
+        return 'avo';
+      }
+
+      return null;
+    }, [trackReference.source, localAvo]);
+    const primaryRemoteCursor = useMemo(() => {
+      const entries = Object.values(remoteCursors);
+      if (!entries.length) {
+        return null;
+      }
+
+      return entries.reduce((latest, current) =>
+        current.timestamp > latest.timestamp ? current : latest,
+      );
+    }, [remoteCursors]);
 
     const userType = useMemo(() => {
       return isSpaceManager(settings, trackReference.participant.identity).ty;
@@ -252,7 +299,10 @@ export const ParticipantItem: (
               }}
             >
               {deleyMask && (
-                <div className="lk-participant-placeholder" style={{ opacity: 1, zIndex: 1000 }}>
+                <div
+                  className="lk-participant-placeholder"
+                  style={{ opacity: 1, zIndex: 1000, height: '100%', width: '100%' }}
+                >
                   <ParticipantPlaceholder />
                 </div>
               )}
@@ -312,7 +362,6 @@ export const ParticipantItem: (
             </div>
           );
         } else if (trackReference.source === Track.Source.ScreenShare) {
-          // 包含远程鼠标位置
           return (
             <div style={{ height: '100%', width: '100%', position: 'relative' }}>
               <VideoTrack
@@ -325,98 +374,12 @@ export const ParticipantItem: (
                 onSubscriptionStatusChanged={handleSubscribe}
                 manageSubscription={autoManageSubscription}
               />
-              {isFocus &&
-                Object.entries(remoteCursors).map(([participantId, cursor]) => {
-                  // 计算视频元素上的绝对位置
-                  if (!videoRef.current) return null;
-                  const containerRect = videoRef.current?.getBoundingClientRect();
-                  if (!containerRect) return null;
-
-                  // 获取视频元素的实际尺寸
-                  const videoElement = videoRef.current;
-                  // 视频没有加载完成时，可能没有宽高
-                  if (!videoElement.videoWidth || !videoElement.videoHeight) return null;
-
-                  // 计算视频在容器中的实际显示区域
-                  const actualVideoRect = {
-                    width: 0,
-                    height: 0,
-                    left: 0,
-                    top: 0,
-                  };
-
-                  // 计算视频的宽高比
-                  const videoRatio = videoElement.videoWidth / videoElement.videoHeight;
-
-                  // 正确计算视频在容器中的实际显示尺寸
-                  // 1. 首先尝试使用容器的宽度
-                  let computedHeight = containerRect.width / videoRatio;
-                  if (computedHeight <= containerRect.height) {
-                    // 如果计算出的高度不超过容器高度，则使用容器宽度作为基准
-                    actualVideoRect.width = containerRect.width;
-                    actualVideoRect.height = computedHeight;
-                    actualVideoRect.left = 0;
-                    actualVideoRect.top = (containerRect.height - actualVideoRect.height) / 2;
-                  } else {
-                    // 如果计算出的高度超过容器高度，则使用容器高度作为基准
-                    actualVideoRect.height = containerRect.height;
-                    actualVideoRect.width = containerRect.height * videoRatio;
-                    actualVideoRect.left = (containerRect.width - actualVideoRect.width) / 2;
-                    actualVideoRect.top = 0;
-                  }
-
-                  // 从归一化坐标计算实际像素坐标
-                  const absoluteX = cursor.x * actualVideoRect.width + actualVideoRect.left;
-                  const absoluteY = cursor.y * actualVideoRect.height + actualVideoRect.top;
-                  // 检查时间戳，如果超过10秒没有更新，则不显示
-                  const now = Date.now();
-                  if (now - cursor.timestamp > 10000) return null;
-
-                  return (
-                    <div
-                      key={participantId}
-                      className={styles.remote_cursor}
-                      style={{
-                        position: 'absolute',
-                        left: `${absoluteX}px`,
-                        top: `${absoluteY}px`,
-                        pointerEvents: 'none', // 确保鼠标事件穿透
-                        zIndex: 1000,
-                        transform: 'translate(3px, 9.5px)', // 使鼠标指针居中
-                      }}
-                    >
-                      {/* 鼠标指针 */}
-                      <div className={styles.cursor_icon}>
-                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-                          <path
-                            d="M7 2L18 13H11L7 20V2Z"
-                            fill={cursor.color}
-                            stroke="white"
-                            strokeWidth="1.5"
-                          />
-                        </svg>
-                      </div>
-
-                      {/* 用户名标签 */}
-                      <div
-                        className={styles.cursor_label}
-                        style={{
-                          backgroundColor: cursor.color,
-                          color: 'white',
-                          padding: '2px 6px',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          position: 'absolute',
-                          top: '-22px',
-                          left: '10px',
-                          whiteSpace: 'nowrap',
-                        }}
-                      >
-                        {cursor.name}
-                      </div>
-                    </div>
-                  );
-                })}
+              <ParticipantMouseEffect
+                enabled={true}
+                mappingTarget="screen-share"
+                videoRef={videoRef}
+                remoteCursors={remoteCursors}
+              />
             </div>
           );
         } else {
@@ -468,39 +431,25 @@ export const ParticipantItem: (
 
     // 处理当前用户如果是演讲者并且当前track source是screen share，那么就需要获取其他用户的鼠标位置
     useEffect(() => {
-      // 如果当前用户是观看者，并且当前的屏幕主视口是screen share，且is_focus为true
-      // console.log(isFocus, trackReference.source, localParticipant.isSpeaking);
-      if (
-        isFocus &&
-        trackReference.source === Track.Source.ScreenShare &&
-        !localParticipant.isSpeaking
-      ) {
+      const cleanupCallbacks: Array<() => void> = [];
+      const canSendPointer =
+        pointerMappingTarget === 'avo' ||
+        (pointerMappingTarget === 'screen-share' && !isLocal && !localParticipant.isSpeaking);
+
+      if (pointerMappingTarget && canSendPointer) {
         // 此时说明当前参与者正在观看屏幕共享，当这个观看者希望引导演讲者时（鼠标在窗口中移动，点击），需要将鼠标位置发送给演讲者
         const handleMouseMove = (e: MouseEvent) => {
-          if (!videoRef.current) return;
-          const containerRect = videoRef.current?.getBoundingClientRect();
-          const videoElement = videoRef.current;
-          const actualVideoRect = {
-            width: 0,
-            height: 0,
-            left: 0,
-            top: 0,
-          };
+          const pointerSourceElement =
+            pointerMappingTarget === 'avo' ? avoContainerRef.current : videoRef.current;
+          if (!pointerSourceElement) return;
 
-          const videoRatio = videoElement.videoWidth / videoElement.videoHeight;
-          let computedHeight = containerRect.width / videoRatio;
-
-          if (computedHeight <= containerRect.height) {
-            actualVideoRect.width = containerRect.width;
-            actualVideoRect.height = computedHeight;
-            actualVideoRect.left = 0;
-            actualVideoRect.top = (containerRect.height - actualVideoRect.height) / 2;
-          } else {
-            actualVideoRect.height = containerRect.height;
-            actualVideoRect.width = containerRect.height * videoRatio;
-            actualVideoRect.left = (containerRect.width - actualVideoRect.width) / 2;
-            actualVideoRect.top = 0;
-          }
+          const containerRect = pointerSourceElement.getBoundingClientRect();
+          const actualVideoRect = getPointerMappingRect({
+            mappingTarget: pointerMappingTarget,
+            videoElement: videoRef.current,
+            containerElement: avoContainerRef.current,
+          });
+          if (!actualVideoRect) return;
 
           // 检查鼠标是否在视频显示区域内
           if (
@@ -525,7 +474,7 @@ export const ParticipantItem: (
               space: space.name,
               x,
               y,
-              color: randomColor(localParticipant.identity),
+              color: localCursorColor,
               senderName: localParticipant.name || localParticipant.identity,
               senderId: localParticipant.identity,
               receiverId: trackReference.participant.identity,
@@ -563,26 +512,67 @@ export const ParticipantItem: (
             } as WsWave);
           }
         };
+        const handleMouseDown = (e: MouseEvent) => {
+          const pointerSourceElement =
+            pointerMappingTarget === 'avo' ? avoContainerRef.current : videoRef.current;
+          if (!pointerSourceElement) return;
+
+          const containerRect = pointerSourceElement.getBoundingClientRect();
+          const actualVideoRect = getPointerMappingRect({
+            mappingTarget: pointerMappingTarget,
+            videoElement: videoRef.current,
+            containerElement: avoContainerRef.current,
+          });
+          if (!actualVideoRect) return;
+
+          const inside =
+            e.clientX >= containerRect.left + actualVideoRect.left &&
+            e.clientX <= containerRect.left + actualVideoRect.left + actualVideoRect.width &&
+            e.clientY >= containerRect.top + actualVideoRect.top &&
+            e.clientY <= containerRect.top + actualVideoRect.top + actualVideoRect.height;
+
+          if (!inside) {
+            return;
+          }
+
+          socket.emit('mouse_click', {
+            space: space.name,
+            senderName: localParticipant.name || localParticipant.identity,
+            senderId: localParticipant.identity,
+            receiverId: trackReference.participant.identity,
+            socketId: settings.participants[trackReference.participant.identity]?.socketId,
+          } as WsMouseClick);
+        };
         // 300ms触发一次, 节流
         const throttledMouseMove = throttle(handleMouseMove, 300);
         document.addEventListener('mousemove', throttledMouseMove);
+        document.addEventListener('mousedown', handleMouseDown);
 
-        return () => {
-          // 清除事件监听器
-          document.removeEventListener('mousemove', handleMouseMove);
-        };
+        cleanupCallbacks.push(() => {
+          document.removeEventListener('mousemove', throttledMouseMove);
+          document.removeEventListener('mousedown', handleMouseDown);
+        });
       }
 
       // 如果当前用户是演讲者并且当前track source是screen share，那么就需要获取其他用户的鼠标位置
-      if (localParticipant.isSpeaking && trackReference.source === Track.Source.ScreenShare) {
-        socket.on('mouse_move_response', (data: WsMouseMove) => {
+      if (pointerMappingTarget) {
+        const handleMouseMoveResponse = (data: WsMouseMove) => {
           // 获取之后需要将别人的鼠标位置在演讲者的屏幕上进行显示
-          const { senderId, senderName, x, y, color, realVideoRect, space: spaceName } = data;
+          const {
+            senderId,
+            senderName,
+            receiverId,
+            x,
+            y,
+            color,
+            realVideoRect,
+            space: spaceName,
+          } = data;
           // 更新状态
           if (
             space.name == spaceName &&
-            selfRoom &&
-            selfRoom.participants.includes(data.senderId)
+            receiverId === trackReference.participant.identity &&
+            (!selfRoom || selfRoom.participants.includes(senderId))
           ) {
             setRemoteCursors((prev) => ({
               ...prev,
@@ -597,24 +587,64 @@ export const ParticipantItem: (
               },
             }));
           }
-        });
-        socket.on('mouse_remove_response', ({ senderId, space: spaceName }: WsWave) => {
+        };
+        const handleMouseClickResponse = ({
+          senderId,
+          receiverId,
+          space: spaceName,
+        }: WsMouseClick) => {
+          if (
+            space.name == spaceName &&
+            receiverId === trackReference.participant.identity &&
+            senderId !== localParticipant.identity &&
+            (!selfRoom || selfRoom.participants.includes(senderId))
+          ) {
+            setRemotePopKey(Date.now());
+          }
+        };
+        const handleMouseRemoveResponse = ({ senderId, receiverId, space: spaceName }: WsWave) => {
           // 删除状态
-          if (space.name == spaceName) {
+          if (space.name == spaceName && receiverId === trackReference.participant.identity) {
             setRemoteCursors((prev) => {
               const newCursors = { ...prev };
               delete newCursors[senderId];
               return newCursors;
             });
           }
+        };
+
+        socket.on('mouse_move_response', handleMouseMoveResponse);
+        socket.on('mouse_click_response', handleMouseClickResponse);
+        socket.on('mouse_remove_response', handleMouseRemoveResponse);
+
+        cleanupCallbacks.push(() => {
+          socket.off('mouse_move_response', handleMouseMoveResponse);
+          socket.off('mouse_click_response', handleMouseClickResponse);
+          socket.off('mouse_remove_response', handleMouseRemoveResponse);
         });
       }
 
-      // return () => {
-      //   socket.off('mouse_move_response');
-      //   socket.off('mouse_remove_response');
-      // };
-    }, [trackReference.source, localParticipant.isSpeaking, isFocus]);
+      if (!cleanupCallbacks.length) {
+        return;
+      }
+
+      return () => {
+        cleanupCallbacks.forEach((cleanup) => cleanup());
+      };
+    }, [
+      pointerMappingTarget,
+      isLocal,
+      trackReference.participant.identity,
+      localParticipant.identity,
+      localParticipant.isSpeaking,
+      localParticipant.name,
+      lastMousePos.x,
+      lastMousePos.y,
+      localCursorColor,
+      selfRoom,
+      settings.participants,
+      space.name,
+    ]);
     const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null);
     const [username, setUsername] = useState<string>('');
     const { optItems, handleOptClick, optOpen, optSelfItems, handleSelfOptClick } =
@@ -663,7 +693,11 @@ export const ParticipantItem: (
         children={
           <ParticipantTile ref={ref} trackRef={trackReference}>
             {deviceTrack}
-            <div className="lk-participant-placeholder">
+            <div
+              className="lk-participant-placeholder"
+              ref={avoContainerRef}
+             
+            >
               {localAvo ? (
                 <ParticipantAvoPlaceholder
                   key={`main-${avoRenderKey}`}
@@ -673,10 +707,26 @@ export const ParticipantItem: (
                   participant={trackReference.participant}
                   interactive={true}
                   isFocused={!!isFocus}
+                  remotePointer={
+                    primaryRemoteCursor
+                      ? {
+                          x: primaryRemoteCursor.x,
+                          y: primaryRemoteCursor.y,
+                          speed: 4,
+                        }
+                      : null
+                  }
+                  remotePopKey={remotePopKey}
                 />
               ) : (
                 <ParticipantPlaceholder />
               )}
+              <ParticipantMouseEffect
+                enabled={pointerMappingTarget === 'avo' && !!localAvo}
+                mappingTarget="avo"
+                containerRef={avoContainerRef}
+                remoteCursors={remoteCursors}
+              />
             </div>
             <div
               className="lk-participant-metadata"

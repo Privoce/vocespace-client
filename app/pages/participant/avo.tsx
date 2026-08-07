@@ -87,6 +87,14 @@ export function normalizeAvoParams(
   };
 }
 
+export function getAvoPrimaryColor(
+  avo: Partial<ParticipantAvoParams> | undefined,
+  name: string,
+): string {
+  const params = normalizeAvoParams(avo, name);
+  return `hsl(${params.hue} 72% 52%)`;
+}
+
 function hasCustomAvoParams(avo: Partial<ParticipantAvoParams> | undefined): boolean {
   if (!avo) {
     return false;
@@ -102,6 +110,8 @@ function hasCustomAvoParams(avo: Partial<ParticipantAvoParams> | undefined): boo
 
 interface AvoHandle {
   setParams: (params: Partial<ParticipantAvoParams>) => void;
+  setExternalPointer: (pointer: CreaturePointer | null, pointerSpeed?: number) => void;
+  triggerRemotePop: () => void;
   destroy: () => void;
 }
 
@@ -495,6 +505,8 @@ async function mountAvoRuntime(
   const isFocused = opts.isFocused ?? false;
   const creature = new Creature();
   creature.applyParams(params);
+  let externalPointer: CreaturePointer | null = null;
+  let externalPointerSpeed = 0;
 
   let visibilityCleanup: (() => void) | null = null;
   let silentStartTime = 0;
@@ -568,10 +580,12 @@ async function mountAvoRuntime(
         p.mouseX <= w &&
         p.mouseY >= 0 &&
         p.mouseY <= h;
-      const pointer = inside ? { x: p.mouseX - w / 2, y: p.mouseY - h / 2 } : null;
-      const pointerSpeed = inside
+      const localPointer = inside ? { x: p.mouseX - w / 2, y: p.mouseY - h / 2 } : null;
+      const localPointerSpeed = inside
         ? p.dist(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY)
         : 0;
+      const pointer = localPointer ?? externalPointer;
+      const pointerSpeed = localPointer ? localPointerSpeed : externalPointerSpeed;
       creature.render(p, w / 2, h / 2, Math.min(w, h) * scale, {
         t,
         level: persistLevel,
@@ -611,6 +625,14 @@ async function mountAvoRuntime(
       );
       creature.applyParams(params);
     },
+    setExternalPointer(pointer, pointerSpeed = 0) {
+      externalPointer = pointer;
+      externalPointerSpeed = pointerSpeed;
+    },
+    triggerRemotePop() {
+      creature.pop();
+      creature.pet();
+    },
     destroy() {
       visibilityCleanup?.();
       ro.disconnect();
@@ -630,6 +652,8 @@ export interface ParticipantAvoPlaceholderProps {
   participant?: { audioLevel: number };
   interactive?: boolean;
   isFocused?: boolean;
+  remotePointer?: { x: number; y: number; speed?: number } | null;
+  remotePopKey?: number;
   className?: string;
   style?: React.CSSProperties;
   fallbackToPlaceholder?: boolean;
@@ -642,6 +666,8 @@ export function ParticipantAvoPlaceholder({
   participant,
   interactive = false,
   isFocused = false,
+  remotePointer = null,
+  remotePopKey,
   className,
   style,
   fallbackToPlaceholder = true,
@@ -649,6 +675,8 @@ export function ParticipantAvoPlaceholder({
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const handleRef = React.useRef<{
     setParams: (params: Partial<ParticipantAvoParams>) => void;
+    setExternalPointer: (pointer: CreaturePointer | null, pointerSpeed?: number) => void;
+    triggerRemotePop: () => void;
     destroy: () => void;
   } | null>(null);
   const levelRef = React.useRef(audioLevel);
@@ -733,6 +761,35 @@ export function ParticipantAvoPlaceholder({
 
     handleRef.current.setParams(params);
   }, [params]);
+
+  React.useEffect(() => {
+    if (!handleRef.current || !containerRef.current) {
+      return;
+    }
+
+    if (!remotePointer) {
+      handleRef.current.setExternalPointer(null, 0);
+      return;
+    }
+
+    const width = containerRef.current.clientWidth;
+    const height = containerRef.current.clientHeight;
+    handleRef.current.setExternalPointer(
+      {
+        x: remotePointer.x * width - width / 2,
+        y: remotePointer.y * height - height / 2,
+      },
+      remotePointer.speed ?? 0,
+    );
+  }, [remotePointer]);
+
+  React.useEffect(() => {
+    if (!handleRef.current || !remotePopKey) {
+      return;
+    }
+
+    handleRef.current.triggerRemotePop();
+  }, [remotePopKey]);
 
   return (
     <div

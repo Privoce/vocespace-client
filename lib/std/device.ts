@@ -72,6 +72,8 @@ export interface WsWave extends WsTo {
 
 export interface WsMouseMove extends MouseMove, WsTo {}
 
+export interface WsMouseClick extends WsTo {}
+
 export interface WsJoinRoom extends WsTo {
   childRoom: string;
   confirm?: boolean; // 是否确认加入

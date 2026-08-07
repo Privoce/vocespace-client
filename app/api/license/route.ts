@@ -11,6 +11,91 @@ import {
 import { sendEmail, fmtContentBuy } from '@/lib/email';
 import { getConfig } from '@/app/api/conf/conf';
 
+interface ValidateResult {
+  inDb: boolean;
+  valid: boolean;
+  invalidFields?: string[];
+  license?: any;
+  claims?: any;
+}
+
+const validateLicense = async (value: string) => {
+  if (!value) {
+    return NextResponse.json({ error: 'Missing license value' }, { status: 400 });
+  }
+
+  let claims: any;
+  try {
+    claims = parseLicenseClaims(value);
+  } catch {
+    return NextResponse.json({ error: 'Invalid JWT token' }, { status: 400 });
+  }
+
+  let license: any;
+  try {
+    const { getLicenseByValue } = await import('@/lib/db/license');
+    license = await getLicenseByValue(value);
+  } catch (e) {
+    console.error('DB unavailable for license validation:', e);
+  }
+
+  if (license) {
+    const now = Math.floor(Date.now() / 1000);
+    const valid = license.expires_at > now && license.created_at <= now;
+    const result: ValidateResult = {
+      inDb: true,
+      valid,
+      license,
+    };
+    if (!valid) {
+      const invalidFields: string[] = [];
+      if (license.expires_at <= now) invalidFields.push('expires_at');
+      if (license.created_at > now) invalidFields.push('created_at');
+      result.invalidFields = invalidFields;
+    }
+    return NextResponse.json(result);
+  }
+
+  const invalidFields: string[] = [];
+  const now = Math.floor(Date.now() / 1000);
+
+  if (!claims.email || typeof claims.email !== 'string' || !claims.email.includes('@')) {
+    invalidFields.push('email');
+  }
+
+  if (!claims.domains || typeof claims.domains !== 'string' || claims.domains.trim() === '') {
+    invalidFields.push('domains');
+  }
+
+  if (typeof claims.created_at !== 'number' || claims.created_at > now) {
+    invalidFields.push('created_at');
+  }
+
+  if (typeof claims.expires_at !== 'number' || claims.expires_at <= now) {
+    invalidFields.push('expires_at');
+  }
+
+  if (!claims.limit || !['free', 'pro', 'enterprise', 'room'].includes(claims.limit)) {
+    invalidFields.push('limit');
+  }
+
+  if (!claims.id || typeof claims.id !== 'string' || claims.id.trim() === '') {
+    invalidFields.push('id');
+  }
+
+  const result: ValidateResult = {
+    inDb: false,
+    valid: invalidFields.length === 0,
+    claims,
+  };
+
+  if (invalidFields.length > 0) {
+    result.invalidFields = invalidFields;
+  }
+
+  return NextResponse.json(result);
+};
+
 /**
  * PUT /api/license - Update license
  * Body: { email, value, new_domains, new_email, sendEmail? }
@@ -172,10 +257,29 @@ export async function POST(request: NextRequest) {
 }
 
 /**
+ * POST /api/license?validate=true - Validate a license JWT value
+ * Body: { value }
+ */
+export async function PATCH(request: NextRequest) {
+  const isValidate = request.nextUrl.searchParams.get('validate') === 'true';
+  if (!isValidate) {
+    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+  }
+
+  const body = await request.json();
+  return validateLicense(body?.value || '');
+}
+
+/**
  * GET /api/license - Get all licenses
  * Requires hostToken query param for authorization
  */
 export async function GET(request: NextRequest) {
+  const validateValue = request.nextUrl.searchParams.get('value');
+  if (validateValue) {
+    return validateLicense(validateValue);
+  }
+
   const hostToken = request.nextUrl.searchParams.get('hostToken');
   const config = getConfig();
   if (!hostToken || hostToken !== config.hostToken) {
