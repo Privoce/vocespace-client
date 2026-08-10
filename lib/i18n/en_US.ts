@@ -26,6 +26,14 @@ export default {
     managePlayer: 'Manage Widgets',
   },
   common: {
+    browser: {
+      low_version: {
+        title: 'Your browser version is too old',
+        current_prefix: 'You are using',
+        current_suffix: 'which is too old for this feature. Minimum supported version:',
+        recommendation: 'Please upgrade your browser, or use the latest Chrome or Edge for better compatibility.',
+      },
+    },
     wx: {
       not_support: "Sorry, the current space does not support access within WeChat. Please use a browser to open it.",
       to_browser: "Open in Browser",

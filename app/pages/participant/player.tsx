@@ -40,6 +40,53 @@ export interface TilePlayerItem {
   updatedAt: number;
 }
 
+type ShadowDeskUserInfo = {
+  userId: string;
+  username: string;
+  isOwner: boolean;
+};
+
+type ShadowDeskEnvelope<T> = {
+  type: string;
+  data?: T;
+} & Partial<T>;
+
+const SHADOW_DESK_MARK = 'shadowdesk';
+const SHADOW_DESK_USER_INFO_TYPE = 'user-info';
+const SHADOW_DESK_USER_INFO_ACK_TYPE = 'user-info-ack';
+const SHADOW_DESK_CONTROL_CHANGE_TYPE = 'user-control-change';
+const SHADOW_DESK_MAX_RETRY = 10;
+const SHADOW_DESK_RETRY_INTERVAL = 10000;
+
+function isShadowDeskUrl(url: string): boolean {
+  return url.toLowerCase().includes(SHADOW_DESK_MARK);
+}
+
+function getShadowDeskOrigin(url: string): string {
+  try {
+    return new URL(url, window.location.href).origin;
+  } catch {
+    return '*';
+  }
+}
+
+function getShadowDeskPayloadUserId(payload: unknown): string | undefined {
+  if (!payload || typeof payload !== 'object') {
+    return undefined;
+  }
+
+  const maybeRecord = payload as { userId?: unknown; data?: { userId?: unknown } };
+  if (typeof maybeRecord.userId === 'string') {
+    return maybeRecord.userId;
+  }
+
+  if (typeof maybeRecord.data?.userId === 'string') {
+    return maybeRecord.data.userId;
+  }
+
+  return undefined;
+}
+
 // ─── 单个 TilePlayer（显示一张图或一个 iframe）───────────────────────────────
 
 export interface TilePlayerProps {
@@ -176,6 +223,15 @@ export const TilePlayer = ({
     afterFocus?.(nextFocus);
   };
 
+  const shadowDeskUserInfo = useMemo<ShadowDeskUserInfo>(
+    () => ({
+      userId: myIdentity,
+      username: spaceInfo.participants[myIdentity]?.name || myIdentity,
+      isOwner: spaceInfo.ownerId === myIdentity,
+    }),
+    [myIdentity, spaceInfo.ownerId, spaceInfo.participants],
+  );
+
   return (
     <div
       className="vocespace_full_size lk-participant-tile"
@@ -230,6 +286,7 @@ export const TilePlayer = ({
       ) : item.mode === 'iframe' ? (
         <IframeWindow
           url={item.iframeUrl || ''}
+          shadowDeskUserInfo={shadowDeskUserInfo}
           onLoad={() => {
             if (item.iframeUrl) {
               uploadIframeUrl(spaceName, item.iframeUrl).catch(() => {});
@@ -470,14 +527,25 @@ export const TilePlayerAdd = ({
 
 // ─── iframe 加载窗口 ─────────────────────────────────────────────────────────
 
-const IframeWindow = ({ url, onLoad }: { url: string; onLoad?: () => void }) => {
+const IframeWindow = ({
+  url,
+  onLoad,
+  shadowDeskUserInfo,
+}: {
+  url: string;
+  onLoad?: () => void;
+  shadowDeskUserInfo: ShadowDeskUserInfo;
+}) => {
   const [loading, setLoading] = useState(true);
+  const [iframeLoaded, setIframeLoaded] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const [iframeScale, setIframeScale] = useState(1);
   const iframeViewport = useMemo(() => ({ width: 1440, height: 900 }), []);
 
   useEffect(() => {
     setLoading(true);
+    setIframeLoaded(false);
   }, [url]);
 
   useEffect(() => {
@@ -513,8 +581,103 @@ const IframeWindow = ({ url, onLoad }: { url: string; onLoad?: () => void }) => 
     };
   }, [iframeViewport]);
 
+  useEffect(() => {
+    if (!url || !iframeLoaded || !isShadowDeskUrl(url)) {
+      return;
+    }
+
+    const targetOrigin = getShadowDeskOrigin(url);
+    let stopped = false;
+    let retryCount = 0;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const postUserInfo = () => {
+      const iframeWindow = iframeRef.current?.contentWindow;
+      if (!iframeWindow || stopped || retryCount >= SHADOW_DESK_MAX_RETRY) {
+        return;
+      }
+
+      const payload = {
+        ...shadowDeskUserInfo,
+        resolution: {
+          x: window.screen.width,
+          y: window.screen.height,
+        },
+      };
+
+      const message: ShadowDeskEnvelope<typeof payload> = {
+        type: SHADOW_DESK_USER_INFO_TYPE,
+        data: payload,
+        ...payload,
+      };
+
+      iframeWindow.postMessage(message, targetOrigin);
+      retryCount += 1;
+
+      if (retryCount < SHADOW_DESK_MAX_RETRY) {
+        retryTimer = setTimeout(postUserInfo, SHADOW_DESK_RETRY_INTERVAL);
+      }
+    };
+
+    const stopRetry = () => {
+      stopped = true;
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+        retryTimer = null;
+      }
+    };
+
+    const handleMessage = (event: MessageEvent) => {
+      const iframeWindow = iframeRef.current?.contentWindow;
+      if (!iframeWindow || event.source !== iframeWindow) {
+        return;
+      }
+
+      if (targetOrigin !== '*' && event.origin !== targetOrigin) {
+        return;
+      }
+
+      const data = event.data as ShadowDeskEnvelope<{ userId: string }> | undefined;
+      if (!data || typeof data.type !== 'string') {
+        return;
+      }
+
+      if (data.type === SHADOW_DESK_USER_INFO_ACK_TYPE) {
+        const ackUserId = getShadowDeskPayloadUserId(data);
+        if (ackUserId === shadowDeskUserInfo.userId) {
+          stopRetry();
+        }
+        return;
+      }
+
+      if (data.type === SHADOW_DESK_CONTROL_CHANGE_TYPE) {
+        const controlUserId = getShadowDeskPayloadUserId(data);
+        if (!controlUserId) {
+          return;
+        }
+
+        window.dispatchEvent(
+          new CustomEvent(SHADOW_DESK_CONTROL_CHANGE_TYPE, {
+            detail: {
+              userId: controlUserId,
+            },
+          }),
+        );
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    postUserInfo();
+
+    return () => {
+      stopRetry();
+      window.removeEventListener('message', handleMessage);
+    };
+  }, [iframeLoaded, shadowDeskUserInfo, url]);
+
   const handleLoad = () => {
     setLoading(false);
+    setIframeLoaded(true);
     onLoad?.();
   };
 
@@ -550,6 +713,7 @@ const IframeWindow = ({ url, onLoad }: { url: string; onLoad?: () => void }) => 
         }}
       >
         <iframe
+          ref={iframeRef}
           allow="clipboard-read; clipboard-write"
           title="tile-iframe"
           src={url}

@@ -25,6 +25,14 @@ export default {
     managePlayer: '管理组件',
   },
   common: {
+    browser: {
+      low_version: {
+        title: '当前浏览器版本过低',
+        current_prefix: '您当前使用的',
+        current_suffix: '版本过低，不支持当前功能。最低支持版本为',
+        recommendation: '建议升级当前浏览器，或使用最新版 Chrome / Edge 访问。',
+      },
+    },
     wx: {
       not_support: "很抱歉，当前空间不支持在微信内访问，请使用浏览器打开",
       to_browser: "在浏览器中打开",
