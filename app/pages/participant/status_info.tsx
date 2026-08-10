@@ -57,7 +57,6 @@ export function useStatusInfo({
   toSettings,
   username,
   t,
-  toSettings,
   setUserStatus,
   settings,
   disabled=false,

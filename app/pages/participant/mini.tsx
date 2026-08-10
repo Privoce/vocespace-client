@@ -56,7 +56,6 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
       updateSettings,
       toSettings,
       toRenameSettings,
-      toSettings,
       setUserStatus,
       showFlotApp,
       messageApi,

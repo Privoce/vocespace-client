@@ -1193,7 +1193,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
         showFlotApp,
         space,
         toSettingGeneral,
-        toRenameSettings,
+        toRenameSetting,
         updateSettings,
       ],
     );
