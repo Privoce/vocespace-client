@@ -232,6 +232,33 @@
   }
 }
 
+.whiteboard_toolbar {
+  position: absolute;
+  left: 50%;
+  bottom: 12px;
+  transform: translateX(-50%);
+  z-index: 6;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.58);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.whiteboard_overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  touch-action: none;
+}
+
+.whiteboard_canvas {
+  position: absolute;
+  display: block;
+}
+
 @keyframes cursor-pulse {
   0% {
     transform: translate(-50%, -50%) scale(1);

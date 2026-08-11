@@ -18,6 +18,7 @@ import { WsBase } from '@/lib/std/device';
 import { normalizeAvoParams } from '../participant/avo';
 import { ParticipantAvoEditorModal } from '../participant/avo_conf';
 import { SvgResource } from '@/app/resources/svg';
+import { FocusToggle } from '../controls/toggles/focus_toogle';
 
 export interface AppPinProps {
   appKey: AppKey;
@@ -78,7 +79,7 @@ export function AppFlotIconCollect({
   showApp,
   participant,
   contextUndefined,
-  style = { right: '32px', backgroundColor: 'transparent', padding: 0 },
+  style = { right: '4px', backgroundColor: 'transparent', padding: 0, zIndex: 4 },
   trackReference,
   spaceName,
   updateSettings,
@@ -154,6 +155,7 @@ export function AppFlotIconCollect({
           onSave={handleSaveAvo}
         />
       )}
+      {trackReference && <FocusToggle trackRef={trackReference} />}
     </div>
   ) : (
     <div>
@@ -183,6 +185,7 @@ export function AppFlotIconCollect({
       {trackReference?.source === Track.Source.ScreenShare && !isFullScreen && (
         <FullScreenBtn trackReference={trackReference}></FullScreenBtn>
       )}
+      {trackReference && <FocusToggle trackRef={trackReference} />}
     </div>
   );
 }

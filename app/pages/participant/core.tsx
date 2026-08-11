@@ -1,7 +1,6 @@
 import * as React from 'react';
 import type { Participant } from 'livekit-client';
-import type {  TrackReferenceOrPlaceholder } from '@livekit/components-core';
-import { FocusToggle } from '../controls/toggles/focus_toogle';
+import type { TrackReferenceOrPlaceholder } from '@livekit/components-core';
 import {
   useParticipantTile,
   ParticipantContext,
@@ -44,6 +43,9 @@ export function TrackRefContextIfNeeded(
   );
 }
 
+/** COPY FROM
+ * @livekit/components-react
+ */
 export const ParticipantTile: (
   props: ParticipantTileProps & React.RefAttributes<HTMLDivElement>,
 ) => React.ReactNode = /* @__PURE__ */ React.forwardRef<HTMLDivElement, ParticipantTileProps>(
@@ -71,7 +73,6 @@ export const ParticipantTile: (
         <TrackRefContextIfNeeded trackRef={trackReference}>
           <ParticipantContextIfNeeded participant={trackReference.participant}>
             {children}
-            <FocusToggle trackRef={trackReference} />
           </ParticipantContextIfNeeded>
         </TrackRefContextIfNeeded>
       </div>

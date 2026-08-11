@@ -78,7 +78,7 @@ export function FlotButton({ style, openApp, setOpenApp }: FlotButtonProps) {
       style={{
         height: 'fit-content',
         width: 'fit-content',
-        padding: '12px 2px',
+        padding: '6px 2px',
         backgroundColor: '#00000050',
         borderRadius: '24px',
         color: '#fff',

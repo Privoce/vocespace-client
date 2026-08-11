@@ -38,6 +38,7 @@ import { MessageInstance } from 'antd/es/message/interface';
 import {
   ChildRoom,
   DEFAULT_PARTICIPANT_SETTINGS,
+  ParticipantHandWriting,
   ParticipantAvoParams,
   ParticipantSettings,
 } from '@/lib/std/space';
@@ -49,7 +50,12 @@ import { ParticipantTileMiniProps } from './mini';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { Popover, Slider, Tooltip } from 'antd';
-import { getPointerMappingRect, ParticipantMouseEffect, PointerMappingTarget } from './effect';
+import {
+  getPointerMappingRect,
+  ParticipantMouseEffect,
+  PointerMappingTarget,
+  ScreenShareWhiteboardOverlay,
+} from './effect';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps {
   messageApi: MessageInstance;
@@ -199,6 +205,14 @@ export const ParticipantItem: (
 
       return getAvoPrimaryColor(active, localParticipant.name || localParticipant.identity);
     }, [localParticipant.identity, localParticipant.name, settings.participants, uState.avoList]);
+    const handWritingByParticipant = useMemo(() => {
+      return Object.fromEntries(
+        Object.entries(settings.participants).map(([participantId, participantSettings]) => [
+          participantId,
+          participantSettings.handWriting,
+        ]),
+      ) as Record<string, ParticipantHandWriting | undefined>;
+    }, [settings.participants]);
     const avoRenderKey = useMemo(() => {
       if (!localAvo) {
         return 'placeholder';
@@ -380,6 +394,21 @@ export const ParticipantItem: (
                 videoRef={videoRef}
                 remoteCursors={remoteCursors}
               />
+              <ScreenShareWhiteboardOverlay
+                enabled={true}
+                videoRef={videoRef}
+                localParticipantId={localParticipant.identity}
+                localColor={localCursorColor}
+                handWritingByParticipant={handWritingByParticipant}
+                onSave={async (nextValue) => {
+                  const success = await updateSettings({ handWriting: nextValue });
+                  if (success !== false) {
+                    socket.emit('update_user_status', {
+                      space: space.name,
+                    } as WsBase);
+                  }
+                }}
+              />
             </div>
           );
         } else {
@@ -395,6 +424,7 @@ export const ParticipantItem: (
       videoRef,
       uState.virtual,
       remoteCursors,
+      handWritingByParticipant,
       settings,
       virtualMask,
       remoteMask,

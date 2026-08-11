@@ -99,6 +99,25 @@ export interface ParticipantAvoParams {
   enabled: boolean;
 }
 
+export interface HandWritingPoint {
+  x: number;
+  y: number;
+}
+
+export interface HandWritingStroke {
+  id: string;
+  color: string;
+  tool: 'pen' | 'eraser';
+  points: HandWritingPoint[];
+  createdAt: number;
+}
+
+export interface ParticipantHandWriting {
+  activeStrokeId?: string;
+  strokes: HandWritingStroke[];
+  undoneStrokes: HandWritingStroke[];
+}
+
 /**
  * Participant settings in Space
  */
@@ -219,6 +238,8 @@ export interface ParticipantSettings {
   work: ParticipantWorkConf;
   /** 用户自行设计的AVO头像列表 */
   avoList?: ParticipantAvoParams[];
+  /** 用户笔迹数据 */
+  handWriting?: ParticipantHandWriting;
 }
 
 export interface SpaceTimeRecord {
@@ -799,6 +820,10 @@ export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
       enabled: true,
     },
   ],
+  handWriting: {
+    strokes: [],
+    undoneStrokes: [],
+  },
 };
 
 /**

@@ -50,7 +50,7 @@ export const FocusToggle: (
       <LayoutContext.Consumer>
         {(layoutContext) =>
           layoutContext !== undefined && (
-            <button ref={ref} {...mergedProps} onClick={() => clickFocus(layoutContext)}>
+            <button ref={ref} {...mergedProps} onClick={() => clickFocus(layoutContext)} style={{ position: "unset", margin: "0 4px"}}>
               {props.children ? (
                 props.children
               ) : inFocus ? (
