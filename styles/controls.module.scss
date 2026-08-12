@@ -242,9 +242,19 @@
   align-items: center;
   gap: 8px;
   padding: 6px;
-  border-radius: 999px;
+  border-radius: 8px;
   background: rgba(0, 0, 0, 0.58);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+}
+
+.whiteboard_toolbar_collapsed {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  transform: translateY(-50%);
+  z-index: 6;
+  display: flex;
+  align-items: center;
 }
 
 .whiteboard_overlay {

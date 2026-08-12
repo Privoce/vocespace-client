@@ -33,6 +33,16 @@ export default {
         recommendation: '建议升级当前浏览器，或使用最新版 Chrome / Edge 访问。',
       },
     },
+    whiteboard: {
+      pen: '笔',
+      eraser: '橡皮擦',
+      undo: '撤销',
+      redo: '恢复',
+      clear_self: '清空我的墨迹',
+      clear_all: '清空全部墨迹',
+      collapse: '收起工具栏',
+      expand: '展开白板工具',
+    },
     wx: {
       not_support: "很抱歉，当前空间不支持在微信内访问，请使用浏览器打开",
       to_browser: "在浏览器中打开",

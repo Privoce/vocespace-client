@@ -34,6 +34,16 @@ export default {
         recommendation: 'Please upgrade your browser, or use the latest Chrome or Edge for better compatibility.',
       },
     },
+    whiteboard: {
+      pen: 'Pen',
+      eraser: 'Eraser',
+      undo: 'Undo',
+      redo: 'Redo',
+      clear_self: 'Clear my strokes',
+      clear_all: 'Clear all strokes',
+      collapse: 'Collapse toolbar',
+      expand: 'Open whiteboard tools',
+    },
     wx: {
       not_support: "Sorry, the current space does not support access within WeChat. Please use a browser to open it.",
       to_browser: "Open in Browser",

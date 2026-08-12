@@ -50,6 +50,7 @@ import { ParticipantTileMiniProps } from './mini';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { Popover, Slider, Tooltip } from 'antd';
+import { api } from '@/lib/api';
 import {
   getPointerMappingRect,
   ParticipantMouseEffect,
@@ -213,6 +214,12 @@ export const ParticipantItem: (
         ]),
       ) as Record<string, ParticipantHandWriting | undefined>;
     }, [settings.participants]);
+    const isLocalScreenShareOwner = useMemo(() => {
+      return (
+        trackReference.source === Track.Source.ScreenShare &&
+        trackReference.participant.identity === localParticipant.identity
+      );
+    }, [localParticipant.identity, trackReference.participant.identity, trackReference.source]);
     const avoRenderKey = useMemo(() => {
       if (!localAvo) {
         return 'placeholder';
@@ -399,6 +406,7 @@ export const ParticipantItem: (
                 videoRef={videoRef}
                 localParticipantId={localParticipant.identity}
                 localColor={localCursorColor}
+                canClearAll={isLocalScreenShareOwner}
                 handWritingByParticipant={handWritingByParticipant}
                 onSave={async (nextValue) => {
                   const success = await updateSettings({ handWriting: nextValue });
@@ -408,6 +416,41 @@ export const ParticipantItem: (
                     } as WsBase);
                   }
                 }}
+                onClearAll={
+                  isLocalScreenShareOwner
+                    ? async () => {
+                        const participantIds = Object.entries(settings.participants)
+                          .filter(([, participantSettings]) => {
+                            const handWriting = participantSettings.handWriting;
+                            return Boolean(
+                              handWriting?.strokes.length || handWriting?.undoneStrokes.length,
+                            );
+                          })
+                          .map(([participantId]) => participantId);
+
+                        if (!participantIds.length) {
+                          return;
+                        }
+
+                        await Promise.all(
+                          participantIds.map((participantId) =>
+                            api.updateSpaceParticipant(space.name, participantId, {
+                              handWriting: {
+                                activeStrokeId: undefined,
+                                strokes: [],
+                                undoneStrokes: [],
+                              },
+                            }),
+                          ),
+                        );
+
+                        await updateSettings({ handWriting: { activeStrokeId: undefined, strokes: [], undoneStrokes: [] } });
+                        socket.emit('update_user_status', {
+                          space: space.name,
+                        } as WsBase);
+                      }
+                    : undefined
+                }
               />
             </div>
           );
@@ -425,6 +468,7 @@ export const ParticipantItem: (
       uState.virtual,
       remoteCursors,
       handWritingByParticipant,
+      isLocalScreenShareOwner,
       settings,
       virtualMask,
       remoteMask,
