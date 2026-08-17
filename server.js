@@ -275,6 +275,12 @@ app.prepare().then(() => {
     socket.on('mouse_remove', (msg) => {
       socket.broadcast.emit('mouse_remove_response', msg);
     });
+    socket.on('whiteboard_sync', (msg) => {
+      socket.broadcast.emit('whiteboard_sync_response', msg);
+    });
+    socket.on('whiteboard_clear_all', (msg) => {
+      socket.broadcast.emit('whiteboard_clear_all_response', msg);
+    });
     // [socket: chat message event] -------------------------------------------------------------------------------------
     socket.on('chat_msg', (msg) => {
       // store in redis if enabled

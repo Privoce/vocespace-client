@@ -3,7 +3,7 @@ import { SizeNum } from '.';
 import { TrackReferenceOrPlaceholder } from '@livekit/components-react';
 import { RefObject, useCallback, useEffect, useMemo, useState } from 'react';
 import { useDebounce, useThrottle } from './debounce';
-import { ChildRoom } from './space';
+import { ChildRoom, ParticipantHandWriting } from './space';
 export interface Device {
   value: string;
   label: string;
@@ -73,6 +73,17 @@ export interface WsWave extends WsTo {
 export interface WsMouseMove extends MouseMove, WsTo {}
 
 export interface WsMouseClick extends WsTo {}
+
+export interface WsWhiteboardSync extends WsBase {
+  senderId: string;
+  receiverId: string;
+  handWriting: ParticipantHandWriting;
+}
+
+export interface WsWhiteboardClearAll extends WsBase {
+  senderId: string;
+  receiverId: string;
+}
 
 export interface WsJoinRoom extends WsTo {
   childRoom: string;

@@ -3,6 +3,8 @@ import {
   MouseMove,
   useVideoBlur,
   WsBase,
+  WsWhiteboardClearAll,
+  WsWhiteboardSync,
   WsMouseClick,
   WsMouseMove,
   WsWave,
@@ -50,12 +52,12 @@ import { ParticipantTileMiniProps } from './mini';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { Popover, Slider, Tooltip } from 'antd';
-import { api } from '@/lib/api';
 import {
   getPointerMappingRect,
   ParticipantMouseEffect,
   PointerMappingTarget,
   ScreenShareWhiteboardOverlay,
+  TileWhiteboardOverlay,
 } from './effect';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps {
@@ -214,12 +216,34 @@ export const ParticipantItem: (
         ]),
       ) as Record<string, ParticipantHandWriting | undefined>;
     }, [settings.participants]);
+    const [screenShareHandWritingByParticipant, setScreenShareHandWritingByParticipant] =
+      useState<Record<string, ParticipantHandWriting | undefined>>({});
+    const [avoHandWritingByParticipant, setAvoHandWritingByParticipant] = useState<
+      Record<string, ParticipantHandWriting | undefined>
+    >({});
     const isLocalScreenShareOwner = useMemo(() => {
       return (
         trackReference.source === Track.Source.ScreenShare &&
         trackReference.participant.identity === localParticipant.identity
       );
     }, [localParticipant.identity, trackReference.participant.identity, trackReference.source]);
+    const effectiveHandWritingByParticipant = useMemo(() => {
+      if (trackReference.source === Track.Source.ScreenShare) {
+        return screenShareHandWritingByParticipant;
+      }
+
+      if (trackReference.source === Track.Source.Camera && localAvo) {
+        return avoHandWritingByParticipant;
+      }
+
+      return handWritingByParticipant;
+    }, [
+      avoHandWritingByParticipant,
+      handWritingByParticipant,
+      localAvo,
+      screenShareHandWritingByParticipant,
+      trackReference.source,
+    ]);
     const avoRenderKey = useMemo(() => {
       if (!localAvo) {
         return 'placeholder';
@@ -269,6 +293,112 @@ export const ParticipantItem: (
         settings.participants[localParticipant.identity]?.screenShareVolumes || {};
       setScreenShareVolume(localScreenShareVolumes[trackReference.participant.identity] ?? 100);
     }, [localParticipant.identity, settings.participants, trackReference.participant.identity]);
+
+    useEffect(() => {
+      if (trackReference.source !== Track.Source.ScreenShare) {
+        return;
+      }
+
+      setScreenShareHandWritingByParticipant({});
+    }, [space.name, trackReference.participant.identity, trackReference.source]);
+
+    useEffect(() => {
+      if (trackReference.source !== Track.Source.ScreenShare) {
+        return;
+      }
+
+      const handleWhiteboardSyncResponse = ({
+        senderId,
+        receiverId,
+        handWriting,
+        space: spaceName,
+      }: WsWhiteboardSync) => {
+        if (
+          space.name !== spaceName ||
+          receiverId !== trackReference.participant.identity ||
+          (selfRoom && !selfRoom.participants.includes(senderId))
+        ) {
+          return;
+        }
+
+        setScreenShareHandWritingByParticipant((prev) => ({
+          ...prev,
+          [senderId]: handWriting,
+        }));
+      };
+
+      const handleWhiteboardClearAllResponse = ({
+        receiverId,
+        space: spaceName,
+      }: WsWhiteboardClearAll) => {
+        if (space.name !== spaceName || receiverId !== trackReference.participant.identity) {
+          return;
+        }
+
+        setScreenShareHandWritingByParticipant({});
+      };
+
+      socket.on('whiteboard_sync_response', handleWhiteboardSyncResponse);
+      socket.on('whiteboard_clear_all_response', handleWhiteboardClearAllResponse);
+
+      return () => {
+        socket.off('whiteboard_sync_response', handleWhiteboardSyncResponse);
+        socket.off('whiteboard_clear_all_response', handleWhiteboardClearAllResponse);
+      };
+    }, [selfRoom, space.name, trackReference.participant.identity, trackReference.source]);
+
+    useEffect(() => {
+      if (trackReference.source !== Track.Source.Camera || !localAvo) {
+        return;
+      }
+
+      setAvoHandWritingByParticipant({});
+    }, [localAvo, space.name, trackReference.participant.identity, trackReference.source]);
+
+    useEffect(() => {
+      if (trackReference.source !== Track.Source.Camera || !localAvo) {
+        return;
+      }
+
+      const handleWhiteboardSyncResponse = ({
+        senderId,
+        receiverId,
+        handWriting,
+        space: spaceName,
+      }: WsWhiteboardSync) => {
+        if (
+          space.name !== spaceName ||
+          receiverId !== trackReference.participant.identity ||
+          (selfRoom && !selfRoom.participants.includes(senderId))
+        ) {
+          return;
+        }
+
+        setAvoHandWritingByParticipant((prev) => ({
+          ...prev,
+          [senderId]: handWriting,
+        }));
+      };
+
+      const handleWhiteboardClearAllResponse = ({
+        receiverId,
+        space: spaceName,
+      }: WsWhiteboardClearAll) => {
+        if (space.name !== spaceName || receiverId !== trackReference.participant.identity) {
+          return;
+        }
+
+        setAvoHandWritingByParticipant({});
+      };
+
+      socket.on('whiteboard_sync_response', handleWhiteboardSyncResponse);
+      socket.on('whiteboard_clear_all_response', handleWhiteboardClearAllResponse);
+
+      return () => {
+        socket.off('whiteboard_sync_response', handleWhiteboardSyncResponse);
+        socket.off('whiteboard_clear_all_response', handleWhiteboardClearAllResponse);
+      };
+    }, [localAvo, selfRoom, space.name, trackReference.participant.identity, trackReference.source]);
 
     const handleScreenShareVolumeChange = React.useCallback(
       async (value: number) => {
@@ -407,47 +537,28 @@ export const ParticipantItem: (
                 localParticipantId={localParticipant.identity}
                 localColor={localCursorColor}
                 canClearAll={isLocalScreenShareOwner}
-                handWritingByParticipant={handWritingByParticipant}
+                handWritingByParticipant={effectiveHandWritingByParticipant}
                 onSave={async (nextValue) => {
-                  const success = await updateSettings({ handWriting: nextValue });
-                  if (success !== false) {
-                    socket.emit('update_user_status', {
-                      space: space.name,
-                    } as WsBase);
-                  }
+                  setScreenShareHandWritingByParticipant((prev) => ({
+                    ...prev,
+                    [localParticipant.identity]: nextValue,
+                  }));
+                  socket.emit('whiteboard_sync', {
+                    space: space.name,
+                    senderId: localParticipant.identity,
+                    receiverId: trackReference.participant.identity,
+                    handWriting: nextValue,
+                  } as WsWhiteboardSync);
                 }}
                 onClearAll={
                   isLocalScreenShareOwner
                     ? async () => {
-                        const participantIds = Object.entries(settings.participants)
-                          .filter(([, participantSettings]) => {
-                            const handWriting = participantSettings.handWriting;
-                            return Boolean(
-                              handWriting?.strokes.length || handWriting?.undoneStrokes.length,
-                            );
-                          })
-                          .map(([participantId]) => participantId);
-
-                        if (!participantIds.length) {
-                          return;
-                        }
-
-                        await Promise.all(
-                          participantIds.map((participantId) =>
-                            api.updateSpaceParticipant(space.name, participantId, {
-                              handWriting: {
-                                activeStrokeId: undefined,
-                                strokes: [],
-                                undoneStrokes: [],
-                              },
-                            }),
-                          ),
-                        );
-
-                        await updateSettings({ handWriting: { activeStrokeId: undefined, strokes: [], undoneStrokes: [] } });
-                        socket.emit('update_user_status', {
+                        setScreenShareHandWritingByParticipant({});
+                        socket.emit('whiteboard_clear_all', {
                           space: space.name,
-                        } as WsBase);
+                          senderId: localParticipant.identity,
+                          receiverId: trackReference.participant.identity,
+                        } as WsWhiteboardClearAll);
                       }
                     : undefined
                 }
@@ -467,7 +578,7 @@ export const ParticipantItem: (
       videoRef,
       uState.virtual,
       remoteCursors,
-      handWritingByParticipant,
+      effectiveHandWritingByParticipant,
       isLocalScreenShareOwner,
       settings,
       virtualMask,
@@ -800,6 +911,38 @@ export const ParticipantItem: (
                 mappingTarget="avo"
                 containerRef={avoContainerRef}
                 remoteCursors={remoteCursors}
+              />
+              <TileWhiteboardOverlay
+                enabled={pointerMappingTarget === 'avo' && !!localAvo}
+                mappingTarget="avo"
+                containerRef={avoContainerRef}
+                localParticipantId={localParticipant.identity}
+                localColor={localCursorColor}
+                handWritingByParticipant={effectiveHandWritingByParticipant}
+                onSave={async (nextValue) => {
+                  setAvoHandWritingByParticipant((prev) => ({
+                    ...prev,
+                    [localParticipant.identity]: nextValue,
+                  }));
+                  socket.emit('whiteboard_sync', {
+                    space: space.name,
+                    senderId: localParticipant.identity,
+                    receiverId: trackReference.participant.identity,
+                    handWriting: nextValue,
+                  } as WsWhiteboardSync);
+                }}
+                onClearAll={
+                  isLocal
+                    ? async () => {
+                        setAvoHandWritingByParticipant({});
+                        socket.emit('whiteboard_clear_all', {
+                          space: space.name,
+                          senderId: localParticipant.identity,
+                          receiverId: trackReference.participant.identity,
+                        } as WsWhiteboardClearAll);
+                      }
+                    : undefined
+                }
               />
             </div>
             <div

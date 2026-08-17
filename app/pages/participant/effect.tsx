@@ -32,15 +32,45 @@ interface ParticipantMouseEffectProps {
 
 type WhiteboardTool = 'pen' | 'eraser';
 
-interface ScreenShareWhiteboardOverlayProps {
+interface TileWhiteboardOverlayProps {
   enabled?: boolean;
+  mappingTarget?: PointerMappingTarget;
   videoRef?: React.RefObject<HTMLVideoElement | null>;
+  containerRef?: React.RefObject<HTMLElement | null>;
   localParticipantId: string;
   localColor: string;
   canClearAll?: boolean;
   handWritingByParticipant: Record<string, ParticipantHandWriting | undefined>;
   onSave: (nextValue: ParticipantHandWriting) => Promise<void> | void;
   onClearAll?: () => Promise<void> | void;
+}
+
+function getMidPoint(
+  pointA: { x: number; y: number },
+  pointB: { x: number; y: number },
+): { x: number; y: number } {
+  return {
+    x: (pointA.x + pointB.x) / 2,
+    y: (pointA.y + pointB.y) / 2,
+  };
+}
+
+function getWhiteboardCursor(tool: WhiteboardTool, color: string): string {
+  if (tool === 'eraser') {
+    return 'cell';
+  }
+
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
+      <g fill="none" fill-rule="evenodd">
+        <path d="M7 24 22.5 8.5l4 4L11 28H7z" fill="${color}" stroke="white" stroke-width="1.8" stroke-linejoin="round"/>
+        <path d="m21.5 7.5 2.8-2.8a1.8 1.8 0 0 1 2.5 0l.5.5a1.8 1.8 0 0 1 0 2.5L24.5 10.5" fill="#ffd48a" stroke="white" stroke-width="1.4" stroke-linejoin="round"/>
+        <path d="M7 24h4l-1.2 4H5.8z" fill="#2b2b2b" stroke="white" stroke-width="1.2" stroke-linejoin="round"/>
+      </g>
+    </svg>
+  `;
+
+  return `url("data:image/svg+xml;utf8,${encodeURIComponent(svg)}") 6 26, crosshair`;
 }
 
 function buildStrokePath(points: HandWritingStroke['points']): string {
@@ -53,7 +83,24 @@ function buildStrokePath(points: HandWritingStroke['points']): string {
     return `M ${point.x} ${point.y} L ${point.x + 0.0001} ${point.y + 0.0001}`;
   }
 
-  return points.map((point, index) => `${index === 0 ? 'M' : 'L'} ${point.x} ${point.y}`).join(' ');
+  if (points.length === 2) {
+    return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
+  }
+
+  const path: string[] = [`M ${points[0].x} ${points[0].y}`];
+
+  for (let index = 1; index < points.length - 1; index += 1) {
+    const point = points[index];
+    const nextPoint = points[index + 1];
+    const midPoint = getMidPoint(point, nextPoint);
+    path.push(`Q ${point.x} ${point.y} ${midPoint.x} ${midPoint.y}`);
+  }
+
+  const penultimatePoint = points[points.length - 2];
+  const lastPoint = points[points.length - 1];
+  path.push(`Q ${penultimatePoint.x} ${penultimatePoint.y} ${lastPoint.x} ${lastPoint.y}`);
+
+  return path.join(' ');
 }
 
 function distanceBetweenPoints(
@@ -244,26 +291,31 @@ function usePointerMappingRectState({
   return rect;
 }
 
-export function ScreenShareWhiteboardOverlay({
+export function TileWhiteboardOverlay({
   enabled = true,
+  mappingTarget = 'screen-share',
   videoRef,
+  containerRef,
   localParticipantId,
   localColor,
   canClearAll = false,
   handWritingByParticipant,
   onSave,
   onClearAll,
-}: ScreenShareWhiteboardOverlayProps) {
+}: TileWhiteboardOverlayProps) {
   const { t } = useI18n();
   const [tool, setTool] = React.useState<WhiteboardTool>('pen');
   const [drawing, setDrawing] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(false);
+  const [draftStroke, setDraftStroke] = React.useState<HandWritingStroke | null>(null);
   const overlayRef = React.useRef<HTMLDivElement | null>(null);
+  const draftStrokeRef = React.useRef<HandWritingStroke | null>(null);
   const localHandWriting = normalizeHandWriting(handWritingByParticipant[localParticipantId]);
 
   const actualVideoRect = usePointerMappingRectState({
-    mappingTarget: 'screen-share',
+    mappingTarget,
     videoRef,
+    containerRef,
   });
 
   const allStrokes = React.useMemo(
@@ -273,6 +325,14 @@ export function ScreenShareWhiteboardOverlay({
         .flatMap((value) => normalizeHandWriting(value).strokes),
     [handWritingByParticipant],
   );
+  const renderedStrokes = React.useMemo(
+    () => (draftStroke ? [...allStrokes, draftStroke] : allStrokes),
+    [allStrokes, draftStroke],
+  );
+
+  React.useEffect(() => {
+    draftStrokeRef.current = draftStroke;
+  }, [draftStroke]);
 
   const saveLocal = React.useCallback(
     async (updater: (current: ParticipantHandWriting) => ParticipantHandWriting) => {
@@ -348,26 +408,20 @@ export function ScreenShareWhiteboardOverlay({
       setDrawing(true);
 
       if (tool === 'eraser') {
+        setDraftStroke(null);
         await eraseAtPoint(point);
         return;
       }
 
       const now = Date.now();
       const strokeId = `${now}-${Math.random().toString(36).slice(2, 8)}`;
-      await saveLocal((current) => ({
-        activeStrokeId: strokeId,
-        strokes: [
-          ...current.strokes,
-          {
-            id: strokeId,
-            color: localColor,
-            tool,
-            points: [point],
-            createdAt: now,
-          },
-        ],
-        undoneStrokes: [],
-      }));
+      setDraftStroke({
+        id: strokeId,
+        color: localColor,
+        tool,
+        points: [point],
+        createdAt: now,
+      });
     },
     [actualVideoRect, enabled, eraseAtPoint, getRelativePoint, localColor, saveLocal, tool],
   );
@@ -384,18 +438,19 @@ export function ScreenShareWhiteboardOverlay({
         return;
       }
 
-      await saveLocal((current) => {
-        if (!current.activeStrokeId) {
+      setDraftStroke((current) => {
+        if (!current) {
+          return current;
+        }
+
+        const previousPoint = current.points[current.points.length - 1];
+        if (previousPoint && distanceBetweenPoints(previousPoint, point) < 0.003) {
           return current;
         }
 
         return {
           ...current,
-          strokes: current.strokes.map((stroke) =>
-            stroke.id === current.activeStrokeId
-              ? { ...stroke, points: [...stroke.points, point] }
-              : stroke,
-          ),
+          points: [...current.points, point],
         };
       });
     },
@@ -404,11 +459,19 @@ export function ScreenShareWhiteboardOverlay({
 
   const finishStroke = React.useCallback(async () => {
     setDrawing(false);
+    const currentDraftStroke = draftStrokeRef.current;
+    setDraftStroke(null);
+
+    if (!currentDraftStroke || tool === 'eraser') {
+      return;
+    }
+
     await saveLocal((current) => ({
-      ...current,
       activeStrokeId: undefined,
+      strokes: [...current.strokes, currentDraftStroke],
+      undoneStrokes: [],
     }));
-  }, [saveLocal]);
+  }, [saveLocal, tool]);
 
   const clearLocal = React.useCallback(async () => {
     await onSave({
@@ -537,7 +600,12 @@ export function ScreenShareWhiteboardOverlay({
           <Button icon={<CloseOutlined />} onClick={() => setCollapsed(true)} />
         </Tooltip>
       </div>
-      <div ref={overlayRef} className={styles.whiteboard_overlay} onPointerDown={handlePointerDown}>
+      <div
+        ref={overlayRef}
+        className={styles.whiteboard_overlay}
+        onPointerDown={handlePointerDown}
+        style={{ cursor: getWhiteboardCursor(tool, localColor) }}
+      >
         <svg
           className={styles.whiteboard_canvas}
           viewBox="0 0 1 1"
@@ -549,7 +617,7 @@ export function ScreenShareWhiteboardOverlay({
             height: `${actualVideoRect.height}px`,
           }}
         >
-          {allStrokes.map((stroke) => (
+          {renderedStrokes.map((stroke) => (
             <path
               key={stroke.id}
               d={buildStrokePath(stroke.points)}
@@ -565,6 +633,8 @@ export function ScreenShareWhiteboardOverlay({
     </>
   );
 }
+
+export const ScreenShareWhiteboardOverlay = TileWhiteboardOverlay;
 
 export function ParticipantMouseEffect({
   enabled = true,
