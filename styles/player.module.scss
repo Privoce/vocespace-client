@@ -1,0 +1,36 @@
+.appLikeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  flex-direction: column;
+  &_btn {
+  
+    box-shadow: 0px 0px 8px 2px #0000009d;
+    // border: 1px solid #1a1a1a;
+    border-radius: 8px;
+    min-width: 32px;
+  }
+  &_text {
+    color: #bbb;
+    font-size: 12px;
+  }
+}
+
+.container {
+  padding: 16px 8px;
+}
+
+.bar {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  justify-content: space-around;
+  gap: 8px;
+  padding: 6px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.58);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  height: fit-content;
+ 
+}

@@ -107,6 +107,7 @@ export const ParticipantItem: (
     const [remotePopKey, setRemotePopKey] = React.useState(0);
     const [virtualReady, setVirtualReady] = React.useState(false);
     const virtualMask = useRoomStore((s) => s.virtualMask);
+    const whiteboardToolbarHost = useRoomStore((s) => s.whiteboardToolbarHost);
     const [remoteMask, setRemoteMask] = React.useState(false);
     const [deleyMask, setDelayMask] = React.useState(virtualMask);
     const isScreenShare =
@@ -534,6 +535,8 @@ export const ParticipantItem: (
               <ScreenShareWhiteboardOverlay
                 enabled={true}
                 videoRef={videoRef}
+                toolbarHost={whiteboardToolbarHost}
+                overlayId={`screen-share:${trackReference.participant.identity}`}
                 localParticipantId={localParticipant.identity}
                 localColor={localCursorColor}
                 canClearAll={isLocalScreenShareOwner}
@@ -916,6 +919,8 @@ export const ParticipantItem: (
                 enabled={pointerMappingTarget === 'avo' && !!localAvo}
                 mappingTarget="avo"
                 containerRef={avoContainerRef}
+                toolbarHost={whiteboardToolbarHost}
+                overlayId={`avo:${trackReference.participant.identity}`}
                 localParticipantId={localParticipant.identity}
                 localColor={localCursorColor}
                 handWritingByParticipant={effectiveHandWritingByParticipant}

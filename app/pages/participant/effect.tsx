@@ -1,8 +1,10 @@
 import React from 'react';
+import { createPortal } from 'react-dom';
 import { MouseMove } from '@/lib/std/device';
 import { HandWritingStroke, ParticipantHandWriting } from '@/lib/std/space';
 import { useI18n } from '@/lib/i18n/i18n';
-import { Button, Tooltip } from 'antd';
+import { Button, Tooltip, Divider, Slider } from 'antd';
+import { useRoomStore } from '@/lib/store';
 import {
   ClearOutlined,
   CloseOutlined,
@@ -32,11 +34,17 @@ interface ParticipantMouseEffectProps {
 
 type WhiteboardTool = 'pen' | 'eraser';
 
+const DEFAULT_WHITEBOARD_STROKE_WIDTH = 0.006;
+const MIN_WHITEBOARD_STROKE_WIDTH = 0.002;
+const MAX_WHITEBOARD_STROKE_WIDTH = 0.02;
+
 interface TileWhiteboardOverlayProps {
   enabled?: boolean;
   mappingTarget?: PointerMappingTarget;
   videoRef?: React.RefObject<HTMLVideoElement | null>;
   containerRef?: React.RefObject<HTMLElement | null>;
+  toolbarHost?: HTMLElement | null;
+  overlayId?: string;
   localParticipantId: string;
   localColor: string;
   canClearAll?: boolean;
@@ -160,6 +168,14 @@ function strokeTouchesPoint(
 }
 
 const ERASER_RADIUS = 0.018;
+
+function getStrokeWidth(stroke?: HandWritingStroke | null): number {
+  if (!stroke?.width) {
+    return DEFAULT_WHITEBOARD_STROKE_WIDTH;
+  }
+
+  return Math.min(MAX_WHITEBOARD_STROKE_WIDTH, Math.max(MIN_WHITEBOARD_STROKE_WIDTH, stroke.width));
+}
 
 function normalizeHandWriting(handWriting?: ParticipantHandWriting): ParticipantHandWriting {
   return {
@@ -296,6 +312,8 @@ export function TileWhiteboardOverlay({
   mappingTarget = 'screen-share',
   videoRef,
   containerRef,
+  toolbarHost,
+  overlayId,
   localParticipantId,
   localColor,
   canClearAll = false,
@@ -305,11 +323,14 @@ export function TileWhiteboardOverlay({
 }: TileWhiteboardOverlayProps) {
   const { t } = useI18n();
   const [tool, setTool] = React.useState<WhiteboardTool>('pen');
+  const [strokeWidth, setStrokeWidth] = React.useState(DEFAULT_WHITEBOARD_STROKE_WIDTH);
   const [drawing, setDrawing] = React.useState(false);
   const [collapsed, setCollapsed] = React.useState(false);
   const [draftStroke, setDraftStroke] = React.useState<HandWritingStroke | null>(null);
   const overlayRef = React.useRef<HTMLDivElement | null>(null);
   const draftStrokeRef = React.useRef<HandWritingStroke | null>(null);
+  const whiteboardActiveOverlayId = useRoomStore((state) => state.whiteboardActiveOverlayId);
+  const setWhiteboardActiveOverlayId = useRoomStore((state) => state.setWhiteboardActiveOverlayId);
   const localHandWriting = normalizeHandWriting(handWritingByParticipant[localParticipantId]);
 
   const actualVideoRect = usePointerMappingRectState({
@@ -317,6 +338,14 @@ export function TileWhiteboardOverlay({
     videoRef,
     containerRef,
   });
+
+  React.useEffect(() => {
+    if (!enabled || !toolbarHost || !overlayId || whiteboardActiveOverlayId) {
+      return;
+    }
+
+    setWhiteboardActiveOverlayId(overlayId);
+  }, [enabled, overlayId, setWhiteboardActiveOverlayId, toolbarHost, whiteboardActiveOverlayId]);
 
   const allStrokes = React.useMemo(
     () =>
@@ -333,6 +362,18 @@ export function TileWhiteboardOverlay({
   React.useEffect(() => {
     draftStrokeRef.current = draftStroke;
   }, [draftStroke]);
+
+  React.useEffect(() => {
+    if (!overlayId || whiteboardActiveOverlayId !== overlayId) {
+      return;
+    }
+
+    return () => {
+      if (whiteboardActiveOverlayId === overlayId) {
+        setWhiteboardActiveOverlayId(null);
+      }
+    };
+  }, [overlayId, setWhiteboardActiveOverlayId, whiteboardActiveOverlayId]);
 
   const saveLocal = React.useCallback(
     async (updater: (current: ParticipantHandWriting) => ParticipantHandWriting) => {
@@ -373,7 +414,7 @@ export function TileWhiteboardOverlay({
     async (point: { x: number; y: number }) => {
       await saveLocal((current) => {
         const removedStrokes = current.strokes.filter((stroke) =>
-          strokeTouchesPoint(stroke, point, ERASER_RADIUS),
+          strokeTouchesPoint(stroke, point, Math.max(ERASER_RADIUS, getStrokeWidth(stroke) * 1.5)),
         );
 
         if (!removedStrokes.length) {
@@ -406,6 +447,9 @@ export function TileWhiteboardOverlay({
       event.preventDefault();
       overlayRef.current?.setPointerCapture(event.pointerId);
       setDrawing(true);
+      if (overlayId) {
+        setWhiteboardActiveOverlayId(overlayId);
+      }
 
       if (tool === 'eraser') {
         setDraftStroke(null);
@@ -419,11 +463,12 @@ export function TileWhiteboardOverlay({
         id: strokeId,
         color: localColor,
         tool,
+        width: strokeWidth,
         points: [point],
         createdAt: now,
       });
     },
-    [actualVideoRect, enabled, eraseAtPoint, getRelativePoint, localColor, saveLocal, tool],
+    [actualVideoRect, enabled, eraseAtPoint, getRelativePoint, localColor, saveLocal, strokeWidth, tool],
   );
 
   const appendPoint = React.useCallback(
@@ -519,41 +564,64 @@ export function TileWhiteboardOverlay({
   }
 
   if (collapsed) {
-    return (
-      <div className={styles.whiteboard_toolbar_collapsed}>
+    const collapsedToolbar = (
+      <div className={styles.whiteboard_toolbar_collapsed} style={{ pointerEvents: 'auto' }}>
         <Tooltip title={t('common.whiteboard.expand')}>
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => setCollapsed(false)}
-          />
+          <Button type="primary" icon={<EditOutlined />} onClick={() => setCollapsed(false)} />
         </Tooltip>
       </div>
     );
+
+    if (toolbarHost && overlayId && whiteboardActiveOverlayId === overlayId) {
+      return createPortal(collapsedToolbar, toolbarHost);
+    }
+
+    if (overlayId) {
+      return null;
+    }
+
+    return null;
   }
 
-  return (
-    <>
-      <div className={styles.whiteboard_toolbar}>
+  const toolbar = (
+    <div className={styles.whiteboard_toolbar} style={{ pointerEvents: 'auto' }}>
+      <div className={styles.whiteboard_toolbar_left}>
         <Tooltip title={t('common.whiteboard.pen')}>
           <Button
-            type={tool === 'pen' ? 'primary' : 'default'}
+            style={{
+              backgroundColor: tool === 'pen' ? localColor : undefined,
+            }}
+            type={tool === 'pen' ? 'primary' : 'text'}
             icon={<EditOutlined />}
-            onClick={() => setTool('pen')}
+            onClick={() => {
+              if (overlayId) {
+                setWhiteboardActiveOverlayId(overlayId);
+              }
+              setTool('pen');
+            }}
           />
         </Tooltip>
         <Tooltip title={t('common.whiteboard.eraser')}>
           <Button
-            type={tool === 'eraser' ? 'primary' : 'default'}
+            type={tool === 'eraser' ? 'primary' : 'text'}
             icon={<ClearOutlined />}
-            onClick={() => setTool('eraser')}
+            onClick={() => {
+              if (overlayId) {
+                setWhiteboardActiveOverlayId(overlayId);
+              }
+              setTool('eraser');
+            }}
           />
         </Tooltip>
         <Tooltip title={t('common.whiteboard.undo')}>
           <Button
+            type="text"
             icon={<UndoOutlined />}
             disabled={!localHandWriting.strokes.length}
             onClick={() => {
+              if (overlayId) {
+                setWhiteboardActiveOverlayId(overlayId);
+              }
               saveLocal((current) => {
                 if (!current.strokes.length) {
                   return current;
@@ -571,9 +639,13 @@ export function TileWhiteboardOverlay({
         </Tooltip>
         <Tooltip title={t('common.whiteboard.redo')}>
           <Button
+            type="text"
             icon={<RollbackOutlined />}
             disabled={!localHandWriting.undoneStrokes.length}
             onClick={() => {
+              if (overlayId) {
+                setWhiteboardActiveOverlayId(overlayId);
+              }
               saveLocal((current) => {
                 if (!current.undoneStrokes.length) {
                   return current;
@@ -589,17 +661,61 @@ export function TileWhiteboardOverlay({
             }}
           />
         </Tooltip>
+        <Divider type="vertical" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          <span>Size:</span>
+          <Slider
+            min={2}
+            max={20}
+            step={1}
+            value={Math.round(strokeWidth * 1000)}
+            onChange={(value) => {
+              setStrokeWidth(Number(value) / 1000);
+            }}
+            style={{ width: 96, margin: 0 }}
+          ></Slider>
+        </div>
+      </div>
+      <div className={styles.whiteboard_toolbar_right}>
         <Tooltip
-          title={
-            canClearAll ? t('common.whiteboard.clear_all') : t('common.whiteboard.clear_self')
-          }
+          title={canClearAll ? t('common.whiteboard.clear_all') : t('common.whiteboard.clear_self')}
         >
-          <Button icon={<DeleteOutlined />} onClick={() => void clearHandWriting()} />
+          <Button
+            type="text"
+            icon={<DeleteOutlined />}
+            onClick={() => {
+              if (overlayId) {
+                setWhiteboardActiveOverlayId(overlayId);
+              }
+              void clearHandWriting();
+            }}
+          />
         </Tooltip>
         <Tooltip title={t('common.whiteboard.collapse')}>
-          <Button icon={<CloseOutlined />} onClick={() => setCollapsed(true)} />
+          <Button
+            type="text"
+            icon={<CloseOutlined />}
+            onClick={() => {
+              if (overlayId) {
+                setWhiteboardActiveOverlayId(overlayId);
+              }
+              setCollapsed(true);
+            }}
+          />
         </Tooltip>
       </div>
+    </div>
+  );
+
+  return (
+    <>
+      {toolbarHost && overlayId && whiteboardActiveOverlayId === overlayId
+        ? createPortal(toolbar, toolbarHost)
+        : overlayId
+          ? null
+          : !toolbarHost
+            ? toolbar
+            : null}
       <div
         ref={overlayRef}
         className={styles.whiteboard_overlay}
@@ -622,7 +738,7 @@ export function TileWhiteboardOverlay({
               key={stroke.id}
               d={buildStrokePath(stroke.points)}
               stroke={stroke.color}
-              strokeWidth={0.006}
+              strokeWidth={getStrokeWidth(stroke)}
               strokeLinecap="round"
               strokeLinejoin="round"
               fill="none"

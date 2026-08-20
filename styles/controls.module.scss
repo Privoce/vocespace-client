@@ -245,6 +245,21 @@
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.58);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  width: calc( 100% - 16px);
+  justify-content: space-between;
+  flex-wrap: wrap;
+  &_left {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+  }
+  &_right {
+    display: inline-flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 8px;
+  }
 }
 
 .whiteboard_toolbar_collapsed {

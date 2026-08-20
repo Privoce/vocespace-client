@@ -108,6 +108,7 @@ export interface HandWritingStroke {
   id: string;
   color: string;
   tool: 'pen' | 'eraser';
+  width?: number;
   points: HandWritingPoint[];
   createdAt: number;
 }

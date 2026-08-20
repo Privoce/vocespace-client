@@ -25,12 +25,18 @@ interface RoomState {
   remoteApp: RemoteApp;
   /** 聊天面板是否打开 */
   chatOpen: boolean;
+  /** 当前激活的白板工具栏所属 overlay */
+  whiteboardActiveOverlayId: string | null;
+  /** 白板工具栏 portal 宿主 */
+  whiteboardToolbarHost: HTMLElement | null;
 
   setRoomStatusList: (list: UserDefineStatus[]) => void;
   setChatMsg: (chatMsg: ChatMsgState | ((prev: ChatMsgState) => ChatMsgState)) => void;
   setVirtualMask: (v: boolean) => void;
   setRemoteApp: (app: Partial<RemoteApp>) => void;
   setChatOpen: (open: boolean) => void;
+  setWhiteboardActiveOverlayId: (overlayId: string | null) => void;
+  setWhiteboardToolbarHost: (host: HTMLElement | null) => void;
 }
 
 export const useRoomStore = create<RoomState>()((set) => ({
@@ -43,6 +49,8 @@ export const useRoomStore = create<RoomState>()((set) => ({
     auth: 'read' as AppAuth,
   },
   chatOpen: false,
+  whiteboardActiveOverlayId: null,
+  whiteboardToolbarHost: null,
 
   setRoomStatusList: (roomStatusList) => set({ roomStatusList }),
   setChatMsg: (chatMsg) =>
@@ -54,4 +62,6 @@ export const useRoomStore = create<RoomState>()((set) => ({
   setVirtualMask: (virtualMask) => set({ virtualMask }),
   setRemoteApp: (partial) => set((s) => ({ remoteApp: { ...s.remoteApp, ...partial } })),
   setChatOpen: (chatOpen) => set({ chatOpen }),
+  setWhiteboardActiveOverlayId: (whiteboardActiveOverlayId) => set({ whiteboardActiveOverlayId }),
+  setWhiteboardToolbarHost: (whiteboardToolbarHost) => set({ whiteboardToolbarHost }),
 }));
