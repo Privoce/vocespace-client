@@ -5,9 +5,7 @@ import { VideoContainer, VideoContainerExports } from '@/app/pages/controls/vide
 import { decodePassphrase } from '@/lib/client_utils';
 // import { DebugMode } from '@/lib/Debug';
 import { useI18n } from '@/lib/i18n/i18n';
-import {
-  consumeExplicitLeaveIntent,
-} from '@/lib/roomLeaveIntent';
+import { consumeExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { RecordingIndicator } from './RecordingIndicator';
 import { ConnectionDetails } from '@/lib/types';
 import {
@@ -39,15 +37,16 @@ import {
 } from '@/lib/std/space';
 import { api } from '@/lib/api';
 import { WsBase, WsTo } from '@/lib/std/device';
-import { createRTCQulity, DEFAULT_VOCESPACE_CONFIG, ReadableConf, VocespaceConfig } from '@/lib/std/conf';
+import {
+  createRTCQulity,
+  DEFAULT_VOCESPACE_CONFIG,
+  ReadableConf,
+  VocespaceConfig,
+} from '@/lib/std/conf';
 import { useUserStore } from '@/lib/store/user';
 import { useRoomStore } from '@/lib/store/room';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
-
-const TURN_CREDENTIAL = process.env.TURN_CREDENTIAL ?? '';
-const TURN_USERNAME = process.env.TURN_USERNAME ?? '';
-const TURN_URL = process.env.TURN_URL ?? '';
 
 export const socket = io({
   reconnection: true,
@@ -378,22 +377,16 @@ function VideoConferenceComponent(props: {
       autoSubscribe: true,
     } as RoomConnectOptions;
 
-    if (TURN_CREDENTIAL !== '' && TURN_USERNAME !== '' && TURN_URL !== '') {
+    if ((props.config.livekit.turn?.length || 0) > 0) {
       conf.rtcConfig = {
-        iceServers: [
-          {
-            urls: TURN_URL,
-            username: TURN_USERNAME,
-            credential: TURN_CREDENTIAL,
-          },
-        ],
+        iceServers: props.config.livekit.turn,
         iceCandidatePoolSize: 20,
         iceTransportPolicy: 'all',
       };
     }
 
     return conf;
-  }, []);
+  }, [props.config.livekit.turn]);
 
   const router = useRouter();
   const handleOnLeave = React.useCallback(async () => {

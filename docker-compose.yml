@@ -23,9 +23,9 @@ services:
       - LIVEKIT_URL=${LIVEKIT_URL:-wss://space.voce.chat}
       - NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH:-}
       - PORT=${PORT:-3000}
-      - TURN_CREDENTIAL=${TURN_CREDENTIAL:-}
-      - TURN_URL=${TURN_URL:-}
-      - TURN_USERNAME=${TURN_USERNAME:-}
+      # - TURN_CREDENTIAL=${TURN_CREDENTIAL:-}
+      # - TURN_URL=${TURN_URL:-}
+      # - TURN_USERNAME=${TURN_USERNAME:-}
     networks:
       - vocespace
 

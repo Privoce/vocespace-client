@@ -5,16 +5,16 @@ import { VideoCodec, VideoPreset } from 'livekit-client';
 import { DEFAULT_LICENSE } from './license';
 
 export interface TurnConf {
-  credential: string;
-  username: string;
-  urls: string[];
+  credential?: string;
+  username?: string;
+  urls: string | string[];
 }
 
 export interface LivekitConf {
   key: string;
   secret: string;
   url: string;
-  turn?: TurnConf;
+  turn?: TurnConf[];
 }
 
 export type Resolution = '540p' | '720p' | '1080p' | '2k' | '4k';
