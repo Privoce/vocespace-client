@@ -11,7 +11,7 @@ import { LangSelect } from '../pages/controls/selects/lang_select';
 import { usePlatformUserInfoCheap } from '@/lib/hooks/platform';
 import { socket } from '../[spaceName]/PageClientImpl';
 import { WsBase } from '@/lib/std/device';
-import { CreateSpaceStrategy } from '@/lib/std/conf';
+import { CreateSpaceStrategy, DEFAULT_VOCESPACE_CONFIG, HyperbeamConf, SMTPConf, VocespaceConfig } from '@/lib/std/conf';
 import {
   DashboardStats,
   DashboardActions,
@@ -27,6 +27,9 @@ import {
   DashboardRecording,
   DashboardLicense,
   DashboardLicenseManage,
+  SMTPConfModal,
+  HyperbeamConfModal,
+  DashboardDrive,
 } from './components';
 
 const { Title } = Typography;
@@ -65,9 +68,16 @@ interface ParticipantTableData {
   isAuth: boolean;
 }
 
-type ActionKey = 'refresh' | 'global_conf' | 'manage_spaces' | 'ac_space' | 'flushdb';
+type ActionKey =
+  | 'refresh'
+  | 'global_conf'
+  | 'manage_spaces'
+  | 'ac_space'
+  | 'smtp_conf'
+  | 'hyperbeam_conf'
+  | 'flushdb';
 
-type MenuTab = 'home' | 'license' | 'licenseManage' | 'recording' | 'log' | 'history';
+type MenuTab = 'drive' | 'home' | 'license' | 'licenseManage' | 'recording' | 'log' | 'history';
 
 export default function Dashboard() {
   const { t } = useI18n();
@@ -99,6 +109,8 @@ export default function Dashboard() {
   const [messageApi, contextHolder] = message.useMessage();
   const [openConf, setOpenConf] = useState(false);
   const [createSpaceConf, setCreateSpaceConf] = useState(false);
+  const [smtpConfOpen, setSMTPConfOpen] = useState(false);
+  const [hyperbeamConfOpen, setHyperbeamConfOpen] = useState(false);
   const [isHostManager, setIsHostManager] = useState(false);
   const [hostToken, setHostToken] = useState('');
   const [webhookEnabled, setWebhookEnabled] = useState(false);
@@ -109,22 +121,34 @@ export default function Dashboard() {
   const [editingOwnerSpace, setEditingOwnerSpace] = useState<string | null>(null);
   const [ownerCandidates, setOwnerCandidates] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedNewOwner, setSelectedNewOwner] = useState<string | null>(null);
-  const { conf, getConf, checkHostToken, updateCreateSpaceConf } = useVoceSpaceConf();
+  const { conf, getConf, checkHostToken, updateCreateSpaceConf, updateSMTPConf, updateHyperbeamConf, setupConf } = useVoceSpaceConf();
   const [createSpaceOption, setCreateSpaceOption] = useState<CreateSpaceStrategy>(
     conf?.create_space || 'all',
+  );
+  const [smtpConf, setSMTPConf] = useState<SMTPConf>(DEFAULT_VOCESPACE_CONFIG.smtp!);
+  const [hyperbeamConf, setHyperbeamConf] = useState<HyperbeamConf>(
+    DEFAULT_VOCESPACE_CONFIG.hyperbeam!,
   );
   const [addWhiteListValue, setAddWhiteListValue] = useState<string>('');
   const [selectOption, setSelectOption] = useState<ActionKey>('refresh');
   const [flushDbConfirm, setFlushDbConfirm] = useState(false);
   const [manageSearchText, setManageSearchText] = useState('');
   const [createSpaceWhiteList, setCreateSpaceWhiteList] = useState<string>('');
+  const [initializingConf, setInitializingConf] = useState(false);
   const VERIFIED_KEY = 'vocespace_host_token_verified';
 
   useEffect(() => {
     if (conf) {
       setCreateSpaceOption(conf?.create_space || 'all');
+      setSMTPConf(conf.smtp || DEFAULT_VOCESPACE_CONFIG.smtp!);
+      setHyperbeamConf(conf.hyperbeam || DEFAULT_VOCESPACE_CONFIG.hyperbeam!);
+      if (conf.initialized === false) {
+        setMenuTab('drive');
+      }
       if (conf.whiteList && conf.whiteList.length > 0) {
         setCreateSpaceWhiteList(conf.whiteList.join('\n'));
+      } else {
+        setCreateSpaceWhiteList('');
       }
     }
   }, [conf]);
@@ -452,26 +476,39 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    getConf();
-    fetchAllData();
+    let interval: ReturnType<typeof setInterval> | undefined;
 
-    // 查询 WEBHOOK 状态
-    fetch('/api/webhook/status')
-      .then((r) => r.json())
-      .then((data) => {
-        setWebhookEnabled(data.webhook);
-        setLicenseManageVisible(data.webhook);
-      })
-      .catch(() => {
-        setWebhookEnabled(false);
-        setLicenseManageVisible(false);
-      });
+    const loadDashboard = async () => {
+      const nextConf = await getConf();
+      if (nextConf?.initialized === false) {
+        return;
+      }
 
-    const interval = setInterval(() => {
-      fetchAllData();
-    }, 120000);
+      await fetchAllData();
 
-    return () => clearInterval(interval);
+      fetch('/api/webhook/status')
+        .then((r) => r.json())
+        .then((data) => {
+          setWebhookEnabled(data.webhook);
+          setLicenseManageVisible(data.webhook);
+        })
+        .catch(() => {
+          setWebhookEnabled(false);
+          setLicenseManageVisible(false);
+        });
+
+      interval = setInterval(() => {
+        fetchAllData();
+      }, 120000);
+    };
+
+    loadDashboard();
+
+    return () => {
+      if (interval) {
+        clearInterval(interval);
+      }
+    };
   }, []);
 
   const handleVerifyHostAndLoad = async (tokenOverride?: string) => {
@@ -724,6 +761,80 @@ export default function Dashboard() {
     }
   };
 
+  const ensureHostVerified = async () => {
+    const saved = getVerified();
+    if (saved && saved.token === hostToken && Date.now() - saved.at < 3600_000) {
+      setIsHostManager(true);
+      return true;
+    }
+    const success = await checkHostToken(hostToken);
+    if (success) {
+      setVerified(hostToken);
+      setIsHostManager(true);
+      return true;
+    }
+    messageApi.error(t('dashboard.conf.error.verify'));
+    return false;
+  };
+
+  const confirmSMTPConfHandle = async () => {
+    if (!isHostManager) {
+      await ensureHostVerified();
+      return;
+    }
+    await updateSMTPConf(
+      hostToken,
+      smtpConf,
+      (e) => {
+        messageApi.error(t('dashboard.conf.error.update') + ': ' + e.message);
+      },
+      () => {
+        messageApi.success(t('dashboard.conf.success.update'));
+        setSMTPConfOpen(false);
+      },
+    );
+  };
+
+  const confirmHyperbeamConfHandle = async () => {
+    if (!isHostManager) {
+      await ensureHostVerified();
+      return;
+    }
+    await updateHyperbeamConf(
+      hostToken,
+      hyperbeamConf,
+      (e) => {
+        messageApi.error(t('dashboard.conf.error.update') + ': ' + e.message);
+      },
+      () => {
+        messageApi.success(t('dashboard.conf.success.update'));
+        setHyperbeamConfOpen(false);
+      },
+    );
+  };
+
+  const handleSetupConf = async (setupData: VocespaceConfig) => {
+    try {
+      setInitializingConf(true);
+      await setupConf(
+        setupData,
+        (e) => {
+          throw e;
+        },
+        async () => {
+          await fetchAllData();
+          setMenuTab('home');
+          messageApi.success(t('dashboard.conf.success.update'));
+        },
+      );
+    } catch (e) {
+      const error = e as Error;
+      messageApi.error(t('dashboard.conf.error.update') + ': ' + error.message);
+    } finally {
+      setInitializingConf(false);
+    }
+  };
+
   const handleProceed = async () => {
     if (selectOption === 'refresh') {
       await fetchAllData();
@@ -751,12 +862,30 @@ export default function Dashboard() {
       }
     } else if (selectOption === 'ac_space') {
       setCreateSpaceConf(true);
+    } else if (selectOption === 'smtp_conf') {
+      const saved = getVerified();
+      if (saved && Date.now() - saved.at < 3600_000) {
+        setHostToken(saved.token);
+        setIsHostManager(true);
+      }
+      setSMTPConfOpen(true);
+    } else if (selectOption === 'hyperbeam_conf') {
+      const saved = getVerified();
+      if (saved && Date.now() - saved.at < 3600_000) {
+        setHostToken(saved.token);
+        setIsHostManager(true);
+      }
+      setHyperbeamConfOpen(true);
     } else if (selectOption === 'flushdb') {
       setFlushDbConfirm(true);
     }
   };
 
   const menuItems = [
+    {
+      key: 'drive',
+      label: t('dashboard.menu.drive'),
+    },
     {
       key: 'home',
       label: t('dashboard.menu.home'),
@@ -816,7 +945,7 @@ export default function Dashboard() {
               platformUsers={historyPlatformUsers}
               avgDuration={historyAvgDuration}
             />
-          ) : menuTab === 'licenseManage' ? null : menuTab !== 'license' ? (
+          ) : menuTab === 'licenseManage' || menuTab === 'drive' ? null : menuTab !== 'license' ? (
             <DashboardStats
               totalSpaces={totalSpaces}
               totalParticipants={totalParticipants}
@@ -833,6 +962,10 @@ export default function Dashboard() {
             />
           ) : null}
         </div>
+
+        {menuTab === 'drive' && (
+          <DashboardDrive onSubmit={handleSetupConf} loading={initializingConf} />
+        )}
 
         {menuTab === 'home' && (
           <ActiveSpacesSection
@@ -924,6 +1057,28 @@ export default function Dashboard() {
           onAddWhiteListValueChange={setAddWhiteListValue}
           onCancel={() => setCreateSpaceConf(false)}
           onConfirm={confirmCreateSpaceHandle}
+        />
+
+        <SMTPConfModal
+          open={smtpConfOpen}
+          isHostManager={isHostManager}
+          hostToken={hostToken}
+          smtpConf={smtpConf}
+          onTokenChange={setHostToken}
+          onSMTPConfChange={setSMTPConf}
+          onCancel={() => setSMTPConfOpen(false)}
+          onConfirm={confirmSMTPConfHandle}
+        />
+
+        <HyperbeamConfModal
+          open={hyperbeamConfOpen}
+          isHostManager={isHostManager}
+          hostToken={hostToken}
+          hyperbeamConf={hyperbeamConf}
+          onTokenChange={setHostToken}
+          onHyperbeamConfChange={setHyperbeamConf}
+          onCancel={() => setHyperbeamConfOpen(false)}
+          onConfirm={confirmHyperbeamConfHandle}
         />
 
         <FlushDbModal

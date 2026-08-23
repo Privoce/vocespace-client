@@ -50,6 +50,21 @@ export interface AIConf {
   maxTokens?: number;
 }
 
+export interface SMTPConf {
+  host: string;
+  port: number;
+  secure: boolean;
+  user: string;
+  pass: string;
+  from: string;
+}
+
+export interface HyperbeamConf {
+  apiKey: string;
+  apiBase?: string;
+  defaultStartUrl?: string;
+}
+
 /**
  * 创建空间的策略
  * all: 允许所有用户创建空间
@@ -71,7 +86,10 @@ export interface ReadableConf {
   serverUrl: string;
   license: string;
   ai?: AIConf; // 必须传递hostToken给后端校验成功才能传递这个配置
+  smtp?: SMTPConf; // 必须传递hostToken给后端校验成功才能传递这个配置
+  hyperbeam?: HyperbeamConf; // 必须传递hostToken给后端校验成功才能传递这个配置
   whiteList?: string[]; // 允许创建空间的白名单用户列表
+  initialized?: boolean;
   /**
    * 创建空间的策略
    */
@@ -140,6 +158,8 @@ export interface VocespaceConfig {
    * | 混元Vision                         | 腾讯        | 文本、图像       | 中文任务优化，SuperCLUE-V测评中领先 |
    */
   ai?: AIConf;
+  smtp?: SMTPConf;
+  hyperbeam?: HyperbeamConf;
   /**
    * 创建空间的策略
    */
@@ -148,19 +168,32 @@ export interface VocespaceConfig {
 }
 
 export const mergeConf = (oldConf: VocespaceConfig, newConf: ReadableConf): VocespaceConfig => {
+  const { initialized: _initialized, ...nextConf } = newConf;
   return {
     ...oldConf,
-    ...newConf,
+    ...nextConf,
     livekit: {
       ...oldConf.livekit,
-      ...newConf.livekit,
+      ...nextConf.livekit,
     },
     redis: oldConf.redis,
     s3: oldConf.s3,
     ai: {
       ...oldConf.ai!,
-      ...(newConf.ai ? newConf.ai : oldConf.ai),
+      ...(nextConf.ai ? nextConf.ai : oldConf.ai),
     },
+    smtp: nextConf.smtp
+      ? {
+          ...oldConf.smtp,
+          ...nextConf.smtp,
+        }
+      : oldConf.smtp,
+    hyperbeam: nextConf.hyperbeam
+      ? {
+          ...oldConf.hyperbeam,
+          ...nextConf.hyperbeam,
+        }
+      : oldConf.hyperbeam,
   };
 };
 
@@ -190,7 +223,61 @@ export const clearReadableConf = (
   if (hostToken && hostToken === conf.hostToken && conf.ai) {
     readableConf.ai = conf.ai;
   }
+  if (hostToken && hostToken === conf.hostToken && conf.smtp) {
+    readableConf.smtp = conf.smtp;
+  }
+  if (hostToken && hostToken === conf.hostToken && conf.hyperbeam) {
+    readableConf.hyperbeam = conf.hyperbeam;
+  }
   return readableConf;
+};
+
+const normalizeConfigForCompare = (
+  conf?: Partial<VocespaceConfig> | ReadableConf | null,
+): Record<string, unknown> => {
+  const defaults = DEFAULT_VOCESPACE_CONFIG as VocespaceConfig;
+  const nextConf = conf || {};
+
+  return {
+    livekit: {
+      ...defaults.livekit,
+      ...(nextConf.livekit || {}),
+    },
+    codec: nextConf.codec ?? defaults.codec,
+    resolution: nextConf.resolution ?? defaults.resolution,
+    maxBitrate: nextConf.maxBitrate ?? defaults.maxBitrate,
+    maxFramerate: nextConf.maxFramerate ?? defaults.maxFramerate,
+    priority: nextConf.priority ?? defaults.priority,
+    redis: {
+      ...defaults.redis,
+      ...(nextConf.redis || {}),
+    },
+    s3: nextConf.s3 ?? defaults.s3 ?? null,
+    serverUrl: nextConf.serverUrl ?? defaults.serverUrl,
+    hostToken: 'hostToken' in nextConf ? nextConf.hostToken ?? defaults.hostToken : defaults.hostToken,
+    license: nextConf.license ?? defaults.license,
+    ai: nextConf.ai ?? defaults.ai ?? null,
+    smtp: {
+      ...defaults.smtp,
+      ...(nextConf.smtp || {}),
+    },
+    hyperbeam: {
+      ...defaults.hyperbeam,
+      ...(nextConf.hyperbeam || {}),
+    },
+    create_space: nextConf.create_space ?? defaults.create_space,
+    whiteList: nextConf.whiteList ?? [],
+    roomLicenses: nextConf.roomLicenses ?? [],
+  };
+};
+
+export const isDefaultVocespaceConfig = (
+  conf?: Partial<VocespaceConfig> | ReadableConf | null,
+): boolean => {
+  return (
+    JSON.stringify(normalizeConfigForCompare(conf)) ===
+    JSON.stringify(normalizeConfigForCompare(DEFAULT_VOCESPACE_CONFIG as VocespaceConfig))
+  );
 };
 
 // 2k, 30fps, 3Mbps
@@ -213,8 +300,21 @@ export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig | ReadableConf = {
     db: 0,
   },
   serverUrl: 'localhost',
-  // hostToken: 'vocespace_privoce',
+  hostToken: 'vocespace_privoce',
   license: DEFAULT_LICENSE.value,
+  smtp: {
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    user: '',
+    pass: '',
+    from: '',
+  },
+  hyperbeam: {
+    apiKey: '',
+    apiBase: 'https://engine.hyperbeam.com',
+    defaultStartUrl: 'https://www.google.com/search?q=',
+  },
   create_space: 'all',
   whiteList: [],
 };

@@ -2,7 +2,14 @@ import React from 'react';
 import { Card, Button, Select } from 'antd';
 import { useI18n } from '@/lib/i18n/i18n';
 
-type ActionKey = 'refresh' | 'global_conf' | 'manage_spaces' | 'ac_space' | 'flushdb';
+type ActionKey =
+  | 'refresh'
+  | 'global_conf'
+  | 'manage_spaces'
+  | 'ac_space'
+  | 'smtp_conf'
+  | 'hyperbeam_conf'
+  | 'flushdb';
 
 interface DashboardActionsProps {
   selectOption: ActionKey;
@@ -20,7 +27,7 @@ export const DashboardActions: React.FC<DashboardActionsProps> = ({
   const { t } = useI18n();
 
   return (
-    <Card style={{height: "100%"}}>
+    <Card style={{ height: '100%' }}>
       <div style={{ marginBottom: '9px' }}>{t('dashboard.count.opt')}</div>
       <div
         style={{
@@ -57,6 +64,16 @@ export const DashboardActions: React.FC<DashboardActionsProps> = ({
               label: t('dashboard.count.allow_create_space'),
               key: 'ac_space',
               value: 'ac_space',
+            },
+            {
+              label: t('dashboard.count.smtp_conf'),
+              key: 'smtp_conf',
+              value: 'smtp_conf',
+            },
+            {
+              label: t('dashboard.count.hyperbeam_conf'),
+              key: 'hyperbeam_conf',
+              value: 'hyperbeam_conf',
             },
             {
               label: (

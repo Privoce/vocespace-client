@@ -3,12 +3,16 @@ import styles from '@/styles/controls.module.scss';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useEffect, useRef, useState } from 'react';
 import {
+  AIConf,
   countLevelByConf,
   CreateSpaceStrategy,
+  HyperbeamConf,
   ReadableConf,
   RTCConf,
   rtcLevelToNumber,
   rtcNumberToConf,
+  SMTPConf,
+  VocespaceConfig,
 } from '@/lib/std/conf';
 import { api } from '@/lib/api';
 import { isUndefinedNumber, isUndefinedString } from '@/lib/std';
@@ -222,8 +226,11 @@ export function useVoceSpaceConf() {
   const getConf = async (hostToken?: string) => {
     const response = await api.getConf(hostToken);
     if (response.ok) {
-      setConf((await response.json()) as ReadableConf);
+      const nextConf = (await response.json()) as ReadableConf;
+      setConf(nextConf);
+      return nextConf;
     }
+    return null;
   };
   const checkHostToken = async (hostToken: string) => {
     const response = await api.checkHostToken(hostToken);
@@ -258,7 +265,95 @@ export function useVoceSpaceConf() {
     }
   };
 
-  return { conf, getConf, setConf, checkHostToken, updateCreateSpaceConf };
+  const updateAIConf = async (
+    aiConf: AIConf,
+    onError: (error: Error) => void,
+    onSuccess: () => void,
+  ) => {
+    try {
+      const response = await api.updateAIConf(aiConf);
+      if (response.ok) {
+        await getConf();
+        onSuccess();
+      } else {
+        const { error } = await response.json();
+        throw new Error(error || 'unknown error');
+      }
+    } catch (error) {
+      onError(error as Error);
+    }
+  };
+
+  const updateSMTPConf = async (
+    hostToken: string,
+    smtpConf: SMTPConf,
+    onError: (error: Error) => void,
+    onSuccess: () => void,
+  ) => {
+    try {
+      const response = await api.updateSMTPConf(smtpConf, hostToken);
+      if (response.ok) {
+        await getConf(hostToken);
+        onSuccess();
+      } else {
+        const { error } = await response.json();
+        throw new Error(error || 'unknown error');
+      }
+    } catch (error) {
+      onError(error as Error);
+    }
+  };
+
+  const updateHyperbeamConf = async (
+    hostToken: string,
+    hyperbeamConf: HyperbeamConf,
+    onError: (error: Error) => void,
+    onSuccess: () => void,
+  ) => {
+    try {
+      const response = await api.updateHyperbeamConf(hyperbeamConf, hostToken);
+      if (response.ok) {
+        await getConf(hostToken);
+        onSuccess();
+      } else {
+        const { error } = await response.json();
+        throw new Error(error || 'unknown error');
+      }
+    } catch (error) {
+      onError(error as Error);
+    }
+  };
+
+  const setupConf = async (
+    setupData: VocespaceConfig,
+    onError: (error: Error) => void,
+    onSuccess: () => void,
+  ) => {
+    try {
+      const response = await api.setupConf(setupData);
+      if (response.ok) {
+        await getConf();
+        onSuccess();
+      } else {
+        const { error } = await response.json();
+        throw new Error(error || 'unknown error');
+      }
+    } catch (error) {
+      onError(error as Error);
+    }
+  };
+
+  return {
+    conf,
+    getConf,
+    setConf,
+    checkHostToken,
+    updateCreateSpaceConf,
+    updateAIConf,
+    updateSMTPConf,
+    updateHyperbeamConf,
+    setupConf,
+  };
 }
 
 export interface UseRTCConfProps {

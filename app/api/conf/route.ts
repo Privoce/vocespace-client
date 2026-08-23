@@ -1,14 +1,28 @@
 // 获取动态配置
 import { NextRequest, NextResponse } from 'next/server';
-import { getConfig, setStoredConf, setConfigEnv, setConfigLicense, setConfigRoomLicense, writeBackConfig } from './conf';
-import { AIConf, clearReadableConf, RTCConf } from '@/lib/std/conf';
+import {
+  getConfig,
+  isConfigInitialized,
+  setStoredConf,
+  setConfigEnv,
+  setConfigLicense,
+  setConfigRoomLicense,
+  setConfigSMTP,
+  setConfigHyperbeam,
+  setFullConfig,
+  writeBackConfig,
+} from './conf';
+import { AIConf, clearReadableConf, HyperbeamConf, RTCConf, SMTPConf, VocespaceConfig } from '@/lib/std/conf';
 import { UpdateCreateSpaceConfBody } from '@/lib/api/conf';
 
 export async function GET(request: NextRequest) {
   const hostToken = request.nextUrl.searchParams.get('hostToken');
   let config = getConfig();
   setStoredConf(config);
-  const readableConfig = clearReadableConf(config, hostToken);
+  const readableConfig = {
+    ...clearReadableConf(config, hostToken),
+    initialized: isConfigInitialized(),
+  };
   return NextResponse.json(readableConfig, {
     status: 200,
     headers: {
@@ -22,8 +36,29 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const isUpdateLicense = request.nextUrl.searchParams.get('license');
   const isUpdateAI = request.nextUrl.searchParams.get('ai');
+  const isUpdateSMTP = request.nextUrl.searchParams.get('smtp') === 'true';
+  const isUpdateHyperbeam = request.nextUrl.searchParams.get('hyperbeam') === 'true';
+  const isSetup = request.nextUrl.searchParams.get('setup') === 'true';
   const isCheckHostToken = request.nextUrl.searchParams.get('check') === 'true';
   const isCreateSpace = request.nextUrl.searchParams.get('create_space') === 'true';
+  if (isSetup) {
+    const conf = (await request.json()) as VocespaceConfig;
+    try {
+      const { success, error } = setFullConfig(conf);
+      if (!success) {
+        throw error;
+      }
+    } catch (e) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'can not initialize config',
+        },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json({ success: true }, { status: 200 });
+  }
   // 更新创建空间配置 ---------------------------------------------------------------------------
   if (isCreateSpace) {
     const { createStrategy, whiteList }: UpdateCreateSpaceConfBody = await request.json();
@@ -69,6 +104,66 @@ export async function POST(request: NextRequest) {
         {
           success: false,
           error: 'can not update ai config',
+        },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json({ success: true }, { status: 200 });
+  }
+
+  if (isUpdateSMTP) {
+    const { smtpConf, hostToken }: { smtpConf: SMTPConf; hostToken?: string } =
+      await request.json();
+    const conf = getConfig();
+    if (!hostToken || hostToken !== conf.hostToken) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'invalid host token',
+        },
+        { status: 403 },
+      );
+    }
+    try {
+      const { success, error } = setConfigSMTP(smtpConf);
+      if (!success) {
+        throw error;
+      }
+    } catch (_e) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'can not update smtp config',
+        },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json({ success: true }, { status: 200 });
+  }
+
+  if (isUpdateHyperbeam) {
+    const { hyperbeamConf, hostToken }: { hyperbeamConf: HyperbeamConf; hostToken?: string } =
+      await request.json();
+    const conf = getConfig();
+    if (!hostToken || hostToken !== conf.hostToken) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'invalid host token',
+        },
+        { status: 403 },
+      );
+    }
+    try {
+      const { success, error } = setConfigHyperbeam(hyperbeamConf);
+      if (!success) {
+        throw error;
+      }
+    } catch (_e) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: 'can not update hyperbeam config',
         },
         { status: 500 },
       );

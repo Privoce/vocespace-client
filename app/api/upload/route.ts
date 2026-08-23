@@ -4,6 +4,7 @@ import path from 'path';
 import { ulid } from 'ulid';
 import { HandleFileSystemBody, HandleTilePlayerFileBody } from '@/lib/api/chat';
 import fs from 'fs/promises';
+import { getConfig } from '@/app/api/conf/conf';
 
 const uploadDirPath = (roomName: string) => path.join(process.cwd(), 'uploads', roomName);
 
@@ -19,18 +20,21 @@ interface TilePlayerEntry {
   updatedAt: number;
 }
 
-const HYPERBEAM_API_BASE = process.env.HYPERBEAM_API_BASE || 'https://engine.hyperbeam.com';
-const HYPERBEAM_DEFAULT_START_URL =
-  process.env.HYPERBEAM_DEFAULT_START_URL || 'https://www.google.com/search?q=';
-
 const createHyperbeamSession = async (startUrl?: string) => {
-  const apiKey = process.env.HYPERBEAM_API_KEY;
+  const conf = getConfig();
+  const hyperbeam = conf.hyperbeam;
+  const apiKey = hyperbeam?.apiKey || process.env.HYPERBEAM_API_KEY;
+  const apiBase = hyperbeam?.apiBase || process.env.HYPERBEAM_API_BASE || 'https://engine.hyperbeam.com';
+  const defaultStartUrl =
+    hyperbeam?.defaultStartUrl ||
+    process.env.HYPERBEAM_DEFAULT_START_URL ||
+    'https://www.google.com/search?q=';
   if (!apiKey) {
     throw new Error('HYPERBEAM_API_KEY is not configured');
   }
 
   const body: Record<string, unknown> = {
-    start_url: startUrl || HYPERBEAM_DEFAULT_START_URL,
+    start_url: startUrl || defaultStartUrl,
   };
 
   const controller = new AbortController();
@@ -38,7 +42,7 @@ const createHyperbeamSession = async (startUrl?: string) => {
 
   let response: Response;
   try {
-    response = await fetch(`${HYPERBEAM_API_BASE}/v0/vm`, {
+    response = await fetch(`${apiBase}/v0/vm`, {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,

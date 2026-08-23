@@ -1,6 +1,5 @@
 import { connect_endpoint } from '../std';
-import { CreateSpaceStrategy, RTCConf } from '../std/conf';
-import { AIConf } from '../std/conf';
+import { AIConf, CreateSpaceStrategy, HyperbeamConf, RTCConf, SMTPConf, VocespaceConfig } from '../std/conf';
 
 const CONF_API_URL = connect_endpoint('/api/conf');
 export const getConf = async (hostToken?: string) => {
@@ -72,6 +71,48 @@ export const updateAIConf = async (aiConf: AIConf): Promise<Response> => {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ aiConf }),
+  });
+};
+
+export const updateSMTPConf = async (
+  smtpConf: SMTPConf,
+  hostToken: string,
+): Promise<Response> => {
+  const url = new URL(CONF_API_URL, window.location.origin);
+  url.searchParams.append('smtp', 'true');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ smtpConf, hostToken }),
+  });
+};
+
+export const updateHyperbeamConf = async (
+  hyperbeamConf: HyperbeamConf,
+  hostToken: string,
+): Promise<Response> => {
+  const url = new URL(CONF_API_URL, window.location.origin);
+  url.searchParams.append('hyperbeam', 'true');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ hyperbeamConf, hostToken }),
+  });
+};
+
+export const setupConf = async (conf: VocespaceConfig): Promise<Response> => {
+  const url = new URL(CONF_API_URL, window.location.origin);
+  url.searchParams.append('setup', 'true');
+  return await fetch(url.toString(), {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(conf),
   });
 };
 

@@ -89,6 +89,19 @@ pnpm lint      # 运行代码检查
     "apiUrl": "your-ai-api-url",
     "model": "your-ai-model",
     "maxTokens": 4000
+  },
+  "smtp": {
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "secure": false,
+    "user": "your-email@gmail.com",
+    "pass": "your-smtp-password",
+    "from": "your-email@gmail.com"
+  },
+  "hyperbeam": {
+    "apiKey": "your-hyperbeam-api-key",
+    "apiBase": "https://engine.hyperbeam.com",
+    "defaultStartUrl": "https://www.google.com/search?q="
   }
 }
 ```

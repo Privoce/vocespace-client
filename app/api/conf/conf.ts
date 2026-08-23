@@ -1,14 +1,43 @@
-import { DEFAULT_VOCESPACE_CONFIG, mergeConf, ReadableConf, RTCConf, VocespaceConfig } from '@/lib/std/conf';
-import { readFileSync, writeFileSync } from 'fs';
+import {
+  DEFAULT_VOCESPACE_CONFIG,
+  HyperbeamConf,
+  isDefaultVocespaceConfig,
+  mergeConf,
+  ReadableConf,
+  RTCConf,
+  SMTPConf,
+  VocespaceConfig,
+} from '@/lib/std/conf';
+import { existsSync, readFileSync, writeFileSync } from 'fs';
 import { join } from 'path';
+
+const getConfigPath = () => join(process.cwd(), 'vocespace.conf.json');
+
+export const hasConfigFile = (): boolean => {
+  return existsSync(getConfigPath());
+};
+
+export const isConfigInitialized = (): boolean => {
+  if (!hasConfigFile()) {
+    return false;
+  }
+
+  return !isDefaultVocespaceConfig(getConfig());
+};
 
 export const getConfig = (): VocespaceConfig => {
   try {
-    const configPath = join(process.cwd(), 'vocespace.conf.json');
+    const configPath = getConfigPath();
     const configContent = readFileSync(configPath, 'utf-8');
     const config = JSON.parse(configContent) as VocespaceConfig;
     if (!config.roomLicenses) {
       config.roomLicenses = [];
+    }
+    if (!config.smtp) {
+      config.smtp = DEFAULT_VOCESPACE_CONFIG.smtp;
+    }
+    if (!config.hyperbeam) {
+      config.hyperbeam = DEFAULT_VOCESPACE_CONFIG.hyperbeam;
     }
     return config;
   } catch (error) {
@@ -41,6 +70,24 @@ export const setConfigLicense = (license: string): { success: boolean; error?: E
   return writeBackConfig(config);
 };
 
+export const setConfigSMTP = (smtp: SMTPConf): { success: boolean; error?: Error } => {
+  const config: VocespaceConfig = getConfig();
+  config.smtp = smtp;
+  return writeBackConfig(config);
+};
+
+export const setConfigHyperbeam = (
+  hyperbeam: HyperbeamConf,
+): { success: boolean; error?: Error } => {
+  const config: VocespaceConfig = getConfig();
+  config.hyperbeam = hyperbeam;
+  return writeBackConfig(config);
+};
+
+export const setFullConfig = (config: VocespaceConfig): { success: boolean; error?: Error } => {
+  return writeBackConfig(config);
+};
+
 export const setConfigRoomLicense = (license: string, roomName: string): { success: boolean; error?: Error } => {
   // 更新vocespace.conf.json
   let config: VocespaceConfig = getConfig();
@@ -60,8 +107,8 @@ export const setConfigRoomLicense = (license: string, roomName: string): { succe
 
 export const writeBackConfig = (config: VocespaceConfig): { success: boolean; error?: Error } => {
   try {
-    const configPath = join(process.cwd(), 'vocespace.conf.json');
-    writeFileSync(configPath, JSON.stringify(config));
+    const configPath = getConfigPath();
+    writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
     setStoredConf(config);
     return {
       success: true,

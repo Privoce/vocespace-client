@@ -1,34 +1,46 @@
 import nodemailer from 'nodemailer';
-
-const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
-const SMTP_PORT = Number(process.env.SMTP_PORT || 587);
-const SMTP_SECURE = process.env.SMTP_SECURE === 'true';
-const SMTP_USER = process.env.SMTP_USER || '';
-const SMTP_PASS = process.env.SMTP_PASS || '';
-const SMTP_FROM = process.env.SMTP_FROM || '';
+import { getConfig } from '@/app/api/conf/conf';
 
 let _transporter: nodemailer.Transporter | null = null;
+let _transporterKey = '';
+
+function getSMTPConf() {
+  const conf = getConfig();
+  return conf.smtp || {
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: process.env.SMTP_SECURE === 'true',
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.SMTP_FROM || '',
+  };
+}
 
 function resolveAuthUser(fromEmail: string): string {
-  return SMTP_USER || fromEmail;
+  const smtp = getSMTPConf();
+  return smtp.user || fromEmail;
 }
 
 function resolveFromAddress(fromEmail: string): string {
-  return SMTP_FROM || fromEmail;
+  const smtp = getSMTPConf();
+  return smtp.from || fromEmail;
 }
 
 function getTransporter(fromEmail: string): nodemailer.Transporter {
-  if (!_transporter) {
+  const smtp = getSMTPConf();
+  const transporterKey = JSON.stringify(smtp);
+  if (!_transporter || _transporterKey !== transporterKey) {
     const authUser = resolveAuthUser(fromEmail);
     _transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_SECURE,
+      host: smtp.host,
+      port: smtp.port,
+      secure: smtp.secure,
       auth: {
         user: authUser,
-        pass: SMTP_PASS,
+        pass: smtp.pass,
       },
     });
+    _transporterKey = transporterKey;
   }
   return _transporter;
 }
@@ -40,7 +52,8 @@ export async function sendEmail(
   content: string,
 ): Promise<boolean> {
   try {
-    if (!SMTP_PASS) {
+    const smtp = getSMTPConf();
+    if (!smtp.pass) {
       console.error('Failed to send email: SMTP_PASS is not configured');
       return false;
     }
@@ -56,11 +69,12 @@ export async function sendEmail(
     });
     return true;
   } catch (err) {
+    const smtp = getSMTPConf();
     console.error('Failed to send email:', {
       error: err,
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure: SMTP_SECURE,
+      host: smtp.host,
+      port: smtp.port,
+      secure: smtp.secure,
       authUser: resolveAuthUser(from),
       fromAddress: resolveFromAddress(from),
       to,

@@ -13,8 +13,11 @@ import {
   reloadConf,
   reloadLicense,
   reloadRoomLicense,
+  setupConf,
   updateAIConf,
+  updateHyperbeamConf,
   updateCreateSpaceConf,
+  updateSMTPConf,
 } from './conf';
 import {
   cancelLicenseSubscription,
@@ -125,6 +128,9 @@ export const api = {
   updateRoom,
   getConf,
   updateAIConf,
+  updateSMTPConf,
+  updateHyperbeamConf,
+  setupConf,
   reloadConf,
   updateCreateSpaceConf,
   reloadLicense,
