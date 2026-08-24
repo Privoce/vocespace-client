@@ -964,7 +964,13 @@ export default function Dashboard() {
         </div>
 
         {menuTab === 'drive' && (
-          <DashboardDrive onSubmit={handleSetupConf} loading={initializingConf} />
+          <DashboardDrive
+            onSubmit={handleSetupConf}
+            loading={initializingConf}
+            conf={conf}
+            initialized={conf?.initialized}
+            onCancel={() => setMenuTab('home')}
+          />
         )}
 
         {menuTab === 'home' && (

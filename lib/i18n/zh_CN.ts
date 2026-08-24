@@ -1042,6 +1042,10 @@ export default {
       title: '初始化 VoceSpace 配置',
       desc: '当前还没有可用的 vocespace.conf.json。按照引导填写后将自动生成配置文件。',
       alert: '这里会把你填写的内容直接写入项目根目录下的 vocespace.conf.json。',
+      confirm_title: '已检测到已有配置',
+      confirm_desc: '服务器已存在 vocespace.conf.json 且已完成配置，是否进入修改？',
+      confirm_modify: '进入修改',
+      cancel: '取消',
       steps: {
         base: '基础连接',
         media: '媒体参数',

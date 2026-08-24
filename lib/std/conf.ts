@@ -236,7 +236,8 @@ const normalizeConfigForCompare = (
   conf?: Partial<VocespaceConfig> | ReadableConf | null,
 ): Record<string, unknown> => {
   const defaults = DEFAULT_VOCESPACE_CONFIG as VocespaceConfig;
-  const nextConf = conf || {};
+  // 同时支持 ReadableConf 与 Partial<VocespaceConfig>，用 Partial<VocespaceConfig> 视图以访问 redis/s3
+  const nextConf = (conf || {}) as Partial<VocespaceConfig>;
 
   return {
     livekit: {

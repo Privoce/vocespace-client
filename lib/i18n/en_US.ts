@@ -1090,6 +1090,10 @@ export default {
       title: 'Initialize VoceSpace Config',
       desc: 'No usable vocespace.conf.json was found. Fill out this guide and VoceSpace will create it for you.',
       alert: 'The values entered here will be written directly to vocespace.conf.json in the project root.',
+      confirm_title: 'Existing configuration detected',
+      confirm_desc: 'The server already has a configured vocespace.conf.json. Do you want to modify it?',
+      confirm_modify: 'Edit Config',
+      cancel: 'Cancel',
       steps: {
         base: 'Basic Connection',
         media: 'Media Settings',
