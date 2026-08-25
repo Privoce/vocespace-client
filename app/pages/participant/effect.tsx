@@ -569,7 +569,19 @@ export function TileWhiteboardOverlay({
     };
   }, [appendPoint, drawing, finishStroke]);
 
+  React.useEffect(() => {
+    console.log('[Whiteboard] Render state:', {
+      enabled,
+      actualVideoRect,
+      overlayId,
+      whiteboardActiveOverlayId,
+      collapsed,
+      toolbarHost: !!toolbarHost,
+    });
+  }, [enabled, actualVideoRect, overlayId, whiteboardActiveOverlayId, collapsed, toolbarHost]);
+
   if (!enabled || !actualVideoRect) {
+    console.warn('[Whiteboard] Not rendering overlay:', { enabled, actualVideoRect });
     return null;
   }
 
