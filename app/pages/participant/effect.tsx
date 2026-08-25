@@ -617,7 +617,7 @@ export function TileWhiteboardOverlay({
     });
   }, [enabled, actualVideoRect, overlayId, whiteboardActiveOverlayId, collapsed, toolbarHost]);
 
-  if (!enabled || !actualVideoRect) {
+  if (!enabled) {
     console.warn('[Whiteboard] Not rendering overlay:', { enabled, actualVideoRect });
     return null;
   }
@@ -638,15 +638,53 @@ export function TileWhiteboardOverlay({
       </div>
     );
 
-    if (toolbarHost && overlayId && whiteboardActiveOverlayId === overlayId) {
-      return createPortal(collapsedToolbar, toolbarHost);
-    }
+    const toolbarPortal =
+      toolbarHost && overlayId && whiteboardActiveOverlayId === overlayId
+        ? createPortal(collapsedToolbar, toolbarHost)
+        : overlayId
+          ? null
+          : !toolbarHost
+            ? collapsedToolbar
+            : null;
 
-    if (overlayId) {
-      return null;
-    }
-
-    return null;
+    // 即使 collapsed 也要渲染 overlay div，以便接收指针事件
+    return (
+      <>
+        {toolbarPortal}
+        {actualVideoRect && (
+          <div
+            ref={overlayRef}
+            className={styles.whiteboard_overlay}
+            onPointerDown={handlePointerDown}
+            style={{ cursor: getWhiteboardCursor(tool, localColor) }}
+          >
+            <svg
+              className={styles.whiteboard_canvas}
+              viewBox="0 0 1 1"
+              preserveAspectRatio="none"
+              style={{
+                left: `${actualVideoRect.left}px`,
+                top: `${actualVideoRect.top}px`,
+                width: `${actualVideoRect.width}px`,
+                height: `${actualVideoRect.height}px`,
+              }}
+            >
+              {renderedStrokes.map((stroke) => (
+                <path
+                  key={stroke.id}
+                  d={buildStrokePath(stroke.points)}
+                  stroke={stroke.color}
+                  strokeWidth={getStrokeWidth(stroke)}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  fill="none"
+                />
+              ))}
+            </svg>
+          </div>
+        )}
+      </>
+    );
   }
 
   const toolbar = (
