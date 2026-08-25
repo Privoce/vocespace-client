@@ -436,6 +436,7 @@ export function TileWhiteboardOverlay({
   const handlePointerDown = React.useCallback(
     async (event: React.PointerEvent<HTMLDivElement>) => {
       if (!enabled || !actualVideoRect) {
+        console.warn('[Whiteboard] Cannot draw:', { enabled, actualVideoRect, overlayId });
         return;
       }
 
