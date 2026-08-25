@@ -1358,7 +1358,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                       ref={toolbarHostRef}
                       style={{
                         position: 'absolute',
-                        right: 428,
+                        right: 468,
                         bottom: 0,
                         zIndex: 20,
                         pointerEvents: 'auto',
