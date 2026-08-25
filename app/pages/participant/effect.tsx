@@ -823,36 +823,38 @@ export function TileWhiteboardOverlay({
           : !toolbarHost
             ? toolbar
             : null}
-      <div
-        ref={overlayRef}
-        className={styles.whiteboard_overlay}
-        onPointerDown={handlePointerDown}
-        style={{ cursor: getWhiteboardCursor(tool, localColor) }}
-      >
-        <svg
-          className={styles.whiteboard_canvas}
-          viewBox="0 0 1 1"
-          preserveAspectRatio="none"
-          style={{
-            left: `${actualVideoRect.left}px`,
-            top: `${actualVideoRect.top}px`,
-            width: `${actualVideoRect.width}px`,
-            height: `${actualVideoRect.height}px`,
-          }}
+      {actualVideoRect && (
+        <div
+          ref={overlayRef}
+          className={styles.whiteboard_overlay}
+          onPointerDown={handlePointerDown}
+          style={{ cursor: getWhiteboardCursor(tool, localColor) }}
         >
-          {renderedStrokes.map((stroke) => (
-            <path
-              key={stroke.id}
-              d={buildStrokePath(stroke.points)}
-              stroke={stroke.color}
-              strokeWidth={getStrokeWidth(stroke)}
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              fill="none"
-            />
-          ))}
-        </svg>
-      </div>
+          <svg
+            className={styles.whiteboard_canvas}
+            viewBox="0 0 1 1"
+            preserveAspectRatio="none"
+            style={{
+              left: `${actualVideoRect.left}px`,
+              top: `${actualVideoRect.top}px`,
+              width: `${actualVideoRect.width}px`,
+              height: `${actualVideoRect.height}px`,
+            }}
+          >
+            {renderedStrokes.map((stroke) => (
+              <path
+                key={stroke.id}
+                d={buildStrokePath(stroke.points)}
+                stroke={stroke.color}
+                strokeWidth={getStrokeWidth(stroke)}
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                fill="none"
+              />
+            ))}
+          </svg>
+        </div>
+      )}
     </>
   );
 }
