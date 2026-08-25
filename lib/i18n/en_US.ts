@@ -985,7 +985,6 @@ export default {
     export_space_button: 'Export Space User Data',
     edit_owner_modal_title: 'Change Space Owner',
     cancel: 'Cancel',
-    save: 'Save',
     host_token_placeholder: 'Host Token',
     verify_and_load: 'Verify and Load',
     manage_search_placeholder: 'Search by room name',

@@ -938,7 +938,6 @@ export default {
     export_space_button: '提取空间用户数据',
     edit_owner_modal_title: '修改空间 Owner',
     cancel: '取消',
-    save: '保存',
     host_token_placeholder: 'Host Token',
     verify_and_load: '验证并加载',
     manage_search_placeholder: '按房间名搜索',
