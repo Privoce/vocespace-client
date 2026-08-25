@@ -191,8 +191,14 @@ function getRenderedVideoRect(videoElement: HTMLVideoElement): PointerMappingRec
     return null;
   }
 
+  // 当视频元数据还未加载时，使用容器尺寸作为 fallback
   if (!videoElement.videoWidth || !videoElement.videoHeight) {
-    return null;
+    return {
+      width: containerRect.width,
+      height: containerRect.height,
+      left: 0,
+      top: 0,
+    };
   }
 
   const actualVideoRect = {
@@ -260,47 +266,78 @@ function usePointerMappingRectState({
   containerRef?: React.RefObject<HTMLElement | null>;
 }) {
   const [rect, setRect] = React.useState<PointerMappingRect | null>(null);
+  const retryCountRef = React.useRef(0);
+  const maxRetries = 20;
 
   React.useEffect(() => {
+    let animationFrameId: number | null = null;
+    let observer: ResizeObserver | null = null;
+    let videoElement: HTMLVideoElement | null = null;
+    
     const measure = () => {
-      setRect(
-        getPointerMappingRect({
-          mappingTarget,
-          videoElement: videoRef?.current,
-          containerElement: containerRef?.current,
-        }),
-      );
+      const videoEl = videoRef?.current;
+      const containerEl = containerRef?.current;
+      
+      const newRect = getPointerMappingRect({
+        mappingTarget,
+        videoElement: videoEl,
+        containerElement: containerEl,
+      });
+      
+      setRect(newRect);
+      
+      // 如果 rect 为 null 且还有重试次数，继续重试
+      if (!newRect && retryCountRef.current < maxRetries) {
+        retryCountRef.current += 1;
+        animationFrameId = requestAnimationFrame(measure);
+      } else if (newRect) {
+        retryCountRef.current = 0;
+      }
     };
 
+    // 立即测量一次
     measure();
 
-    const resizeTarget =
-      mappingTarget === 'screen-share' ? videoRef?.current : containerRef?.current;
-    if (!resizeTarget) {
-      return;
-    }
+    // 延迟设置 observer 和事件监听，等待元素渲染
+    const setupListeners = () => {
+      const resizeTarget =
+        mappingTarget === 'screen-share' ? videoRef?.current : containerRef?.current;
+      
+      if (!resizeTarget) {
+        // 元素还没渲染，延迟重试
+        setTimeout(setupListeners, 100);
+        return;
+      }
 
-    const observer = new ResizeObserver(() => {
-      measure();
-    });
-    observer.observe(resizeTarget);
+      observer = new ResizeObserver(() => {
+        retryCountRef.current = 0;
+        measure();
+      });
+      observer.observe(resizeTarget);
 
-    const videoElement = videoRef?.current;
-    const handleVideoReady = () => {
-      measure();
+      videoElement = videoRef?.current ?? null;
+      const handleVideoReady = () => {
+        retryCountRef.current = 0;
+        measure();
+      };
+
+      videoElement?.addEventListener('loadedmetadata', handleVideoReady);
+      videoElement?.addEventListener('loadeddata', handleVideoReady);
+      videoElement?.addEventListener('resize', handleVideoReady);
+      window.addEventListener('resize', handleVideoReady);
     };
 
-    videoElement?.addEventListener('loadedmetadata', handleVideoReady);
-    videoElement?.addEventListener('loadeddata', handleVideoReady);
-    videoElement?.addEventListener('resize', handleVideoReady);
-    window.addEventListener('resize', handleVideoReady);
+    setupListeners();
 
     return () => {
-      observer.disconnect();
-      videoElement?.removeEventListener('loadedmetadata', handleVideoReady);
-      videoElement?.removeEventListener('loadeddata', handleVideoReady);
-      videoElement?.removeEventListener('resize', handleVideoReady);
-      window.removeEventListener('resize', handleVideoReady);
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      observer?.disconnect();
+      videoElement?.removeEventListener('loadedmetadata', () => {});
+      videoElement?.removeEventListener('loadeddata', () => {});
+      videoElement?.removeEventListener('resize', () => {});
+      window.removeEventListener('resize', () => {});
     };
   }, [containerRef, mappingTarget, videoRef]);
 
