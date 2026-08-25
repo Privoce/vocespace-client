@@ -325,7 +325,7 @@ export function TileWhiteboardOverlay({
   const [tool, setTool] = React.useState<WhiteboardTool>('pen');
   const [strokeWidth, setStrokeWidth] = React.useState(DEFAULT_WHITEBOARD_STROKE_WIDTH);
   const [drawing, setDrawing] = React.useState(false);
-  const [collapsed, setCollapsed] = React.useState(false);
+  const [collapsed, setCollapsed] = React.useState(true);
   const [draftStroke, setDraftStroke] = React.useState<HandWritingStroke | null>(null);
   const overlayRef = React.useRef<HTMLDivElement | null>(null);
   const draftStrokeRef = React.useRef<HandWritingStroke | null>(null);
@@ -468,7 +468,16 @@ export function TileWhiteboardOverlay({
         createdAt: now,
       });
     },
-    [actualVideoRect, enabled, eraseAtPoint, getRelativePoint, localColor, saveLocal, strokeWidth, tool],
+    [
+      actualVideoRect,
+      enabled,
+      eraseAtPoint,
+      getRelativePoint,
+      localColor,
+      saveLocal,
+      strokeWidth,
+      tool,
+    ],
   );
 
   const appendPoint = React.useCallback(
@@ -567,7 +576,14 @@ export function TileWhiteboardOverlay({
     const collapsedToolbar = (
       <div className={styles.whiteboard_toolbar_collapsed} style={{ pointerEvents: 'auto' }}>
         <Tooltip title={t('common.whiteboard.expand')}>
-          <Button type="primary" icon={<EditOutlined />} onClick={() => setCollapsed(false)} />
+          <Button
+            style={{
+              backgroundColor: tool === 'pen' ? localColor : undefined,
+            }}
+            type="primary"
+            icon={<EditOutlined />}
+            onClick={() => setCollapsed(false)}
+          />
         </Tooltip>
       </div>
     );
@@ -603,6 +619,9 @@ export function TileWhiteboardOverlay({
         </Tooltip>
         <Tooltip title={t('common.whiteboard.eraser')}>
           <Button
+            style={{
+              backgroundColor: tool === 'eraser' ? localColor : undefined,
+            }}
             type={tool === 'eraser' ? 'primary' : 'text'}
             icon={<ClearOutlined />}
             onClick={() => {

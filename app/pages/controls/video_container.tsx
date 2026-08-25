@@ -119,10 +119,12 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const controlsRef = React.useRef<ControlBarExport>(null);
     const waveAudioRef = React.useRef<HTMLAudioElement>(null);
     const promptSoundRef = React.useRef<HTMLAudioElement>(null);
+    const toolbarHostRef = React.useRef<HTMLDivElement>(null);
     const [freshPermission, setFreshPermission] = useState(false);
     const [localTrackVersion, setLocalTrackVersion] = useState(0);
     const [cacheWidgetState, setCacheWidgetState] = useState<WidgetState>();
     const chatMsg = useRoomStore((s) => s.chatMsg);
+    const setWhiteboardToolbarHost = useRoomStore((s) => s.setWhiteboardToolbarHost);
     const { chatOpen, setChatOpen, sendFileConfirm } = useControlsChat();
     const channelRef = React.useRef<ChannelExports>(null);
     const {
@@ -181,6 +183,13 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       updateSettings,
       locale,
     });
+
+    useEffect(() => {
+      setWhiteboardToolbarHost(toolbarHostRef.current);
+      return () => {
+        setWhiteboardToolbarHost(null);
+      };
+    }, [setWhiteboardToolbarHost]);
 
     useEffect(() => {
       if (!space) return;
@@ -1343,6 +1352,16 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                             />
                           </div>
                         );
+                      }}
+                    />
+                    <div
+                      ref={toolbarHostRef}
+                      style={{
+                        position: 'absolute',
+                        right: 428,
+                        bottom: 0,
+                        zIndex: 20,
+                        pointerEvents: 'auto',
                       }}
                     />
                   </div>

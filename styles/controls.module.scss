@@ -234,9 +234,9 @@
 
 .whiteboard_toolbar {
   position: absolute;
-  left: 50%;
+  left: 38px;
   bottom: 12px;
-  transform: translateX(-50%);
+  // transform: translateX(-50%);
   z-index: 6;
   display: inline-flex;
   align-items: center;
@@ -245,7 +245,7 @@
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.58);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
-  width: calc( 100% - 16px);
+  width: 420px;
   justify-content: space-between;
   flex-wrap: wrap;
   &_left {
@@ -264,12 +264,15 @@
 
 .whiteboard_toolbar_collapsed {
   position: absolute;
-  right: 12px;
+  left: 418px;
   bottom: 12px;
-  transform: translateY(-50%);
   z-index: 6;
   display: flex;
   align-items: center;
+  padding: 6px;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.58);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
 }
 
 .whiteboard_overlay {

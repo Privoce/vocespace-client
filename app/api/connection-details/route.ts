@@ -243,6 +243,13 @@ export async function GET(request: NextRequest) {
     const uIdentity = request.nextUrl.searchParams.get('identity');
     // with auth id (from vocespace platform)
     const auth = request.nextUrl.searchParams.get('auth') as AuthType | null;
+
+    // special handling for platform auth: /api/connection-details?auth=vocespace&token=xxx
+    // 通过这种方式接入的用户，必须提供 token 参数，通过解析 token 获取用户名和空间名以及房间名，这样用户可以直接进入指定的房间
+    if (auth) {
+      return await PlatformLogin(request, auth);
+    }
+
     const existSpace = await isSpaceExist(request, spaceName || '');
     if (!existSpace) {
       // 测试得出没有每次都获取新的config，所以重新获取一次配置
@@ -266,32 +273,26 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // special handling for sohive auth: /api/connection-details?auth=sohive&token=xxx
-    // 通过这种方式接入的用户，必须提供 token 参数，通过解析 token 获取用户名和空间名以及房间名，这样用户可以直接进入指定的房间
-    if (auth) {
-      return await PlatformLogin(request, auth);
-    } else {
-      // 没有 auth 参数，走普通流程
-      let randomParticipantPostfix = request.cookies.get(COOKIE_KEY)?.value;
-      if (typeof spaceName !== 'string') {
-        return new NextResponse('Missing required query parameter: spaceName', { status: 400 });
-      }
-      if (participantName === null) {
-        return new NextResponse('Missing required query parameter: participantName', {
-          status: 400,
-        });
-      }
-
-      let identity = uIdentity || generateBasicIdentity(participantName, spaceName);
-      const { details: data } = await generateData(identity, participantName, spaceName, metadata);
-
-      return new NextResponse(JSON.stringify(data), {
-        headers: {
-          'Content-Type': 'application/json',
-          'Set-Cookie': `${COOKIE_KEY}=${randomParticipantPostfix}; Path=/; HttpOnly; SameSite=Strict; Secure; Expires=${getCookieExpirationTime()}`,
-        },
+    // 没有 auth 参数，走普通流程
+    let randomParticipantPostfix = request.cookies.get(COOKIE_KEY)?.value;
+    if (typeof spaceName !== 'string') {
+      return new NextResponse('Missing required query parameter: spaceName', { status: 400 });
+    }
+    if (participantName === null) {
+      return new NextResponse('Missing required query parameter: participantName', {
+        status: 400,
       });
     }
+
+    let identity = uIdentity || generateBasicIdentity(participantName, spaceName);
+    const { details: data } = await generateData(identity, participantName, spaceName, metadata);
+
+    return new NextResponse(JSON.stringify(data), {
+      headers: {
+        'Content-Type': 'application/json',
+        'Set-Cookie': `${COOKIE_KEY}=${randomParticipantPostfix}; Path=/; HttpOnly; SameSite=Strict; Secure; Expires=${getCookieExpirationTime()}`,
+      },
+    });
   } catch (error) {
     return NextResponse.json(
       {

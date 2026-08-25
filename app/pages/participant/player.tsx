@@ -328,18 +328,8 @@ export const TilePlayerAdd = ({
   const { t } = useI18n();
   const [openInputIframe, setOpenInputIframe] = useState(false);
   const [inputIframeUrl, setInputIframeUrl] = useState('');
-  const toolbarHostRef = useRef<HTMLDivElement | null>(null);
   const chatOpen = useRoomStore((s) => s.chatOpen);
   const setChatOpen = useRoomStore((s) => s.setChatOpen);
-  const setWhiteboardToolbarHost = useRoomStore((state) => state.setWhiteboardToolbarHost);
-
-  useEffect(() => {
-    setWhiteboardToolbarHost(toolbarHostRef.current);
-
-    return () => {
-      setWhiteboardToolbarHost(null);
-    };
-  }, [setWhiteboardToolbarHost]);
 
   const createHyperbeamPlayer = async () => {
     try {
@@ -432,54 +422,55 @@ export const TilePlayerAdd = ({
         style={{
           border: '1px dashed #565656',
           borderRadius: '0.5em',
-          display: 'flex',
           background: '#202020',
         }}
       >
-        <div className={styles.bar}>
-          <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="image/*">
-            <Tooltip title={t('common.upload')}>
+        <div
+          style={{
+            margin: 'auto',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            height: '60%',
+            width: '60%',
+          }}
+        >
+          <Tooltip title={t('common.upload')}>
+            <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="image/*">
               <Button
                 type="text"
+                style={{ height: '100%', width: '100%' }}
                 className={styles.appLikeBtn_btn}
-                icon={<FileImageOutlined style={{ color: '#565656', fontSize: 20 }} />}
+                icon={<FileImageOutlined style={{ color: '#aaa', fontSize: 20 }} />}
               ></Button>
-            </Tooltip>
-          </Upload>
-          <Tooltip title="Iframe">
-            <Button
-              type="text"
-              className={styles.appLikeBtn_btn}
-              onClick={() => setOpenInputIframe(true)}
-              icon={<LayoutOutlined style={{ color: '#565656', fontSize: 20 }} />}
-            ></Button>
-          </Tooltip>
-          <Tooltip title="HyperBeam Browser">
-            <Button
-              type="text"
-              className={styles.appLikeBtn_btn}
-              onClick={createHyperbeamPlayer}
-              icon={<GlobalOutlined style={{ color: '#565656', fontSize: 20 }} />}
-            ></Button>
-          </Tooltip>
-          <Tooltip title={t('common.chat')}>
-            <Button
-              type="text"
-              className={styles.appLikeBtn_btn}
-              onClick={() => setChatOpen(!chatOpen)}
-              icon={<SvgResource type="chat" svgSize={24} color={'#565656'} />}
-            ></Button>
+            </Upload>
           </Tooltip>
         </div>
-        <div
-          ref={toolbarHostRef}
-          style={{
-            position: 'absolute',
-            inset: 0,
-            zIndex: 12,
-            pointerEvents: 'none',
-          }}
-        />
+
+        <Tooltip title="Iframe">
+          <Button
+            type="text"
+            className={styles.appLikeBtn_btn}
+            onClick={() => setOpenInputIframe(true)}
+            icon={<LayoutOutlined style={{ color: '#aaa', fontSize: 20 }} />}
+          ></Button>
+        </Tooltip>
+        <Tooltip title="HyperBeam Browser">
+          <Button
+            type="text"
+            className={styles.appLikeBtn_btn}
+            onClick={createHyperbeamPlayer}
+            icon={<GlobalOutlined style={{ color: '#aaa', fontSize: 20 }} />}
+          ></Button>
+        </Tooltip>
+        <Tooltip title={t('common.chat')}>
+          <Button
+            type="text"
+            className={styles.appLikeBtn_btn}
+            onClick={() => setChatOpen(!chatOpen)}
+            icon={<SvgResource type="chat" svgSize={24} color={'#aaa'} />}
+          ></Button>
+        </Tooltip>
       </div>
 
       <Modal
