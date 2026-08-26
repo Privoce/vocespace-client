@@ -639,13 +639,11 @@ export function TileWhiteboardOverlay({
     );
 
     const toolbarPortal =
-      toolbarHost && overlayId && whiteboardActiveOverlayId === overlayId
+      toolbarHost && overlayId
         ? createPortal(collapsedToolbar, toolbarHost)
-        : overlayId
-          ? null
-          : !toolbarHost
-            ? collapsedToolbar
-            : null;
+        : !toolbarHost
+          ? collapsedToolbar
+          : null;
 
     // 即使 collapsed 也要渲染 overlay div，以便接收指针事件
     return (
@@ -713,6 +711,7 @@ export function TileWhiteboardOverlay({
             type={tool === 'eraser' ? 'primary' : 'text'}
             icon={<ClearOutlined />}
             onClick={() => {
+              console.log('[Whiteboard] Eraser button clicked, current tool:', tool);
               if (overlayId) {
                 setWhiteboardActiveOverlayId(overlayId);
               }
@@ -726,6 +725,7 @@ export function TileWhiteboardOverlay({
             icon={<UndoOutlined />}
             disabled={!localHandWriting.strokes.length}
             onClick={() => {
+              console.log('[Whiteboard] Undo clicked, strokes:', localHandWriting.strokes.length);
               if (overlayId) {
                 setWhiteboardActiveOverlayId(overlayId);
               }
@@ -814,15 +814,20 @@ export function TileWhiteboardOverlay({
     </div>
   );
 
+  console.log('[Whiteboard] Rendering toolbar:', {
+    toolbarHost: !!toolbarHost,
+    overlayId,
+    whiteboardActiveOverlayId,
+    collapsed,
+  });
+
   return (
     <>
-      {toolbarHost && overlayId && whiteboardActiveOverlayId === overlayId
+      {toolbarHost && overlayId
         ? createPortal(toolbar, toolbarHost)
-        : overlayId
-          ? null
-          : !toolbarHost
-            ? toolbar
-            : null}
+        : !toolbarHost
+          ? toolbar
+          : null}
       {actualVideoRect && (
         <div
           ref={overlayRef}

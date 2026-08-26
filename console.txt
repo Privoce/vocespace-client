@@ -1,0 +1,573 @@
+Object { livekit: {…}, codec: "vp9", resolution: "720p", maxBitrate: 1700000, maxFramerate: 30, priority: "high", serverUrl: "vocespace.com", license: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFwaS5wcml2b2NlQGdtYWlsLmNvbSIsImV4cGlyZXNfYXQiOjE4MTQ0NTk5NzYsImNyZWF0ZWRfYXQiOjE3ODI5MjM5NzYsImRvbWFpbnMiOiIqIiwibGltaXQiOiJwcm8iLCJpZCI6ImQzNDBhYjM4LWM4NDYtNGMzZC1hZmMyLWIzZTIzN2Q1NWQ5YyIsImlhdCI6MTc4MjkyMzk3Nn0.F_sSx1yDESUoFSVeb9qSPm3o3ciqsHtcXsyXSrla6yY", create_space: "all", whiteList: (4) […], … }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: null, overlayId: "avo:", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:", whiteboardActiveOverlayId: "avo:", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:", whiteboardActiveOverlayId: "avo:", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+方向传感器已弃用。 5cd38513.15c6c14d58c74dc0.js:1:466495
+运动传感器已弃用。 5cd38513.15c6c14d58c74dc0.js:1:466495
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: null, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+源代码映射错误：Error: JSON.parse: unexpected character at line 1 column 1 of the JSON data
+Stack in the worker:parseSourceMapInput@resource://devtools/client/shared/vendor/source-map/lib/util.js:163:15
+_factory@resource://devtools/client/shared/vendor/source-map/lib/source-map-consumer.js:1069:22
+SourceMapConsumer@resource://devtools/client/shared/vendor/source-map/lib/source-map-consumer.js:26:12
+_fetch@resource://devtools/client/shared/source-map-loader/utils/fetchSourceMap.js:83:19
+
+资源 URL：https://vocespace.com/%3Canonymous%20code%3E
+源代码映射 URL：installHook.js.map
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+publishing track 
+Object { room: "tt", roomID: "RM_iAttnjDTRmbW", participant: "yifei sheng__tt", pID: "PA_oUDWHhuuTAwM", trackID: undefined, source: "screen_share", muted: false, enabled: true, kind: "video", streamID: "{b7b1e78f-2e5f-4bc9-839a-2ad86e5bd122}", … }
+2a193d4c-4d493a5388674f83.js:1:282434
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: null }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: null, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: null, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "screen-share:yifei sheng__tt", collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: null, collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "screen-share:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: false, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: true, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Render state: 
+Object { enabled: true, actualVideoRect: {…}, overlayId: "avo:yifei sheng__tt", whiteboardActiveOverlayId: "avo:yifei sheng__tt", collapsed: false, toolbarHost: true }
+67-afe9098280f8fc53.js:1:135784
+[Whiteboard] Not rendering overlay: 
+Object { enabled: false, actualVideoRect: {…} }
+<anonymous code>:1:147461

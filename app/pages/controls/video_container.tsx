@@ -1362,6 +1362,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                         bottom: 0,
                         zIndex: 20,
                         pointerEvents: 'auto',
+                        width: 'fit-content',
+                        height: 'fit-content',
                       }}
                     />
                   </div>

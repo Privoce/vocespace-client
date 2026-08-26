@@ -915,7 +915,8 @@ export const ParticipantItem: (
                 containerRef={avoContainerRef}
                 remoteCursors={remoteCursors}
               />
-              <TileWhiteboardOverlay
+              {/* AVO 工具栏已禁用，当前只使用屏幕分享工具栏 */}
+              {/* <TileWhiteboardOverlay
                 enabled={pointerMappingTarget === 'avo' && !!localAvo}
                 mappingTarget="avo"
                 containerRef={avoContainerRef}
@@ -948,7 +949,7 @@ export const ParticipantItem: (
                       }
                     : undefined
                 }
-              />
+              /> */}
             </div>
             <div
               className="lk-participant-metadata"
