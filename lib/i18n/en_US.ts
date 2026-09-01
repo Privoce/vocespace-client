@@ -45,8 +45,13 @@ export default {
       expand: 'Open whiteboard tools',
     },
     wx: {
-      not_support: "Sorry, the current space does not support access within WeChat. Please use a browser to open it.",
+      not_support:
+        'When opened inside WeChat, some capabilities may be limited. A system browser is recommended for the best experience.',
       to_browser: "Open in Browser",
+      access_warning_title: 'WeChat access notice',
+      screen_share_note_title: 'WeChat screen sharing note',
+      screen_share_note_desc:
+        'On desktop WeChat, screen sharing usually only works for in-browser content and may not reliably share the full screen. If sharing fails, switch to a system browser.',
     },
     full_screen: 'Full Screen',
     guest: {

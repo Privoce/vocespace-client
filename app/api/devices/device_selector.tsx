@@ -1,4 +1,5 @@
 import { Device, MediaDeviceKind } from '@/lib/std/device';
+import { supportsMediaDeviceChangeEvent } from '@/lib/std';
 import { useMaybeRoomContext } from '@livekit/components-react';
 import { LocalAudioTrack, LocalVideoTrack, RoomEvent } from 'livekit-client';
 import { forwardRef, useCallback, useImperativeHandle, useState, useEffect } from 'react';
@@ -146,11 +147,15 @@ export const DevicesSelector = forwardRef(
         void loadDevices();
       }, DEVICE_REFRESH_INTERVAL);
 
-      navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange);
+      if (supportsMediaDeviceChangeEvent()) {
+        navigator.mediaDevices.addEventListener('devicechange', handleDeviceChange);
+      }
       window.addEventListener('focus', handleFocus);
       document.addEventListener('visibilitychange', handleVisibilityChange);
       return () => {
-        navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
+        if (supportsMediaDeviceChangeEvent()) {
+          navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
+        }
         window.removeEventListener('focus', handleFocus);
         document.removeEventListener('visibilitychange', handleVisibilityChange);
         window.clearInterval(pollTimer);

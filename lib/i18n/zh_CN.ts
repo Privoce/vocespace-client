@@ -44,8 +44,12 @@ export default {
       expand: '展开白板工具',
     },
     wx: {
-      not_support: "很抱歉，当前空间不支持在微信内访问，请使用浏览器打开",
+      not_support: '当前在微信内访问时，部分能力可能受限，建议优先使用系统浏览器打开。',
       to_browser: "在浏览器中打开",
+      access_warning_title: '微信内访问提醒',
+      screen_share_note_title: '微信屏幕共享提示',
+      screen_share_note_desc:
+        'PC 端微信浏览器当前通常只能共享浏览器内内容，无法稳定共享整个屏幕；如果共享失败，请改用系统浏览器。',
     },
     full_screen: '全屏',
     guest: {

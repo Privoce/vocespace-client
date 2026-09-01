@@ -8,7 +8,7 @@ import {
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import {  Drawer, Input, message, Modal, Popover } from 'antd';
+import { Drawer, Input, message, Modal, notification, Popover } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
@@ -34,6 +34,7 @@ import { usePlatformUserInfo } from '@/lib/hooks/platform';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { DevicesSelector } from '@/app/api/devices/device_selector';
 import { useControlsSettings, useControlsRecord, useControlsChat } from './hooks/index';
+import { isWeChatBrowser, isWeChatMobile } from '@/lib/std';
 
 /** @public */
 export type ControlBarControls = {
@@ -138,6 +139,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const isMobile = React.useMemo(() => {
       return is_mobile();
     }, []);
+    const isWeChat = React.useMemo(() => isWeChatBrowser(), []);
+    const isWeChatMobileBrowser = React.useMemo(() => isWeChatMobile(), []);
 
     const controlSize = React.useMemo(() => {
       return (isMobile ? 'small' : 'middle') as SizeType;
@@ -185,6 +188,10 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       visibleControls.chat ??= localPermissions.canPublishData && controls?.chat;
     }
 
+    if (isWeChatMobileBrowser) {
+      visibleControls.camera = false;
+    }
+
     const showIcon = React.useMemo(
       () => variation === 'minimal' || variation === 'verbose',
       [variation],
@@ -202,12 +209,25 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     const [isScreenShareEnabled, setIsScreenShareEnabled] = React.useState(false);
     const [audioMenuOpen, setAudioMenuOpen] = React.useState(false);
     const [videoMenuOpen, setVideoMenuOpen] = React.useState(false);
+    const hasShownWeChatScreenShareNoteRef = React.useRef(false);
+
+    const [messageApi, contextHolder] = message.useMessage();
+    const [noteApi, noteHolder] = notification.useNotification();
 
     const onScreenShareChange = React.useCallback(
       (enabled: boolean) => {
         setIsScreenShareEnabled(enabled);
+
+        if (enabled && isWeChat && !isMobile && !hasShownWeChatScreenShareNoteRef.current) {
+          noteApi.info({
+            message: t('common.wx.screen_share_note_title'),
+            description: t('common.wx.screen_share_note_desc'),
+            duration: 8,
+          });
+          hasShownWeChatScreenShareNoteRef.current = true;
+        }
       },
-      [setIsScreenShareEnabled],
+      [isMobile, isWeChat, noteApi, t],
     );
 
     const htmlProps = { className: 'lk-control-bar', ...props };
@@ -263,7 +283,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       return isSpaceManager(spaceInfo, space?.localParticipant.identity || '').isManager;
     }, [spaceInfo.ownerId, space?.localParticipant.identity]);
 
-    const [messageApi, contextHolder] = message.useMessage();
     const uState = useUserStore();
     const { settingVis, setSettingVis, key, setKey, settingsRef, closeSetting, openSettings } =
       useControlsSettings({ space, saveUsername, updateSettings });
@@ -409,6 +428,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         }}
       >
         {contextHolder}
+        {noteHolder}
         <div
           className={styles.controls_left}
           ref={controlLeftRef}

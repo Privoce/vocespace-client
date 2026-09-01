@@ -14,7 +14,7 @@ import {
   WsTo,
 } from '@/lib/std/device';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { isSpaceManager, src } from '@/lib/std';
+import { isSpaceManager, src, supportsMediaDeviceChangeEvent } from '@/lib/std';
 import { exportRBAC, usePlatformUserInfo } from '@/lib/hooks/platform';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { HomeOutlined } from '@ant-design/icons';
@@ -242,7 +242,7 @@ export function useControlRKeyMenu({
 
   // 监听音频设备变化，耳机断开时自动关闭耳返
   useEffect(() => {
-    if (!navigator.mediaDevices) return;
+    if (!navigator.mediaDevices || !supportsMediaDeviceChangeEvent()) return;
 
     const handleDeviceChange = async () => {
       const connected = await hasHeadphonesConnected();
@@ -264,7 +264,7 @@ export function useControlRKeyMenu({
     return () => {
       navigator.mediaDevices.removeEventListener('devicechange', handleDeviceChange);
     };
-  }, [space]);
+  }, [messageApi, space, t, updateSettings]);
 
   useEffect(() => {
     return () => {

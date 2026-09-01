@@ -77,6 +77,12 @@ export function is_web(): boolean {
   return typeof window !== 'undefined';
 }
 
+export function isWeChatBrowser(): boolean {
+  if (!is_web()) return false;
+
+  return navigator.userAgent.includes('MicroMessenger');
+}
+
 /**
  * 是否是iOS设备
  */
@@ -120,6 +126,20 @@ export function isMobile(): boolean {
   const isSmallScreen = window.innerWidth < 768;
 
   return isMobileUserAgent || (hasTouchScreen && isSmallScreen);
+}
+
+export function isWeChatMobile(): boolean {
+  return isWeChatBrowser() && isMobile();
+}
+
+export function supportsMediaDeviceChangeEvent(): boolean {
+  if (!is_web() || !navigator.mediaDevices) return false;
+  if (isWeChatMobile()) return false;
+
+  return (
+    typeof navigator.mediaDevices.addEventListener === 'function' &&
+    typeof navigator.mediaDevices.removeEventListener === 'function'
+  );
 }
 
 /**
