@@ -4,13 +4,15 @@ import { api } from '@/lib/api';
 import { uploadIframeUrl } from '@/lib/api/space';
 import { useI18n } from '@/lib/i18n/i18n';
 import { FileType } from '@/lib/std';
+import { WsWhiteboardClearAll, WsWhiteboardSync } from '@/lib/std/device';
+import { ParticipantHandWriting, SpaceInfo } from '@/lib/std/space';
 import {
+  EditOutlined,
   FileImageOutlined,
   FullscreenExitOutlined,
   FullscreenOutlined,
   GlobalOutlined,
   LayoutOutlined,
-  MessageOutlined,
 } from '@ant-design/icons';
 import { AutoComplete, Button, Image, Modal, Spin, Tooltip, Upload } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
@@ -23,7 +25,9 @@ import {
 } from '@livekit/components-react';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsTilePlayer } from '@/lib/std/device';
-import { handleIdentityType, SpaceInfo } from '@/lib/std/space';
+import { getAvoPrimaryColor } from './avo';
+import { TileWhiteboardOverlay } from './effect';
+import { handleIdentityType } from '@/lib/std/space';
 import { useSpaceStore, useRoomStore } from '@/lib/store';
 import { Participant, Track } from 'livekit-client';
 import styles from '@/styles/player.module.scss';
@@ -33,7 +37,7 @@ import styles from '@/styles/player.module.scss';
 export interface TilePlayerItem {
   id: string;
   ownerId: string;
-  mode: 'image' | 'iframe' | 'hyperbeam';
+  mode: 'image' | 'iframe' | 'hyperbeam' | 'whiteboard';
   url?: string | null;
   fileName?: string | null;
   iframeUrl?: string | null;
@@ -94,6 +98,7 @@ export interface TilePlayerProps {
   item: TilePlayerItem;
   spaceName: string;
   room?: string;
+  roomParticipantIds?: string[];
   myIdentity: string;
   messageApi: MessageInstance;
   setFocus?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -107,6 +112,7 @@ export const TilePlayer = ({
   item,
   spaceName,
   room,
+  roomParticipantIds,
   myIdentity,
   messageApi,
   setFocus,
@@ -145,6 +151,13 @@ export const TilePlayer = ({
         item.id,
       );
       if (response.ok) {
+        if (item.mode === 'whiteboard') {
+          socket.emit('whiteboard_clear_all', {
+            space: spaceName,
+            senderId: myIdentity,
+            receiverId: item.id,
+          } as WsWhiteboardClearAll);
+        }
         socket.emit('tile_player_change', {
           ty: item.mode,
           created: false,
@@ -164,7 +177,7 @@ export const TilePlayer = ({
   };
 
   const showFullScreen =
-    item.mode === 'iframe' || item.mode === 'hyperbeam' || item.mode === 'image';
+    item.mode === 'iframe' || item.mode === 'hyperbeam' || item.mode === 'image' || item.mode === 'whiteboard';
   const isActiveView = !!focus || !!isFullScreen;
 
   const handleFullScreen = () => {
@@ -284,6 +297,15 @@ export const TilePlayer = ({
       {/* 内容 */}
       {item.mode === 'hyperbeam' ? (
         <HyperbeamWindow url={item.iframeUrl || ''} messageApi={messageApi} />
+      ) : item.mode === 'whiteboard' ? (
+        <WhiteboardWindow
+          playerId={item.id}
+          ownerId={item.ownerId}
+          spaceName={spaceName}
+          myIdentity={myIdentity}
+          roomParticipantIds={roomParticipantIds}
+          spaceInfo={spaceInfo}
+        />
       ) : item.mode === 'iframe' ? (
         <IframeWindow
           url={item.iframeUrl || ''}
@@ -380,6 +402,55 @@ export const TilePlayerAdd = ({
     }
   };
 
+  const createWhiteboardPlayer = async () => {
+    try {
+      const response = await api.handleTilePlayerFile(
+        spaceName,
+        room,
+        'create_whiteboard',
+        undefined,
+        undefined,
+        myIdentity,
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        socket.emit('tile_player_change', {
+          ty: 'whiteboard',
+          created: true,
+          playerId: data.player?.id,
+          ownerId: myIdentity,
+          action: 'create',
+          participantId: myIdentity,
+          space: spaceName,
+        } as WsTilePlayer);
+        onCreated?.();
+        return;
+      }
+
+      const errorData = await response.json().catch(() => ({}));
+
+      if (response.status === 409) {
+        messageApi.warning({
+          content: t('common.whiteboard.only_one_tile'),
+          duration: 3,
+        });
+        return;
+      }
+
+      messageApi.error({
+        content: errorData?.error || t('common.whiteboard.create_failed'),
+        duration: 3,
+      });
+    } catch (e) {
+      console.error('Error creating whiteboard player:', e);
+      messageApi.error({
+        content: t('common.whiteboard.create_failed'),
+        duration: 3,
+      });
+    }
+  };
+
   const handleBeforeUpload = async (file: FileType) => {
     const maxFileSize = 10 * 1024 * 1024;
     if (file.size > maxFileSize) {
@@ -463,6 +534,14 @@ export const TilePlayerAdd = ({
             icon={<GlobalOutlined style={{ color: '#aaa', fontSize: 20 }} />}
           ></Button>
         </Tooltip>
+        <Tooltip title={t('common.whiteboard.title')}>
+          <Button
+            type="text"
+            className={styles.appLikeBtn_btn}
+            onClick={createWhiteboardPlayer}
+            icon={<EditOutlined style={{ color: '#aaa', fontSize: 20 }} />}
+          ></Button>
+        </Tooltip>
         <Tooltip title={t('common.chat')}>
           <Button
             type="text"
@@ -529,6 +608,140 @@ export const TilePlayerAdd = ({
         />
       </Modal>
     </>
+  );
+};
+
+const WhiteboardWindow = ({
+  playerId,
+  ownerId,
+  spaceName,
+  myIdentity,
+  roomParticipantIds,
+  spaceInfo,
+}: {
+  playerId: string;
+  ownerId: string;
+  spaceName: string;
+  myIdentity: string;
+  roomParticipantIds?: string[];
+  spaceInfo: SpaceInfo;
+}) => {
+  const containerRef = useRef<HTMLDivElement | null>(null);
+  const whiteboardToolbarHost = useRoomStore((state) => state.whiteboardToolbarHost);
+  const setWhiteboardActiveOverlayId = useRoomStore((state) => state.setWhiteboardActiveOverlayId);
+  const [handWritingByParticipant, setHandWritingByParticipant] = useState<
+    Record<string, ParticipantHandWriting | undefined>
+  >({});
+
+  const localParticipant = spaceInfo.participants[myIdentity];
+  const localColor = useMemo(() => {
+    return getAvoPrimaryColor(
+      localParticipant?.avoList?.[0],
+      localParticipant?.name || myIdentity,
+    );
+  }, [localParticipant?.avoList, localParticipant?.name, myIdentity]);
+  const canClearAll = ownerId === myIdentity;
+
+  useEffect(() => {
+    setHandWritingByParticipant({});
+  }, [playerId, spaceName]);
+
+  useEffect(() => {
+    if (!whiteboardToolbarHost) {
+      return;
+    }
+
+    setWhiteboardActiveOverlayId(`whiteboard:${playerId}`);
+  }, [playerId, setWhiteboardActiveOverlayId, whiteboardToolbarHost]);
+
+  useEffect(() => {
+    const handleWhiteboardSyncResponse = ({
+      senderId,
+      receiverId,
+      handWriting,
+      space,
+    }: WsWhiteboardSync) => {
+      if (space !== spaceName || receiverId !== playerId) {
+        return;
+      }
+
+      if (roomParticipantIds && !roomParticipantIds.includes(senderId)) {
+        return;
+      }
+
+      setHandWritingByParticipant((prev) => ({
+        ...prev,
+        [senderId]: handWriting,
+      }));
+    };
+
+    const handleWhiteboardClearAllResponse = ({
+      receiverId,
+      space,
+    }: WsWhiteboardClearAll) => {
+      if (space !== spaceName || receiverId !== playerId) {
+        return;
+      }
+
+      setHandWritingByParticipant({});
+    };
+
+    socket.on('whiteboard_sync_response', handleWhiteboardSyncResponse);
+    socket.on('whiteboard_clear_all_response', handleWhiteboardClearAllResponse);
+
+    return () => {
+      socket.off('whiteboard_sync_response', handleWhiteboardSyncResponse);
+      socket.off('whiteboard_clear_all_response', handleWhiteboardClearAllResponse);
+    };
+  }, [playerId, roomParticipantIds, spaceName]);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        background: '#fff',
+      }}
+    >
+      <TileWhiteboardOverlay
+        enabled={true}
+        mappingTarget="avo"
+        containerRef={containerRef}
+        toolbarHost={whiteboardToolbarHost}
+        initialCollapsed={true}
+        overlayId={`whiteboard:${playerId}`}
+        localParticipantId={myIdentity}
+        localColor={localColor}
+        canClearAll={canClearAll}
+        handWritingByParticipant={handWritingByParticipant}
+        onSave={async (nextValue) => {
+          setHandWritingByParticipant((prev) => ({
+            ...prev,
+            [myIdentity]: nextValue,
+          }));
+          socket.emit('whiteboard_sync', {
+            space: spaceName,
+            senderId: myIdentity,
+            receiverId: playerId,
+            handWriting: nextValue,
+          } as WsWhiteboardSync);
+        }}
+        onClearAll={
+          canClearAll
+            ? async () => {
+                setHandWritingByParticipant({});
+                socket.emit('whiteboard_clear_all', {
+                  space: spaceName,
+                  senderId: myIdentity,
+                  receiverId: playerId,
+                } as WsWhiteboardClearAll);
+              }
+            : undefined
+        }
+      />
+    </div>
   );
 };
 

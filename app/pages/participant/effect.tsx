@@ -10,9 +10,11 @@ import {
   CloseOutlined,
   DeleteOutlined,
   EditOutlined,
+  LineHeightOutlined,
   RollbackOutlined,
   UndoOutlined,
 } from '@ant-design/icons';
+import { Popover } from 'antd';
 import styles from '@/styles/controls.module.scss';
 
 export type PointerMappingTarget = 'screen-share' | 'avo';
@@ -44,6 +46,7 @@ interface TileWhiteboardOverlayProps {
   videoRef?: React.RefObject<HTMLVideoElement | null>;
   containerRef?: React.RefObject<HTMLElement | null>;
   toolbarHost?: HTMLElement | null;
+  initialCollapsed?: boolean;
   overlayId?: string;
   localParticipantId: string;
   localColor: string;
@@ -350,6 +353,7 @@ export function TileWhiteboardOverlay({
   videoRef,
   containerRef,
   toolbarHost,
+  initialCollapsed = true,
   overlayId,
   localParticipantId,
   localColor,
@@ -362,7 +366,9 @@ export function TileWhiteboardOverlay({
   const [tool, setTool] = React.useState<WhiteboardTool>('pen');
   const [strokeWidth, setStrokeWidth] = React.useState(DEFAULT_WHITEBOARD_STROKE_WIDTH);
   const [drawing, setDrawing] = React.useState(false);
-  const [collapsed, setCollapsed] = React.useState(true);
+  const [collapsed, setCollapsed] = React.useState(initialCollapsed);
+  const [clearPopoverOpen, setClearPopoverOpen] = React.useState(false);
+  const [sizePopoverOpen, setSizePopoverOpen] = React.useState(false);
   const [draftStroke, setDraftStroke] = React.useState<HandWritingStroke | null>(null);
   const overlayRef = React.useRef<HTMLDivElement | null>(null);
   const draftStrokeRef = React.useRef<HandWritingStroke | null>(null);
@@ -375,6 +381,10 @@ export function TileWhiteboardOverlay({
     videoRef,
     containerRef,
   });
+
+  React.useEffect(() => {
+    setCollapsed(initialCollapsed);
+  }, [initialCollapsed, overlayId]);
 
   React.useEffect(() => {
     if (!enabled || !toolbarHost || !overlayId || whiteboardActiveOverlayId) {
@@ -582,6 +592,20 @@ export function TileWhiteboardOverlay({
     await clearLocal();
   }, [canClearAll, clearLocal, onClearAll]);
 
+  const handleOpenClearPopover = React.useCallback(() => {
+    if (overlayId) {
+      setWhiteboardActiveOverlayId(overlayId);
+    }
+    setClearPopoverOpen((current) => !current);
+  }, [overlayId, setWhiteboardActiveOverlayId]);
+
+  const handleOpenSizePopover = React.useCallback(() => {
+    if (overlayId) {
+      setWhiteboardActiveOverlayId(overlayId);
+    }
+    setSizePopoverOpen((current) => !current);
+  }, [overlayId, setWhiteboardActiveOverlayId]);
+
   React.useEffect(() => {
     if (!drawing) {
       return;
@@ -622,9 +646,20 @@ export function TileWhiteboardOverlay({
     return null;
   }
 
-  if (collapsed) {
+  const usesGlobalToolbarHost = Boolean(toolbarHost && overlayId);
+  const shouldRenderPortalToolbar = !toolbarHost || !overlayId || whiteboardActiveOverlayId === overlayId;
+
+  if (collapsed && !usesGlobalToolbarHost) {
     const collapsedToolbar = (
-      <div className={styles.whiteboard_toolbar_collapsed} style={{ pointerEvents: 'auto' }}>
+      <div
+        className={styles.whiteboard_toolbar_collapsed}
+        style={{
+          pointerEvents: 'auto',
+          position: usesGlobalToolbarHost ? 'relative' : undefined,
+          left: usesGlobalToolbarHost ? 0 : undefined,
+          bottom: usesGlobalToolbarHost ? 16 : undefined,
+        }}
+      >
         <Tooltip title={t('common.whiteboard.expand')}>
           <Button
             style={{
@@ -640,7 +675,9 @@ export function TileWhiteboardOverlay({
 
     const toolbarPortal =
       toolbarHost && overlayId
-        ? createPortal(collapsedToolbar, toolbarHost)
+        ? shouldRenderPortalToolbar
+          ? createPortal(collapsedToolbar, toolbarHost)
+          : null
         : !toolbarHost
           ? collapsedToolbar
           : null;
@@ -653,8 +690,88 @@ export function TileWhiteboardOverlay({
     );
   }
 
+  const collapsedToolbar = collapsed ? (
+    <div
+      className={styles.whiteboard_toolbar_collapsed}
+      style={{
+        pointerEvents: 'auto',
+        position: usesGlobalToolbarHost ? 'relative' : undefined,
+        left: usesGlobalToolbarHost ? 0 : undefined,
+        bottom: usesGlobalToolbarHost ? 16 : undefined,
+      }}
+    >
+      <Tooltip title={t('common.whiteboard.expand')}>
+        <Button
+          style={{
+            backgroundColor: tool === 'pen' ? localColor : undefined,
+          }}
+          type="primary"
+          icon={<EditOutlined />}
+          onClick={() => setCollapsed(false)}
+        />
+      </Tooltip>
+    </div>
+  ) : null;
+
+  const clearPopoverContent = (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 144 }}>
+      {canClearAll && (
+        <Button
+          block
+          onClick={() => {
+            setClearPopoverOpen(false);
+            void clearHandWriting();
+          }}
+        >
+          {t('common.whiteboard.clear_all')}
+        </Button>
+      )}
+      <Button
+        block
+        onClick={() => {
+          setClearPopoverOpen(false);
+          void clearLocal();
+        }}
+      >
+        {t('common.whiteboard.clear_self')}
+      </Button>
+    </div>
+  );
+
+  const sizePopoverContent = (
+    <div
+      style={{
+        height: 144,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingInline: 8,
+      }}
+    >
+      <Slider
+        vertical
+        min={2}
+        max={20}
+        step={1}
+        value={Math.round(strokeWidth * 1000)}
+        onChange={(value) => {
+          setStrokeWidth(Number(value) / 1000);
+        }}
+        style={{ height: 120, margin: 0 }}
+      ></Slider>
+    </div>
+  );
+
   const toolbar = (
-    <div className={styles.whiteboard_toolbar} style={{ pointerEvents: 'auto' }}>
+    <div
+      className={styles.whiteboard_toolbar}
+      style={{
+        pointerEvents: 'auto',
+        position: usesGlobalToolbarHost ? 'relative' : undefined,
+        left: usesGlobalToolbarHost ? 0 : undefined,
+        bottom: usesGlobalToolbarHost ? 16 : undefined,
+      }}
+    >
       <div className={styles.whiteboard_toolbar_left}>
         <Tooltip title={t('common.whiteboard.pen')}>
           <Button
@@ -737,35 +854,36 @@ export function TileWhiteboardOverlay({
           />
         </Tooltip>
         <Divider type="vertical" />
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          <span>Size:</span>
-          <Slider
-            min={2}
-            max={20}
-            step={1}
-            value={Math.round(strokeWidth * 1000)}
-            onChange={(value) => {
-              setStrokeWidth(Number(value) / 1000);
-            }}
-            style={{ width: 96, margin: 0 }}
-          ></Slider>
-        </div>
+        <Popover
+          trigger="click"
+          placement="bottom"
+          open={sizePopoverOpen}
+          onOpenChange={setSizePopoverOpen}
+          title={t('common.whiteboard.stroke_size')}
+          content={sizePopoverContent}
+        >
+          <Button
+            type={sizePopoverOpen ? 'primary' : 'text'}
+            icon={<LineHeightOutlined />}
+            onClick={handleOpenSizePopover}
+          />
+        </Popover>
       </div>
       <div className={styles.whiteboard_toolbar_right}>
-        <Tooltip
-          title={canClearAll ? t('common.whiteboard.clear_all') : t('common.whiteboard.clear_self')}
+        <Popover
+          trigger="click"
+          placement="bottomRight"
+          open={clearPopoverOpen}
+          onOpenChange={setClearPopoverOpen}
+          title={t('common.whiteboard.clear')}
+          content={clearPopoverContent}
         >
           <Button
             type="text"
             icon={<DeleteOutlined />}
-            onClick={() => {
-              if (overlayId) {
-                setWhiteboardActiveOverlayId(overlayId);
-              }
-              void clearHandWriting();
-            }}
+            onClick={handleOpenClearPopover}
           />
-        </Tooltip>
+        </Popover>
         <Tooltip title={t('common.whiteboard.collapse')}>
           <Button
             type="text"
@@ -792,9 +910,13 @@ export function TileWhiteboardOverlay({
   return (
     <>
       {toolbarHost && overlayId
-        ? createPortal(toolbar, toolbarHost)
+        ? shouldRenderPortalToolbar
+          ? createPortal(collapsed ? collapsedToolbar : toolbar, toolbarHost)
+          : null
         : !toolbarHost
-          ? toolbar
+          ? collapsed
+            ? collapsedToolbar
+            : toolbar
           : null}
       {actualVideoRect && (
         <div

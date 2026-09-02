@@ -1100,6 +1100,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
             item={item}
             spaceName={space.name}
             room={selfRoom.name}
+            roomParticipantIds={selfRoom.participants}
             myIdentity={space.localParticipant.identity}
             messageApi={messageApi}
             focus={isFocused}
@@ -1289,10 +1290,12 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
               <div
                 className="lk-video-conference-inner"
                 style={{
+                  flex: 1,
                   alignItems: 'flex-start',
                   height: '100dvh',
                   gap: 8,
                   flexDirection: 'column',
+                  paddingRight: 8,
                 }}
               >
                 {!hasRoomLicense && (
@@ -1358,8 +1361,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                       ref={toolbarHostRef}
                       style={{
                         position: 'absolute',
-                        right: 468,
-                        bottom: 0,
+                        right: !isMobile() && chatOpen ? 296 : 16,
+                        bottom: 16,
                         zIndex: 20,
                         pointerEvents: 'auto',
                         width: 'fit-content',

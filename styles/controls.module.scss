@@ -235,7 +235,7 @@
 .whiteboard_toolbar {
   position: absolute;
   left: 38px;
-  bottom: 12px;
+  bottom: 32px;
   // transform: translateX(-50%);
   z-index: 15;
   display: inline-flex;
@@ -265,7 +265,7 @@
 .whiteboard_toolbar_collapsed {
   position: absolute;
   left: 418px;
-  bottom: 12px;
+  bottom: 32px;
   z-index: 6;
   display: flex;
   align-items: center;

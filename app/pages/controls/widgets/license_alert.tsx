@@ -36,6 +36,6 @@ export const LicenseAlert = ({ toBuyRoomLicense }: LicenseAlertProps) => {
         )}
       </>
     }
-    style={{ margin: '8px 8px 0 8px', flexShrink: 0, width: 'calc(100% - 16px)' }}
+    style={{ margin: '8px 0px 0 8px', flexShrink: 0, width: 'calc(100% - 8px)' }}
   />;
 };

@@ -94,7 +94,7 @@ export const handleFileSystem = async (
 export interface HandleTilePlayerFileBody {
   spaceName: string;
   room?: string;
-  ty: HandleFileSystemType | 'set_meta' | 'create_hyperbeam'; // 默认为ls
+  ty: HandleFileSystemType | 'set_meta' | 'create_hyperbeam' | 'create_whiteboard'; // 默认为ls
   file?: FileType;
   iframeUrl?: string;
   identity?: string;
@@ -104,7 +104,7 @@ export interface HandleTilePlayerFileBody {
 export const handleTilePlayerFile = async (
   spaceName: string,
   room?: string,
-  ty?: HandleFileSystemType | 'set_meta' | 'create_hyperbeam',
+  ty?: HandleFileSystemType | 'set_meta' | 'create_hyperbeam' | 'create_whiteboard',
   file?: FileType,
   iframeUrl?: string,
   identity?: string,

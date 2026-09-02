@@ -12,7 +12,7 @@ interface TilePlayerEntry {
   id: string;
   ownerId: string;
   room?: string;
-  mode: 'image' | 'iframe' | 'hyperbeam';
+  mode: 'image' | 'iframe' | 'hyperbeam' | 'whiteboard';
   fileName?: string | null;
   iframeUrl?: string | null;
   hyperbeamSessionId?: string | null;
@@ -151,7 +151,9 @@ export async function POST(request: NextRequest) {
         }
       };
 
-      const countHyperbeamPlayersInSpace = async (): Promise<number> => {
+      const countPlayersInSpace = async (
+        mode: TilePlayerEntry['mode'],
+      ): Promise<number> => {
         const baseSpaceDir = uploadDirPath(spaceName);
         const filePaths = new Set<string>([path.join(baseSpaceDir, 'tile_players.json')]);
 
@@ -169,7 +171,7 @@ export async function POST(request: NextRequest) {
         let count = 0;
         for (const targetPath of filePaths) {
           const players = await loadPlayersByPath(targetPath);
-          count += players.filter((player) => player.mode === 'hyperbeam').length;
+          count += players.filter((player) => player.mode === mode).length;
         }
 
         return count;
@@ -261,7 +263,7 @@ export async function POST(request: NextRequest) {
           );
         }
 
-        const totalHyperbeamPlayers = await countHyperbeamPlayersInSpace();
+        const totalHyperbeamPlayers = await countPlayersInSpace('hyperbeam');
         if (totalHyperbeamPlayers >= 1) {
           return NextResponse.json(
             { success: false, error: 'Only one HyperBeam player is allowed per space' },
@@ -293,6 +295,49 @@ export async function POST(request: NextRequest) {
           const message = e instanceof Error ? e.message : 'Failed to create HyperBeam player';
           return NextResponse.json(
             { success: false, error: message },
+            { status: 500 },
+          );
+        }
+      }
+
+      if (ty === 'create_whiteboard') {
+        if (!identity) {
+          return NextResponse.json(
+            { success: false, error: 'identity is required' },
+            { status: 400 },
+          );
+        }
+
+        const totalWhiteboardPlayers = await countPlayersInSpace('whiteboard');
+        if (totalWhiteboardPlayers >= 1) {
+          return NextResponse.json(
+            { success: false, error: 'Only one whiteboard is allowed per space' },
+            { status: 409 },
+          );
+        }
+
+        try {
+          const now = Date.now();
+          const id = ulid();
+          const players = await loadPlayers();
+          const entry: TilePlayerEntry = {
+            id,
+            ownerId: identity,
+            room,
+            mode: 'whiteboard',
+            iframeUrl: null,
+            fileName: null,
+            hyperbeamSessionId: null,
+            createdAt: now,
+            updatedAt: now,
+          };
+          players.push(entry);
+          await savePlayers(players);
+          return NextResponse.json({ success: true, player: entry });
+        } catch (e) {
+          console.error('Failed to create whiteboard player:', e);
+          return NextResponse.json(
+            { success: false, error: 'Failed to create whiteboard player' },
             { status: 500 },
           );
         }

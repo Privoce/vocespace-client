@@ -33,7 +33,7 @@ export interface WsParticipant extends WsBase {
 }
 
 export interface WsTilePlayer extends WsParticipant {
-  ty?: 'image' | 'iframe' | 'nestedBrowser';
+  ty?: 'image' | 'iframe' | 'nestedBrowser' | 'whiteboard';
   created: boolean;
   playerId?: string;
   ownerId?: string;
