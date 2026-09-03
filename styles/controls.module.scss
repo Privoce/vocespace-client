@@ -245,7 +245,7 @@
   border-radius: 8px;
   background: rgba(0, 0, 0, 0.58);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
-  width: 420px;
+  width: fit-content;
   justify-content: space-between;
   flex-wrap: wrap;
   &_left {

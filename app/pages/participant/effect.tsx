@@ -592,19 +592,25 @@ export function TileWhiteboardOverlay({
     await clearLocal();
   }, [canClearAll, clearLocal, onClearAll]);
 
-  const handleOpenClearPopover = React.useCallback(() => {
-    if (overlayId) {
-      setWhiteboardActiveOverlayId(overlayId);
-    }
-    setClearPopoverOpen((current) => !current);
-  }, [overlayId, setWhiteboardActiveOverlayId]);
+  const handleClearPopoverOpenChange = React.useCallback(
+    (open: boolean) => {
+      if (open && overlayId) {
+        setWhiteboardActiveOverlayId(overlayId);
+      }
+      setClearPopoverOpen(open);
+    },
+    [overlayId, setWhiteboardActiveOverlayId],
+  );
 
-  const handleOpenSizePopover = React.useCallback(() => {
-    if (overlayId) {
-      setWhiteboardActiveOverlayId(overlayId);
-    }
-    setSizePopoverOpen((current) => !current);
-  }, [overlayId, setWhiteboardActiveOverlayId]);
+  const handleSizePopoverOpenChange = React.useCallback(
+    (open: boolean) => {
+      if (open && overlayId) {
+        setWhiteboardActiveOverlayId(overlayId);
+      }
+      setSizePopoverOpen(open);
+    },
+    [overlayId, setWhiteboardActiveOverlayId],
+  );
 
   React.useEffect(() => {
     if (!drawing) {
@@ -656,7 +662,7 @@ export function TileWhiteboardOverlay({
         style={{
           pointerEvents: 'auto',
           position: usesGlobalToolbarHost ? 'relative' : undefined,
-          left: usesGlobalToolbarHost ? 0 : undefined,
+          left: usesGlobalToolbarHost ? 6 : undefined,
           bottom: usesGlobalToolbarHost ? 16 : undefined,
         }}
       >
@@ -696,7 +702,7 @@ export function TileWhiteboardOverlay({
       style={{
         pointerEvents: 'auto',
         position: usesGlobalToolbarHost ? 'relative' : undefined,
-        left: usesGlobalToolbarHost ? 0 : undefined,
+        left: usesGlobalToolbarHost ? 6 : undefined,
         bottom: usesGlobalToolbarHost ? 16 : undefined,
       }}
     >
@@ -717,6 +723,8 @@ export function TileWhiteboardOverlay({
     <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 144 }}>
       {canClearAll && (
         <Button
+          danger
+          variant="filled"
           block
           onClick={() => {
             setClearPopoverOpen(false);
@@ -728,6 +736,7 @@ export function TileWhiteboardOverlay({
       )}
       <Button
         block
+        type="primary"
         onClick={() => {
           setClearPopoverOpen(false);
           void clearLocal();
@@ -768,7 +777,7 @@ export function TileWhiteboardOverlay({
       style={{
         pointerEvents: 'auto',
         position: usesGlobalToolbarHost ? 'relative' : undefined,
-        left: usesGlobalToolbarHost ? 0 : undefined,
+        left: usesGlobalToolbarHost ? 6 : undefined,
         bottom: usesGlobalToolbarHost ? 16 : undefined,
       }}
     >
@@ -858,14 +867,21 @@ export function TileWhiteboardOverlay({
           trigger="click"
           placement="bottom"
           open={sizePopoverOpen}
-          onOpenChange={setSizePopoverOpen}
-          title={t('common.whiteboard.stroke_size')}
+          onOpenChange={handleSizePopoverOpenChange}
+          // title={t('common.whiteboard.stroke_size')}
           content={sizePopoverContent}
+          styles={{
+            body: {width: 48}
+          }}
         >
           <Button
             type={sizePopoverOpen ? 'primary' : 'text'}
             icon={<LineHeightOutlined />}
-            onClick={handleOpenSizePopover}
+            onClick={() => {
+              if (overlayId) {
+                setWhiteboardActiveOverlayId(overlayId);
+              }
+            }}
           />
         </Popover>
       </div>
@@ -874,14 +890,18 @@ export function TileWhiteboardOverlay({
           trigger="click"
           placement="bottomRight"
           open={clearPopoverOpen}
-          onOpenChange={setClearPopoverOpen}
+          onOpenChange={handleClearPopoverOpenChange}
           title={t('common.whiteboard.clear')}
           content={clearPopoverContent}
         >
           <Button
             type="text"
             icon={<DeleteOutlined />}
-            onClick={handleOpenClearPopover}
+            onClick={() => {
+              if (overlayId) {
+                setWhiteboardActiveOverlayId(overlayId);
+              }
+            }}
           />
         </Popover>
         <Tooltip title={t('common.whiteboard.collapse')}>

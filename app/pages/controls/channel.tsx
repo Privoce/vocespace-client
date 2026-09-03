@@ -564,15 +564,17 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       border: 'none',
     };
 
-    const shareRoomToClipboard = () => {
-      if (!selectedRoom) {
+    const shareRoomToClipboard = (room?: string, spaceName?: string) => {
+      let targetRoom = room ?? selectedRoom?.name;
+      let targetSpace = spaceName ?? space.name;
+      if (!targetRoom || !targetSpace) {
         return;
       }
       // 复制到剪贴板
       navigator.clipboard.writeText(
-        `https://${config.serverUrl}/${space.name}?childRoomEnter=${encodeChildRoomEnter(
-          space.name,
-          selectedRoom.name,
+        `https://${config.serverUrl}/${targetSpace}?childRoomEnter=${encodeChildRoomEnter(
+          targetSpace,
+          targetRoom,
           space.localParticipant.identity,
         )}`,
       );
@@ -646,7 +648,16 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
           </GLayout>
         );
       },
-      [tracks, childRooms, settings, space, allParticipants, messageApi, toRenameSettings, toSettings],
+      [
+        tracks,
+        childRooms,
+        settings,
+        space,
+        allParticipants,
+        messageApi,
+        toRenameSettings,
+        toSettings,
+      ],
     );
 
     const subChildren: CollapseProps['items'] = useMemo(() => {
@@ -708,7 +719,14 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                   )}
                   <Popover
                     content={
-                      <button className="vocespace_button" onClick={shareRoomToClipboard}>
+                      <button
+                        className="vocespace_button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          shareRoomToClipboard(room.name, space.name);
+                        }}
+                      >
                         <SvgResource type={'add_user'} svgSize={16}></SvgResource>
                         {t('channel.menu.share')} {room.name}
                       </button>
@@ -1008,7 +1026,7 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             onCancel={() => setShareRoomOpen(false)}
             okText={t('recording.copy.title')}
             cancelText={t('common.cancel')}
-            onOk={shareRoomToClipboard}
+            onOk={() => shareRoomToClipboard()}
           >
             <p>
               {`https://${config.serverUrl}/${space.name}?childRoomEnter=${encodeChildRoomEnter(
