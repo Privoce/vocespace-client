@@ -19,6 +19,7 @@ import {
   CollapseProps,
   Drawer,
   Dropdown,
+  Form,
   Input,
   MenuProps,
   Modal,
@@ -27,14 +28,17 @@ import {
   Tag,
   theme,
   Tooltip,
+  Upload,
 } from 'antd';
 
 import {
   LockOutlined,
+  MailOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   PlusCircleOutlined,
 } from '@ant-design/icons';
+import TextArea from 'antd/es/input/TextArea';
 import { TrackReferenceOrPlaceholder } from '@livekit/components-react';
 import { MessageInstance } from 'antd/es/message/interface';
 import { ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
@@ -50,6 +54,7 @@ import {
   ChildRoomEnter,
   CreateSpaceError,
   encodeChildRoomEnter,
+  FileType,
   isMobile as is_mobile,
   UserStatus,
 } from '@/lib/std';
@@ -82,6 +87,14 @@ export interface ChannelExports {
 }
 
 type RoomPrivacy = 'public' | 'private';
+type FeedbackType = 'bug' | 'error' | 'question' | 'suggestion' | 'other';
+
+interface FeedbackUploadItem {
+  uid: string;
+  name: string;
+  status: 'uploading' | 'done' | 'error';
+  url?: string;
+}
 
 export const Channel = forwardRef<ChannelExports, ChannelProps>(
   (
@@ -116,6 +129,11 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
     const [joinModalOpen, setJoinModalOpen] = useState(false);
     const [renameModalOpen, setRenameModalOpen] = useState(false);
     const [shareRoomOpen, setShareRoomOpen] = useState(false);
+    const [feedbackOpen, setFeedbackOpen] = useState(false);
+    const [feedbackType, setFeedbackType] = useState<FeedbackType>('bug');
+    const [feedbackUploading, setFeedbackUploading] = useState(false);
+    const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
+    const [feedbackUploads, setFeedbackUploads] = useState<FeedbackUploadItem[]>([]);
     const [renameRoomName, setRenameRoomName] = useState('');
     const [joinParticipant, setJoinParticipant] = useState<{
       id: string;
@@ -128,6 +146,11 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
     const [subRoomsTmp, setSubRoomsTmp] = useState<string[]>([]);
     const [mainActiveKey, setMainActiveKey] = useState<string[]>(['main', 'sub']);
     const [roomPrivacy, setRoomPrivacy] = useState<RoomPrivacy>('public');
+    const [feedbackForm] = Form.useForm<{
+      email: string;
+      otherType?: string;
+      content: string;
+    }>();
     const { createRoom, manageRoom } = useMemo(() => {
       return exportRBAC(localParticipantId, settings);
     }, [localParticipantId, settings]);
@@ -144,6 +167,16 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
     const isMobile = useMemo(() => {
       return is_mobile();
     }, []);
+    const feedbackTypeOptions = useMemo(
+      () => [
+        { label: t('channel.feedback.types.bug'), value: 'bug' },
+        { label: t('channel.feedback.types.error'), value: 'error' },
+        { label: t('channel.feedback.types.question'), value: 'question' },
+        { label: t('channel.feedback.types.suggestion'), value: 'suggestion' },
+        { label: t('channel.feedback.types.other'), value: 'other' },
+      ],
+      [t],
+    );
 
     // 用于清除延迟隐藏的 timeout
     const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -582,6 +615,110 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
         content: t('common.copy.success'),
       });
     };
+
+    const resetFeedbackState = useCallback(() => {
+      feedbackForm.resetFields();
+      setFeedbackType('bug');
+      setFeedbackUploads([]);
+      setFeedbackUploading(false);
+      setFeedbackSubmitting(false);
+    }, [feedbackForm]);
+
+    const closeFeedbackModal = useCallback(() => {
+      setFeedbackOpen(false);
+      resetFeedbackState();
+    }, [resetFeedbackState]);
+
+    const handleFeedbackUpload = useCallback(
+      async (file: FileType) => {
+        const email = String(feedbackForm.getFieldValue('email') || '').trim().toLowerCase();
+        if (!email) {
+          messageApi.error({ content: t('channel.feedback.validation.email_required'), duration: 3 });
+          return false;
+        }
+
+        const maxSize = 10 * 1024 * 1024;
+        if (file.size > maxSize) {
+          messageApi.error({ content: t('channel.feedback.validation.file_too_large'), duration: 3 });
+          return false;
+        }
+
+        const uid = `${Date.now()}-${file.name}`;
+        setFeedbackUploading(true);
+        setFeedbackUploads((prev) => [...prev, { uid, name: file.name, status: 'uploading' }]);
+
+        try {
+          const response = await api.uploadFeedbackFile(file, email);
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.error || 'upload failed');
+          }
+
+          setFeedbackUploads((prev) =>
+            prev.map((item) =>
+              item.uid === uid
+                ? { ...item, status: 'done', url: data.absoluteUrl || data.fileUrl }
+                : item,
+            ),
+          );
+          messageApi.success({ content: t('channel.feedback.upload_success'), duration: 2 });
+        } catch (error) {
+          setFeedbackUploads((prev) =>
+            prev.map((item) => (item.uid === uid ? { ...item, status: 'error' } : item)),
+          );
+          messageApi.error({
+            content: `${t('channel.feedback.upload_error')}: ${error instanceof Error ? error.message : error}`,
+            duration: 3,
+          });
+        } finally {
+          setFeedbackUploading(false);
+        }
+
+        return false;
+      },
+      [feedbackForm, messageApi, t],
+    );
+
+    const submitFeedback = useCallback(async () => {
+      const values = await feedbackForm.validateFields();
+      const effectiveType = feedbackType === 'other' ? values.otherType?.trim() : feedbackType;
+
+      if (!effectiveType) {
+        messageApi.error({ content: t('channel.feedback.validation.type_required'), duration: 3 });
+        return;
+      }
+
+      if (feedbackUploading) {
+        messageApi.info({ content: t('channel.feedback.uploading_wait'), duration: 2 });
+        return;
+      }
+
+      setFeedbackSubmitting(true);
+      try {
+        const response = await api.sendFeedback({
+          email: values.email.trim().toLowerCase(),
+          feedbackType: effectiveType,
+          content: values.content.trim(),
+          attachments: feedbackUploads
+            .filter((item) => item.status === 'done' && item.url)
+            .map((item) => item.url as string),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'send failed');
+        }
+
+        messageApi.success({ content: t('channel.feedback.submit_success'), duration: 3 });
+        closeFeedbackModal();
+      } catch (error) {
+        messageApi.error({
+          content: `${t('channel.feedback.submit_error')}: ${error instanceof Error ? error.message : error}`,
+          duration: 3,
+        });
+      } finally {
+        setFeedbackSubmitting(false);
+      }
+    }, [closeFeedbackModal, feedbackForm, feedbackType, feedbackUploading, feedbackUploads, messageApi, t]);
 
     const mainContext: ReactNode = useMemo(() => {
       let allChildParticipants = childRooms.reduce((acc, room) => {
@@ -1037,6 +1174,75 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             </p>
           </Modal>
         )}
+
+        <Modal
+          open={feedbackOpen}
+          title={t('channel.feedback.title')}
+          onCancel={closeFeedbackModal}
+          onOk={submitFeedback}
+          confirmLoading={feedbackSubmitting}
+          okText={t('channel.feedback.submit')}
+          cancelText={t('common.cancel')}
+        >
+          <Form
+            form={feedbackForm}
+            layout="vertical"
+            initialValues={{ email: '', content: '', otherType: '' }}
+          >
+            <Form.Item
+              label={t('channel.feedback.email')}
+              name="email"
+              rules={[
+                { required: true, message: t('channel.feedback.validation.email_required') },
+                { type: 'email', message: t('channel.feedback.validation.email_invalid') },
+              ]}
+            >
+              <Input placeholder={t('channel.feedback.email_placeholder')} />
+            </Form.Item>
+            <Form.Item label={t('channel.feedback.type')}>
+              <Radio.Group
+                options={feedbackTypeOptions}
+                value={feedbackType}
+                onChange={(e) => setFeedbackType(e.target.value as FeedbackType)}
+              />
+            </Form.Item>
+            {feedbackType === 'other' && (
+              <Form.Item
+                name="otherType"
+                rules={[{ required: true, message: t('channel.feedback.validation.type_required') }]}
+              >
+                <Input placeholder={t('channel.feedback.other_placeholder')} />
+              </Form.Item>
+            )}
+            <Form.Item
+              label={t('channel.feedback.content')}
+              name="content"
+              rules={[{ required: true, message: t('channel.feedback.validation.content_required') }]}
+            >
+              <TextArea rows={5} placeholder={t('channel.feedback.content_placeholder')} />
+            </Form.Item>
+            <Form.Item label={t('channel.feedback.attachments')}>
+              <Upload beforeUpload={handleFeedbackUpload} showUploadList={false} multiple>
+                <Button loading={feedbackUploading}>{t('channel.feedback.upload_action')}</Button>
+              </Upload>
+              <div className={styles.feedback_hint}>{t('channel.feedback.upload_hint')}</div>
+              <div className={styles.feedback_upload_list}>
+                {feedbackUploads.map((item) => (
+                  <div key={item.uid} className={styles.feedback_upload_item}>
+                    <span>{item.name}</span>
+                    <span>
+                      {item.status === 'uploading'
+                        ? t('channel.feedback.uploading')
+                        : item.status === 'done'
+                          ? t('channel.feedback.upload_done')
+                          : t('channel.feedback.upload_failed')}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </Form.Item>
+          </Form>
+        </Modal>
       </>
     );
 
@@ -1185,6 +1391,21 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                   items={mainItems}
                 />
               </div>
+            </div>
+            <div>
+              <Button
+                variant="solid"
+                color="default"
+                size="large"
+                onClick={() => setFeedbackOpen(true)}
+                style={{
+                  backgroundColor: '#1E1E1E',
+                  height: '46px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                }}
+                icon={<MailOutlined />}
+              ></Button>
             </div>
           </div>
           {renderModals()}

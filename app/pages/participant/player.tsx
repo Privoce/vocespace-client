@@ -627,8 +627,6 @@ const WhiteboardWindow = ({
   spaceInfo: SpaceInfo;
 }) => {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const whiteboardToolbarHost = useRoomStore((state) => state.whiteboardToolbarHost);
-  const setWhiteboardActiveOverlayId = useRoomStore((state) => state.setWhiteboardActiveOverlayId);
   const [handWritingByParticipant, setHandWritingByParticipant] = useState<
     Record<string, ParticipantHandWriting | undefined>
   >({});
@@ -645,14 +643,6 @@ const WhiteboardWindow = ({
   useEffect(() => {
     setHandWritingByParticipant({});
   }, [playerId, spaceName]);
-
-  useEffect(() => {
-    if (!whiteboardToolbarHost) {
-      return;
-    }
-
-    setWhiteboardActiveOverlayId(`whiteboard:${playerId}`);
-  }, [playerId, setWhiteboardActiveOverlayId, whiteboardToolbarHost]);
 
   useEffect(() => {
     const handleWhiteboardSyncResponse = ({
@@ -709,7 +699,6 @@ const WhiteboardWindow = ({
         enabled={true}
         mappingTarget="avo"
         containerRef={containerRef}
-        toolbarHost={whiteboardToolbarHost}
         initialCollapsed={true}
         overlayId={`whiteboard:${playerId}`}
         localParticipantId={myIdentity}

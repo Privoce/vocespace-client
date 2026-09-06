@@ -8,7 +8,7 @@ import {
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { Drawer, Input, message, Modal, notification, Popover } from 'antd';
+import { Button, Drawer, Input, message, Modal, notification, Popover } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
@@ -35,6 +35,7 @@ import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { DevicesSelector } from '@/app/api/devices/device_selector';
 import { useControlsSettings, useControlsRecord, useControlsChat } from './hooks/index';
 import { isWeChatBrowser, isWeChatMobile } from '@/lib/std';
+import { MailOutlined } from '@ant-design/icons';
 
 /** @public */
 export type ControlBarControls = {

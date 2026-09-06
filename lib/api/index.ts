@@ -7,6 +7,7 @@ import {
   handleFileSystem,
   handleTilePlayerFile,
 } from './chat';
+import { sendFeedback, uploadFeedbackFile } from './feedback';
 import {
   checkHostToken,
   getConf,
@@ -103,6 +104,8 @@ export const api = {
   uploadFile,
   handleFileSystem,
   handleTilePlayerFile,
+  uploadFeedbackFile,
+  sendFeedback,
   // ---- license api --------
   getLicenseByIP,
   cancelLicenseSubscription,

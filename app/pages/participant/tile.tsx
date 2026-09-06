@@ -107,7 +107,6 @@ export const ParticipantItem: (
     const [remotePopKey, setRemotePopKey] = React.useState(0);
     const [virtualReady, setVirtualReady] = React.useState(false);
     const virtualMask = useRoomStore((s) => s.virtualMask);
-    const whiteboardToolbarHost = useRoomStore((s) => s.whiteboardToolbarHost);
     const [remoteMask, setRemoteMask] = React.useState(false);
     const [deleyMask, setDelayMask] = React.useState(virtualMask);
     const isScreenShare =
@@ -535,7 +534,6 @@ export const ParticipantItem: (
               <ScreenShareWhiteboardOverlay
                 enabled={true}
                 videoRef={videoRef}
-                toolbarHost={whiteboardToolbarHost}
                 overlayId={`screen-share:${trackReference.participant.identity}`}
                 localParticipantId={localParticipant.identity}
                 localColor={localCursorColor}
@@ -625,12 +623,30 @@ export const ParticipantItem: (
         (pointerMappingTarget === 'screen-share' && !isLocal && !localParticipant.isSpeaking);
 
       if (pointerMappingTarget && canSendPointer) {
+        const pointerSourceElement =
+          pointerMappingTarget === 'avo' ? avoContainerRef.current : videoRef.current;
+
+        if (!pointerSourceElement) {
+          return;
+        }
+
+        const emitMouseRemove = () => {
+          setRemoteCursors((prev) => {
+            const newCursors = { ...prev };
+            delete newCursors[localParticipant.identity];
+            return newCursors;
+          });
+          socket.emit('mouse_remove', {
+            space: space.name,
+            senderName: localParticipant.name || localParticipant.identity,
+            senderId: localParticipant.identity,
+            receiverId: trackReference.participant.identity,
+            socketId: settings.participants[trackReference.participant.identity]?.socketId,
+          } as WsWave);
+        };
+
         // 此时说明当前参与者正在观看屏幕共享，当这个观看者希望引导演讲者时（鼠标在窗口中移动，点击），需要将鼠标位置发送给演讲者
         const handleMouseMove = (e: MouseEvent) => {
-          const pointerSourceElement =
-            pointerMappingTarget === 'avo' ? avoContainerRef.current : videoRef.current;
-          if (!pointerSourceElement) return;
-
           const containerRect = pointerSourceElement.getBoundingClientRect();
           const actualVideoRect = getPointerMappingRect({
             mappingTarget: pointerMappingTarget,
@@ -684,27 +700,10 @@ export const ParticipantItem: (
             }));
             socket.emit('mouse_move', data);
           } else {
-            // 去除鼠标位置, 在remoteCursors中删除当前用户
-            setRemoteCursors((prev) => {
-              const newCursors = { ...prev };
-              delete newCursors[localParticipant.identity];
-              return newCursors;
-            });
-            // 发送socket, 只需要知道去除者的id
-            socket.emit('mouse_remove', {
-              space: space.name,
-              senderName: localParticipant.name || localParticipant.identity,
-              senderId: localParticipant.identity,
-              receiverId: trackReference.participant.identity,
-              socketId: settings.participants[trackReference.participant.identity]?.socketId,
-            } as WsWave);
+            emitMouseRemove();
           }
         };
         const handleMouseDown = (e: MouseEvent) => {
-          const pointerSourceElement =
-            pointerMappingTarget === 'avo' ? avoContainerRef.current : videoRef.current;
-          if (!pointerSourceElement) return;
-
           const containerRect = pointerSourceElement.getBoundingClientRect();
           const actualVideoRect = getPointerMappingRect({
             mappingTarget: pointerMappingTarget,
@@ -731,14 +730,28 @@ export const ParticipantItem: (
             socketId: settings.participants[trackReference.participant.identity]?.socketId,
           } as WsMouseClick);
         };
+        const handleMouseLeave = () => {
+          emitMouseRemove();
+        };
+        const handlePointerSourceMouseMove: EventListener = (event) => {
+          handleMouseMove(event as MouseEvent);
+        };
+        const handlePointerSourceMouseDown: EventListener = (event) => {
+          handleMouseDown(event as MouseEvent);
+        };
         // 300ms触发一次, 节流
         const throttledMouseMove = throttle(handleMouseMove, 300);
-        document.addEventListener('mousemove', throttledMouseMove);
-        document.addEventListener('mousedown', handleMouseDown);
+        const throttledPointerSourceMouseMove: EventListener = (event) => {
+          handlePointerSourceMouseMove(event);
+        };
+        pointerSourceElement.addEventListener('mousemove', throttledPointerSourceMouseMove);
+        pointerSourceElement.addEventListener('mousedown', handlePointerSourceMouseDown);
+        pointerSourceElement.addEventListener('mouseleave', handleMouseLeave);
 
         cleanupCallbacks.push(() => {
-          document.removeEventListener('mousemove', throttledMouseMove);
-          document.removeEventListener('mousedown', handleMouseDown);
+          pointerSourceElement.removeEventListener('mousemove', throttledPointerSourceMouseMove);
+          pointerSourceElement.removeEventListener('mousedown', handlePointerSourceMouseDown);
+          pointerSourceElement.removeEventListener('mouseleave', handleMouseLeave);
         });
       }
 
@@ -920,7 +933,6 @@ export const ParticipantItem: (
                 enabled={pointerMappingTarget === 'avo' && !!localAvo}
                 mappingTarget="avo"
                 containerRef={avoContainerRef}
-                toolbarHost={whiteboardToolbarHost}
                 overlayId={`avo:${trackReference.participant.identity}`}
                 localParticipantId={localParticipant.identity}
                 localColor={localCursorColor}

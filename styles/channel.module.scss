@@ -247,6 +247,32 @@
   margin-bottom: 4px;
 }
 
+.feedback_hint {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.feedback_upload_list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.feedback_upload_item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid #2a2a2a;
+  border-radius: 8px;
+  background: #141414;
+  color: #d9d9d9;
+  font-size: 12px;
+}
+
 .userAvatar {
   position: relative;
   width: 24px;
