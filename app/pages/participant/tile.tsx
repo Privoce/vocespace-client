@@ -742,7 +742,7 @@ export const ParticipantItem: (
         // 300ms触发一次, 节流
         const throttledMouseMove = throttle(handleMouseMove, 300);
         const throttledPointerSourceMouseMove: EventListener = (event) => {
-          handlePointerSourceMouseMove(event);
+          throttledMouseMove(event as MouseEvent);
         };
         pointerSourceElement.addEventListener('mousemove', throttledPointerSourceMouseMove);
         pointerSourceElement.addEventListener('mousedown', handlePointerSourceMouseDown);

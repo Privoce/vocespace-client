@@ -234,9 +234,8 @@
 
 .whiteboard_toolbar {
   position: absolute;
-  left: 38px;
-  bottom: 32px;
-  // transform: translateX(-50%);
+  right: 12px;
+  bottom: 12px;
   z-index: 15;
   display: inline-flex;
   align-items: center;
@@ -246,6 +245,7 @@
   background: rgba(0, 0, 0, 0.58);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   width: fit-content;
+  max-width: calc(100% - 24px);
   justify-content: space-between;
   flex-wrap: wrap;
   &_left {
@@ -264,8 +264,8 @@
 
 .whiteboard_toolbar_collapsed {
   position: absolute;
-  left: 418px;
-  bottom: 32px;
+  right: 12px;
+  bottom: 12px;
   z-index: 6;
   display: flex;
   align-items: center;

@@ -513,6 +513,44 @@ async function mountAvoRuntime(
   let smoothLevel = 0;
   let persistLevel = 0; // 缓出用，声音结束后平滑衰减
 
+  const isTopmostPressInsideContainer = (event?: MouseEvent | TouchEvent): boolean => {
+    if (!interactive) {
+      return false;
+    }
+
+    const rect = container.getBoundingClientRect();
+    let clientX = -1;
+    let clientY = -1;
+
+    if (event instanceof MouseEvent) {
+      clientX = event.clientX;
+      clientY = event.clientY;
+    } else if (event instanceof TouchEvent && event.touches[0]) {
+      clientX = event.touches[0].clientX;
+      clientY = event.touches[0].clientY;
+    } else if (event instanceof TouchEvent && event.changedTouches[0]) {
+      clientX = event.changedTouches[0].clientX;
+      clientY = event.changedTouches[0].clientY;
+    }
+
+    if (clientX < 0 || clientY < 0) {
+      return false;
+    }
+
+    const insideRect =
+      clientX >= rect.left &&
+      clientX <= rect.right &&
+      clientY >= rect.top &&
+      clientY <= rect.bottom;
+
+    if (!insideRect) {
+      return false;
+    }
+
+    const topElement = document.elementFromPoint(clientX, clientY);
+    return !!topElement && container.contains(topElement);
+  };
+
   const sketch = new P5Ctor((p: p5) => {
     p.setup = () => {
       const c = p.createCanvas(container.clientWidth || 160, container.clientHeight || 160);
@@ -594,16 +632,17 @@ async function mountAvoRuntime(
       });
     };
 
-    p.mousePressed = () => {
-      if (
-        interactive &&
-        p.mouseX >= 0 &&
-        p.mouseX <= p.width &&
-        p.mouseY >= 0 &&
-        p.mouseY <= p.height
-      ) {
+    p.mousePressed = (event?: MouseEvent) => {
+      if (isTopmostPressInsideContainer(event)) {
         creature.pop();
       }
+    };
+
+    p.touchStarted = (event?: TouchEvent) => {
+      if (isTopmostPressInsideContainer(event)) {
+        creature.pop();
+      }
+      return false;
     };
   }, container);
 

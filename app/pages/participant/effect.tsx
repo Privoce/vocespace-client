@@ -9,6 +9,7 @@ import {
   DeleteOutlined,
   EditOutlined,
   LineHeightOutlined,
+  RedoOutlined,
   RollbackOutlined,
   UndoOutlined,
 } from '@ant-design/icons';
@@ -273,19 +274,19 @@ function usePointerMappingRectState({
     let animationFrameId: number | null = null;
     let observer: ResizeObserver | null = null;
     let videoElement: HTMLVideoElement | null = null;
-    
+
     const measure = () => {
       const videoEl = videoRef?.current;
       const containerEl = containerRef?.current;
-      
+
       const newRect = getPointerMappingRect({
         mappingTarget,
         videoElement: videoEl,
         containerElement: containerEl,
       });
-      
+
       setRect(newRect);
-      
+
       // 如果 rect 为 null 且还有重试次数，继续重试
       if (!newRect && retryCountRef.current < maxRetries) {
         retryCountRef.current += 1;
@@ -302,7 +303,7 @@ function usePointerMappingRectState({
     const setupListeners = () => {
       const resizeTarget =
         mappingTarget === 'screen-share' ? videoRef?.current : containerRef?.current;
-      
+
       if (!resizeTarget) {
         // 元素还没渲染，延迟重试
         setTimeout(setupListeners, 100);
@@ -563,19 +564,13 @@ export function TileWhiteboardOverlay({
     await clearLocal();
   }, [canClearAll, clearLocal, onClearAll]);
 
-  const handleClearPopoverOpenChange = React.useCallback(
-    (open: boolean) => {
-      setClearPopoverOpen(open);
-    },
-    [],
-  );
+  const handleClearPopoverOpenChange = React.useCallback((open: boolean) => {
+    setClearPopoverOpen(open);
+  }, []);
 
-  const handleSizePopoverOpenChange = React.useCallback(
-    (open: boolean) => {
-      setSizePopoverOpen(open);
-    },
-    [],
-  );
+  const handleSizePopoverOpenChange = React.useCallback((open: boolean) => {
+    setSizePopoverOpen(open);
+  }, []);
 
   React.useEffect(() => {
     if (!drawing) {
@@ -739,7 +734,7 @@ export function TileWhiteboardOverlay({
         <Tooltip title={t('common.whiteboard.redo')}>
           <Button
             type="text"
-            icon={<RollbackOutlined />}
+            icon={<RedoOutlined />}
             disabled={!localHandWriting.undoneStrokes.length}
             onClick={() => {
               saveLocal((current) => {
@@ -784,18 +779,10 @@ export function TileWhiteboardOverlay({
           title={t('common.whiteboard.clear')}
           content={clearPopoverContent}
         >
-          <Button
-            type="text"
-            icon={<DeleteOutlined />}
-            onClick={() => undefined}
-          />
+          <Button type="text" icon={<DeleteOutlined />} onClick={() => undefined} />
         </Popover>
         <Tooltip title={t('common.whiteboard.collapse')}>
-          <Button
-            type="text"
-            icon={<CloseOutlined />}
-            onClick={() => setCollapsed(true)}
-          />
+          <Button type="text" icon={<CloseOutlined />} onClick={() => setCollapsed(true)} />
         </Tooltip>
       </div>
     </div>

@@ -8,7 +8,7 @@ import {
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import { Button, Drawer, Input, message, Modal, notification, Popover } from 'antd';
+import {  Drawer, Input, message, Modal, notification, Popover } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
@@ -34,8 +34,8 @@ import { usePlatformUserInfo } from '@/lib/hooks/platform';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { DevicesSelector } from '@/app/api/devices/device_selector';
 import { useControlsSettings, useControlsRecord, useControlsChat } from './hooks/index';
-import { isWeChatBrowser, isWeChatMobile } from '@/lib/std';
-import { MailOutlined } from '@ant-design/icons';
+import { isWeChatBrowser } from '@/lib/std';
+
 
 /** @public */
 export type ControlBarControls = {
@@ -141,7 +141,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       return is_mobile();
     }, []);
     const isWeChat = React.useMemo(() => isWeChatBrowser(), []);
-    const isWeChatMobileBrowser = React.useMemo(() => isWeChatMobile(), []);
 
     const controlSize = React.useMemo(() => {
       return (isMobile ? 'small' : 'middle') as SizeType;
@@ -187,10 +186,6 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       visibleControls.microphone ??= localPermissions.canPublish;
       visibleControls.screenShare ??= localPermissions.canPublish;
       visibleControls.chat ??= localPermissions.canPublishData && controls?.chat;
-    }
-
-    if (isWeChatMobileBrowser) {
-      visibleControls.camera = false;
     }
 
     const showIcon = React.useMemo(

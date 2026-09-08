@@ -1,14 +1,12 @@
 'use client';
 
 import { useI18n } from '@/lib/i18n/i18n';
-import { isWeChatBrowser, src } from '@/lib/std';
-import { Image, Modal, Result } from 'antd';
+import { Result } from 'antd';
 import React from 'react';
 
 type GuardState =
   | { kind: 'pending' }
   | { kind: 'ok' }
-  | { kind: 'wechat' }
   | {
       kind: 'unsupported-browser';
       browserName: string;
@@ -97,10 +95,6 @@ function detectBrowser(userAgent: string): BrowserInfo | null {
 function detectGuardState(): GuardState {
   const userAgent = window.navigator.userAgent;
 
-  if (isWeChatBrowser()) {
-    return { kind: 'wechat' };
-  }
-
   const iosInfo = detectIosVersion(userAgent);
   if (iosInfo && compareVersions(iosInfo.versionParts, parseVersion(MIN_VERSIONS.iOS)) < 0) {
     const browserInfo = detectBrowser(userAgent);
@@ -137,14 +131,9 @@ function detectGuardState(): GuardState {
 export function WeChatAccessGuard({ children }: { children: React.ReactNode }) {
   const { t } = useI18n();
   const [guardState, setGuardState] = React.useState<GuardState>({ kind: 'pending' });
-  const [wechatModalOpen, setWeChatModalOpen] = React.useState(false);
 
   React.useEffect(() => {
-    const nextState = detectGuardState();
-    setGuardState(nextState);
-    if (nextState.kind === 'wechat') {
-      setWeChatModalOpen(true);
-    }
+    setGuardState(detectGuardState());
   }, []);
 
   if (guardState.kind === 'unsupported-browser') {
@@ -161,21 +150,5 @@ export function WeChatAccessGuard({ children }: { children: React.ReactNode }) {
     return null;
   }
 
-  return (
-    <>
-      {children}
-      <Modal
-        open={guardState.kind === 'wechat' && wechatModalOpen}
-        footer={null}
-        onCancel={() => setWeChatModalOpen(false)}
-        title={t('common.wx.access_warning_title')}
-      >
-        <Result
-          status="warning"
-          title={t('common.wx.not_support')}
-          extra={<Image src={src('/wxClick.png')}></Image>}
-        />
-      </Modal>
-    </>
-  );
+  return <>{children}</>;
 }

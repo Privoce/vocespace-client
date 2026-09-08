@@ -56,6 +56,11 @@ export default {
       screen_share_note_desc:
         'PC 端微信浏览器当前通常只能共享浏览器内内容，无法稳定共享整个屏幕；如果共享失败，请改用系统浏览器。',
     },
+    license_alert: {
+      trial_prefix: '目前是试用版本，',
+      trial_action: '订阅VoceSpace',
+      trial_suffix: '后无限制使用，每年仅需49$。',
+    },
     full_screen: '全屏',
     guest: {
       not_allow: '很抱歉，当前空间不允许访客加入，请登陆',
