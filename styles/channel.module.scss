@@ -440,3 +440,13 @@
     width: fit-content;
   }
 }
+
+.feedbackItem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  font-size: 14px;
+ 
+  width: 100%;
+  gap: 12px;
+}

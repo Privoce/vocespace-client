@@ -32,11 +32,13 @@ import {
 } from 'antd';
 
 import {
+  CommentOutlined,
   LockOutlined,
   MailOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   PlusCircleOutlined,
+  RightOutlined,
 } from '@ant-design/icons';
 import TextArea from 'antd/es/input/TextArea';
 import { TrackReferenceOrPlaceholder } from '@livekit/components-react';
@@ -631,15 +633,23 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
 
     const handleFeedbackUpload = useCallback(
       async (file: FileType) => {
-        const email = String(feedbackForm.getFieldValue('email') || '').trim().toLowerCase();
+        const email = String(feedbackForm.getFieldValue('email') || '')
+          .trim()
+          .toLowerCase();
         if (!email) {
-          messageApi.error({ content: t('channel.feedback.validation.email_required'), duration: 3 });
+          messageApi.error({
+            content: t('channel.feedback.validation.email_required'),
+            duration: 3,
+          });
           return false;
         }
 
         const maxSize = 10 * 1024 * 1024;
         if (file.size > maxSize) {
-          messageApi.error({ content: t('channel.feedback.validation.file_too_large'), duration: 3 });
+          messageApi.error({
+            content: t('channel.feedback.validation.file_too_large'),
+            duration: 3,
+          });
           return false;
         }
 
@@ -718,7 +728,15 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       } finally {
         setFeedbackSubmitting(false);
       }
-    }, [closeFeedbackModal, feedbackForm, feedbackType, feedbackUploading, feedbackUploads, messageApi, t]);
+    }, [
+      closeFeedbackModal,
+      feedbackForm,
+      feedbackType,
+      feedbackUploading,
+      feedbackUploads,
+      messageApi,
+      t,
+    ]);
 
     const mainContext: ReactNode = useMemo(() => {
       let allChildParticipants = childRooms.reduce((acc, room) => {
@@ -1209,7 +1227,9 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             {feedbackType === 'other' && (
               <Form.Item
                 name="otherType"
-                rules={[{ required: true, message: t('channel.feedback.validation.type_required') }]}
+                rules={[
+                  { required: true, message: t('channel.feedback.validation.type_required') },
+                ]}
               >
                 <Input placeholder={t('channel.feedback.other_placeholder')} />
               </Form.Item>
@@ -1217,7 +1237,9 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
             <Form.Item
               label={t('channel.feedback.content')}
               name="content"
-              rules={[{ required: true, message: t('channel.feedback.validation.content_required') }]}
+              rules={[
+                { required: true, message: t('channel.feedback.validation.content_required') },
+              ]}
             >
               <TextArea rows={5} placeholder={t('channel.feedback.content_placeholder')} />
             </Form.Item>
@@ -1392,20 +1414,31 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
                 />
               </div>
             </div>
-            <div>
+            <div className={styles.feedbackItem}>
               <Button
+              block
                 variant="solid"
                 color="default"
                 size="large"
                 onClick={() => setFeedbackOpen(true)}
                 style={{
-                  backgroundColor: '#1E1E1E',
+                  borderTop: '1px solid #2a2a2a',
+                  backgroundColor: 'transparent',
                   height: '46px',
-                  borderRadius: '8px',
-                  fontSize: '16px',
+                  borderRadius: '0',
+                  fontSize: '14px',
+                  display: 'flex',
+                  justifyContent: 'flex-start',
+                  gap: 12,
                 }}
-                icon={<MailOutlined />}
-              ></Button>
+              >
+                {' '}
+                <div className={styles.feedbackItem}>
+                  <CommentOutlined style={{ fontSize: '16px' }} />
+                  {t('channel.feedback.title')}
+                </div>
+                <RightOutlined />
+              </Button>
             </div>
           </div>
           {renderModals()}
