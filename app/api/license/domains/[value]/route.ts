@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLicenseByDomain, validateLicense } from '@/lib/db/license';
+import { getLicenseByDomain, validateLicense } from '@/server/db/license';
 
 const WEBHOOK = process.env.WEBHOOK ?? false;
 const VOCESPACE_API = 'https://vocespace.com';

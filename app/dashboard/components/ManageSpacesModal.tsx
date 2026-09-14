@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Input, Button, Table, Space, Popconfirm, Select } from 'antd';
-import { SpaceInfoMap } from '@/lib/std/space';
+import { SpaceInfoMap } from '@/features/spaces/model';
 import { useI18n } from '@/lib/i18n/i18n';
 
 interface ManageSpacesModalProps {

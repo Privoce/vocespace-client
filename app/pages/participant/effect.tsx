@@ -1,6 +1,6 @@
 import React from 'react';
-import { MouseMove } from '@/lib/std/device';
-import { HandWritingStroke, ParticipantHandWriting } from '@/lib/std/space';
+import { MouseMove } from '@/features/room/protocol';
+import { HandWritingStroke, ParticipantHandWriting } from '@/features/spaces/model';
 import { useI18n } from '@/lib/i18n/i18n';
 import { Button, Tooltip, Divider, Slider } from 'antd';
 import {
@@ -274,8 +274,11 @@ function usePointerMappingRectState({
     let animationFrameId: number | null = null;
     let observer: ResizeObserver | null = null;
     let videoElement: HTMLVideoElement | null = null;
+    let setupTimer: ReturnType<typeof setTimeout> | undefined;
+    let disposed = false;
 
     const measure = () => {
+      if (disposed) return;
       const videoEl = videoRef?.current;
       const containerEl = containerRef?.current;
 
@@ -299,28 +302,29 @@ function usePointerMappingRectState({
     // 立即测量一次
     measure();
 
+    const handleVideoReady = () => {
+      retryCountRef.current = 0;
+      measure();
+    };
+
     // 延迟设置 observer 和事件监听，等待元素渲染
     const setupListeners = () => {
+      if (disposed) return;
       const resizeTarget =
         mappingTarget === 'screen-share' ? videoRef?.current : containerRef?.current;
 
       if (!resizeTarget) {
         // 元素还没渲染，延迟重试
-        setTimeout(setupListeners, 100);
+        setupTimer = setTimeout(setupListeners, 100);
         return;
       }
 
-      observer = new ResizeObserver(() => {
-        retryCountRef.current = 0;
-        measure();
-      });
-      observer.observe(resizeTarget);
+      if (typeof ResizeObserver !== 'undefined') {
+        observer = new ResizeObserver(handleVideoReady);
+        observer.observe(resizeTarget);
+      }
 
       videoElement = videoRef?.current ?? null;
-      const handleVideoReady = () => {
-        retryCountRef.current = 0;
-        measure();
-      };
 
       videoElement?.addEventListener('loadedmetadata', handleVideoReady);
       videoElement?.addEventListener('loadeddata', handleVideoReady);
@@ -331,14 +335,16 @@ function usePointerMappingRectState({
     setupListeners();
 
     return () => {
-      if (animationFrameId) {
+      disposed = true;
+      clearTimeout(setupTimer);
+      if (animationFrameId !== null) {
         cancelAnimationFrame(animationFrameId);
       }
       observer?.disconnect();
-      videoElement?.removeEventListener('loadedmetadata', () => {});
-      videoElement?.removeEventListener('loadeddata', () => {});
-      videoElement?.removeEventListener('resize', () => {});
-      window.removeEventListener('resize', () => {});
+      videoElement?.removeEventListener('loadedmetadata', handleVideoReady);
+      videoElement?.removeEventListener('loadeddata', handleVideoReady);
+      videoElement?.removeEventListener('resize', handleVideoReady);
+      window.removeEventListener('resize', handleVideoReady);
     };
   }, [containerRef, mappingTarget, videoRef]);
 
@@ -829,17 +835,16 @@ export function TileWhiteboardOverlay({
 
 export const ScreenShareWhiteboardOverlay = TileWhiteboardOverlay;
 
-export function ParticipantMouseEffect({
-  enabled = true,
+export function ParticipantMouseEffect(props: ParticipantMouseEffectProps) {
+  return props.enabled === false ? null : <EnabledParticipantMouseEffect {...props} />;
+}
+
+function EnabledParticipantMouseEffect({
   mappingTarget = 'screen-share',
   videoRef,
   containerRef,
   remoteCursors,
 }: ParticipantMouseEffectProps) {
-  if (!enabled) {
-    return null;
-  }
-
   const actualVideoRect = usePointerMappingRectState({
     mappingTarget,
     videoRef,

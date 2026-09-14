@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { ParticipantPlaceholder } from '@livekit/components-react';
-import type { ParticipantAvoParams } from '@/lib/std/space';
+import type { ParticipantAvoParams } from '@/features/spaces/model';
 import type p5 from 'p5';
 
 let p5Loader: Promise<{ default: typeof p5 }> | null = null;

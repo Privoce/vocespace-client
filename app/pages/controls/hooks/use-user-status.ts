@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import type { Room } from 'livekit-client';
-import { UserDefineStatus, UserStatus } from '@/lib/std';
-import { useRoomStore, useUserStore } from '@/lib/store';
+import { UserDefineStatus, UserStatus } from '@/features/room/model';
+import { useRoomStore, useUserStore } from '@/features/stores';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { WsBase } from '@/lib/std/device';
+import { WsBase } from '@/features/room/protocol';
 
 /**
  * 用户状态管理 hook

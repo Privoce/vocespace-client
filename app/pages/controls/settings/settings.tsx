@@ -1,9 +1,9 @@
 import { Button, Tabs, TabsProps, Tag } from 'antd';
 import { forwardRef, useImperativeHandle, useRef, useState } from 'react';
 import { MessageInstance } from 'antd/es/message/interface';
-import { ModelBg, ModelRole } from '@/lib/std/virtual';
+import { ModelBg, ModelRole } from '@/features/avatars/model';
 import { useI18n } from '@/lib/i18n/i18n';
-import { useUserStore } from '@/lib/store';
+import { useUserStore } from '@/features/stores';
 import { LocalParticipant, Room } from 'livekit-client';
 import { LicenseControl } from './license';
 import { AudioSettings } from './audio';
@@ -13,11 +13,11 @@ import { VirtualSettingsExports } from './virtual';
 import { VideoSettings } from './video';
 import { AboutUs } from './about_us';
 import { RecordingTable } from '@/app/recording/table';
-import { RecordData, RecordResponse, useRecordingEnv } from '@/lib/std/recording';
+import { RecordData, RecordResponse, useRecordingEnv } from '@/features/recording/use-recording-env';
 import { ulid } from 'ulid';
 import { ReloadOutlined } from '@ant-design/icons';
 import { AppSettings } from './app';
-import { ParticipantAvoParams, ParticipantSettings, SettingState, SpaceInfo } from '@/lib/std/space';
+import { ParticipantAvoParams, ParticipantSettings, SettingState, SpaceInfo } from '@/features/spaces/model';
 import { AISettings } from './ai';
 import { AuthSettings } from './auth';
 import { ProfileSettings } from './profile';
@@ -328,3 +328,4 @@ export const Settings = forwardRef<SettingsExports, SettingsProps>(
     );
   },
 );
+Settings.displayName = 'Settings';

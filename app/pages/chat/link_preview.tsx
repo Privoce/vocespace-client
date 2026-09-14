@@ -1,7 +1,7 @@
 import { Card, Skeleton } from 'antd';
 import { useEffect, useState } from 'react';
 import styles from '@/styles/chat.module.scss';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 
 interface LinkPreviewProps {
   text?: string;

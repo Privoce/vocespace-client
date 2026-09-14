@@ -1,0 +1,1404 @@
+[
+  {
+    "filePath": "app/[spaceName]/PageClientImpl.tsx",
+    "errorCount": 0,
+    "warningCount": 9,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useCallback has missing dependencies: 'messageApi' and 'router'. Either include them or remove the dependency array.",
+        "line": 148,
+        "column": 5,
+        "endLine": 148,
+        "endColumn": 49
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'getConfig'. Either include it or remove the dependency array.",
+        "line": 170,
+        "column": 6,
+        "endLine": 170,
+        "endColumn": 18
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has missing dependencies: 'details', 'router', and 'spaceName'. Either include them or remove the dependency array. If 'setConnectionDetails' needs the current value of 'details', you can also switch to useReducer instead of useState and read 'details' in the reducer.",
+        "line": 187,
+        "column": 6,
+        "endLine": 187,
+        "endColumn": 12
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has missing dependencies: 'handlePreJoinSubmit', 'isReload', 'messageApi', 't', 'uState', and 'userChoices.username'. Either include them or remove the dependency array.",
+        "line": 238,
+        "column": 6,
+        "endLine": 238,
+        "endColumn": 8
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useMemo has missing dependencies: 'e2eeEnabled', 'keyProvider', 'resolutions', and 'worker'. Either include them or remove the dependency array.",
+        "line": 351,
+        "column": 6,
+        "endLine": 351,
+        "endColumn": 78
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useMemo has a missing dependency: 'roomOptions'. Either include it or remove the dependency array.",
+        "line": 353,
+        "column": 59,
+        "endLine": 353,
+        "endColumn": 61
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useEffect has missing dependencies: 'keyProvider' and 't'. Either include them or remove the dependency array.",
+        "line": 372,
+        "column": 6,
+        "endLine": 372,
+        "endColumn": 41
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useCallback has missing dependencies: 'props.messageApi' and 't'. Either include them or remove the dependency array.",
+        "line": 425,
+        "column": 6,
+        "endLine": 425,
+        "endColumn": 8
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useCallback has missing dependencies: 'props.messageApi' and 't'. Either include them or remove the dependency array.",
+        "line": 428,
+        "column": 6,
+        "endLine": 428,
+        "endColumn": 8
+      }
+    ]
+  },
+  {
+    "filePath": "app/[spaceName]/RecordingIndicator.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useEffect has a missing dependency: 'wasRecording'. Either include it or remove the dependency array.",
+        "line": 15,
+        "column": 6,
+        "endLine": 15,
+        "endColumn": 19
+      }
+    ]
+  },
+  {
+    "filePath": "app/[spaceName]/page.tsx",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useEffect has missing dependencies: 'params.spaceName' and 'router'. Either include them or remove the dependency array.",
+        "line": 69,
+        "column": 6,
+        "endLine": 69,
+        "endColumn": 15
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useEffect has a missing dependency: 'checkAndFetchByStored'. Either include it or remove the dependency array.",
+        "line": 74,
+        "column": 6,
+        "endLine": 74,
+        "endColumn": 8
+      }
+    ]
+  },
+  {
+    "filePath": "app/dashboard/components/DashboardLicense.tsx",
+    "errorCount": 0,
+    "warningCount": 5,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has missing dependencies: 'getConfig' and 'validLicense'. Either include them or remove the dependency array.",
+        "line": 92,
+        "column": 6,
+        "endLine": 92,
+        "endColumn": 17
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array.",
+        "line": 106,
+        "column": 6,
+        "endLine": 106,
+        "endColumn": 18
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array.",
+        "line": 117,
+        "column": 6,
+        "endLine": 117,
+        "endColumn": 11
+      },
+      {
+        "ruleId": "@next/next/no-img-element",
+        "severity": 1,
+        "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "line": 401,
+        "column": 9,
+        "endLine": 404,
+        "endColumn": 10
+      },
+      {
+        "ruleId": "jsx-a11y/alt-text",
+        "severity": 1,
+        "message": "img elements must have an alt prop, either with meaningful text, or an empty string for decorative images.",
+        "line": 401,
+        "column": 9,
+        "endLine": 404,
+        "endColumn": 10
+      }
+    ]
+  },
+  {
+    "filePath": "app/dashboard/components/DashboardLicenseManage.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'fetchLicenses'. Either include it or remove the dependency array.",
+        "line": 189,
+        "column": 6,
+        "endLine": 189,
+        "endColumn": 32
+      }
+    ]
+  },
+  {
+    "filePath": "app/dashboard/page.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has missing dependencies: 'fetchAllData' and 'getConf'. Either include them or remove the dependency array.",
+        "line": 512,
+        "column": 6,
+        "endLine": 512,
+        "endColumn": 8
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/apps/flot.tsx",
+    "errorCount": 0,
+    "warningCount": 4,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has an unnecessary dependency: 'window.innerWidth'. Either exclude it or remove the dependency array. Outer scope values like 'window.innerWidth' aren't valid dependencies because mutating them doesn't re-render the component.",
+        "line": 179,
+        "column": 8,
+        "endLine": 179,
+        "endColumn": 35
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'getRemoteAICutAnalysisRes'. Either include it or remove the dependency array.",
+        "line": 226,
+        "column": 8,
+        "endLine": 226,
+        "endColumn": 59
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'fetchTodo'. Either include it or remove the dependency array.",
+        "line": 276,
+        "column": 8,
+        "endLine": 276,
+        "endColumn": 76
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has missing dependencies: 'appData.countdown', 'appData.timer', 'appData.todo', 'apps', 'createItems', 'setSelfCountdownData', 'setSelfTimerData', and 'setSelfTodoData'. Either include them or remove the dependency array.",
+        "line": 816,
+        "column": 8,
+        "endLine": 816,
+        "endColumn": 66
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/apps/todo_list.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array.",
+        "line": 217,
+        "column": 6,
+        "endLine": 217,
+        "endColumn": 15
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/chat/chat.tsx",
+    "errorCount": 0,
+    "warningCount": 3,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useMemo has a missing dependency: 'spaceInfo.participants'. Either include it or remove the dependency array.",
+        "line": 68,
+        "column": 8,
+        "endLine": 68,
+        "endColumn": 59
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useMemo has missing dependencies: 'downloadFile' and 'isLocal'. Either include them or remove the dependency array.",
+        "line": 341,
+        "column": 8,
+        "endLine": 341,
+        "endColumn": 22
+      },
+      {
+        "ruleId": "jsx-a11y/alt-text",
+        "severity": 1,
+        "message": "Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images.",
+        "line": 663,
+        "column": 21,
+        "endLine": 668,
+        "endColumn": 22
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/chat/link_preview.tsx",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "@next/next/no-img-element",
+        "severity": 1,
+        "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "line": 108,
+        "column": 15,
+        "endLine": 108,
+        "endColumn": 84
+      },
+      {
+        "ruleId": "@next/next/no-img-element",
+        "severity": 1,
+        "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "line": 115,
+        "column": 19,
+        "endLine": 115,
+        "endColumn": 99
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/bar.tsx",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useEffect has an unnecessary dependency: 'controlLeftRef.current'. Either exclude it or remove the dependency array. Mutable values like 'controlLeftRef.current' aren't valid dependencies because mutating them doesn't re-render the component.",
+        "line": 163,
+        "column": 8,
+        "endLine": 163,
+        "endColumn": 32
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useMemo has a missing dependency: 'spaceInfo'. Either include it or remove the dependency array.",
+        "line": 282,
+        "column": 8,
+        "endLine": 282,
+        "endColumn": 61
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/channel.tsx",
+    "errorCount": 0,
+    "warningCount": 5,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has missing dependencies: 'agreeJoinRoom', 'messageApi', and 't'. Either include them or remove the dependency array. Outer scope values like 'socket' aren't valid dependencies because mutating them doesn't re-render the component.",
+        "line": 303,
+        "column": 8,
+        "endLine": 303,
+        "endColumn": 63
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has missing dependencies: 'setUserStatus', 'showFlotApp', 'space', and 'updateSettings'. Either include them or remove the dependency array.",
+        "line": 764,
+        "column": 8,
+        "endLine": 764,
+        "endColumn": 97
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has missing dependencies: 'setUserStatus', 'showFlotApp', and 'updateSettings'. Either include them or remove the dependency array.",
+        "line": 801,
+        "column": 7,
+        "endLine": 810,
+        "endColumn": 8
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has missing dependencies: 'addIntoRoom', 'isMobile', 'shareRoomToClipboard', 'space.name', 'subContextItems', 'subStyle', and 't'. Either include them or remove the dependency array.",
+        "line": 942,
+        "column": 8,
+        "endLine": 942,
+        "endColumn": 73
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has missing dependencies: 'isMobile', 'joinMainRoom', 'panelStyle', 't', and 'token.colorBgContainer'. Either include them or remove the dependency array.",
+        "line": 1052,
+        "column": 8,
+        "endLine": 1052,
+        "endColumn": 85
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/hooks/use-ai-cut.ts",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has an unnecessary dependency: 'space'. Either exclude it or remove the dependency array.",
+        "line": 145,
+        "column": 6,
+        "endLine": 145,
+        "endColumn": 25
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has missing dependencies: 'settings.ai.cut.freq', 'startOrStopAICutAnalysis', and 'uState.ai.cut'. Either include them or remove the dependency array.",
+        "line": 165,
+        "column": 6,
+        "endLine": 165,
+        "endColumn": 83
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/hooks/use-controls-chat.tsx",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has a missing dependency: 'setChatOpen'. Either include it or remove the dependency array.",
+        "line": 16,
+        "column": 6,
+        "endLine": 16,
+        "endColumn": 8
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has a missing dependency: 'sendingFile'. Either include it or remove the dependency array.",
+        "line": 30,
+        "column": 5,
+        "endLine": 30,
+        "endColumn": 8
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/hooks/use-controls-record.ts",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has an unnecessary dependency: 'isManager'. Either exclude it or remove the dependency array.",
+        "line": 61,
+        "column": 6,
+        "endLine": 61,
+        "endColumn": 90
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/selects/audio_select.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'active_audio'. Either include it or remove the dependency array.",
+        "line": 37,
+        "column": 6,
+        "endLine": 37,
+        "endColumn": 15
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/selects/status_select.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'active'. Either include it or remove the dependency array.",
+        "line": 49,
+        "column": 6,
+        "endLine": 49,
+        "endColumn": 20
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/selects/video_select.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'activeVideo'. Either include it or remove the dependency array.",
+        "line": 43,
+        "column": 6,
+        "endLine": 43,
+        "endColumn": 15
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/settings/auth.tsx",
+    "errorCount": 1,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react/display-name",
+        "severity": 2,
+        "message": "Component definition is missing display name",
+        "line": 45,
+        "column": 62,
+        "endLine": 64,
+        "endColumn": 4
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has a missing dependency: 'renderSwitch'. Either include it or remove the dependency array.",
+        "line": 103,
+        "column": 6,
+        "endLine": 103,
+        "endColumn": 34
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/settings/conf.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'getRTCConf'. Either include it or remove the dependency array.",
+        "line": 74,
+        "column": 6,
+        "endLine": 74,
+        "endColumn": 14
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/settings/general.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 't'. Either include it or remove the dependency array.",
+        "line": 47,
+        "column": 6,
+        "endLine": 47,
+        "endColumn": 44
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/settings/license.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'validRoomLicense'. Either include it or remove the dependency array.",
+        "line": 84,
+        "column": 6,
+        "endLine": 84,
+        "endColumn": 17
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/settings/virtual.tsx",
+    "errorCount": 0,
+    "warningCount": 5,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'setVideoBlur'. Either include it or remove the dependency array.",
+        "line": 79,
+        "column": 8,
+        "endLine": 79,
+        "endColumn": 14
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'setEnabled'. Either include it or remove the dependency array. If 'setEnabled' changes too often, find the parent component that defines it and wrap that definition in useCallback.",
+        "line": 87,
+        "column": 8,
+        "endLine": 87,
+        "endColumn": 19
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has missing dependencies: 'modelRole', 'reloadVirtual', and 'setCompare'. Either include them or remove the dependency array. If 'setCompare' changes too often, find the parent component that defines it and wrap that definition in useCallback.",
+        "line": 97,
+        "column": 8,
+        "endLine": 97,
+        "endColumn": 25
+      },
+      {
+        "ruleId": "@next/next/no-img-element",
+        "severity": 1,
+        "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "line": 203,
+        "column": 23,
+        "endLine": 203,
+        "endColumn": 77
+      },
+      {
+        "ruleId": "@next/next/no-img-element",
+        "severity": 1,
+        "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "line": 247,
+        "column": 21,
+        "endLine": 247,
+        "endColumn": 71
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/toggles/chat_toggle.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has a missing dependency: 'showText'. Either include it or remove the dependency array.",
+        "line": 34,
+        "column": 6,
+        "endLine": 34,
+        "endColumn": 20
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/toggles/more_button.tsx",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has a missing dependency: 'showText'. Either include it or remove the dependency array.",
+        "line": 65,
+        "column": 6,
+        "endLine": 65,
+        "endColumn": 20
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has missing dependencies: 'hasRoomLicense' and 'isDot'. Either include them or remove the dependency array.",
+        "line": 155,
+        "column": 6,
+        "endLine": 155,
+        "endColumn": 54
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/toggles/setting_toggle.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has a missing dependency: 'showText'. Either include it or remove the dependency array. Outer scope values like 'window.innerWidth' aren't valid dependencies because mutating them doesn't re-render the component.",
+        "line": 18,
+        "column": 6,
+        "endLine": 18,
+        "endColumn": 25
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/video_container.tsx",
+    "errorCount": 0,
+    "warningCount": 9,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has missing dependencies: 'clearSettings', 'fetchPlatformData', 'fetchSettings', 'fromVocespace', 'layoutContext.pin', 'messageApi', 'noteApi', 'roomEnter', 'setNoteStateForAICutService', 'settings.managers.length', 'settings.ownerId', 'settings.participants', 'space', 't', 'transOrSetOwnerManager', and 'updateSettings'. Either include them or remove the dependency array. Outer scope values like 'socket' aren't valid dependencies because mutating them doesn't re-render the component.",
+        "line": 747,
+        "column": 8,
+        "endLine": 759,
+        "endColumn": 6
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has missing dependencies: 'selfRoom' and 'space.localParticipant.identity'. Either include them or remove the dependency array.",
+        "line": 807,
+        "column": 8,
+        "endLine": 807,
+        "endColumn": 37
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'fetchSettings'. Either include it or remove the dependency array.",
+        "line": 826,
+        "column": 8,
+        "endLine": 826,
+        "endColumn": 33
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useLayoutEffect has a missing dependency: 'fetchSettings'. Either include it or remove the dependency array.",
+        "line": 833,
+        "column": 8,
+        "endLine": 833,
+        "endColumn": 42
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has a missing dependency: 'focusTrack'. Either include it or remove the dependency array.",
+        "line": 923,
+        "column": 8,
+        "endLine": 928,
+        "endColumn": 6
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useEffect has missing dependencies: 'focusTrack', 'layoutContext.pin', 'screenShareTracks', and 'setIsFocus'. Either include them or remove the dependency array.",
+        "line": 962,
+        "column": 8,
+        "endLine": 968,
+        "endColumn": 6
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked.",
+        "line": 963,
+        "column": 7,
+        "endLine": 965,
+        "endColumn": 16
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has a missing dependency: 'fetchSettings'. Either include it or remove the dependency array.",
+        "line": 1116,
+        "column": 8,
+        "endLine": 1128,
+        "endColumn": 6
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has unnecessary dependencies: 'isFullScreen' and 'setIsFullScreen'. Either exclude them or remove the dependency array.",
+        "line": 1175,
+        "column": 7,
+        "endLine": 1188,
+        "endColumn": 8
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/widgets/raise.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array.",
+        "line": 146,
+        "column": 6,
+        "endLine": 146,
+        "endColumn": 49
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/widgets/reaction.tsx",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has a missing dependency: 'showText'. Either include it or remove the dependency array.",
+        "line": 35,
+        "column": 6,
+        "endLine": 35,
+        "endColumn": 20
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has missing dependencies: 'localParticipant.identity', 'localParticipant?.name', 'participant?.name', and 'participant?.socketId'. Either include them or remove the dependency array.",
+        "line": 66,
+        "column": 6,
+        "endLine": 66,
+        "endColumn": 24
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/widgets/tile_action_pin.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has missing dependencies: 'localParticipant.identity' and 'spaceInfo.participants'. Either include them or remove the dependency array.",
+        "line": 45,
+        "column": 6,
+        "endLine": 45,
+        "endColumn": 14
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/controls/widgets/work.tsx",
+    "errorCount": 2,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "The 'startOrStopWork' function makes the dependencies of useCallback Hook (at line 175) change on every render. To fix this, wrap the definition of 'startOrStopWork' in its own useCallback() Hook.",
+        "line": 70,
+        "column": 9,
+        "endLine": 143,
+        "endColumn": 4
+      },
+      {
+        "ruleId": "react-hooks/rules-of-hooks",
+        "severity": 2,
+        "message": "React Hook \"useI18n\" is called conditionally. React Hooks must be called in the exact same order in every component render.",
+        "line": 236,
+        "column": 17,
+        "endLine": 236,
+        "endColumn": 24
+      },
+      {
+        "ruleId": "react-hooks/rules-of-hooks",
+        "severity": 2,
+        "message": "React Hook \"useMemo\" is called conditionally. React Hooks must be called in the exact same order in every component render.",
+        "line": 237,
+        "column": 26,
+        "endLine": 237,
+        "endColumn": 33
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has a missing dependency: 'showText'. Either include it or remove the dependency array.",
+        "line": 239,
+        "column": 6,
+        "endLine": 239,
+        "endColumn": 20
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/layout/hooks.ts",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useLayoutEffect has a missing dependency: 'target'. Either include it or remove the dependency array. Mutable values like 'target.current' aren't valid dependencies because mutating them doesn't re-render the component.",
+        "line": 10,
+        "column": 6,
+        "endLine": 10,
+        "endColumn": 22
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useLayoutEffect has a missing dependency: 'target'. Either include it or remove the dependency array. Mutable values like 'target.current' aren't valid dependencies because mutating them doesn't re-render the component.",
+        "line": 45,
+        "column": 6,
+        "endLine": 45,
+        "endColumn": 54
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/participant/avo.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useEffect has missing dependencies: 'isFocused' and 'params'. Either include them or remove the dependency array.",
+        "line": 794,
+        "column": 6,
+        "endLine": 794,
+        "endColumn": 50
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/participant/effect.tsx",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useCallback has a missing dependency: 'overlayId'. Either include it or remove the dependency array.",
+        "line": 491,
+        "column": 5,
+        "endLine": 500,
+        "endColumn": 6
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useCallback has an unnecessary dependency: 'saveLocal'. Either exclude it or remove the dependency array.",
+        "line": 531,
+        "column": 5,
+        "endLine": 531,
+        "endColumn": 54
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/participant/menu.tsx",
+    "errorCount": 0,
+    "warningCount": 4,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has a missing dependency: 'spaceInfo'. Either include it or remove the dependency array.",
+        "line": 96,
+        "column": 6,
+        "endLine": 96,
+        "endColumn": 59
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'checkEarMonitorSupported'. Either include it or remove the dependency array.",
+        "line": 237,
+        "column": 6,
+        "endLine": 237,
+        "endColumn": 31
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has missing dependencies: 'handleAdjustment', 'isScreenShare', 'platUser', and 't'. Either include them or remove the dependency array.",
+        "line": 575,
+        "column": 6,
+        "endLine": 587,
+        "endColumn": 4
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has missing dependencies: 'handleAdjustment', 'isScreenShare', and 't'. Either include them or remove the dependency array.",
+        "line": 889,
+        "column": 6,
+        "endLine": 902,
+        "endColumn": 4
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/participant/mini.tsx",
+    "errorCount": 1,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'setVideoBlur'. Either include it or remove the dependency array.",
+        "line": 100,
+        "column": 8,
+        "endLine": 100,
+        "endColumn": 47
+      },
+      {
+        "ruleId": "react/no-children-prop",
+        "severity": 2,
+        "message": "Do not pass children as props. Instead, nest children between the opening and closing tags.",
+        "line": 248,
+        "column": 9,
+        "endLine": 423,
+        "endColumn": 10
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/participant/player.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has missing dependencies: 'item.ownerId' and 'spaceInfo.participants'. Either include them or remove the dependency array.",
+        "line": 140,
+        "column": 6,
+        "endLine": 140,
+        "endColumn": 35
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/participant/status_info.tsx",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has missing dependencies: 'disabled' and 'toSettings'. Either include them or remove the dependency array. If 'toSettings' changes too often, find the parent component that defines it and wrap that definition in useCallback.",
+        "line": 151,
+        "column": 6,
+        "endLine": 151,
+        "endColumn": 56
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has missing dependencies: 'toRenameSettings', 'trackReference.participant.identity', and 'username'. Either include them or remove the dependency array. If 'toRenameSettings' changes too often, find the parent component that defines it and wrap that definition in useCallback.",
+        "line": 191,
+        "column": 6,
+        "endLine": 191,
+        "endColumn": 29
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/participant/tile.tsx",
+    "errorCount": 1,
+    "warningCount": 0,
+    "messages": [
+      {
+        "ruleId": null,
+        "severity": 2,
+        "message": "Parsing error: Expected corresponding JSX closing tag for 'ControlRKeyMenu'.",
+        "line": 1088,
+        "column": 12
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/pre_join/pre_join.tsx",
+    "errorCount": 0,
+    "warningCount": 4,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useEffect has a missing dependency: 'username'. Either include it or remove the dependency array.",
+        "line": 104,
+        "column": 6,
+        "endLine": 104,
+        "endColumn": 12
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has missing dependencies: 'audioEnabled' and 'videoEnabled'. Either include them or remove the dependency array.",
+        "line": 246,
+        "column": 6,
+        "endLine": 246,
+        "endColumn": 33
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook React.useMemo has an unnecessary dependency: 'hasCameraPermission'. Either exclude it or remove the dependency array.",
+        "line": 272,
+        "column": 6,
+        "endLine": 272,
+        "endColumn": 90
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'setVideoBlur'. Either include it or remove the dependency array.",
+        "line": 445,
+        "column": 6,
+        "endLine": 445,
+        "endColumn": 28
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/pre_join/tab.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'router'. Either include it or remove the dependency array.",
+        "line": 88,
+        "column": 6,
+        "endLine": 88,
+        "endColumn": 8
+      }
+    ]
+  },
+  {
+    "filePath": "app/pages/virtual_role/virtual_role.tsx",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has missing dependencies: 'cState.detectorReady', 'cleanupResources', and 'initPixiAndModel'. Either include them or remove the dependency array.",
+        "line": 466,
+        "column": 6,
+        "endLine": 466,
+        "endColumn": 15
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has missing dependencies: 'setupVirtualCamera' and 'trackRef'. Either include them or remove the dependency array.",
+        "line": 491,
+        "column": 6,
+        "endLine": 491,
+        "endColumn": 61
+      }
+    ]
+  },
+  {
+    "filePath": "app/recording/table.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has missing dependencies: 'copyDownloadLink', 'currentRoom', 'handleDelete', 'handleDownload', and 'loading'. Either include them or remove the dependency array.",
+        "line": 290,
+        "column": 6,
+        "endLine": 290,
+        "endColumn": 21
+      }
+    ]
+  },
+  {
+    "filePath": "features/platform/hooks.ts",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useMemo has a missing dependency: 'uid'. Either include it or remove the dependency array.",
+        "line": 196,
+        "column": 6,
+        "endLine": 196,
+        "endColumn": 23
+      }
+    ]
+  },
+  {
+    "filePath": "features/recording/use-recording-env.ts",
+    "errorCount": 0,
+    "warningCount": 3,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has missing dependencies: 'messageApi' and 't'. Either include them or remove the dependency array.",
+        "line": 79,
+        "column": 6,
+        "endLine": 79,
+        "endColumn": 11
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has missing dependencies: 'messageApi' and 't'. Either include them or remove the dependency array.",
+        "line": 98,
+        "column": 6,
+        "endLine": 98,
+        "endColumn": 8
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has missing dependencies: 'messageApi' and 't'. Either include them or remove the dependency array.",
+        "line": 120,
+        "column": 6,
+        "endLine": 120,
+        "endColumn": 37
+      }
+    ]
+  },
+  {
+    "filePath": "features/room/screen-preview.tsx",
+    "errorCount": 0,
+    "warningCount": 3,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has missing dependencies: 'isRequesting' and 'onClose'. Either include them or remove the dependency array. If 'onClose' changes too often, find the parent component that defines it and wrap that definition in useCallback.",
+        "line": 48,
+        "column": 6,
+        "endLine": 48,
+        "endColumn": 15
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'isRequesting'. Either include it or remove the dependency array.",
+        "line": 72,
+        "column": 6,
+        "endLine": 72,
+        "endColumn": 50
+      },
+      {
+        "ruleId": "@next/next/no-img-element",
+        "severity": 1,
+        "message": "Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element",
+        "line": 85,
+        "column": 11,
+        "endLine": 85,
+        "endColumn": 72
+      }
+    ]
+  },
+  {
+    "filePath": "features/spaces/use-space-info.ts",
+    "errorCount": 0,
+    "warningCount": 2,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has an unnecessary dependency: 'participantId'. Either exclude it or remove the dependency array.",
+        "line": 52,
+        "column": 5,
+        "endLine": 52,
+        "endColumn": 31
+      },
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useCallback has a missing dependency: 'fetchSettings'. Either include it or remove the dependency array.",
+        "line": 115,
+        "column": 5,
+        "endLine": 115,
+        "endColumn": 31
+      }
+    ]
+  },
+  {
+    "filePath": "lib/hooks/video-blur.ts",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'videoRef'. Either include it or remove the dependency array.",
+        "line": 59,
+        "column": 6,
+        "endLine": 59,
+        "endColumn": 24
+      }
+    ]
+  },
+  {
+    "filePath": "lib/i18n/en_US.ts",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "import/no-anonymous-default-export",
+        "severity": 1,
+        "message": "Assign object to a variable before exporting as module default",
+        "line": 1,
+        "column": 1,
+        "endLine": 1338,
+        "endColumn": 3
+      }
+    ]
+  },
+  {
+    "filePath": "lib/i18n/i18n.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'initialLocale'. Either include it or remove the dependency array. If 'setLocale' needs the current value of 'initialLocale', you can also switch to useReducer instead of useState and read 'initialLocale' in the reducer.",
+        "line": 55,
+        "column": 6,
+        "endLine": 55,
+        "endColumn": 8
+      }
+    ]
+  },
+  {
+    "filePath": "lib/i18n/ru_RU.ts",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "import/no-anonymous-default-export",
+        "severity": 1,
+        "message": "Assign object to a variable before exporting as module default",
+        "line": 1,
+        "column": 1,
+        "endLine": 1246,
+        "endColumn": 3
+      }
+    ]
+  },
+  {
+    "filePath": "lib/i18n/zh_CN.ts",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "import/no-anonymous-default-export",
+        "severity": 1,
+        "message": "Assign object to a variable before exporting as module default",
+        "line": 1,
+        "column": 1,
+        "endLine": 1288,
+        "endColumn": 3
+      }
+    ]
+  },
+  {
+    "filePath": "lib/livekit/device-selector.tsx",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "react-hooks/exhaustive-deps",
+        "severity": 1,
+        "message": "React Hook useEffect has a missing dependency: 'kind'. Either include it or remove the dependency array.",
+        "line": 167,
+        "column": 8,
+        "endLine": 167,
+        "endColumn": 30
+      }
+    ]
+  },
+  {
+    "filePath": "server/platform-token.ts",
+    "errorCount": 0,
+    "warningCount": 1,
+    "messages": [
+      {
+        "ruleId": "import/no-anonymous-default-export",
+        "severity": 1,
+        "message": "Assign object to a variable before exporting as module default",
+        "line": 61,
+        "column": 1,
+        "endLine": 65,
+        "endColumn": 3
+      }
+    ]
+  }
+]

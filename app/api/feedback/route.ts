@@ -1,6 +1,6 @@
-import { getConfig } from '@/app/api/conf/conf';
-import { sendEmail } from '@/lib/email';
-import { connect_endpoint } from '@/lib/std';
+import { getConfig } from '@/server/config';
+import { sendEmail } from '@/server/email';
+import { connect_endpoint } from '@/lib/http/paths';
 import { mkdir, writeFile } from 'fs/promises';
 import { NextRequest, NextResponse } from 'next/server';
 import path from 'path';

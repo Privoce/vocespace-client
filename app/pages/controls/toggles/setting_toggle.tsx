@@ -1,10 +1,10 @@
 import { Button } from 'antd';
-import { ToggleProps } from '@/lib/std/device';
+import { ToggleProps } from '@/lib/components/types';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useMemo } from 'react';
 import { VideoPresets } from 'livekit-client';
-import { WindowAdjusts } from '@/lib/std/window';
+import { WindowAdjusts } from '@/lib/browser/window';
 
 export function SettingToggle({ enabled, onClicked, showText = true }: ToggleProps) {
   const on_clicked = () => {

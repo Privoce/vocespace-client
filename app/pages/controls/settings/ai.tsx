@@ -1,11 +1,11 @@
 'use client';
 
-import { AICutDeps } from '@/lib/ai/analysis';
-import { api } from '@/lib/api';
+import { AICutDeps } from '@/features/ai/types';
+import { api } from '@/features/api';
 import { useI18n } from '@/lib/i18n/i18n';
-import { isSpaceManager } from '@/lib/std';
-import { DEFAULT_VOCESPACE_CONFIG, ReadableConf } from '@/lib/std/conf';
-import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { isSpaceManager } from '@/features/room/model';
+import { DEFAULT_VOCESPACE_CONFIG, ReadableConf } from '@/features/settings/config';
+import { ParticipantSettings, SpaceInfo } from '@/features/spaces/model';
 import styles from '@/styles/controls.module.scss';
 import { Button, Input, Radio } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
@@ -13,7 +13,7 @@ import { LocalParticipant, Room } from 'livekit-client';
 import { useEffect, useMemo, useState } from 'react';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from '../widgets/ai';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { WsBase } from '@/lib/std/device';
+import { WsBase } from '@/features/room/protocol';
 
 export interface AISettingProps {
   space: Room;

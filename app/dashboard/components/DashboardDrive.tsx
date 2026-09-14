@@ -20,7 +20,7 @@ import {
   ReadableConf,
   Resolution,
   VocespaceConfig,
-} from '@/lib/std/conf';
+} from '@/features/settings/config';
 import { useI18n } from '@/lib/i18n/i18n';
 
 const { Title, Paragraph, Text } = Typography;

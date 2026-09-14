@@ -1,0 +1,1 @@
+PASS: document links and formatting; 41 tasks / 128 day; only P0-01..04 checked; 26 socket inputs; 19 passing tests; direct runtime dependency declarations unchanged; application sources unchanged. Lint failure retained as B01.

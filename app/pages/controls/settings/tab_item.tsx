@@ -1,5 +1,5 @@
 import { SvgResource, SvgType } from '@/app/resources/svg';
-import { isMobile } from '@/lib/std';
+import { isMobile } from '@/lib/browser/environment';
 
 export function TabItem({
   type,

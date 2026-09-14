@@ -1,4 +1,5 @@
-import { isMobile, mergeProps } from '@/lib/std';
+import { isMobile } from '@/lib/browser/environment';
+import { mergeProps } from '@/lib/components/props';
 import {
   GridLayoutProps,
   TrackLoop,
@@ -7,7 +8,7 @@ import {
   useSwipe,
 } from '@livekit/components-react';
 import React from 'react';
-import { PaginationCtl, PaginationInfo } from '../controls/widgets/pagination';
+import { PaginationCtl, PaginationInfo } from '@/lib/components/pagination';
 import { PaginationControl, PaginationIndicator } from './cover';
 
 

@@ -1,0 +1,4 @@
+
+> vocespace@0.5.5 typecheck <repo>
+> tsc --noEmit --incremental false
+

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { clearUnloadAttempt, markUnloadAttempt } from '@/lib/roomLeaveIntent';
+import { clearUnloadAttempt, markUnloadAttempt } from '@/features/room/leave-intent';
 
 export default function BeforeUnloadGuard({ enabled = true }: { enabled?: boolean }) {
   useEffect(() => {

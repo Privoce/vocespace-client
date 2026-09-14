@@ -1,8 +1,8 @@
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { SvgResource } from '@/app/resources/svg';
-import { audio } from '@/lib/audio';
+import { audio } from '@/features/controls/audio';
 import { useI18n } from '@/lib/i18n/i18n';
-import { WsWave } from '@/lib/std/device';
+import { WsWave } from '@/features/room/protocol';
 import { LayoutContext } from '@livekit/components-react';
 import { Tooltip } from 'antd';
 

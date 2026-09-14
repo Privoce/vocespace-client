@@ -1,8 +1,8 @@
 import { Badge, Button } from 'antd';
-import { ToggleProps } from '@/lib/std/device';
+import { ToggleProps } from '@/lib/components/types';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useMemo, useState } from 'react';
-import { ViewAdjusts } from '@/lib/std/window';
+import { ViewAdjusts } from '@/lib/browser/window';
 import { ToggleBtn } from './toggle_btn';
 
 export interface ChatToggleProps extends ToggleProps {

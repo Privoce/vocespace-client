@@ -1,14 +1,6 @@
 import { isTrackReferencePlaceholder } from '@/app/pages/controls/video_container';
-import {
-  MouseMove,
-  useVideoBlur,
-  WsBase,
-  WsWhiteboardClearAll,
-  WsWhiteboardSync,
-  WsMouseClick,
-  WsMouseMove,
-  WsWave,
-} from '@/lib/std/device';
+import { MouseMove, WsBase, WsWhiteboardClearAll, WsWhiteboardSync, WsMouseClick, WsMouseMove, WsWave } from '@/features/room/protocol';
+import { useVideoBlur } from '@/lib/hooks/video-blur';
 import {
   AudioTrack,
   isTrackReference,
@@ -30,12 +22,12 @@ import { ParticipantTile } from './core';
 import { ConnectionState, Participant, Track } from 'livekit-client';
 import React, { useEffect, useMemo, useState } from 'react';
 import VirtualRoleCanvas from '../virtual_role/live2d';
-import { useUserStore, useRoomStore, useSpaceStore } from '@/lib/store';
+import { useUserStore, useRoomStore, useSpaceStore } from '@/features/stores';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import styles from '@/styles/controls.module.scss';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
-import { isSpaceManager } from '@/lib/std';
+import { isSpaceManager } from '@/features/room/model';
 import { MessageInstance } from 'antd/es/message/interface';
 import {
   ChildRoom,
@@ -43,7 +35,7 @@ import {
   ParticipantHandWriting,
   ParticipantAvoParams,
   ParticipantSettings,
-} from '@/lib/std/space';
+} from '@/features/spaces/model';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { AppFlotIconCollect } from '../apps/app_pin';
@@ -891,13 +883,12 @@ export const ParticipantItem: (
         onOpenChange={(open) => {
           optOpen(open, space.getParticipantByIdentity(trackReference.participant.identity)!);
         }}
-        children={
-          <ParticipantTile ref={ref} trackRef={trackReference}>
+      >
+        <ParticipantTile ref={ref} trackRef={trackReference}>
             {deviceTrack}
             <div
               className="lk-participant-placeholder"
               ref={avoContainerRef}
-             
             >
               {localAvo ? (
                 <ParticipantAvoPlaceholder
@@ -980,8 +971,8 @@ export const ParticipantItem: (
               <StatusInfo
                 disabled={trackReference.participant.identity != localParticipant.identity}
                 items={items}
-                children={
-                  <Tooltip
+              >
+                <Tooltip
                     placement="right"
                     title={
                       trackReference.source === Track.Source.ScreenShare &&
@@ -1067,8 +1058,7 @@ export const ParticipantItem: (
                       )}
                     </div>
                   </Tooltip>
-                }
-              ></StatusInfo>
+              </StatusInfo>
 
               {/* <ConnectionQualityIndicator className="lk-participant-metadata-item" /> */}
             </div>
@@ -1095,8 +1085,7 @@ export const ParticipantItem: (
               updateSettings={updateSettings}
             ></AppFlotIconCollect>
           </ParticipantTile>
-        }
-      ></ControlRKeyMenu>
+      </ControlRKeyMenu>
     );
   },
 );

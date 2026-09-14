@@ -1,0 +1,534 @@
+
+> vocespace@0.5.5 baseline:build /Users/shengyifei/projects/livekit/vocespace/vocespace
+> node scripts/p0-build.mjs
+
+P0 source snapshot: /var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g
+Private env, config, upload state and existing .next are excluded.
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+
+./app/[spaceName]/PageClientImpl.tsx
+148:5  Warning: React Hook React.useCallback has missing dependencies: 'messageApi' and 'router'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+170:6  Warning: React Hook useEffect has a missing dependency: 'getConfig'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+187:6  Warning: React Hook useEffect has missing dependencies: 'details', 'router', and 'spaceName'. Either include them or remove the dependency array. If 'setConnectionDetails' needs the current value of 'details', you can also switch to useReducer instead of useState and read 'details' in the reducer.  react-hooks/exhaustive-deps
+238:6  Warning: React Hook useEffect has missing dependencies: 'handlePreJoinSubmit', 'isReload', 'messageApi', 't', 'uState', and 'userChoices.username'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+351:6  Warning: React Hook React.useMemo has missing dependencies: 'e2eeEnabled', 'keyProvider', 'resolutions', and 'worker'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+353:59  Warning: React Hook React.useMemo has a missing dependency: 'roomOptions'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+372:6  Warning: React Hook React.useEffect has missing dependencies: 'keyProvider' and 't'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+425:6  Warning: React Hook React.useCallback has missing dependencies: 'props.messageApi' and 't'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+428:6  Warning: React Hook React.useCallback has missing dependencies: 'props.messageApi' and 't'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/[spaceName]/RecordingIndicator.tsx
+15:6  Warning: React Hook React.useEffect has a missing dependency: 'wasRecording'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/[spaceName]/page.tsx
+69:6  Warning: React Hook React.useEffect has missing dependencies: 'params.spaceName' and 'router'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+74:6  Warning: React Hook React.useEffect has a missing dependency: 'checkAndFetchByStored'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/dashboard/components/DashboardLicense.tsx
+92:6  Warning: React Hook useEffect has missing dependencies: 'getConfig' and 'validLicense'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+106:6  Warning: React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+117:6  Warning: React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+401:9  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+401:9  Warning: img elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+
+./app/dashboard/components/DashboardLicenseManage.tsx
+189:6  Warning: React Hook useEffect has a missing dependency: 'fetchLicenses'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/dashboard/page.tsx
+512:6  Warning: React Hook useEffect has missing dependencies: 'fetchAllData' and 'getConf'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/apps/flot.tsx
+179:8  Warning: React Hook useMemo has an unnecessary dependency: 'window.innerWidth'. Either exclude it or remove the dependency array. Outer scope values like 'window.innerWidth' aren't valid dependencies because mutating them doesn't re-render the component.  react-hooks/exhaustive-deps
+226:8  Warning: React Hook useEffect has a missing dependency: 'getRemoteAICutAnalysisRes'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+276:8  Warning: React Hook useEffect has a missing dependency: 'fetchTodo'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+816:8  Warning: React Hook useMemo has missing dependencies: 'appData.countdown', 'appData.timer', 'appData.todo', 'apps', 'createItems', 'setSelfCountdownData', 'setSelfTimerData', and 'setSelfTodoData'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/apps/todo_list.tsx
+217:6  Warning: React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/chat/chat.tsx
+68:8  Warning: React Hook React.useMemo has a missing dependency: 'spaceInfo.participants'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+341:8  Warning: React Hook React.useMemo has missing dependencies: 'downloadFile' and 'isLocal'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+663:21  Warning: Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images.  jsx-a11y/alt-text
+
+./app/pages/chat/link_preview.tsx
+108:15  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+115:19  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./app/pages/controls/bar.tsx
+163:8  Warning: React Hook React.useEffect has an unnecessary dependency: 'controlLeftRef.current'. Either exclude it or remove the dependency array. Mutable values like 'controlLeftRef.current' aren't valid dependencies because mutating them doesn't re-render the component.  react-hooks/exhaustive-deps
+282:8  Warning: React Hook React.useMemo has a missing dependency: 'spaceInfo'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/channel.tsx
+303:8  Warning: React Hook useEffect has missing dependencies: 'agreeJoinRoom', 'messageApi', and 't'. Either include them or remove the dependency array. Outer scope values like 'socket' aren't valid dependencies because mutating them doesn't re-render the component.  react-hooks/exhaustive-deps
+764:8  Warning: React Hook useMemo has missing dependencies: 'setUserStatus', 'showFlotApp', 'space', and 'updateSettings'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+801:7  Warning: React Hook useCallback has missing dependencies: 'setUserStatus', 'showFlotApp', and 'updateSettings'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+942:8  Warning: React Hook useMemo has missing dependencies: 'addIntoRoom', 'isMobile', 'shareRoomToClipboard', 'space.name', 'subContextItems', 'subStyle', and 't'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+1052:8  Warning: React Hook useMemo has missing dependencies: 'isMobile', 'joinMainRoom', 'panelStyle', 't', and 'token.colorBgContainer'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/hooks/use-ai-cut.ts
+145:6  Warning: React Hook useCallback has an unnecessary dependency: 'space'. Either exclude it or remove the dependency array.  react-hooks/exhaustive-deps
+165:6  Warning: React Hook useEffect has missing dependencies: 'settings.ai.cut.freq', 'startOrStopAICutAnalysis', and 'uState.ai.cut'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/hooks/use-controls-chat.tsx
+16:6  Warning: React Hook useCallback has a missing dependency: 'setChatOpen'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+30:5  Warning: React Hook useCallback has a missing dependency: 'sendingFile'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/hooks/use-controls-record.ts
+61:6  Warning: React Hook useCallback has an unnecessary dependency: 'isManager'. Either exclude it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/selects/audio_select.tsx
+37:6  Warning: React Hook useEffect has a missing dependency: 'active_audio'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/selects/status_select.tsx
+49:6  Warning: React Hook useEffect has a missing dependency: 'active'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/selects/video_select.tsx
+43:6  Warning: React Hook useEffect has a missing dependency: 'activeVideo'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/settings/auth.tsx
+103:6  Warning: React Hook useMemo has a missing dependency: 'renderSwitch'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/settings/conf.tsx
+74:6  Warning: React Hook useEffect has a missing dependency: 'getRTCConf'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/settings/general.tsx
+47:6  Warning: React Hook useEffect has a missing dependency: 't'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/settings/license.tsx
+84:6  Warning: React Hook useEffect has a missing dependency: 'validRoomLicense'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/settings/virtual.tsx
+79:8  Warning: React Hook useEffect has a missing dependency: 'setVideoBlur'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+87:8  Warning: React Hook useEffect has a missing dependency: 'setEnabled'. Either include it or remove the dependency array. If 'setEnabled' changes too often, find the parent component that defines it and wrap that definition in useCallback.  react-hooks/exhaustive-deps
+97:8  Warning: React Hook useEffect has missing dependencies: 'modelRole', 'reloadVirtual', and 'setCompare'. Either include them or remove the dependency array. If 'setCompare' changes too often, find the parent component that defines it and wrap that definition in useCallback.  react-hooks/exhaustive-deps
+203:23  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+247:21  Warning: Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+./app/pages/controls/toggles/chat_toggle.tsx
+34:6  Warning: React Hook useMemo has a missing dependency: 'showText'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/toggles/more_button.tsx
+65:6  Warning: React Hook useMemo has a missing dependency: 'showText'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+155:6  Warning: React Hook useMemo has missing dependencies: 'hasRoomLicense' and 'isDot'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/toggles/setting_toggle.tsx
+18:6  Warning: React Hook useMemo has a missing dependency: 'showText'. Either include it or remove the dependency array. Outer scope values like 'window.innerWidth' aren't valid dependencies because mutating them doesn't re-render the component.  react-hooks/exhaustive-deps
+
+./app/pages/controls/video_container.tsx
+747:8  Warning: React Hook useEffect has missing dependencies: 'clearSettings', 'fetchPlatformData', 'fetchSettings', 'fromVocespace', 'layoutContext.pin', 'messageApi', 'noteApi', 'roomEnter', 'setNoteStateForAICutService', 'settings.managers.length', 'settings.ownerId', 'settings.participants', 'space', 't', 'transOrSetOwnerManager', and 'updateSettings'. Either include them or remove the dependency array. Outer scope values like 'socket' aren't valid dependencies because mutating them doesn't re-render the component.  react-hooks/exhaustive-deps
+807:8  Warning: React Hook useCallback has missing dependencies: 'selfRoom' and 'space.localParticipant.identity'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+826:8  Warning: React Hook useEffect has a missing dependency: 'fetchSettings'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+833:8  Warning: React Hook useLayoutEffect has a missing dependency: 'fetchSettings'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+923:8  Warning: React Hook useMemo has a missing dependency: 'focusTrack'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+962:8  Warning: React Hook React.useEffect has missing dependencies: 'focusTrack', 'layoutContext.pin', 'screenShareTracks', and 'setIsFocus'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+963:7  Warning: React Hook React.useEffect has a complex expression in the dependency array. Extract it to a separate variable so it can be statically checked.  react-hooks/exhaustive-deps
+1116:8  Warning: React Hook useMemo has a missing dependency: 'fetchSettings'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+1175:7  Warning: React Hook useCallback has unnecessary dependencies: 'isFullScreen' and 'setIsFullScreen'. Either exclude them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/widgets/raise.tsx
+146:6  Warning: React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/widgets/reaction.tsx
+35:6  Warning: React Hook useMemo has a missing dependency: 'showText'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+66:6  Warning: React Hook useMemo has missing dependencies: 'localParticipant.identity', 'localParticipant?.name', 'participant?.name', and 'participant?.socketId'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/widgets/tile_action_pin.tsx
+45:6  Warning: React Hook useMemo has missing dependencies: 'localParticipant.identity' and 'spaceInfo.participants'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/controls/widgets/work.tsx
+70:9  Warning: The 'startOrStopWork' function makes the dependencies of useCallback Hook (at line 175) change on every render. To fix this, wrap the definition of 'startOrStopWork' in its own useCallback() Hook.  react-hooks/exhaustive-deps
+235:6  Warning: React Hook useMemo has a missing dependency: 'showText'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/layout/hooks.ts
+10:6  Warning: React Hook React.useLayoutEffect has a missing dependency: 'target'. Either include it or remove the dependency array. Mutable values like 'target.current' aren't valid dependencies because mutating them doesn't re-render the component.  react-hooks/exhaustive-deps
+45:6  Warning: React Hook React.useLayoutEffect has a missing dependency: 'target'. Either include it or remove the dependency array. Mutable values like 'target.current' aren't valid dependencies because mutating them doesn't re-render the component.  react-hooks/exhaustive-deps
+
+./app/pages/participant/avo.tsx
+794:6  Warning: React Hook React.useEffect has missing dependencies: 'isFocused' and 'params'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/participant/effect.tsx
+497:5  Warning: React Hook React.useCallback has a missing dependency: 'overlayId'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+537:5  Warning: React Hook React.useCallback has an unnecessary dependency: 'saveLocal'. Either exclude it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/participant/menu.tsx
+96:6  Warning: React Hook useMemo has a missing dependency: 'spaceInfo'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+237:6  Warning: React Hook useEffect has a missing dependency: 'checkEarMonitorSupported'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+575:6  Warning: React Hook useMemo has missing dependencies: 'handleAdjustment', 'isScreenShare', 'platUser', and 't'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+889:6  Warning: React Hook useMemo has missing dependencies: 'handleAdjustment', 'isScreenShare', and 't'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/participant/mini.tsx
+100:8  Warning: React Hook useEffect has a missing dependency: 'setVideoBlur'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/participant/player.tsx
+140:6  Warning: React Hook useMemo has missing dependencies: 'item.ownerId' and 'spaceInfo.participants'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/participant/status_info.tsx
+151:6  Warning: React Hook useMemo has missing dependencies: 'disabled' and 'toSettings'. Either include them or remove the dependency array. If 'toSettings' changes too often, find the parent component that defines it and wrap that definition in useCallback.  react-hooks/exhaustive-deps
+191:6  Warning: React Hook useMemo has missing dependencies: 'toRenameSettings', 'trackReference.participant.identity', and 'username'. Either include them or remove the dependency array. If 'toRenameSettings' changes too often, find the parent component that defines it and wrap that definition in useCallback.  react-hooks/exhaustive-deps
+
+./app/pages/participant/tile.tsx
+281:8  Warning: React Hook useEffect has missing dependencies: 'setVideoBlur', 'settings.participants', and 'trackReference.source'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+567:8  Warning: React Hook React.useMemo has missing dependencies: 'autoManageSubscription', 'handleSubscribe', 'localCursorColor', 'localParticipant.identity', 'messageApi', and 'space.name'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/pre_join/pre_join.tsx
+104:6  Warning: React Hook React.useEffect has a missing dependency: 'username'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+246:6  Warning: React Hook useEffect has missing dependencies: 'audioEnabled' and 'videoEnabled'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+272:6  Warning: React Hook React.useMemo has an unnecessary dependency: 'hasCameraPermission'. Either exclude it or remove the dependency array.  react-hooks/exhaustive-deps
+445:6  Warning: React Hook useEffect has a missing dependency: 'setVideoBlur'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/pre_join/tab.tsx
+88:6  Warning: React Hook useEffect has a missing dependency: 'router'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/pages/virtual_role/virtual_role.tsx
+466:6  Warning: React Hook useEffect has missing dependencies: 'cState.detectorReady', 'cleanupResources', and 'initPixiAndModel'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+491:6  Warning: React Hook useEffect has missing dependencies: 'setupVirtualCamera' and 'trackRef'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./app/recording/table.tsx
+290:6  Warning: React Hook useMemo has missing dependencies: 'copyDownloadLink', 'currentRoom', 'handleDelete', 'handleDownload', and 'loading'. Either include them or remove the dependency array.  react-hooks/exhaustive-deps
+
+./lib/hooks/video-blur.ts
+63:6  Warning: React Hook useEffect has a missing dependency: 'videoRef'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+./lib/i18n/en_US.ts
+1:1  Warning: Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+
+./lib/i18n/i18n.tsx
+55:6  Warning: React Hook useEffect has a missing dependency: 'initialLocale'. Either include it or remove the dependency array. If 'setLocale' needs the current value of 'initialLocale', you can also switch to useReducer instead of useState and read 'initialLocale' in the reducer.  react-hooks/exhaustive-deps
+
+./lib/i18n/ru_RU.ts
+1:1  Warning: Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+
+./lib/i18n/zh_CN.ts
+1:1  Warning: Assign object to a variable before exporting as module default  import/no-anonymous-default-export
+
+./lib/livekit/device-selector.tsx
+167:8  Warning: React Hook useEffect has a missing dependency: 'kind'. Either include it or remove the dependency array.  react-hooks/exhaustive-deps
+
+info  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/basic-features/eslint#disabling-rules
+   Collecting page data ...
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+    at readFileSync (node:fs:440:20)
+    at p (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/conf/route.js:1:6922)
+    at 16954 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/conf/route.js:2:134)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at 55340 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/conf/route.js:1:577)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at s (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/conf/route.js:2:224)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/conf/route.js:2:259
+    at t.X (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:1206)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/conf/route.js:2:237 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+    at readFileSync (node:fs:440:20)
+    at h (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:105:8039)
+    at 16954 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:134)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at 24126 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:1:854)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at __webpack_exec__ (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:281)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:392
+    at t.X (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:1206)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:366 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+    at readFileSync (node:fs:440:20)
+    at n (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/chunks/954.js:1:2782)
+    at 16954 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/chunks/954.js:2:134)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at 26729 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/license/route.js:1:8235)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at 33602 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/license/route.js:1:1151)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at r (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/license/route.js:243:121)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/license/route.js:243:168 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+    at readFileSync (node:fs:440:20)
+    at n (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/chunks/954.js:1:2782)
+    at 16954 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/chunks/954.js:2:134)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at 86575 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/feedback/route.js:1:1089)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at r (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/feedback/route.js:261:121)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/feedback/route.js:261:164
+    at t.X (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:1206)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/feedback/route.js:261:134 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+    at readFileSync (node:fs:440:20)
+    at h (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:105:8039)
+    at 24126 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:104:5093)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at __webpack_exec__ (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:281)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:392
+    at t.X (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:1206)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:366
+    at Object.<anonymous> (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:453)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+    at readFileSync (node:fs:440:20)
+    at p (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:1:9049)
+    at 16954 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:2:134)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at 86365 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:1:873)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at r (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:2:1183)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:2:1226
+    at t.X (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:1206)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:2:1196 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+    at readFileSync (node:fs:440:20)
+    at p (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:1:9049)
+    at 86365 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:1:992)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at r (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:2:1183)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:2:1226
+    at t.X (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:1206)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:2:1196
+    at Object.<anonymous> (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:2:1254)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+    at readFileSync (node:fs:440:20)
+    at n (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/chunks/954.js:1:2782)
+    at 92068 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/space/route.js:1:3318)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at s (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/space/route.js:139:52293)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/space/route.js:139:52344
+    at t.X (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:1206)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/space/route.js:139:52306
+    at Object.<anonymous> (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/space/route.js:139:52372)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+    at readFileSync (node:fs:440:20)
+    at p (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/conf/route.js:1:6922)
+    at 62792 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/record/route.js:1:2107)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/record/route.js:2:224)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/record/route.js:2:263
+    at t.X (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:1206)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/record/route.js:2:237
+    at Object.<anonymous> (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/record/route.js:2:291)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+}
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1110:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:472:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1432:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:113:8)
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+    at readFileSync (node:fs:440:20)
+    at l (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/s3/route.js:10:18700)
+    at 16954 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/s3/route.js:11:134)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at 74975 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/s3/route.js:10:12460)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at r (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/s3/route.js:11:224)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/s3/route.js:11:259
+    at t.X (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:1206)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/s3/route.js:11:237 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+}
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1110:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:472:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1432:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:113:8)
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1110:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:472:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1432:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:113:8)
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1110:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:472:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1432:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:113:8)
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1110:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:472:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1432:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:113:8)
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1110:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:472:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1432:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:113:8)
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1110:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:472:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1432:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:113:8)
+   Generating static pages (0/20) ...
+   Generating static pages (5/20) 
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+    at readFileSync (node:fs:440:20)
+    at h (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:105:8039)
+    at 16954 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:134)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at 24126 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:1:854)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at __webpack_exec__ (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:281)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:392
+    at t.X (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:1206)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:366 {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+    at readFileSync (node:fs:440:20)
+    at h (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:105:8039)
+    at 24126 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:104:5093)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at __webpack_exec__ (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:281)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:392
+    at t.X (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:1206)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:366
+    at Object.<anonymous> (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:106:453)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+}
+   Generating static pages (10/20) 
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+    at readFileSync (node:fs:440:20)
+    at h (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/ai/route.js:105:8039)
+    at 86365 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:1:992)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at r (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:2:1183)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:2:1226
+    at t.X (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:1206)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:2:1196
+    at Object.<anonymous> (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/connection-details/route.js:2:1254)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+}
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1110:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:472:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1432:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:113:8)
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+    at readFileSync (node:fs:440:20)
+    at l (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/s3/route.js:10:18700)
+    at 92068 (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/space/route.js:1:3318)
+    at t (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:128)
+    at s (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/space/route.js:139:52293)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/space/route.js:139:52344
+    at t.X (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/webpack-runtime.js:1:1206)
+    at /private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/space/route.js:139:52306
+    at Object.<anonymous> (/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/.next/server/app/api/space/route.js:139:52372)
+    at Module._compile (node:internal/modules/cjs/loader:1761:14) {
+  errno: -2,
+  code: 'ENOENT',
+  syscall: 'open',
+  path: '/private/var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g/vocespace.conf.json'
+}
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1110:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:472:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1432:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:113:8)
+   Generating static pages (15/20) 
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1110:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:472:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1432:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:113:8)
+ ✓ Generating static pages (20/20)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    346 B          88.5 kB
+├ ○ /_not-found                          139 B          88.3 kB
+├ ƒ /[spaceName]                         830 B           829 kB
+├ ƒ /api/ai                              0 B                0 B
+├ ƒ /api/chat                            0 B                0 B
+├ ƒ /api/conf                            0 B                0 B
+├ ƒ /api/connection-details              0 B                0 B
+├ ƒ /api/feedback                        0 B                0 B
+├ ƒ /api/files/[...slug]                 0 B                0 B
+├ ○ /api/hello                           0 B                0 B
+├ ƒ /api/license                         0 B                0 B
+├ ƒ /api/license/[value]                 0 B                0 B
+├ ƒ /api/license/domains/[value]         0 B                0 B
+├ ƒ /api/record                          0 B                0 B
+├ ƒ /api/s3                              0 B                0 B
+├ ƒ /api/space                           0 B                0 B
+├ ƒ /api/upload                          0 B                0 B
+├ ƒ /api/webhook                         0 B                0 B
+├ ○ /api/webhook/status                  0 B                0 B
+├ ○ /dashboard                           33.1 kB         878 kB
+├ ○ /new_space                           2.41 kB         315 kB
+└ ○ /recording                           1.72 kB         431 kB
++ First Load JS shared by all            88.2 kB
+  ├ chunks/1f4ff949-65ee5f307573503b.js  53.6 kB
+  ├ chunks/578-3b893ce24a3ecb0a.js       31.9 kB
+  └ other shared chunks (total)          2.63 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+
+Snapshot retained for diagnosis: /var/folders/n8/nl4jl0jn7dz2bbhrvfx8ss7h0000gn/T/vocespace-p0-build-stKH5g

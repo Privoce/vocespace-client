@@ -1,0 +1,12 @@
+Lockfile is up to date, resolution step is skipped
+Already up to date
+
+╭ Warning ─────────────────────────────────────────────────────────────────────╮
+│                                                                              │
+│   Ignored build scripts: @parcel/watcher@2.5.1, canvas@3.1.2,                │
+│   cbor-extract@2.2.2, esbuild@0.25.12, sharp@0.34.5.                         │
+│   Run "pnpm approve-builds" to pick which dependencies should be allowed     │
+│   to run scripts.                                                            │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+Done in 324ms using pnpm v10.27.0

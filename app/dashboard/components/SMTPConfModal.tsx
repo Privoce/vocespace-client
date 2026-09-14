@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Input, InputNumber, Modal, Switch } from 'antd';
-import { SMTPConf } from '@/lib/std/conf';
+import { SMTPConf } from '@/features/settings/config';
 import { useI18n } from '@/lib/i18n/i18n';
 
 interface SMTPConfModalProps {

@@ -1,0 +1,9 @@
+{
+  "command": [
+    "pnpm",
+    "build"
+  ],
+  "exitCode": 0,
+  "seconds": 34.59,
+  "configuration": "isolated tracked-source snapshot; no private env/config/upload state"
+}

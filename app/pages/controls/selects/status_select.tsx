@@ -1,8 +1,8 @@
 import { Select, SelectProps } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
 import { Trans, useI18n } from '@/lib/i18n/i18n';
-import { UserDefineStatus, UserStatus } from '@/lib/std';
-import { useRoomStore, useUserStore } from '@/lib/store';
+import { UserDefineStatus, UserStatus } from '@/features/room/model';
+import { useRoomStore, useUserStore } from '@/features/stores';
 import { SvgResource, SvgType } from '@/app/resources/svg';
 import styles from '@/styles/controls.module.scss';
 import { BaseOptionType } from 'antd/es/select';

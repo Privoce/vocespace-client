@@ -2,13 +2,14 @@ import { Button, List, Tabs, TabsProps } from 'antd';
 import styles from '@/styles/controls.module.scss';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { MessageInstance } from 'antd/es/message/interface';
-import { loadVideo, useVideoBlur } from '@/lib/std/device';
-import { ModelBg, ModelRole } from '@/lib/std/virtual';
+import { loadVideo } from '@/lib/browser/media';
+import { useVideoBlur } from '@/lib/hooks/video-blur';
+import { ModelBg, ModelRole } from '@/features/avatars/model';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import VirtualRoleCanvas from '@/app/pages/virtual_role/live2d';
-import { src } from '@/lib/std';
-import { useRoomStore } from '@/lib/store';
+import { src } from '@/lib/http/paths';
+import { useRoomStore } from '@/features/stores';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { LocalParticipant } from 'livekit-client';
 import { TabItem } from './tab_item';
@@ -326,3 +327,4 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
     );
   },
 );
+VirtualSettings.displayName = 'VirtualSettings';

@@ -3,7 +3,7 @@
 import { Input } from 'antd';
 import { useI18n } from '@/lib/i18n/i18n';
 import { AvoConfigPanel } from '../../participant/avo_conf';
-import type { ParticipantAvoParams } from '@/lib/std/space';
+import type { ParticipantAvoParams } from '@/features/spaces/model';
 import styles from '@/styles/controls.module.scss';
 
 export interface ProfileSettingsProps {

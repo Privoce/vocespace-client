@@ -12,29 +12,31 @@ import {  Drawer, Input, message, Modal, notification, Popover } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
-import { useUserStore, useRoomStore } from '@/lib/store';
+import { useUserStore, useRoomStore } from '@/features/stores';
 import { Settings, TabKey } from './settings/settings';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
-import { ReadableConf } from '@/lib/std/conf';
-import { isMobile as is_mobile, isSpaceManager, UserStatus } from '@/lib/std';
+import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/features/spaces/model';
+import { ReadableConf } from '@/features/settings/config';
+import { isMobile as is_mobile } from '@/lib/browser/environment';
+import { isSpaceManager, UserStatus } from '@/features/room/model';
 
 import { ChatToggle } from './toggles/chat_toggle';
 import { MoreButton } from './toggles/more_button';
-import { ControlType, MediaDeviceKind, WsBase, WsControlParticipant, WsTo } from '@/lib/std/device';
+import { ControlType, WsBase, WsControlParticipant, WsTo } from '@/features/room/protocol';
+import { MediaDeviceKind } from '@/lib/livekit/devices';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from './drawer_tools';
 import { ParticipantManage } from '../participant/manage';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
-import { AICutService } from '@/lib/ai/cut';
+import { AICutService } from '@/features/ai/cut';
 import { useWork, Work, WorkModal } from './widgets/work';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/ai';
-import { DEFAULT_WINDOW_ADJUST_WIDTH } from '@/lib/std/window';
-import { usePlatformUserInfo } from '@/lib/hooks/platform';
-import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
-import { DevicesSelector } from '@/app/api/devices/device_selector';
+import { DEFAULT_WINDOW_ADJUST_WIDTH } from '@/lib/browser/window';
+import { usePlatformUserInfo } from '@/features/platform/hooks';
+import { markExplicitLeaveIntent } from '@/features/room/leave-intent';
+import { DevicesSelector } from '@/lib/livekit/device-selector';
 import { useControlsSettings, useControlsRecord, useControlsChat } from './hooks/index';
-import { isWeChatBrowser } from '@/lib/std';
+import { isWeChatBrowser } from '@/lib/browser/environment';
 
 
 /** @public */
@@ -792,6 +794,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
     );
   },
 );
+Controls.displayName = 'Controls';
 
 export function useMediaQuery(query: string): boolean {
   const getMatches = (query: string): boolean => {

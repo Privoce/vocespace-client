@@ -5,7 +5,7 @@ import { SvgResource } from '@/app/resources/svg';
 import { ParticipantList } from './list';
 import { Participant, Room, Track } from 'livekit-client';
 import styles from '@/styles/controls.module.scss';
-import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { ParticipantSettings, SpaceInfo } from '@/features/spaces/model';
 import { TrackMutedIndicator } from '@livekit/components-react';
 import React from 'react';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
@@ -151,12 +151,11 @@ export function ParticipantManage({
                           onOpenChange={(open) => {
                             optOpen(open, space.getParticipantByIdentity(item[0])!);
                           }}
-                          children={
-                            <Button shape="circle" type="text">
+                        >
+                          <Button shape="circle" type="text">
                               <SvgResource type="more2" svgSize={16}></SvgResource>
                             </Button>
-                          }
-                        ></ControlRKeyMenu>
+                        </ControlRKeyMenu>
                       )}
                     </div>
                   )}

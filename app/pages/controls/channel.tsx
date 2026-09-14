@@ -43,28 +43,23 @@ import {
 import TextArea from 'antd/es/input/TextArea';
 import { TrackReferenceOrPlaceholder } from '@livekit/components-react';
 import { MessageInstance } from 'antd/es/message/interface';
-import { ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { ChildRoom, ParticipantSettings, SpaceInfo } from '@/features/spaces/model';
 import { ParticipantTileMini } from '../participant/mini';
 import { GLayout } from '../layout/grid';
 import { CheckboxGroupProps } from 'antd/es/checkbox';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { WsJoinRoom, WsRemove, WsSender } from '@/lib/std/device';
-import { api } from '@/lib/api';
-import { UpdateRoomParam, UpdateRoomType } from '@/lib/api/channel';
+import { WsJoinRoom, WsRemove, WsSender } from '@/features/room/protocol';
+import { api } from '@/features/api';
+import { UpdateRoomParam, UpdateRoomType } from '@/features/channels/api';
 import { Room } from 'livekit-client';
-import {
-  ChildRoomEnter,
-  CreateSpaceError,
-  encodeChildRoomEnter,
-  FileType,
-  isMobile as is_mobile,
-  UserStatus,
-} from '@/lib/std';
+import { ChildRoomEnter, CreateSpaceError, encodeChildRoomEnter, UserStatus } from '@/features/room/model';
+import { FileType } from '@/lib/components/props';
+import { isMobile as is_mobile } from '@/lib/browser/environment';
 import { DEFAULT_DRAWER_PROP } from './drawer_tools';
-import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
-import { audio } from '@/lib/audio';
-import { exportRBAC } from '@/lib/hooks/platform';
-import { useSpaceStore } from '@/lib/store';
+import { ReadableConf, VocespaceConfig } from '@/features/settings/config';
+import { audio } from '@/features/controls/audio';
+import { exportRBAC } from '@/features/platform/hooks';
+import { useSpaceStore } from '@/features/stores';
 
 interface ChannelProps {
   // roomName: string;
@@ -1447,3 +1442,4 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
     }
   },
 );
+Channel.displayName = 'Channel';

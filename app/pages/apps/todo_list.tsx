@@ -15,12 +15,12 @@ import {
 import { useMemo, useState } from 'react';
 import styles from '@/styles/apps.module.scss';
 import { MessageInstance } from 'antd/es/message/interface';
-import { AppAuth, sortTodos, SpaceTodo, todayTimeStamp, TodoItem } from '@/lib/std/space';
+import { AppAuth, sortTodos, SpaceTodo, todayTimeStamp, TodoItem } from '@/features/spaces/model';
 import { useLocalParticipant } from '@livekit/components-react';
 import { CardSize } from 'antd/es/card/Card';
 import dayjs, { extend } from 'dayjs';
-import { api } from '@/lib/api';
-import { WsBase } from '@/lib/std/device';
+import { api } from '@/features/api';
+import { WsBase } from '@/features/room/protocol';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 
 export interface AppTodoProps {

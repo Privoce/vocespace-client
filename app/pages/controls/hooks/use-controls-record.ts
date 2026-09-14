@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from 'react';
 import type { Room } from 'livekit-client';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 import { message } from 'antd';
 
 interface UseControlsRecordOptions {

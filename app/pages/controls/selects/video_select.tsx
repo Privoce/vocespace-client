@@ -1,5 +1,5 @@
 import { Select } from 'antd';
-import { MediaDeviceKind } from '@/lib/std/device';
+import { MediaDeviceKind } from '@/lib/livekit/devices';
 import { useMediaDevices } from '@livekit/components-react';
 import { useEffect, useState } from 'react';
 import { SelectPrefix } from './select_prefix';

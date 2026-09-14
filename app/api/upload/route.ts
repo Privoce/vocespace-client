@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { ulid } from 'ulid';
-import { HandleFileSystemBody, HandleTilePlayerFileBody } from '@/lib/api/chat';
+import { HandleFileSystemBody, HandleTilePlayerFileBody } from '@/features/chat/api';
 import fs from 'fs/promises';
-import { getConfig } from '@/app/api/conf/conf';
+import { getConfig } from '@/server/config';
 
 const uploadDirPath = (roomName: string) => path.join(process.cwd(), 'uploads', roomName);
 

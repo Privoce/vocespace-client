@@ -1,4 +1,6 @@
-import { isMobile, src, UserDefineStatus, UserStatus } from '@/lib/std';
+import { isMobile } from '@/lib/browser/environment';
+import { src } from '@/lib/http/paths';
+import { UserDefineStatus, UserStatus } from '@/features/room/model';
 import {
   ConnectionStateToast,
   isTrackReference,
@@ -33,38 +35,28 @@ import React, {
 } from 'react';
 import { ControlBarExport, Controls } from './bar';
 import { ParticipantItem } from '../participant/tile';
-import { useSpaceInfo } from '@/lib/hooks/space';
+import { useSpaceInfo } from '@/features/spaces/use-space-info';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { useI18n } from '@/lib/i18n/i18n';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { useUserStore, useLicenseStore, useRoomStore, useSpaceStore } from '@/lib/store';
+import { useUserStore, useLicenseStore, useRoomStore, useSpaceStore } from '@/features/stores';
 import { useUserStatus, useRoomLicense, useRoomSubscription } from './hooks/index';
 import { useAICutService } from './hooks/use-ai-cut';
-import {
-  ControlType,
-  WsBase,
-  WsControlParticipant,
-  WsInviteDevice,
-  WsParticipant,
-  WsSender,
-  WsTilePlayer,
-  WsTo,
-  WsWave,
-} from '@/lib/std/device';
+import { ControlType, WsBase, WsControlParticipant, WsInviteDevice, WsParticipant, WsSender, WsTilePlayer, WsTo, WsWave } from '@/features/room/protocol';
 import { Button } from 'antd';
-import { ChatMsgItem } from '@/lib/std/chat';
+import { ChatMsgItem } from '@/features/chat/types';
 import { Channel, ChannelExports } from './channel';
-import { AppAuth, PARTICIPANT_SETTINGS_KEY } from '@/lib/std/space';
+import { AppAuth, PARTICIPANT_SETTINGS_KEY } from '@/features/spaces/model';
 import { FlotButton, FlotLayout, FlotLayoutExports } from '../apps/flot';
-import { api } from '@/lib/api';
-import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/lib/std/license';
-import { ReadableConf } from '@/lib/std/conf';
+import { api } from '@/features/api';
+import { analyzeLicense, getLicensePersonLimit, validLicenseDomain } from '@/features/license/model';
+import { ReadableConf } from '@/features/settings/config';
 import { acceptRaise, RaiseHandler, rejectRaise } from './widgets/raise';
-import { audio } from '@/lib/audio';
+import { audio } from '@/features/controls/audio';
 import { useFullScreenBtn } from './widgets/full_screen';
-import { exportRBAC, usePlatformUserInfo, usePlatformUserInfoCheap } from '@/lib/hooks/platform';
-import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
+import { exportRBAC, usePlatformUserInfo, getPlatformUserInfo } from '@/features/platform/hooks';
+import { markExplicitLeaveIntent } from '@/features/room/leave-intent';
 import { TilePlayer, TilePlayerAdd, TilePlayerItem } from '../participant/player';
 import { LayoutEntity, UnifiedLayout, useReplaceLivekitTrack } from '../layout/unified';
 import { PaginationControl, PaginationIndicator } from '../layout/cover';
@@ -1427,6 +1419,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     );
   },
 );
+VideoContainer.displayName = 'VideoContainer';
 
 export function isEqualTrackRef(
   a?: TrackReferenceOrPlaceholder,

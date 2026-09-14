@@ -3,15 +3,15 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Menu, MenuProps, Typography, message } from 'antd';
 import styles from '@/styles/dashboard.module.scss';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 import { useVoceSpaceConf } from '../pages/controls/settings/conf';
-import { ParticipantSettings, SpaceDateRecords, SpaceInfo, SpaceInfoMap } from '@/lib/std/space';
+import { ParticipantSettings, SpaceDateRecords, SpaceInfo, SpaceInfoMap } from '@/features/spaces/model';
 import { useI18n } from '@/lib/i18n/i18n';
 import { LangSelect } from '../pages/controls/selects/lang_select';
-import { usePlatformUserInfoCheap } from '@/lib/hooks/platform';
+import { getPlatformUserInfo } from '@/features/platform/hooks';
 import { socket } from '../[spaceName]/PageClientImpl';
-import { WsBase } from '@/lib/std/device';
-import { CreateSpaceStrategy, DEFAULT_VOCESPACE_CONFIG, HyperbeamConf, SMTPConf, VocespaceConfig } from '@/lib/std/conf';
+import { WsBase } from '@/features/room/protocol';
+import { CreateSpaceStrategy, DEFAULT_VOCESPACE_CONFIG, HyperbeamConf, SMTPConf, VocespaceConfig } from '@/features/settings/config';
 import {
   DashboardStats,
   DashboardActions,
@@ -278,7 +278,7 @@ export default function Dashboard() {
                   virtualEnabled: participant.virtual?.enabled || false,
                   during: duringDisplay,
                   online: participant.online,
-                  isAuth: usePlatformUserInfoCheap({ user: participant }).isAuth,
+                  isAuth: getPlatformUserInfo({ user: participant }).isAuth,
                 });
               },
             );

@@ -2,8 +2,8 @@
 
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
-import { PlatformUser, TokenResult } from '@/lib/std';
-import { VOCESPACE_PLATFORM_USER } from '@/lib/std/space';
+import { PlatformUser, TokenResult } from '@/features/room/model';
+import { VOCESPACE_PLATFORM_USER } from '@/features/spaces/model';
 import styles from '@/styles/pre_join.module.scss';
 import { MailOutlined, UserOutlined } from '@ant-design/icons';
 import { Avatar, Button, Divider, Dropdown } from 'antd';

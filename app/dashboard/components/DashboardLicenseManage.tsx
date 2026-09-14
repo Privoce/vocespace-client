@@ -37,7 +37,7 @@ import {
 } from '@ant-design/icons';
 import TextArea from 'antd/es/input/TextArea';
 import { useI18n } from '@/lib/i18n/i18n';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 import { fmtDate, LicenseDetailCard } from './LicenseDetailCard';
 
 const { Title } = Typography;

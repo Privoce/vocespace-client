@@ -3,10 +3,10 @@ import { ItemType } from 'antd/es/menu/interface';
 import { useMemo } from 'react';
 import styles from '@/styles/controls.module.scss';
 import { SvgResource } from '@/app/resources/svg';
-import { useRoomStore, useUserStore } from '@/lib/store';
+import { useRoomStore, useUserStore } from '@/features/stores';
 import { Trans } from '@/lib/i18n/i18n';
-import { UserStatus } from '@/lib/std';
-import { SpaceInfo } from '@/lib/std/space';
+import { UserStatus } from '@/features/room/model';
+import { SpaceInfo } from '@/features/spaces/model';
 import { TrackReferenceOrPlaceholder } from '@livekit/components-react';
 
 export interface StatusInfoProps {

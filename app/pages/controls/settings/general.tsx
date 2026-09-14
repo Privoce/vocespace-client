@@ -4,13 +4,13 @@ import { LangSelect } from '../selects/lang_select';
 import { useI18n } from '@/lib/i18n/i18n';
 import { LocalParticipant } from 'livekit-client';
 import { MessageInstance } from 'antd/es/message/interface';
-import { TransIfSystemStatus, UserStatus } from '@/lib/std';
+import { TransIfSystemStatus, UserStatus } from '@/features/room/model';
 import { useEffect, useRef, useState } from 'react';
-import { api } from '@/lib/api';
-import { AllowGuest, SpaceInfo } from '@/lib/std/space';
+import { api } from '@/features/api';
+import { AllowGuest, SpaceInfo } from '@/features/spaces/model';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { WsBase } from '@/lib/std/device';
-import { DefineUserStatusResponse } from '@/lib/api/space';
+import { WsBase } from '@/features/room/protocol';
+import { DefineUserStatusResponse } from '@/features/spaces/api';
 export interface GeneralSettingsProps {
   space: string;
   localParticipant: LocalParticipant;

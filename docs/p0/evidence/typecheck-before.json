@@ -1,0 +1,12 @@
+{
+  "command": [
+    "pnpm",
+    "exec",
+    "tsc",
+    "--noEmit",
+    "--incremental",
+    "false"
+  ],
+  "exitCode": 0,
+  "seconds": 6.86
+}

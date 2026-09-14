@@ -1,15 +1,15 @@
 import { useI18n } from '@/lib/i18n/i18n';
-import { ViewAdjusts } from '@/lib/std/window';
+import { ViewAdjusts } from '@/lib/browser/window';
 import { SmileOutlined } from '@ant-design/icons';
 import { Button, Popover } from 'antd';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
 import { useMemo } from 'react';
 import { RaiseKeeper } from './raise';
-import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { ParticipantSettings, SpaceInfo } from '@/features/spaces/model';
 import { useLocalParticipant } from '@livekit/components-react';
-import { WsBase, WsTo } from '@/lib/std/device';
+import { WsBase, WsTo } from '@/features/room/protocol';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { audio } from '@/lib/audio';
+import { audio } from '@/features/controls/audio';
 
 export interface ReactionProps {
   showText?: boolean;

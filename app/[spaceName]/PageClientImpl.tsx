@@ -2,12 +2,12 @@
 
 import BeforeUnloadGuard from '@/app/BeforeUnloadGuard';
 import { VideoContainer, VideoContainerExports } from '@/app/pages/controls/video_container';
-import { decodePassphrase } from '@/lib/client_utils';
+import { decodePassphrase } from '@/lib/utils/room-id';
 // import { DebugMode } from '@/lib/Debug';
 import { useI18n } from '@/lib/i18n/i18n';
-import { consumeExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
+import { consumeExplicitLeaveIntent } from '@/features/room/leave-intent';
 import { RecordingIndicator } from './RecordingIndicator';
-import { ConnectionDetails } from '@/lib/types';
+import { ConnectionDetails } from '@/lib/livekit/connection';
 import {
   formatChatMessageLinks,
   LiveKitRoom,
@@ -28,23 +28,23 @@ import {
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { PreJoin } from '@/app/pages/pre_join/pre_join';
-import { PlatformUser, SearchParams } from '@/lib/std';
+import { PlatformUser, SearchParams } from '@/features/room/model';
 import io from 'socket.io-client';
 import {
   PARTICIPANT_SETTINGS_KEY,
   ParticipantSettings,
   VOCESPACE_PLATFORM_USER,
-} from '@/lib/std/space';
-import { api } from '@/lib/api';
-import { WsBase, WsTo } from '@/lib/std/device';
+} from '@/features/spaces/model';
+import { api } from '@/features/api';
+import { WsBase, WsTo } from '@/features/room/protocol';
 import {
   createRTCQulity,
   DEFAULT_VOCESPACE_CONFIG,
   ReadableConf,
   VocespaceConfig,
-} from '@/lib/std/conf';
-import { useUserStore } from '@/lib/store/user';
-import { useRoomStore } from '@/lib/store/room';
+} from '@/features/settings/config';
+import { useUserStore } from '@/features/settings/user-store';
+import { useRoomStore } from '@/features/room/store';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
 
@@ -57,16 +57,16 @@ export const socket = io({
   transports: ['websocket', 'polling'],
 });
 
-export { useUserStore as userState } from '@/lib/store/user';
-export { useLicenseStore as licenseState } from '@/lib/store/license';
-export type { LicenseWithAnalysis } from '@/lib/store/license';
+export { useUserStore as userState } from '@/features/settings/user-store';
+export { useLicenseStore as licenseState } from '@/features/license/store';
+export type { LicenseWithAnalysis } from '@/features/license/store';
 export {
   useRoomStore as roomStatusState,
   useRoomStore as virtualMaskState,
   useRoomStore as chatMsgState,
   useRoomStore as RemoteTargetApp,
-} from '@/lib/store/room';
-export { useSpaceStore as roomIdTmpState } from '@/lib/store/space';
+} from '@/features/room/store';
+export { useSpaceStore as roomIdTmpState } from '@/features/spaces/store';
 
 export interface PageClientImplProps extends SearchParams {
   spaceName: string;
@@ -609,7 +609,7 @@ function VideoConferenceComponent(props: {
                   <p>
                     <strong>{t('msg.request.device.permission.how')}</strong>
                   </p>
-                  {renderBrowserSpecificInstructions()}
+                  <BrowserSpecificInstructions />
                   <p>{t('msg.request.device.permission.changed_with_reload')}</p>
                 </div>
               ) : null}
@@ -626,7 +626,7 @@ function VideoConferenceComponent(props: {
   );
 }
 
-const renderBrowserSpecificInstructions = () => {
+const BrowserSpecificInstructions = () => {
   const { t } = useI18n();
   // 检测浏览器类型
   const isChrome = navigator.userAgent.indexOf('Chrome') > -1;

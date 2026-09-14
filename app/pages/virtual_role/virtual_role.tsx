@@ -6,11 +6,11 @@ import { MotionSync } from 'live2d-motionsync/stream';
 // import * as faceapi from 'face-api.js';
 import styles from '@/styles/virtual_role.module.scss';
 import { VirtualRoleProps } from './live2d';
-import { ModelRole } from '@/lib/std/virtual';
-import { src } from '@/lib/std';
+import { ModelRole } from '@/features/avatars/model';
+import { src } from '@/lib/http/paths';
 import { isTrackReference, useLocalParticipant } from '@livekit/components-react';
 import { LocalTrack, LocalTrackPublication, Track } from 'livekit-client';
-import { loadVideo } from '@/lib/std/device';
+import { loadVideo } from '@/lib/browser/media';
 import { useI18n } from '@/lib/i18n/i18n';
 
 export const Live2DComponent = ({

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Input, Button, Radio, message } from 'antd';
-import { CreateSpaceStrategy } from '@/lib/std/conf';
+import { CreateSpaceStrategy } from '@/features/settings/config';
 import { useI18n } from '@/lib/i18n/i18n';
 
 interface CreateSpaceStrategyModalProps {

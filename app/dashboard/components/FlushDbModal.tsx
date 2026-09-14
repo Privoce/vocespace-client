@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Input } from 'antd';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 import { useI18n } from '@/lib/i18n/i18n';
 
 interface FlushDbModalProps {

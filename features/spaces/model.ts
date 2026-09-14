@@ -1,0 +1,871 @@
+import { AuthType, IdentityType, UserStatus } from '@/features/room/model';
+import { ModelBg, ModelRole } from '@/features/avatars/model';
+import { Extraction } from '@/features/ai/types';
+import dayjs, { Dayjs } from 'dayjs';
+import utc from 'dayjs/plugin/utc';
+dayjs.extend(utc);
+/**
+ * Child room information
+ */
+export interface ChildRoom {
+  /**
+   * room name
+   */
+  name: string;
+  /**
+   * 参与者ID
+   * participantId
+   */
+  participants: string[];
+  /**
+   * room owner ID
+   */
+  ownerId: string;
+  /**
+   * is private room or not
+   */
+  isPrivate: boolean;
+}
+
+export interface AICutParticipantConf {
+  enabled: boolean;
+  /**
+   * 是否需要在任务栏显示分析时间以及需要进行时间统计
+   */
+  spent: boolean;
+  /**
+   * 是否要结合待办事项进行分析
+   */
+  todo: boolean;
+  /**
+   * 提取内容配置的精细度
+   */
+  extraction: Extraction;
+  /**
+   * AI截图保存到云端的模糊度，使用布尔值表示，false表示不模糊，true表示模糊，模糊只应用5%的模糊效果
+   * 在看板上，会使用blur值来模糊图片，自己可以下载清晰图片，但别人使用看板查看时会被模糊
+   * 在云端则直接保存模糊后的图片
+   */
+  blur: boolean;
+}
+
+/**
+ * Work mode related configuration for participants
+ * 工作模式相关配置
+ * - enabled: 是否开启工作模式
+ * - videoBlur: 视频模糊度
+ * - screenBlur: 屏幕分享模糊度
+ * 其中 videoBlur 和 screenBlur 用于存储用户在开启工作模式前的模糊度设置，用于关闭工作模式时恢复
+ */
+export interface ParticipantWorkConf {
+  /**
+   * 是否开启工作模式, 在space中表示空间是否开启工作模式（目前没有作用）
+   */
+  enabled: boolean;
+  /**
+   * 视频模糊度, 在这里是存储用户原先的模糊度设置
+   */
+  videoBlur: number;
+  /**
+   * 屏幕分享模糊度，在这里是存储用户原先的模糊度设置
+   */
+  screenBlur: number;
+}
+
+export const DEFAULT_PARTICIPANT_WORK_CONF: ParticipantWorkConf = {
+  enabled: false,
+  videoBlur: 0.0,
+  screenBlur: 0.0,
+};
+
+export interface AuthPlatform {
+  /**
+   * 认证的身份类型
+   */
+  identity?: IdentityType;
+  /**
+   * 来自平台类型，普遍认为other表示访客用户
+   */
+  platform: AuthType;
+}
+
+export interface ParticipantAvoParams {
+  name: string;
+  variant: number;
+  hue: number;
+  style: 'blob' | 'ring' | 'wave';
+  energy: number;
+  isUsed: boolean;
+  enabled: boolean;
+}
+
+export interface HandWritingPoint {
+  x: number;
+  y: number;
+}
+
+export interface HandWritingStroke {
+  id: string;
+  color: string;
+  tool: 'pen' | 'eraser';
+  width?: number;
+  points: HandWritingPoint[];
+  createdAt: number;
+}
+
+export interface ParticipantHandWriting {
+  activeStrokeId?: string;
+  strokes: HandWritingStroke[];
+  undoneStrokes: HandWritingStroke[];
+}
+
+/**
+ * Participant settings in Space
+ */
+export interface ParticipantSettings {
+  /**
+   * 客户端版本
+   */
+  version: string;
+  /**
+   * 参与者名称
+   */
+  name: string;
+  /**
+   * 音量
+   */
+  volume: number;
+  /**
+    * 当前用户对不同参与者屏幕分享音量的本地偏好
+    * key为参与者ID，value为音量值，范围0-100
+   */
+    screenShareVolumes?: Record<string, number>;
+  /**
+   * 是否开启了耳返功能
+   * 开启后，用户可以在自己的耳机中听到自己的声音，主要用于调试和工作模式
+   * ** 注意：该功能前端必须判断是否支持耳返功能 **
+   */
+  inEarMonitor?: boolean;
+  /**
+   * 视频模糊度
+   */
+  blur: number;
+  /**
+   * 屏幕分享模糊度
+   */
+  screenBlur: number;
+  /**
+   * 用户状态：系统状态/用户自定义状态
+   */
+  status: UserStatus | string;
+  socketId: string;
+  /**
+   * 参与者开始时间
+   */
+  startAt: number;
+  /**
+   * 虚拟形象
+   */
+  virtual: {
+    role: ModelRole;
+    bg: ModelBg;
+    enabled: boolean;
+  };
+  /**
+   * 是否开启屏幕分享音频
+   */
+  openShareAudio: boolean;
+  /**
+   * 是否开启新用户加入时的提示音
+   */
+  openPromptSound: boolean;
+  /**
+   * 音频处理设置
+   */
+  audioProcessing: {
+    noiseSuppression: boolean;
+    echoCancellation: boolean;
+    autoGainControl: boolean;
+  };
+  /**
+   * 用户应用同步
+   */
+  sync: AppKey[];
+  /**
+   * 用户应用权限
+   */
+  appAuth: AppAuth;
+  /**
+   * 用户应用数据
+   */
+  appDatas: {
+    /**
+     * 待办事项应用数据
+     */
+    todo?: SpaceTodo[];
+    /**
+     * 计时器应用数据
+     */
+    timer?: SpaceTimer;
+    /**
+     * 倒计时应用数据
+     */
+    countdown?: SpaceCountdown;
+  };
+  /**
+   * 当前是否请求举手
+   */
+  raiseHand: boolean;
+  /**
+   * ai相关的功能设置
+   */
+  ai: {
+    /**
+     * AI截图分析功能
+     */
+    cut: AICutParticipantConf;
+  };
+  /**
+   * 是否在线，如果用户在线则新用户如果重名无法加入，如果不在线则允许重名加入
+   */
+  online: boolean;
+  /**
+   * 认证数据
+   */
+  auth?: AuthPlatform;
+  /**
+   * 是否开启了工作模式
+   */
+  work: ParticipantWorkConf;
+  /** 用户自行设计的AVO头像列表 */
+  avoList?: ParticipantAvoParams[];
+  /** 用户笔迹数据 */
+  handWriting?: ParticipantHandWriting;
+}
+
+export interface SpaceTimeRecord {
+  start: number; // 记录开始时间戳
+  end?: number; // 记录结束时间戳
+}
+
+export interface SpaceDateRecord {
+  /**
+   * 空间的使用记录
+   */
+  space: SpaceTimeRecord[];
+  /**
+   * 参与者的使用记录
+   */
+  participants: {
+    [name: string]: SpaceTimeRecord[];
+  };
+}
+
+/**
+ * 记录空间的使用情况
+ * 主要应用在空间的使用记录中
+ */
+export interface SpaceDateRecords {
+  [spaceId: string]: SpaceDateRecord;
+}
+
+export interface RecordSettings {
+  /**
+   * egress 服务ID for LiveKit
+   */
+  egressId?: string;
+  /**
+   * 录制文件存储路径
+   */
+  filePath?: string;
+  /**
+   * 录制是否开启
+   */
+  active: boolean;
+}
+
+/**
+ * 应用Key
+ * - timer: 计时器
+ * - countdown: 倒计时
+ * - todo: 待办事项
+ */
+export type AppKey = 'timer' | 'countdown' | 'todo';
+export type AppAuth = 'read' | 'write';
+
+export interface SpaceInfoMap {
+  [spaceId: string]: SpaceInfo;
+}
+
+export interface SpaceAIConf {
+  cut: {
+    enabled: boolean;
+    freq: number; // 截图频率，单位分钟
+  };
+}
+
+/**
+ * 工作模式相关配置
+ */
+export interface SpaceWorkConf extends ParticipantWorkConf {
+  /**
+   * 是否开启AI分析，开启后每个开始工作模式的用户都会自动启动AI分析
+   * 当然，用户可以选择开启后手动关闭AI分析
+   */
+  useAI: boolean;
+  /**
+   * 同步的配置项
+   * - 视频模糊度
+   * - 屏幕分享模糊度
+   */
+  sync: boolean;
+}
+
+export const DEFAULT_SPACE_WORK_CONF: SpaceWorkConf = {
+  ...DEFAULT_PARTICIPANT_WORK_CONF,
+  useAI: true,
+  sync: true,
+};
+
+/**
+ * 允许访客加入的设置
+ * - allow: 允许访客加入
+ * - disable: 禁止访客加入
+ * - link: 通过链接允许访客加入，访客会通过链接直接加入到某个房间内
+ */
+export type AllowGuest = 'allow' | 'disable' | 'link';
+
+/**
+ * RBAC 权限配置
+ */
+export interface SpaceRBACConf {
+  /**
+   * 查看房间权限，即是否有房间侧边栏
+   */
+  viewRoom: boolean;
+  /**
+   * 创建子房间权限
+   * 游客没有权利创建子房间
+   */
+  createRoom: boolean;
+  /**
+   * 控制子房间权限
+   * 一般只有创建该房间的用户拥有绝对控制权限，但管理员和房主可以控制所有子房间
+   *
+   * - 删除子房间
+   * - 修改子房间名称
+   * - 设置子房间私密/公开
+   */
+  manageRoom: boolean;
+  /**
+   * 管理角色权限
+   * - 分配给其他用户管理员角色/取消管理员角色（房主）
+   * - 转让自己的权限给其他用户（管理员只能转让自己的权限，不能转让房主权限）但这一条不算
+   */
+  manageRole: boolean;
+  /**
+   * 控制用户权限
+   * - 可以修改用户的名称
+   * - 将用户移除出空间
+   * - 开关用户的麦克风和摄像头
+   * - 修改用户视频模糊度/分享模糊度
+   */
+  controlUser: boolean;
+  /**
+   * 录制空间权限
+   */
+  recording: boolean;
+  /**
+   * 可以管理Chat聊天中的文件，主要为删除其他人上传的文件
+   * 因为用户自己上传的文件自己可以删除
+   */
+  manageFile: boolean;
+  /**
+   * 可以关闭其他用户的TilePlayer
+   * 用户只能关闭自己的TilePlayer，管理员和房主可以关闭任意用户的TilePlayer
+   */
+  managePlayer: boolean;
+}
+
+/**
+ * 专门为用户设计的快捷RBAC结构，便于直接使用
+ * 通过usePlatformUserInfo hook获取该结构用于各种组件权限判断和显示
+ */
+export interface SpaceAuthRBAC extends SpaceRBACConf {
+  /**
+   * 用户是否来自vocespace平台进行注册认证
+   * 来自vocespace平台的用户能够将AI分析结果和TODO List保存到vocespace平台的看板中
+   * 并且有个人主页可供查看和管理以及直接跳转，最低身份为participant而不是guest
+   */
+  fromVocespace: boolean;
+  auth: AuthType;
+  /**
+   * 是否显示侧边栏频道，只有guest和customer身份不显示侧边栏频道
+   */
+  showSideChannel: boolean;
+  /**
+   * 是否显示AI相关功能，只有customer和guest身份不显示AI相关功能
+   */
+  showAI: boolean;
+}
+
+export interface SpaceAuthConf {
+  owner: SpaceRBACConf;
+  manager: SpaceRBACConf;
+  participant: SpaceRBACConf;
+  guest: SpaceRBACConf;
+}
+
+export const handleIdentityType = (identity?: IdentityType): keyof SpaceAuthConf => {
+  if (!identity) return 'guest';
+  switch (identity) {
+    case 'owner':
+      return 'owner';
+    case 'manager':
+      return 'manager';
+    case 'participant':
+      return 'participant';
+    case 'assistant':
+      return 'manager';
+    case 'customer':
+      return 'guest';
+    case 'guest':
+    default:
+      return 'guest';
+  }
+};
+
+export const DEFAULT_RBAC_CONF = (role: IdentityType) => {
+  switch (role) {
+    case 'owner':
+      return {
+        viewRoom: true,
+        createRoom: true,
+        manageRoom: true,
+        manageRole: true,
+        controlUser: true,
+        recording: true,
+        manageFile: true,
+        managePlayer: true,
+      } as SpaceRBACConf;
+    case 'manager':
+    case 'assistant':
+      return {
+        viewRoom: true,
+        createRoom: true,
+        manageRoom: true,
+        manageRole: false,
+        controlUser: true,
+        recording: true,
+        manageFile: true,
+        managePlayer: true,
+      } as SpaceRBACConf;
+    case 'participant':
+      return {
+        viewRoom: true,
+        createRoom: true,
+        manageRoom: false,
+        manageRole: false,
+        controlUser: false,
+        recording: false,
+        manageFile: false,
+        managePlayer: false,
+      } as SpaceRBACConf;
+
+    case 'guest':
+      return {
+        viewRoom: true,
+        createRoom: false,
+        manageRoom: false,
+        manageRole: false,
+        controlUser: false,
+        recording: false,
+        manageFile: false,
+        managePlayer: false,
+      } as SpaceRBACConf;
+    case 'customer':
+    default:
+      return {
+        viewRoom: false,
+        createRoom: false,
+        manageRoom: false,
+        manageRole: false,
+        controlUser: false,
+        recording: false,
+        manageFile: false,
+        managePlayer: false,
+      } as SpaceRBACConf;
+  }
+};
+
+export const DEFAULT_SPACE_AUTH_CONF: SpaceAuthConf = {
+  owner: DEFAULT_RBAC_CONF('owner'),
+  manager: DEFAULT_RBAC_CONF('manager'),
+  participant: DEFAULT_RBAC_CONF('participant'),
+  guest: DEFAULT_RBAC_CONF('guest'),
+};
+
+export interface SpaceInfo {
+  participants: {
+    [participantId: string]: ParticipantSettings;
+  };
+  // /**
+  //  * 用户自定义状态列表，这会保存任意在空间的参与者设置过的自定义状态
+  //  * 主要用于在空间内的用户自定义状态选择
+  //  */ @deprecated 由用户内部维护
+  // status?: UserDefineStatus[];
+  /**
+   * 空间主持人ID
+   */
+  ownerId: string;
+  /**
+   * 空间管理员ID列表，空间管理员可获得owner同等权限但无法对owner进行管理
+   * owner可以将其他用户设置为管理员，每个空间最多5个管理员，管理员可以转让自己的身份
+   * 管理员只能管理空间用户，无法删除空间，但可以更改部分空间设置
+   *
+   * 管理员可以管理用户的权限和应用：
+   *  - 帮助修改用户的名称
+   *  - 关闭/开启用户的麦克风和摄像头
+   *  - 开放空间应用给其他用户使用
+   *  - 录制空间
+   *  - 删除用户子房间
+   *  - 设置用户声音/虚化
+   *  - 强制用户离开空间
+   *
+   *  ---
+   *
+   * 管理员无法进行以下操作：
+   *  - 删除空间
+   *  - 转让空间所有权
+   *  - 修改空间的持久化设置
+   *  - 修改空间的访客加入设置
+   *  - 修改空间的AI相关设置
+   *  - 更改空间证书
+   */
+  managers: string[];
+  /**
+   * 是否允许访客加入
+   * 若为false，则只有认证用户才能加入空间
+   */
+  allowGuest: AllowGuest;
+  /**
+   * 录制设置
+   */
+  record: RecordSettings;
+  /**
+   * 空间创建的时间戳
+   */
+  startAt: number;
+  /**
+   * 空间中子房间列表
+   */
+  children: ChildRoom[];
+  // 应用列表，由主持人设置参与者可以使用的应用
+  apps: AppKey[];
+  /**
+   * 空间是否为持久化空间
+   * - false: 临时空间，所有数据不会持久化，空间内的应用数据也不会保存
+   * - true: 持久化空间，空间内的数据会持久化，应用数据也会保存
+   */
+  persistence: boolean;
+  /**
+   * 空间的AI相关配置
+   */
+  ai: SpaceAIConf;
+  /**
+   * 工作模式相关配置
+   *
+   */
+  work: SpaceWorkConf;
+  /**
+   * 空间的RBAC认证配置
+   */
+  auth: SpaceAuthConf;
+  /**
+   * iframe URLs，存储空间内访问的iframe URL列表
+   */
+  iframeUrls?: string[];
+}
+
+export interface TodoItem {
+  id: string;
+  /**
+   * 任务
+   */
+  title: string;
+  /**
+   * 完成时间戳，如果未完成则没有该字段
+   */
+  done?: number;
+  /**
+   * 是否显示
+   * - 当用户删除任务时，会检查done字段，如果有则表示任务已完成，设置visible为false而不是删除
+   * - 如果没有done字段，则表示任务未完成，直接删除
+   * - 这样做的目的是为了防止用户误操作删除了已完成的任务，导致数据丢失
+   * - 用户可以通过导出功能导出已完成的任务
+   */
+  visible: boolean;
+}
+
+export interface Timer {
+  value: number | null;
+  running: boolean;
+  stopTimeStamp: number | null;
+  records: string[];
+}
+
+/**
+ * 倒计时App的数据结构
+ */
+export interface Countdown {
+  value: number | null;
+  duration: Dayjs | null;
+  running: boolean;
+  stopTimeStamp: number | null;
+}
+
+export interface CountdownDurStr {
+  value: number | null;
+  duration: string | null;
+  running: boolean;
+  stopTimeStamp: number | null;
+}
+
+export interface SpaceTodo {
+  items: TodoItem[];
+  /**
+   * 上传时间戳，表示用户上传到空间的时间
+   */
+  date: number;
+}
+
+export const sortTodos = (todos: SpaceTodo[]): SpaceTodo[] => {
+  if (todos.length === 0) return [];
+
+  // 创建深拷贝以避免修改只读对象
+  const sortedTodos = todos.map((todo) => {
+    // 对items进行排序：未完成的排在前面，相同完成状态按id（时间戳）排序
+    const sortedItems = [...todo.items].sort((a, b) => {
+      if ((!a.done && !b.done) || (a.done && b.done)) {
+        // 都未完成或都已完成，按id排序（新的在前面）
+        return Number(b.id) - Number(a.id);
+      }
+      if (a.done && !b.done) {
+        // a已完成，b未完成，b排前面
+        return 1;
+      }
+      if (!a.done && b.done) {
+        // a未完成，b已完成，a排前面
+        return -1;
+      }
+
+      return 0;
+    });
+
+    return {
+      ...todo,
+      items: sortedItems,
+    };
+  });
+
+  // 按照date进行排序，最新的在前面
+  return sortedTodos.sort((a, b) => b.date - a.date);
+};
+
+export const todayTimeStamp = (timestamp?: number): number => {
+  const date = timestamp ? dayjs.utc(timestamp) : dayjs.utc();
+  return date.startOf('day').valueOf();
+};
+
+export const DEFAULT_TODOS: SpaceTodo = {
+  items: [],
+  date: todayTimeStamp(),
+};
+
+export interface SpaceTimer extends Timer {
+  timestamp: number;
+}
+
+export interface SpaceCountdown extends CountdownDurStr {
+  timestamp: number;
+}
+
+export const castTimer = (timer?: SpaceTimer): Timer | undefined => {
+  if (!timer) return undefined;
+  return {
+    value: timer.value,
+    running: timer.running,
+    stopTimeStamp: timer.stopTimeStamp,
+    records: timer.records,
+  };
+};
+
+export const castCountdown = (countdown?: SpaceCountdown): Countdown | undefined => {
+  if (!countdown) return undefined;
+  return {
+    value: countdown.value,
+    duration: dayjs(countdown.duration) as Dayjs | null,
+    running: countdown.running,
+    stopTimeStamp: countdown.stopTimeStamp,
+  };
+};
+
+export const castTodo = (todo?: SpaceTodo): TodoItem[] | undefined => {
+  if (!todo) return undefined;
+  return todo.items.map((item) => ({
+    id: item.id,
+    title: item.title,
+    done: item.done,
+    visible: item.visible,
+  }));
+};
+
+export const DEFAULT_TIMER: Timer = {
+  value: null as number | null,
+  running: false,
+  stopTimeStamp: null as number | null,
+  records: [] as string[],
+};
+
+export const DEFAULT_COUNTDOWN: Countdown = {
+  value: null as number | null,
+  duration: dayjs().hour(0).minute(5).second(0) as Dayjs | null,
+  running: false,
+  stopTimeStamp: null as number | null,
+};
+
+export const DEFAULT_SPACE_INFO = (startAt: number, createRoom: boolean): SpaceInfo => ({
+  participants: {},
+  ownerId: '',
+  persistence: true,
+  record: { active: false },
+  managers: [],
+  allowGuest: 'allow',
+  startAt,
+  children: createRoom
+    ? [
+        {
+          name: 'Meeting Room',
+          participants: [],
+          ownerId: 'system',
+          isPrivate: false,
+        },
+        {
+          name: '☕️ Coffee Break',
+          participants: [],
+          ownerId: 'system',
+          isPrivate: false,
+        },
+      ]
+    : [],
+  apps: ['todo', 'countdown'],
+  ai: {
+    cut: {
+      enabled: true,
+      freq: 5,
+    },
+  },
+  work: DEFAULT_SPACE_WORK_CONF,
+  auth: DEFAULT_SPACE_AUTH_CONF,
+});
+
+export const DEFAULT_PARTICIPANT_SETTINGS: ParticipantSettings = {
+  version: '0.5.5',
+  name: '',
+  volume: 100,
+  screenShareVolumes: {},
+  blur: 0.0,
+  screenBlur: 0.0,
+  status: 'settings.general.status.online',
+  socketId: '',
+  startAt: 0,
+  virtual: {
+    role: ModelRole.None,
+    bg: ModelBg.ClassRoom,
+    enabled: false,
+  },
+  openPromptSound: true,
+  openShareAudio: true,
+  audioProcessing: {
+    noiseSuppression: true,
+    echoCancellation: true,
+    autoGainControl: true,
+  },
+  sync: ['todo'],
+  appAuth: 'read',
+  appDatas: {},
+  raiseHand: false,
+  ai: {
+    cut: {
+      enabled: true,
+      spent: false,
+      todo: true,
+      extraction: 'medium',
+      blur: false,
+    },
+  },
+  online: true,
+  auth: {
+    platform: 'other',
+    identity: 'participant',
+  },
+  work: DEFAULT_PARTICIPANT_WORK_CONF,
+  avoList: [
+    {
+      name: 'guest',
+      variant: Math.floor(Math.random() * 1_000_000),
+      hue: [193, 214, 235, 172, 151, 43, 13, 343][Math.floor(Math.random() * 8)],
+      style: (['blob', 'ring', 'wave'] as const)[Math.floor(Math.random() * 3)],
+      energy: Math.round((0.4 + Math.random() * 0.5) * 20) / 20,
+      isUsed: true,
+      enabled: true,
+    },
+  ],
+  handWriting: {
+    strokes: [],
+    undoneStrokes: [],
+  },
+};
+
+/**
+ * key in localStorage
+ */
+export const PARTICIPANT_SETTINGS_KEY = 'vocespace_participant_settings';
+/**
+ * 来自 Vocespace 平台的用户TOKEN标识，用于标识用户是否为匿名用户
+ */
+export const VOCESPACE_PLATFORM_USER = 'vocespace_platform_user';
+
+export interface SettingState {
+  volume: number;
+  blur: number;
+  screenBlur: number;
+  virtual: {
+    enabled: boolean;
+    role: ModelRole;
+    bg: ModelBg;
+  };
+  openShareAudio: boolean;
+  openPromptSound: boolean;
+  audioProcessing: {
+    noiseSuppression: boolean;
+    echoCancellation: boolean;
+    autoGainControl: boolean;
+  };
+}
+
+export const getState = (uState: ParticipantSettings): SettingState => {
+  return {
+    volume: uState.volume,
+    blur: uState.blur,
+    screenBlur: uState.screenBlur,
+    virtual: {
+      enabled: uState.virtual.enabled,
+      role: uState.virtual.role,
+      bg: uState.virtual.bg,
+    },
+    openShareAudio: uState.openShareAudio,
+    openPromptSound: uState.openPromptSound,
+    audioProcessing: uState.audioProcessing,
+  };
+};

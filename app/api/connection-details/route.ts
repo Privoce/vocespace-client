@@ -1,16 +1,10 @@
-import { ConnectionDetails } from '@/lib/types';
+import { ConnectionDetails } from '@/lib/livekit/connection';
 import { AccessToken, AccessTokenOptions, VideoGrant } from 'livekit-server-sdk';
 import { NextRequest, NextResponse } from 'next/server';
-import { getConfig } from '../conf/conf';
-import { generateToken, parseToken } from '@/lib/hooks/platformToken';
-import {
-  AuthType,
-  generateBasicIdentity,
-  TokenResult,
-  verifyPlatformUser,
-  verifyTokenResult,
-} from '@/lib/std';
-import { SpaceInfo } from '@/lib/std/space';
+import { getConfig } from '@/server/config';
+import { generateToken, parseToken } from '@/server/platform-token';
+import { AuthType, generateBasicIdentity, TokenResult, verifyPlatformUser, verifyTokenResult } from '@/features/room/model';
+import { SpaceInfo } from '@/features/spaces/model';
 
 const COOKIE_KEY = 'random-participant-postfix';
 

@@ -1,4 +1,4 @@
-import { AICutAnalysisRes, AICutAnalysisResLine } from '@/lib/ai/analysis';
+import { AICutAnalysisRes, AICutAnalysisResLine } from '@/features/ai/types';
 import { Button, Empty, Image, Tag, Tooltip } from 'antd';
 import { forwardRef, useImperativeHandle, useMemo, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
@@ -10,11 +10,11 @@ import {
   SettingOutlined,
 } from '@ant-design/icons';
 import { useI18n } from '@/lib/i18n/i18n';
-import { AICutParticipantConf, SpaceInfo } from '@/lib/std/space';
+import { AICutParticipantConf, SpaceInfo } from '@/features/spaces/model';
 import { useLocalParticipant } from '@livekit/components-react';
 import { CopyButton, CopyButtonExports } from '../controls/widgets/copy';
 import { MessageInstance } from 'antd/es/message/interface';
-import { AICutService } from '@/lib/ai/cut';
+import { AICutService } from '@/features/ai/cut';
 
 export interface AICutAnalysisMdTabsProps {
   result?: AICutAnalysisRes;
@@ -354,6 +354,7 @@ export const AICutAnalysisMdTabs = forwardRef<AICutAnalysisMdTabsExports, AICutA
     );
   },
 );
+AICutAnalysisMdTabs.displayName = 'AICutAnalysisMdTabs';
 
 function ScreenShot({
   section,

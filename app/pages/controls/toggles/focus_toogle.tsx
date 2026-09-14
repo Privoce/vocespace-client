@@ -8,7 +8,7 @@ import {
   FocusToggleProps,
   LayoutContextType,
 } from '@livekit/components-react';
-import { useSpaceStore } from '@/lib/store';
+import { useSpaceStore } from '@/features/stores';
 
 export const FocusToggle: (
   props: FocusToggleProps & React.RefAttributes<HTMLButtonElement>,

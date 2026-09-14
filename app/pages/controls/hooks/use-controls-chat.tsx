@@ -1,9 +1,9 @@
 import { useCallback } from 'react';
 import { Button, Modal } from 'antd';
 import { message } from 'antd';
-import { ChatMsgItem } from '@/lib/std/chat';
+import { ChatMsgItem } from '@/features/chat/types';
 import { useI18n } from '@/lib/i18n/i18n';
-import { useRoomStore } from '@/lib/store';
+import { useRoomStore } from '@/features/stores';
 
 export function useControlsChat() {
   const { t } = useI18n();

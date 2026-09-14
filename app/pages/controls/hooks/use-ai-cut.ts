@@ -1,16 +1,16 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
 import type { Room } from 'livekit-client';
-import { api } from '@/lib/api';
-import { AICutService } from '@/lib/ai/cut';
-import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
-import { convertPlatformToACARes, PlarformAICutAnalysis, platformAPI, PlatformTodos } from '@/lib/api/platform';
-import { AICutParticipantConf, todayTimeStamp } from '@/lib/std/space';
-import { usePlatformUserInfoCheap } from '@/lib/hooks/platform';
-import { isMobile } from '@/lib/std';
+import { api } from '@/features/api';
+import { AICutService } from '@/features/ai/cut';
+import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/features/ai/types';
+import { convertPlatformToACARes, PlarformAICutAnalysis, platformAPI, PlatformTodos } from '@/features/platform/api';
+import { AICutParticipantConf, todayTimeStamp } from '@/features/spaces/model';
+import { getPlatformUserInfo } from '@/features/platform/hooks';
+import { isMobile } from '@/lib/browser/environment';
 import type { MessageInstance } from 'antd/es/message/interface';
 import type { NotificationInstance } from 'antd/es/notification/interface';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { WsBase } from '@/lib/std/device';
+import { WsBase } from '@/features/room/protocol';
 import { useI18n } from '@/lib/i18n/i18n';
 
 interface UseAICutServiceOptions {
@@ -54,7 +54,7 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
     const response = await api.ai.getAnalysisRes(
       space.name,
       space.localParticipant.identity,
-      usePlatformUserInfoCheap({ user: settings.participants[space.localParticipant.identity] }).isAuth,
+      getPlatformUserInfo({ user: settings.participants[space.localParticipant.identity] }).isAuth,
     );
     if (response.ok) {
       const { res }: { res: AICutAnalysisRes } = await response.json();
@@ -102,7 +102,7 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
                 freq,
                 lang: locale,
                 extraction: conf.extraction,
-                isAuth: usePlatformUserInfoCheap({ user: uState }).isAuth,
+                isAuth: getPlatformUserInfo({ user: uState }).isAuth,
                 blur: conf.blur,
               });
               if (!response.ok) {

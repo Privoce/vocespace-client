@@ -9,9 +9,9 @@ import {
   RecordData,
   RecordResponse,
   useRecordingEnv,
-} from '@/lib/std/recording';
+} from '@/features/recording/use-recording-env';
 import { useI18n } from '@/lib/i18n/i18n';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 
 const { Title, Text } = Typography;
 

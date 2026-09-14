@@ -6,7 +6,7 @@ import TextArea from 'antd/es/input/TextArea';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useEffect, useMemo, useState } from 'react';
 import { Calendly } from '@/app/pages/controls/widgets/calendly';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 import {
   analyzeLicense,
   getLicensePersonLimit,
@@ -14,15 +14,15 @@ import {
   LicenseStatus,
   licenseStatus,
   validLicenseDomain,
-} from '@/lib/std/license';
+} from '@/features/license/model';
 import { PresetStatusColorType } from 'antd/es/_util/colors';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
-import { DEFAULT_VOCESPACE_CONFIG, ReadableConf } from '@/lib/std/conf';
-import { DEFAULT_LICENSE } from '@/lib/std/license';
+import { DEFAULT_VOCESPACE_CONFIG, ReadableConf } from '@/features/settings/config';
+import { DEFAULT_LICENSE } from '@/features/license/model';
 
 type ModelKey = 'update' | 'renew' | 'server';
 type OptionValue = 'renew' | 'custom';

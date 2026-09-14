@@ -1,21 +1,21 @@
 import { useI18n } from '@/lib/i18n/i18n';
-import { ViewAdjusts } from '@/lib/std/window';
+import { ViewAdjusts } from '@/lib/browser/window';
 import { LaptopOutlined } from '@ant-design/icons';
 import { Button, Modal, Radio, Slider } from 'antd';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AICutParticipantConf, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { AICutParticipantConf, ParticipantSettings, SpaceInfo } from '@/features/spaces/model';
 import { useLocalParticipant } from '@livekit/components-react';
-import { WsBase, WsTo } from '@/lib/std/device';
+import { WsBase, WsTo } from '@/features/room/protocol';
 import styles from '@/styles/controls.module.scss';
 import { LocalParticipant, Room } from 'livekit-client';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 import { MessageInstance } from 'antd/es/message/interface';
 import equal from 'fast-deep-equal';
-import { isSpaceManager } from '@/lib/std';
+import { isSpaceManager } from '@/features/room/model';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './ai';
-import { Extraction } from '@/lib/ai/analysis';
+import { Extraction } from '@/features/ai/types';
 
 export interface UseWorkProps {
   spaceInfo: SpaceInfo;
@@ -229,14 +229,14 @@ export function Work({
   lastAICutConfig,
   localParticipant,
 }: WorkProps) {
-  if (!spaceInfo.ai.cut.enabled) {
-    return <></>;
-  }
-
   const { t } = useI18n();
   const showTextOrHide = useMemo(() => {
     return ViewAdjusts(controlWidth).w960 ? false : showText;
   }, [controlWidth]);
+
+  if (!spaceInfo.ai.cut.enabled) {
+    return <></>;
+  }
 
   return (
     <Button

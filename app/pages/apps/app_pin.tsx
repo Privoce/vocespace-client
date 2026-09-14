@@ -2,8 +2,8 @@
 
 import React, { useCallback, useRef, useState, type CSSProperties } from 'react';
 import { useI18n } from '@/lib/i18n/i18n';
-import { useSpaceStore, useUserStore } from '@/lib/store';
-import { AppKey, ParticipantAvoParams, ParticipantSettings } from '@/lib/std/space';
+import { useSpaceStore, useUserStore } from '@/features/stores';
+import { AppKey, ParticipantAvoParams, ParticipantSettings } from '@/features/spaces/model';
 import { AppstoreOutlined, BgColorsOutlined } from '@ant-design/icons';
 import {
   LayoutContext,
@@ -14,7 +14,7 @@ import { Tooltip } from 'antd';
 import { FullScreenBtn } from '../controls/widgets/full_screen';
 import { Track } from 'livekit-client';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { WsBase } from '@/lib/std/device';
+import { WsBase } from '@/features/room/protocol';
 import { normalizeAvoParams } from '../participant/avo';
 import { ParticipantAvoEditorModal } from '../participant/avo_conf';
 import { SvgResource } from '@/app/resources/svg';

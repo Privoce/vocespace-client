@@ -1,0 +1,14 @@
+{
+  "routesUnchanged": true,
+  "socketSignaturesUnchanged": true,
+  "roomEventSignaturesUnchanged": true,
+  "compatibilityConsumersInAppLibFeaturesServer": {
+    "lib/client_utils.ts": [],
+    "lib/std/debounce.ts": [],
+    "lib/std/window.ts": [],
+    "lib/std/level.ts": [],
+    "lib/types.ts": [],
+    "app/pages/controls/widgets/pagination.tsx": []
+  },
+  "libToApp": []
+}

@@ -1,0 +1,355 @@
+
+> vocespace@0.5.5 build <snapshot>
+> NODE_OPTIONS='--max-old-space-size=8192' next build
+
+  ▲ Next.js 14.2.35
+
+   Creating an optimized production build ...
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+Browserslist: caniuse-lite is outdated. Please run:
+  npx update-browserslist-db@latest
+  Why you should do it regularly: https://github.com/browserslist/update-db#readme
+ ✓ Compiled successfully
+   Linting and checking validity of types ...
+ ⨯ ESLint: Invalid Options: - Unknown options: useEslintrc, extensions - 'extensions' has been removed.
+   Collecting page data ...
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at c (<snapshot>/.next/server/app/api/license/route.js:1:5886)
+    at 36563 (<snapshot>/.next/server/app/api/license/route.js:2:134)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at 19667 (<snapshot>/.next/server/app/api/license/route.js:2:2821)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at 69316 (<snapshot>/.next/server/app/api/license/route.js:1:1151)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at r (<snapshot>/.next/server/app/api/license/route.js:244:2532) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at h (<snapshot>/.next/server/app/api/ai/route.js:105:5624)
+    at 36563 (<snapshot>/.next/server/app/api/ai/route.js:106:134)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at 88252 (<snapshot>/.next/server/app/api/ai/route.js:1:850)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at __webpack_exec__ (<snapshot>/.next/server/app/api/ai/route.js:106:2696)
+    at <snapshot>/.next/server/app/api/ai/route.js:106:2807
+    at t.X (<snapshot>/.next/server/webpack-runtime.js:1:1206) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at p (<snapshot>/.next/server/chunks/478.js:1:371)
+    at 36563 (<snapshot>/.next/server/chunks/478.js:2:134)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at 73048 (<snapshot>/.next/server/app/api/record/route.js:1:837)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at r (<snapshot>/.next/server/app/api/record/route.js:1:5231)
+    at <snapshot>/.next/server/app/api/record/route.js:1:5274
+    at t.X (<snapshot>/.next/server/webpack-runtime.js:1:1206) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at p (<snapshot>/.next/server/app/api/conf/route.js:1:4510)
+    at 36563 (<snapshot>/.next/server/app/api/conf/route.js:2:134)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at 59032 (<snapshot>/.next/server/app/api/conf/route.js:1:573)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at s (<snapshot>/.next/server/app/api/conf/route.js:2:2635)
+    at <snapshot>/.next/server/app/api/conf/route.js:2:2670
+    at t.X (<snapshot>/.next/server/webpack-runtime.js:1:1206) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at p (<snapshot>/.next/server/chunks/478.js:1:371)
+    at 36563 (<snapshot>/.next/server/chunks/478.js:2:134)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at 57671 (<snapshot>/.next/server/app/api/connection-details/route.js:1:904)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at r (<snapshot>/.next/server/app/api/connection-details/route.js:1:6320)
+    at <snapshot>/.next/server/app/api/connection-details/route.js:1:6367
+    at t.X (<snapshot>/.next/server/webpack-runtime.js:1:1206) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at p (<snapshot>/.next/server/chunks/478.js:1:371)
+    at 36563 (<snapshot>/.next/server/chunks/478.js:2:134)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at 66841 (<snapshot>/.next/server/app/api/feedback/route.js:1:1089)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at r (<snapshot>/.next/server/app/api/feedback/route.js:261:121)
+    at <snapshot>/.next/server/app/api/feedback/route.js:261:164
+    at t.X (<snapshot>/.next/server/webpack-runtime.js:1:1206) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at p (<snapshot>/.next/server/chunks/478.js:1:371)
+    at 57671 (<snapshot>/.next/server/app/api/connection-details/route.js:1:1023)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at r (<snapshot>/.next/server/app/api/connection-details/route.js:1:6320)
+    at <snapshot>/.next/server/app/api/connection-details/route.js:1:6367
+    at t.X (<snapshot>/.next/server/webpack-runtime.js:1:1206)
+    at <snapshot>/.next/server/app/api/connection-details/route.js:1:6333
+    at Object.<anonymous> (<snapshot>/.next/server/app/api/connection-details/route.js:1:6395) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at p (<snapshot>/.next/server/chunks/478.js:1:371)
+    at 66359 (<snapshot>/.next/server/app/api/space/route.js:1:3205)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at s (<snapshot>/.next/server/app/api/space/route.js:139:50950)
+    at <snapshot>/.next/server/app/api/space/route.js:139:51001
+    at t.X (<snapshot>/.next/server/webpack-runtime.js:1:1206)
+    at <snapshot>/.next/server/app/api/space/route.js:139:50963
+    at Object.<anonymous> (<snapshot>/.next/server/app/api/space/route.js:139:51029) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at p (<snapshot>/.next/server/chunks/478.js:1:371)
+    at 73048 (<snapshot>/.next/server/app/api/record/route.js:1:2120)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at r (<snapshot>/.next/server/app/api/record/route.js:1:5231)
+    at <snapshot>/.next/server/app/api/record/route.js:1:5274
+    at t.X (<snapshot>/.next/server/webpack-runtime.js:1:1206)
+    at <snapshot>/.next/server/app/api/record/route.js:1:5244
+    at Object.<anonymous> (<snapshot>/.next/server/app/api/record/route.js:1:5302) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1100:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:462:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1381:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:8)
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at h (<snapshot>/.next/server/app/api/ai/route.js:105:5624)
+    at 88252 (<snapshot>/.next/server/app/api/ai/route.js:104:5205)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at __webpack_exec__ (<snapshot>/.next/server/app/api/ai/route.js:106:2696)
+    at <snapshot>/.next/server/app/api/ai/route.js:106:2807
+    at t.X (<snapshot>/.next/server/webpack-runtime.js:1:1206)
+    at <snapshot>/.next/server/app/api/ai/route.js:106:2781
+    at Object.<anonymous> (<snapshot>/.next/server/app/api/ai/route.js:106:2868) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at l (<snapshot>/.next/server/app/api/s3/route.js:10:16292)
+    at 36563 (<snapshot>/.next/server/app/api/s3/route.js:11:134)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at 547 (<snapshot>/.next/server/app/api/s3/route.js:10:12460)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at r (<snapshot>/.next/server/app/api/s3/route.js:11:2635)
+    at <snapshot>/.next/server/app/api/s3/route.js:11:2670
+    at t.X (<snapshot>/.next/server/webpack-runtime.js:1:1206) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1100:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:462:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1381:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:8)
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1100:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:462:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1381:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:8)
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1100:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:462:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1381:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:8)
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1100:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:462:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1381:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:8)
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1100:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:462:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1381:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:8)
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1100:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:462:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1381:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:8)
+   Generating static pages (0/20) ...
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1100:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:462:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1381:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:8)
+   Generating static pages (5/20) 
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at p (<snapshot>/.next/server/chunks/478.js:1:371)
+    at 57671 (<snapshot>/.next/server/app/api/connection-details/route.js:1:1023)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at r (<snapshot>/.next/server/app/api/connection-details/route.js:1:6320)
+    at <snapshot>/.next/server/app/api/connection-details/route.js:1:6367
+    at t.X (<snapshot>/.next/server/webpack-runtime.js:1:1206)
+    at <snapshot>/.next/server/app/api/connection-details/route.js:1:6333
+    at Object.<anonymous> (<snapshot>/.next/server/app/api/connection-details/route.js:1:6395) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+   Generating static pages (10/20) 
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at l (<snapshot>/.next/server/app/api/s3/route.js:10:16292)
+    at 66359 (<snapshot>/.next/server/app/api/space/route.js:1:3205)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at s (<snapshot>/.next/server/app/api/space/route.js:139:50950)
+    at <snapshot>/.next/server/app/api/space/route.js:139:51001
+    at t.X (<snapshot>/.next/server/webpack-runtime.js:1:1206)
+    at <snapshot>/.next/server/app/api/space/route.js:139:50963
+    at Object.<anonymous> (<snapshot>/.next/server/app/api/space/route.js:139:51029) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1100:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:462:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1381:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:8)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:128:17)
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at l (<snapshot>/.next/server/app/api/s3/route.js:10:16292)
+    at 88252 (<snapshot>/.next/server/app/api/ai/route.js:104:5205)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at __webpack_exec__ (<snapshot>/.next/server/app/api/ai/route.js:106:2696)
+    at <snapshot>/.next/server/app/api/ai/route.js:106:2807
+    at t.X (<snapshot>/.next/server/webpack-runtime.js:1:1206)
+    at <snapshot>/.next/server/app/api/ai/route.js:106:2781
+    at Object.<anonymous> (<snapshot>/.next/server/app/api/ai/route.js:106:2868) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+   Generating static pages (15/20) 
+Error reading vocespace.conf.json: Error: ENOENT: no such file or directory, open '<snapshot>/vocespace.conf.json'
+    at Object.openSync (node:fs:596:3)
+    at readFileSync (node:fs:464:35)
+    at p (<snapshot>/.next/server/chunks/478.js:1:371)
+    at 73048 (<snapshot>/.next/server/app/api/record/route.js:1:2120)
+    at t (<snapshot>/.next/server/webpack-runtime.js:1:128)
+    at r (<snapshot>/.next/server/app/api/record/route.js:1:5231)
+    at <snapshot>/.next/server/app/api/record/route.js:1:5274
+    at t.X (<snapshot>/.next/server/webpack-runtime.js:1:1206)
+    at <snapshot>/.next/server/app/api/record/route.js:1:5244
+    at Object.<anonymous> (<snapshot>/.next/server/app/api/record/route.js:1:5302) {
+  errno: -2,
+  syscall: 'open',
+  code: 'ENOENT',
+  path: '<snapshot>/vocespace.conf.json'
+}
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1100:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:462:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1381:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:8)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:128:17)
+[ioredis] Unhandled error event: Error: connect EPERM 127.0.0.1:6379 - Local (0.0.0.0:0)
+    at internalConnect (node:net:1100:16)
+    at defaultTriggerAsyncIdScope (node:internal/async_hooks:462:18)
+    at GetAddrInfoReqWrap.emitLookup [as callback] (node:net:1381:9)
+    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:109:8)
+    at GetAddrInfoReqWrap.callbackTrampoline (node:internal/async_hooks:128:17)
+ ✓ Generating static pages (20/20)
+   Finalizing page optimization ...
+   Collecting build traces ...
+
+Route (app)                              Size     First Load JS
+┌ ○ /                                    346 B          88.5 kB
+├ ○ /_not-found                          139 B          88.3 kB
+├ ƒ /[spaceName]                         836 B          1.01 MB
+├ ƒ /api/ai                              0 B                0 B
+├ ƒ /api/chat                            0 B                0 B
+├ ƒ /api/conf                            0 B                0 B
+├ ƒ /api/connection-details              0 B                0 B
+├ ƒ /api/feedback                        0 B                0 B
+├ ƒ /api/files/[...slug]                 0 B                0 B
+├ ○ /api/hello                           0 B                0 B
+├ ƒ /api/license                         0 B                0 B
+├ ƒ /api/license/[value]                 0 B                0 B
+├ ƒ /api/license/domains/[value]         0 B                0 B
+├ ƒ /api/record                          0 B                0 B
+├ ƒ /api/s3                              0 B                0 B
+├ ƒ /api/space                           0 B                0 B
+├ ƒ /api/upload                          0 B                0 B
+├ ƒ /api/webhook                         0 B                0 B
+├ ○ /api/webhook/status                  0 B                0 B
+├ ○ /dashboard                           33.1 kB        1.06 MB
+├ ○ /new_space                           2.41 kB         315 kB
+└ ○ /recording                           1.73 kB         432 kB
++ First Load JS shared by all            88.2 kB
+  ├ chunks/1f4ff949-65ee5f307573503b.js  53.6 kB
+  ├ chunks/578-3b893ce24a3ecb0a.js       31.9 kB
+  └ other shared chunks (total)          2.63 kB
+
+
+○  (Static)   prerendered as static content
+ƒ  (Dynamic)  server-rendered on demand
+

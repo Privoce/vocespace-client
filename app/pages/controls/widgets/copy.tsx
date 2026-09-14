@@ -57,3 +57,4 @@ export const CopyButton = forwardRef<CopyButtonExports, CopyButtonProps>(
     );
   },
 );
+CopyButton.displayName = 'CopyButton';

@@ -1,8 +1,8 @@
 import { Avatar, List, MenuProps } from 'antd';
 import styles from '@/styles/controls.module.scss';
-import { randomColor } from '@/lib/std';
+import { randomColor } from '@/lib/utils/color';
 import { useI18n } from '@/lib/i18n/i18n';
-import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { ParticipantSettings, SpaceInfo } from '@/features/spaces/model';
 import { ControlRKeyMenu } from './menu';
 import { Room } from 'livekit-client';
 
@@ -48,8 +48,8 @@ export function ParticipantList({
             menu={item[0] === space.localParticipant.identity ? selfMenu : menu}
             onOpenChange={(open) => onOpenMenu(open, item[0])}
             isRKey={true}
-            children={
-              <div className={styles.particepant_item}>
+          >
+            <div className={styles.particepant_item}>
                 <div className={styles.particepant_item_left}>
                   <Avatar
                     size={size}
@@ -73,8 +73,7 @@ export function ParticipantList({
                 </div>
                 {suffix && suffix(item, index)}
               </div>
-            }
-          ></ControlRKeyMenu>
+          </ControlRKeyMenu>
         </List.Item>
       )}
     />

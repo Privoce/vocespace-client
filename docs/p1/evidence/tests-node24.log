@@ -1,0 +1,24 @@
+
+> vocespace@0.5.5 test /Users/shengyifei/projects/livekit/vocespace/vocespace
+> vitest run
+
+
+ RUN  v3.2.4 /Users/shengyifei/projects/livekit/vocespace/vocespace
+
+ ✓ tests/boundaries.test.ts (10 tests) 63ms
+ ✓ tests/lib-ssr.test.tsx (2 tests) 1047ms
+   ✓ imports scoped public entries without browser globals or server configuration  1032ms
+ ✓ tests/lib-components.test.tsx (5 tests) 92ms
+ ✓ tests/device-selector.test.tsx (6 tests) 89ms
+ ✓ tests/debounce.test.tsx (4 tests) 18ms
+ ✓ tests/video-blur.test.tsx (2 tests) 19ms
+ ✓ tests/before-unload-guard.test.tsx (7 tests) 13ms
+ ✓ tests/room-subscription.test.ts (4 tests) 14ms
+ ✓ tests/room-leave-intent.test.ts (4 tests) 2ms
+ ✓ tests/participant-effect.test.tsx (2 tests) 13ms
+
+ Test Files  10 passed (10)
+      Tests  46 passed (46)
+   Start at  00:55:04
+   Duration  4.94s (transform 1.02s, setup 675ms, collect 2.80s, tests 1.37s, environment 1.88s, prepare 377ms)
+

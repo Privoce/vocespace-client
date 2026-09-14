@@ -1,14 +1,14 @@
 import { useI18n } from '@/lib/i18n/i18n';
-import { AppAuth, AppKey, SpaceInfo } from '@/lib/std/space';
+import { AppAuth, AppKey, SpaceInfo } from '@/features/spaces/model';
 import { CarryOutOutlined, ClockCircleOutlined, HistoryOutlined } from '@ant-design/icons';
 import { Checkbox, CheckboxChangeEvent, CheckboxProps, Radio, Tooltip } from 'antd';
 import styles from '@/styles/controls.module.scss';
 import { useEffect, useMemo, useState } from 'react';
 import { LocalParticipant } from 'livekit-client';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 import { MessageInstance } from 'antd/es/message/interface';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { WsBase } from '@/lib/std/device';
+import { WsBase } from '@/features/room/protocol';
 
 export interface AppSettingsProps {
   spaceName: string;

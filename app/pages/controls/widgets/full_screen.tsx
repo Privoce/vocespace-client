@@ -11,7 +11,7 @@ import {
 import { isTrackReferencePinned } from '../../participant/tile';
 import { Tooltip } from 'antd';
 import { useI18n } from '@/lib/i18n/i18n';
-import { useSpaceStore } from '@/lib/store';
+import { useSpaceStore } from '@/features/stores';
 
 export interface FullScreenBtnProps {}
 
@@ -52,6 +52,7 @@ export const FullScreenBtn = forwardRef<
     );
   },
 );
+FullScreenBtn.displayName = 'FullScreenBtn';
 
 interface FullScreenBtnPinProps {
   layoutContext?: LayoutContextType;

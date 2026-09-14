@@ -14,9 +14,9 @@ import {
   message,
 } from 'antd';
 import { UploadOutlined, DownloadOutlined } from '@ant-design/icons';
-import type { ParticipantAvoParams } from '@/lib/std/space';
+import type { ParticipantAvoParams } from '@/features/spaces/model';
 import { useI18n } from '@/lib/i18n/i18n';
-import { isMobile } from '@/lib/std';
+import { isMobile } from '@/lib/browser/environment';
 import equal from 'fast-deep-equal';
 import {
   ParticipantAvoPlaceholder,
@@ -479,6 +479,7 @@ export const AvoConfigPanel = React.forwardRef<AvoConfigPanelExports, AvoConfigP
     </div>
   );
 });
+AvoConfigPanel.displayName = 'AvoConfigPanel';
 
 // ----------------------------------------------------------------
 // 原来的 Modal，使用 AvoConfigPanel（横向），footer 由 panel 内 save 按钮处理

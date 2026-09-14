@@ -1,5 +1,5 @@
-import { LicenseWithAnalysis } from '@/lib/store/license';
-import { useLicenseStore, useRoomStore } from '@/lib/store';
+import { LicenseWithAnalysis } from '@/features/license/store';
+import { useLicenseStore, useRoomStore } from '@/features/stores';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { useI18n } from '@/lib/i18n/i18n';
 import styles from '@/styles/controls.module.scss';
@@ -8,22 +8,22 @@ import TextArea from 'antd/es/input/TextArea';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useEffect, useMemo, useState } from 'react';
 import { Calendly } from '../widgets/calendly';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 import {
   analyzeLicense,
   getLicensePersonLimit,
   LicenseStatus,
   licenseStatus,
   validLicenseDomain,
-} from '@/lib/std/license';
+} from '@/features/license/model';
 import { PresetStatusColorType } from 'antd/es/_util/colors';
 import {
   CheckCircleOutlined,
   CloseCircleOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
-import { DEFAULT_VOCESPACE_CONFIG, ReadableConf } from '@/lib/std/conf';
-import { WsBase } from '@/lib/std/device';
+import { DEFAULT_VOCESPACE_CONFIG, ReadableConf } from '@/features/settings/config';
+import { WsBase } from '@/features/room/protocol';
 
 export function LicenseControl({
   messageApi,

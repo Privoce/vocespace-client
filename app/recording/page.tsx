@@ -4,7 +4,7 @@ import React, { useEffect, useState, Suspense, useCallback } from 'react';
 import { Spin } from 'antd';
 import { useSearchParams } from 'next/navigation';
 import { RecordingContent } from './content';
-import { RecordState, useRecordingEnv } from '@/lib/std/recording';
+import { RecordState, useRecordingEnv } from '@/features/recording/use-recording-env';
 import { message } from 'antd';
 
 function RecordsPageContent() {

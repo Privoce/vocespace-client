@@ -3,10 +3,10 @@ import type { Room } from 'livekit-client';
 import { message } from 'antd';
 import { TabKey } from '../settings/settings';
 import type { SettingsExports } from '../settings/settings';
-import { useUserStore, useRoomStore } from '@/lib/store';
-import { getState } from '@/lib/std/space';
+import { useUserStore, useRoomStore } from '@/features/stores';
+import { getState } from '@/features/spaces/model';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { WsBase } from '@/lib/std/device';
+import { WsBase } from '@/features/room/protocol';
 import equal from 'fast-deep-equal';
 
 interface UseControlsSettingsOptions {

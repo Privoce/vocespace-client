@@ -1,6 +1,6 @@
-import { AICutDeps, Extraction } from '@/lib/ai/analysis';
+import { AICutDeps, Extraction } from '@/features/ai/types';
 import { useI18n } from '@/lib/i18n/i18n';
-import { SpaceInfo } from '@/lib/std/space';
+import { SpaceInfo } from '@/features/spaces/model';
 import styles from '@/styles/controls.module.scss';
 import { InfoCircleFilled } from '@ant-design/icons';
 import { Checkbox, CheckboxOptionType, GetProp, Radio, Slider, Tooltip } from 'antd';

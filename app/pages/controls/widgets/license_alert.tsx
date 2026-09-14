@@ -1,5 +1,5 @@
 import { useI18n } from '@/lib/i18n/i18n';
-import { isWeChatBrowser } from '@/lib/std';
+import { isWeChatBrowser } from '@/lib/browser/environment';
 import { Alert } from 'antd';
 import { useMemo } from 'react';
 

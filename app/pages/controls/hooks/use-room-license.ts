@@ -1,8 +1,8 @@
 import { useMemo, useCallback } from 'react';
 import type { Room } from 'livekit-client';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 import { MessageInstance } from 'antd/es/message/interface';
-import { ReadableConf } from '@/lib/std/conf';
+import { ReadableConf } from '@/features/settings/config';
 
 export function useRoomLicense(config: ReadableConf, space: Room | null | undefined, messageApi: MessageInstance) {
   const hasRoomLicense = useMemo(() => {

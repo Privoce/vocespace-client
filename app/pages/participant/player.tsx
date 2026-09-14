@@ -1,11 +1,11 @@
 'use client';
 import { SvgResource } from '@/app/resources/svg';
-import { api } from '@/lib/api';
-import { uploadIframeUrl } from '@/lib/api/space';
+import { api } from '@/features/api';
+import { uploadIframeUrl } from '@/features/spaces/api';
 import { useI18n } from '@/lib/i18n/i18n';
-import { FileType } from '@/lib/std';
-import { WsWhiteboardClearAll, WsWhiteboardSync } from '@/lib/std/device';
-import { ParticipantHandWriting, SpaceInfo } from '@/lib/std/space';
+import { FileType } from '@/lib/components/props';
+import { WsWhiteboardClearAll, WsWhiteboardSync } from '@/features/room/protocol';
+import { ParticipantHandWriting, SpaceInfo } from '@/features/spaces/model';
 import {
   EditOutlined,
   FileImageOutlined,
@@ -24,11 +24,11 @@ import {
   useMaybeLayoutContext,
 } from '@livekit/components-react';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { WsTilePlayer } from '@/lib/std/device';
+import { WsTilePlayer } from '@/features/room/protocol';
 import { getAvoPrimaryColor } from './avo';
 import { TileWhiteboardOverlay } from './effect';
-import { handleIdentityType } from '@/lib/std/space';
-import { useSpaceStore, useRoomStore } from '@/lib/store';
+import { handleIdentityType } from '@/features/spaces/model';
+import { useSpaceStore, useRoomStore } from '@/features/stores';
 import { Participant, Track } from 'livekit-client';
 import styles from '@/styles/player.module.scss';
 

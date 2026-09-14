@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, Badge, Space, Button, Table, Tag } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
 import { useI18n } from '@/lib/i18n/i18n';
-import { connect_endpoint } from '@/lib/std';
+import { connect_endpoint } from '@/lib/http/paths';
 
 export type LogType = 'info' | 'warn' | 'error';
 

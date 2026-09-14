@@ -13,15 +13,16 @@ import { facingModeFromLocalTrack, LocalAudioTrack, LocalVideoTrack, Track } fro
 import { Input, InputRef, Modal, message, Skeleton, Slider, Space, Spin, Button } from 'antd';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
-import { useUserStore } from '@/lib/store';
-import { PlatformUser, src } from '@/lib/std';
-import { useVideoBlur } from '@/lib/std/device';
+import { useUserStore } from '@/features/stores';
+import { PlatformUser } from '@/features/room/model';
+import { src } from '@/lib/http/paths';
+import { useVideoBlur } from '@/lib/hooks/video-blur';
 import { LangSelect } from '@/app/pages/controls/selects/lang_select';
 import { ulid } from 'ulid';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 import { LoginButtons, LoginStateBtn } from './login';
-import { SpaceInfo } from '@/lib/std/space';
-import { ReadableConf, VocespaceConfig } from '@/lib/std/conf';
+import { SpaceInfo } from '@/features/spaces/model';
+import { ReadableConf, VocespaceConfig } from '@/features/settings/config';
 
 export interface PreJoinPropsExt extends PreJoinProps {
   data: PlatformUser | undefined;

@@ -1,0 +1,79 @@
+{
+  "date": "2026-09-15",
+  "node": "24.12.0",
+  "pnpm": "10.27.0",
+  "commit": "7af4969670aa1bbbd4f0e91c4896e348a47f153c",
+  "checks": {
+    "installFrozenOffline": {
+      "exitCode": 0,
+      "log": "install-node24.log"
+    },
+    "typecheck": {
+      "exitCode": 0,
+      "log": "typecheck-node24.log"
+    },
+    "tests": {
+      "exitCode": 0,
+      "files": 10,
+      "passed": 46,
+      "log": "tests-node24.log"
+    },
+    "lint": {
+      "exitCode": 0,
+      "errors": 0,
+      "warnings": 111,
+      "log": "lint-final.json"
+    },
+    "boundaries": {
+      "exitCode": 0,
+      "files": 226,
+      "clientReachable": 186,
+      "errors": []
+    },
+    "isolatedBuild": {
+      "exitCode": 0,
+      "log": "build-node24.log",
+      "knownWarnings": [
+        "missing vocespace.conf.json in isolated source snapshot",
+        "Redis connection EPERM; service health not tested"
+      ]
+    },
+    "sourceInventory": {
+      "exitCode": 0,
+      "log": "source-inventory.json"
+    },
+    "gitDiffCheck": {
+      "exitCode": 0,
+      "output": ""
+    },
+    "documentationLinks": {
+      "broken": []
+    },
+    "paginationStylesMatchOriginal": true,
+    "checklist": {
+      "tasks": 41,
+      "baseDays": 128,
+      "completed": [
+        "P0-01",
+        "P0-02",
+        "P0-03",
+        "P0-04",
+        "P1-01",
+        "P1-02",
+        "P1-03",
+        "P1-04",
+        "P1-05"
+      ]
+    },
+    "userDeletionsPreserved": [
+      "avo.opt.md",
+      "wx_after_test.md"
+    ]
+  },
+  "notExecuted": [
+    "real devices and two-client LiveKit call",
+    "manual Dashboard/browser interactions",
+    "Node 18 revalidation",
+    "Docker and external services"
+  ]
+}

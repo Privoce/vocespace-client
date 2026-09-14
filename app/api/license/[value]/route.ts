@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLicenseByValue, parseLicenseClaims } from '@/lib/db/license';
+import { getLicenseByValue, parseLicenseClaims } from '@/server/db/license';
 
 interface ValidateResult {
   inDb: boolean;

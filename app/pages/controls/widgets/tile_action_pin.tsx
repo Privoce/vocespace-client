@@ -1,8 +1,8 @@
-import { WsSender, WsWave } from '@/lib/std/device';
+import { WsSender, WsWave } from '@/features/room/protocol';
 import { RaiseAuth, RaiseHand, RaiseKeeper } from './raise';
 import { WaveHand } from './wave';
 import { useMemo } from 'react';
-import { SpaceInfo } from '@/lib/std/space';
+import { SpaceInfo } from '@/features/spaces/model';
 import { Participant } from 'livekit-client';
 
 export interface TileActionCollectProps {

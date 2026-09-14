@@ -1,12 +1,13 @@
 // app/api/ai/analysis/route.ts
 import { NextRequest, NextResponse } from 'next/server';
-import { getConfig } from '../conf/conf';
-import { AnalysisRequestBody } from '@/lib/api/ai';
-import { AICutAnalysisService, Extraction } from '@/lib/ai/analysis';
-import { getDefaultPrompts } from '@/lib/ai/load';
-import { convertPlatformToACARes, PlarformAICutAnalysis, platformAPI } from '@/lib/api/platform';
-import { todayTimeStamp } from '@/lib/std/space';
-import { blurBase64Image } from '@/lib/std/blur';
+import { getConfig } from '@/server/config';
+import { AnalysisRequestBody } from '@/features/ai/api';
+import { AICutAnalysisService } from '@/server/ai/analysis';
+import { Extraction } from '@/features/ai/types';
+import { getDefaultPrompts } from '@/server/ai/prompts';
+import { convertPlatformToACARes, PlarformAICutAnalysis, platformAPI } from '@/features/platform/api';
+import { todayTimeStamp } from '@/features/spaces/model';
+import { blurBase64Image } from '@/server/media/blur';
 
 const { ai } = getConfig();
 

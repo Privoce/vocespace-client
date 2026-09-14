@@ -1,0 +1,8 @@
+
+> vocespace@0.5.5 typecheck /Users/shengyifei/projects/livekit/vocespace/vocespace
+> tsc --noEmit --incremental false
+
+app/api/license/route.ts(36,48): error TS2307: Cannot find module '@/lib/db/license' or its corresponding type declarations.
+app/api/license/route.ts(199,63): error TS2307: Cannot find module '@/lib/db/license' or its corresponding type declarations.
+server/ai/analysis.ts(6,15): error TS2459: Module '"@/features/ai/types"' declares 'AICutAnalysisBack' locally, but it is not exported.
+ ELIFECYCLE  Command failed with exit code 2.

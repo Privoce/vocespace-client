@@ -3,13 +3,13 @@ import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useMemo, useState } from 'react';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
-import { ViewAdjusts } from '@/lib/std/window';
-import { exportRBAC, usePlatformUserInfo } from '@/lib/hooks/platform';
+import { ViewAdjusts } from '@/lib/browser/window';
+import { exportRBAC, usePlatformUserInfo } from '@/features/platform/hooks';
 import { useLocalParticipant } from '@livekit/components-react';
 import { HomeOutlined, RobotOutlined } from '@ant-design/icons';
 import { Room } from 'livekit-client';
-import { SpaceInfo } from '@/lib/std/space';
-import { ReadableConf } from '@/lib/std/conf';
+import { SpaceInfo } from '@/features/spaces/model';
+import { ReadableConf } from '@/features/settings/config';
 
 export interface MoreButtonProps {
   space: Room;

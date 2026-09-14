@@ -1,16 +1,9 @@
 // /app/api/space/route.ts
-import {
-  AuthType,
-  ChildRoomEnter,
-  DEFAULT_TOKEN_RESULT,
-  ERROR_CODE,
-  IdentityType,
-  isUndefinedString,
-  splitPlatformUser,
-} from '@/lib/std';
+import { AuthType, ChildRoomEnter, DEFAULT_TOKEN_RESULT, ERROR_CODE, IdentityType, splitPlatformUser } from '@/features/room/model';
+import { isUndefinedString } from '@/lib/utils/validation';
 import { NextRequest, NextResponse } from 'next/server';
 import Redis from 'ioredis';
-import { ChatMsgItem } from '@/lib/std/chat';
+import { ChatMsgItem } from '@/features/chat/types';
 import {
   ChildRoom,
   DEFAULT_SPACE_INFO,
@@ -27,10 +20,10 @@ import {
   DEFAULT_SPACE_AUTH_CONF,
   SpaceRBACConf,
   handleIdentityType,
-} from '@/lib/std/space';
+} from '@/features/spaces/model';
 import { RoomServiceClient } from 'livekit-server-sdk';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { WsParticipant } from '@/lib/std/device';
+import { WsParticipant } from '@/features/room/protocol';
 import {
   AllowGuestBody,
   CheckNameBody,
@@ -48,8 +41,8 @@ import {
   UpdateSpaceParticipantBody,
   UploadSpaceAppBody,
   WorkModeBody,
-} from '@/lib/api/space';
-import { UpdateRecordBody } from '@/lib/api/record';
+} from '@/features/spaces/api';
+import { UpdateRecordBody } from '@/features/recording/api';
 import {
   ChildRoomMethods,
   CreateRoomBody,
@@ -57,10 +50,10 @@ import {
   JoinRoomBody,
   LeaveRoomBody,
   UpdateRoomBody,
-} from '@/lib/api/channel';
-import { getConfig } from '../conf/conf';
-import { platformAPI } from '@/lib/api/platform';
-import { generateToken, usePlatformUserInfoServer } from '@/lib/hooks/platformToken';
+} from '@/features/channels/api';
+import { getConfig } from '@/server/config';
+import { platformAPI } from '@/features/platform/api';
+import { generateToken, getPlatformUserInfoServer } from '@/server/platform-token';
 
 // [redis config env] ----------------------------------------------------------
 const {
@@ -821,7 +814,7 @@ class SpaceManager {
           return false;
         }
 
-        const { createRoom } = usePlatformUserInfoServer({ user: pData });
+        const { createRoom } = getPlatformUserInfoServer({ user: pData });
 
         spaceInfo = {
           ...DEFAULT_SPACE_INFO(startAt, createRoom),
@@ -865,7 +858,7 @@ class SpaceManager {
       let participant = spaceInfo.participants[participantId];
       // init 时进行房间创建
       if (init) {
-        const { isAuth } = usePlatformUserInfoServer({ user: participant });
+        const { isAuth } = getPlatformUserInfoServer({ user: participant });
         // 这里说明房间存在而且且用户也存在，说明用户可能是重连或房间是持久化的，我们无需大范围数据更新，只需要更新
         // 用户的最基础设置即可
         // 由于todo数据连接了平台端数据，所以这里需要更改为平台端的todo数据，但只有在isAuth为true时才更新
@@ -1041,7 +1034,7 @@ class SpaceManager {
       // 如果是持久化房间，删除参与者操作到此为止
       if (spaceInfo.persistence) {
         // 需要确定参与者的身份，如果是guest则需要直接删除，guest永远不持久存储
-        const { isAuth } = usePlatformUserInfoServer({
+        const { isAuth } = getPlatformUserInfoServer({
           user: spaceInfo.participants[participantId],
         });
         if (!isAuth) {

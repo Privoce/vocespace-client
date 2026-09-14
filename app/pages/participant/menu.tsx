@@ -1,22 +1,18 @@
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
-import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
+import { ParticipantSettings, SpaceInfo } from '@/features/spaces/model';
 import { Dropdown, MenuProps, Modal, Slider } from 'antd';
 import { Participant, Room, Track } from 'livekit-client';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import styles from '@/styles/controls.module.scss';
-import {
-  ControlType,
-  hasHeadphonesConnected,
-  WsBase,
-  WsControlParticipant,
-  WsInviteDevice,
-  WsTo,
-} from '@/lib/std/device';
+import { ControlType, WsBase, WsControlParticipant, WsInviteDevice, WsTo } from '@/features/room/protocol';
+import { hasHeadphonesConnected } from '@/lib/browser/media';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { isSpaceManager, src, supportsMediaDeviceChangeEvent } from '@/lib/std';
-import { exportRBAC, usePlatformUserInfo } from '@/lib/hooks/platform';
-import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
+import { isSpaceManager } from '@/features/room/model';
+import { src } from '@/lib/http/paths';
+import { supportsMediaDeviceChangeEvent } from '@/lib/browser/environment';
+import { exportRBAC, usePlatformUserInfo } from '@/features/platform/hooks';
+import { markExplicitLeaveIntent } from '@/features/room/leave-intent';
 import { HomeOutlined } from '@ant-design/icons';
 import { MessageInstance } from 'antd/es/message/interface';
 

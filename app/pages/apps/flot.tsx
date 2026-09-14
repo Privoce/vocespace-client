@@ -30,27 +30,27 @@ import {
   SpaceTodo,
   Timer,
   todayTimeStamp,
-} from '@/lib/std/space';
-import { api } from '@/lib/api';
+} from '@/features/spaces/model';
+import { api } from '@/features/api';
 import { useLocalParticipant } from '@livekit/components-react';
 import { RemoteTargetApp, socket } from '@/app/[spaceName]/PageClientImpl';
-import { WsBase } from '@/lib/std/device';
+import { WsBase } from '@/features/room/protocol';
 import { DEFAULT_COLLAPSE_HEADER_STYLES } from '../controls/collapse_tools';
 import { TodoTogether } from './todo_together';
 import { AICutAnalysisMdTabsExports, AICutAnalysisMdTabs } from './ai_analysis_md';
-import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
+import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/features/ai/types';
 import { CopyButton } from '../controls/widgets/copy';
-import { useRoomStore } from '@/lib/store';
-import { AICutService } from '@/lib/ai/cut';
+import { useRoomStore } from '@/features/stores';
+import { AICutService } from '@/features/ai/cut';
 import { DEFAULT_DRAWER_PROP, DrawerCloser, DrawerHeader } from '../controls/drawer_tools';
 import {
   convertPlatformToACARes,
   PlarformAICutAnalysis,
   platformAPI,
   PlatformTodos,
-} from '@/lib/api/platform';
+} from '@/features/platform/api';
 import { SvgResource } from '@/app/resources/svg';
-import { usePlatformUserInfoCheap } from '@/lib/hooks/platform';
+import { getPlatformUserInfo } from '@/features/platform/hooks';
 
 export interface FlotButtonProps {
   style?: React.CSSProperties;
@@ -183,7 +183,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
         // 发起请求获取结果
         if (
           targetParticipant.participantId &&
-          usePlatformUserInfoCheap({
+          getPlatformUserInfo({
             user: spaceInfo.participants[targetParticipant.participantId],
           }).isAuth
         ) {
@@ -200,7 +200,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
           const response = await api.ai.getAnalysisRes(
             space,
             participantId,
-            usePlatformUserInfoCheap({ user: spaceInfo.participants[participantId] }).isAuth,
+            getPlatformUserInfo({ user: spaceInfo.participants[participantId] }).isAuth,
           );
           if (response.ok) {
             const { res }: { res: AICutAnalysisRes } = await response.json();
@@ -215,7 +215,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
       if (
         !isSelf &&
         targetParticipant.participantId &&
-        usePlatformUserInfoCheap({ user: spaceInfo.participants[targetParticipant.participantId] })
+        getPlatformUserInfo({ user: spaceInfo.participants[targetParticipant.participantId] })
           .isAuth
       ) {
         // console.warn('Fetching remote AI Cut Analysis Result for', targetParticipant.participantId);
@@ -227,7 +227,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
 
     const toPersonalPlatform = () => {
       let id = targetParticipant.participantId || localParticipant.identity;
-      if (usePlatformUserInfoCheap({ user: spaceInfo.participants[id] }).isAuth) {
+      if (getPlatformUserInfo({ user: spaceInfo.participants[id] }).isAuth) {
         let url = `https://home.vocespace.com/ai/${id}`;
         window.open(url, '_blank');
       }
@@ -265,7 +265,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
     useEffect(() => {
       if (
         targetParticipant.participantId &&
-        usePlatformUserInfoCheap({ user: spaceInfo.participants[targetParticipant.participantId] })
+        getPlatformUserInfo({ user: spaceInfo.participants[targetParticipant.participantId] })
           .isAuth &&
         fetchData
       ) {
@@ -294,7 +294,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
           <DrawerHeader
             title={'Widgets'}
             icon={
-              usePlatformUserInfoCheap({
+              getPlatformUserInfo({
                 user: spaceInfo.participants[
                   targetParticipant.participantId || localParticipant.identity
                 ],
@@ -347,7 +347,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
                   width: '100%',
                 }}
                 isAuthed={
-                  usePlatformUserInfoCheap({
+                  getPlatformUserInfo({
                     user: spaceInfo.participants[
                       targetParticipant.participantId || localParticipant.identity
                     ],
@@ -393,7 +393,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
                   width: '100%',
                 }}
                 isAuthed={
-                  usePlatformUserInfoCheap({
+                  getPlatformUserInfo({
                     user: spaceInfo.participants[
                       targetParticipant.participantId || localParticipant.identity
                     ],
@@ -409,6 +409,7 @@ export const FlotLayout = forwardRef<FlotLayoutExports, FlotLayoutProps>(
     );
   },
 );
+FlotLayout.displayName = 'FlotLayout';
 
 interface FlotAppItemProps {
   messageApi: MessageInstance;
@@ -501,7 +502,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
         participantId,
         key,
         data,
-        usePlatformUserInfoCheap({ user: spaceInfo.participants[participantId] }).isAuth,
+        getPlatformUserInfo({ user: spaceInfo.participants[participantId] }).isAuth,
       );
       if (response.ok) {
         socket.emit('update_user_status', {
@@ -652,7 +653,7 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
               space={space}
               participantId={participantId}
               isAuth={
-                usePlatformUserInfoCheap({ user: spaceInfo.participants[participantId] }).isAuth
+                getPlatformUserInfo({ user: spaceInfo.participants[participantId] }).isAuth
               }
               messageApi={messageApi}
               appData={todo.data}
@@ -826,3 +827,4 @@ const FlotAppItem = forwardRef<FlotAppExports, FlotAppItemProps>(
     );
   },
 );
+FlotAppItem.displayName = 'FlotAppItem';

@@ -7,10 +7,10 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { ulid } from 'ulid';
 import { Room } from 'livekit-client';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { useRoomStore } from '@/lib/store';
+import { useRoomStore } from '@/features/stores';
 import { MessageInstance } from 'antd/es/message/interface';
 import Dragger from 'antd/es/upload/Dragger';
-import { ChatMsgItem } from '@/lib/std/chat';
+import { ChatMsgItem } from '@/features/chat/types';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from '../controls/drawer_tools';
 import {
   FolderOpenOutlined,
@@ -18,10 +18,11 @@ import {
   CloseOutlined,
   SendOutlined,
 } from '@ant-design/icons';
-import { api } from '@/lib/api';
-import { FileType, isMobile } from '@/lib/std';
+import { api } from '@/features/api';
+import { FileType } from '@/lib/components/props';
+import { isMobile } from '@/lib/browser/environment';
 import { FS } from './fs';
-import { handleIdentityType, SpaceInfo } from '@/lib/std/space';
+import { handleIdentityType, SpaceInfo } from '@/features/spaces/model';
 
 export interface EnhancedChatProps {
   open: boolean;
@@ -487,6 +488,7 @@ export const ChatPanel = React.forwardRef<EnhancedChatExports, ChatPanelProps>(
     );
   },
 );
+ChatPanel.displayName = 'ChatPanel';
 
 export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatProps>(
   (
@@ -532,6 +534,7 @@ export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatPr
     );
   },
 );
+EnhancedChat.displayName = 'EnhancedChat';
 
 interface ChatMsgItemProps {
   isLocal: boolean;

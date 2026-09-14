@@ -7,9 +7,9 @@ import {
   updateLicense,
   parseLicenseClaims,
   generateLicenseOnly,
-} from '@/lib/db/license';
-import { sendEmail, fmtContentBuy } from '@/lib/email';
-import { getConfig } from '@/app/api/conf/conf';
+} from '@/server/db/license';
+import { sendEmail, fmtContentBuy } from '@/server/email';
+import { getConfig } from '@/server/config';
 
 interface ValidateResult {
   inDb: boolean;
@@ -33,7 +33,7 @@ const validateLicense = async (value: string) => {
 
   let license: any;
   try {
-    const { getLicenseByValue } = await import('@/lib/db/license');
+    const { getLicenseByValue } = await import('@/server/db/license');
     license = await getLicenseByValue(value);
   } catch (e) {
     console.error('DB unavailable for license validation:', e);
@@ -196,7 +196,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already in DB
-    const { getLicenseByValue: checkExisting } = await import('@/lib/db/license');
+    const { getLicenseByValue: checkExisting } = await import('@/server/db/license');
     const existing = await checkExisting(value);
     if (existing) {
       return NextResponse.json({ error: 'License already exists in database' }, { status: 409 });

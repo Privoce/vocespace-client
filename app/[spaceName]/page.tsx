@@ -2,13 +2,13 @@
 
 import * as React from 'react';
 import { PageClientImpl } from './PageClientImpl';
-import { isVideoCodec } from '@/lib/types';
-import { SearchParams } from '@/lib/std';
-import { usePlatformUser } from '@/lib/hooks/platform';
+import { isVideoCodec } from '@/lib/livekit/connection';
+import { SearchParams } from '@/features/room/model';
+import { usePlatformUser } from '@/features/platform/hooks';
 import useMessage from 'antd/es/message/useMessage';
 import { message } from 'antd';
 import { useRouter } from 'next/navigation';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 
 export default function Page({
   params,

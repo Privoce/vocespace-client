@@ -11,9 +11,9 @@ import {
   setConfigHyperbeam,
   setFullConfig,
   writeBackConfig,
-} from './conf';
-import { AIConf, clearReadableConf, HyperbeamConf, RTCConf, SMTPConf, VocespaceConfig } from '@/lib/std/conf';
-import { UpdateCreateSpaceConfBody } from '@/lib/api/conf';
+} from '@/server/config';
+import { AIConf, clearReadableConf, HyperbeamConf, RTCConf, SMTPConf, VocespaceConfig } from '@/features/settings/config';
+import { UpdateCreateSpaceConfBody } from '@/features/settings/api';
 
 export async function GET(request: NextRequest) {
   const hostToken = request.nextUrl.searchParams.get('hostToken');

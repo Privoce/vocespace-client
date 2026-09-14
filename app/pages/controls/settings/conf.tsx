@@ -13,12 +13,12 @@ import {
   rtcNumberToConf,
   SMTPConf,
   VocespaceConfig,
-} from '@/lib/std/conf';
-import { api } from '@/lib/api';
-import { isUndefinedNumber, isUndefinedString } from '@/lib/std';
+} from '@/features/settings/config';
+import { api } from '@/features/api';
+import { isUndefinedNumber, isUndefinedString } from '@/lib/utils/validation';
 import { MessageInstance } from 'antd/es/message/interface';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { WsBase } from '@/lib/std/device';
+import { WsBase } from '@/features/room/protocol';
 import equal from 'fast-deep-equal';
 
 export interface ConfQulityProps {

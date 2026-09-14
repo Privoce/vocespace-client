@@ -1,6 +1,6 @@
 import React from 'react';
 import { Button, Input, Modal } from 'antd';
-import { HyperbeamConf } from '@/lib/std/conf';
+import { HyperbeamConf } from '@/features/settings/config';
 import { useI18n } from '@/lib/i18n/i18n';
 
 interface HyperbeamConfModalProps {

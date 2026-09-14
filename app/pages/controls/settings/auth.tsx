@@ -4,14 +4,14 @@ import React, { useMemo } from 'react';
 import styles from '@/styles/controls.module.scss';
 import { Button, Switch, Table, message } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { SpaceInfo } from '@/lib/std/space';
+import { SpaceInfo } from '@/features/spaces/model';
 import { useI18n } from '@/lib/i18n/i18n';
 import { Room } from 'livekit-client';
-import { isSpaceManager } from '@/lib/std';
+import { isSpaceManager } from '@/features/room/model';
 import { MessageInstance } from 'antd/es/message/interface';
-import { api } from '@/lib/api';
+import { api } from '@/features/api';
 import { socket } from '@/app/[spaceName]/PageClientImpl';
-import { WsBase } from '@/lib/std/device';
+import { WsBase } from '@/features/room/protocol';
 
 type PermissionKey = 'createRoom' | 'manageRoom' | 'manageRole' | 'controlUser' | 'recording' | 'viewRoom' | "manageFile" | "managePlayer";
 
@@ -42,7 +42,7 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
     guest: { ...spaceInfo.auth.guest },
   });
 
-  const renderSwitch = (roleKey: keyof SpaceInfo['auth']) => (_: any, record: PermissionRow) => {
+  const renderSwitch = (roleKey: keyof SpaceInfo['auth']) => function PermissionSwitchCell(_: any, record: PermissionRow) {
     const field = record.key as PermissionKey;
     const checked = Boolean((changeableAuth as any)[roleKey]?.[field]);
     return (

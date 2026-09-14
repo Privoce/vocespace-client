@@ -1,4 +1,4 @@
-import { SpaceInfo, SpaceTodo, TodoItem } from '@/lib/std/space';
+import { SpaceInfo, SpaceTodo, TodoItem } from '@/features/spaces/model';
 import { useI18n } from '@/lib/i18n/i18n';
 import { Collapse, Progress, Empty, Card, List } from 'antd';
 import { AppTodo } from './todo_list';
@@ -6,7 +6,7 @@ import { MessageInstance } from 'antd/es/message/interface';
 import { useMemo } from 'react';
 import styles from '@/styles/apps.module.scss';
 import { SvgResource } from '@/app/resources/svg';
-import { usePlatformUserInfoCheap } from '@/lib/hooks/platform';
+import { getPlatformUserInfo } from '@/features/platform/hooks';
 
 export interface TodoTogetherProps {
   spaceInfo: SpaceInfo;
@@ -49,7 +49,7 @@ export function TodoTogether({ spaceInfo, messageApi, space }: TodoTogetherProps
           totalCount: todoData.length,
           firstTodoTitle: firstTodo?.title,
           todos: participant.appDatas?.todo || [],
-          isAuth: usePlatformUserInfoCheap({ user: participant }).isAuth,
+          isAuth: getPlatformUserInfo({ user: participant }).isAuth,
         };
       })
       .sort((a, b) => a.name.localeCompare(b.name)); // 按名字排序

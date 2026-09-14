@@ -2,7 +2,7 @@
 
 import React, { RefObject } from 'react';
 import dynamic from 'next/dynamic';
-import { ModelBg, ModelRole } from '@/lib/std/virtual';
+import { ModelBg, ModelRole } from '@/features/avatars/model';
 import { TrackReference } from '@livekit/components-react';
 import { MessageInstance } from 'antd/es/message/interface';
 

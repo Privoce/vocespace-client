@@ -1,0 +1,44 @@
+[
+  {
+    "name": "install-after",
+    "command": [
+      "pnpm",
+      "install",
+      "--frozen-lockfile",
+      "--offline"
+    ],
+    "node": "24.12.0",
+    "exitCode": 0,
+    "seconds": 0.43
+  },
+  {
+    "name": "test-node24",
+    "command": [
+      "pnpm",
+      "test"
+    ],
+    "node": "24.12.0",
+    "exitCode": 0,
+    "seconds": 2.17
+  },
+  {
+    "name": "typecheck-node24",
+    "command": [
+      "pnpm",
+      "typecheck"
+    ],
+    "node": "24.12.0",
+    "exitCode": 0,
+    "seconds": 4.89
+  },
+  {
+    "name": "lint-after",
+    "command": [
+      "pnpm",
+      "lint"
+    ],
+    "node": "24.12.0",
+    "exitCode": 1,
+    "seconds": 0.56
+  }
+]

@@ -12,10 +12,10 @@ import {
   DeleteOutlined,
   FolderOpenFilled,
 } from '@ant-design/icons';
-import * as api from '@/lib/api/chat';
+import * as api from '@/features/chat/api';
 import React from 'react';
 import { useI18n } from '@/lib/i18n/i18n';
-import { downloadFile } from '@/lib/std';
+import { downloadFile } from '@/lib/browser/download';
 
 export interface FSProps {
   space: Room;

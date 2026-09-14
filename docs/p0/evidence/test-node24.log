@@ -1,0 +1,17 @@
+
+> vocespace@0.5.5 test <repo>
+> vitest run
+
+
+ RUN  v3.2.4 <repo>
+
+ ✓ tests/debounce.test.tsx (4 tests) 11ms
+ ✓ tests/before-unload-guard.test.tsx (7 tests) 10ms
+ ✓ tests/room-leave-intent.test.ts (4 tests) 1ms
+ ✓ tests/room-subscription.test.ts (4 tests) 10ms
+
+ Test Files  4 passed (4)
+      Tests  19 passed (19)
+   Start at  00:20:51
+   Duration  756ms (transform 48ms, setup 262ms, collect 80ms, tests 33ms, environment 678ms, prepare 120ms)
+

@@ -5,10 +5,10 @@ import { useMemo } from 'react';
 import { MessageInstance } from 'antd/es/message/interface';
 const { Timer } = Statistic;
 import dayjs from 'dayjs';
-import { src } from '@/lib/std';
+import { src } from '@/lib/http/paths';
 import styles from '@/styles/apps.module.scss';
 import { CardSize } from 'antd/es/card/Card';
-import { AppAuth, Countdown } from '@/lib/std/space';
+import { AppAuth, Countdown } from '@/features/spaces/model';
 
 export interface CountdownProps {
   messageApi: MessageInstance;

@@ -1,0 +1,10 @@
+{
+  "command": [
+    "pnpm",
+    "baseline:build"
+  ],
+  "node": "24.12.0",
+  "exitCode": 0,
+  "seconds": 28.58,
+  "configuration": "isolated source snapshot without private configuration"
+}
