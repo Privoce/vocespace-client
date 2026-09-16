@@ -33,7 +33,7 @@ import {
 } from '@/features/spaces/model';
 import { api } from '@/features/api';
 import { useLocalParticipant } from '@livekit/components-react';
-import { RemoteTargetApp, socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { WsBase } from '@/features/room/protocol';
 import { DEFAULT_COLLAPSE_HEADER_STYLES } from '../controls/collapse_tools';
 import { TodoTogether } from './todo_together';

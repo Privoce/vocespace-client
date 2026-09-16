@@ -5,7 +5,7 @@ import { describe, expect, it, vi } from 'vitest';
 // Isolate the transport boundary: importing the real page would auto-connect a Socket.
 // The hook and LiveKit enum values remain real; this is not a media integration test.
 const { emit } = vi.hoisted(() => ({ emit: vi.fn() }));
-vi.mock('@/app/[spaceName]/PageClientImpl', () => ({ socket: { emit } }));
+vi.mock('@/features/room/socket', () => ({ socket: { emit } }));
 import { useRoomSubscription } from '@/app/pages/controls/hooks/use-room-subscription';
 
 function fixture() {

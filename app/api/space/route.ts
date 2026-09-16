@@ -22,8 +22,8 @@ import {
   handleIdentityType,
 } from '@/features/spaces/model';
 import { RoomServiceClient } from 'livekit-server-sdk';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
 import { WsParticipant } from '@/features/room/protocol';
+import { getSocketServer } from '@/server/socket-bridge.js';
 import {
   AllowGuestBody,
   CheckNameBody,
@@ -2588,15 +2588,24 @@ const userHeartbeat = async () => {
           'warn',
         );
 
+        const socketServer = getSocketServer();
+
         for (const participant of inLKNotInRedis) {
-          socket.emit('re_init', {
-            space: room.name,
-            participantId: participant.identity,
-          } as WsParticipant);
-          await SpaceManager.addHeartbeatLog(
-            `✓ 已发送重新初始化请求给用户: ${participant.identity}`,
-            'info',
-          );
+          if (socketServer) {
+            socketServer.emit('re_init_response', {
+              space: room.name,
+              participantId: participant.identity,
+            } as WsParticipant);
+            await SpaceManager.addHeartbeatLog(
+              `✓ 已发送重新初始化请求给用户: ${participant.identity}`,
+              'info',
+            );
+          } else {
+            await SpaceManager.addHeartbeatLog(
+              `! Socket.IO 服务未就绪，跳过重新初始化推送: ${participant.identity}`,
+              'warn',
+            );
+          }
           totalReInit++;
         }
       }

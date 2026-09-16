@@ -9,7 +9,7 @@ import { getPlatformUserInfo } from '@/features/platform/hooks';
 import { isMobile } from '@/lib/browser/environment';
 import type { MessageInstance } from 'antd/es/message/interface';
 import type { NotificationInstance } from 'antd/es/notification/interface';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { WsBase } from '@/features/room/protocol';
 import { useI18n } from '@/lib/i18n/i18n';
 

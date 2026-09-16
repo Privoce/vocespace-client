@@ -17,7 +17,7 @@ import {
 import { api } from '@/features/api';
 import { isUndefinedNumber, isUndefinedString } from '@/lib/utils/validation';
 import { MessageInstance } from 'antd/es/message/interface';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { WsBase } from '@/features/room/protocol';
 import equal from 'fast-deep-equal';
 

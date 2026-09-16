@@ -2,7 +2,7 @@ import { useEffect } from 'react';
 import { ConnectionState, ParticipantTrackPermission, Track } from 'livekit-client';
 import type { Room } from 'livekit-client';
 import { WsBase } from '@/features/room/protocol';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 
 interface SelfRoom {
   name: string;

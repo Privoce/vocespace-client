@@ -22,7 +22,7 @@ import { AppAuth, ChildRoom, DEFAULT_PARTICIPANT_SETTINGS, ParticipantAvoParams,
 import { useVideoBlur } from '@/lib/hooks/video-blur';
 import { WsBase, WsSender, WsWave } from '@/features/room/protocol';
 import { useUserStore } from '@/features/settings/user-store';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { isSpaceManager, UserStatus } from '@/features/room/model';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { StatusInfo, useStatusInfo } from './status_info';

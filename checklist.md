@@ -7,7 +7,7 @@
 - 1 day = 2 小时；每周 4 day = 8 小时。以下任务共 128 day / 256 小时，另预留 24 day / 48 小时缓冲。
 - 每个任务记录状态、实际 day、关联 PR、验收证据、阻塞项；所有估算包含该任务自身验证。
 - 状态为待开始、进行中、待验收、已完成或阻塞。仅完整满足验收要求才勾选；部分完成保留未勾选。
-- P0-01–04 已完成，见 [P0 完成报告](./docs/p0/README.md)：模块与协议基线、工程检查、19 个行为测试和双浏览器步骤已交付。P1-01–05 已完成，见 [P1 完成报告](./docs/p1/README.md)；P2–P8 待开始。
+- P0-01–04 已完成，见 [P0 完成报告](./docs/p0/README.md)：模块与协议基线、工程检查、19 个行为测试和双浏览器步骤已交付。P1-01–05 已完成，见 [P1 完成报告](./docs/p1/README.md)；P2、P3 进行中，P4–P8 待开始。
 - P0 的 lint 配置错误 B01 已在 P1 修复；当前 0 错误、111 个历史警告。46 个自动化测试、类型、边界和构建通过；真实媒体尚未验证。
 - 实际 day 由后续投入记录，空值表示未记录，不代表零耗时。没有外部环境的实测不以 mock 结果替代。
 - Dashboard 不做结构拆解，只做必要兼容；保留当前用户未提交改动。
@@ -59,32 +59,32 @@
 ## P2：连接与生命周期（12 day / 24 小时）
 
 - [ ] **P2-01｜3 day｜迁移 Socket 与状态别名**：解除页面导出的 Socket 单例与 store 别名依赖，明确会话状态所有者。
-  - 状态：待开始；实际 day：—；关联 PR：—；阻塞项：—。
-  - 验收证据：页面反向引用清理，状态归属清单。
+  - 状态：待验收；实际 day：—；关联 PR：—；阻塞项：清理注释遗留引用后再做最终扫描。
+  - 验收证据：新增 [features/room/socket.ts](./features/room/socket.ts) 统一 Socket 所有权；业务模块改为从该模块导入；`grep -RIn "from '@/app/\[spaceName\]/PageClientImpl'" app features lib server tests` 仅剩 [app/pages/apps/single_flot.tsx](./app/pages/apps/single_flot.tsx) 注释命中。
 
 - [ ] **P2-02｜4 day｜抽离会话生命周期**：实现入会状态、LiveKit 会话、Socket Provider、重连、失败重试与离会处理。
-  - 状态：待开始；实际 day：—；关联 PR：—；阻塞项：—。
-  - 验收证据：普通入会与平台直入行为测试。
+  - 状态：进行中；实际 day：—；关联 PR：—；阻塞项：缺少普通入会/平台直入的真实端到端回归记录。
+  - 验收证据：新增 [features/room/use-room-session-lifecycle.ts](./features/room/use-room-session-lifecycle.ts) 并接入 [app/[spaceName]/PageClientImpl.tsx](./app/[spaceName]/PageClientImpl.tsx)；通过 [tests/room-session-lifecycle.test.ts](./tests/room-session-lifecycle.test.ts) 覆盖显式离会与非显式断连分支。
 
 - [ ] **P2-03｜3 day｜统一资源清理**：按所有者释放监听、异步任务、媒体轨道、计时器和观察器；只解绑当前 handler。
-  - 状态：待开始；实际 day：—；关联 PR：—；阻塞项：—。
-  - 验收证据：挂载/卸载、过期异步结果和资源清理验证。
+  - 状态：进行中；实际 day：—；关联 PR：—；阻塞项：需补充复杂场景（切房间、重复挂载）的自动化与人工回归。
+  - 验收证据：离会统一清理迁移到 [features/room/use-room-session-lifecycle.ts](./features/room/use-room-session-lifecycle.ts)；补充 [tests/room-session-lifecycle.test.ts](./tests/room-session-lifecycle.test.ts) 验证资源释放仅在显式离会执行。
 
 - [ ] **P2-04｜2 day｜验证重入与连接恢复**：覆盖首次入会、直入、失败重试、两种连接重连、离会再入会和页面切换。
-  - 状态：待开始；实际 day：—；关联 PR：—；阻塞项：—。
-  - 验收证据：自动化结果及真实双端连接记录。
+  - 状态：进行中；实际 day：—；关联 PR：—；阻塞项：真实双端连接与媒体链路记录未执行。
+  - 验收证据：Node 24 下 `pnpm exec tsc --noEmit --pretty false` 与 `pnpm vitest run tests/room-session-lifecycle.test.ts tests/room-subscription.test.ts tests/room-leave-intent.test.ts tests/before-unload-guard.test.tsx` 通过（17 tests）。
 
 **阶段验收：** 无重复事件处理，旧房间状态不污染新会话；新模块通过重复挂载清理验证。
 
 ## P3：会议核心组件（28 day / 56 小时）
 
 - [ ] **P3-01｜5 day｜拆解视频容器**：分离布局计算、轨道选择、焦点状态、分页和渲染，保持已有布局交互。
-  - 状态：待开始；实际 day：—；关联 PR：—；阻塞项：—。
-  - 验收证据：布局切换、轨道更新、分页与焦点验证。
+  - 状态：进行中；实际 day：—；关联 PR：—；阻塞项：需补充布局切换与焦点切换的场景化测试。
+  - 验收证据：新增 [app/pages/controls/components/video-conference-stage.tsx](./app/pages/controls/components/video-conference-stage.tsx) 承接主视口渲染；新增 [app/pages/controls/hooks/use-self-room.ts](./app/pages/controls/hooks/use-self-room.ts) 承接 `selfRoom` 计算；[app/pages/controls/video_container.tsx](./app/pages/controls/video_container.tsx) 已改为组合调用。Node 24 下类型检查与相关测试通过（13 tests）。
 
 - [ ] **P3-02｜5 day｜拆解控制栏**：分离设备操作、聊天入口、设置面板和离会行为，复用已有 controls hooks。
-  - 状态：待开始；实际 day：—；关联 PR：—；阻塞项：—。
-  - 验收证据：麦克风、摄像头、共享、面板与离会回归。
+  - 状态：进行中；实际 day：—；关联 PR：—；阻塞项：需补充设备切换与离会场景化回归（含真实设备）。
+  - 验收证据：新增 [app/pages/controls/components/media-device-controls.tsx](./app/pages/controls/components/media-device-controls.tsx) 抽离麦克风/摄像头/共享设备操作；新增 [app/pages/controls/hooks/use-controls-leave.ts](./app/pages/controls/hooks/use-controls-leave.ts) 抽离离会行为；[app/pages/controls/bar.tsx](./app/pages/controls/bar.tsx) 已改为组合调用并统一聊天入口 toggle。Node 24 下类型检查与相关测试通过（13 tests）。
 
 - [ ] **P3-03｜5 day｜拆解成员组件**：拆分 Tile、Player、Menu 的轨道渲染、状态、权限和菜单操作。
   - 状态：待开始；实际 day：—；关联 PR：—；阻塞项：—。
@@ -95,8 +95,8 @@
   - 验收证据：消息/附件提交、未读、重连后无重复监听。
 
 - [ ] **P3-05｜5 day｜拆解频道**：分离频道列表、切换、权限和管理交互，取消或忽略旧频道异步结果。
-  - 状态：待开始；实际 day：—；关联 PR：—；阻塞项：—。
-  - 验收证据：切换、失败处理和权限回归。
+  - 状态：进行中；实际 day：—；关联 PR：—；阻塞项：频道切换与失败流程尚未抽离，需继续拆分异步流程。
+  - 验收证据：新增 [app/pages/controls/hooks/use-channel-join-events.ts](./app/pages/controls/hooks/use-channel-join-events.ts) 并接入 [app/pages/controls/channel.tsx](./app/pages/controls/channel.tsx)，将加入私密房间/被移除监听与清理从组件主体中抽离。
 
 - [ ] **P3-06｜3 day｜整理预览与房间组合**：拆分入会预览表单和设备预览；保留平台直入、用户偏好，整理房间入口组合。
   - 状态：待开始；实际 day：—；关联 PR：—；阻塞项：—。

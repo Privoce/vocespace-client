@@ -2,10 +2,7 @@ import { isMobile } from '@/lib/browser/environment';
 import { src } from '@/lib/http/paths';
 import { UserDefineStatus, UserStatus } from '@/features/room/model';
 import {
-  ConnectionStateToast,
   isTrackReference,
-  LayoutContextProvider,
-  RoomAudioRenderer,
   TrackReference,
   useCreateLayoutContext,
   useMaybeRoomContext,
@@ -33,13 +30,13 @@ import React, {
   useRef,
   useState,
 } from 'react';
-import { ControlBarExport, Controls } from './bar';
+import { ControlBarExport } from './bar';
 import { ParticipantItem } from '../participant/tile';
 import { useSpaceInfo } from '@/features/spaces/use-space-info';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { useI18n } from '@/lib/i18n/i18n';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { useUserStore, useLicenseStore, useRoomStore, useSpaceStore } from '@/features/stores';
 import { useUserStatus, useRoomLicense, useRoomSubscription } from './hooks/index';
 import { useAICutService } from './hooks/use-ai-cut';
@@ -58,11 +55,10 @@ import { useFullScreenBtn } from './widgets/full_screen';
 import { exportRBAC, usePlatformUserInfo, getPlatformUserInfo } from '@/features/platform/hooks';
 import { markExplicitLeaveIntent } from '@/features/room/leave-intent';
 import { TilePlayer, TilePlayerAdd, TilePlayerItem } from '../participant/player';
-import { LayoutEntity, UnifiedLayout, useReplaceLivekitTrack } from '../layout/unified';
-import { PaginationControl, PaginationIndicator } from '../layout/cover';
-import { LicenseAlert } from './widgets/license_alert';
-import { ChatPanel, EnhancedChat } from '@/app/pages/chat/chat';
+import { LayoutEntity, useReplaceLivekitTrack } from '../layout/unified';
 import { useControlsChat } from './hooks';
+import { useSelfRoom } from './hooks/use-self-room';
+import { VideoConferenceStage } from './components/video-conference-stage';
 
 export interface VideoContainerProps extends VideoConferenceProps {
   messageApi: MessageInstance;
@@ -758,31 +754,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       platUser,
     ]);
 
-    const selfRoom = useMemo(() => {
-      if (!space || space.state !== ConnectionState.Connected || !settings || !settings.children)
-        return;
-
-      let selfRoom = settings.children.find((child) => {
-        return child.participants.includes(space.localParticipant.identity);
-      });
-
-      let allChildParticipants = settings.children.reduce((acc, room) => {
-        return acc.concat(room.participants);
-      }, [] as string[]);
-
-      if (!selfRoom) {
-        // 这里还需要过滤掉进入子房间的参与者
-        selfRoom = {
-          name: space.name,
-          participants: Object.keys(settings.participants).filter((pid) => {
-            return !allChildParticipants.includes(pid);
-          }),
-          ownerId: settings.ownerId,
-          isPrivate: false,
-        };
-      }
-      return selfRoom;
-    }, [settings, space]);
+    const selfRoom = useSelfRoom(space || undefined, settings);
 
     const [tilePlayerItems, setTilePlayerItems] = useState<TilePlayerItem[]>([]);
 
@@ -1255,166 +1227,48 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
           ></Channel>
         )}
         {/* 主视口 */}
-        <div
-          className="lk-video-conference"
-          {...props}
-          style={{
-            height: '100vh',
-            transition: 'width 0.3s ease-in-out',
-            width: mainViewWidth,
-          }}
-        >
-          {space && (
-            <LayoutContextProvider
-              value={layoutContext}
-              // onPinChange={handleFocusStateChange}
-              onWidgetChange={widgetUpdate}
-            >
-              <div
-                className="lk-video-conference-inner"
-                style={{
-                  flex: 1,
-                  alignItems: 'flex-start',
-                  height: '100dvh',
-                  gap: 8,
-                  flexDirection: 'column',
-                  paddingRight: 8,
-                }}
-              >
-                {!hasRoomLicense && (
-                  <LicenseAlert toBuyRoomLicense={toBuyRoomLicense}></LicenseAlert>
-                )}
-                <div style={{ display: 'flex', flex: 1, width: '100%', minHeight: 0 }}>
-                  <div
-                    className={focusTrack ? 'lk-focus-layout-wrapper' : 'lk-grid-layout-wrapper'}
-                    style={{
-                      position: 'relative',
-                      flex: 1,
-                      minHeight: 0,
-                      height: '100%',
-                      width: chatOpen ? 'calc(100% - 308px)' : '100%',
-                      padding: '0px 0px 0px 8px',
-                      marginBottom: 0,
-                      transition: 'width 0.3s ease-in-out',
-                    }}
-                  >
-                    <UnifiedLayout
-                      entities={unifiedEntities}
-                      focusEntity={unifiedFocusEntity}
-                      layoutType={unifiedFocusEntity ? 'focus' : 'grid'}
-                      deviceType={deviceType}
-                      fullScreen={isFullScreen}
-                      pageSize={unifiedPageSize}
-                      preserveOffscreen
-                      className="lk-unified-layout-stage"
-                      style={{ width: '100%', height: '100%' }}
-                      renderEntity={renderUnifiedEntity}
-                      renderOverlay={({ currentPage, totalPages, nextPage, prevPage }) => {
-                        if (totalPages <= 1) return null;
-
-                        return (
-                          <div
-                            style={{
-                              position: 'absolute',
-                              bottom: 12,
-                              left: '50%',
-                              transform: 'translateX(-50%)',
-                              zIndex: 30,
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              gap: 8,
-                            }}
-                          >
-                            <PaginationIndicator
-                              totalPageCount={totalPages}
-                              currentPage={currentPage}
-                            />
-                            <PaginationControl
-                              totalPageCount={totalPages}
-                              currentPage={currentPage}
-                              nextPage={nextPage}
-                              prevPage={prevPage}
-                            />
-                          </div>
-                        );
-                      }}
-                    />
-                  </div>
-                  {!isMobile() && chatOpen && space && (
-                    <div
-                      style={{
-                        width: chatOpen ? 280 : 0,
-                        height: '100%',
-                        overflow: 'hidden',
-                        transition: 'width 0.3s ease-in-out',
-                        flexShrink: 0,
-                        borderRadius: '0.5em',
-                        marginLeft: 4,
-                      }}
-                    >
-                      <ChatPanel
-                        space={space}
-                        sendFileConfirm={sendFileConfirm}
-                        messageApi={messageApi}
-                        spaceInfo={settings}
-                        onClose={() => setChatOpen(false)}
-                      />
-                    </div>
-                  )}
-                </div>
-                <Controls
-                  ref={controlsRef}
-                  setUserStatus={setUserStatus}
-                  controls={{ chat: true, settings: !!SettingsComponent }}
-                  updateSettings={updateSettings}
-                  spaceInfo={settings}
-                  fetchSettings={fetchSettings}
-                  updateRecord={updateRecord}
-                  setPermissionDevice={setPermissionDevice}
-                  openApp={openApp}
-                  setOpenApp={setOpenApp}
-                  toRenameSettings={toSettingGeneral}
-                  startOrStopAICutAnalysis={startOrStopAICutAnalysis}
-                  openAIServiceAskNote={openAIServiceAskNote}
-                  downloadAIMdReport={FlotLayoutRef.current?.downloadAIMdReport}
-                  config={config}
-                ></Controls>
-              </div>
-              {SettingsComponent && (
-                <div
-                  className="lk-settings-menu-modal"
-                  style={{ display: widgetState.showSettings ? 'block' : 'none' }}
-                >
-                  <SettingsComponent />
-                </div>
-              )}
-              {isMobile() && chatOpen && space && (
-                <EnhancedChat
-                  open={chatOpen}
-                  setOpen={setChatOpen}
-                  onClose={() => setChatOpen(false)}
-                  space={space}
-                  sendFileConfirm={sendFileConfirm}
-                  messageApi={messageApi}
-                  spaceInfo={settings}
-                />
-              )}
-            </LayoutContextProvider>
-          )}
-          <RoomAudioRenderer />
-          <ConnectionStateToast />
-          <audio
-            ref={waveAudioRef}
-            style={{ display: 'none' }}
-            src={src('/audios/vocespacewave.m4a')}
-          ></audio>
-          <audio
-            ref={promptSoundRef}
-            style={{ display: 'none' }}
-            src={src('/audios/prompt.mp3')}
-          ></audio>
-        </div>
+        {space && (
+          <VideoConferenceStage
+            {...props}
+            mainViewWidth={mainViewWidth}
+            focusTrack={focusTrack}
+            layoutContext={layoutContext}
+            widgetUpdate={widgetUpdate}
+            hasRoomLicense={hasRoomLicense}
+            toBuyRoomLicense={toBuyRoomLicense}
+            chatOpen={chatOpen}
+            setChatOpen={setChatOpen}
+            space={space}
+            settings={settings}
+            unifiedEntities={unifiedEntities}
+            unifiedFocusEntity={unifiedFocusEntity}
+            unifiedPageSize={unifiedPageSize}
+            deviceType={deviceType}
+            isFullScreen={isFullScreen}
+            renderUnifiedEntity={renderUnifiedEntity}
+            sendFileConfirm={sendFileConfirm}
+            messageApi={messageApi}
+            controlsRef={controlsRef}
+            setUserStatus={setUserStatus}
+            updateSettings={updateSettings}
+            fetchSettings={fetchSettings}
+            updateRecord={updateRecord}
+            setPermissionDevice={setPermissionDevice}
+            openApp={openApp}
+            setOpenApp={setOpenApp}
+            toSettingGeneral={toSettingGeneral}
+            startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+            openAIServiceAskNote={openAIServiceAskNote}
+            downloadAIMdReport={FlotLayoutRef.current?.downloadAIMdReport}
+            config={config}
+            SettingsComponent={SettingsComponent}
+            widgetState={widgetState}
+            waveAudioRef={waveAudioRef}
+            promptSoundRef={promptSoundRef}
+            waveAudioSrc={src('/audios/vocespacewave.m4a')}
+            promptSoundSrc={src('/audios/prompt.mp3')}
+          />
+        )}
       </div>
     );
   },

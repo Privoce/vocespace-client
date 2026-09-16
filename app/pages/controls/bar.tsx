@@ -2,19 +2,18 @@ import { useI18n } from '@/lib/i18n/i18n';
 import {
   DisconnectButton,
   LeaveIcon,
-  TrackToggle,
   useLocalParticipantPermissions,
   useMaybeLayoutContext,
   useMaybeRoomContext,
   usePersistentUserChoices,
 } from '@livekit/components-react';
-import {  Drawer, Input, message, Modal, notification, Popover } from 'antd';
+import { Drawer, Input, message, Modal, notification } from 'antd';
 import { Participant, Track } from 'livekit-client';
 import * as React from 'react';
 import styles from '@/styles/controls.module.scss';
 import { useUserStore, useRoomStore } from '@/features/stores';
 import { Settings, TabKey } from './settings/settings';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { AICutParticipantConf, getState, ParticipantSettings, SpaceInfo } from '@/features/spaces/model';
 import { ReadableConf } from '@/features/settings/config';
 import { isMobile as is_mobile } from '@/lib/browser/environment';
@@ -23,7 +22,6 @@ import { isSpaceManager, UserStatus } from '@/features/room/model';
 import { ChatToggle } from './toggles/chat_toggle';
 import { MoreButton } from './toggles/more_button';
 import { ControlType, WsBase, WsControlParticipant, WsTo } from '@/features/room/protocol';
-import { MediaDeviceKind } from '@/lib/livekit/devices';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from './drawer_tools';
 import { ParticipantManage } from '../participant/manage';
 import { api } from '@/features/api';
@@ -33,10 +31,10 @@ import { useWork, Work, WorkModal } from './widgets/work';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './widgets/ai';
 import { DEFAULT_WINDOW_ADJUST_WIDTH } from '@/lib/browser/window';
 import { usePlatformUserInfo } from '@/features/platform/hooks';
-import { markExplicitLeaveIntent } from '@/features/room/leave-intent';
-import { DevicesSelector } from '@/lib/livekit/device-selector';
 import { useControlsSettings, useControlsRecord, useControlsChat } from './hooks/index';
 import { isWeChatBrowser } from '@/lib/browser/environment';
+import { MediaDeviceControls } from './components/media-device-controls';
+import { useControlsLeave } from './hooks/use-controls-leave';
 
 
 /** @public */
@@ -295,6 +293,11 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       recordModalOnCancel,
     } = useControlsRecord({ space, isManager, spaceInfo, updateRecord });
     const { chatOpen, setChatOpen } = useControlsChat();
+    const { onLeave } = useControlsLeave();
+
+    const toggleChat = React.useCallback(() => {
+      setChatOpen(!chatOpen);
+    }, [chatOpen, setChatOpen]);
 
     const onClickApp = async () => {
       if (!space) return;
@@ -434,106 +437,32 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             width: isMobile ? 'calc(100% - 64px)' : 'calc(100% - 100px)',
           }}
         >
-          {visibleControls.microphone && (
-            <div className="lk-button-group">
-              <TrackToggle
-                style={{ height: 46, padding: controlSize === 'small' ? 7 : 15 }}
-                source={Track.Source.Microphone}
-                showIcon={showIcon}
-                onChange={microphoneOnChange}
-                onDeviceError={(error) => {
-                  setPermissionDevice(Track.Source.Microphone);
-                  onDeviceError?.({ source: Track.Source.Microphone, error });
-                }}
-              >
-                {showText && t('common.device.microphone')}
-              </TrackToggle>
-              <div className="lk-button-group-menu">
-                <Popover
-                  trigger="click"
-                  open={audioMenuOpen}
-                  onOpenChange={setAudioMenuOpen}
-                  content={
-                    <DevicesSelector
-                      enabled={audioMenuOpen}
-                      kind={MediaDeviceKind.AudioInput}
-                      preferredDeviceId={userChoices.audioDeviceId}
-                      requestPermissions
-                      err={(error) => {
-                        setPermissionDevice(Track.Source.Microphone);
-                        onDeviceError?.({ source: Track.Source.Microphone, error });
-                      }}
-                      onDeviceChanged={(deviceId) => {
-                        saveAudioInputDeviceId(deviceId ?? 'default');
-                        setAudioMenuOpen(false);
-                      }}
-                    />
-                  }
-                  placement="top"
-                >
-                  {renderDeviceMenuTrigger()}
-                </Popover>
-              </div>
-            </div>
-          )}
-          {visibleControls.camera && (
-            <div className="lk-button-group">
-              <TrackToggle
-                style={{ height: 46, padding: controlSize === 'small' ? 7 : 15 }}
-                source={Track.Source.Camera}
-                showIcon={showIcon}
-                onChange={cameraOnChange}
-                onDeviceError={(error) => {
-                  setPermissionDevice(Track.Source.Camera);
-                  onDeviceError?.({ source: Track.Source.Camera, error });
-                }}
-              >
-                {showText && t('common.device.camera')}
-              </TrackToggle>
-              <div className="lk-button-group-menu">
-                <Popover
-                  trigger="click"
-                  open={videoMenuOpen}
-                  onOpenChange={setVideoMenuOpen}
-                  content={
-                    <DevicesSelector
-                      enabled={videoMenuOpen}
-                      kind={MediaDeviceKind.VideoInput}
-                      preferredDeviceId={userChoices.videoDeviceId}
-                      requestPermissions
-                      err={(error) => {
-                        setPermissionDevice(Track.Source.Camera);
-                        onDeviceError?.({ source: Track.Source.Camera, error });
-                      }}
-                      onDeviceChanged={(deviceId) => {
-                        saveVideoInputDeviceId(deviceId ?? 'default');
-                        setVideoMenuOpen(false);
-                      }}
-                    />
-                  }
-                  placement="top"
-                >
-                  {renderDeviceMenuTrigger()}
-                </Popover>
-              </div>
-            </div>
-          )}
-          {visibleControls.screenShare && browserSupportsScreenSharing && (
-            <TrackToggle
-              style={{ height: 46, padding: 15 }}
-              source={Track.Source.ScreenShare}
-              captureOptions={{ audio: uState.openShareAudio, selfBrowserSurface: 'include' }}
-              showIcon={showIcon}
-              onChange={onScreenShareChange}
-              onDeviceError={(error) => {
-                setPermissionDevice(Track.Source.ScreenShare);
-                onDeviceError?.({ source: Track.Source.ScreenShare, error });
-              }}
-            >
-              {showText &&
-                (isScreenShareEnabled ? t('common.stop_share') : t('common.share_screen'))}
-            </TrackToggle>
-          )}
+          <MediaDeviceControls
+            visibleMicrophone={!!visibleControls.microphone}
+            visibleCamera={!!visibleControls.camera}
+            visibleScreenShare={!!visibleControls.screenShare}
+            browserSupportsScreenSharing={browserSupportsScreenSharing}
+            controlSize={controlSize}
+            showIcon={showIcon}
+            showText={showText}
+            isScreenShareEnabled={isScreenShareEnabled}
+            openShareAudio={uState.openShareAudio}
+            audioMenuOpen={audioMenuOpen}
+            setAudioMenuOpen={setAudioMenuOpen}
+            videoMenuOpen={videoMenuOpen}
+            setVideoMenuOpen={setVideoMenuOpen}
+            audioDeviceId={userChoices.audioDeviceId}
+            videoDeviceId={userChoices.videoDeviceId}
+            saveAudioInputDeviceId={saveAudioInputDeviceId}
+            saveVideoInputDeviceId={saveVideoInputDeviceId}
+            microphoneOnChange={microphoneOnChange}
+            cameraOnChange={cameraOnChange}
+            onScreenShareChange={onScreenShareChange}
+            setPermissionDevice={setPermissionDevice}
+            onDeviceError={onDeviceError}
+            renderDeviceMenuTrigger={renderDeviceMenuTrigger}
+            t={t}
+          />
           {space && visibleControls.microphone && spaceInfo.ai.cut.enabled && showAI && (
             // <Reaction
             //   updateSettings={updateSettings}
@@ -561,9 +490,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             <ChatToggle
               controlWidth={controlWidth}
               enabled={chatOpen}
-              onClicked={() => {
-                setChatOpen(!chatOpen);
-              }}
+              onClicked={toggleChat}
               count={chatMsg.unhandled}
             ></ChatToggle>
           )}
@@ -590,9 +517,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
                       visible: visibleControls.chat || false,
                       enabled: chatOpen,
                       count: chatMsg.unhandled,
-                      onClicked: () => {
-                        setChatOpen(!chatOpen);
-                      },
+                      onClicked: toggleChat,
                     }
                   : undefined
               }
@@ -601,7 +526,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         </div>
 
         {visibleControls.leave && (
-          <DisconnectButton style={{ height: 46 }} onClick={() => markExplicitLeaveIntent()}>
+          <DisconnectButton style={{ height: 46 }} onClick={onLeave}>
             {showIcon && <LeaveIcon />}
             {showText && t('common.leave')}
           </DisconnectButton>

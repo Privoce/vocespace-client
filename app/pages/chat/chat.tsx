@@ -6,7 +6,7 @@ import styles from '@/styles/chat.module.scss';
 import { useI18n } from '@/lib/i18n/i18n';
 import { ulid } from 'ulid';
 import { Room } from 'livekit-client';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { useRoomStore } from '@/features/stores';
 import { MessageInstance } from 'antd/es/message/interface';
 import Dragger from 'antd/es/upload/Dragger';

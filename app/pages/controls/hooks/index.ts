@@ -5,4 +5,5 @@ export { useRoomSubscription } from './use-room-subscription';
 export { useControlsSettings } from './use-controls-settings';
 export { useControlsRecord } from './use-controls-record';
 export { useControlsChat } from './use-controls-chat';
+export { useControlsLeave } from './use-controls-leave';
 // hooks index

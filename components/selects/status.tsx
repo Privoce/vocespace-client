@@ -46,7 +46,7 @@ export function StatusSelect({
     if (state.status !== active) {
       setActive(state.status);
     }
-  }, [state.status]);
+  }, [state.status, active]);
 
   const items = useMemo(() => {
     return getStatusItems(t, uRoomStatusState, localParticipant.identity);

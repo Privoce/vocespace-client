@@ -10,7 +10,7 @@ import { Room } from 'livekit-client';
 import { isSpaceManager } from '@/features/room/model';
 import { MessageInstance } from 'antd/es/message/interface';
 import { api } from '@/features/api';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { WsBase } from '@/features/room/protocol';
 
 type PermissionKey = 'createRoom' | 'manageRoom' | 'manageRole' | 'controlUser' | 'recording' | 'viewRoom' | "manageFile" | "managePlayer";

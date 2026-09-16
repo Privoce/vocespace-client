@@ -5,7 +5,6 @@ import { VideoContainer, VideoContainerExports } from '@/app/pages/controls/vide
 import { decodePassphrase } from '@/lib/utils/room-id';
 // import { DebugMode } from '@/lib/Debug';
 import { useI18n } from '@/lib/i18n/i18n';
-import { consumeExplicitLeaveIntent } from '@/features/room/leave-intent';
 import { RecordingIndicator } from './RecordingIndicator';
 import { ConnectionDetails } from '@/lib/livekit/connection';
 import {
@@ -29,14 +28,13 @@ import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 import { PreJoin } from '@/app/pages/pre_join/pre_join';
 import { PlatformUser, SearchParams } from '@/features/room/model';
-import io from 'socket.io-client';
 import {
   PARTICIPANT_SETTINGS_KEY,
   ParticipantSettings,
   VOCESPACE_PLATFORM_USER,
 } from '@/features/spaces/model';
 import { api } from '@/features/api';
-import { WsBase, WsTo } from '@/features/room/protocol';
+import { connectRoomSocket } from '@/features/room/socket';
 import {
   createRTCQulity,
   DEFAULT_VOCESPACE_CONFIG,
@@ -45,28 +43,9 @@ import {
 } from '@/features/settings/config';
 import { useUserStore } from '@/features/settings/user-store';
 import { useRoomStore } from '@/features/room/store';
+import { useRoomSessionLifecycle } from '@/features/room/use-room-session-lifecycle';
 import { MessageInstance } from 'antd/es/message/interface';
 import { NotificationInstance } from 'antd/es/notification/interface';
-
-export const socket = io({
-  reconnection: true,
-  reconnectionDelay: 1000,
-  reconnectionAttempts: 5,
-  timeout: 30000,
-  forceNew: true,
-  transports: ['websocket', 'polling'],
-});
-
-export { useUserStore as userState } from '@/features/settings/user-store';
-export { useLicenseStore as licenseState } from '@/features/license/store';
-export type { LicenseWithAnalysis } from '@/features/license/store';
-export {
-  useRoomStore as roomStatusState,
-  useRoomStore as virtualMaskState,
-  useRoomStore as chatMsgState,
-  useRoomStore as RemoteTargetApp,
-} from '@/features/room/store';
-export { useSpaceStore as roomIdTmpState } from '@/features/spaces/store';
 
 export interface PageClientImplProps extends SearchParams {
   spaceName: string;
@@ -389,32 +368,25 @@ function VideoConferenceComponent(props: {
   }, [props.config.livekit.turn]);
 
   const router = useRouter();
-  const handleOnLeave = React.useCallback(async () => {
-    setShouldConfirmLeave(false);
-    if (!consumeExplicitLeaveIntent()) {
-      return;
-    }
 
-    const audioElement = document.getElementById('local-in-ear-monitor-audio');
-    if (audioElement) {
-      audioElement.remove();
-    }
-    useRoomStore.getState().setRoomStatusList([]);
-    socket.emit('mouse_remove', {
-      space: room.name,
-      senderName: room.localParticipant.name || room.localParticipant.identity,
-      senderId: room.localParticipant.identity,
-      receiverId: '',
-      socketId: '',
-    } as WsTo);
-    await api.leaveSpace(room.name, room.localParticipant.identity, socket);
-    await videoContainerRef.current?.clearRoom();
-    socket.emit('update_user_status', {
-      space: room.name,
-    } as WsBase);
-    socket.disconnect();
-    router.replace('/');
-  }, [room, router]);
+  useEffect(() => {
+    connectRoomSocket();
+  }, []);
+
+  const { handleDisconnected } = useRoomSessionLifecycle({
+    room,
+    clearRoom: async () => {
+      await videoContainerRef.current?.clearRoom();
+    },
+    navigateHome: () => {
+      router.replace('/');
+    },
+    setShouldConfirmLeave,
+  });
+
+  const handleOnLeave = React.useCallback(async () => {
+    await handleDisconnected();
+  }, [handleDisconnected]);
   const handleError = React.useCallback((error: Error) => {
     console.error(`${t('msg.error.room.unexpect')}: ${error.message}`);
     if (error.name === 'ConnectionError') {
@@ -547,6 +519,7 @@ function VideoConferenceComponent(props: {
         onError={handleError}
         onMediaDeviceFailure={handleMediaDeviceFailure}
         onConnected={() => {
+          connectRoomSocket();
           setShouldConfirmLeave(true);
           videoContainerRef.current?.clearRoom();
         }}

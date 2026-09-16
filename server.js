@@ -12,6 +12,7 @@ import { fileURLToPath } from 'url';
 import express from 'express';
 import Redis from 'ioredis';
 import { rebuildCleanTasks } from "./server/storage/s3-clean.js";
+import { setSocketServer } from './server/socket-bridge.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __cfg = path.dirname(__filename);
@@ -172,6 +173,7 @@ app.prepare().then(() => {
   const httpServer = createServer(server);
 
   const io = new Server(httpServer);
+  setSocketServer(io);
   const processingSocketIds = new Set();
   // [io on] -------------------------------------------------------------------------------------------------------------
   // - [io connection] ---------------------------------------------------------------------------------------------------

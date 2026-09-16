@@ -10,7 +10,7 @@ import { useI18n } from '@/lib/i18n/i18n';
 import VirtualRoleCanvas from '@/app/pages/virtual_role/live2d';
 import { src } from '@/lib/http/paths';
 import { useRoomStore } from '@/features/stores';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { LocalParticipant } from 'livekit-client';
 import { TabItem } from './tab_item';
 import { SelectedMask } from './mask';

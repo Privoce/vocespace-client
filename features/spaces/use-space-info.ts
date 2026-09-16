@@ -1,6 +1,6 @@
 // lib/hooks/useSpaceInfo.ts
 import { useState, useCallback } from 'react';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { DEFAULT_SPACE_INFO, ParticipantSettings, RecordSettings, SpaceInfo } from '@/features/spaces/model';
 import { api } from '@/features/api';
 import { isCreateRoom } from '@/features/platform/hooks';

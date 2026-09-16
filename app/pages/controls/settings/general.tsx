@@ -8,7 +8,7 @@ import { TransIfSystemStatus, UserStatus } from '@/features/room/model';
 import { useEffect, useRef, useState } from 'react';
 import { api } from '@/features/api';
 import { AllowGuest, SpaceInfo } from '@/features/spaces/model';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { WsBase } from '@/features/room/protocol';
 import { DefineUserStatusResponse } from '@/features/spaces/api';
 export interface GeneralSettingsProps {

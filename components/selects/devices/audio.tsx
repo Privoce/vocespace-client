@@ -2,9 +2,14 @@ import { Select } from 'antd';
 import { MediaDeviceKind } from '@/lib/livekit/devices';
 import { useMediaDevices } from '@livekit/components-react';
 import { useEffect, useState } from 'react';
-import { SelectPrefix } from './select_prefix';
+import { SelectPrefix } from '../prefix';
 
-
+/**
+ * ## 音频设备选择组件
+ * 用于用户需要进行音频设备选择时使用。
+ * 该组件会自动获取当前设备的音频输入设备列表，并将其显示在下拉框中，用户可以选择其中一个设备作为音频输入设备。
+ * 该组件会在设备列表发生变化时自动更新。
+ */
 export function AudioSelect({ className }: { className?: string }) {
   const devices = useMediaDevices({
     kind: MediaDeviceKind.AudioInput,

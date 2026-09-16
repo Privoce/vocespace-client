@@ -1,6 +1,6 @@
 import { LicenseWithAnalysis } from '@/features/license/store';
 import { useLicenseStore, useRoomStore } from '@/features/stores';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { useI18n } from '@/lib/i18n/i18n';
 import styles from '@/styles/controls.module.scss';
 import { Button, Descriptions, Input, Modal, Tag } from 'antd';

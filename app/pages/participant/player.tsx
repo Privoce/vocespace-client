@@ -23,7 +23,7 @@ import {
   UnfocusToggleIcon,
   useMaybeLayoutContext,
 } from '@livekit/components-react';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { WsTilePlayer } from '@/features/room/protocol';
 import { getAvoPrimaryColor } from './avo';
 import { TileWhiteboardOverlay } from './effect';

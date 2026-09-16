@@ -9,7 +9,7 @@ import { ParticipantSettings, SpaceDateRecords, SpaceInfo, SpaceInfoMap } from '
 import { useI18n } from '@/lib/i18n/i18n';
 import { LangSelect } from '../pages/controls/selects/lang_select';
 import { getPlatformUserInfo } from '@/features/platform/hooks';
-import { socket } from '../[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { WsBase } from '@/features/room/protocol';
 import { CreateSpaceStrategy, DEFAULT_VOCESPACE_CONFIG, HyperbeamConf, SMTPConf, VocespaceConfig } from '@/features/settings/config';
 import {

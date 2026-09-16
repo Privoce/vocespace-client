@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import styles from '@/styles/controls.module.scss';
 import { ControlType, WsBase, WsControlParticipant, WsInviteDevice, WsTo } from '@/features/room/protocol';
 import { hasHeadphonesConnected } from '@/lib/browser/media';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { isSpaceManager } from '@/features/room/model';
 import { src } from '@/lib/http/paths';
 import { supportsMediaDeviceChangeEvent } from '@/lib/browser/environment';

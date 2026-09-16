@@ -13,7 +13,7 @@ import { api } from '@/features/api';
 import { MessageInstance } from 'antd/es/message/interface';
 import equal from 'fast-deep-equal';
 import { isSpaceManager } from '@/features/room/model';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './ai';
 import { Extraction } from '@/features/ai/types';
 

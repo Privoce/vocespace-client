@@ -47,7 +47,7 @@ import { ChildRoom, ParticipantSettings, SpaceInfo } from '@/features/spaces/mod
 import { ParticipantTileMini } from '../participant/mini';
 import { GLayout } from '../layout/grid';
 import { CheckboxGroupProps } from 'antd/es/checkbox';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/features/room/socket';
 import { WsJoinRoom, WsRemove, WsSender } from '@/features/room/protocol';
 import { api } from '@/features/api';
 import { UpdateRoomParam, UpdateRoomType } from '@/features/channels/api';
@@ -57,9 +57,9 @@ import { FileType } from '@/lib/components/props';
 import { isMobile as is_mobile } from '@/lib/browser/environment';
 import { DEFAULT_DRAWER_PROP } from './drawer_tools';
 import { ReadableConf, VocespaceConfig } from '@/features/settings/config';
-import { audio } from '@/features/controls/audio';
 import { exportRBAC } from '@/features/platform/hooks';
 import { useSpaceStore } from '@/features/stores';
+import { useChannelJoinEvents } from './hooks/use-channel-join-events';
 
 interface ChannelProps {
   // roomName: string;
@@ -251,56 +251,18 @@ export const Channel = forwardRef<ChannelExports, ChannelProps>(
       });
     };
 
-    useEffect(() => {
-      // 监听加入私密房间的socket事件 --------------------------------------------------------------------------
-      socket.on('join_privacy_room_response', async (msg: WsJoinRoom) => {
-        if (msg.space === space.name && msg.receiverId === localParticipantId) {
-          if (!joinModalOpen) {
-            if (msg.confirm === false) {
-              // 说明对方拒绝了加入请求
-              messageApi.warning({
-                content: t('channel.modal.join.reject'),
-              });
-              setJoinModalOpen(false);
-            } else if (msg.confirm) {
-              //同意加入
-              agreeJoinRoom(msg.childRoom);
-            } else {
-              await audio.wave();
-              setJoinParticipant({
-                id: msg.senderId,
-                name: msg.senderName,
-                targetRoom: msg.childRoom,
-              });
-              setJoinModalOpen(true);
-            }
-          }
-        }
-      });
-      // 监听从私密房间移除的socket事件 -----------------------------------------------------------------------
-      socket.on('removed_from_privacy_room_response', (msg: WsRemove) => {
-        if (msg.space === space.name && msg.participants.includes(localParticipantId)) {
-          messageApi.info({
-            content: `${t('channel.modal.remove.before')}${msg.childRoom}${t(
-              'channel.modal.remove.after',
-            )}`,
-          });
-        }
-      });
-
-      return () => {
-        socket.off('join_privacy_room_response');
-        socket.off('removed_from_privacy_room_response');
-
-        // 清理延迟隐藏的 timeout
-        if (hideTimeoutRef.current) {
-          clearTimeout(hideTimeoutRef.current);
-        }
-        if (mainHideTimeoutRef.current) {
-          clearTimeout(mainHideTimeoutRef.current);
-        }
-      };
-    }, [socket, space.name, localParticipantId, joinModalOpen]);
+    useChannelJoinEvents({
+      spaceName: space.name,
+      localParticipantId,
+      joinModalOpen,
+      agreeJoinRoom,
+      setJoinParticipant,
+      setJoinModalOpen,
+      messageApi,
+      t,
+      hideTimeoutRef,
+      mainHideTimeoutRef,
+    });
 
     const childRooms = useMemo(() => {
       return settings.children || [];
