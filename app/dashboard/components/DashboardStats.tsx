@@ -21,7 +21,7 @@ export const DashboardStats: React.FC<DashboardStatsProps> = ({
   const { t } = useI18n();
 
   return (
-    <Row gutter={16}>
+    <Row className="dashboard-stats" gutter={16}>
       <Col span={4}>
         <Card style={{ height: '100%' }}>
           <Statistic title={t('dashboard.count.room')} value={totalSpaces} />

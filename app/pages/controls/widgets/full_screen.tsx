@@ -95,3 +95,5 @@ export const FullScreenBtnPin = ({
     </Tooltip>
   );
 };
+
+FullScreenBtn.displayName = 'FullScreenBtn';

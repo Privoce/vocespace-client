@@ -1,3 +1,4 @@
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { Button } from 'antd';
 import { ToggleProps } from '@/lib/std/device';
 import { SvgResource } from '@/app/resources/svg';
@@ -12,10 +13,7 @@ export function SettingToggle({ enabled, onClicked, showText = true }: TogglePro
   };
   const { t } = useI18n();
 
-  const showTextOrHide = useMemo(() => {
-    // 判断窗口的宽度是否大于720px, 如果小于则需要隐藏文字
-    return WindowAdjusts.w720 ? false : showText;
-  }, [window.innerWidth]);
+  const showTextOrHide = useLayoutDevice() !== 'phone' && showText;
 
   return (
     <>

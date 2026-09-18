@@ -1,0 +1,19 @@
+.container { height: 100dvh; display: flex; flex-direction: column; overflow: hidden; padding-top: env(safe-area-inset-top); }
+.main {
+  min-height: 0; flex: 1; overflow: auto; overscroll-behavior: contain; padding: 0 12px max(24px, env(safe-area-inset-bottom));
+  :global(.ant-card-body) { padding: 16px; }
+  :global(.ant-card-head) { padding: 0 16px; }
+  :global(.ant-card-head-wrapper) { flex-wrap: wrap; gap: 8px; padding: 8px 0; }
+  :global(.ant-card-extra) { margin-left: 0; max-width: 100%; }
+  :global(.ant-space) { flex-wrap: wrap; max-width: 100%; }
+  :global(.ant-table) { overflow-x: auto; }
+  :global(.ant-table-container) { min-width: 640px; }
+  :global(.ant-col) { min-width: 0; }
+  h2 { font-size: 22px; }
+}
+
+.main :global(.dashboard-stats) {
+  row-gap: 12px;
+  > :global(.ant-col-4), > :global(.ant-col-6) { flex: 0 0 50%; max-width: 50%; }
+  > :global(.ant-col-8) { flex: 0 0 100%; max-width: 100%; }
+}

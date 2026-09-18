@@ -225,7 +225,6 @@ export const randomColor = (participantId: string): string => {
 };
 
 export const getServerIp = () => {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const os = require('os') as typeof import('os');
   const interfaces = os.networkInterfaces();
   for (const interfaceName in interfaces) {

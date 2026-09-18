@@ -31,7 +31,7 @@ const CustomError = () => {
           </>
         }
         extra={[
-          <Button type="primary" onClick={backToNewSpace}>
+          <Button key="back" type="primary" onClick={backToNewSpace}>
             {t('msg.error.client.back')}
           </Button>,
         ]}

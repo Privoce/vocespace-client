@@ -26,6 +26,9 @@ export default {
     managePlayer: 'Manage Widgets',
   },
   common: {
+    back: 'Back',
+    screen_share_unavailable: 'Screen sharing is unavailable in this browser or with your room permissions',
+    try_again: 'Retry',
     browser: {
       low_version: {
         title: 'Your browser version is too old',

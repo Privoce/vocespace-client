@@ -266,8 +266,8 @@ export const isCreateRoom = (): boolean => {
  * 一种简单快捷的方式处理用户数据，直接返回需要的信息，不使用任何react hook
  * 适合需要简单处理的场景
  */
-export const usePlatformUserInfoCheap = ({ user }: { user: ParticipantSettings }) => {
-  const { auth } = user;
+export const getParticipantPlatformInfo = ({ user }: { user: ParticipantSettings | undefined }) => {
+  const auth = user?.auth;
 
   const isAuth = auth ? auth.platform === 'vocespace' || auth.platform === 'space' : false;
   const createRoom = auth ? !(auth.platform === 'c_s') : true;
@@ -277,3 +277,6 @@ export const usePlatformUserInfoCheap = ({ user }: { user: ParticipantSettings }
     createRoom,
   };
 };
+
+/** @deprecated Use the pure getParticipantPlatformInfo helper. */
+export const usePlatformUserInfoCheap = getParticipantPlatformInfo;

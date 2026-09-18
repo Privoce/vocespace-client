@@ -5,11 +5,11 @@ import { AICutService } from '@/lib/ai/cut';
 import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
 import { convertPlatformToACARes, PlarformAICutAnalysis, platformAPI, PlatformTodos } from '@/lib/api/platform';
 import { AICutParticipantConf, todayTimeStamp } from '@/lib/std/space';
-import { usePlatformUserInfoCheap } from '@/lib/hooks/platform';
-import { isMobile } from '@/lib/std';
+import { getParticipantPlatformInfo } from '@/lib/hooks/platform';
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import type { MessageInstance } from 'antd/es/message/interface';
 import type { NotificationInstance } from 'antd/es/notification/interface';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/lib/realtime/socket';
 import { WsBase } from '@/lib/std/device';
 import { useI18n } from '@/lib/i18n/i18n';
 
@@ -40,6 +40,7 @@ interface AICutServiceReturn {
 export function useAICutService(options: UseAICutServiceOptions): AICutServiceReturn {
   const { space, settings, uState, messageApi, noteApi, updateSettings, locale } = options;
   const { t } = useI18n();
+  const device = useLayoutDevice();
   const aiCutServiceRef = useRef<AICutService>(new AICutService());
   const aiCutAnalysisIntervalId = useRef<NodeJS.Timeout | null>(null);
   const [aiCutAnalysisRes, setAICutAnalysisRes] = useState<AICutAnalysisRes>(DEFAULT_AI_CUT_ANALYSIS_RES);
@@ -54,7 +55,7 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
     const response = await api.ai.getAnalysisRes(
       space.name,
       space.localParticipant.identity,
-      usePlatformUserInfoCheap({ user: settings.participants[space.localParticipant.identity] }).isAuth,
+      getParticipantPlatformInfo({ user: settings.participants[space.localParticipant.identity] }).isAuth,
     );
     if (response.ok) {
       const { res }: { res: AICutAnalysisRes } = await response.json();
@@ -102,7 +103,7 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
                 freq,
                 lang: locale,
                 extraction: conf.extraction,
-                isAuth: usePlatformUserInfoCheap({ user: uState }).isAuth,
+                isAuth: getParticipantPlatformInfo({ user: uState }).isAuth,
                 blur: conf.blur,
               });
               if (!response.ok) {
@@ -149,11 +150,11 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
     if (
       noteStateForAICutService.hasAsked === false &&
       settings.ai.cut.enabled === undefined &&
-      !isMobile()
+      device !== 'phone'
     ) {
       openAIServiceAskNote();
     }
-  }, [noteStateForAICutService.hasAsked, settings, openAIServiceAskNote]);
+  }, [noteStateForAICutService.hasAsked, settings, openAIServiceAskNote, device]);
 
   useEffect(() => {
     if (noteStateForAICutService.noteClosed) {

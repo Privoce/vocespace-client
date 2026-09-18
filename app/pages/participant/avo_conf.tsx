@@ -16,7 +16,7 @@ import {
 import { UploadOutlined, DownloadOutlined } from '@ant-design/icons';
 import type { ParticipantAvoParams } from '@/lib/std/space';
 import { useI18n } from '@/lib/i18n/i18n';
-import { isMobile } from '@/lib/std';
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import equal from 'fast-deep-equal';
 import {
   ParticipantAvoPlaceholder,
@@ -51,7 +51,7 @@ export interface AvoConfigPanelProps {
 export const AvoConfigPanel = React.forwardRef<AvoConfigPanelExports, AvoConfigPanelProps>(
   ({ direction, name, avoList, saving = false, onSave }: AvoConfigPanelProps, ref) => {
   const { t } = useI18n();
-  const mobile = isMobile();
+  const mobile = useLayoutDevice() === 'phone';
 
   // 当前编辑的列表
   const [draftList, setDraftList] = React.useState<ParticipantAvoParams[]>(() => {
@@ -501,6 +501,7 @@ export function ParticipantAvoEditorModal({
   onCancel,
   onSave,
 }: ParticipantAvoEditorModalProps) {
+  const mobile = useLayoutDevice() === 'phone';
   const panelRef = React.useRef<AvoConfigPanelExports>(null);
 
   const handleCancel = React.useCallback(async () => {
@@ -524,7 +525,7 @@ export function ParticipantAvoEditorModal({
     >
       <AvoConfigPanel
         ref={panelRef}
-        direction={isMobile() ? 'vertical' : 'horizontal'}
+        direction={mobile ? 'vertical' : 'horizontal'}
         name={name}
         avoList={avoList}
         saving={saving}
@@ -533,3 +534,5 @@ export function ParticipantAvoEditorModal({
     </Modal>
   );
 }
+
+AvoConfigPanel.displayName = 'AvoConfigPanel';

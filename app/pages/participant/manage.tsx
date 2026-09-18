@@ -151,12 +151,12 @@ export function ParticipantManage({
                           onOpenChange={(open) => {
                             optOpen(open, space.getParticipantByIdentity(item[0])!);
                           }}
-                          children={
+
+                        >{
                             <Button shape="circle" type="text">
                               <SvgResource type="more2" svgSize={16}></SvgResource>
                             </Button>
-                          }
-                        ></ControlRKeyMenu>
+                          }</ControlRKeyMenu>
                       )}
                     </div>
                   )}

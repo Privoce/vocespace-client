@@ -1,0 +1,10 @@
+.settings { min-height: 100%; }
+.profile { margin: 16px; display: flex; align-items: center; gap: 14px; }
+.avatar { width: 48px; height: 48px; border-radius: 16px; display: grid; place-items: center; background: #22ccee22; color: #22ccee; font-size: 20px; flex-shrink: 0; }
+.name { flex: 1; min-width: 0; font-weight: 600; }
+.name small { display: block; margin-top: 6px; color: #8e99ab; font-size: 12px; font-weight: normal; }
+.group { margin: 16px; border: 1px solid #ffffff0c; border-radius: 16px; overflow: hidden; }
+.row { width: 100%; min-height: 56px; display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; color: #e7edf5; background: #171c24; border: 0; border-bottom: 1px solid #ffffff08; cursor: pointer; text-align: left; }
+.panel { padding: 12px 16px max(24px, env(safe-area-inset-bottom)); overflow-x: auto; }
+.panel :global(.ant-tabs-content-holder) { border: 0; }
+.panel :global(.ant-tabs-tabpane) { padding: 0 !important; }

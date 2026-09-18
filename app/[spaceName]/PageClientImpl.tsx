@@ -1,245 +1,34 @@
 'use client';
 
+import { useRoomConnection } from '@/features/room/hooks/use-room-connection';
+import { useRoomEntry } from '@/features/room/hooks/use-room-entry';
+import type { PageClientImplProps } from '@/features/room/types';
 import BeforeUnloadGuard from '@/app/BeforeUnloadGuard';
 import { VideoContainer, VideoContainerExports } from '@/app/pages/controls/video_container';
-import { decodePassphrase } from '@/lib/client_utils';
-// import { DebugMode } from '@/lib/Debug';
 import { useI18n } from '@/lib/i18n/i18n';
-import { consumeExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { RecordingIndicator } from './RecordingIndicator';
-import { ConnectionDetails } from '@/lib/types';
-import {
-  formatChatMessageLinks,
-  LiveKitRoom,
-  LocalUserChoices,
-  usePersistentUserChoices,
-} from '@livekit/components-react';
-import { Button, message, Modal, notification, Space } from 'antd';
-import {
-  ExternalE2EEKeyProvider,
-  RoomOptions,
-  VideoCodec,
-  Room,
-  DeviceUnsupportedError,
-  RoomConnectOptions,
-  MediaDeviceFailure,
-  Track,
-} from 'livekit-client';
-import { useRouter } from 'next/navigation';
-import React, { useEffect, useState } from 'react';
+import type { ConnectionDetails } from '@/lib/types';
+import { formatChatMessageLinks, LiveKitRoom, type LocalUserChoices } from '@livekit/components-react';
+import { Button, Modal, Space } from 'antd';
+import { type Room, type RoomConnectOptions, type VideoCodec, MediaDeviceFailure, Track } from 'livekit-client';
+import React, { useState } from 'react';
 import { PreJoin } from '@/app/pages/pre_join/pre_join';
-import { PlatformUser, SearchParams } from '@/lib/std';
-import io from 'socket.io-client';
-import {
-  PARTICIPANT_SETTINGS_KEY,
-  ParticipantSettings,
-  VOCESPACE_PLATFORM_USER,
-} from '@/lib/std/space';
-import { api } from '@/lib/api';
-import { WsBase, WsTo } from '@/lib/std/device';
-import {
-  createRTCQulity,
-  DEFAULT_VOCESPACE_CONFIG,
-  ReadableConf,
-  VocespaceConfig,
-} from '@/lib/std/conf';
-import { useUserStore } from '@/lib/store/user';
-import { useRoomStore } from '@/lib/store/room';
-import { MessageInstance } from 'antd/es/message/interface';
-import { NotificationInstance } from 'antd/es/notification/interface';
+import { useSocketSession } from '@/lib/hooks/use-socket-session';
+import { useRoomLeave } from '@/features/room/hooks/use-room-leave';
+import type { ReadableConf } from '@/lib/std/conf';
+import type { MessageInstance } from 'antd/es/message/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 
-export const socket = io({
-  reconnection: true,
-  reconnectionDelay: 1000,
-  reconnectionAttempts: 5,
-  timeout: 30000,
-  forceNew: true,
-  transports: ['websocket', 'polling'],
-});
-
-export { useUserStore as userState } from '@/lib/store/user';
-export { useLicenseStore as licenseState } from '@/lib/store/license';
-export type { LicenseWithAnalysis } from '@/lib/store/license';
-export {
-  useRoomStore as roomStatusState,
-  useRoomStore as virtualMaskState,
-  useRoomStore as chatMsgState,
-  useRoomStore as RemoteTargetApp,
-} from '@/lib/store/room';
-export { useSpaceStore as roomIdTmpState } from '@/lib/store/space';
-
-export interface PageClientImplProps extends SearchParams {
-  spaceName: string;
-  loading: boolean;
-  setLoading: (loading: boolean) => void;
-  data?: PlatformUser;
-  messageApi: MessageInstance;
-}
-
-export function PageClientImpl({
-  spaceName,
-  loading,
-  setLoading,
-  region,
-  hq,
-  codec,
-  auth,
-  data,
-  room,
-  details,
-  messageApi,
-}: PageClientImplProps) {
-  const { t } = useI18n();
-  const uState = useUserStore();
-  const [notApi, notHolder] = notification.useNotification();
-  const [isReload, setIsReload] = useState(false);
-  const router = useRouter();
-  const [preJoinChoices, setPreJoinChoices] = React.useState<LocalUserChoices | undefined>(
-    undefined,
-  );
-  const { userChoices } = usePersistentUserChoices({
-    defaults: {
-      videoEnabled: false,
-      audioEnabled: false,
-    },
-    preventSave: false,
-    preventLoad: false,
-  });
-  const preJoinDefaults = React.useMemo(() => {
-    return {
-      username: '',
-      videoEnabled: true,
-      audioEnabled: true,
-    };
-  }, []);
-  const [connectionDetails, setConnectionDetails] = React.useState<ConnectionDetails | undefined>(
-    undefined,
-  );
-
-  const handlePreJoinSubmit = React.useCallback(
-    async (values: LocalUserChoices) => {
-      setPreJoinChoices(values);
-      if (details) {
-        // 如果details是有数据的，我们其实无需在此进行api请求，直接使用details作为connectionDetails
-        setConnectionDetails(details as ConnectionDetails);
-      } else {
-        const connectionDetailsResp = await api.joinSpace(
-          spaceName,
-          values.username,
-          region,
-          data?.id,
-        );
-
-        if (connectionDetailsResp.ok) {
-          const connectionDetailsData = await connectionDetailsResp.json();
-          setConnectionDetails(connectionDetailsData);
-        } else {
-          const { error } = await connectionDetailsResp.json();
-          messageApi.error(error);
-        }
-      }
-      if (auth) {
-        // 设置登陆状态：需要在localStorage中存储来自平台提供的用户id即可，因为id才是真正的唯一标识
-        // localStorage.setItem(VOCESPACE_PLATFORM_USER, props.userId);
-        // 去除url参数
-        router.replace(`/${spaceName}`);
-      }
-    },
-    [auth, data?.id, region, spaceName, details],
-  );
-  const handlePreJoinError = React.useCallback((e: any) => console.error(e), []);
-  // 配置数据 ----------------------------------------------------------------------------------------
-  const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
-  const [loadConfig, setLoadConfig] = useState(false);
-
-  const getConfig = async () => {
-    const response = await api.getConf();
-    if (response.ok) {
-      const configData: ReadableConf = await response.json();
-      setConfig(configData);
-      setLoadConfig(true);
-    } else {
-      console.error(t('msg.error.conf_load'));
-    }
-  };
-
-  useEffect(() => {
-    if (!loadConfig) {
-      getConfig();
-    }
-  }, [loadConfig]);
-
-  // 平台直接加入房间逻辑 ---------------------------------
-  useEffect(() => {
-    // console.warn('Checking direct join from platform with props:', props);
-    if (!data || !details) return;
-    if (!data.preJoin) {
-      setPreJoinChoices({
-        username: data.username,
-        videoEnabled: false,
-        audioEnabled: false,
-        videoDeviceId: '',
-        audioDeviceId: '',
-      });
-      setConnectionDetails(details as ConnectionDetails);
-    }
-    router.replace(`/${spaceName}`);
-  }, [data]);
-
-  // 当localStorage中有reload这个标志时，需要重登陆
-  useEffect(() => {
-    const storedSettingsStr = localStorage.getItem(PARTICIPANT_SETTINGS_KEY);
-    if (storedSettingsStr) {
-      const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
-      if (storedSettings?.version !== '0.5.5') {
-        // 版本不匹配/不存在，直接删除
-        localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
-        localStorage.removeItem(VOCESPACE_PLATFORM_USER);
-        return;
-      }
-      useUserStore.setState(storedSettings);
-    }
-    const reloadRoom = localStorage.getItem('reload');
-    if (reloadRoom) {
-      if (storedSettingsStr) {
-        const storedSettings: ParticipantSettings = JSON.parse(storedSettingsStr);
-        useUserStore.setState(storedSettings);
-      } else {
-        // 没有则存到localStorage中
-        localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
-      }
-      setIsReload(true);
-      messageApi.loading(t('settings.general.conf.reloading'));
-      localStorage.removeItem('reload');
-      // 等待5s进行重登陆
-      setTimeout(async () => {
-        const finalUserChoices = {
-          username: userChoices.username,
-          videoEnabled: false,
-          audioEnabled: false,
-          videoDeviceId: '',
-          audioDeviceId: '',
-        } as LocalUserChoices;
-        await handlePreJoinSubmit(finalUserChoices);
-        setIsReload(false);
-        // router.push(`/${reloadRoom}`);
-      }, 5000);
-    }
-
-    // 直接加入房间逻辑
-    // directJoinFromPlatform();
-
-    return () => {
-      // 在组件卸载时将用户设置存储到localStorage中，保证用户设置的持久化
-      if (isReload) {
-        localStorage.setItem(PARTICIPANT_SETTINGS_KEY, JSON.stringify(uState));
-      }
-    };
-  }, []);
+export function PageClientImpl(props: PageClientImplProps) {
+  const { data, loading, setLoading, spaceName, codec, hq, messageApi } = props;
+  const { t, notApi, notHolder, connectionDetails, preJoinChoices, preJoinDefaults,
+    handlePreJoinSubmit, handlePreJoinError, config, configReady, configError, retryConfig } = useRoomEntry(props);
   return (
     <main data-lk-theme="default" style={{ height: '100%' }}>
       {notHolder}
-      {connectionDetails === undefined || preJoinChoices === undefined ? (
+      {configError ? (
+        <div role="alert"><p>{t('msg.error.conf_load')}</p><Button onClick={retryConfig}>{t('common.try_again')}</Button></div>
+      ) : !configReady || connectionDetails === undefined || preJoinChoices === undefined ? (
         <div style={{ display: 'grid', placeItems: 'center', height: '100%' }}>
           <PreJoin
             defaults={preJoinDefaults}
@@ -250,7 +39,7 @@ export function PageClientImpl({
             camLabel={t('common.device.camera')}
             userLabel={t('common.username')}
             data={data}
-            loading={loading}
+            loading={loading || !configReady}
             setLoading={setLoading}
             space={spaceName}
             config={config}
@@ -273,7 +62,7 @@ export function PageClientImpl({
   );
 }
 
-function VideoConferenceComponent(props: {
+interface VideoConferenceProps {
   userChoices: LocalUserChoices;
   connectionDetails: ConnectionDetails;
   options: {
@@ -283,18 +72,22 @@ function VideoConferenceComponent(props: {
   config: ReadableConf;
   messageApi: MessageInstance;
   notApi: NotificationInstance;
-}) {
+}
+
+function VideoConferenceComponent(props: VideoConferenceProps) {
   const { t } = useI18n();
-  const e2eePassphrase =
-    typeof window !== 'undefined' && decodePassphrase(location.hash.substring(1));
-  const worker =
-    typeof window !== 'undefined' &&
-    e2eePassphrase &&
-    new Worker(new URL('livekit-client/e2ee-worker', import.meta.url));
-  const e2eeEnabled = !!(e2eePassphrase && worker);
-  const keyProvider = new ExternalE2EEKeyProvider();
-  const [e2eeSetupComplete, setE2eeSetupComplete] = React.useState(false);
-  const roomState = useRoomStore((s) => s.roomStatusList);
+  const connection = useRoomConnection({ ...props,
+    onError: (error) => { console.error(error); props.messageApi.error(t('msg.error.e2ee.unsupport')); },
+  });
+  if (!connection.room) return null;
+  return <ConnectedConference {...props} connection={{ ...connection, room: connection.room }} />;
+}
+
+function ConnectedConference(props: VideoConferenceProps & {
+  connection: { room: Room; connectOptions?: RoomConnectOptions; e2eeSetupComplete: boolean };
+}) {
+  useSocketSession();
+  const { t } = useI18n();
   const [permissionModalVisible, setPermissionModalVisible] = useState(false);
   const [permissionRequested, setPermissionRequested] = useState(false);
   const [permissionError, setPermissionError] = useState<string | null>(null);
@@ -302,119 +95,9 @@ function VideoConferenceComponent(props: {
   const [shouldConfirmLeave, setShouldConfirmLeave] = useState(false);
   const permissionNoticeShownRef = React.useRef(false);
   const videoContainerRef = React.useRef<VideoContainerExports>(null);
-  const resolutions = createRTCQulity(
-    {
-      resolution: props.config.resolution,
-      maxBitrate: props.config.maxBitrate,
-      maxFramerate: props.config.maxFramerate,
-      priority: props.config.priority,
-    },
-    3,
-  );
+  const { room, connectOptions, e2eeSetupComplete } = props.connection;
 
-  const roomOptions = React.useMemo((): RoomOptions => {
-    console.warn(props.config);
-    let videoCodec: VideoCodec | undefined = props.config.codec ?? 'vp9';
-    if (e2eeEnabled && (videoCodec === 'av1' || videoCodec === 'vp9')) {
-      videoCodec = undefined;
-    }
-    return {
-      videoCaptureDefaults: {
-        deviceId: props.userChoices.videoDeviceId ?? undefined,
-        resolution: props.options.hq ? resolutions[0] : resolutions[1],
-      },
-      publishDefaults: {
-        dtx: false,
-        videoSimulcastLayers: props.options.hq ? resolutions : [resolutions[1], resolutions[2]],
-        red: !e2eeEnabled,
-        videoCodec,
-        screenShareEncoding: {
-          maxBitrate: props.config.maxBitrate ?? 3000000, // 3Mbps
-          maxFramerate: props.config.maxFramerate ?? 30, // 30fps
-          priority: 'medium',
-        },
-        screenShareSimulcastLayers: resolutions,
-      },
-      audioCaptureDefaults: {
-        deviceId: props.userChoices.audioDeviceId ?? undefined,
-      },
-      adaptiveStream: { pixelDensity: 'screen' },
-      dynacast: true,
-      disconnectOnPageLeave: false,
-      e2ee: e2eeEnabled
-        ? {
-            keyProvider,
-            worker,
-          }
-        : undefined,
-    };
-  }, [props.userChoices, props.options.hq, props.options.codec, props.config]);
-
-  const room = React.useMemo(() => new Room(roomOptions), []);
-  React.useEffect(() => {
-    if (e2eeEnabled) {
-      keyProvider
-        .setKey(decodePassphrase(e2eePassphrase))
-        .then(() => {
-          room.setE2EEEnabled(true).catch((e) => {
-            if (e instanceof DeviceUnsupportedError) {
-              console.error(t('msg.error.e2ee.unsupport'));
-              console.error(e);
-            } else {
-              throw e;
-            }
-          });
-        })
-        .then(() => setE2eeSetupComplete(true));
-    } else {
-      setE2eeSetupComplete(true);
-    }
-  }, [e2eeEnabled, room, e2eePassphrase]);
-
-  const connectOptions = React.useMemo((): RoomConnectOptions => {
-    let conf = {
-      maxRetries: 5,
-      autoSubscribe: true,
-    } as RoomConnectOptions;
-
-    if ((props.config.livekit.turn?.length || 0) > 0) {
-      conf.rtcConfig = {
-        iceServers: props.config.livekit.turn,
-        iceCandidatePoolSize: 20,
-        iceTransportPolicy: 'all',
-      };
-    }
-
-    return conf;
-  }, [props.config.livekit.turn]);
-
-  const router = useRouter();
-  const handleOnLeave = React.useCallback(async () => {
-    setShouldConfirmLeave(false);
-    if (!consumeExplicitLeaveIntent()) {
-      return;
-    }
-
-    const audioElement = document.getElementById('local-in-ear-monitor-audio');
-    if (audioElement) {
-      audioElement.remove();
-    }
-    useRoomStore.getState().setRoomStatusList([]);
-    socket.emit('mouse_remove', {
-      space: room.name,
-      senderName: room.localParticipant.name || room.localParticipant.identity,
-      senderId: room.localParticipant.identity,
-      receiverId: '',
-      socketId: '',
-    } as WsTo);
-    await api.leaveSpace(room.name, room.localParticipant.identity, socket);
-    await videoContainerRef.current?.clearRoom();
-    socket.emit('update_user_status', {
-      space: room.name,
-    } as WsBase);
-    socket.disconnect();
-    router.replace('/');
-  }, [room, router]);
+  const handleOnLeave = useRoomLeave(room, videoContainerRef, setShouldConfirmLeave);
   const handleError = React.useCallback((error: Error) => {
     console.error(`${t('msg.error.room.unexpect')}: ${error.message}`);
     if (error.name === 'ConnectionError') {
@@ -482,10 +165,11 @@ function VideoConferenceComponent(props: {
 
     try {
       // 请求媒体权限
-      await navigator.mediaDevices.getUserMedia({
+      const stream = await navigator.mediaDevices.getUserMedia({
         video: true,
         audio: true,
       });
+      stream.getTracks().forEach((track) => track.stop());
 
       // 权限已获取，通知用户
       props.messageApi.success(t('msg.success.device.granted'));
@@ -609,7 +293,7 @@ function VideoConferenceComponent(props: {
                   <p>
                     <strong>{t('msg.request.device.permission.how')}</strong>
                   </p>
-                  {renderBrowserSpecificInstructions()}
+                  <BrowserSpecificInstructions />
                   <p>{t('msg.request.device.permission.changed_with_reload')}</p>
                 </div>
               ) : null}
@@ -626,7 +310,7 @@ function VideoConferenceComponent(props: {
   );
 }
 
-const renderBrowserSpecificInstructions = () => {
+function BrowserSpecificInstructions() {
   const { t } = useI18n();
   // 检测浏览器类型
   const isChrome = navigator.userAgent.indexOf('Chrome') > -1;

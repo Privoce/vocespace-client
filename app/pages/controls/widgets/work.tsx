@@ -13,7 +13,7 @@ import { api } from '@/lib/api';
 import { MessageInstance } from 'antd/es/message/interface';
 import equal from 'fast-deep-equal';
 import { isSpaceManager } from '@/lib/std';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/lib/realtime/socket';
 import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from './ai';
 import { Extraction } from '@/lib/ai/analysis';
 
@@ -229,14 +229,12 @@ export function Work({
   lastAICutConfig,
   localParticipant,
 }: WorkProps) {
+  const { t } = useI18n();
   if (!spaceInfo.ai.cut.enabled) {
     return <></>;
   }
 
-  const { t } = useI18n();
-  const showTextOrHide = useMemo(() => {
-    return ViewAdjusts(controlWidth).w960 ? false : showText;
-  }, [controlWidth]);
+  const showTextOrHide = ViewAdjusts(controlWidth).w960 ? false : showText;
 
   return (
     <Button

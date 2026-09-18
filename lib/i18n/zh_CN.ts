@@ -25,6 +25,9 @@ export default {
     managePlayer: '管理组件',
   },
   common: {
+    back: '返回',
+    screen_share_unavailable: '当前浏览器或房间权限不支持屏幕共享',
+    try_again: '重试',
     browser: {
       low_version: {
         title: '当前浏览器版本过低',

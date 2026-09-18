@@ -13,7 +13,7 @@ import {
   WsInviteDevice,
   WsTo,
 } from '@/lib/std/device';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/lib/realtime/socket';
 import { isSpaceManager, src, supportsMediaDeviceChangeEvent } from '@/lib/std';
 import { exportRBAC, usePlatformUserInfo } from '@/lib/hooks/platform';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';

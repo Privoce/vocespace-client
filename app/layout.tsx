@@ -1,3 +1,4 @@
+import { DeviceLayoutSync } from './DeviceLayoutSync';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { WeChatAccessGuard } from './WeChatAccessGuard';
 import '../styles/globals.css';
@@ -216,6 +217,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html lang="en">
         <body>
           <I18nProvider initialLocale="en">
+            <DeviceLayoutSync />
             <WeChatAccessGuard>{children}</WeChatAccessGuard>
           </I18nProvider>
         </body>

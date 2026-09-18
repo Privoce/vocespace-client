@@ -1,4 +1,4 @@
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/lib/realtime/socket';
 import { SvgResource } from '@/app/resources/svg';
 import { audio } from '@/lib/audio';
 import { useI18n } from '@/lib/i18n/i18n';

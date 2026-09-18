@@ -21,7 +21,7 @@ import { CardSize } from 'antd/es/card/Card';
 import dayjs, { extend } from 'dayjs';
 import { api } from '@/lib/api';
 import { WsBase } from '@/lib/std/device';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/lib/realtime/socket';
 
 export interface AppTodoProps {
   space: string;

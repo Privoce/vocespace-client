@@ -829,17 +829,17 @@ export function TileWhiteboardOverlay({
 
 export const ScreenShareWhiteboardOverlay = TileWhiteboardOverlay;
 
-export function ParticipantMouseEffect({
+export function ParticipantMouseEffect(props: ParticipantMouseEffectProps) {
+  return props.enabled === false ? null : <ActiveParticipantMouseEffect {...props}/>;
+}
+
+function ActiveParticipantMouseEffect({
   enabled = true,
   mappingTarget = 'screen-share',
   videoRef,
   containerRef,
   remoteCursors,
 }: ParticipantMouseEffectProps) {
-  if (!enabled) {
-    return null;
-  }
-
   const actualVideoRect = usePointerMappingRectState({
     mappingTarget,
     videoRef,

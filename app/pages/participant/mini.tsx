@@ -21,7 +21,7 @@ import { isTrackReferencePinned } from './tile';
 import { AppAuth, ChildRoom, DEFAULT_PARTICIPANT_SETTINGS, ParticipantAvoParams, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { useVideoBlur, WsBase, WsSender, WsWave } from '@/lib/std/device';
 import { useUserStore } from '@/lib/store/user';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/lib/realtime/socket';
 import { isSpaceManager, UserStatus } from '@/lib/std';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { StatusInfo, useStatusInfo } from './status_info';
@@ -244,7 +244,8 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
           optOpen(open, space.getParticipantByIdentity(trackReference.participant.identity)!);
         }}
         isRKey={true}
-        children={
+
+      >{
           <ParticipantTile ref={ref} trackRef={trackReference}>
             {isTrackReference(trackReference) &&
             (trackReference.source === Track.Source.Camera ||
@@ -306,7 +307,8 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                   trackReference.source !== Track.Source.Camera
                 }
                 items={items}
-                children={
+
+              >{
                   <Tooltip
                     placement="right"
                     title={
@@ -376,8 +378,7 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
                       )}
                     </div>
                   </Tooltip>
-                }
-              ></StatusInfo>
+                }</StatusInfo>
             </div>
             <div
               className="lk-participant-metadata"
@@ -419,8 +420,9 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
               updateSettings={updateSettings}
             ></AppFlotIconCollect>
           </ParticipantTile>
-        }
-      />
+        }</ControlRKeyMenu>
     );
   },
 );
+
+ParticipantTileMini.displayName = 'ParticipantTileMini';

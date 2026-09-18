@@ -172,6 +172,7 @@ app.prepare().then(() => {
   const httpServer = createServer(server);
 
   const io = new Server(httpServer);
+  globalThis.vocespaceSocketServer = io;
   const processingSocketIds = new Set();
   // [io on] -------------------------------------------------------------------------------------------------------------
   // - [io connection] ---------------------------------------------------------------------------------------------------

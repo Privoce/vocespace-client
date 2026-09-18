@@ -67,7 +67,7 @@ export default {
 /**
  * 服务端处理平台用户信息的 Hook
  */
-export const usePlatformUserInfoServer = ({user}: {user: ParticipantSettings}) => {
+export const getServerParticipantPlatformInfo = ({user}: {user: ParticipantSettings}) => {
   const {auth} = user;
 
   const isAuth = auth ? (auth.platform === "vocespace"|| auth.platform === 'space') : false;
@@ -78,3 +78,5 @@ export const usePlatformUserInfoServer = ({user}: {user: ParticipantSettings}) =
     createRoom,
   };
 }
+/** @deprecated Use getServerParticipantPlatformInfo. */
+export const usePlatformUserInfoServer = getServerParticipantPlatformInfo;

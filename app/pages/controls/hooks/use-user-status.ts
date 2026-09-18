@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import type { Room } from 'livekit-client';
 import { UserDefineStatus, UserStatus } from '@/lib/std';
 import { useRoomStore, useUserStore } from '@/lib/store';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/lib/realtime/socket';
 import { WsBase } from '@/lib/std/device';
 
 /**

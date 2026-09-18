@@ -241,3 +241,5 @@ export interface DeviceSelectorProps {
   onDeviceChanged?: (deviceId: string) => void;
   preferredDeviceId?: string;
 }
+
+DevicesSelector.displayName = 'DevicesSelector';

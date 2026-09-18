@@ -1,0 +1,21 @@
+.room {
+  background: #0c0f14; height: 100dvh; width: 100%; overflow: hidden;
+  :global(.lk-video-conference-inner) { gap: 0 !important; }
+  :global(.lk-participant-tile) { border-radius: 16px; border: 1px solid #ffffff0c; }
+  :global(.lk-participant-metadata) { overflow: hidden; max-width: 100%; }
+  :global(.lk-participant-name) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+.header {
+  box-sizing: border-box; width: 100%; display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) 12px max(16px, env(safe-area-inset-left));
+  button { width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; color: #c6d1e2; }
+}
+.identity { min-width: 0; flex: 1; display: flex; flex-direction: column; gap: 5px; }
+.identity strong { font-size: 16px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #f1f5fb; }
+.identity span { font-size: 11px; color: #96a5bb; }
+.identity i { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #41d7a0; margin-right: 4px; }
+.stage { position: relative; flex: 1; min-height: 0; min-width: 0; height: 100%; padding: 0 8px 8px; }
+@media (max-height: 450px) and (orientation: landscape) {
+  .header { padding-top: 4px; padding-bottom: 4px; }
+  .identity { flex-direction: row; align-items: center; gap: 12px; }
+}

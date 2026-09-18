@@ -26,6 +26,9 @@ export default {
     manageFile: 'Управление файлами',
   },
   common: {
+    back: 'Назад',
+    screen_share_unavailable: 'Демонстрация экрана недоступна в этом браузере или для вашей роли',
+    try_again: 'Повторить',
     browser: {
       low_version: {
         title: 'Версия вашего браузера слишком устарела',

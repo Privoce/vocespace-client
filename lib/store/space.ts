@@ -1,5 +1,4 @@
 import { create } from 'zustand';
-import { isMobile } from '@/lib/std';
 
 interface SpaceState {
   /** 临时 room ID */
@@ -7,6 +6,7 @@ interface SpaceState {
   setRoomIdTmp: (id: string) => void;
   /** 设备类型 */
   deviceType: 'mobile' | 'desktop';
+  setDeviceType: (deviceType: 'mobile' | 'desktop') => void;
   /** 侧边栏是否折叠 */
   collapsed: boolean;
   setCollapsed: (collapsed: boolean) => void;
@@ -19,8 +19,11 @@ interface SpaceState {
 export const useSpaceStore = create<SpaceState>()((set) => ({
   roomIdTmp: '',
   setRoomIdTmp: (roomIdTmp) => set({ roomIdTmp }),
-  deviceType: isMobile() ? 'mobile' : 'desktop',
-  collapsed: isMobile(),
+  deviceType: 'desktop',
+  setDeviceType: (deviceType) => set((state) => state.deviceType === deviceType
+    ? state
+    : { deviceType, collapsed: deviceType === 'mobile' }),
+  collapsed: false,
   setCollapsed: (collapsed) => set({ collapsed }),
   isFocus: false,
   isFullScreen: false,

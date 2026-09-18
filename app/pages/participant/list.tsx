@@ -48,7 +48,8 @@ export function ParticipantList({
             menu={item[0] === space.localParticipant.identity ? selfMenu : menu}
             onOpenChange={(open) => onOpenMenu(open, item[0])}
             isRKey={true}
-            children={
+
+          >{
               <div className={styles.particepant_item}>
                 <div className={styles.particepant_item_left}>
                   <Avatar
@@ -73,8 +74,7 @@ export function ParticipantList({
                 </div>
                 {suffix && suffix(item, index)}
               </div>
-            }
-          ></ControlRKeyMenu>
+            }</ControlRKeyMenu>
         </List.Item>
       )}
     />

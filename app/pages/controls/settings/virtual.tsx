@@ -9,7 +9,7 @@ import { useI18n } from '@/lib/i18n/i18n';
 import VirtualRoleCanvas from '@/app/pages/virtual_role/live2d';
 import { src } from '@/lib/std';
 import { useRoomStore } from '@/lib/store';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/lib/realtime/socket';
 import { LocalParticipant } from 'livekit-client';
 import { TabItem } from './tab_item';
 import { SelectedMask } from './mask';
@@ -326,3 +326,5 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
     );
   },
 );
+
+VirtualSettings.displayName = 'VirtualSettings';

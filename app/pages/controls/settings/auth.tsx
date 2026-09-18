@@ -10,7 +10,7 @@ import { Room } from 'livekit-client';
 import { isSpaceManager } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
 import { api } from '@/lib/api';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/lib/realtime/socket';
 import { WsBase } from '@/lib/std/device';
 
 type PermissionKey = 'createRoom' | 'manageRoom' | 'manageRole' | 'controlUser' | 'recording' | 'viewRoom' | "manageFile" | "managePlayer";
@@ -42,7 +42,7 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
     guest: { ...spaceInfo.auth.guest },
   });
 
-  const renderSwitch = (roleKey: keyof SpaceInfo['auth']) => (_: any, record: PermissionRow) => {
+  const renderSwitch = (roleKey: keyof SpaceInfo['auth']) => function PermissionSwitch(_: any, record: PermissionRow) {
     const field = record.key as PermissionKey;
     const checked = Boolean((changeableAuth as any)[roleKey]?.[field]);
     return (

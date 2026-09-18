@@ -1,0 +1,36 @@
+.page {
+  width: 100%; height: 100dvh; display: flex; flex-direction: column;
+  background: #1a1a1a; color: #fff; overflow: hidden;
+  font-family: "PingFang SC", -apple-system, BlinkMacSystemFont, sans-serif;
+}
+.scroll { flex: 1; min-height: 0; overflow-y: auto; padding: max(16px, env(safe-area-inset-top)) 20px 20px; }
+.header {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 20px;
+  h1 { font-size: 18px; font-weight: 600; flex: 1; margin: 0; }
+  > button { color: #5ac8fa; padding: 0; min-width: 36px; }
+  :global(.ant-select) { max-width: 120px; }
+}
+.preview {
+  min-height: 172px; aspect-ratio: 16 / 9; width: 100%; background: #0d0d0d;
+  border-radius: 12px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  overflow: hidden; margin-bottom: 20px;
+  video { width: 100%; height: 100%; object-fit: cover; }
+  p { font-size: 13px; color: #a0a0a0; text-align: center; margin: 10px 16px 0; }
+  button { color: #5ac8fa; font-size: 12px; }
+}
+.avatar { color: #666; background: #2d2d2d; border-radius: 50%; padding: 16px; font-size: 32px; }
+.card { border: 1px solid #333; border-radius: 12px; background: #2d2d2d; overflow: hidden; margin-bottom: 14px; }
+.cardHeader {
+  display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-bottom: 1px solid #333;
+  button { color: #a0a0a0; min-height: 40px; }
+  button[aria-pressed='true'] { color: #5ac8fa; }
+}
+.cardBody { padding: 14px 16px; audio { display: none; } }
+.row { display: flex; justify-content: space-between; font-size: 13px; color: #a0a0a0; span:last-child { color: #fff; } }
+.testButton { background: #3a3a3a; border: 0; color: #5ac8fa; width: 100%; border-radius: 8px; }
+.login { padding: 10px 0 20px; }
+.name { min-height: 46px; border: 1px solid #333; border-radius: 10px; background: #2d2d2d; }
+.joinBar {
+  flex-shrink: 0; padding: 14px 20px max(16px, env(safe-area-inset-bottom)); border-top: 1px solid #333; background: #1a1a1a;
+  button { height: 48px; border-radius: 12px; color: #0d0d0d; background: #5ac8fa; font-weight: 600; }
+}

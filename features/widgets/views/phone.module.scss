@@ -1,0 +1,4 @@
+.ai { min-height: 0; height: 100%; }
+@media (max-width: 767px) {
+  .ai { padding: 16px; height: auto; min-height: 50dvh; overflow-x: auto; }
+}

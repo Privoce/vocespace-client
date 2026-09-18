@@ -77,6 +77,7 @@ export default function Page({
     <>
       {contextHolder}
       <PageClientImpl
+        key={params.spaceName}
         spaceName={params.spaceName}
         region={searchParams.region}
         hq={hq}

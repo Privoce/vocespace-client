@@ -5,7 +5,7 @@ import { TabKey } from '../settings/settings';
 import type { SettingsExports } from '../settings/settings';
 import { useUserStore, useRoomStore } from '@/lib/store';
 import { getState } from '@/lib/std/space';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/lib/realtime/socket';
 import { WsBase } from '@/lib/std/device';
 import equal from 'fast-deep-equal';
 

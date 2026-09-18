@@ -29,7 +29,7 @@ import {
   handleIdentityType,
 } from '@/lib/std/space';
 import { RoomServiceClient } from 'livekit-server-sdk';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { notifyParticipantReinit } from '@/lib/realtime/server';
 import { WsParticipant } from '@/lib/std/device';
 import {
   AllowGuestBody,
@@ -60,7 +60,7 @@ import {
 } from '@/lib/api/channel';
 import { getConfig } from '../conf/conf';
 import { platformAPI } from '@/lib/api/platform';
-import { generateToken, usePlatformUserInfoServer } from '@/lib/hooks/platformToken';
+import { generateToken, getServerParticipantPlatformInfo } from '@/lib/hooks/platformToken';
 
 // [redis config env] ----------------------------------------------------------
 const {
@@ -821,7 +821,7 @@ class SpaceManager {
           return false;
         }
 
-        const { createRoom } = usePlatformUserInfoServer({ user: pData });
+        const { createRoom } = getServerParticipantPlatformInfo({ user: pData });
 
         spaceInfo = {
           ...DEFAULT_SPACE_INFO(startAt, createRoom),
@@ -865,7 +865,7 @@ class SpaceManager {
       let participant = spaceInfo.participants[participantId];
       // init 时进行房间创建
       if (init) {
-        const { isAuth } = usePlatformUserInfoServer({ user: participant });
+        const { isAuth } = getServerParticipantPlatformInfo({ user: participant });
         // 这里说明房间存在而且且用户也存在，说明用户可能是重连或房间是持久化的，我们无需大范围数据更新，只需要更新
         // 用户的最基础设置即可
         // 由于todo数据连接了平台端数据，所以这里需要更改为平台端的todo数据，但只有在isAuth为true时才更新
@@ -1041,7 +1041,7 @@ class SpaceManager {
       // 如果是持久化房间，删除参与者操作到此为止
       if (spaceInfo.persistence) {
         // 需要确定参与者的身份，如果是guest则需要直接删除，guest永远不持久存储
-        const { isAuth } = usePlatformUserInfoServer({
+        const { isAuth } = getServerParticipantPlatformInfo({
           user: spaceInfo.participants[participantId],
         });
         if (!isAuth) {
@@ -2596,7 +2596,7 @@ const userHeartbeat = async () => {
         );
 
         for (const participant of inLKNotInRedis) {
-          socket.emit('re_init', {
+          notifyParticipantReinit({
             space: room.name,
             participantId: participant.identity,
           } as WsParticipant);

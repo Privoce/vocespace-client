@@ -31,7 +31,7 @@ import { ConnectionState, Participant, Track } from 'livekit-client';
 import React, { useEffect, useMemo, useState } from 'react';
 import VirtualRoleCanvas from '../virtual_role/live2d';
 import { useUserStore, useRoomStore, useSpaceStore } from '@/lib/store';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/lib/realtime/socket';
 import styles from '@/styles/controls.module.scss';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -891,13 +891,14 @@ export const ParticipantItem: (
         onOpenChange={(open) => {
           optOpen(open, space.getParticipantByIdentity(trackReference.participant.identity)!);
         }}
-        children={
+
+      >{
           <ParticipantTile ref={ref} trackRef={trackReference}>
             {deviceTrack}
             <div
               className="lk-participant-placeholder"
               ref={avoContainerRef}
-             
+
             >
               {localAvo ? (
                 <ParticipantAvoPlaceholder
@@ -980,7 +981,8 @@ export const ParticipantItem: (
               <StatusInfo
                 disabled={trackReference.participant.identity != localParticipant.identity}
                 items={items}
-                children={
+
+              >{
                   <Tooltip
                     placement="right"
                     title={
@@ -1067,8 +1069,7 @@ export const ParticipantItem: (
                       )}
                     </div>
                   </Tooltip>
-                }
-              ></StatusInfo>
+                }</StatusInfo>
 
               {/* <ConnectionQualityIndicator className="lk-participant-metadata-item" /> */}
             </div>
@@ -1095,8 +1096,7 @@ export const ParticipantItem: (
               updateSettings={updateSettings}
             ></AppFlotIconCollect>
           </ParticipantTile>
-        }
-      ></ControlRKeyMenu>
+        }</ControlRKeyMenu>
     );
   },
 );

@@ -7,7 +7,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { LocalParticipant } from 'livekit-client';
 import { api } from '@/lib/api';
 import { MessageInstance } from 'antd/es/message/interface';
-import { socket } from '@/app/[spaceName]/PageClientImpl';
+import { socket } from '@/lib/realtime/socket';
 import { WsBase } from '@/lib/std/device';
 
 export interface AppSettingsProps {

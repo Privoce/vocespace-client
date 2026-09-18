@@ -1,0 +1,8 @@
+.panels {
+  padding: 0 16px max(24px, env(safe-area-inset-bottom));
+  :global(.ant-collapse-item:not(.ant-collapse-item-active)) { display: none; }
+  :global(.ant-collapse-item) { background: #171c24 !important; border: 1px solid #ffffff0c !important; border-radius: 16px !important; }
+  :global(.ant-collapse-header) { color: #edf2fa !important; cursor: default !important; padding: 16px !important; }
+  :global(.ant-collapse-expand-icon) { display: none; }
+  :global(.ant-collapse-content-box) { padding: 0 16px 16px !important; }
+}

@@ -430,3 +430,5 @@ function ScreenShotImage({ src, blur = false }: { src?: string; blur?: boolean }
     />
   );
 }
+
+AICutAnalysisMdTabs.displayName = 'AICutAnalysisMdTabs';

@@ -1,43 +1,13 @@
 'use client';
 
-import React, { useEffect, useState, Suspense, useCallback } from 'react';
+import React, { Suspense } from 'react';
 import { Spin } from 'antd';
 import { useSearchParams } from 'next/navigation';
 import { RecordingContent } from './content';
-import { RecordState, useRecordingEnv } from '@/lib/std/recording';
-import { message } from 'antd';
 
 function RecordsPageContent() {
-  const searchParams = useSearchParams();
-  const [initialRoom, setInitialRoom] = useState<string | undefined>();
-  const [autoSearchRoom, setAutoSearchRoom] = useState<string | undefined>();
-  const [messageApi, contextHolder] = message.useMessage();
-  const { state } = useRecordingEnv(messageApi);
-
-  useEffect(() => {
-    const roomParam = searchParams.get('room');
-    if (roomParam) {
-      setInitialRoom(roomParam);
-    }
-  }, [searchParams]);
-
-  // 当 S3 连接成功且有初始房间时，触发自动搜索
-  const onAutoSearch = useCallback(() => {
-    if (initialRoom && state === RecordState.Connected) {
-      setAutoSearchRoom(initialRoom);
-    }
-  }, [initialRoom, state]);
-
-  useEffect(() => {
-    onAutoSearch();
-  }, [onAutoSearch]);
-
-  return (
-    <>
-      {contextHolder}
-      <RecordingContent showContainer={true} initialRoom={initialRoom} autoSearchRoom={autoSearchRoom} />
-    </>
-  );
+  const room = useSearchParams().get('room') || undefined;
+  return <RecordingContent showContainer initialRoom={room} autoSearchRoom={room}/>;
 }
 
 function RecordsPageFallback() {

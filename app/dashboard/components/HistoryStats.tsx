@@ -22,7 +22,7 @@ export const HistoryStats: React.FC<HistoryStatsProps> = ({
   const { t } = useI18n();
 
   return (
-    <Row gutter={16} style={{ marginBottom: 24 }}>
+    <Row className="dashboard-stats" gutter={16} style={{ marginBottom: 24 }}>
       <Col span={6}>
         <Card style={{ height: '100%' }}>
           <Statistic title={t('dashboard.count.history.stats.rooms')} value={totalRooms} />
