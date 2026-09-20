@@ -76,23 +76,30 @@ export const AICutAnalysisMdTabs = forwardRef<AICutAnalysisMdTabsExports, AICutA
     const { t } = useI18n();
     const { localParticipant } = useLocalParticipant();
     const CopyButtonRef = useRef<CopyButtonExports>(null);
+    const screenshotCacheRef = useRef<Record<string, string>>({});
     // 生成结构化的内容，而不是纯 markdown 字符串
     const contentSections: Section[] = useMemo(() => {
       if (!result) return [];
 
       const flattenedLines = result.lines.flat();
+      const screenShots = cutInstance.getScreenshots();
+      for (const shot of screenShots) {
+        screenshotCacheRef.current[String(shot.timestamp)] = shot.data;
+      }
+
       return flattenedLines.map((line: AICutAnalysisResLine) => {
-        const screenShots = cutInstance.getScreenshots();
         const cutScreenShot = screenShots.find((shot) => shot.timestamp === line.timestamp);
         const sameScreenShot = line.same
-          ? screenShots.find((shot) => shot.timestamp === line.same)?.data || line.same.toString()
+          ? screenShots.find((shot) => shot.timestamp === line.same)?.data ||
+            screenshotCacheRef.current[String(line.same)] ||
+            line.same.toString()
           : undefined;
 
         return {
           name: line.name,
           timestamp: line.timestamp,
           content: line.content,
-          screenshot: cutScreenShot?.data,
+          screenshot: cutScreenShot?.data || screenshotCacheRef.current[String(line.timestamp)],
           sameshot: sameScreenShot,
           duration: line.duration, // 如果用户启用了时间统计功能，需要显示
         };
@@ -165,7 +172,10 @@ export const AICutAnalysisMdTabs = forwardRef<AICutAnalysisMdTabsExports, AICutA
             `screenshot_${section.timestamp}.jpg`,
           );
         }
-        if (section.sameshot && section.sameshot.startsWith('data:')) {
+        if (!section.sameshot) {
+          return;
+        }
+        if (section.sameshot.startsWith('data:')) {
           cutInstance.downloadTargetScreenshot(section.sameshot as unknown as number);
         } else {
           downloadFromUrl(
@@ -338,6 +348,7 @@ export const AICutAnalysisMdTabs = forwardRef<AICutAnalysisMdTabsExports, AICutA
                   <ScreenShot
                     section={section}
                     isAuthed={isAuthed}
+                    isSelf={isSelf}
                     userId={userId}
                     blur={spaceInfo.participants[userId]?.ai.cut.blur || false}
                   />
@@ -355,22 +366,28 @@ export const AICutAnalysisMdTabs = forwardRef<AICutAnalysisMdTabsExports, AICutA
   },
 );
 
+AICutAnalysisMdTabs.displayName = "AICutAnalysisMdTabs"
+
 function ScreenShot({
   section,
   isAuthed,
+  isSelf,
   userId,
   blur,
 }: {
   section: Section;
   isAuthed: boolean;
+  isSelf: boolean;
   userId: string;
   blur: boolean;
 }) {
+  const canFallbackToStorage = isAuthed || isSelf;
+
   return (
     <div className={styles.ai_analysis_md_screenshot}>
       {section.screenshot ? (
         <ScreenShotImage src={section.screenshot} blur={blur}></ScreenShotImage>
-      ) : isAuthed ? (
+      ) : canFallbackToStorage ? (
         <ScreenShotImage src={storageUrl(`${userId}_${section.timestamp}`)}></ScreenShotImage>
       ) : (
         <></>
@@ -379,7 +396,7 @@ function ScreenShot({
       {section.sameshot ? (
         section.sameshot.startsWith('data:') ? (
           <ScreenShotImage src={section.sameshot} blur={blur}></ScreenShotImage>
-        ) : isAuthed ? (
+        ) : canFallbackToStorage ? (
           <ScreenShotImage src={storageUrl(`${userId}_${section.sameshot}`)}></ScreenShotImage>
         ) : (
           <></>

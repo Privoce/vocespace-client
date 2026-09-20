@@ -50,21 +50,34 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
     hasAsked: !settings?.ai?.cut?.enabled || false,
   });
 
+  const loadAnalysisResult = useCallback(
+    async (showMessage: boolean) => {
+      if (!space) return false;
+      const participant = settings?.participants?.[space.localParticipant.identity];
+      const response = await api.ai.getAnalysisRes(
+        space.name,
+        space.localParticipant.identity,
+        usePlatformUserInfoCheap({ user: participant }).isAuth,
+      );
+      if (response.ok) {
+        const { res }: { res: AICutAnalysisRes } = await response.json();
+        setAICutAnalysisRes(res);
+        if (showMessage) {
+          messageApi.success(t('ai.cut.success.reload'));
+        }
+        return true;
+      }
+      if (showMessage) {
+        messageApi.error(t('ai.cut.error.reload'));
+      }
+      return false;
+    },
+    [space, settings, messageApi, t],
+  );
+
   const reloadResult = useCallback(async () => {
-    if (!space) return;
-    const response = await api.ai.getAnalysisRes(
-      space.name,
-      space.localParticipant.identity,
-      getParticipantPlatformInfo({ user: settings.participants[space.localParticipant.identity] }).isAuth,
-    );
-    if (response.ok) {
-      const { res }: { res: AICutAnalysisRes } = await response.json();
-      setAICutAnalysisRes(res);
-      messageApi.success(t('ai.cut.success.reload'));
-    } else {
-      messageApi.error(t('ai.cut.error.reload'));
-    }
-  }, [space, settings, messageApi, t]);
+    await loadAnalysisResult(true);
+  }, [loadAnalysisResult]);
 
   const stopAICutService = useCallback(async (room: Room) => {
     aiCutServiceRef.current.stop();
@@ -111,6 +124,9 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
                 stopAICutService(space);
                 await updateSettings({ ai: { cut: { ...conf, enabled: false } } });
                 socket.emit('update_user_status', { space: space.name } as WsBase);
+              } else {
+                // 自动刷新采用静默模式，避免周期性提示打断用户
+                await loadAnalysisResult(false);
               }
             }
           },
@@ -121,17 +137,29 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
           },
         );
         if (aiCutAnalysisIntervalId.current) {
-          try { clearInterval(aiCutAnalysisIntervalId.current as unknown as number); } catch { /* ignore */ }
+          try {
+            clearInterval(aiCutAnalysisIntervalId.current as unknown as number);
+          } catch {
+            /* ignore */
+          }
           aiCutAnalysisIntervalId.current = null;
         }
-        aiCutAnalysisIntervalId.current = setInterval(() => { reloadResult(); }, (freq + 2) * 60 * 1000);
+        // 按采集频率进行静默兜底拉取，防止页面重连后 UI 不更新
+        aiCutAnalysisIntervalId.current = setInterval(
+          () => {
+            void loadAnalysisResult(false);
+          },
+          Math.max(1, freq) * 60 * 1000,
+        );
+        // 启动后先拉一次最新结果，减少首屏等待
+        void loadAnalysisResult(false);
       } else {
         stopAICutService(space);
       }
       await updateSettings({ ai: { cut: { ...conf } } });
       socket.emit('update_user_status', { space: space.name } as WsBase);
     },
-    [space, uState, messageApi, t, updateSettings, locale, stopAICutService, reloadResult],
+    [space, uState, messageApi, t, updateSettings, locale, stopAICutService, loadAnalysisResult],
   );
 
   const openAIServiceAskNote = useCallback(() => {
@@ -164,6 +192,35 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
       });
     }
   }, [noteStateForAICutService.noteClosed, noteStateForAICutService.openAIService]);
+
+  useEffect(() => {
+    if (!space || !settings?.ai?.cut?.enabled) {
+      if (aiCutAnalysisIntervalId.current) {
+        clearInterval(aiCutAnalysisIntervalId.current);
+        aiCutAnalysisIntervalId.current = null;
+      }
+      return;
+    }
+
+    if (aiCutAnalysisIntervalId.current) {
+      clearInterval(aiCutAnalysisIntervalId.current);
+    }
+
+    const freq = Number(settings?.ai?.cut?.freq || 3);
+    aiCutAnalysisIntervalId.current = setInterval(
+      () => {
+        void loadAnalysisResult(false);
+      },
+      Math.max(1, freq) * 60 * 1000,
+    );
+
+    return () => {
+      if (aiCutAnalysisIntervalId.current) {
+        clearInterval(aiCutAnalysisIntervalId.current);
+        aiCutAnalysisIntervalId.current = null;
+      }
+    };
+  }, [space, settings?.ai?.cut?.enabled, settings?.ai?.cut?.freq, loadAnalysisResult]);
 
   const fetchPlatformData = useCallback(async (isAuth: boolean) => {
     const identity = space?.localParticipant.identity;
