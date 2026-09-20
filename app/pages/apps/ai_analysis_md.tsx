@@ -355,6 +355,8 @@ export const AICutAnalysisMdTabs = forwardRef<AICutAnalysisMdTabsExports, AICutA
   },
 );
 
+AICutAnalysisMdTabs.displayName = "AICutAnalysisMdTabs"
+
 function ScreenShot({
   section,
   isAuthed,
