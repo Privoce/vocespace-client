@@ -3,8 +3,8 @@
 import { usePreJoin } from '@/features/pre-join/hooks/use-pre-join';
 import { PreJoinPC } from '@/features/pre-join/views/pc';
 import { PreJoinPhone } from '@/features/pre-join/views/phone';
-import type { PreJoinPropsExt } from '@/features/pre-join/types';
-export type { PreJoinPropsExt } from '@/features/pre-join/types';
+import type { PreJoinPropsExt } from '@/components/PreJoin/types';
+export type { PreJoinPropsExt } from '@/components/PreJoin/types';
 
 export function PreJoin(props: PreJoinPropsExt) {
   const model = usePreJoin(props);

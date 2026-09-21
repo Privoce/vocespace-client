@@ -12,7 +12,7 @@ import { formatChatMessageLinks, LiveKitRoom, type LocalUserChoices } from '@liv
 import { Button, Modal, Space } from 'antd';
 import { type Room, type RoomConnectOptions, type VideoCodec, MediaDeviceFailure, Track } from 'livekit-client';
 import React, { useState } from 'react';
-import { PreJoin } from '@/app/pages/pre_join/pre_join';
+import { PreJoin } from '@/components/PreJoin/index';
 import { useSocketSession } from '@/lib/hooks/use-socket-session';
 import { useRoomLeave } from '@/features/room/hooks/use-room-leave';
 import type { ReadableConf } from '@/lib/std/conf';

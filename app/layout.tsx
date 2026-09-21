@@ -66,6 +66,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           colorTextDisabled: '#333',
         },
         components: {
+          Segmented: {
+            itemSelectedBg: '#22CCEE',
+            itemSelectedColor: '#1E1E1E',
+            trackBg: '#1E1E1E',
+            itemColor: '#fff'
+          },
           Button: {
             defaultColor: '#8c8c8c',
           },
@@ -215,7 +221,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       }}
     >
       <html lang="en">
-        <body>
+        <body  style={{backgroundColor: '#1a1a1a'}}>
           <I18nProvider initialLocale="en">
             <DeviceLayoutSync />
             <WeChatAccessGuard>{children}</WeChatAccessGuard>

@@ -1,0 +1,204 @@
+@use "@/styles/utils.scss" as *;
+
+.view {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  @include flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex-wrap: nowrap;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scroll-behavior: smooth;
+  padding: vs-space(lg);
+
+  &__lang_select {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+  }
+  &__video {
+    margin-top: 80px;
+    flex-shrink: 0;
+    overflow: hidden;
+    aspect-ratio: 16/9;
+    min-height: 0;
+    width: min(100%, 448px);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #0d0d0d;
+    border-radius: 8px;
+    &__placeholder {
+      height: auto;
+      width: 100%;
+      aspect-ratio: 16/8;
+      @include flex;
+      flex-direction: column;
+      gap: 1em;
+      text-align: center;
+      margin-top: 2rem;
+    }
+    &__permission {
+      margin: 0;
+      color: #d9d9d9;
+      font-size: 15px;
+      line-height: 1.6;
+      max-width: 320px;
+    }
+  }
+  &__permission_modal {
+    &__content {
+      color: #d9d9d9;
+      font-size: 14px;
+      line-height: 1.7;
+      p {
+        margin: 0 0 0.5rem;
+      }
+      p:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+  &__controls {
+    width: min(100%, 448px);
+    display: flex;
+    align-items: center;
+    justify-content: stretch;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    height: fit-content;
+    &__group {
+      // width: 50%;
+      height: 44px;
+      flex-grow: 1;
+      width: 100%;
+      @include flex(center, space-between);
+      margin-left: vs-space(sm);
+      &_container {
+        padding: vs-space(md);
+      }
+      &_volume {
+        width: 100%;
+        height: fit-content;
+        background-color: vs-color(bg);
+        
+        border-radius: 8px;
+        &__button {
+          width: 100%;
+          background-color: #1f8cf9;
+          padding: 0.8rem;
+          transition: all 0.3s ease-in-out;
+          border: none;
+          border-radius: 8px;
+          cursor: pointer;
+          &:hover {
+            filter: brightness(1.1);
+          }
+        }
+        &__header {
+          width: 100%;
+          display: inline-flex;
+          align-items: center;
+          justify-content: space-between;
+          margin: 0.5rem 0;
+          &__left {
+            display: inline-flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 0.5rem;
+            color: vs-color(text-weak);
+            font-size: 14px;
+          }
+        }
+      }
+    }
+    &__toggle {
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+    }
+    &__form {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      input {
+        width: 100%;
+      }
+      &__button {
+        width: 100%;
+        background-color: #1f8cf9;
+        padding: 0.8rem;
+        transition: all 0.3s ease-in-out;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        &:hover {
+          filter: brightness(1.1);
+        }
+      }
+    }
+  }
+}
+
+.loginButtons {
+  width: 100%;
+  height: fit-content;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-wrap: wrap;
+  gap: 8px;
+  .loginButton {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    height: fit-content;
+    width: 100%;
+    &_btn {
+      cursor: pointer;
+      height: 44px;
+      width: 100%;
+      border: 1px solid #333;
+      background-color: #1e1e1e;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease-in-out;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      font-size: 14px;
+      &:hover {
+        background-color: #222;
+      }
+    }
+    span {
+      font-size: 14px;
+    }
+  }
+}
+
+.LoginStateBtn {
+  position: absolute;
+  top: 1rem;
+  left: 0rem;
+  color: #fff;
+  .wrapper {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: fit-content;
+    height: fit-content;
+  }
+}

@@ -1,10 +1,16 @@
 'use client';
 
-import { useHomePage } from '@/features/home/hooks/use-home-page';
-import { HomePagePC } from '@/features/home/views/pc';
-import { HomePagePhone } from '@/features/home/views/phone';
+import { PageFooter } from '@/components/PageFooter';
+import { useNewSpace } from './hooks/UseNewSpace';
+import { NewSpacePC } from './components/NewSpacePC';
 
 export default function Page() {
-  const model = useHomePage();
-  return model.device === 'phone' ? <HomePagePhone {...model} /> : <HomePagePC {...model} />;
+  const hookProps = useNewSpace();
+
+  return (
+    <>
+      <NewSpacePC {...hookProps} />
+      <PageFooter loading={hookProps.loading}></PageFooter>
+    </>
+  );
 }

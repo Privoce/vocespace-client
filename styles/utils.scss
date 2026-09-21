@@ -1,0 +1,37 @@
+@use 'sass:map';
+
+$colors: (
+  primary: #22ccee,
+  bg: #2d2d2d,
+  pg: #1a1a1a,
+  main: #1e1e1e,
+
+  text-pm: #333,
+  text-sc: #666,
+  text-weak: #a0a0a0,
+);
+
+@function vs-color($name) {
+  @return map.get($colors, $name);
+}
+
+$space: (
+  3xl: 24px,
+  xxl: 20px,
+  xl: 16px,
+  lg: 14px,
+  md: 12px,
+  sm: 8px,
+  xs: 4px,
+);
+
+@function vs-space($size) {
+  @return map.get($space, $size);
+}
+
+@mixin flex($align: center, $justify: center, $wrap: nowrap) {
+  display: flex;
+  align-items: $align;
+  justify-content: $justify;
+  flex-wrap: $wrap;
+}

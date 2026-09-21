@@ -23,7 +23,7 @@
     "@livekit/krisp-noise-filter": "0.2.16",
     "@mediapipe/camera_utils": "0.3.1675466862",
     "@mediapipe/holistic": "0.5.1675471629",
-    "antd": "^5.26.3",
+    "antd": "^6.6.5",
     "clsx": "^2.1.1",
     "dayjs": "^1.11.13",
     "detect-gpu": "^5.0.70",

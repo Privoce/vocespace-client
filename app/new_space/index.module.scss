@@ -1,0 +1,47 @@
+@use '@/styles/utils' as *;
+
+.main {
+  position: relative;
+  @include flex();
+  flex-direction: column;
+  overflow: auto;
+  overflow-x: hidden;
+  flex-grow: 1;
+}
+
+.header {
+  text-align: center;
+
+  margin-bottom: vs-space(md);
+  width: 100%;
+  & > h2 {
+    font-size: vs-space(xxl);
+    color: vs-color(text-weak);
+  }
+}
+
+.tabContent {
+  border: 1px solid #333;
+  border-radius: vs-space(md);
+  padding: 20px;
+  background: vs-color(bg);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: calc(100% - 40px);
+  max-width: 440px;
+  min-width: 320px;
+}
+
+.lang_select {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+}
+
+.subtitle {
+ margin: vs-space(sm) 0;
+ text-align: justify;
+ color: vs-color(text-weak);
+ font-size: vs-space(lg);
+}
