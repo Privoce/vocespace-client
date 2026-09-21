@@ -1,6 +1,6 @@
 'use client';
 
-import { ChannelExports, ChannelProps, FeedbackType, FeedbackUploadItem, RoomPrivacy } from '@/features/channel/shared';
+import { ChannelExports, ChannelProps, FeedbackType, FeedbackUploadItem, RoomPrivacy } from '@/components/Channel/types';
 import { exportRBAC } from '@/lib/hooks/platform';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { useI18n } from '@/lib/i18n/i18n';

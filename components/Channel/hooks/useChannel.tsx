@@ -1,6 +1,6 @@
 'use client';
 
-import { ChannelExports, ChannelProps } from '@/features/channel/shared';
+import { ChannelExports, ChannelProps } from '@/components/Channel/types';
 import * as React from 'react';
 import { useChannelActions } from './useChannelActions';
 import { useChannelFeedback } from './useChannelFeedback';

@@ -9,7 +9,7 @@ import { src } from '@/lib/std';
 import {
   ConnectionStateToast,
   LayoutContextProvider,
-  RoomAudioRenderer
+  RoomAudioRenderer,
 } from '@livekit/components-react';
 import type { useConference } from '../hooks/useConference';
 export type VideoContainerModel = ReturnType<typeof useConference>;
@@ -64,20 +64,27 @@ export function ConferenceSurface({ model }: { model: VideoContainerModel }) {
   } = model;
   return (
     <div
-      className={model.device === 'phone' ? `video_container_wrapper ${phone.room}` : 'video_container_wrapper'}
+      className={
+        model.device === 'phone'
+          ? `video_container_wrapper ${phone.room}`
+          : 'video_container_wrapper'
+      }
       style={{ position: 'relative' }}
       onDragEnter={handleDrag}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
       {/* 右侧应用浮窗，悬浮态 */}
-      {model.device !== 'phone' && showFlot && space && settings.participants[space.localParticipant.identity] && (
-        <FlotButton
-          openApp={openApp}
-          setOpenApp={setOpenApp}
-          style={{ position: 'absolute', top: '30px', right: '0px', zIndex: 1111 }}
-        ></FlotButton>
-      )}
+      {model.device !== 'phone' &&
+        showFlot &&
+        space &&
+        settings.participants[space.localParticipant.identity] && (
+          <FlotButton
+            openApp={openApp}
+            setOpenApp={setOpenApp}
+            style={{ position: 'absolute', top: '30px', right: '0px', zIndex: 1111 }}
+          ></FlotButton>
+        )}
       {space && settings.participants[space.localParticipant.identity] && (
         <FlotLayout
           showAI={showAI}
@@ -143,11 +150,13 @@ export function ConferenceSurface({ model }: { model: VideoContainerModel }) {
               }}
             >
               {model.device === 'phone' && <PhoneRoomHeader model={model} />}
-              {!hasRoomLicense && (
-                <LicenseAlert toBuyRoomLicense={toBuyRoomLicense}></LicenseAlert>
-              )}
+              {!hasRoomLicense && <LicenseAlert toBuyRoomLicense={toBuyRoomLicense}></LicenseAlert>}
               <div style={{ display: 'flex', flex: 1, width: '100%', minHeight: 0 }}>
-                {model.device === 'phone' ? <VideoContainerPhone model={model} /> : <VideoContainerPC model={model} />}
+                {model.device === 'phone' ? (
+                  <VideoContainerPhone model={model} />
+                ) : (
+                  <VideoContainerPC model={model} />
+                )}
                 {chatOpen && space && (
                   <div
                     style={{
@@ -196,7 +205,6 @@ export function ConferenceSurface({ model }: { model: VideoContainerModel }) {
                 <SettingsComponent />
               </div>
             )}
-
           </LayoutContextProvider>
         )}
         <RoomAudioRenderer />

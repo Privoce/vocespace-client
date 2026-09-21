@@ -1,15 +1,10 @@
 import { GLayout } from '@/app/pages/layout/grid';
 import { ParticipantTileMini } from '@/app/pages/participant/mini';
 import { SvgResource } from '@/app/resources/svg';
-import { FeedbackType, RoomPrivacy } from '@/features/channel/shared';
-import {
-  encodeChildRoomEnter
-} from '@/lib/std';
-import styles from '@/styles/channel.module.scss';
-import {
-  LockOutlined,
-  PlusCircleOutlined
-} from '@ant-design/icons';
+import { FeedbackType, RoomPrivacy } from '@/components/Channel/types';
+import { encodeChildRoomEnter } from '@/lib/std';
+import styles from './index.module.scss';
+import { LockOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import {
   Button,
   Collapse,
@@ -21,13 +16,11 @@ import {
   Popover,
   Radio,
   Tag,
-  Upload
+  Upload,
 } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
-import {
-  ReactNode
-} from 'react';
-import type { useChannel } from '../hooks/useChannel';
+import { ReactNode } from 'react';
+import type { useChannel } from './hooks/useChannel';
 export type ChannelModel = ReturnType<typeof useChannel>;
 export function getChannelContent(model: ChannelModel) {
   const {
@@ -230,19 +223,12 @@ export function getChannelContent(model: ChannelModel) {
                   }
                   placement="topRight"
                 >
-                  <div
-                    className={styles.room_header_wrapper_title_name_title}
-                    style={{
-                      width: room.participants.length > 0 ? '100px' : '160px',
-                      maxWidth: '160px',
-                    }}
-                  >
-                    {room.name}
-                  </div>
+                  <div className={styles.room_header_wrapper_title_name_title}>{room.name}</div>
                 </Popover>
               </div>
               {room.participants.length > 0 && (
                 <Tag
+                  variant="solid"
                   color="transparent"
                   style={{
                     fontSize: '0.8em',
@@ -250,7 +236,6 @@ export function getChannelContent(model: ChannelModel) {
                     lineHeight: '1.2em',
                     color: '#8c8c8c',
                   }}
-                  bordered={false}
                 >
                   {room.participants.length}&nbsp;
                   {t('channel.menu.active')}
@@ -527,9 +512,7 @@ export function getChannelContent(model: ChannelModel) {
           {feedbackType === 'other' && (
             <Form.Item
               name="otherType"
-              rules={[
-                { required: true, message: t('channel.feedback.validation.type_required') },
-              ]}
+              rules={[{ required: true, message: t('channel.feedback.validation.type_required') }]}
             >
               <Input placeholder={t('channel.feedback.other_placeholder')} />
             </Form.Item>
@@ -537,9 +520,7 @@ export function getChannelContent(model: ChannelModel) {
           <Form.Item
             label={t('channel.feedback.content')}
             name="content"
-            rules={[
-              { required: true, message: t('channel.feedback.validation.content_required') },
-            ]}
+            rules={[{ required: true, message: t('channel.feedback.validation.content_required') }]}
           >
             <TextArea rows={5} placeholder={t('channel.feedback.content_placeholder')} />
           </Form.Item>

@@ -4,17 +4,17 @@ import {
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   PlusCircleOutlined,
-  RightOutlined
+  RightOutlined,
 } from '@ant-design/icons';
-import {
-  Button,
-  Collapse,
-  CollapseProps,
-  Tag,
-  Tooltip
-} from 'antd';
+import { Button, Collapse, CollapseProps, Tag, Tooltip } from 'antd';
 import type { ChannelModel } from './content';
-export function ChannelPC({ model, mainItems }: { model: ChannelModel; mainItems: CollapseProps['items'] }) {
+export function ChannelPC({
+  model,
+  mainItems,
+}: {
+  model: ChannelModel;
+  mainItems: CollapseProps['items'];
+}) {
   const {
     space,
     isActive,
@@ -70,7 +70,7 @@ export function ChannelPC({ model, mainItems }: { model: ChannelModel; mainItems
               </Tooltip>
             </div>
             <div className={styles.headerActions}>
-              <Tag color="#22CCEE">
+              <Tag color="#22CCEE" variant="solid">
                 {allParticipants.length} {t('channel.menu.active')}
               </Tag>
               <Button
@@ -122,8 +122,6 @@ export function ChannelPC({ model, mainItems }: { model: ChannelModel; mainItems
           </Button>
         </div>
       </div>
-
     </>
   );
-
 }

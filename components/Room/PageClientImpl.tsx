@@ -1,8 +1,8 @@
 'use client';
 
-import { useRoomConnection } from '@/features/room/hooks/use-room-connection';
-import { useRoomEntry } from '@/features/room/hooks/use-room-entry';
-import type { PageClientImplProps } from '@/features/room/types';
+import { useRoomConnection } from './hooks/UseRoomConnection';
+import { useRoomEntry } from './hooks/UseRoomEntry';
+import type { PageClientImplProps } from '@/components/Room/types';
 import BeforeUnloadGuard from '@/app/BeforeUnloadGuard';
 import { VideoContainer, VideoContainerExports } from '@/app/pages/controls/video_container';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -14,7 +14,7 @@ import { type Room, type RoomConnectOptions, type VideoCodec, MediaDeviceFailure
 import React, { useState } from 'react';
 import { PreJoin } from '@/components/PreJoin/index';
 import { useSocketSession } from '@/lib/hooks/use-socket-session';
-import { useRoomLeave } from '@/features/room/hooks/use-room-leave';
+import { useRoomLeave } from './hooks/UseRoomLeave';
 import type { ReadableConf } from '@/lib/std/conf';
 import type { MessageInstance } from 'antd/es/message/interface';
 import type { NotificationInstance } from 'antd/es/notification/interface';
