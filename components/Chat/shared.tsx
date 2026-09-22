@@ -1,28 +1,13 @@
 'use client';
 
-import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
-
-import { ChatPanel } from '@/app/pages/chat/chat';
-import { DEFAULT_DRAWER_PROP, DrawerCloser } from '@/app/pages/controls/drawer_tools';
 import { pictureCallback, SvgResource } from '@/app/resources/svg';
-import { useI18n } from '@/lib/i18n/i18n';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { SpaceInfo } from '@/lib/std/space';
-import { useRoomStore } from '@/lib/store';
-import styles from '@/styles/chat.module.scss';
-import { Button, Drawer, Image, Popover } from 'antd';
+import styles from './index.module.scss';
+import { Button, Image, Popover } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
 import { Room } from 'livekit-client';
 import * as React from 'react';
-export interface EnhancedChatProps {
-  open: boolean;
-  setOpen: (open: boolean) => void;
-  onClose: () => void;
-  space: Room;
-  sendFileConfirm: (onOk: (abortController?: AbortController) => Promise<ChatMsgItem>) => void;
-  messageApi: MessageInstance;
-  spaceInfo: SpaceInfo;
-}
 
 export interface ChatPanelProps {
   space: Room;
@@ -33,53 +18,6 @@ export interface ChatPanelProps {
 }
 
 export interface EnhancedChatExports { }
-
-export const EnhancedChat = React.forwardRef<EnhancedChatExports, EnhancedChatProps>(
-  function EnhancedChat(
-    { open, setOpen, onClose, space, sendFileConfirm, messageApi, spaceInfo }: EnhancedChatProps,
-    ref,
-  ) {
-    const { t } = useI18n();
-    const device = useLayoutDevice();
-    const chatMsg = useRoomStore((s) => s.chatMsg);
-
-    React.useEffect(() => {
-      if (open) {
-        useRoomStore.getState().setChatMsg((prev) => ({
-          unhandled: 0,
-          msgs: prev.msgs,
-        }));
-      }
-    }, [open]);
-
-    if (device === 'phone') return open ? <ChatPanel ref={ref} space={space} sendFileConfirm={sendFileConfirm} messageApi={messageApi} spaceInfo={spaceInfo} onClose={() => { setOpen(false); onClose(); }} /> : null;
-    return (
-      <Drawer
-        {...DEFAULT_DRAWER_PROP}
-        title={t('common.chat')}
-        onClose={onClose}
-        open={open}
-        extra={DrawerCloser({
-          on_clicked: () => setOpen(false),
-        })}
-        styles={{
-          body: {
-            ...DEFAULT_DRAWER_PROP.styles?.body,
-            padding: 0,
-          },
-        }}
-      >
-        <ChatPanel
-          ref={ref}
-          space={space}
-          sendFileConfirm={sendFileConfirm}
-          messageApi={messageApi}
-          spaceInfo={spaceInfo}
-        />
-      </Drawer>
-    );
-  },
-);
 
 export interface ChatMsgItemProps {
   isLocal: boolean;

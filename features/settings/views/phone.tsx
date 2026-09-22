@@ -1,4 +1,4 @@
-import mobile from '@/features/shared/mobile.module.scss';
+import mobile from '@/styles/mobile.module.scss';
 import { ArrowLeftOutlined, RightOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import type { SettingsModel } from './panels';

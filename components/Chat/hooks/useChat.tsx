@@ -2,7 +2,7 @@
 
 import { ulid } from 'ulid';
 
-import { ChatPanelProps, EnhancedChatExports } from '@/features/chat/shared';
+import { ChatPanelProps, EnhancedChatExports } from '@/components/Chat/shared';
 import { api } from '@/lib/api';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { useVisualViewport } from '@/lib/hooks/use-visual-viewport';

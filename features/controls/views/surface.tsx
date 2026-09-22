@@ -3,7 +3,7 @@ import { Settings } from '@/app/pages/controls/settings/settings';
 import { AICutAnalysisSettingsPanel } from '@/app/pages/controls/widgets/ai';
 import { WorkModal } from '@/app/pages/controls/widgets/work';
 import { ParticipantManage } from '@/app/pages/participant/manage';
-import mobile from '@/features/shared/mobile.module.scss';
+import mobile from '@/styles/mobile.module.scss';
 import styles from '@/styles/controls.module.scss';
 import { Drawer, Input, Modal } from 'antd';
 import type { useControls } from '../hooks/useControls';

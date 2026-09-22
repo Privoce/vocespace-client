@@ -1,4 +1,4 @@
-import { chatMessageKey, mergeChatMessages } from '@/features/chat/message-key';
+import { chatMessageKey, mergeChatMessages } from '@/components/Chat/message-key';
 import { api } from '@/lib/api';
 import { socket } from '@/lib/realtime/socket';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';

@@ -1,7 +1,7 @@
 import { AICutAnalysisMdTabs } from '@/app/pages/apps/ai_analysis_md';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from '@/app/pages/controls/drawer_tools';
 import { SvgResource } from '@/app/resources/svg';
-import mobile from '@/features/shared/mobile.module.scss';
+import mobile from '@/styles/mobile.module.scss';
 import { FlotAppItem } from '@/features/widgets/shared';
 import { getParticipantPlatformInfo } from '@/lib/hooks/platform';
 import { Button, Drawer } from 'antd';

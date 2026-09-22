@@ -274,7 +274,7 @@ export function DashboardSurface({ model }: { model: DashboardModel }) {
   );
 }
 
-import mobile from '@/features/shared/mobile.module.scss';
+import mobile from '@/styles/mobile.module.scss';
 import { DashboardPC } from './pc';
 import { DashboardPhone } from './phone';
 import phone from './phone.module.scss';

@@ -1,4 +1,4 @@
-import mobile from '@/features/shared/mobile.module.scss';
+import mobile from '@/styles/mobile.module.scss';
 import { CopyOutlined, DeleteOutlined, DownloadOutlined } from '@ant-design/icons';
 import { Button, Empty, Pagination, Select, Space, Tag } from 'antd';
 import type { RecordingTableModel } from './pc';

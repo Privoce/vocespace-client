@@ -1,5 +1,5 @@
 import { RecordingTable } from '@/app/recording/table';
-import mobile from '@/features/shared/mobile.module.scss';
+import mobile from '@/styles/mobile.module.scss';
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { Button, Input, Spin, Tag } from 'antd';
 import type { RecordingContentModel } from './pc';

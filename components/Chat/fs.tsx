@@ -1,5 +1,5 @@
 import { Room } from 'livekit-client';
-import styles from '@/styles/chat.module.scss';
+import styles from './index.module.scss';
 import { Image, Tooltip, Dropdown, Menu, message, MenuProps } from 'antd';
 import {
   FileZipOutlined,

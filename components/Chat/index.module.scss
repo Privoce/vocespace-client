@@ -1,3 +1,47 @@
+.phone {
+  height: 100%;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  :global(.ant-upload-drag) {
+    border: 0;
+    background: transparent;
+  }
+  :global(.ant-upload-drag-container) {
+    display: block;
+  }
+  :global(.ant-upload-btn) {
+    padding: 16px 12px !important;
+  }
+  button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  ul {
+    padding: 0;
+    margin: 0;
+  }
+  li {
+    margin-bottom: 20px;
+  }
+  li[data-local='true'] p[data-message='true'] {
+    color: #eaffff;
+    background: #12515c;
+    border-radius: 16px 4px 16px 16px;
+  }
+  li[data-local='false'] p[data-message='true'] {
+    background: #222a36;
+    border-radius: 4px 16px 16px 16px;
+  }
+  p[data-message='true'] {
+    padding: 12px 14px;
+    max-width: 90%;
+    font-size: 15px;
+    line-height: 1.6;
+    overflow-wrap: anywhere;
+  }
+}
+
+
 .msg {
   height: calc(100% - 146px);
   overflow-y: scroll;

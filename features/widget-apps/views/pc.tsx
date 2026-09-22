@@ -1,4 +1,4 @@
-import mobile from '@/features/shared/mobile.module.scss';
+import mobile from '@/styles/mobile.module.scss';
 import type { AppKey } from '@/lib/std/space';
 import styles from '@/styles/apps.module.scss';
 import { Collapse } from 'antd';

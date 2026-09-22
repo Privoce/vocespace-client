@@ -1,4 +1,4 @@
-import { chatMessageKey, mergeChatMessages } from '@/features/chat/message-key';
+import { chatMessageKey, mergeChatMessages } from '@/components/Chat/message-key';
 import type { createSocketScope } from '@/lib/realtime/socket-scope';
 import type { ChatMsgItem } from '@/lib/std/chat';
 import { useRoomStore } from '@/lib/store';

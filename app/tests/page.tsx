@@ -1,424 +1,272 @@
 'use client';
 
+// 必须最先导入：lib/api(index) ↔ lib/std 存在循环引用，
+// 若首个触达该簇的是子模块（如 fs.tsx 引 @/lib/api/chat），
+// 会触发 TDZ 错误 "Cannot access 'fetchLinkPreview' before initialization"
+import '@/lib/api';
+
 /**
- * ChannelSurface 单页测试
- * 仅用于 /tests 页面：mock ChannelModel 所需数据，不依赖真实 LiveKit 连接与后端接口
- * - 设备切换（pc/phone）
- * - 子房间列表（公开/私密/有成员）
- * - 创建/重命名/分享/反馈等弹窗交互（全部为本地 mock，不发起请求）
+ * ChatPanel 单页测试
+ * 仅用于 /tests 页面：mock ChatPanelModel 所需数据，不依赖真实 LiveKit 连接、socket 与后端接口
+ * - 设备切换（pc/phone，phone 走 Drawer 分支）
+ * - 消息列表（本地/远程文本、文件、图片、时间分割线）
+ * - 发送/上传/拖拽/文件系统弹窗交互（全部为本地 mock，不发起请求）
  */
 
-import { ChannelSurface } from '@/components/Channel';
-import type { ChannelModel } from '@/components/Channel/content';
-import type { FeedbackType, FeedbackUploadItem, RoomPrivacy } from '@/components/Channel/types';
+import { ChatPanelPC, type ChatPanelModel } from '@/components/Chat/pc';
+import { ChatPanelPhone } from '@/components/Chat/phone';
 import { useI18n } from '@/lib/i18n/i18n';
-import { encodeChildRoomEnter } from '@/lib/std';
-import type { ReadableConf } from '@/lib/std/conf';
-import {
-  DEFAULT_PARTICIPANT_SETTINGS,
-  DEFAULT_SPACE_WORK_CONF,
-  type ChildRoom,
-  type ParticipantSettings,
-  type SpaceAuthConf,
-  type SpaceInfo,
-} from '@/lib/std/space';
-import { RoomContext, type TrackReferenceOrPlaceholder } from '@livekit/components-react';
-import type { MenuProps } from 'antd';
-import { Button, Form, Radio, Space, Switch, theme, message } from 'antd';
+import type { ChatMsgItem } from '@/lib/std/chat';
+import { Button, Radio, Space, message } from 'antd';
 import type { MessageInstance } from 'antd/es/message/interface';
-import { Room, type RemoteParticipant } from 'livekit-client';
-import { useRef, useState } from 'react';
+import { Room } from 'livekit-client';
+import * as React from 'react';
+import { ulid } from 'ulid';
 
 // ---------------------------------- mock 常量 ----------------------------------
 
 const LOCAL_ID = 'local-user';
 const MOCK_SPACE_NAME = 'test-space';
 
-const mockParticipant = (id: string, name: string, online = true): ParticipantSettings => {
-  const p = {
-    ...DEFAULT_PARTICIPANT_SETTINGS,
-    name,
-    online,
-    socketId: `socket-${id}`,
-    blur: 0,
-  } as ParticipantSettings;
-  return p;
+const buildMockMsgs = (): ChatMsgItem[] => {
+  const now = Date.now();
+  return [
+    {
+      id: ulid(),
+      sender: { id: 'alice', name: 'Alice' },
+      message: '大家好，会议开始了',
+      type: 'text',
+      roomName: MOCK_SPACE_NAME,
+      file: null,
+      timestamp: now - 15 * 60 * 1000,
+    },
+    {
+      id: ulid(),
+      sender: { id: 'bob', name: 'Bob' },
+      message: '收到，需求文档我看一下',
+      type: 'text',
+      roomName: MOCK_SPACE_NAME,
+      file: null,
+      timestamp: now - 14 * 60 * 1000,
+    },
+    {
+      id: ulid(),
+      sender: { id: 'alice', name: 'Alice' },
+      message: null,
+      type: 'file',
+      roomName: MOCK_SPACE_NAME,
+      file: { name: 'requirements.pdf', size: 1024 * 1024 * 3, type: 'application/pdf' },
+      timestamp: now - 4 * 60 * 1000,
+    },
+    {
+      id: ulid(),
+      sender: { id: 'carol', name: 'Carol' },
+      message: null,
+      type: 'file',
+      roomName: MOCK_SPACE_NAME,
+      file: { name: 'screenshot.png', size: 1024 * 256, type: 'image/png' },
+      timestamp: now - 3 * 60 * 1000,
+    },
+    {
+      id: ulid(),
+      sender: { id: LOCAL_ID, name: 'Local User' },
+      message: '这个方案没问题，就按这个来 👍',
+      type: 'text',
+      roomName: MOCK_SPACE_NAME,
+      file: null,
+      timestamp: now - 2 * 60 * 1000,
+    },
+    {
+      id: ulid(),
+      sender: { id: 'bob', name: 'Bob' },
+      message: 'ok，那我先出原型稿',
+      type: 'text',
+      roomName: MOCK_SPACE_NAME,
+      file: null,
+      timestamp: now - 1 * 60 * 1000,
+    },
+  ];
 };
 
-const mockChildRooms: ChildRoom[] = [
-  { name: 'design', participants: ['alice', 'bob'], ownerId: LOCAL_ID, isPrivate: false },
-  { name: 'secret-room', participants: [], ownerId: LOCAL_ID, isPrivate: true },
-  { name: 'group-chat', participants: ['carol'], ownerId: 'alice', isPrivate: false },
-];
-
-const mockSettings: SpaceInfo = {
-  participants: {
-    [LOCAL_ID]: mockParticipant(LOCAL_ID, 'Local User'),
-    alice: mockParticipant('alice', 'Alice'),
-    bob: mockParticipant('bob', 'Bob'),
-    carol: mockParticipant('carol', 'Carol'),
-  },
-  ownerId: LOCAL_ID,
-  managers: [],
-  allowGuest: 'allow',
-  record: { active: false },
-  startAt: Math.floor(Date.now() / 1000),
-  children: mockChildRooms,
-  apps: [],
-  persistence: false,
-  ai: { cut: { enabled: false, freq: 5 } },
-  work: DEFAULT_SPACE_WORK_CONF,
-  auth: {
-    owner: {
-      viewRoom: true,
-      createRoom: true,
-      manageRoom: true,
-      manageRole: true,
-      controlUser: true,
-      recording: true,
-      manageFile: true,
-      managePlayer: true,
-    },
-    manager: {
-      viewRoom: true,
-      createRoom: true,
-      manageRoom: true,
-      manageRole: false,
-      controlUser: true,
-      recording: true,
-      manageFile: true,
-      managePlayer: true,
-    },
-    participant: {
-      viewRoom: true,
-      createRoom: true,
-      manageRoom: false,
-      manageRole: false,
-      controlUser: false,
-      recording: false,
-      manageFile: false,
-      managePlayer: false,
-    },
-    guest: {
-      viewRoom: true,
-      createRoom: false,
-      manageRoom: false,
-      manageRole: false,
-      controlUser: false,
-      recording: false,
-      manageFile: false,
-      managePlayer: false,
-    },
-  } as SpaceAuthConf,
-};
-
-const mockConfig: ReadableConf = {
-  livekit: { url: 'ws://localhost:7880', key: 'devkey', secret: 'devsecret' },
-  serverUrl: 'localhost:3000',
-  license: 'mock-license',
-  create_space: 'all',
-};
-
-// 占位 track refs（无真实媒体流），仅用于验证 Tile 渲染
-const buildMockTracks = (): TrackReferenceOrPlaceholder[] =>
-  ['alice', 'bob'].map((id) => ({
-    participant: {
-      identity: id,
-      name: mockSettings.participants[id].name,
-    } as unknown as RemoteParticipant,
-    publication: undefined,
-    source: 'camera',
-  })) as TrackReferenceOrPlaceholder[];
+const MOCK_FILES = ['uploads/requirements.pdf', 'uploads/screenshot.png', 'uploads/demo.mp4'];
 
 // ---------------------------------- 测试页 ----------------------------------
 
 export default function Page() {
   const { t } = useI18n();
-  const { token } = theme.useToken();
   const [messageApi, contextHolder] = message.useMessage() as [MessageInstance, React.ReactNode];
 
   // 设备模拟
-  const [device, setDevice] = useState<'pc' | 'phone'>('pc');
-  // 是否渲染占位参与者 Tile（依赖 mock Room context）
-  const [showTiles, setShowTiles] = useState(false);
-
-  // mock Room：不连接，仅提供 RoomContext / space.name
-  const [mockRoom] = useState(() => {
-    const r = new Room();
-    Object.defineProperty(r, 'name', { value: MOCK_SPACE_NAME, configurable: true });
-    return r;
-  });
-
-  // 交互状态（对齐 useChannelState 中的真实 state）
-  const [collapsed, setCollapsed] = useState(false);
-  const [roomCreateModalOpen, setRoomCreateModalOpen] = useState(false);
-  const [selectedRoom, setSelectedRoom] = useState<ChildRoom | null>(null);
-  const [mainJoinVis, setMainJoinVis] = useState<'hidden' | 'visible'>('hidden');
-  const [roomJoinVis, setRoomJoinVis] = useState<number | null>(null);
-  const [renameModalOpen, setRenameModalOpen] = useState(false);
-  const [shareRoomOpen, setShareRoomOpen] = useState(false);
-  const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackType, setFeedbackType] = useState<FeedbackType>('bug');
-  const [feedbackUploading, setFeedbackUploading] = useState(false);
-  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
-  const [feedbackUploads, setFeedbackUploads] = useState<FeedbackUploadItem[]>([]);
-  const [renameRoomName, setRenameRoomName] = useState('');
-  const [childRoomName, setChildRoomName] = useState('');
-  const [subActiveKey, setSubActiveKey] = useState<string[]>(['design', 'group-chat']);
-  const [mainActiveKey, setMainActiveKey] = useState<string[]>(['main', 'sub']);
-  const [roomPrivacy, setRoomPrivacy] = useState<RoomPrivacy>('public');
-  const [feedbackForm] = Form.useForm<{ email: string; otherType?: string; content: string }>();
-
-  const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const mainHideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [device, setDevice] = React.useState<'pc' | 'phone'>('pc');
+  const [msgs, setMsgs] = React.useState<ChatMsgItem[]>(buildMockMsgs);
+  const [value, setValue] = React.useState('');
+  const [isComposing, setIsComposing] = React.useState(false);
+  const [dragOver, setDragOver] = React.useState(false);
+  const dragCounterRef = React.useRef(0);
+  const [fsModal, setFsModal] = React.useState(false);
+  const [files, setFiles] = React.useState<string[]>([]);
+  const ulRef = React.useRef<HTMLUListElement>(null);
+  const bottomRef = React.useRef<HTMLLIElement>(null);
 
   const log = (action: string, ...args: unknown[]) =>
-    console.warn(`[ChannelTest] ${action}`, ...args);
+    console.warn(`[ChatTest] ${action}`, ...args);
 
-  const roomPrivacyOptions = [
-    { label: t('channel.modal.privacy.public.title'), value: 'public' },
-    { label: t('channel.modal.privacy.private.title'), value: 'private' },
-  ];
+  // mock Room：仅用于 FS 弹窗的 space.name
+  const mockSpace = React.useMemo(
+    () => ({ name: MOCK_SPACE_NAME }) as unknown as Room,
+    [],
+  );
 
-  const feedbackTypeOptions = [
-    { label: t('channel.feedback.types.bug'), value: 'bug' },
-    { label: t('channel.feedback.types.error'), value: 'error' },
-    { label: t('channel.feedback.types.question'), value: 'question' },
-    { label: t('channel.feedback.types.suggestion'), value: 'suggestion' },
-    { label: t('channel.feedback.types.other'), value: 'other' },
-  ];
-
-  const panelStyle: React.CSSProperties = {
-    marginBottom: 0,
-    background: '#1e1e1e',
-    borderRadius: 0,
-    border: 'none',
-    padding: '0px',
-  };
-  const subStyle: React.CSSProperties = {
-    marginBottom: 0,
-    background: '#1e1e1e',
-    borderRadius: 0,
-    border: 'none',
+  const sendMsg = async () => {
+    const msg = value.trim();
+    if (msg === '') return;
+    const newMsg: ChatMsgItem = {
+      id: ulid(),
+      sender: { id: LOCAL_ID, name: 'Local User' },
+      message: msg,
+      type: 'text',
+      roomName: MOCK_SPACE_NAME,
+      file: null,
+      timestamp: Date.now(),
+    };
+    setMsgs((prev) => [...prev, newMsg]);
+    log('sendMsg', msg);
+    setValue('');
   };
 
-  const shareRoomToClipboard = (room?: string, spaceName?: string) => {
-    const targetRoom = room ?? selectedRoom?.name;
-    const targetSpace = spaceName ?? MOCK_SPACE_NAME;
-    if (!targetRoom || !targetSpace) return;
-    const url = `https://${mockConfig.serverUrl}/${targetSpace}?childRoomEnter=${encodeChildRoomEnter(
-      targetSpace,
-      targetRoom,
-      mockRoom.localParticipant.identity,
-    )}`;
-    log('shareRoomToClipboard', url);
-    navigator.clipboard
-      .writeText(url)
-      .then(() => messageApi.success({ content: t('common.copy.success') }))
-      .catch((e) => log('clipboard error', e));
-  };
-
-  const createChildRoom = async () => {
-    if (childRoomName.trim() === '') {
-      messageApi.error({ content: t('channel.create.empty_name'), duration: 2 });
-      return;
-    }
-    log('createChildRoom', childRoomName, roomPrivacy);
-    messageApi.success({ content: `[mock] create room: ${childRoomName}`, duration: 2 });
-    setRoomCreateModalOpen(false);
-    setChildRoomName('');
-  };
-
-  const updateChildRoom = async (ty: string) => {
-    log('updateChildRoom', ty, selectedRoom?.name);
-    if (ty === 'name') {
-      setRenameModalOpen(false);
-      setRenameRoomName('');
-      messageApi.success({ content: `[mock] rename -> ${renameRoomName}`, duration: 2 });
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (
+      e.key === 'Enter' &&
+      !e.shiftKey &&
+      !isComposing &&
+      !e.nativeEvent.isComposing &&
+      e.keyCode !== 229
+    ) {
+      e.preventDefault();
+      sendMsg();
     }
   };
 
-  const subContextItems: MenuProps['items'] = [
-    {
-      key: 'rename',
-      label: t('channel.menu.rename'),
-      onClick: () => setRenameModalOpen(true),
-    },
-    {
-      key: 'share',
-      label: t('channel.menu.share'),
-      onClick: () => setShareRoomOpen(true),
-    },
-    {
-      key: 'privacy',
-      label: `${t('channel.menu.switch_privacy')}${!selectedRoom?.isPrivate
-        ? t('channel.modal.privacy.private.title')
-        : t('channel.modal.privacy.public.title')
-      }`,
-      onClick: () => log('switch privacy', selectedRoom?.name),
-    },
-    {
-      key: 'delete',
-      label: t('channel.menu.delete'),
-      onClick: () => {
-        log('delete room', selectedRoom?.name);
-        setSelectedRoom(null);
-      },
-    },
-    {
-      key: 'leave',
-      label: t('channel.menu.leave'),
-      onClick: () => log('leave room', selectedRoom?.name),
-    },
-  ];
-
-  const closeFeedbackModal = () => {
-    setFeedbackOpen(false);
-    feedbackForm.resetFields();
-    setFeedbackType('bug');
-    setFeedbackUploads([]);
-    setFeedbackUploading(false);
-    setFeedbackSubmitting(false);
-  };
-
-  const handleFeedbackUpload = async () => {
-    log('handleFeedbackUpload (mock)');
-    setFeedbackUploading(true);
-    setTimeout(() => setFeedbackUploading(false), 800);
+  const handleBeforeUpload = (file: { name: string; size: number; type: string }) => {
+    log('handleBeforeUpload (mock)', file.name);
+    const fileMessage: ChatMsgItem = {
+      id: ulid(),
+      sender: { id: LOCAL_ID, name: 'Local User' },
+      message: null,
+      type: 'file',
+      roomName: MOCK_SPACE_NAME,
+      file: { name: file.name, size: file.size, type: file.type },
+      timestamp: Date.now(),
+    };
+    setMsgs((prev) => [...prev, fileMessage]);
+    messageApi.info({ content: `[mock] uploaded: ${file.name}`, duration: 2 });
     return false;
   };
 
-  const submitFeedback = async () => {
-    const values = await feedbackForm.validateFields();
-    log('submitFeedback', { ...values, feedbackType });
-    messageApi.success({ content: '[mock] feedback submitted', duration: 2 });
-    closeFeedbackModal();
+  const handleDragEnter = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current++;
+    if (e.dataTransfer.types && e.dataTransfer.types.includes('Files')) {
+      setDragOver(true);
+    }
+  };
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current--;
+    if (dragCounterRef.current <= 0) {
+      dragCounterRef.current = 0;
+      setDragOver(false);
+    }
+  };
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounterRef.current = 0;
+    setDragOver(false);
   };
 
+  const openLocalFileSystem = async (fresh?: boolean) => {
+    log('openLocalFileSystem (mock)');
+    setFiles(MOCK_FILES);
+    if (!fresh) {
+      setFsModal(true);
+    }
+  };
+
+  const isLocal = (identity?: string): boolean => (identity ? identity === LOCAL_ID : false);
+  const isImg = (type: string) => type.startsWith('image/');
+  const downloadFile = async (url?: string) => log('downloadFile', url);
+
+  // phone 分支需要 viewport（mock 视口）
+  const viewport =
+    device === 'phone' && typeof window !== 'undefined'
+      ? { height: window.innerHeight, top: 0 }
+      : undefined;
+
   const model = {
-    // 基础 props
-    space: mockRoom,
-    config: mockConfig,
-    settings: mockSettings,
+    viewport,
+    space: mockSpace,
+    sendFileConfirm: (confirm: () => Promise<ChatMsgItem>) => {
+      log('sendFileConfirm (mock)');
+      confirm()
+        .then((m) => setMsgs((prev) => [...prev, m]))
+        .catch((e) => log('upload failed', e));
+    },
     messageApi,
-    localParticipantId: LOCAL_ID,
-    onUpdate: async () => {},
-    tracks: showTiles ? buildMockTracks() : [],
-    isActive: true,
-    updateSettings: async () => true,
-    toRenameSettings: () => {},
-    toSettings: () => {},
-    setUserStatus: async () => {},
-    showFlotApp: () => {},
-    // 设备
-    device,
-    isMobile: device === 'phone',
-    // i18n / theme
-    t,
-    token,
-    // 布局状态
-    collapsed,
-    setCollapsed,
-    isFullScreen: false,
-    selected: 'main' as const,
-    setSelected: () => {},
-    // 主房间 hover/加入
-    mainJoinVis,
-    setMainJoinVis,
-    roomJoinVis,
-    setRoomJoinVis,
-    mainHideTimeoutRef,
-    hideTimeoutRef,
-    // 子房间
-    childRooms: mockChildRooms,
-    subActiveKey,
-    setSubActiveKey,
-    mainActiveKey,
-    setMainActiveKey,
-    childRoomName,
-    setChildRoomName,
-    createRoom: true,
-    manageRoom: true,
-    roomCreateModalOpen,
-    setRoomCreateModalOpen,
-    selectedRoom,
-    setSelectedRoom,
-    renameModalOpen,
-    setRenameModalOpen,
-    renameRoomName,
-    setRenameRoomName,
-    shareRoomOpen,
-    setShareRoomOpen,
-    roomPrivacy,
-    setRoomPrivacy,
-    roomPrivacyOptions,
-    createChildRoom,
-    deleteChildRoom: async () => {},
-    leaveChildRoom: async () => {},
-    joinChildRoom: async () => {},
-    addIntoRoom: async (room: ChildRoom) => {
-      log('addIntoRoom', room.name);
-      messageApi.info({ content: `[mock] join room: ${room.name}`, duration: 2 });
-    },
-    confirmJoinRoom: async () => {},
-    joinMainRoom: async () => {
-      log('joinMainRoom');
-      messageApi.info({ content: '[mock] back to main room', duration: 2 });
-    },
-    updateChildRoom,
-    authDisabled: false,
-    subContextItems,
-    panelStyle,
-    subStyle,
-    shareRoomToClipboard,
-    // 加入请求弹窗（真实流程由 socket 触发，这里默认关闭）
-    joinModalOpen: false,
-    setJoinModalOpen: () => {},
-    joinParticipant: null,
-    setJoinParticipant: () => {},
-    selfRoomName: MOCK_SPACE_NAME,
-    setSelfRoomName: () => {},
-    agreeJoinRoom: async () => {},
-    // 参与者
-    allParticipants: Object.keys(mockSettings.participants),
-    subRoomsTmp: [],
-    setSubRoomsTmp: () => {},
-    wsSender: null,
-    // 反馈
-    feedbackOpen,
-    setFeedbackOpen,
-    feedbackType,
-    setFeedbackType,
-    feedbackUploading,
-    setFeedbackSubmitting,
-    feedbackSubmitting,
-    feedbackUploads,
-    setFeedbackUploads,
-    feedbackForm,
-    feedbackTypeOptions,
-    resetFeedbackState: () => {},
-    closeFeedbackModal,
-    handleFeedbackUpload,
-    submitFeedback,
-    // actions
-    createOwnSpace: async () => {
-      log('createOwnSpace (mock)');
-      messageApi.info({ content: '[mock] create own space', duration: 2 });
-    },
+    spaceInfo: undefined,
+    onClose: () => log('onClose'),
     ref: null,
-  } as unknown as ChannelModel;
+    t,
+    ulRef,
+    bottomRef,
+    chatMsg: { unhandled: 0, msgs },
+    value,
+    setValue,
+    isComposing,
+    setIsComposing,
+    dragOver,
+    setDragOver,
+    dragCounterRef,
+    fsModal,
+    setFsModal,
+    files,
+    setFiles,
+    canDeleteRBAC: true,
+    handleDragEnter,
+    handleDragLeave,
+    handleDragOver,
+    handleDrop,
+    sendMsg,
+    handleBeforeUpload,
+    handleKeyDown,
+    localParticipant: { identity: LOCAL_ID, name: 'Local User' },
+    isLocal,
+    isImg,
+    downloadFile,
+    openLocalFileSystem,
+    device,
+  } as unknown as ChatPanelModel;
 
   return (
-    <div style={{ height: '100vh', display: 'flex', flexDirection: 'column', background: '#141414' }}>
+    <div
+      style={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        background: '#141414',
+      }}
+    >
       {contextHolder}
       <Space
-        style={{
-          padding: '12px 16px',
-          borderBottom: '1px solid #2a2a2a',
-          color: '#fff',
-        }}
+        style={{ padding: '12px 16px', borderBottom: '1px solid #2a2a2a', color: '#fff' }}
       >
-        <span>ChannelSurface Test</span>
+        <span>ChatPanel Test</span>
         <Radio.Group
           value={device}
           onChange={(e) => setDevice(e.target.value)}
@@ -429,34 +277,35 @@ export default function Page() {
           optionType="button"
           size="small"
         />
-        <span>Tile占位:</span>
-        <Switch size="small" checked={showTiles} onChange={setShowTiles} />
-        <Button size="small" onClick={() => setCollapsed((v) => !v)}>
-          toggleCollapse
-        </Button>
-        <Button size="small" type="primary" onClick={() => setFeedbackOpen(true)}>
-          feedback
+        <Button size="small" onClick={() => setMsgs(buildMockMsgs())}>
+          重置消息
         </Button>
         <span style={{ color: '#888', fontSize: 12 }}>交互均为本地mock，无真实请求</span>
       </Space>
-      <div style={{ flex: 1, display: 'flex', overflow: 'hidden' }}>
-        <RoomContext.Provider value={mockRoom}>
-          <div style={{ width: 320, height: '100%' }}>
-            <ChannelSurface model={model} />
+      <div
+        style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          overflow: 'hidden',
+        }}
+      >
+        {device === 'pc' ? (
+          <div
+            style={{
+              width: 300,
+              height: 560,
+              border: '1px solid #2a2a2a',
+              borderRadius: 8,
+              overflow: 'hidden',
+            }}
+          >
+            <ChatPanelPC model={model} />
           </div>
-        </RoomContext.Provider>
-        <div
-          style={{
-            flex: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#666',
-          }}
-        >
-          mock settings: {mockChildRooms.length} child rooms /{' '}
-          {Object.keys(mockSettings.participants).length} participants
-        </div>
+        ) : (
+          <ChatPanelPhone model={model} />
+        )}
       </div>
     </div>
   );

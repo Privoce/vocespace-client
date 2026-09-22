@@ -1,7 +1,7 @@
 'use client';
 
 import { FlotButton, FlotLayout } from '@/app/pages/apps/flot';
-import { ChatPanel } from '@/app/pages/chat/chat';
+import { ChatPanel } from '@/components/Chat';
 import { Controls } from '@/app/pages/controls/bar';
 import { Channel } from '@/app/pages/controls/channel';
 import { LicenseAlert } from '@/app/pages/controls/widgets/license_alert';

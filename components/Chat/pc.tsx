@@ -1,9 +1,9 @@
 'use client';
 
-import { FS } from '@/app/pages/chat/fs';
+import { FS } from '@/components/Chat/fs';
 import { SvgResource } from '@/app/resources/svg';
-import { ChatMsgItemCmp, ChatMsgTimeSplit } from '@/features/chat/shared';
-import styles from '@/styles/chat.module.scss';
+import { ChatMsgItemCmp, ChatMsgTimeSplit } from '@/components/Chat/shared';
+import styles from './index.module.scss';
 import {
   CloseOutlined,
   FolderOpenOutlined,
@@ -13,10 +13,11 @@ import {
 import { Button, Input, Modal, Tooltip, Upload } from 'antd';
 import Dragger from 'antd/es/upload/Dragger';
 import * as React from 'react';
-import type { useChat } from '../hooks/useChat';
-import { chatMessageKey } from '../message-key';
+import type { useChat } from './hooks/useChat';
+import { chatMessageKey } from './message-key';
 
 export type ChatPanelModel = ReturnType<typeof useChat>;
+
 export function ChatContent({ model }: { model: ChatPanelModel }) {
   const {
     space,
@@ -192,7 +193,13 @@ export function ChatContent({ model }: { model: ChatPanelModel }) {
               </Button>
             </Tooltip>
           </div>
-          <Button type="primary" aria-label={t('common.send')} disabled={!value.trim()} onClick={sendMsg} icon={<SendOutlined></SendOutlined>}></Button>
+          <Button
+            type="primary"
+            aria-label={t('common.send')}
+            disabled={!value.trim()}
+            onClick={sendMsg}
+            icon={<SendOutlined></SendOutlined>}
+          ></Button>
         </div>
       </div>
       <Modal
@@ -211,4 +218,8 @@ export function ChatContent({ model }: { model: ChatPanelModel }) {
       </Modal>
     </div>
   );
+}
+
+export function ChatPanelPC({ model }: { model: ChatPanelModel }) {
+  return <ChatContent model={model} />;
 }

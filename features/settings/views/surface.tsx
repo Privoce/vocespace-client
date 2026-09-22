@@ -1,4 +1,4 @@
-import mobile from '@/features/shared/mobile.module.scss';
+import mobile from '@/styles/mobile.module.scss';
 import { Tabs } from 'antd';
 import { getSettingsPanels, type SettingsModel } from './panels';
 import { SettingsPhone } from './phone';
