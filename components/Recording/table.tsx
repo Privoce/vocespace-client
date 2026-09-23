@@ -6,6 +6,10 @@ import { RecordingTablePhone } from '@/features/recording-list/views/phone';
 import { RecordingTableProps } from '@/features/recording-list/shared';
 export * from '@/features/recording-list/shared';
 export function RecordingTable(props: RecordingTableProps) {
-const model = useRecordingActions(props);
-return model.device === 'phone' ? <RecordingTablePhone model={model} /> : <RecordingTablePC model={model} />;
+  const model = useRecordingActions(props);
+  return model.device === 'phone' ? (
+    <RecordingTablePhone model={model} />
+  ) : (
+    <RecordingTablePC model={model} />
+  );
 }

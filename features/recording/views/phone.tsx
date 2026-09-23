@@ -1,4 +1,4 @@
-import { RecordingTable } from '@/app/recording/table';
+import { RecordingTable } from '@/components/Recording/table';
 import mobile from '@/styles/mobile.module.scss';
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { Button, Input, Spin, Tag } from 'antd';

@@ -8,7 +8,7 @@ import { LicenseControl } from '@/app/pages/controls/settings/license';
 import { ProfileSettings } from '@/app/pages/controls/settings/profile';
 import { TabItem } from '@/app/pages/controls/settings/tab_item';
 import { VideoSettings } from '@/app/pages/controls/settings/video';
-import { RecordingTable } from '@/app/recording/table';
+import { RecordingTable } from '@/components/Recording/table';
 import { ParticipantAvoParams } from '@/lib/std/space';
 import { ReloadOutlined } from '@ant-design/icons';
 import { Button, TabsProps, Tag } from 'antd';
