@@ -112,6 +112,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const setIsFocus = useSpaceStore((s) => s.setIsFocus);
     const uState = useUserStore();
     const collapsed = useSpaceStore((s) => s.collapsed);
+    const setCollapsed = useSpaceStore((s) => s.setCollapsed);
     const deviceType = useSpaceStore((s) => s.deviceType);
     const uLicenseState = useLicenseStore();
     const { hasRoomLicense, toBuyRoomLicense } = useRoomLicense(config, space, messageApi);
@@ -121,7 +122,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const promptSoundRef = React.useRef<HTMLAudioElement>(null);
     const [freshPermission, setFreshPermission] = useState(false);
     const [localTrackVersion, setLocalTrackVersion] = useState(0);
-    const [cacheWidgetState, setCacheWidgetState] = useState<WidgetState>();
     const chatMsg = useRoomStore((s) => s.chatMsg);
     const { chatOpen, setChatOpen, sendFileConfirm } = useControlsChat();
     const channelRef = React.useRef<ChannelExports>(null);
@@ -160,6 +160,23 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       });
       setOpenApp(!openApp);
     };
+
+    const mobileOverlayCleanupDoneRef = useRef(false);
+    useEffect(() => {
+      if (!isMobile() || !space || space.state !== ConnectionState.Connected) return;
+      if (mobileOverlayCleanupDoneRef.current) return;
+      mobileOverlayCleanupDoneRef.current = true;
+      // 移动端兜底：关闭可能残留的抽屉/遮罩，防止整页无法点击
+      if (!collapsed) {
+        setCollapsed(true);
+      }
+      if (chatOpen) {
+        setChatOpen(false);
+      }
+      if (openApp) {
+        setOpenApp(false);
+      }
+    }, [space?.state, collapsed, chatOpen, openApp, setCollapsed, setChatOpen]);
 
     const {
       aiCutServiceRef,
@@ -879,7 +896,7 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       }
     }, [space, settings]);
 
-    const [widgetState, setWidgetState] = React.useState<WidgetState>({
+    const [widgetState] = React.useState<WidgetState>({
       showChat: false,
       unreadMessages: 0,
       showSettings: false,
@@ -907,13 +924,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     }, [originTracks, selfRoom]);
 
     // [widget update and layout adjust] --------------------------------------------------------------------------
-    const widgetUpdate = (state: WidgetState) => {
-      if (cacheWidgetState && cacheWidgetState == state) {
-        return;
-      } else {
-        setCacheWidgetState(state);
-        setWidgetState(state);
-      }
+    const widgetUpdate = (_state: WidgetState) => {
+      // 使用项目自己的设置 Drawer，避免 LiveKit 内置 settings 浮层在移动端覆盖拦截点击。
+      // 这里不再回写 React state，避免 LiveKit onWidgetChange 触发渲染循环。
     };
 
     const layoutContext = useCreateLayoutContext();
@@ -1009,6 +1022,8 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     const showFlot = useMemo(() => {
       return deviceType === 'desktop' ? true : collapsed;
     }, [collapsed, deviceType]);
+
+    const isMobileClient = useMemo(() => isMobile(), []);
 
     const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
       e.preventDefault();
@@ -1197,6 +1212,47 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     );
 
     useEffect(() => {
+      if (!isMobile()) return;
+
+      let lastNativeClickAt = 0;
+
+      const onNativeClickCapture = () => {
+        lastNativeClickAt = Date.now();
+      };
+
+      const onPointerUpCapture = (e: PointerEvent) => {
+        if (e.pointerType !== 'touch') return;
+        if (!e.isPrimary) return;
+
+        const target = e.target as HTMLElement | null;
+        if (!target) return;
+
+        const clickable = target.closest(
+          'button, a, [role="button"], .lk-button, .ant-btn',
+        ) as HTMLElement | null;
+
+        if (!clickable) return;
+        if ((clickable as HTMLButtonElement).disabled) return;
+
+        const pointerUpAt = Date.now();
+        requestAnimationFrame(() => {
+          // 若系统 click 未触发，则主动补发一次 click
+          if (lastNativeClickAt < pointerUpAt) {
+            clickable.click();
+          }
+        });
+      };
+
+      document.addEventListener('click', onNativeClickCapture, true);
+      document.addEventListener('pointerup', onPointerUpCapture, true);
+
+      return () => {
+        document.removeEventListener('click', onNativeClickCapture, true);
+        document.removeEventListener('pointerup', onPointerUpCapture, true);
+      };
+    }, []);
+
+    useEffect(() => {
       if (!focusedTilePlayerId) return;
       if (tilePlayerItems.some((item) => item.id === focusedTilePlayerId)) return;
 
@@ -1213,9 +1269,9 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
       <div
         className="video_container_wrapper"
         style={{ position: 'relative' }}
-        onDragEnter={handleDrag}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
+        onDragEnter={isMobileClient ? undefined : handleDrag}
+        onDragOver={isMobileClient ? undefined : handleDragOver}
+        onDrop={isMobileClient ? undefined : handleDrop}
       >
         {/* 右侧应用浮窗，悬浮态 */}
         {showFlot && space && settings.participants[space.localParticipant.identity] && (
@@ -1371,32 +1427,27 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
                     </div>
                   )}
                 </div>
-                <Controls
-                  ref={controlsRef}
-                  setUserStatus={setUserStatus}
-                  controls={{ chat: true, settings: !!SettingsComponent }}
-                  updateSettings={updateSettings}
-                  spaceInfo={settings}
-                  fetchSettings={fetchSettings}
-                  updateRecord={updateRecord}
-                  setPermissionDevice={setPermissionDevice}
-                  openApp={openApp}
-                  setOpenApp={setOpenApp}
-                  toRenameSettings={toSettingGeneral}
-                  startOrStopAICutAnalysis={startOrStopAICutAnalysis}
-                  openAIServiceAskNote={openAIServiceAskNote}
-                  downloadAIMdReport={FlotLayoutRef.current?.downloadAIMdReport}
-                  config={config}
-                ></Controls>
-              </div>
-              {SettingsComponent && (
-                <div
-                  className="lk-settings-menu-modal"
-                  style={{ display: widgetState.showSettings ? 'block' : 'none' }}
-                >
-                  <SettingsComponent />
+                <div style={{ position: 'relative', zIndex: 20, width: '100%' }}>
+                  <Controls
+                    ref={controlsRef}
+                    setUserStatus={setUserStatus}
+                    controls={{ chat: true, settings: !!SettingsComponent }}
+                    updateSettings={updateSettings}
+                    spaceInfo={settings}
+                    fetchSettings={fetchSettings}
+                    updateRecord={updateRecord}
+                    setPermissionDevice={setPermissionDevice}
+                    openApp={openApp}
+                    setOpenApp={setOpenApp}
+                    toRenameSettings={toSettingGeneral}
+                    startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+                    openAIServiceAskNote={openAIServiceAskNote}
+                    downloadAIMdReport={FlotLayoutRef.current?.downloadAIMdReport}
+                    config={config}
+                  ></Controls>
                 </div>
-              )}
+              </div>
+              {/* 项目使用 Controls 内部 Drawer 管理设置，不渲染 LiveKit 内置 settings 浮层 */}
               {isMobile() && chatOpen && space && (
                 <EnhancedChat
                   open={chatOpen}
