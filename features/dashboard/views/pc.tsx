@@ -1,6 +1,6 @@
 import styles from '@/styles/dashboard.module.scss';
 import { Menu } from 'antd';
-import type { useDashboard } from '../hooks/useDashboard';
+import type { useDashboard } from '../../../app/dashboard/hooks/useDashboard';
 export type DashboardModel = ReturnType<typeof useDashboard>;
 export function DashboardPC({ model }: { model: DashboardModel }) {
   const { menuTab, menuItems, changeMenu } = model;

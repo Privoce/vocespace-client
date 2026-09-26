@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useControls } from '@/features/controls/hooks/useControls';
+import { useControls } from '@/components/Controller/hooks/useControls';
 import { ControlsSurface } from '@/features/controls/views/surface';
 import { ControlBarProps, ControlBarExport } from '@/features/controls/shared';
 export * from '@/features/controls/shared';

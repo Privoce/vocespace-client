@@ -1,6 +1,6 @@
 'use client';
 
-import { confirm, RecordingTableProps } from '@/features/recording-list/shared';
+import { confirm, RecordingTableProps } from '../types';
 import { api } from '@/lib/api';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { useI18n } from '@/lib/i18n/i18n';

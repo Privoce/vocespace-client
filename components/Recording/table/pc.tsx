@@ -1,7 +1,7 @@
 'use client';
 
 import { SvgResource } from '@/app/resources/svg';
-import { Text } from '@/features/recording-list/shared';
+import { Text } from '../types';
 import { RecordData } from '@/lib/std/recording';
 import {
   DeleteOutlined,

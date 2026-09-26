@@ -1,7 +1,7 @@
 'use client';
 
 import { LangSelect } from '@/app/pages/controls/selects/lang_select';
-import { LoginButtons, LoginStateBtn } from '@/app/pages/pre_join/login';
+import { LoginButtons, LoginStateBtn } from '@/components/PreJoin/login';
 import { SvgResource } from '@/app/resources/svg';
 import { src } from '@/lib/std';
 import styles from './index.module.scss';

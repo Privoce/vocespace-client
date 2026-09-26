@@ -1,6 +1,6 @@
 'use client';
 import * as React from 'react';
-import { useDashboard } from '@/features/dashboard/hooks/useDashboard';
+import { useDashboard } from '@/app/dashboard/hooks/useDashboard';
 import { DashboardSurface } from '@/features/dashboard/views/surface';
 import {  } from '@/features/dashboard/shared';
 

@@ -7,7 +7,7 @@ import { DesktopOutlined, MessageOutlined, ThunderboltOutlined } from '@ant-desi
 import { DisconnectButton, LeaveIcon, TrackToggle } from '@livekit/components-react';
 import { Badge, Button, Popover, Tooltip } from 'antd';
 import { Track } from 'livekit-client';
-import type { useControls } from '../hooks/useControls';
+import type { useControls } from '../../../components/Controller/hooks/useControls';
 import phone from './phone.module.scss';
 
 export type ControlsModel = ReturnType<typeof useControls>;

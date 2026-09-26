@@ -1,6 +1,6 @@
 'use client';
 
-import { useMeeting } from '@/features/home/hooks/use-meeting';
+import { useMeeting } from './UseMeeting';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useEffect, useState } from 'react';

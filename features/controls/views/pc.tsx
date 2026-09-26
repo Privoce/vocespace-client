@@ -12,7 +12,7 @@ import {
 } from '@livekit/components-react';
 import { Popover } from 'antd';
 import { Track } from 'livekit-client';
-import type { useControls } from '../hooks/useControls';
+import type { useControls } from '../../../components/Controller/hooks/useControls';
 import { renderDeviceMenuTrigger } from '../shared';
 export type ControlsModel = ReturnType<typeof useControls>;
 export function ControlsPC({ model }: { model: ControlsModel }) {

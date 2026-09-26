@@ -1,6 +1,6 @@
 'use client';
 
-import { RecordingContentProps } from '@/features/recording/shared';
+import { RecordingContentProps } from '@/components/Recording/types';
 import { api } from '@/lib/api';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { useI18n } from '@/lib/i18n/i18n';

@@ -1,10 +1,11 @@
 'use client';
 import * as React from 'react';
-import { useRecordingActions } from '@/features/recording-list/hooks/useRecordingActions';
-import { RecordingTablePC } from '@/features/recording-list/views/pc';
-import { RecordingTablePhone } from '@/features/recording-list/views/phone';
-import { RecordingTableProps } from '@/features/recording-list/shared';
-export * from '@/features/recording-list/shared';
+import { useRecordingActions } from '@/components/Recording/hooks/useRecordingActions';
+import { RecordingTablePC } from './table/pc';
+import { RecordingTablePhone } from './table/phone';
+import { RecordingTableProps } from './types';
+export * from './types';
+
 export function RecordingTable(props: RecordingTableProps) {
   const model = useRecordingActions(props);
   return model.device === 'phone' ? (

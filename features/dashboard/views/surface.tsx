@@ -22,7 +22,7 @@ import {
 import { LangSelect } from '@/app/pages/controls/selects/lang_select';
 import { Title } from '@/features/dashboard/shared';
 import styles from '@/styles/dashboard.module.scss';
-import type { useDashboard } from '../hooks/useDashboard';
+import type { useDashboard } from '../../../app/dashboard/hooks/useDashboard';
 export type DashboardModel = ReturnType<typeof useDashboard>;
 export function DashboardSurface({ model }: { model: DashboardModel }) {
   const {

@@ -167,7 +167,7 @@
       height: 44px;
       width: 100%;
       border: 1px solid #333;
-      background-color: #1e1e1e;
+      background-color: vs-color(bg);
       border-radius: 8px;
       display: flex;
       align-items: center;
@@ -189,7 +189,7 @@
 }
 
 .LoginStateBtn {
-  position: absolute;
+  position: fixed;
   top: 1rem;
   left: 0rem;
   color: #fff;

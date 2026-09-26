@@ -101,4 +101,6 @@ export function supportsScreenSharing(): boolean {
   );
 }
 
-export function renderDeviceMenuTrigger() { return <button className="lk-button lk-button-menu" type="button" aria-label="devices" />; }
+export function renderDeviceMenuTrigger() {
+  return <button className="lk-button lk-button-menu" type="button" aria-label="devices" />;
+}

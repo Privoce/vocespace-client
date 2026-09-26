@@ -1,7 +1,7 @@
 'use client';
 
 import { RecordingTable } from '@/components/Recording/table';
-import { Text, Title } from '@/features/recording/shared';
+import { Text, Title } from '@/components/Recording/types';
 import { ReloadOutlined, SearchOutlined } from '@ant-design/icons';
 import { Button, Card, Empty, Input, Spin, Tag, Tooltip } from 'antd';
 import type { useRecordings } from '../hooks/useRecordings';
