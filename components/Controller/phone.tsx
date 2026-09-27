@@ -7,8 +7,8 @@ import { DesktopOutlined, MessageOutlined, ThunderboltOutlined } from '@ant-desi
 import { DisconnectButton, LeaveIcon, TrackToggle } from '@livekit/components-react';
 import { Badge, Button, Popover, Tooltip } from 'antd';
 import { Track } from 'livekit-client';
-import type { useControls } from '../../../components/Controller/hooks/useControls';
-import phone from './phone.module.scss';
+import type { useControls } from './hooks/useControls';
+import phone from './index.module.scss';
 
 export type ControlsModel = ReturnType<typeof useControls>;
 function DeviceControl({ model, source }: { model: ControlsModel; source: Track.Source.Camera | Track.Source.Microphone }) {

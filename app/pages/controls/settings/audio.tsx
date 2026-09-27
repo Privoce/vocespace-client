@@ -1,7 +1,7 @@
 import styles from '@/styles/controls.module.scss';
 import { Radio, Slider } from 'antd';
 import { useI18n } from '@/lib/i18n/i18n';
-import { AudioSelect } from '../selects/audio_select';
+import { AudioSelect } from '../../../../components/Select/audio';
 import { LocalParticipant, Track } from 'livekit-client';
 import { useEffect } from 'react';
 

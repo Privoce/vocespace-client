@@ -2,10 +2,14 @@
 
 import { ControlType, type WsControlParticipant } from '@/lib/std/device';
 
-import { useControlsChat, useControlsRecord, useControlsSettings } from '@/app/pages/controls/hooks/index';
+import {
+  useControlsChat,
+  useControlsRecord,
+  useControlsSettings,
+} from '@/app/pages/controls/hooks/index';
 import { useAICutAnalysisSettings } from '@/app/pages/controls/widgets/ai';
 import { useWork } from '@/app/pages/controls/widgets/work';
-import { ControlBarExport } from '@/features/controls/shared';
+import { ControlBarExport } from '../types';
 import { api } from '@/lib/api';
 import { usePlatformUserInfo } from '@/lib/hooks/platform';
 import { socket } from '@/lib/realtime/socket';
@@ -51,12 +55,15 @@ export function useControlsPanels(context: ReturnType<typeof useControlsMedia>) 
   const participantList = React.useMemo(() => {
     return Object.entries(spaceInfo.participants);
   }, [spaceInfo]);
+
   const isManager = React.useMemo(() => {
     return isSpaceManager(spaceInfo, space?.localParticipant.identity || '').isManager;
   }, [spaceInfo, space?.localParticipant.identity]);
+
   const uState = useUserStore();
   const { settingVis, setSettingVis, key, setKey, settingsRef, closeSetting, openSettings } =
     useControlsSettings({ space, saveUsername, updateSettings });
+
   const {
     openRecordModal,
     setOpenRecordModal,
@@ -67,7 +74,9 @@ export function useControlsPanels(context: ReturnType<typeof useControlsMedia>) 
     recordModalOnOk,
     recordModalOnCancel,
   } = useControlsRecord({ space, isManager, spaceInfo, updateRecord });
+
   const { chatOpen, setChatOpen } = useControlsChat();
+
   const onClickApp = async () => {
     if (!space) return;
     useRoomStore.getState().setRemoteApp({
@@ -77,6 +86,7 @@ export function useControlsPanels(context: ReturnType<typeof useControlsMedia>) 
     });
     setOpenApp(true);
   };
+
   const {
     aiCutDeps,
     setAICutDeps,
@@ -199,8 +209,7 @@ export function useControlsPanels(context: ReturnType<typeof useControlsMedia>) 
   };
   const copyInvite = async () => {
     await navigator.clipboard.writeText(
-      inviteTextRef.current?.innerText ||
-      `${t('more.participant.invite.link')}: ${inviteUrl}`,
+      inviteTextRef.current?.innerText || `${t('more.participant.invite.link')}: ${inviteUrl}`,
     );
     setOpenShareModal(false);
   };

@@ -2,7 +2,7 @@ import styles from '@/styles/controls.module.scss';
 import { Radio, Slider } from 'antd';
 import { useI18n } from '@/lib/i18n/i18n';
 import { VirtualSettings, VirtualSettingsExports, VirtualSettingsProps } from './virtual';
-import { VideoSelect } from '../selects/video_select';
+import { VideoSelect } from '../../../../components/Select/video';
 
 export interface VideoSettingsProps {
   videoBlur: number;

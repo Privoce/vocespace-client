@@ -1,6 +1,6 @@
 'use client';
 
-import { LangSelect } from '@/app/pages/controls/selects/lang_select';
+import { LangSelect } from '@/components/Select/lang';
 import { SvgResource } from '@/app/resources/svg';
 import styles from '../index.module.scss';
 import { Skeleton } from 'antd';

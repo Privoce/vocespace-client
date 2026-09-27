@@ -19,7 +19,7 @@ import {
   ManageSpacesModal,
   SMTPConfModal,
 } from '@/app/dashboard/components';
-import { LangSelect } from '@/app/pages/controls/selects/lang_select';
+import { LangSelect } from '@/components/Select/lang';
 import { Title } from '@/features/dashboard/shared';
 import styles from '@/styles/dashboard.module.scss';
 import type { useDashboard } from '../../../app/dashboard/hooks/useDashboard';

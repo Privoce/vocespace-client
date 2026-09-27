@@ -2,7 +2,8 @@ import { Select } from 'antd';
 import { MediaDeviceKind } from '@/lib/std/device';
 import { useMediaDevices } from '@livekit/components-react';
 import { useEffect, useState } from 'react';
-import { SelectPrefix } from './select_prefix';
+import { SelectPrefix } from './prefix';
+
 
 /**
  * ## 视频设备选择组件

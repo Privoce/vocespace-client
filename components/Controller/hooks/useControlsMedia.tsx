@@ -1,6 +1,7 @@
 'use client';
 
-import { ControlBarExport, ControlBarProps, supportsScreenSharing, useMediaQuery } from '@/features/controls/shared';
+import { ControlBarExport, ControlBarProps } from '../types';
+import { supportsScreenSharing, useMediaQuery } from './useMediaQuery';
 import { AICutService } from '@/lib/ai/cut';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -11,31 +12,34 @@ import {
   useLocalParticipantPermissions,
   useMaybeLayoutContext,
   useMaybeRoomContext,
-  usePersistentUserChoices
+  usePersistentUserChoices,
 } from '@livekit/components-react';
 import { message, notification } from 'antd';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
 import * as React from 'react';
-export function useControlsMedia({
-  variation,
-  controls,
-  saveUserChoices = true,
-  onDeviceError,
-  updateSettings,
-  setUserStatus,
-  spaceInfo,
-  fetchSettings,
-  updateRecord,
-  setPermissionDevice,
-  openApp,
-  setOpenApp,
-  toRenameSettings,
-  startOrStopAICutAnalysis,
-  openAIServiceAskNote,
-  downloadAIMdReport,
-  config,
-  ...props
-}: ControlBarProps, ref: React.ForwardedRef<ControlBarExport>) {
+export function useControlsMedia(
+  {
+    variation,
+    controls,
+    saveUserChoices = true,
+    onDeviceError,
+    updateSettings,
+    setUserStatus,
+    spaceInfo,
+    fetchSettings,
+    updateRecord,
+    setPermissionDevice,
+    openApp,
+    setOpenApp,
+    toRenameSettings,
+    startOrStopAICutAnalysis,
+    openAIServiceAskNote,
+    downloadAIMdReport,
+    config,
+    ...props
+  }: ControlBarProps,
+  ref: React.ForwardedRef<ControlBarExport>,
+) {
   const device = useLayoutDevice();
   const { t } = useI18n();
   const [isChatOpen, setIsChatOpen] = React.useState(false);

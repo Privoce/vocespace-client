@@ -1,6 +1,6 @@
 import styles from '@/styles/controls.module.scss';
 import { Button, Input, InputRef, Radio } from 'antd';
-import { LangSelect } from '../selects/lang_select';
+import { LangSelect } from '../../../../components/Select/lang';
 import { useI18n } from '@/lib/i18n/i18n';
 import { LocalParticipant } from 'livekit-client';
 import { MessageInstance } from 'antd/es/message/interface';

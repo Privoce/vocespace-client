@@ -6,6 +6,7 @@ import { ReadableConf } from '@/lib/std/conf';
 import { AICutParticipantConf, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { Track } from 'livekit-client';
 import * as React from 'react';
+
 export type ControlBarControls = {
   microphone?: boolean;
   camera?: boolean;
@@ -50,57 +51,4 @@ export interface ControlBarExport {
   showAICutAnalysisSettings: (open: boolean) => void;
   isChatOpen: boolean;
   setChatOpen: (open: boolean) => void;
-}
-
-export function useMediaQuery(query: string): boolean {
-  const getMatches = (query: string): boolean => {
-    // Prevents SSR issues
-    if (typeof window !== 'undefined') {
-      return window.matchMedia(query).matches;
-    }
-    return false;
-  };
-
-  const [matches, setMatches] = React.useState<boolean>(getMatches(query));
-
-  function handleChange() {
-    setMatches(getMatches(query));
-  }
-
-  React.useEffect(() => {
-    const matchMedia = window.matchMedia(query);
-
-    // Triggered at the first client-side load and if query changes
-    handleChange();
-
-    // Listen matchMedia
-    if (matchMedia.addListener) {
-      matchMedia.addListener(handleChange);
-    } else {
-      matchMedia.addEventListener('change', handleChange);
-    }
-
-    return () => {
-      if (matchMedia.removeListener) {
-        matchMedia.removeListener(handleChange);
-      } else {
-        matchMedia.removeEventListener('change', handleChange);
-      }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [query]);
-
-  return matches;
-}
-
-export function supportsScreenSharing(): boolean {
-  return (
-    typeof navigator !== 'undefined' &&
-    navigator.mediaDevices &&
-    !!navigator.mediaDevices.getDisplayMedia
-  );
-}
-
-export function renderDeviceMenuTrigger() {
-  return <button className="lk-button lk-button-menu" type="button" aria-label="devices" />;
 }

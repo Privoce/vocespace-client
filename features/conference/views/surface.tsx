@@ -2,7 +2,7 @@
 
 import { FlotButton, FlotLayout } from '@/app/pages/apps/flot';
 import { ChatPanel } from '@/components/Chat';
-import { Controls } from '@/app/pages/controls/bar';
+import { Controls } from '@/components/Controller';
 import { Channel } from '@/app/pages/controls/channel';
 import { LicenseAlert } from '@/app/pages/controls/widgets/license_alert';
 import { src } from '@/lib/std';

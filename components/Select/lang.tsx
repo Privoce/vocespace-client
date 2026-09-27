@@ -1,6 +1,6 @@
 import { langOptions, useI18n } from '@/lib/i18n/i18n';
 import { Select } from 'antd';
-import { SelectPrefix } from './select_prefix';
+import { SelectPrefix } from './prefix';
 
 export function LangSelect({ style }: { style?: React.CSSProperties }) {
   const { locale, changeLocale } = useI18n();

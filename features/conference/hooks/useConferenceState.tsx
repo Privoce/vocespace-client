@@ -1,7 +1,7 @@
 'use client';
 
 import { FlotLayoutExports } from '@/app/pages/apps/flot';
-import { ControlBarExport } from '@/app/pages/controls/bar';
+import { ControlBarExport } from '@/components/Controller';
 import { ChannelExports } from '@/app/pages/controls/channel';
 import { useControlsChat } from '@/app/pages/controls/hooks';
 import { useRoomLicense } from '@/app/pages/controls/hooks/index';
