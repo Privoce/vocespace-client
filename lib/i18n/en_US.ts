@@ -59,7 +59,7 @@ export default {
         'On desktop WeChat, screen sharing usually only works for in-browser content and may not reliably share the full screen. If sharing fails, switch to a system browser.',
     },
     license_alert: {
-      trial_prefix: '',
+      trial_prefix: 'This is currently a trial version,',
       trial_action: 'Upgrade now',
       trial_suffix: ' to use VoceSpace without limits for only 49$ annually.',
     },
