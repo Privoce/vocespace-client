@@ -392,6 +392,14 @@ export function TileWhiteboardOverlay({
     () => (draftStroke ? [...allStrokes, draftStroke] : allStrokes),
     [allStrokes, draftStroke],
   );
+  const collapsedVisibleStrokes = React.useMemo(
+    () =>
+      Object.entries(handWritingByParticipant)
+        .filter(([participantId, value]) => participantId !== localParticipantId && Boolean(value))
+        .flatMap(([, value]) => normalizeHandWriting(value).strokes),
+    [handWritingByParticipant, localParticipantId],
+  );
+  const visibleStrokes = collapsed ? collapsedVisibleStrokes : renderedStrokes;
 
   React.useEffect(() => {
     draftStrokeRef.current = draftStroke;
@@ -791,12 +799,15 @@ export function TileWhiteboardOverlay({
   return (
     <>
       {collapsed ? collapsedToolbar : toolbar}
-      {!collapsed && actualVideoRect && (
+      {actualVideoRect && (
         <div
           ref={overlayRef}
           className={styles.whiteboard_overlay}
-          onPointerDown={handlePointerDown}
-          style={{ cursor: getWhiteboardCursor(tool, localColor) }}
+          onPointerDown={collapsed ? undefined : handlePointerDown}
+          style={{
+            cursor: collapsed ? 'default' : getWhiteboardCursor(tool, localColor),
+            pointerEvents: collapsed ? 'none' : 'auto',
+          }}
         >
           <svg
             className={styles.whiteboard_canvas}
@@ -809,7 +820,7 @@ export function TileWhiteboardOverlay({
               height: `${actualVideoRect.height}px`,
             }}
           >
-            {renderedStrokes.map((stroke) => (
+            {visibleStrokes.map((stroke) => (
               <path
                 key={stroke.id}
                 d={buildStrokePath(stroke.points)}
