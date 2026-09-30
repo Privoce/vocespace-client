@@ -1,6 +1,6 @@
 'use client';
 
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { useEffect } from 'react';
 import styles from '@/components/Controller/index.module.scss';
 

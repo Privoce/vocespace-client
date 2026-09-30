@@ -17,7 +17,7 @@ import { socket } from '@/lib/realtime/socket';
 import { WsBase } from '@/lib/std/device';
 import { normalizeAvoParams } from '../../app/pages/participant/avo';
 import { ParticipantAvoEditorModal } from '../../app/pages/participant/avo_conf';
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { FocusToggle } from '../Toggles/focus';
 
 export interface AppPinProps {

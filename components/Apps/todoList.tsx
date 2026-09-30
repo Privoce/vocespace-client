@@ -1,4 +1,4 @@
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { useI18n } from '@/lib/i18n/i18n';
 import {
   Button,
@@ -15,10 +15,9 @@ import {
 import { useMemo, useState } from 'react';
 import styles from '@/styles/apps.module.scss';
 import { MessageInstance } from 'antd/es/message/interface';
-import { AppAuth, sortTodos, SpaceTodo, todayTimeStamp, TodoItem } from '@/lib/std/space';
+import { AppAuth, SpaceTodo, todayTimeStamp, TodoItem } from '@/lib/std/space';
 import { useLocalParticipant } from '@livekit/components-react';
 import { CardSize } from 'antd/es/card/Card';
-import dayjs, { extend } from 'dayjs';
 import { api } from '@/lib/api';
 import { WsBase } from '@/lib/std/device';
 import { socket } from '@/lib/realtime/socket';

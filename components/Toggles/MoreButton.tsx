@@ -1,5 +1,5 @@
 import { Badge, Button, Dropdown, MenuProps } from 'antd';
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useMemo, useState } from 'react';
 import { SizeType } from 'antd/es/config-provider/SizeContext';

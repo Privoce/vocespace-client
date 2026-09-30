@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card, Table, Tabs, Space, Badge, Typography } from 'antd';
 import type { ColumnsType } from 'antd/es/table';
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { useI18n } from '@/lib/i18n/i18n';
 
 interface ParticipantTableData {

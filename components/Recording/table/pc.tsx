@@ -1,6 +1,6 @@
 'use client';
 
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { Text } from '../types';
 import { RecordData } from '@/lib/std/recording';
 import {

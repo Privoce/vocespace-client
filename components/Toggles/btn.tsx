@@ -1,4 +1,4 @@
-import { SvgResource, SvgType } from '@/app/resources/svg';
+import { SvgResource, SvgType } from '@/components/Icon/index';
 import { Button } from 'antd';
 
 export interface ToggleBtnProps {

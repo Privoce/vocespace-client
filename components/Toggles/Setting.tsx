@@ -1,7 +1,7 @@
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { Button } from 'antd';
 import { ToggleProps } from '@/lib/std/device';
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useMemo } from 'react';
 import { VideoPresets } from 'livekit-client';

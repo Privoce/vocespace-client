@@ -1,7 +1,7 @@
 'use client';
 
 import { LangSelect } from '@/components/Select/lang';
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import styles from '../index.module.scss';
 import { Skeleton } from 'antd';
 import type { NewSpaceModel } from '../hooks/UseNewSpace';

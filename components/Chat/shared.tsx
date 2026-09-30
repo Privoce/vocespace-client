@@ -1,6 +1,6 @@
 'use client';
 
-import { pictureCallback, SvgResource } from '@/app/resources/svg';
+import { pictureCallback, SvgResource } from '@/components/Icon/index';
 import { ChatMsgItem } from '@/lib/std/chat';
 import { SpaceInfo } from '@/lib/std/space';
 import styles from './index.module.scss';

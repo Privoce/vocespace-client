@@ -1,4 +1,4 @@
-import { acceptRaise, RaiseHandler, rejectRaise } from '@/app/pages/controls/widgets/raise';
+import { acceptRaise, RaiseHandler, rejectRaise } from '@/components/Widgets/raise';
 import { audio } from '@/lib/audio';
 import { socket } from '@/lib/realtime/socket';
 import type { createSocketScope } from '@/lib/realtime/socket-scope';

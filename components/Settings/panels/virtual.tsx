@@ -4,7 +4,7 @@ import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 're
 import { MessageInstance } from 'antd/es/message/interface';
 import { loadVideo, useVideoBlur } from '@/lib/std/device';
 import { ModelBg, ModelRole } from '@/lib/std/virtual';
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { useI18n } from '@/lib/i18n/i18n';
 import VirtualRoleCanvas from '@/components/VirtualRole/live2d';
 import { src } from '@/lib/std';

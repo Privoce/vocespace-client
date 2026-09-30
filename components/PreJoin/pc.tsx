@@ -2,7 +2,7 @@
 
 import { LangSelect } from '@/components/Select/lang';
 import { LoginButtons, LoginStateBtn } from '@/components/PreJoin/login';
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { src } from '@/lib/std';
 import styles from './index.module.scss';
 import { MediaDeviceMenu } from '@livekit/components-react';

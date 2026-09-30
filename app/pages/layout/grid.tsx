@@ -7,8 +7,9 @@ import {
   useSwipe,
 } from '@livekit/components-react';
 import React from 'react';
-import { PaginationCtl, PaginationInfo } from '../controls/widgets/pagination';
+
 import { PaginationControl, PaginationIndicator } from './cover';
+import { PaginationCtl, PaginationInfo } from '@/components/Widgets/pagination';
 
 
 /**

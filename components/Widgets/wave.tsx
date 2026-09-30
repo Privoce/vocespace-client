@@ -1,5 +1,5 @@
 import { socket } from '@/lib/realtime/socket';
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { audio } from '@/lib/audio';
 import { useI18n } from '@/lib/i18n/i18n';
 import { WsWave } from '@/lib/std/device';

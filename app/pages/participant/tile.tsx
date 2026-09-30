@@ -33,7 +33,7 @@ import VirtualRoleCanvas from '../../../components/VirtualRole/live2d';
 import { useUserStore, useRoomStore, useSpaceStore } from '@/lib/store';
 import { socket } from '@/lib/realtime/socket';
 import styles from '@/components/Controller/index.module.scss';
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { useI18n } from '@/lib/i18n/i18n';
 import { isSpaceManager } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
@@ -49,7 +49,6 @@ import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './
 import { AppFlotIconCollect } from '../../../components/Apps/appPin';
 import { getAvoPrimaryColor, ParticipantAvoPlaceholder } from './avo';
 import { ParticipantTileMiniProps } from './mini';
-import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { NotificationInstance } from 'antd/es/notification/interface';
 import { Popover, Slider, Tooltip } from 'antd';
 import {
@@ -59,6 +58,7 @@ import {
   ScreenShareWhiteboardOverlay,
   TileWhiteboardOverlay,
 } from './effect';
+import { TileActionCollect } from '@/components/Widgets/tile_action_pin';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps {
   messageApi: MessageInstance;

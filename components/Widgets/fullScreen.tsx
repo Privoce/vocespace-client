@@ -1,6 +1,6 @@
 import { FullscreenExitOutlined, FullscreenOutlined } from '@ant-design/icons';
 import { forwardRef } from 'react';
-import { APP_FLOT_PIN_STYLE } from '../../apps/app_pin';
+
 import {
   LayoutContext,
   LayoutContextType,
@@ -8,10 +8,12 @@ import {
   useEnsureTrackRef,
   useMaybeTrackRefContext,
 } from '@livekit/components-react';
-import { isTrackReferencePinned } from '../../participant/tile';
+
 import { Tooltip } from 'antd';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useSpaceStore } from '@/lib/store';
+import { isTrackReferencePinned } from '@/app/pages/participant/tile';
+import { APP_FLOT_PIN_STYLE } from '../Apps/appPin';
 
 export interface FullScreenBtnProps {}
 

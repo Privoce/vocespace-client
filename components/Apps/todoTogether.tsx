@@ -1,11 +1,11 @@
 import { SpaceInfo, SpaceTodo, TodoItem } from '@/lib/std/space';
 import { useI18n } from '@/lib/i18n/i18n';
 import { Collapse, Progress, Empty, Card, List } from 'antd';
-import { AppTodo } from './todo_list';
+import { AppTodo } from './todoList';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useMemo } from 'react';
 import styles from '@/styles/apps.module.scss';
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { getParticipantPlatformInfo } from '@/lib/hooks/platform';
 
 export interface TodoTogetherProps {

@@ -1,4 +1,4 @@
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { Button, DrawerProps } from 'antd';
 
 export function DrawerHeader({ title, icon }: { title: string, icon?: React.ReactNode }) {

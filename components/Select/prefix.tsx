@@ -1,4 +1,4 @@
-import { SvgResource, SvgResourceProps } from '@/app/resources/svg';
+import { SvgResource, SvgResourceProps } from '@/components/Icon/index';
 
 /**
  * ### 设备选择组件的通用前缀组件

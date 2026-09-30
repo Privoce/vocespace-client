@@ -1,5 +1,5 @@
 'use client';
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { api } from '@/lib/api';
 import { uploadIframeUrl } from '@/lib/api/space';
 import { useI18n } from '@/lib/i18n/i18n';

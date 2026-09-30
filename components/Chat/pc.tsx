@@ -1,7 +1,7 @@
 'use client';
 
 import { FS } from '@/components/Chat/fs';
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { ChatMsgItemCmp, ChatMsgTimeSplit } from '@/components/Chat/shared';
 import styles from './index.module.scss';
 import {

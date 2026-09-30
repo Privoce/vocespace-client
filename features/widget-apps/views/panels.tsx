@@ -2,8 +2,8 @@
 
 import { AppCountdown } from '@/components/Apps/countdown';
 import { AppTimer } from '@/components/Apps/timer';
-import { AppTodo } from '@/components/Apps/todo_list';
-import { TodoTogether } from '@/components/Apps/todo_together';
+import { AppTodo } from '@/components/Apps/todoList';
+import { TodoTogether } from '@/components/Apps/todoTogether';
 import { DEFAULT_COLLAPSE_HEADER_STYLES } from '@/components/Collapse/tools';
 import { CopyButton } from '@/components/Widgets/copy';
 import { CountdownProp, TimerProp, TodoProp } from '@/features/widget-apps/shared';

@@ -28,10 +28,10 @@ import { StatusInfo, useStatusInfo } from './status_info';
 import { useI18n } from '@/lib/i18n/i18n';
 import { AppFlotIconCollect } from '../../../components/Apps/appPin';
 import { ParticipantAvoPlaceholder } from './avo';
-import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { Tooltip } from 'antd';
-import { SvgResource } from '@/app/resources/svg';
+import { SvgResource } from '@/components/Icon/index';
 import { MessageInstance } from 'antd/es/message/interface';
+import { TileActionCollect } from '@/components/Widgets/tile_action_pin';
 
 export interface ParticipantTileMiniProps extends ParticipantTileProps {
   settings: SpaceInfo;

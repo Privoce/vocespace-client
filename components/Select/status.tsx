@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Trans, useI18n } from '@/lib/i18n/i18n';
 import { UserDefineStatus, UserStatus } from '@/lib/std';
 import { useRoomStore, useUserStore } from '@/lib/store';
-import { SvgResource, SvgType } from '@/app/resources/svg';
+import { SvgResource, SvgType } from '@/components/Icon/index';
 import styles from '@/components/Controller/index.module.scss';
 import { BaseOptionType } from 'antd/es/select';
 import { LocalParticipant } from 'livekit-client';
