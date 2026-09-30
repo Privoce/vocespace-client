@@ -5,7 +5,7 @@ import { ControlBarProps, ControlBarExport } from './types';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from '@/components/Drawer/tools';
 import { AICutAnalysisSettingsPanel } from '@/components/Widgets/ai';
 import { WorkModal } from '@/components/Widgets/work';
-import { ParticipantManage } from '@/app/pages/participant/manage';
+import { ParticipantManage } from '@/components/Participant/manage';
 import mobile from '@/styles/mobile.module.scss';
 import styles from '@/components/Controller/index.module.scss';
 import { Drawer, Input, Modal } from 'antd';

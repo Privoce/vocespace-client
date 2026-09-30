@@ -2,7 +2,7 @@
 
 import { Input } from 'antd';
 import { useI18n } from '@/lib/i18n/i18n';
-import { AvoConfigPanel } from '../../../app/pages/participant/avo_conf';
+import { AvoConfigPanel } from '../../Participant/avo_conf';
 import type { ParticipantAvoParams } from '@/lib/std/space';
 import styles from '@/components/Controller/index.module.scss';
 

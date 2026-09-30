@@ -29,7 +29,7 @@ import {
 import { ParticipantTile } from './core';
 import { ConnectionState, Participant, Track } from 'livekit-client';
 import React, { useEffect, useMemo, useState } from 'react';
-import VirtualRoleCanvas from '../../../components/VirtualRole/live2d';
+import VirtualRoleCanvas from '../VirtualRole/live2d';
 import { useUserStore, useRoomStore, useSpaceStore } from '@/lib/store';
 import { socket } from '@/lib/realtime/socket';
 import styles from '@/components/Controller/index.module.scss';
@@ -44,9 +44,9 @@ import {
   ParticipantAvoParams,
   ParticipantSettings,
 } from '@/lib/std/space';
-import { StatusInfo, useStatusInfo } from './status_info';
+import { StatusInfo, useStatusInfo } from './status';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
-import { AppFlotIconCollect } from '../../../components/Apps/appPin';
+import { AppFlotIconCollect } from '../Apps/appPin';
 import { getAvoPrimaryColor, ParticipantAvoPlaceholder } from './avo';
 import { ParticipantTileMiniProps } from './mini';
 import { NotificationInstance } from 'antd/es/notification/interface';

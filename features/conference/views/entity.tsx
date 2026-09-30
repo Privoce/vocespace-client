@@ -1,5 +1,5 @@
-import { TilePlayer, TilePlayerAdd, type TilePlayerItem } from '@/app/pages/participant/player';
-import { ParticipantItem } from '@/app/pages/participant/tile';
+import { TilePlayer, TilePlayerAdd, type TilePlayerItem } from '@/components/Participant/player';
+import { ParticipantItem } from '@/components/Participant/tile';
 import { newPlayerTrack, type TrackReferenceOrPlaceholder, type VideoLayoutEntity } from '../shared';
 import type { ConferenceModel } from './media-stage';
 

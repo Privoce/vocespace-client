@@ -1,7 +1,7 @@
 'use client';
 
 import { LayoutEntity } from '@/app/pages/layout/unified';
-import type { TilePlayerItem } from '@/app/pages/participant/player';
+import type { TilePlayerItem } from '@/components/Participant/player';
 import { ReadableConf } from '@/lib/std/conf';
 import {
   isTrackReference,

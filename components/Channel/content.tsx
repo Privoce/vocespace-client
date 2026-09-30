@@ -1,5 +1,5 @@
 import { GLayout } from '@/app/pages/layout/grid';
-import { ParticipantTileMini } from '@/app/pages/participant/mini';
+import { ParticipantTileMini } from '@/components/Participant/mini';
 import { SvgResource } from '@/components/Icon/index';
 import { FeedbackType, RoomPrivacy } from '@/components/Channel/types';
 import { encodeChildRoomEnter } from '@/lib/std';

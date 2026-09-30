@@ -15,8 +15,8 @@ import { FullScreenBtn } from '../Widgets/fullScreen';
 import { Track } from 'livekit-client';
 import { socket } from '@/lib/realtime/socket';
 import { WsBase } from '@/lib/std/device';
-import { normalizeAvoParams } from '../../app/pages/participant/avo';
-import { ParticipantAvoEditorModal } from '../../app/pages/participant/avo_conf';
+import { normalizeAvoParams } from '../Participant/avo';
+import { ParticipantAvoEditorModal } from '../Participant/avo_conf';
 import { SvgResource } from '@/components/Icon/index';
 import { FocusToggle } from '../Toggles/focus';
 

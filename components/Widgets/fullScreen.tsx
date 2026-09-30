@@ -12,7 +12,7 @@ import {
 import { Tooltip } from 'antd';
 import { useI18n } from '@/lib/i18n/i18n';
 import { useSpaceStore } from '@/lib/store';
-import { isTrackReferencePinned } from '@/app/pages/participant/tile';
+import { isTrackReferencePinned } from '@/components/Participant/tile';
 import { APP_FLOT_PIN_STYLE } from '../Apps/appPin';
 
 export interface FullScreenBtnProps {}
