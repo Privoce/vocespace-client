@@ -8,7 +8,7 @@ export interface ToggleBtnProps {
   onClick: () => void;
 }
 
-export const ToggleBtn = ({ svgType, svgSize = 18, label, onClick }: ToggleBtnProps) => {
+export const ToggleBtn = ({ svgType, svgSize = 20, label, onClick }: ToggleBtnProps) => {
   return (
     <Button
       variant="solid"

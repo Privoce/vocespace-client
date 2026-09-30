@@ -1,11 +1,11 @@
 'use client';
 
-import { AppCountdown } from '@/app/pages/apps/countdown';
-import { AppTimer } from '@/app/pages/apps/timer';
-import { AppTodo } from '@/app/pages/apps/todo_list';
-import { TodoTogether } from '@/app/pages/apps/todo_together';
-import { DEFAULT_COLLAPSE_HEADER_STYLES } from '@/app/pages/controls/collapse_tools';
-import { CopyButton } from '@/app/pages/controls/widgets/copy';
+import { AppCountdown } from '@/components/Apps/countdown';
+import { AppTimer } from '@/components/Apps/timer';
+import { AppTodo } from '@/components/Apps/todo_list';
+import { TodoTogether } from '@/components/Apps/todo_together';
+import { DEFAULT_COLLAPSE_HEADER_STYLES } from '@/components/Collapse/tools';
+import { CopyButton } from '@/components/Widgets/copy';
 import { CountdownProp, TimerProp, TodoProp } from '@/features/widget-apps/shared';
 import { getParticipantPlatformInfo } from '@/lib/hooks/platform';
 import {
@@ -18,7 +18,7 @@ import {
   ProfileOutlined
 } from '@ant-design/icons';
 import { CollapseProps, Tooltip } from 'antd';
-import type { useWidgetApps } from '../hooks/useWidgetApps';
+import type { useWidgetApps } from '../../../components/Widgets/hooks/useWidgetApps';
 export type FlotAppItemModel = ReturnType<typeof useWidgetApps>;
 export function getWidgetPanels(model: FlotAppItemModel) {
   const {

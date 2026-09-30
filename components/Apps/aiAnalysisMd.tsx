@@ -12,7 +12,7 @@ import {
 import { useI18n } from '@/lib/i18n/i18n';
 import { AICutParticipantConf, SpaceInfo } from '@/lib/std/space';
 import { useLocalParticipant } from '@livekit/components-react';
-import { CopyButton, CopyButtonExports } from '../controls/widgets/copy';
+import { CopyButton, CopyButtonExports } from '../Widgets/copy';
 import { MessageInstance } from 'antd/es/message/interface';
 import { AICutService } from '@/lib/ai/cut';
 

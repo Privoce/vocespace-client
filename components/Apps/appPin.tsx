@@ -11,14 +11,14 @@ import {
   useLocalParticipant,
 } from '@livekit/components-react';
 import { Tooltip } from 'antd';
-import { FullScreenBtn } from '../controls/widgets/full_screen';
+import { FullScreenBtn } from '../Widgets/fullScreen';
 import { Track } from 'livekit-client';
 import { socket } from '@/lib/realtime/socket';
 import { WsBase } from '@/lib/std/device';
-import { normalizeAvoParams } from '../participant/avo';
-import { ParticipantAvoEditorModal } from '../participant/avo_conf';
+import { normalizeAvoParams } from '../../app/pages/participant/avo';
+import { ParticipantAvoEditorModal } from '../../app/pages/participant/avo_conf';
 import { SvgResource } from '@/app/resources/svg';
-import { FocusToggle } from '../../../components/Toggles/focus';
+import { FocusToggle } from '../Toggles/focus';
 
 export interface AppPinProps {
   appKey: AppKey;

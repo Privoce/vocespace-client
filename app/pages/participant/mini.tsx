@@ -26,7 +26,7 @@ import { isSpaceManager, UserStatus } from '@/lib/std';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { useI18n } from '@/lib/i18n/i18n';
-import { AppFlotIconCollect } from '../apps/app_pin';
+import { AppFlotIconCollect } from '../../../components/Apps/appPin';
 import { ParticipantAvoPlaceholder } from './avo';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';
 import { Tooltip } from 'antd';

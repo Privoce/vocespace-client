@@ -1,7 +1,7 @@
 import { DevicesSelector } from '@/app/api/devices/device_selector';
 import { ChatToggle } from '@/components/Toggles/chat';
 import { MoreButton } from '@/components/Toggles/MoreButton';
-import { Work } from '@/app/pages/controls/widgets/work';
+import { Work } from '@/components/Widgets/work';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { MediaDeviceKind } from '@/lib/std/device';
 import styles from '@/components/Controller/index.module.scss';
@@ -15,6 +15,7 @@ import { Track } from 'livekit-client';
 import type { useControls } from './hooks/useControls';
 import { renderDeviceMenuTrigger } from './shared';
 export type ControlsModel = ReturnType<typeof useControls>;
+
 export function ControlsPC({ model }: { model: ControlsModel }) {
   const {
     controls,
@@ -66,6 +67,7 @@ export function ControlsPC({ model }: { model: ControlsModel }) {
     lastAICutConfig,
     device,
   } = model;
+
   return <div {...htmlProps} className={styles.controls} style={{ marginBottom: 4 }}><div
     className={styles.controls_left}
     ref={controlLeftRef}

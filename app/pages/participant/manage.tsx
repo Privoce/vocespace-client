@@ -1,5 +1,5 @@
 import { Button, Drawer, Select } from 'antd';
-import { DEFAULT_DRAWER_PROP, DrawerCloser, DrawerHeader } from '../controls/drawer_tools';
+import { DEFAULT_DRAWER_PROP, DrawerCloser, DrawerHeader } from '../../../components/Drawer/tools';
 import { useI18n } from '@/lib/i18n/i18n';
 import { SvgResource } from '@/app/resources/svg';
 import { ParticipantList } from './list';

@@ -205,17 +205,17 @@ export function MoreButtonInner({
       <Button
         size={size}
         style={{
+          border: size === 'small' ? '1px solid #ffffff0a' : 'none',
           backgroundColor: '#1E1E1E',
           height: '46px',
           borderRadius: '8px',
-          border: 'none',
           color: '#fff',
         }}
       >
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
           <SvgResource type="more" svgSize={18}></SvgResource>
           {showTextOrHide && t('more.title')}
-          <SvgResource type="down" svgSize={14}></SvgResource>
+          {size !== 'small' && <SvgResource type="down" svgSize={14}></SvgResource>}
         </div>
       </Button>
     </Dropdown>

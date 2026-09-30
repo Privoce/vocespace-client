@@ -1,6 +1,6 @@
 'use client';
 
-import { useWidgetApps } from '@/features/widget-apps/hooks/useWidgetApps';
+import { useWidgetApps } from '@/components/Widgets/hooks/useWidgetApps';
 import { FlotAppExports, FlotAppItemProps } from '@/features/widget-apps/shared';
 import { FlotAppItemPC } from '@/features/widget-apps/views/pc';
 import * as React from 'react';

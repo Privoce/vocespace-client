@@ -1,10 +1,10 @@
 'use client';
 
-import { FlotButton, FlotLayout } from '@/app/pages/apps/flot';
+import { FlotButton, FlotLayout } from '@/components/Apps/flot';
 import { ChatPanel } from '@/components/Chat';
 import { Controls } from '@/components/Controller';
 import { Channel } from '@/app/pages/controls/channel';
-import { LicenseAlert } from '@/app/pages/controls/widgets/license_alert';
+import { LicenseAlert } from '@/components/Widgets/licenseAlert';
 import { src } from '@/lib/std';
 import {
   ConnectionStateToast,

@@ -1,17 +1,16 @@
 .toolbar {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-around;
   gap: 4px;
   width: 100%;
   flex-shrink: 0;
   position: relative;
   box-sizing: border-box;
-  padding: 14px max(8px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom))
-    max(8px, env(safe-area-inset-left));
-  background: linear-gradient(180deg, #0c0f14e8, #0c0f14);
-  border-top: 1px solid #ffffff0d;
+  background: transparent;
+  padding: 4px 0;
 }
+
 .action {
   min-width: 0;
   flex: 1;
@@ -33,7 +32,7 @@
     min-width: 0;
     padding: 0 !important;
     border-radius: 50% !important;
-    background: #242b36;
+    // background: #242b36;
     color: #e7edf5;
     border: 1px solid #ffffff0a;
     justify-content: center;
@@ -49,17 +48,18 @@
   button:global(.lk-button-menu) {
     width: 20px;
     height: 20px !important;
-    background: #394451;
-  }
-  button[data-lk-enabled='false'] {
-    background: #572c36;
-    color: #ff9fae;
   }
 }
-.leave button:global(.lk-button) {
-  background: #ef5265;
-  color: white;
+
+
+.leave {
+  :global(.lk-disconnect-button) {
+    width: 44px;
+    height: 44px !important;
+    border-radius: 50%;
+  }
 }
+
 .work {
   position: absolute;
   right: 12px;
@@ -77,7 +77,6 @@
     gap: 3px;
   }
 }
-
 
 .controls {
   height: fit-content;
@@ -285,7 +284,9 @@
   position: absolute;
   pointer-events: none;
   z-index: 1000;
-  transition: left 0.1s ease, top 0.1s ease;
+  transition:
+    left 0.1s ease,
+    top 0.1s ease;
 
   .cursor_icon {
     transform: translate(-50%, -50%);
@@ -564,7 +565,7 @@
   align-items: center;
   justify-content: flex-start;
   cursor: pointer;
-  &_title{
+  &_title {
     flex: 1;
     min-width: 0;
     overflow: hidden;
@@ -599,7 +600,7 @@
   flex-wrap: wrap;
   &_line {
     width: 100%;
-   
+
     display: flex;
     align-items: center;
     justify-content: flex-start;

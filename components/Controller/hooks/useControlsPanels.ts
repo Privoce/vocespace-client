@@ -6,9 +6,9 @@ import {
   useControlsChat,
   useControlsRecord,
   useControlsSettings,
-} from '@/app/pages/controls/hooks/index';
-import { useAICutAnalysisSettings } from '@/app/pages/controls/widgets/ai';
-import { useWork } from '@/app/pages/controls/widgets/work';
+} from '@/components/Controller/hooks/index';
+import { useAICutAnalysisSettings } from '@/components/Widgets/ai';
+import { useWork } from '@/components/Widgets/work';
 import { ControlBarExport } from '../types';
 import { api } from '@/lib/api';
 import { usePlatformUserInfo } from '@/lib/hooks/platform';

@@ -1,6 +1,6 @@
 import { DevicesSelector } from '@/app/api/devices/device_selector';
 import { MoreButton } from '@/components/Toggles/MoreButton';
-import { Work } from '@/app/pages/controls/widgets/work';
+import { Work } from '@/components/Widgets/work';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { MediaDeviceKind } from '@/lib/std/device';
 import { DesktopOutlined, MessageOutlined, ThunderboltOutlined } from '@ant-design/icons';
@@ -9,6 +9,7 @@ import { Badge, Button, Popover, Tooltip } from 'antd';
 import { Track } from 'livekit-client';
 import type { useControls } from './hooks/useControls';
 import phone from './index.module.scss';
+import { ChatToggle } from '../Toggles/chat';
 
 export type ControlsModel = ReturnType<typeof useControls>;
 function DeviceControl({
@@ -67,7 +68,7 @@ function DeviceControl({
           </div>
         )}
       </div>
-      <span>{label}</span>
+      {/* <span>{label}</span> */}
     </div>
   );
 }
@@ -113,19 +114,19 @@ export function ControlsPhone({ model }: { model: ControlsModel }) {
             />
           </Tooltip>
         )}
-        <span>{t('common.device.screen')}</span>
+        {/* <span>{t('common.device.screen')}</span> */}
       </div>
       {visibleControls.chat && (
         <div className={phone.action}>
-          <Badge count={chatMsg.unhandled} size="small">
-            <Button
-              aria-label={t('common.chat')}
-              aria-pressed={chatOpen}
-              icon={<MessageOutlined />}
-              onClick={() => setChatOpen(!chatOpen)}
-            />
-          </Badge>
-          <span>{t('common.chat')}</span>
+          <ChatToggle
+            controlWidth={model.controlWidth}
+            enabled={chatOpen}
+            onClicked={() => {
+              setChatOpen(!chatOpen);
+            }}
+            count={chatMsg.unhandled}
+          ></ChatToggle>
+          {/* <span>{t('common.chat')}</span> */}
         </div>
       )}
       {space && (
@@ -145,7 +146,7 @@ export function ControlsPhone({ model }: { model: ControlsModel }) {
             onClickApp={model.onClickApp}
             isRecording={model.isRecording}
           />
-          <span>{t('more.title')}</span>
+          {/* <span>{t('more.title')}</span> */}
         </div>
       )}
       {visibleControls.leave && (
@@ -156,7 +157,7 @@ export function ControlsPhone({ model }: { model: ControlsModel }) {
           >
             <LeaveIcon />
           </DisconnectButton>
-          <span>{t('common.leave')}</span>
+          {/* <span>{t('common.leave')}</span> */}
         </div>
       )}
       {space && visibleControls.microphone && spaceInfo.ai.cut.enabled && model.showAI && (

@@ -17,7 +17,7 @@ import {
 import { AutoComplete, Button, Image, Modal, Spin, Tooltip, Upload } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { APP_FLOT_PIN_STYLE } from '../apps/app_pin';
+import { APP_FLOT_PIN_STYLE } from '../../../components/Apps/appPin';
 import {
   FocusToggleIcon,
   UnfocusToggleIcon,

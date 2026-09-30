@@ -17,7 +17,7 @@ import {
 import { theme } from 'antd';
 import * as React from 'react';
 import { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import type { CountdownProp, TimerProp } from '../shared';
+import type { CountdownProp, TimerProp } from '../../../features/widget-apps/shared';
 
 export function useWidgetApps({ messageApi, apps, space, spaceInfo, onHeightChange, isSelf, participantId }: FlotAppItemProps, ref: React.ForwardedRef<FlotAppExports>) {
   const device = useLayoutDevice();

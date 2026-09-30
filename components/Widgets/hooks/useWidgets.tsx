@@ -1,6 +1,6 @@
 'use client';
 
-import { AICutAnalysisMdTabsExports } from '@/app/pages/apps/ai_analysis_md';
+import { AICutAnalysisMdTabsExports } from '@/components/Apps/aiAnalysisMd';
 import { FlotAppExports, FlotLayoutExports, FlotLayoutProps } from '@/components/Widgets/item';
 import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
 import { api } from '@/lib/api';

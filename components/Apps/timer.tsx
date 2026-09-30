@@ -6,10 +6,10 @@ import {
 } from '@ant-design/icons';
 import { Card, Col, Row, Space, Statistic } from 'antd';
 import { useMemo } from 'react';
-import { TimeRecords } from './time_records';
 import styles from '@/styles/apps.module.scss';
 import { CardSize } from 'antd/es/card/Card';
 import { AppAuth, Timer as TimerData } from '@/lib/std/space';
+import { TimeRecords } from './time_records';
 const { Timer } = Statistic;
 
 export interface AppTimerProps {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useRoomSubscription } from '@/app/pages/controls/hooks/index';
+import { useRoomSubscription } from '@/components/Controller/hooks/index';
 import { TilePlayerItem } from '@/app/pages/participant/player';
 import { api } from '@/lib/api';
 import { useLatestCallback } from '@/lib/hooks/use-latest-callback';

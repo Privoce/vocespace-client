@@ -1,11 +1,11 @@
 'use client';
 
-import { FlotLayoutExports } from '@/app/pages/apps/flot';
+import { FlotLayoutExports } from '@/components/Apps/flot';
 import { ControlBarExport } from '@/components/Controller';
 import { ChannelExports } from '@/app/pages/controls/channel';
-import { useControlsChat } from '@/app/pages/controls/hooks';
-import { useRoomLicense } from '@/app/pages/controls/hooks/index';
-import { useAICutService } from '@/app/pages/controls/hooks/use-ai-cut';
+import { useControlsChat } from '@/components/Controller/hooks';
+import { useRoomLicense } from '@/components/Controller/hooks/index';
+import { useAICutService } from '@/components/Controller/hooks/useAICut';
 import { VideoContainerExports, VideoContainerProps } from '@/features/conference/shared';
 import { exportRBAC, usePlatformUserInfo } from '@/lib/hooks/platform';
 import { useSpaceInfo } from '@/lib/hooks/space';

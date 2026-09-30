@@ -57,7 +57,7 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
       const response = await api.ai.getAnalysisRes(
         space.name,
         space.localParticipant.identity,
-        usePlatformUserInfoCheap({ user: participant }).isAuth,
+        getParticipantPlatformInfo({ user: participant }).isAuth,
       );
       if (response.ok) {
         const { res }: { res: AICutAnalysisRes } = await response.json();

@@ -46,7 +46,7 @@ import {
 } from '@/lib/std/space';
 import { StatusInfo, useStatusInfo } from './status_info';
 import { ControlRKeyMenu, useControlRKeyMenu, UseControlRKeyMenuProps } from './menu';
-import { AppFlotIconCollect } from '../apps/app_pin';
+import { AppFlotIconCollect } from '../../../components/Apps/appPin';
 import { getAvoPrimaryColor, ParticipantAvoPlaceholder } from './avo';
 import { ParticipantTileMiniProps } from './mini';
 import { TileActionCollect } from '../controls/widgets/tile_action_pin';

@@ -7,7 +7,7 @@ import { Button, Descriptions, Input, Modal, Tag } from 'antd';
 import TextArea from 'antd/es/input/TextArea';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useEffect, useMemo, useState } from 'react';
-import { Calendly } from '../../../app/pages/controls/widgets/calendly';
+import { Calendly } from '@/components/Widgets/calendly';
 import { api } from '@/lib/api';
 import {
   analyzeLicense,

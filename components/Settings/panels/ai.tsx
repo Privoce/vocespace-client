@@ -11,7 +11,7 @@ import { Button, Input, Radio } from 'antd';
 import { MessageInstance } from 'antd/es/message/interface';
 import { LocalParticipant, Room } from 'livekit-client';
 import { useEffect, useMemo, useState } from 'react';
-import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from '../../../app/pages/controls/widgets/ai';
+import { AICutAnalysisSettingsPanel, useAICutAnalysisSettings } from '@/components/Widgets/ai';
 import { socket } from '@/lib/realtime/socket';
 import { WsBase } from '@/lib/std/device';
 

@@ -10,11 +10,11 @@
 .avatar {
   width: 48px;
   height: 48px;
-  border-radius: 16px;
+  border-radius: 50%;
   display: grid;
   place-items: center;
-  background: #22ccee22;
-  color: #22ccee;
+  background: transparent;
+  border: 1px solid #ffffff1b;
   font-size: 20px;
   flex-shrink: 0;
 }
@@ -44,7 +44,7 @@
   justify-content: space-between;
   padding: 12px 16px;
   color: #e7edf5;
-  background: #171c24;
+  background: #1e1e1e;
   border: 0;
   border-bottom: 1px solid #ffffff08;
   cursor: pointer;

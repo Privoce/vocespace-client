@@ -2,9 +2,9 @@
 import * as React from 'react';
 import { useControls } from '@/components/Controller/hooks/useControls';
 import { ControlBarProps, ControlBarExport } from './types';
-import { DEFAULT_DRAWER_PROP, DrawerCloser } from '@/app/pages/controls/drawer_tools';
-import { AICutAnalysisSettingsPanel } from '@/app/pages/controls/widgets/ai';
-import { WorkModal } from '@/app/pages/controls/widgets/work';
+import { DEFAULT_DRAWER_PROP, DrawerCloser } from '@/components/Drawer/tools';
+import { AICutAnalysisSettingsPanel } from '@/components/Widgets/ai';
+import { WorkModal } from '@/components/Widgets/work';
 import { ParticipantManage } from '@/app/pages/participant/manage';
 import mobile from '@/styles/mobile.module.scss';
 import styles from '@/components/Controller/index.module.scss';

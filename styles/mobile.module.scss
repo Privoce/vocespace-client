@@ -1,11 +1,10 @@
 .surface {
-  --mobile-bg: #0c0f14;
-  --mobile-panel: #171c24;
+  --mobile-panel: #1e1e1e;
   --mobile-line: #ffffff12;
   --mobile-muted: #8e99ab;
   --mobile-accent: #22ccee;
   color: #edf2fa;
-  background: var(--mobile-bg);
+  // background: var(--mobile-bg);
   min-width: 0;
   width: 100%;
   box-sizing: border-box;
