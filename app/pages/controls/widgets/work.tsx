@@ -7,7 +7,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AICutParticipantConf, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { useLocalParticipant } from '@livekit/components-react';
 import { WsBase, WsTo } from '@/lib/std/device';
-import styles from '@/styles/controls.module.scss';
+import styles from '@/components/Controller/index.module.scss';
 import { LocalParticipant, Room } from 'livekit-client';
 import { api } from '@/lib/api';
 import { MessageInstance } from 'antd/es/message/interface';

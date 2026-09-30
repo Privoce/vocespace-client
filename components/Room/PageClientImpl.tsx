@@ -4,7 +4,7 @@ import { useRoomConnection } from './hooks/UseRoomConnection';
 import { useRoomEntry } from './hooks/UseRoomEntry';
 import type { PageClientImplProps } from '@/components/Room/types';
 import BeforeUnloadGuard from '@/app/BeforeUnloadGuard';
-import { VideoContainer, VideoContainerExports } from '@/app/pages/controls/video_container';
+import { VideoContainer, VideoContainerExports } from '@/app/[spaceName]/container';
 import { useI18n } from '@/lib/i18n/i18n';
 import { RecordingIndicator } from './RecordingIndicator';
 import type { ConnectionDetails } from '@/lib/types';

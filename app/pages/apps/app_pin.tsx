@@ -18,7 +18,7 @@ import { WsBase } from '@/lib/std/device';
 import { normalizeAvoParams } from '../participant/avo';
 import { ParticipantAvoEditorModal } from '../participant/avo_conf';
 import { SvgResource } from '@/app/resources/svg';
-import { FocusToggle } from '../controls/toggles/focus_toogle';
+import { FocusToggle } from '../../../components/Toggles/focus';
 
 export interface AppPinProps {
   appKey: AppKey;

@@ -134,9 +134,9 @@ const PageLoading = () => {
 
       <div className={styles.view__controls}>
         <Space direction="vertical" size={'small'} style={{ width: '100%' }}>
-          {[136, 92.4, 44, 44, 44, 44].map((h) => (
+          {[136, 92.4, 44, 44, 44, 44].map((h, i) => (
             <Skeleton.Input
-              key={h}
+              key={`${h}-${i}`}
               active
               style={{ height: `${h}px`, backgroundColor: '#333' }}
               block

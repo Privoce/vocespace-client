@@ -4,7 +4,7 @@ import { useI18n } from '@/lib/i18n/i18n';
 import { SvgResource } from '@/app/resources/svg';
 import { ParticipantList } from './list';
 import { Participant, Room, Track } from 'livekit-client';
-import styles from '@/styles/controls.module.scss';
+import styles from '@/components/Controller/index.module.scss';
 import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { TrackMutedIndicator } from '@livekit/components-react';
 import React from 'react';

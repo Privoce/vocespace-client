@@ -3,15 +3,15 @@ import * as React from 'react';
 import { useControls } from '@/components/Controller/hooks/useControls';
 import { ControlBarProps, ControlBarExport } from './types';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from '@/app/pages/controls/drawer_tools';
-import { Settings } from '@/app/pages/controls/settings/settings';
 import { AICutAnalysisSettingsPanel } from '@/app/pages/controls/widgets/ai';
 import { WorkModal } from '@/app/pages/controls/widgets/work';
 import { ParticipantManage } from '@/app/pages/participant/manage';
 import mobile from '@/styles/mobile.module.scss';
-import styles from '@/styles/controls.module.scss';
+import styles from '@/components/Controller/index.module.scss';
 import { Drawer, Input, Modal } from 'antd';
 import { ControlsPC } from './pc';
 import { ControlsPhone } from './phone';
+import { Settings } from '../Settings';
 export * from '@/components/Controller/shared';
 
 export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(

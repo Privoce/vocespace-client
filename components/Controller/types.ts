@@ -1,11 +1,12 @@
 'use client';
 
-import { TabKey } from '@/app/pages/controls/settings/settings';
+
 import { UserStatus } from '@/lib/std';
 import { ReadableConf } from '@/lib/std/conf';
 import { AICutParticipantConf, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { Track } from 'livekit-client';
 import * as React from 'react';
+import { TabKey } from '../Settings';
 
 export type ControlBarControls = {
   microphone?: boolean;

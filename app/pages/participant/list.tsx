@@ -1,5 +1,5 @@
 import { Avatar, List, MenuProps } from 'antd';
-import styles from '@/styles/controls.module.scss';
+import styles from '@/components/Controller/index.module.scss';
 import { randomColor } from '@/lib/std';
 import { useI18n } from '@/lib/i18n/i18n';
 import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';

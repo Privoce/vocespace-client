@@ -1,6 +1,6 @@
 import React from 'react';
 import { Modal, Input, Button } from 'antd';
-import { ConfQulity } from '@/app/pages/controls/settings/conf';
+import { ConfQulity } from '@/components/Settings/panels/conf';
 import { useI18n } from '@/lib/i18n/i18n';
 
 interface GlobalConfModalProps {

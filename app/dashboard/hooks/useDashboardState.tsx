@@ -1,6 +1,6 @@
 'use client';
 
-import { useVoceSpaceConf } from '@/app/pages/controls/settings/conf';
+import { useVoceSpaceConf } from '@/components/Settings/panels/conf';
 import { ActionKey, HistorySpaceData, LeaderboardData, MenuTab, ParticipantTableData } from '@/features/dashboard/shared';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { useSocketSession } from '@/lib/hooks/use-socket-session';

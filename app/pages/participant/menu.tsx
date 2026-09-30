@@ -4,7 +4,7 @@ import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { Dropdown, MenuProps, Modal, Slider } from 'antd';
 import { Participant, Room, Track } from 'livekit-client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import styles from '@/styles/controls.module.scss';
+import styles from '@/components/Controller/index.module.scss';
 import {
   ControlType,
   hasHeadphonesConnected,

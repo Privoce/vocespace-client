@@ -14,7 +14,7 @@ import {
   UndoOutlined,
 } from '@ant-design/icons';
 import { Popover } from 'antd';
-import styles from '@/styles/controls.module.scss';
+import styles from '@/components/Controller/index.module.scss';
 
 export type PointerMappingTarget = 'screen-share' | 'avo';
 

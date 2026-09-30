@@ -1,10 +1,10 @@
 import { DevicesSelector } from '@/app/api/devices/device_selector';
-import { ChatToggle } from '@/app/pages/controls/toggles/chat_toggle';
-import { MoreButton } from '@/app/pages/controls/toggles/more_button';
+import { ChatToggle } from '@/components/Toggles/chat';
+import { MoreButton } from '@/components/Toggles/MoreButton';
 import { Work } from '@/app/pages/controls/widgets/work';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { MediaDeviceKind } from '@/lib/std/device';
-import styles from '@/styles/controls.module.scss';
+import styles from '@/components/Controller/index.module.scss';
 import {
   DisconnectButton,
   LeaveIcon,

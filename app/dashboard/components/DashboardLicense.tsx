@@ -1,5 +1,5 @@
 import { useI18n } from '@/lib/i18n/i18n';
-import styles from '@/styles/controls.module.scss';
+import styles from '@/components/Controller/index.module.scss';
 import { Button, Descriptions, Input, Modal, Radio, RadioChangeEvent, Tag } from 'antd';
 import { CheckboxGroupProps } from 'antd/es/checkbox';
 import TextArea from 'antd/es/input/TextArea';

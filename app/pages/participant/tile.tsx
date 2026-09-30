@@ -1,4 +1,4 @@
-import { isTrackReferencePlaceholder } from '@/app/pages/controls/video_container';
+import { isTrackReferencePlaceholder } from '@/app/[spaceName]/container';
 import {
   MouseMove,
   useVideoBlur,
@@ -29,10 +29,10 @@ import {
 import { ParticipantTile } from './core';
 import { ConnectionState, Participant, Track } from 'livekit-client';
 import React, { useEffect, useMemo, useState } from 'react';
-import VirtualRoleCanvas from '../virtual_role/live2d';
+import VirtualRoleCanvas from '../../../components/VirtualRole/live2d';
 import { useUserStore, useRoomStore, useSpaceStore } from '@/lib/store';
 import { socket } from '@/lib/realtime/socket';
-import styles from '@/styles/controls.module.scss';
+import styles from '@/components/Controller/index.module.scss';
 import { SvgResource } from '@/app/resources/svg';
 import { useI18n } from '@/lib/i18n/i18n';
 import { isSpaceManager } from '@/lib/std';

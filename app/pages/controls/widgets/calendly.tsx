@@ -2,7 +2,7 @@
 
 import { SvgResource } from '@/app/resources/svg';
 import { useEffect } from 'react';
-import styles from '@/styles/controls.module.scss';
+import styles from '@/components/Controller/index.module.scss';
 
 export function Calendly() {
   useEffect(() => {

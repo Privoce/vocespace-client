@@ -4,7 +4,7 @@ import { Trans, useI18n } from '@/lib/i18n/i18n';
 import { UserDefineStatus, UserStatus } from '@/lib/std';
 import { useRoomStore, useUserStore } from '@/lib/store';
 import { SvgResource, SvgType } from '@/app/resources/svg';
-import styles from '@/styles/controls.module.scss';
+import styles from '@/components/Controller/index.module.scss';
 import { BaseOptionType } from 'antd/es/select';
 import { LocalParticipant } from 'livekit-client';
 

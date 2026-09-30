@@ -1,7 +1,7 @@
 import { Button, Dropdown, MenuProps, Tooltip } from 'antd';
 import { ItemType } from 'antd/es/menu/interface';
 import { useMemo } from 'react';
-import styles from '@/styles/controls.module.scss';
+import styles from '@/components/Controller/index.module.scss';
 import { SvgResource } from '@/app/resources/svg';
 import { useRoomStore, useUserStore } from '@/lib/store';
 import { Trans } from '@/lib/i18n/i18n';
