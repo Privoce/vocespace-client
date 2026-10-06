@@ -2,7 +2,7 @@ import type { TrackReferenceOrPlaceholder } from '@livekit/components-core';
 import { getScrollBarWidth } from '@livekit/components-core';
 import { TrackLoop, useVisualStableUpdate } from '@livekit/components-react';
 import * as React from 'react';
-import { useSize } from './hooks';
+import { useSize } from './hooks/hooks';
 
 
 const MIN_HEIGHT = 130;

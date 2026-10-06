@@ -1,6 +1,6 @@
 'use client';
 
-import { LayoutEntity } from '@/app/pages/layout/unified';
+import { LayoutEntity } from '@/components/Layout/unified';
 import type { TilePlayerItem } from '@/components/Participant/player';
 import { ReadableConf } from '@/lib/std/conf';
 import {

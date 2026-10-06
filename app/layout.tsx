@@ -1,6 +1,6 @@
-import { DeviceLayoutSync } from './DeviceLayoutSync';
+import { DeviceLayoutSync } from '../components/Layout/DeviceLayoutSync';
 import { I18nProvider } from '@/lib/i18n/i18n';
-import { WeChatAccessGuard } from './WeChatAccessGuard';
+import { WeChatAccessGuard } from '../components/Guard/WeChatAccessGuard';
 import '../styles/globals.css';
 import '@livekit/components-styles';
 import '@livekit/components-styles/prefabs';

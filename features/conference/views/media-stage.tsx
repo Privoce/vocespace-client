@@ -1,5 +1,5 @@
-import { PaginationControl, PaginationIndicator } from '@/app/pages/layout/cover';
-import { UnifiedLayout } from '@/app/pages/layout/unified';
+import { PaginationControl, PaginationIndicator } from '@/components/Layout/cover';
+import { UnifiedLayout } from '@/components/Layout/unified';
 import type { useConference } from '../hooks/useConference';
 import { renderConferenceEntity } from './entity';
 export type ConferenceModel = ReturnType<typeof useConference>;

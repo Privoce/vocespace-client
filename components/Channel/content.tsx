@@ -1,4 +1,4 @@
-import { GLayout } from '@/app/pages/layout/grid';
+import { GLayout } from '@/components/Layout/grid';
 import { ParticipantTileMini } from '@/components/Participant/mini';
 import { SvgResource } from '@/components/Icon/index';
 import { FeedbackType, RoomPrivacy } from '@/components/Channel/types';

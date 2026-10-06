@@ -1,6 +1,6 @@
 import * as React from 'react';
 import type { Track } from 'livekit-client';
-import { useSize } from './hooks';
+import { useSize } from './hooks/hooks';
 
 const LAYOUT_GAP = 4;
 // focus 布局下主区和缩略区的尺寸比例，分别适配 desktop 和 mobile 两种使用场景

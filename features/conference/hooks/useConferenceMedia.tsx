@@ -1,7 +1,7 @@
 'use client';
 
 import { useUserStatus } from '@/components/Controller/hooks/index';
-import { useReplaceLivekitTrack } from '@/app/pages/layout/unified';
+import { useReplaceLivekitTrack } from '@/components/Layout/unified';
 import { getTrackReferenceIdSafe, TrackReferenceOrPlaceholder, VideoLayoutEntity } from '@/features/conference/shared';
 import { socket } from '@/lib/realtime/socket';
 import {
