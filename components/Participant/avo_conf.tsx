@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import {
+  App,
   Button,
   Flex,
   Input,
@@ -11,7 +12,6 @@ import {
   Space,
   Typography,
   Upload,
-  message,
 } from 'antd';
 import { UploadOutlined, DownloadOutlined } from '@ant-design/icons';
 import type { ParticipantAvoParams } from '@/lib/std/space';
@@ -52,6 +52,8 @@ export const AvoConfigPanel = React.forwardRef<AvoConfigPanelExports, AvoConfigP
   ({ direction, name, avoList, saving = false, onSave }: AvoConfigPanelProps, ref) => {
   const { t } = useI18n();
   const mobile = useLayoutDevice() === 'phone';
+  // App.useApp() 替代静态 message，可消费动态主题（antd App 上下文）
+  const { message } = App.useApp();
 
   // 当前编辑的列表
   const [draftList, setDraftList] = React.useState<ParticipantAvoParams[]>(() => {
@@ -163,7 +165,7 @@ export const AvoConfigPanel = React.forwardRef<AvoConfigPanelExports, AvoConfigP
       reader.readAsText(file);
       return false; // 阻止 Upload 默认提交
     },
-    [name, t],
+    [name, t, message],
   );
 
   const previewSection = (

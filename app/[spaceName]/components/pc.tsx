@@ -1,4 +1,4 @@
-import { MediaStage, type ConferenceModel } from './media-stage';
+import { MediaStage, type ConferenceModel } from './mediaStage';
 export function VideoContainerPC({ model }: { model: ConferenceModel }) {
   const { chatOpen, focusTrack } = model;
   return <div

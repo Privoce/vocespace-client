@@ -760,7 +760,7 @@ export function TileWhiteboardOverlay({
           onOpenChange={handleSizePopoverOpenChange}
           content={sizePopoverContent}
           styles={{
-            body: { width: 48 },
+            content: { width: 48 },
           }}
         >
           <Button

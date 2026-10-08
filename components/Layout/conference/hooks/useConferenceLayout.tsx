@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useImperativeHandle, useMemo } from 'react';
-import type { VideoLayoutEntity } from '../shared';
+import type { VideoLayoutEntity } from '../types';
 import type { useConferenceMedia } from './useConferenceMedia';
 
 export function useConferenceLayout(context: ReturnType<typeof useConferenceMedia>) {

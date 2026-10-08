@@ -12,6 +12,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import {
+  App,
   Tabs,
   Table,
   Tag,
@@ -24,7 +25,6 @@ import {
   Row,
   Col,
   Card,
-  message,
   Space,
   Typography,
   Descriptions,
@@ -81,6 +81,8 @@ interface DashboardLicenseManageProps {
 }
 
 export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}) => {
+  // App.useApp() 替代静态 message，可消费动态主题（antd App 上下文）
+  const { message } = App.useApp();
   const { t } = useI18n();
   const [licenses, setLicenses] = useState<LicenseRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -534,7 +536,7 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
                 <Statistic
                   title={lm('statsValid')}
                   value={stats.valid}
-                  valueStyle={{ color: '#3f8600' }}
+                  styles={{ content: { color: '#3f8600' } }}
                 />
               </Card>
             </Col>
@@ -543,7 +545,7 @@ export const DashboardLicenseManage: React.FC<DashboardLicenseManageProps> = ({}
                 <Statistic
                   title={lm('statsExpired')}
                   value={stats.expired}
-                  valueStyle={{ color: stats.expired > 0 ? '#cf1322' : undefined }}
+                  styles={{ content: { color: stats.expired > 0 ? '#cf1322' : undefined } }}
                 />
               </Card>
             </Col>

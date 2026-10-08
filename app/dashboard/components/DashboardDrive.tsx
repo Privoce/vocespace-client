@@ -195,7 +195,7 @@ export const DashboardDrive: React.FC<DashboardDriveProps> = ({
       }}
     >
       {contextHolder}
-      <Space direction="vertical" size={20} style={{ width: '100%' }}>
+      <Space orientation="vertical" size={20} style={{ width: '100%' }}>
         <div>
           <Title level={2} style={{ color: '#fff', marginBottom: 8 }}>
             {t('dashboard.drive.title')}
@@ -208,7 +208,7 @@ export const DashboardDrive: React.FC<DashboardDriveProps> = ({
         <Alert
           type="warning"
           showIcon
-          message={t('dashboard.drive.alert')}
+          title={t('dashboard.drive.alert')}
           style={{ borderRadius: 12 }}
           closable
         ></Alert>
@@ -223,7 +223,7 @@ export const DashboardDrive: React.FC<DashboardDriveProps> = ({
         </Card>
 
         {current === 0 && (
-          <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          <Space orientation="vertical" size={12} style={{ width: '100%' }}>
             <Input
               addonBefore="LiveKit URL"
               value={config.livekit.url}
@@ -278,7 +278,7 @@ export const DashboardDrive: React.FC<DashboardDriveProps> = ({
         )}
 
         {current === 1 && (
-          <Space direction="vertical" size={16} style={{ width: '100%' }}>
+          <Space orientation="vertical" size={16} style={{ width: '100%' }}>
             <div>
               <Text style={{ color: '#fff' }}>{t('dashboard.drive.resolution')}</Text>
               <Radio.Group
@@ -349,7 +349,7 @@ export const DashboardDrive: React.FC<DashboardDriveProps> = ({
         )}
 
         {current === 2 && (
-          <Space direction="vertical" size={16} style={{ width: '100%' }}>
+          <Space orientation="vertical" size={16} style={{ width: '100%' }}>
             <Input.Password
               addonBefore={t('dashboard.conf.smtp.pass')}
               value={config.smtp?.pass}
@@ -428,7 +428,7 @@ export const DashboardDrive: React.FC<DashboardDriveProps> = ({
         )}
 
         {current === 3 && (
-          <Space direction="vertical" size={12} style={{ width: '100%' }}>
+          <Space orientation="vertical" size={12} style={{ width: '100%' }}>
             <Input.TextArea
               rows={16}
               value={JSON.stringify(config, null, 2)}

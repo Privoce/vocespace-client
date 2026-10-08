@@ -16,7 +16,7 @@ export const LicenseAlert = ({ toBuyRoomLicense }: LicenseAlertProps) => {
       type="warning"
       showIcon
       closable
-      message={
+      title={
         isWeChat ? (
           <span>{t('common.wx.not_support')}</span>
         ) : (

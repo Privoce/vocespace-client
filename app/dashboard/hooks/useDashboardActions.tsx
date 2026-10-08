@@ -1,6 +1,6 @@
 'use client';
 
-import { MenuTab } from '@/features/dashboard/shared';
+import { MenuTab } from '@/app/dashboard/shared';
 import { api } from '@/lib/api';
 import { socket } from '@/lib/realtime/socket';
 import { VocespaceConfig } from '@/lib/std/conf';

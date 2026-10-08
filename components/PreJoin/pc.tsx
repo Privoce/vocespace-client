@@ -53,7 +53,7 @@ export function PreJoinPC(m: PreJoinModel) {
         open={permissionModalVisible}
         centered
         closable={true}
-        maskClosable={false}
+        mask={{ closable: false }}
         title={t('msg.request.device.pre_join.modal_title')}
         onOk={requestMediaPermissions}
         onCancel={continueWithoutPermissions}
@@ -133,7 +133,7 @@ const PageLoading = () => {
       </div>
 
       <div className={styles.view__controls}>
-        <Space direction="vertical" size={'small'} style={{ width: '100%' }}>
+        <Space orientation="vertical" size={'small'} style={{ width: '100%' }}>
           {[136, 92.4, 44, 44, 44, 44].map((h, i) => (
             <Skeleton.Input
               key={`${h}-${i}`}

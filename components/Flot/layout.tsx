@@ -7,8 +7,8 @@ import { FlotLayoutProps, FlotLayoutExports, FlotAppItem } from '@/components/Wi
 import { Button, Drawer } from 'antd';
 import { DEFAULT_DRAWER_PROP, DrawerCloser } from '../Drawer/tools';
 import { getParticipantPlatformInfo } from '@/lib/hooks/platform';
-import { AICutAnalysisMdTabs } from './aiAnalysisMd';
-import styles from  "./index.module.scss"
+import { AICutAnalysisMdTabs } from '../Apps/aiAnalysisMd';
+import styles from  "@/components/Apps/index.module.scss"
 
 export * from '@/components/Widgets/item';
 export const FlotLayout = React.forwardRef<FlotLayoutExports, FlotLayoutProps>(
@@ -43,7 +43,7 @@ export const FlotLayout = React.forwardRef<FlotLayoutExports, FlotLayoutProps>(
         {...DEFAULT_DRAWER_PROP}
         open={openApp}
         onClose={() => setOpenApp(false)}
-        width={model.device === 'phone' ? '100%' : showAI ? 1168 : 420}
+        size={model.device === 'phone' ? '100%' : showAI ? 1168 : 420}
         rootClassName={model.device === 'phone' ? mobile.drawer : undefined}
         title={
           <span>

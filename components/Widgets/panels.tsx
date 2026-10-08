@@ -6,7 +6,7 @@ import { AppTodo } from '@/components/Apps/todoList';
 import { TodoTogether } from '@/components/Apps/todoTogether';
 import { DEFAULT_COLLAPSE_HEADER_STYLES } from '@/components/Collapse/tools';
 import { CopyButton } from '@/components/Widgets/copy';
-import { CountdownProp, TimerProp, TodoProp } from '@/features/widget-apps/shared';
+import { CountdownProp, TimerProp, TodoProp } from '@/components/Flot/types';
 import { getParticipantPlatformInfo } from '@/lib/hooks/platform';
 import {
   AppKey
@@ -18,7 +18,7 @@ import {
   ProfileOutlined
 } from '@ant-design/icons';
 import { CollapseProps, Tooltip } from 'antd';
-import type { useWidgetApps } from '../../../components/Widgets/hooks/useWidgetApps';
+import type { useWidgetApps } from './hooks/useWidgetApps';
 export type FlotAppItemModel = ReturnType<typeof useWidgetApps>;
 export function getWidgetPanels(model: FlotAppItemModel) {
   const {

@@ -8,8 +8,9 @@ import {
   DescriptionsProps,
   Divider,
   Input,
-  List,
+  Listy,
   Modal,
+  Pagination,
   Progress,
 } from 'antd';
 import { useMemo, useState } from 'react';
@@ -46,6 +47,8 @@ interface TodoNode extends TodoItem {
   from: number;
 }
 
+const CHECKED_PAGE_SIZE = 6;
+
 export function AppTodo({
   space,
   participantId,
@@ -56,7 +59,7 @@ export function AppTodo({
   auth,
   showExport,
   setShowExport,
-  size = 'default',
+  size = 'medium',
   bodyStyle,
 }: AppTodoProps) {
   const { t } = useI18n();
@@ -64,6 +67,8 @@ export function AppTodo({
     return auth !== 'write';
   }, [auth]);
   const [historyPageSize, setHistoryPageSize] = useState<number>(6);
+  const [checkedPage, setCheckedPage] = useState(1);
+  const [historyPage, setHistoryPage] = useState(1);
   const [newTodo, setNewTodo] = useState<string>('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingValue, setEditingValue] = useState<string>('');
@@ -261,6 +266,19 @@ export function AppTodo({
     }
   };
 
+  const checkedTotalPages = Math.max(1, Math.ceil(todoListChecked.length / CHECKED_PAGE_SIZE));
+  const checkedCurrentPage = Math.min(checkedPage, checkedTotalPages);
+  const checkedPageData = todoListChecked.slice(
+    (checkedCurrentPage - 1) * CHECKED_PAGE_SIZE,
+    checkedCurrentPage * CHECKED_PAGE_SIZE,
+  );
+  const historyTotalPages = Math.max(1, Math.ceil(todoList.length / historyPageSize));
+  const historyCurrentPage = Math.min(historyPage, historyTotalPages);
+  const historyPageData = todoList.slice(
+    (historyCurrentPage - 1) * historyPageSize,
+    historyCurrentPage * historyPageSize,
+  );
+
   return (
     <>
       <Card
@@ -283,144 +301,143 @@ export function AppTodo({
           <Divider style={{ fontSize: 12, margin: '0 0 8px 0' }}>
             {t('more.app.todo.today_done')}
           </Divider>
-          <List
-            pagination={
-              todoListChecked.length > 6
-                ? {
-                    position: 'bottom',
-                    align: 'end',
-                    pageSize: 6,
-                    size: 'small',
-                    showSizeChanger: false,
-                    simple: { readOnly: true },
-                  }
-                : undefined
-            }
-            bordered={false}
-            split={false}
-            locale={{
-              emptyText: (
-                <p
-                  style={{
-                    color: '#8c8c8c',
-                    fontSize: size === 'small' ? 12 : 14,
-                  }}
-                >
-                  {t('more.app.todo.today_empty')}
-                </p>
-              ),
-            }}
-            dataSource={todoListChecked}
-            renderItem={(item) => (
-              <List.Item style={{ border: 'none' }}>
-                <div className={styles.todo_item}>
-                  <Checkbox checked disabled>
-                    {item.title}
-                  </Checkbox>
-                </div>
-              </List.Item>
-            )}
-          ></List>
+          {todoListChecked.length === 0 ? (
+            <p
+              style={{
+                color: '#8c8c8c',
+                fontSize: size === 'small' ? 12 : 14,
+              }}
+            >
+              {t('more.app.todo.today_empty')}
+            </p>
+          ) : (
+            <>
+              <Listy
+                items={checkedPageData}
+                rowKey={(item) => item.id}
+                itemRender={(item) => (
+                  <div className={styles.todo_item}>
+                    <Checkbox checked disabled>
+                      {item.title}
+                    </Checkbox>
+                  </div>
+                )}
+                styles={{ item: { border: 'none', padding: '12px 0' } }}
+              />
+              {todoListChecked.length > CHECKED_PAGE_SIZE && (
+                <Pagination
+                  align="end"
+                  size="small"
+                  simple={{ readOnly: true }}
+                  showSizeChanger={false}
+                  pageSize={CHECKED_PAGE_SIZE}
+                  total={todoListChecked.length}
+                  current={checkedCurrentPage}
+                  onChange={setCheckedPage}
+                />
+              )}
+            </>
+          )}
           <Divider style={{ fontSize: 12, margin: '8px 0' }}>{t('more.app.todo.history')}</Divider>
-          <List
-            className={styles.todo_history_list}
-            pagination={
-              appData.length > 0
-                ? {
-                    position: 'bottom',
-                    align: 'end',
-                    pageSize: historyPageSize,
-                    size: 'small',
-                    pageSizeOptions: ['6', '10', '15'],
-                    onShowSizeChange: (_current, size) => {
-                      setHistoryPageSize(size);
-                    },
-                    simple: { readOnly: true },
-                  }
-                : undefined
-            }
-            bordered={false}
-            split={false}
-            locale={{
-              emptyText: (
-                <p
-                  style={{
-                    color: '#8c8c8c',
-                    fontSize: size === 'small' ? 12 : 14,
-                  }}
-                >
-                  {t('more.app.todo.empty')}
-                </p>
-              ),
-            }}
-            dataSource={todoList}
-            renderItem={(item) => (
-              <List.Item
+          <div className={styles.todo_history_list}>
+            {todoList.length === 0 ? (
+              <p
                 style={{
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'center',
-                  flexWrap: 'wrap',
-                  border: 'none',
+                  color: '#8c8c8c',
+                  fontSize: size === 'small' ? 12 : 14,
                 }}
               >
-                <div
-                  className={styles.todo_item}
-                  style={{
-                    fontSize: size === 'small' ? 12 : 14,
-                    // height: size === 'small' ? 28 : 32,
-                  }}
-                >
-                  <Checkbox
-                    onChange={async (e) => await toggleTodo(e.target.checked, item)}
-                    checked={Boolean(item.done)}
-                    disabled={disabled}
-                  ></Checkbox>
-                  <div style={{ marginLeft: '8px', flex: 1 }}>
-                    {editingId === item.id ? (
-                      <Input
-                        value={editingValue}
-                        styles={{ input: { fontSize: size === 'small' ? 12 : 14 } }}
-                        size="small"
-                        autoFocus
-                        onChange={(e) => setEditingValue(e.target.value)}
-                        onBlur={() => saveEdit(item)}
-                        onPressEnter={() => saveEdit(item)}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Escape') {
-                            cancelEdit();
-                          }
-                        }}
-                      />
-                    ) : (
-                      <div
-                        onClick={() => startEditing(item)}
-                        style={{
-                          textDecoration: item.done ? 'line-through' : 'none',
-                          cursor: disabled ? 'default' : 'pointer',
-                          color: '#fff',
-                        }}
-                      >
-                        {item.title}
+                {t('more.app.todo.empty')}
+              </p>
+            ) : (
+              <>
+                <Listy
+                  items={historyPageData}
+                  rowKey={(item) => item.id}
+                  itemRender={(item) => (
+                    <div
+                      className={styles.todo_item}
+                      style={{
+                        fontSize: size === 'small' ? 12 : 14,
+                        // height: size === 'small' ? 28 : 32,
+                      }}
+                    >
+                      <Checkbox
+                        onChange={async (e) => await toggleTodo(e.target.checked, item)}
+                        checked={Boolean(item.done)}
+                        disabled={disabled}
+                      ></Checkbox>
+                      <div style={{ marginLeft: '8px', flex: 1 }}>
+                        {editingId === item.id ? (
+                          <Input
+                            value={editingValue}
+                            styles={{ input: { fontSize: size === 'small' ? 12 : 14 } }}
+                            size="small"
+                            autoFocus
+                            onChange={(e) => setEditingValue(e.target.value)}
+                            onBlur={() => saveEdit(item)}
+                            onPressEnter={() => saveEdit(item)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Escape') {
+                                cancelEdit();
+                              }
+                            }}
+                          />
+                        ) : (
+                          <div
+                            onClick={() => startEditing(item)}
+                            style={{
+                              textDecoration: item.done ? 'line-through' : 'none',
+                              cursor: disabled ? 'default' : 'pointer',
+                              color: '#fff',
+                            }}
+                          >
+                            {item.title}
+                          </div>
+                        )}
                       </div>
-                    )}
-                  </div>
-                  <Button
-                    disabled={disabled}
-                    type="text"
-                    onClick={() => deleteTodo(item)}
-                    size={convertToBtnSize(size)}
-                  >
-                    <SvgResource
-                      type="close"
-                      svgSize={12}
-                      color={disabled ? '#666' : '#8c8c8c'}
-                    ></SvgResource>
-                  </Button>
-                </div>
-              </List.Item>
+                      <Button
+                        disabled={disabled}
+                        type="text"
+                        onClick={() => deleteTodo(item)}
+                        size={convertToBtnSize(size)}
+                      >
+                        <SvgResource
+                          type="close"
+                          svgSize={12}
+                          color={disabled ? '#666' : '#8c8c8c'}
+                        ></SvgResource>
+                      </Button>
+                    </div>
+                  )}
+                  styles={{
+                    item: {
+                      padding: '12px 0',
+                      display: 'flex',
+                      alignItems: 'flex-start',
+                      justifyContent: 'center',
+                      flexWrap: 'wrap',
+                      border: 'none',
+                    },
+                  }}
+                />
+                <Pagination
+                  align="end"
+                  size="small"
+                  simple={{ readOnly: true }}
+                  showSizeChanger
+                  pageSize={historyPageSize}
+                  pageSizeOptions={['6', '10', '15']}
+                  onShowSizeChange={(_current, size) => {
+                    setHistoryPageSize(size);
+                  }}
+                  total={todoList.length}
+                  current={historyCurrentPage}
+                  onChange={setHistoryPage}
+                />
+              </>
             )}
-          ></List>
+          </div>
         </div>
         {!disabled && (
           <div className={styles.todo_add_wrapper}>

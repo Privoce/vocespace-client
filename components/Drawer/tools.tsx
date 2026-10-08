@@ -10,11 +10,16 @@ export function DrawerHeader({ title, icon }: { title: string, icon?: React.Reac
   );
 }
 
-export const DEFAULT_DRAWER_PROP: DrawerProps = {
+// styles 收窄为对象分支：antd 新版本 DrawerProps['styles'] 是 object | function 联合，
+// 使用方需要直接访问 .styles.body（注意函数也属于 object，Extract 不适用，需 Exclude 函数）
+type DrawerStylesObject = Exclude<DrawerProps['styles'], (...args: never[]) => unknown>;
+export const DEFAULT_DRAWER_PROP: Omit<DrawerProps, 'styles'> & {
+  styles?: DrawerStylesObject;
+} = {
   style: { backgroundColor: '#111', padding: 0, margin: 0, color: '#fff' },
   placement: 'right',
   closable: false,
-  width: '640px',
+  size: '640px',
   styles: {
     body: {
       padding: '0 24px 0 0',

@@ -1,6 +1,6 @@
 import { CopyOutlined, MenuOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
-import { MediaStage, type ConferenceModel } from './media-stage';
+import { MediaStage, type ConferenceModel } from './mediaStage';
 import styles from './phone.module.scss';
 
 export function PhoneRoomHeader({ model }: { model: ConferenceModel }) {

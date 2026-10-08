@@ -1,6 +1,6 @@
 'use client';
 
-import { DEFAULT_KEYS, FlotAppExports, FlotAppItemProps, TodoProp } from '@/features/widget-apps/shared';
+import { DEFAULT_KEYS, FlotAppExports, FlotAppItemProps, TodoProp } from '@/components/Flot/types';
 import { api } from '@/lib/api';
 import { getParticipantPlatformInfo } from '@/lib/hooks/platform';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
@@ -17,7 +17,7 @@ import {
 import { theme } from 'antd';
 import * as React from 'react';
 import { useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
-import type { CountdownProp, TimerProp } from '../../../features/widget-apps/shared';
+import type { CountdownProp, TimerProp } from '../../Flot/types';
 
 export function useWidgetApps({ messageApi, apps, space, spaceInfo, onHeightChange, isSelf, participantId }: FlotAppItemProps, ref: React.ForwardedRef<FlotAppExports>) {
   const device = useLayoutDevice();

@@ -1,6 +1,6 @@
 import { PaginationControl, PaginationIndicator } from '@/components/Layout/cover';
 import { UnifiedLayout } from '@/components/Layout/unified';
-import type { useConference } from '../hooks/useConference';
+import type { useConference } from '../../../components/Layout/conference/hooks/useConference';
 import { renderConferenceEntity } from './entity';
 export type ConferenceModel = ReturnType<typeof useConference>;
 export function MediaStage({ model }: { model: ConferenceModel }) {

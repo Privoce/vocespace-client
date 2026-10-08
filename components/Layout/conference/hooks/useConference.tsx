@@ -1,12 +1,13 @@
 'use client';
 
-import { VideoContainerExports, VideoContainerProps } from '@/features/conference/shared';
 import React from 'react';
 import { useConferenceEvents } from './useConferenceEvents';
 import { useConferenceLayout } from './useConferenceLayout';
 import { useConferenceMedia } from './useConferenceMedia';
 import { useConferenceMembership } from './useConferenceMembership';
 import { useConferenceState } from './useConferenceState';
+import { VideoContainerExports, VideoContainerProps } from '../types';
+
 export function useConference({
   chatMessageFormatter,
   chatMessageDecoder,

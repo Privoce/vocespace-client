@@ -1,4 +1,4 @@
-import { Button, List, Tabs, TabsProps } from 'antd';
+import { Button, Tabs, TabsProps } from 'antd';
 import styles from '@/components/Controller/index.module.scss';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { MessageInstance } from 'antd/es/message/interface';
@@ -155,55 +155,49 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
         children: (
           <div>
             <h4>{t('settings.virtual.model')}</h4>
-            <List
-              grid={{
-                gutter: 16,
-                column: 3,
-              }}
-              dataSource={modelDatas}
-              renderItem={(item, index) => (
-                <List.Item>
-                  <div
-                    className={styles.virtual_model_box}
-                    onClick={() => {
-                      reloadVirtual();
-                      set_model_selected_index(index);
-                      setModelRole(item.name as ModelRole);
-                      useRoomStore.getState().setVirtualMask(true);
-                      if (compare && item.name != ModelRole.None) {
-                        // 这里需要将外部视频进行遮罩
-                        setCompare(false);
-                        setTimeout(() => {
-                          setCompare(true);
-                        }, 200);
-                      } else if (item.name == ModelRole.None) {
-                        setCompare(false);
-                      } else {
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+              {modelDatas.map((item, index) => (
+                <div
+                  key={item.src}
+                  className={styles.virtual_model_box}
+                  onClick={() => {
+                    reloadVirtual();
+                    set_model_selected_index(index);
+                    setModelRole(item.name as ModelRole);
+                    useRoomStore.getState().setVirtualMask(true);
+                    if (compare && item.name != ModelRole.None) {
+                      // 这里需要将外部视频进行遮罩
+                      setCompare(false);
+                      setTimeout(() => {
                         setCompare(true);
-                      }
-                    }}
-                  >
-                    {model_selected_index == index && <SelectedMask></SelectedMask>}
-                    {/* <h4>{item.name}</h4> */}
-                    {item.name == ModelRole.None ? (
-                      <div
-                        style={{
-                          height: '120px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontWeight: '700',
-                        }}
-                      >
-                        {t('settings.virtual.none')}
-                      </div>
-                    ) : (
-                      <img src={src(`/images/models/${item.src}`)} alt="" />
-                    )}
-                  </div>
-                </List.Item>
-              )}
-            />
+                      }, 200);
+                    } else if (item.name == ModelRole.None) {
+                      setCompare(false);
+                    } else {
+                      setCompare(true);
+                    }
+                  }}
+                >
+                  {model_selected_index == index && <SelectedMask></SelectedMask>}
+                  {/* <h4>{item.name}</h4> */}
+                  {item.name == ModelRole.None ? (
+                    <div
+                      style={{
+                        height: '120px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontWeight: '700',
+                      }}
+                    >
+                      {t('settings.virtual.none')}
+                    </div>
+                  ) : (
+                    <img src={src(`/images/models/${item.src}`)} alt="" />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         ),
       },
@@ -213,40 +207,34 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
         children: (
           <div>
             <h4>{t('settings.virtual.background')}</h4>
-            <List
-              grid={{
-                gutter: 16,
-                column: 3,
-              }}
-              dataSource={bgDatas}
-              renderItem={(item, index) => (
-                <List.Item>
-                  <div
-                    className={styles.virtual_model_box}
-                    onClick={() => {
-                      reloadVirtual();
-                      set_bg_selected_index(index);
-                      useRoomStore.getState().setVirtualMask(true);
-                      setModelBg(item.src as ModelBg);
-                      if (compare && modelRole != ModelRole.None) {
-                        setCompare(false);
-                        setTimeout(() => {
-                          setCompare(true);
-                        }, 200);
-                      } else if (modelRole == ModelRole.None && !compare) {
-                        setCompare(false);
-                      } else {
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
+              {bgDatas.map((item, index) => (
+                <div
+                  key={item.src}
+                  className={styles.virtual_model_box}
+                  onClick={() => {
+                    reloadVirtual();
+                    set_bg_selected_index(index);
+                    useRoomStore.getState().setVirtualMask(true);
+                    setModelBg(item.src as ModelBg);
+                    if (compare && modelRole != ModelRole.None) {
+                      setCompare(false);
+                      setTimeout(() => {
                         setCompare(true);
-                      }
-                    }}
-                  >
-                    {bg_selected_index == index && <SelectedMask></SelectedMask>}
-                    {/* <h4>{item.name}</h4> */}
-                    <img src={src(`/images/bg/${item.src}`)} alt="" />
-                  </div>
-                </List.Item>
-              )}
-            />
+                      }, 200);
+                    } else if (modelRole == ModelRole.None && !compare) {
+                      setCompare(false);
+                    } else {
+                      setCompare(true);
+                    }
+                  }}
+                >
+                  {bg_selected_index == index && <SelectedMask></SelectedMask>}
+                  {/* <h4>{item.name}</h4> */}
+                  <img src={src(`/images/bg/${item.src}`)} alt="" />
+                </div>
+              ))}
+            </div>
           </div>
         ),
       },

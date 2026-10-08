@@ -20,7 +20,7 @@ export interface CountdownProps {
 
 export function AppCountdown({
   messageApi,
-  size = 'default',
+  size = 'medium',
   appData,
   setAppData,
   auth,
@@ -161,7 +161,7 @@ export function AppCountdown({
   return (
     <Card style={{ width: '100%' }} size={size}>
       <Space
-        direction="vertical"
+        orientation="vertical"
         size={size === 'small' ? 'small' : 'large'}
         style={{ width: '100%' }}
       >
@@ -194,7 +194,7 @@ export function AppCountdown({
                   ? timestampToSecond(appData.value - appData.stopTimeStamp)
                   : '--:--:--'
               }
-              valueStyle={timerStyle.text}
+              styles={{ content: timerStyle.text }}
             />
           ) : (
             <>
@@ -204,12 +204,12 @@ export function AppCountdown({
                   value={appData.value}
                   onFinish={onCountdownFinish}
                   format="HH:mm:ss"
-                  valueStyle={timerStyle.text}
+                  styles={{ content: timerStyle.text }}
                 />
               ) : (
                 <Statistic
                   value={appData.duration?.format('HH:mm:ss')}
-                  valueStyle={timerStyle.text}
+                  styles={{ content: timerStyle.text }}
                 />
               )}
             </>

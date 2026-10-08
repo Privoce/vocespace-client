@@ -1,6 +1,6 @@
 'use client';
 
-import { HistorySpaceData, LeaderboardData, ParticipantTableData } from '@/features/dashboard/shared';
+import { HistorySpaceData, LeaderboardData, ParticipantTableData } from '@/app/dashboard/shared';
 import { api } from '@/lib/api';
 import { getParticipantPlatformInfo } from '@/lib/hooks/platform';
 import { useLatestCallback } from '@/lib/hooks/use-latest-callback';

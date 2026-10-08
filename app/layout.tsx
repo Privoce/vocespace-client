@@ -5,7 +5,7 @@ import '../styles/globals.css';
 import '@livekit/components-styles';
 import '@livekit/components-styles/prefabs';
 import type { Metadata, Viewport } from 'next';
-import { ConfigProvider } from 'antd';
+import { App, ConfigProvider } from 'antd';
 
 export const metadata: Metadata = {
   title: {
@@ -223,8 +223,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <html lang="en">
         <body  style={{backgroundColor: '#1a1a1a'}}>
           <I18nProvider initialLocale="en">
-            <DeviceLayoutSync />
-            <WeChatAccessGuard>{children}</WeChatAccessGuard>
+            {/* component={false} 不渲染额外 DOM，仅为 App.useApp() 提供上下文（message 等消费主题） */}
+            <App component={false}>
+              <DeviceLayoutSync />
+              <WeChatAccessGuard>{children}</WeChatAccessGuard>
+            </App>
           </I18nProvider>
         </body>
       </html>

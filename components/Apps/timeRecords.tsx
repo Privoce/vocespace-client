@@ -1,4 +1,4 @@
-import { List } from 'antd';
+import { Listy } from 'antd';
 import styles from '@/styles/apps.module.scss';
 import { CardSize } from 'antd/es/card/Card';
 import { useMemo } from 'react';
@@ -9,7 +9,7 @@ export interface TimeRecordsProps {
   size?: CardSize;
 }
 
-export function TimeRecords({ data, clear, size }: TimeRecordsProps) {
+export function TimeRecords({ data, size }: TimeRecordsProps) {
   const recordStyle = useMemo(() => {
     if (size === 'default') {
       return {};
@@ -18,20 +18,20 @@ export function TimeRecords({ data, clear, size }: TimeRecordsProps) {
     }
   }, [size]);
 
+  if (data.length === 0) {
+    return null;
+  }
+
   return (
-    <List
-      split={false}
-      locale={{
-        emptyText: <></>,
-      }}
-      dataSource={data}
-      renderItem={(item) => (
-        <List.Item>
-          <strong className={styles.record_item} style={recordStyle}>
-            {item}
-          </strong>
-        </List.Item>
+    <Listy
+      items={data}
+      rowKey={(item) => item}
+      itemRender={(item) => (
+        <strong className={styles.record_item} style={recordStyle}>
+          {item}
+        </strong>
       )}
-    ></List>
+      styles={{ item: { padding: '12px 0' } }}
+    ></Listy>
   );
 }

@@ -1,9 +1,9 @@
 import { SpaceInfo, SpaceTodo, TodoItem } from '@/lib/std/space';
 import { useI18n } from '@/lib/i18n/i18n';
-import { Collapse, Progress, Empty, Card, List } from 'antd';
+import { Collapse, Progress, Empty, Card, Listy, Pagination } from 'antd';
 import { AppTodo } from './todoList';
 import { MessageInstance } from 'antd/es/message/interface';
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import styles from '@/styles/apps.module.scss';
 import { SvgResource } from '@/components/Icon/index';
 import { getParticipantPlatformInfo } from '@/lib/hooks/platform';
@@ -55,6 +55,18 @@ export function TodoTogether({ spaceInfo, messageApi, space }: TodoTogetherProps
       .sort((a, b) => a.name.localeCompare(b.name)); // 按名字排序
   }, [spaceInfo.participants]);
 
+  const TODO_TOGETHER_PAGE_SIZE = 4;
+  const [summaryPage, setSummaryPage] = useState(1);
+  const summaryTotalPages = Math.max(
+    1,
+    Math.ceil(participantSummaries.length / TODO_TOGETHER_PAGE_SIZE),
+  );
+  const summaryCurrentPage = Math.min(summaryPage, summaryTotalPages);
+  const pagedSummaries = participantSummaries.slice(
+    (summaryCurrentPage - 1) * TODO_TOGETHER_PAGE_SIZE,
+    summaryCurrentPage * TODO_TOGETHER_PAGE_SIZE,
+  );
+
   // 生成每个参与者的Collapse项目
   const createCollapseItemsForParticipant = (summary: ParticipantTodoSummary) => {
     const progressPercent =
@@ -100,7 +112,7 @@ export function TodoTogether({ spaceInfo, messageApi, space }: TodoTogetherProps
                   percent={progressPercent}
                   size="small"
                   strokeColor="#22CCEE"
-                  trailColor="#333"
+                  railColor="#333"
                   showInfo={false}
                   style={{ width: '100%', marginRight: '8px' }}
                 />
@@ -158,31 +170,33 @@ export function TodoTogether({ spaceInfo, messageApi, space }: TodoTogetherProps
   return (
     <Card
       style={{ width: '100%' }}
-      size="default"
+      size="medium"
       styles={{ body: { padding: '4px 0px 4px 8px' } }}
     >
       <div className={styles.todo_together_wrapper}>
-        <List
-          dataSource={participantSummaries}
-          pagination={{
-            position: 'bottom',
-            align: 'end',
-            pageSize: 4,
-            size: 'small',
-            simple: { readOnly: true },
-            showSizeChanger: false,
-          }}
-          renderItem={(summary) => (
-            <List.Item style={{ padding: '0 0 4px 0' }}>
-              <Collapse
-                items={createCollapseItemsForParticipant(summary)}
-                ghost
-                expandIconPosition="end"
-                className={styles.todo_together_collapse}
-                style={{ width: '100%' }}
-              />
-            </List.Item>
+        <Listy
+          items={pagedSummaries}
+          rowKey={(summary) => summary.participantId}
+          itemRender={(summary) => (
+            <Collapse
+              items={createCollapseItemsForParticipant(summary)}
+              ghost
+              expandIconPlacement="end"
+              className={styles.todo_together_collapse}
+              style={{ width: '100%' }}
+            />
           )}
+          styles={{ item: { padding: '0 0 4px 0' } }}
+        />
+        <Pagination
+          align="end"
+          size="small"
+          simple={{ readOnly: true }}
+          showSizeChanger={false}
+          pageSize={TODO_TOGETHER_PAGE_SIZE}
+          total={participantSummaries.length}
+          current={summaryCurrentPage}
+          onChange={setSummaryPage}
         />
       </div>
     </Card>

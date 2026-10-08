@@ -94,7 +94,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
         <Drawer
           {...DEFAULT_DRAWER_PROP}
           title={t('common.setting')}
-          width={device === 'phone' ? '100%' : 640}
+          size={device === 'phone' ? '100%' : 640}
           rootClassName={device === 'phone' ? mobile.drawer : undefined}
           styles={{ body: { padding: device === 'phone' ? 0 : '0 24px', overflow: 'auto' } }}
           open={settingVis}

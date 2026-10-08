@@ -1,4 +1,3 @@
-import { isTrackReferencePlaceholder } from '@/app/[spaceName]/container';
 import {
   MouseMove,
   useVideoBlur,
@@ -59,6 +58,7 @@ import {
   TileWhiteboardOverlay,
 } from './effect';
 import { TileActionCollect } from '@/components/Widgets/tile_action_pin';
+import { isTrackReferencePlaceholder } from '@livekit/components-core';
 
 export interface ParticipantItemProps extends ParticipantTileMiniProps {
   messageApi: MessageInstance;

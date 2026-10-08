@@ -1,22 +1,16 @@
 import { socket } from '@/lib/realtime/socket';
 import type { createSocketScope } from '@/lib/realtime/socket-scope';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
-import {
-  ControlType,
-  WsBase,
-  WsControlParticipant,
-  WsInviteDevice,
-  WsTo
-} from '@/lib/std/device';
+import { ControlType, WsBase, WsControlParticipant, WsInviteDevice, WsTo } from '@/lib/std/device';
 import { Button } from 'antd';
 import type { Room } from 'livekit-client';
-import {
-  LocalTrackPublication,
-  Participant,
-  Track
-} from 'livekit-client';
+import { LocalTrackPublication, Participant, Track } from 'livekit-client';
 import type { useConferenceState } from '../hooks/useConferenceState';
-export function registerModerationEvents(context: ReturnType<typeof useConferenceState> & { space: Room }, events: ReturnType<typeof createSocketScope>, onParticipantDisConnected: (participant: Participant) => Promise<void>) {
+export function registerModerationEvents(
+  context: ReturnType<typeof useConferenceState> & { space: Room },
+  events: ReturnType<typeof createSocketScope>,
+  onParticipantDisConnected: (participant: Participant) => Promise<void>,
+) {
   const {
     layoutContext,
     noteApi,

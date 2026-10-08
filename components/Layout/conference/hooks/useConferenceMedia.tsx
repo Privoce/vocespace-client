@@ -2,7 +2,6 @@
 
 import { useUserStatus } from '@/components/Controller/hooks/index';
 import { useReplaceLivekitTrack } from '@/components/Layout/unified';
-import { getTrackReferenceIdSafe, TrackReferenceOrPlaceholder, VideoLayoutEntity } from '@/features/conference/shared';
 import { socket } from '@/lib/realtime/socket';
 import {
   WsBase
@@ -22,6 +21,7 @@ import React, {
   useMemo
 } from 'react';
 import type { useConferenceMembership } from './useConferenceMembership';
+import { getTrackReferenceIdSafe, TrackReferenceOrPlaceholder, VideoLayoutEntity } from '../types';
 
 export function useConferenceMedia(context: ReturnType<typeof useConferenceMembership>) {
   const {

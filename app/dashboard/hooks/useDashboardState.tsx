@@ -1,7 +1,7 @@
 'use client';
 
 import { useVoceSpaceConf } from '@/components/Settings/panels/conf';
-import { ActionKey, HistorySpaceData, LeaderboardData, MenuTab, ParticipantTableData } from '@/features/dashboard/shared';
+import { ActionKey, HistorySpaceData, LeaderboardData, MenuTab, ParticipantTableData } from '@/app/dashboard/shared';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { useSocketSession } from '@/lib/hooks/use-socket-session';
 import { useI18n } from '@/lib/i18n/i18n';

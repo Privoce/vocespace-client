@@ -5,7 +5,6 @@ import { CheckboxGroupProps } from 'antd/es/checkbox';
 import TextArea from 'antd/es/input/TextArea';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useEffect, useMemo, useState } from 'react';
-import { Calendly } from '@/app/pages/controls/widgets/calendly';
 import { api } from '@/lib/api';
 import {
   analyzeLicense,
@@ -23,6 +22,7 @@ import {
 } from '@ant-design/icons';
 import { DEFAULT_VOCESPACE_CONFIG, ReadableConf } from '@/lib/std/conf';
 import { DEFAULT_LICENSE } from '@/lib/std/license';
+import { Calendly } from '@/components/Widgets/calendly';
 
 type ModelKey = 'update' | 'renew' | 'server';
 type OptionValue = 'renew' | 'custom';

@@ -890,7 +890,9 @@ export function UnifiedLayout<TEntity extends LayoutEntity = LayoutEntity>({
               transitionEasing,
             })}
           >
-            <div style={{ width: '100%', height: '100%' }}>{renderEntity(entity, renderState)}</div>
+            <div style={{ width: '100%', height: '100%', display: 'grid' }}>
+              {renderEntity(entity, renderState)}
+            </div>
           </div>
         );
       })}

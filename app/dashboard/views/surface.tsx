@@ -20,9 +20,9 @@ import {
   SMTPConfModal,
 } from '@/app/dashboard/components';
 import { LangSelect } from '@/components/Select/lang';
-import { Title } from '@/features/dashboard/shared';
+import { Title } from '@/app/dashboard/shared';
 import styles from '@/styles/dashboard.module.scss';
-import type { useDashboard } from '../../../app/dashboard/hooks/useDashboard';
+import type { useDashboard } from '../hooks/useDashboard';
 export type DashboardModel = ReturnType<typeof useDashboard>;
 export function DashboardSurface({ model }: { model: DashboardModel }) {
   const {

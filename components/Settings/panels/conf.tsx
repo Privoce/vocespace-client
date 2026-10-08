@@ -1,7 +1,7 @@
 import { Button, InputNumber, Select, Slider, SliderSingleProps } from 'antd';
 import styles from '@/components/Controller/index.module.scss';
 import { useI18n } from '@/lib/i18n/i18n';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   AIConf,
   countLevelByConf,
@@ -134,7 +134,7 @@ export function ConfQulity({ isOwner, messageApi, space, onReload }: ConfQulityP
               dots
               range={false}
               style={{ width: '100%', marginLeft: '16px', marginRight: '16px' }}
-              onChange={(value) => {
+              onChange={(value: number) => {
                 setRtcLevel(value);
                 setReload(value !== originRtcLevel.current);
               }}
@@ -155,7 +155,7 @@ export function ConfQulity({ isOwner, messageApi, space, onReload }: ConfQulityP
                 options={codecOptions}
                 style={{ width: '100%' }}
                 value={rtcConf.codec}
-                onChange={(value) => {
+                onChange={(value: RTCConf['codec']) => {
                   setRTCConf({ ...rtcConf, codec: value });
                 }}
               ></Select>
@@ -165,7 +165,7 @@ export function ConfQulity({ isOwner, messageApi, space, onReload }: ConfQulityP
                 options={resolutionOptions}
                 style={{ width: '100%' }}
                 value={rtcConf.resolution}
-                onChange={(value) => {
+                onChange={(value: RTCConf['resolution']) => {
                   setRTCConf({ ...rtcConf, resolution: value });
                 }}
               ></Select>
@@ -179,8 +179,8 @@ export function ConfQulity({ isOwner, messageApi, space, onReload }: ConfQulityP
                 keyboard={false}
                 step={100000}
                 max={20000000}
-                formatter={(value) => `${value} bps`}
-                onChange={(value) => {
+                formatter={(value: number | undefined) => `${value} bps`}
+                onChange={(value: number | null) => {
                   setMaxBitrate(value ?? 100000);
                   setRTCConf({ ...rtcConf, maxBitrate: value ?? 100000 });
                 }}
@@ -192,10 +192,10 @@ export function ConfQulity({ isOwner, messageApi, space, onReload }: ConfQulityP
                 min={10}
                 max={90}
                 step={1}
-                formatter={(value) => `${value} fps`}
+                formatter={(value: number | undefined) => `${value} fps`}
                 className={styles.common_space}
                 value={maxFramerate}
-                onChange={(value) => {
+                onChange={(value: number | null) => {
                   setMaxFramerate(value ?? 10);
                   setRTCConf({ ...rtcConf, maxFramerate: value ?? 10 });
                 }}
@@ -223,7 +223,9 @@ export function ConfQulity({ isOwner, messageApi, space, onReload }: ConfQulityP
 
 export function useVoceSpaceConf() {
   const [conf, setConf] = useState<ReadableConf | null>(null);
-  const getConf = async (hostToken?: string) => {
+  // useCallback 稳定引用：getConf 被 useDashboardData 的 effect 依赖，
+  // 若每次渲染都是新函数，配合 setConf 触发的重渲染会形成请求死循环
+  const getConf = useCallback(async (hostToken?: string) => {
     const response = await api.getConf(hostToken);
     if (response.ok) {
       const nextConf = (await response.json()) as ReadableConf;
@@ -231,7 +233,7 @@ export function useVoceSpaceConf() {
       return nextConf;
     }
     return null;
-  };
+  }, []);
   const checkHostToken = async (hostToken: string) => {
     const response = await api.checkHostToken(hostToken);
     if (response.ok) {

@@ -19,7 +19,7 @@ export interface AppTimerProps {
   auth: AppAuth;
 }
 
-export function AppTimer({ size = 'default', appData, setAppData, auth }: AppTimerProps) {
+export function AppTimer({ size = 'medium', appData, setAppData, auth }: AppTimerProps) {
   const disabled = useMemo(() => {
     return auth !== 'write';
   }, [auth]);
@@ -153,7 +153,7 @@ export function AppTimer({ size = 'default', appData, setAppData, auth }: AppTim
     <>
       <Card style={{ width: '100%' }} size={size}>
         <Space
-          direction="vertical"
+          orientation="vertical"
           size={size === 'small' ? 'small' : 'large'}
           style={{ width: '100%' }}
         >
@@ -165,12 +165,12 @@ export function AppTimer({ size = 'default', appData, setAppData, auth }: AppTim
                     type="countup"
                     value={appData.value}
                     format="HH:mm:ss"
-                    valueStyle={timerStyle.text}
+                    styles={{ content: timerStyle.text }}
                   />
                 )}
               </>
             ) : (
-              <Statistic value={timestampToSecond()} valueStyle={timerStyle.text} />
+              <Statistic value={timestampToSecond()} styles={{ content: timerStyle.text }} />
             )}
           </div>
           <TimeRecords

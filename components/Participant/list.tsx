@@ -1,4 +1,4 @@
-import { Avatar, List, MenuProps } from 'antd';
+import { Avatar, Listy, MenuProps } from 'antd';
 import styles from '@/components/Controller/index.module.scss';
 import { randomColor } from '@/lib/std';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -38,45 +38,43 @@ export function ParticipantList({
   const { t } = useI18n();
 
   return (
-    <List
-      itemLayout="horizontal"
-      dataSource={participants}
-      split={false}
-      renderItem={(item, index) => (
-        <List.Item>
-          <ControlRKeyMenu
-            menu={item[0] === space.localParticipant.identity ? selfMenu : menu}
-            onOpenChange={(open) => onOpenMenu(open, item[0])}
-            isRKey={true}
+    <Listy
+      items={participants}
+      rowKey={(item) => item[0]}
+      itemRender={(item, index) => (
+        <ControlRKeyMenu
+          menu={item[0] === space.localParticipant.identity ? selfMenu : menu}
+          onOpenChange={(open) => onOpenMenu(open, item[0])}
+          isRKey={true}
 
-          >{
-              <div className={styles.particepant_item}>
-                <div className={styles.particepant_item_left}>
-                  <Avatar
-                    size={size}
-                    style={{
-                      backgroundColor: randomColor(item[1].name),
-                    }}
-                  >
-                    {item[1].name.substring(0, 3)}
-                  </Avatar>
-                  <span>{item[1].name}</span>
-                  {item[0] === spaceInfo.ownerId && (
-                    <span className={styles.particepant_item_owner}>
-                      ( {t('more.participant.host')} )
-                    </span>
-                  )}
-                  {spaceInfo.managers.includes(item[0]) && (
-                    <span className={styles.particepant_item_owner}>
-                      ( {t('more.participant.manager')} )
-                    </span>
-                  )}
-                </div>
-                {suffix && suffix(item, index)}
+        >{
+            <div className={styles.particepant_item}>
+              <div className={styles.particepant_item_left}>
+                <Avatar
+                  size={size}
+                  style={{
+                    backgroundColor: randomColor(item[1].name),
+                  }}
+                >
+                  {item[1].name.substring(0, 3)}
+                </Avatar>
+                <span>{item[1].name}</span>
+                {item[0] === spaceInfo.ownerId && (
+                  <span className={styles.particepant_item_owner}>
+                    ( {t('more.participant.host')} )
+                  </span>
+                )}
+                {spaceInfo.managers.includes(item[0]) && (
+                  <span className={styles.particepant_item_owner}>
+                    ( {t('more.participant.manager')} )
+                  </span>
+                )}
               </div>
-            }</ControlRKeyMenu>
-        </List.Item>
+              {suffix && suffix(item, index)}
+            </div>
+          }</ControlRKeyMenu>
       )}
+      styles={{ item: { padding: '12px 0', display: 'flex', alignItems: 'center' } }}
     />
   );
 }
