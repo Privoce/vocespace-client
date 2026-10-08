@@ -207,7 +207,9 @@ export const clearReadableConf = (
   hostToken?: string | null,
 ): ReadableConf => {
   const readableConf: ReadableConf = {
-    livekit: conf.livekit,
+    livekit: hostToken && conf.hostToken && hostToken === conf.hostToken
+      ? { ...conf.livekit }
+      : { url: conf.livekit.url, turn: conf.livekit.turn, key: '', secret: '' },
     codec: conf.codec,
     resolution: conf.resolution,
     maxBitrate: conf.maxBitrate,

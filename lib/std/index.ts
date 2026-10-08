@@ -1,3 +1,4 @@
+import { generateBasicIdentity } from '@vocespace/domain';
 import clsx from 'clsx';
 import { Trans } from '../i18n/i18n';
 import { GetProp, UploadProps } from 'antd';
@@ -422,6 +423,7 @@ export const encodeChildRoomEnter = (space: string, room: string, roomOwner: str
  *
  */
 export interface SearchParams {
+  code?: string;
   /**
    * 地区
    */
@@ -604,8 +606,7 @@ export const verifyTokenResult = (tokenResult: Partial<TokenResult>): boolean =>
   return !(!tokenResult.id || !tokenResult.username || !tokenResult.space);
 };
 
-export const generateBasicIdentity = (participantName: string, spaceName: string): string =>
-  `${participantName}__${spaceName}`;
+export { generateBasicIdentity } from '@vocespace/domain';
 
 export const verifyPlatformUser = (platUser: PlatformUser | TokenResult): boolean => {
   // 只需要验证exp是否过期

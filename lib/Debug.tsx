@@ -5,7 +5,7 @@ import { setLogLevel, LogLevel, RemoteTrackPublication, setLogExtension } from '
 import { tinykeys } from 'tinykeys';
 import { datadogLogs } from '@datadog/browser-logs';
 
-import styles from '../styles/Debug.module.css';
+import styles from '@/styles/Debug.module.css';
 
 export const useDebugMode = ({ logLevel }: { logLevel?: LogLevel }) => {
   const room = useRoomContext();

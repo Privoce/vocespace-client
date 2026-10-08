@@ -10,5 +10,5 @@ export function notifyParticipantReinit(participant: WsParticipant) {
   if (!globalThis.vocespaceSocketServer) {
     throw new Error('Socket.IO server is unavailable; start the app with server.js');
   }
-  globalThis.vocespaceSocketServer.emit('re_init_response', participant);
+  globalThis.vocespaceSocketServer.to(`space:${participant.space}`).emit('re_init_response', participant);
 }

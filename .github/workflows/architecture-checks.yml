@@ -1,0 +1,34 @@
+name: Architecture checks
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.27.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.12.0
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check:boundaries
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm typecheck:mobile
+      - run: pnpm --filter @vocespace/mobile export
+      - run: pnpm --filter @vocespace/web typecheck
+      - run: pnpm build:api
+      - run: pnpm build:web
+      - run: sudo apt-get update && sudo apt-get install -y redis-server
+      - run: pnpm package:api /tmp/vocespace-api-runtime
+      - run: pnpm test:backend
+        env:
+          WEB_BUILD_DIR: ${{ github.workspace }}/apps/web/.next/standalone
+          API_BUILD_DIR: /tmp/vocespace-api-runtime

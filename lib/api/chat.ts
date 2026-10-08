@@ -1,9 +1,11 @@
+import { apiFetch } from './client';
+import { getWebClient } from './client';
 import { LocalParticipant } from 'livekit-client';
 import { connect_endpoint, FileType } from '../std';
 
 export const fetchLinkPreview = async (text: string) => {
   const url = new URL(connect_endpoint('/api/chat'), window.location.origin);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -18,11 +20,7 @@ export const fetchLinkPreview = async (text: string) => {
  * @returns
  */
 export const getChatMsg = async (spaceName: string) => {
-  const url = new URL(connect_endpoint('/api/space'), window.location.origin);
-  url.searchParams.append('spaceName', spaceName);
-  url.searchParams.append('chat', 'true');
-  url.searchParams.append('history', 'true');
-  return await fetch(url.toString());
+  return getWebClient().chat.history(spaceName);
 };
 
 export const uploadFile = async (
@@ -42,7 +40,7 @@ export const uploadFile = async (
   formData.append('senderId', localParticipant.identity);
   formData.append('senderName', localParticipant.name || localParticipant.identity);
 
-  return await fetch('/api/upload', {
+  return await apiFetch(connect_endpoint('/api/upload'), {
     method: 'POST',
     body: formData,
     signal: abortController?.signal, // 添加取消信号
@@ -82,7 +80,7 @@ export const handleFileSystem = async (
 ) => {
   const url = new URL(connect_endpoint('/api/upload'), window.location.origin);
   url.searchParams.append('action', 'fs');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -121,13 +119,13 @@ export const handleTilePlayerFile = async (
     if (room) formData.append('room', room);
     if (identity) formData.append('identity', identity);
     formData.append('file', file as File);
-    return await fetch(url.toString(), {
+    return await apiFetch(url.toString(), {
       method: 'POST',
       body: formData,
     });
   }
 
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',

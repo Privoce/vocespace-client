@@ -1,0 +1,17 @@
+{
+  "name": "@vocespace/client-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "files": [
+    "src"
+  ],
+  "dependencies": {
+    "@vocespace/contracts": "workspace:*",
+    "socket.io-client": "^4.8.1"
+  }
+}

@@ -1,3 +1,4 @@
+import { apiFetch } from './client';
 import { Extraction } from '../ai/analysis';
 import { CutScreenShot } from '../ai/cut';
 import { connect_endpoint } from '../std';
@@ -26,7 +27,7 @@ const getBaseUrl = () => connect_endpoint('/api/ai');
  */
 const analysis = async (params: AnalysisRequestBody) => {
   const url = new URL(getBaseUrl(), window.location.origin);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -79,7 +80,7 @@ const unifiedGet = async (
   url.searchParams.append('spaceName', spaceName);
   url.searchParams.append('userId', userId);
   url.searchParams.append('isAuth', isAuth ? 'true' : 'false');
-  return await fetch(url.toString());
+  return await apiFetch(url.toString());
 };
 
 export const ai = {

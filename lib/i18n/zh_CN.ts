@@ -808,6 +808,7 @@ export default {
     },
   },
   msg: {
+    send_failed: '消息发送失败，草稿已保留，请重试。',
     info: {
       title: '由 Privoce 开发的您的网络共享工作空间',
       contact: '请联系',

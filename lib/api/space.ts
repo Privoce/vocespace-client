@@ -1,3 +1,5 @@
+import { apiFetch, ensureWebSession } from './client';
+import { getWebClient } from './client';
 import { Socket } from 'socket.io-client';
 import {
   AuthType,
@@ -26,7 +28,7 @@ const SPACE_API = connect_endpoint('/api/space');
 export const flushdb = async (hostToken: string) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('flushdb', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ hostToken }),
@@ -37,7 +39,7 @@ export const deleteSpace = async (spaceName: string) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('space', 'true');
   url.searchParams.append('delete', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ spaceName }),
@@ -58,26 +60,15 @@ export const joinSpace = async (
   identity?: string,
   auth?: string,
 ) => {
-  const url = new URL(connect_endpoint('/api/connection-details'), window.location.origin);
-  url.searchParams.append('spaceName', spaceName);
-  url.searchParams.append('participantName', username);
-  if (identity) {
-    url.searchParams.append('identity', identity);
-  }
-  if (auth) {
-    url.searchParams.append('auth', auth);
-  }
-  if (region) {
-    url.searchParams.append('region', region);
-  }
-  return await fetch(url.toString());
+  await ensureWebSession();
+  return getWebClient().connections.request({ spaceName, participantName: username, region, identity });
 };
 
 export const createSpace = async (username: string) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('space', 'create');
   url.searchParams.append('owner', username);
-  return await fetch(url.toString());
+  return await apiFetch(url.toString());
 };
 
 /**
@@ -87,14 +78,14 @@ export const allSpaceInfos = async () => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('all', 'true');
   url.searchParams.append('detail', 'true');
-  return await fetch(url.toString());
+  return await apiFetch(url.toString());
 };
 
 export const updateSpaceInfo = async (spaceName: string, info: Partial<SpaceInfo>) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('space', 'true');
   url.searchParams.append('update', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -110,7 +101,7 @@ export const updateSpaceInfo = async (spaceName: string, info: Partial<SpaceInfo
 export const historySpaceInfos = async () => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('timeRecord', 'true');
-  return await fetch(url.toString());
+  return await apiFetch(url.toString());
 };
 /**
  *  向服务器请求一个唯一的用户名
@@ -119,7 +110,7 @@ export const getUniqueUsername = async (spaceName: string) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('spaceName', spaceName);
   url.searchParams.append('pre', 'true');
-  return await fetch(url.toString());
+  return await apiFetch(url.toString());
 };
 
 export interface CheckNameBody {
@@ -140,7 +131,7 @@ export const checkUsername = async (
 ) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('nameCheck', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -170,7 +161,7 @@ export const defineUserStatus = async (
 ) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('status', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -191,7 +182,7 @@ export const defineUserStatus = async (
 export const getSpaceInfo = async (spaceName: string) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('spaceName', spaceName);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     cache: 'no-store',
   });
 };
@@ -204,7 +195,7 @@ export interface UpdateOwnerIdBody {
 export const updateOwnerId = async (spaceName: string, replacedId: string) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('ownerId', 'update');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -226,17 +217,7 @@ export interface DeleteSpaceParticipantBody {
  * @returns
  */
 export const deleteSpaceParticipant = async (spaceName: string, participantId: string) => {
-  const url = new URL(SPACE_API, window.location.origin);
-  url.searchParams.append('participant', 'delete');
-  url.searchParams.append('space', 'true');
-  return await fetch(url.toString(), {
-    method: 'DELETE',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      spaceName,
-      participantId,
-    } as DeleteSpaceParticipantBody),
-  });
+  return getWebClient().participants.leave(spaceName, participantId);
 };
 
 export interface UpdateSpaceParticipantBody {
@@ -267,7 +248,7 @@ export const transOrSetOwnerManager = async (
   url.searchParams.append('transfer', isTransfer ? 'true' : 'false');
   url.searchParams.append('space', 'true');
   url.searchParams.append('auth', 'manage');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -291,7 +272,7 @@ export const updateSpaceParticipant = async (
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('participant', 'update');
   url.searchParams.append('space', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -313,7 +294,7 @@ export interface UpdateSpaceAppsBody {
 export const updateSpaceApps = async (spaceName: string, appKey: AppKey, enabled: boolean) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('apps', 'update');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -337,7 +318,7 @@ export const updateSpaceAppSync = async (
 ) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('apps', 'sync');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -361,7 +342,7 @@ export const updateSpaceAppAuth = async (
 ) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('apps', 'auth');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -396,7 +377,7 @@ export const persistentSpace = async (spaceName: string, persistence: boolean) =
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('space', 'true');
   url.searchParams.append('persistence', 'update');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ spaceName, persistence } as PersistentSpaceBody),
@@ -412,7 +393,7 @@ export const allowGuest = async (spaceName: string, allowGuest: AllowGuest) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('space', 'true');
   url.searchParams.append('allowGuest', 'update');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ spaceName, allowGuest } as AllowGuestBody),
@@ -437,7 +418,7 @@ export const uploadSpaceApp = async (
 ) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('apps', 'upload');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -460,7 +441,7 @@ export const deleteTodo = async (
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('apps', 'upload');
   url.searchParams.append('delete', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -476,9 +457,9 @@ export const deleteTodo = async (
 
 export const getUserMeta = async (userId: string | undefined) => {
   // const url = new URL('http://localhost:3000/api/vocespace'); // 开发环境测试用
-  const url = new URL('https://home.vocespace.com/api/vocespace'); // 生产环境使用
+  const url = new URL(connect_endpoint('/api/platform'), window.location.origin); // 生产环境使用
   url.searchParams.append('userId', userId || '');
-  return await fetch(url.toString());
+  return await apiFetch(url.toString());
 };
 
 export interface WorkModeBody {
@@ -495,7 +476,7 @@ export const handleWorkMode = async (
   const url = new URL(SPACE_API, window.location.origin);
 
   url.searchParams.append('mode', 'work');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -526,7 +507,7 @@ export const enterRoom = async (
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('childRoom', 'true');
   url.searchParams.append('enter', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -544,7 +525,7 @@ export const enterSpaceRoomFromLink = async (childRoomEnter: ChildRoomEnter) => 
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('childRoom', 'true');
   url.searchParams.append('enter', 'link');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(childRoomEnter),
@@ -561,7 +542,7 @@ export const updateAuthRBACConf = async (spaceName: string, conf: SpaceAuthConf)
   url.searchParams.append('space', 'true');
   url.searchParams.append('update', 'true');
   url.searchParams.append('auth', 'rbac');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ spaceName, authConf: conf } as UpdateAuthRBACConfBody),
@@ -573,7 +554,7 @@ export const uploadIframeUrl = async (spaceName: string, iframeUrl: string) => {
   url.searchParams.append('space', 'true');
   url.searchParams.append('update', 'true');
   url.searchParams.append('iframe', 'url');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ spaceName, iframeUrl }),

@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { apiFetch } from '@/lib/api/client';
+import { useLatestCallback } from '@/lib/hooks/use-latest-callback';
+import { useEffect, useMemo, useState } from 'react';
 import { connect_endpoint, isUndefinedString } from '.';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useI18n } from '../i18n/i18n';
@@ -16,8 +18,7 @@ export enum RecordState {
 }
 
 export interface EnvData {
-  s3_access_key?: string;
-  s3_secret_key?: string;
+  configured?: boolean;
   s3_bucket?: string;
   s3_region?: string;
   server_host?: string;
@@ -44,79 +45,46 @@ export function useRecordingEnv(messageApi: MessageInstance) {
   const [env, setEnv] = useState<EnvData | null>(null);
   const { t } = useI18n();
   const [state, setState] = useState<RecordState>(RecordState.GetEnv);
-  const get_env = useCallback(async () => {
-    if (env != null) return;
-
-    const url = new URL(CONNECT_ENDPOINT, window.location.origin);
-    url.searchParams.set('env', 'true');
-    const response = await fetch(url.toString());
-    if (response.ok) {
-      const { s3_access_key, s3_secret_key, s3_bucket, s3_region, server_host }: EnvData =
-        await response.json();
-
-      if (
-        isUndefinedString(s3_access_key) ||
-        isUndefinedString(s3_secret_key) ||
-        isUndefinedString(s3_bucket) ||
-        isUndefinedString(s3_region) ||
-        isUndefinedString(server_host)
-      ) {
-        setState(RecordState.UnAvailable);
-        messageApi.error(t('recording.try_s3.unavailible'));
-      } else {
-        setEnv({
-          s3_access_key,
-          s3_secret_key,
-          s3_bucket,
-          s3_region,
-          server_host,
-        });
-        setState(RecordState.Init);
-        messageApi.success(t('recording.try_s3.init'));
-      }
-    }
-  }, [env]);
-
-  const try_connectS3 = useCallback(async () => {
-    try {
-      const response = await api.testS3Connection();
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setState(RecordState.Connected);
-          messageApi.success(t('recording.try_s3.connected'));
-        } else {
-          setState(RecordState.UnAvailable);
-          messageApi.error(t('recording.try_s3.connect_error'));
-        }
-      }
-    } catch (error) {
-      console.error('S3连接测试失败:', error);
-      setState(RecordState.UnAvailable);
-    }
-  }, []);
+  const notify = useLatestCallback((kind: 'success' | 'error', key: string) => {
+    messageApi[kind](t(key));
+  });
 
   useEffect(() => {
-    switch (state) {
-      case RecordState.GetEnv:
-        // 获取环境变量
-        get_env();
-        break;
-      case RecordState.Init:
-        // 尝试连接S3服务
-        try_connectS3();
-        break;
-      case RecordState.Connected:
-        // 已经连接到S3服务，可以进行后续操作
-        break;
-      case RecordState.UnAvailable:
-        // 无法连接到S3服务，提示用户
-        messageApi.error(t('recording.try_s3.connect_error'));
-        break;
-      default:
-        break;
-    }
-  }, [state, get_env, try_connectS3]);
+    const controller = new AbortController();
+    let active = true;
+    const initialize = async () => {
+      const url = new URL(CONNECT_ENDPOINT, window.location.origin);
+      url.searchParams.set('env', 'true');
+      const response = await apiFetch(url.toString(), { signal: controller.signal });
+      if (!response.ok) throw new Error('Recording capabilities unavailable');
+      const { configured, s3_bucket, s3_region, server_host }: EnvData = await response.json();
+      if (!active) return;
+      if (configured === false || isUndefinedString(s3_bucket) ||
+          isUndefinedString(s3_region) || isUndefinedString(server_host)) {
+        throw new Error('Recording is not configured');
+      }
+      // Whitelist the capability fields even when talking to an older server.
+      setEnv({ configured: true, s3_bucket, s3_region, server_host });
+      setState(RecordState.Init);
+      notify('success', 'recording.try_s3.init');
+      const check = await api.testS3Connection(controller.signal);
+      if (!check.ok) throw new Error('Recording storage check failed');
+      const result = await check.json();
+      if (!active) return;
+      if (!result.success) throw new Error('Recording storage unavailable');
+      setState(RecordState.Connected);
+      notify('success', 'recording.try_s3.connected');
+    };
+    void initialize().catch(() => {
+      if (!active) return;
+      setState(RecordState.UnAvailable);
+      notify('error', 'recording.try_s3.connect_error');
+    });
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, [notify]);
 
   const isConnected = useMemo(() => {
     switch (state) {

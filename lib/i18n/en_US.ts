@@ -851,6 +851,7 @@ export default {
     },
   },
   msg: {
+    send_failed: 'Message failed to send. Your draft was kept; please retry.',
     info: {
       title: 'Your virtual co-working space, developed by Privoce',
       contact: 'Contact',

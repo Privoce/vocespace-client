@@ -1,3 +1,4 @@
+import { apiFetch } from './client';
 import { connect_endpoint } from '../std';
 import { RecordSettings } from '../std/space';
 
@@ -9,7 +10,7 @@ export interface SendRecordRequestBody {
 
 export const sendRecordRequest = (data: SendRecordRequestBody): Promise<Response> => {
   const url = new URL(connect_endpoint('/api/record'), window.location.origin);
-  return fetch(url.toString(), {
+  return apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -29,7 +30,7 @@ export interface UpdateRecordBody {
 export const updateRecord = async (spaceName: string, record: RecordSettings) => {
   const url = new URL(connect_endpoint('/api/space'), window.location.origin);
   url.searchParams.append('record', 'update');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

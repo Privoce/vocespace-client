@@ -48,7 +48,9 @@ export interface PromptsTOML {
  */
 export function loadPromptsFromToml(filePath: string): PromptsTOML {
   try {
-    const fullPath = path.join(process.cwd(), filePath);
+    const fullPath = process.env.VOCESPACE_PROMPT_DIR
+      ? path.join(process.env.VOCESPACE_PROMPT_DIR, path.basename(filePath))
+      : path.join(process.cwd(), filePath);
     const tomlContent = fs.readFileSync(fullPath, 'utf-8');
     const config = TOML.parse(tomlContent) as unknown as PromptsTOML;
     return {

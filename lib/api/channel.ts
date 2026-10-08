@@ -1,3 +1,4 @@
+import { apiFetch } from './client';
 import { connect_endpoint } from '../std';
 
 const CONNECT_ENDPOINT = connect_endpoint('/api/space');
@@ -28,7 +29,7 @@ export interface CreateRoomBody {
 export const createRoom = async ({ spaceName, roomName, ownerId, isPrivate }: CreateRoomParam) => {
   const url = new URL(CONNECT_ENDPOINT, window.location.origin);
   url.searchParams.append('childRoom', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -47,7 +48,7 @@ export type DeleteRoomBody = DeleteRoomParam;
 export const deleteRoom = async ({ spaceName, roomName }: DeleteRoomParam) => {
   const url = new URL(CONNECT_ENDPOINT, window.location.origin);
   url.searchParams.append('childRoom', ChildRoomMethods.DELETE);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -66,7 +67,7 @@ export type LeaveRoomBody = LeaveRoomParam;
 export const leaveRoom = async ({ spaceName, roomName, participantId }: LeaveRoomParam) => {
   const url = new URL(CONNECT_ENDPOINT, window.location.origin);
   url.searchParams.append('childRoom', ChildRoomMethods.LEAVE);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -86,7 +87,7 @@ export type JoinRoomBody = JoinRoomParam;
 export const joinRoom = async ({ spaceName, roomName, participantId }: JoinRoomParam) => {
   const url = new URL(CONNECT_ENDPOINT, window.location.origin);
   url.searchParams.append('childRoom', ChildRoomMethods.JOIN);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
@@ -116,7 +117,7 @@ export const updateRoom = async ({
 }: UpdateRoomParam) => {
   const url = new URL(CONNECT_ENDPOINT, window.location.origin);
   url.searchParams.append('childRoom', ChildRoomMethods.UPDATE);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({

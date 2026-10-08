@@ -1,19 +1,19 @@
+import { apiFetch } from './client';
 import { connect_endpoint } from '../std';
 import { AIConf, CreateSpaceStrategy, HyperbeamConf, RTCConf, SMTPConf, VocespaceConfig } from '../std/conf';
 
 const CONF_API_URL = connect_endpoint('/api/conf');
 export const getConf = async (hostToken?: string) => {
   const url = new URL(CONF_API_URL, window.location.origin);
-  if (hostToken) {
-    url.searchParams.append('hostToken', hostToken);
-  }
-  return await fetch(url.toString());
+  return await apiFetch(url.toString(), {
+    headers: hostToken ? { 'x-vocespace-host-token': hostToken } : undefined,
+  });
 };
 
 export const checkHostToken = async (hostToken: string) => {
   const url = new URL(CONF_API_URL, window.location.origin);
   url.searchParams.append('check', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -24,7 +24,7 @@ export const checkHostToken = async (hostToken: string) => {
 
 export const reloadConf = async (env: RTCConf): Promise<Response> => {
   const url = new URL(CONF_API_URL, window.location.origin);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -36,7 +36,7 @@ export const reloadConf = async (env: RTCConf): Promise<Response> => {
 export const reloadLicense = async (license: string): Promise<Response> => {
   const url = new URL(CONF_API_URL, window.location.origin);
   url.searchParams.append('license', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -53,7 +53,7 @@ export const reloadLicense = async (license: string): Promise<Response> => {
 export const reloadRoomLicense = async (license: string, roomName: string): Promise<Response> => {
   const url = new URL(CONF_API_URL, window.location.origin);
   url.searchParams.append('room_license', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -62,15 +62,15 @@ export const reloadRoomLicense = async (license: string, roomName: string): Prom
   });
 };
 
-export const updateAIConf = async (aiConf: AIConf): Promise<Response> => {
+export const updateAIConf = async (aiConf: AIConf, hostToken?: string): Promise<Response> => {
   const url = new URL(CONF_API_URL, window.location.origin);
   url.searchParams.append('ai', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ aiConf }),
+    body: JSON.stringify({ aiConf, hostToken }),
   });
 };
 
@@ -80,7 +80,7 @@ export const updateSMTPConf = async (
 ): Promise<Response> => {
   const url = new URL(CONF_API_URL, window.location.origin);
   url.searchParams.append('smtp', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ export const updateHyperbeamConf = async (
 ): Promise<Response> => {
   const url = new URL(CONF_API_URL, window.location.origin);
   url.searchParams.append('hyperbeam', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -104,13 +104,14 @@ export const updateHyperbeamConf = async (
   });
 };
 
-export const setupConf = async (conf: VocespaceConfig): Promise<Response> => {
+export const setupConf = async (conf: VocespaceConfig, currentHostToken?: string): Promise<Response> => {
   const url = new URL(CONF_API_URL, window.location.origin);
   url.searchParams.append('setup', 'true');
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
+      ...(currentHostToken ? { 'x-vocespace-host-token': currentHostToken } : {}),
     },
     body: JSON.stringify(conf),
   });
@@ -124,6 +125,7 @@ export interface UpdateCreateSpaceConfBody {
 export const updateCreateSpaceConf = async (
   createStrategy: CreateSpaceStrategy,
   whiteList: string[] | undefined | Set<string>,
+  hostToken?: string,
 ): Promise<Response> => {
   const url = new URL(CONF_API_URL, window.location.origin);
   url.searchParams.append('create_space', 'true');
@@ -132,11 +134,11 @@ export const updateCreateSpaceConf = async (
       ? whiteList
       : Array.from(whiteList)
     : [];
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
     },
-    body: JSON.stringify({ createStrategy, whiteList: whiteListArray }),
+    body: JSON.stringify({ createStrategy, whiteList: whiteListArray, hostToken }),
   });
 };

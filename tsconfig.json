@@ -27,16 +27,44 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@vocespace/contracts": [
+        "./packages/contracts/src/index.ts"
+      ],
+      "@vocespace/domain": [
+        "./packages/domain/src/index.ts"
+      ],
+      "@vocespace/client-sdk": [
+        "./packages/client-sdk/src/index.ts"
+      ],
+      "@vocespace/server-core": [
+        "./packages/server-core/src/index.ts"
+      ],
+      "@/app/*": [
+        "./apps/web/app/*"
+      ],
+      "@/components/*": [
+        "./apps/web/components/*"
+      ],
+      "@/styles/*": [
+        "./apps/web/styles/*"
       ]
     }
   },
   "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts"
+    "apps/web/**/*.ts",
+    "apps/web/**/*.tsx",
+    "lib/**/*.ts",
+    "lib/**/*.tsx",
+    "services/**/*.ts",
+    "packages/**/*.ts",
+    "tests/**/*.ts",
+    "tests/**/*.tsx",
+    "vitest.config.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "apps/web/.next",
+    "services/api/dist"
   ]
 }

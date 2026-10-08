@@ -1,19 +1,13 @@
-import { io } from 'socket.io-client';
+import { ensureWebSession } from '../api/client';
+import { createRealtimeClient } from '@vocespace/client-sdk';
 
 // Importing a view or rendering on the server must never open a connection.
-export const socket = io({
-  autoConnect: false,
-  reconnection: true,
-  reconnectionDelay: 1000,
-  reconnectionAttempts: 5,
-  timeout: 30000,
-  transports: ['websocket', 'polling'],
-});
+export const socket = createRealtimeClient(undefined, { path: `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/socket.io` });
 
 let owners = 0;
 export function retainSocket() {
   owners += 1;
-  socket.connect();
+  void ensureWebSession().then((response) => { if (response.ok && owners > 0) socket.connect(); }).catch(() => undefined);
   let released = false;
   return () => {
     if (released) return;

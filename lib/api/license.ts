@@ -1,3 +1,4 @@
+import { apiFetch } from './client';
 import { connect_endpoint } from '../std';
 
 const LICENSE_API_URL = connect_endpoint('/api/license');
@@ -12,7 +13,7 @@ export const getLicenseByIP = async (ip: string, licenseType: string = 'pro') =>
   const url = new URL(connect_endpoint('/api/webhook'), window.location.origin);
   url.searchParams.set('session_ip', ip);
   url.searchParams.set('license_type', licenseType);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'GET',
   });
 };
@@ -34,7 +35,7 @@ export const cancelLicenseSubscription = async (
   url.searchParams.set('email', email);
   url.searchParams.set('license_type', licenseType);
   url.searchParams.set('return_url', returnUrl || window.location.href);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'DELETE',
   });
 };
@@ -46,7 +47,7 @@ export const cancelLicenseSubscription = async (
  */
 export const checkLicenseByIP = async (ip: string) => {
   const url = new URL(`${LICENSE_API_URL}/domains/${encodeURIComponent(ip)}`, window.location.origin);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'GET',
   });
 };
@@ -60,7 +61,7 @@ export const checkLicenseByIP = async (ip: string) => {
 export const getAllLicenses = async (hostToken: string) => {
   const url = new URL(LICENSE_API_URL, window.location.origin);
   url.searchParams.append('hostToken', hostToken);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'GET',
   });
 };
@@ -76,7 +77,7 @@ export const createLicense = async (
 ) => {
   const url = new URL(LICENSE_API_URL, window.location.origin);
   url.searchParams.append('hostToken', hostToken);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -104,7 +105,7 @@ export const updateLicense = async (
 ) => {
   const url = new URL(LICENSE_API_URL, window.location.origin);
   url.searchParams.append('hostToken', hostToken);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
@@ -122,7 +123,7 @@ export const deleteAllLicenses = async (hostToken: string, id?: string) => {
   const url = new URL(LICENSE_API_URL, window.location.origin);
   url.searchParams.append('hostToken', hostToken);
   if (id) url.searchParams.append('id', id);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'DELETE',
   });
 };
@@ -134,7 +135,7 @@ export const deleteAllLicenses = async (hostToken: string, id?: string) => {
 export const validateLicenseValue = async (value: string) => {
   const url = new URL(LICENSE_API_URL, window.location.origin);
   url.searchParams.append('value', value);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'GET',
   });
 };

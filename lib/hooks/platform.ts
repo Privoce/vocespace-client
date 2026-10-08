@@ -1,9 +1,10 @@
+'use client';
+
 /**
  * 获取从home.vocespace.com提供的平台信息到localStorage的hook
  * 该hook只允许使用者获取数据，不允许修改数据
  */
 
-'use client';
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
@@ -31,6 +32,8 @@ import { ConnectionDetails } from '../types';
 import { MessageInstance } from 'antd/es/message/interface';
 import { useI18n } from '../i18n/i18n';
 import { api } from '../api';
+import { socket } from '../realtime/socket';
+import { getWebClient, exchangePlatformCode } from '../api/client';
 import { Room } from 'livekit-client';
 
 export interface UsePlatformUserProps {
@@ -42,7 +45,7 @@ export interface UsePlatformUserProps {
  * 解析来自某个平台的Token得到需要的信息，返回TokenResult
  * @param token
  */
-export { parseToken, generateToken } from './platformToken';
+
 
 /**
  * 用于在客户端中处理来自平台并存储在localStorage中的用户信息的hook
@@ -69,61 +72,23 @@ export function usePlatformUser({ searchParams, messageApi }: UsePlatformUserPro
   // 通过/api/connection-details进行身份接入的用户这个api都会返回携带auth和data参数
   const checkOrUpdateStore = async () => {
     if (typeof window === 'undefined') return;
-    // 检查是否在客户端环境中
-    const storedUserInfo = localStorage.getItem(VOCESPACE_PLATFORM_USER);
-    if (storedUserInfo) {
-      // 本地已有用户信息，检查是否需要更新
-      const parsedInfo = JSON.parse(storedUserInfo) as PlatformUser;
-      // 在此之前先确定数据实效性
-      if (!verifyPlatformUser(parsedInfo)) {
-        // messageApi.warning(t('api.token.out_of_date'));
-        // 数据无效，清除
-        localStorage.removeItem(VOCESPACE_PLATFORM_USER);
-      }
-      // 没有auth,data,details参数则直接返回，三个参数必须同时存在
-      if (!searchParams.auth || !searchParams.data || !searchParams.details) {
-        setPlatformUser(parsedInfo);
-        return;
-      }
-      const platformNewInfo: PlatformUser = castToPlatformUser(
-        searchParams.data,
-        searchParams.auth,
-      );
-      const connectionDetails: ConnectionDetails = castToConnectionDetails(searchParams.details);
-      if (!verifyPlatformUser(platformNewInfo)) {
-        // messageApi.warning(t('api.token.out_of_date'));
-        // 数据无效，直接返回
-        setPlatformUser(parsedInfo);
-        return;
-      }
-      setDetails(connectionDetails);
-      setIsValid(true);
-      // 使用isEqual进行深度比较
-      if (!equal(parsedInfo, platformNewInfo)) {
-        // 不相等则更新
-        localStorage.setItem(VOCESPACE_PLATFORM_USER, JSON.stringify(platformNewInfo));
-      }
-      // 相等则直接使用已有数据
-      setPlatformUser(platformNewInfo);
-    } else {
-      // 本地没有用户信息，检查searchParams中是否有auth和data参数
-      if (!searchParams.auth || !searchParams.data || !searchParams.details) {
-        return;
-      }
-      const platformNewInfo: PlatformUser = castToPlatformUser(
-        searchParams.data,
-        searchParams.auth,
-      );
-      const connectionDetails: ConnectionDetails = castToConnectionDetails(searchParams.details);
-      if (!verifyPlatformUser(platformNewInfo)) {
-        // 数据无效，直接返回
-        // messageApi.warning(t('api.token.out_of_date'));
-        return;
-      }
-      // 数据有效，存储并使用
-      localStorage.setItem(VOCESPACE_PLATFORM_USER, JSON.stringify(platformNewInfo));
-      setDetails(connectionDetails);
-      setPlatformUser(platformNewInfo);
+    const client = getWebClient();
+    const code = searchParams.code || new URL(window.location.href).searchParams.get('code');
+    const response = code ? await exchangePlatformCode(code) : await client.session.get();
+    if (!response.ok) { localStorage.removeItem(VOCESPACE_PLATFORM_USER); return; }
+    const { platform } = await response.json();
+    if (code) {
+      if (socket.connected) { socket.disconnect(); socket.connect(); }
+      const url = new URL(window.location.href);
+      for (const key of ['code', 'data', 'details', 'token']) url.searchParams.delete(key);
+      window.history.replaceState({}, '', url);
+    }
+    if (!platform || !verifyPlatformUser(platform)) { localStorage.removeItem(VOCESPACE_PLATFORM_USER); return; }
+    localStorage.setItem(VOCESPACE_PLATFORM_USER, JSON.stringify(platform));
+    setPlatformUser(platform);
+    if (code) {
+      const connection = await client.connections.get({ spaceName: platform.space, participantName: platform.username });
+      setDetails(connection);
       setIsValid(true);
     }
   };

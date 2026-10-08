@@ -1,3 +1,4 @@
+import { apiFetch } from './client';
 import { connect_endpoint } from '../std';
 
 export interface S3ConnectResponse {
@@ -33,10 +34,10 @@ export interface S3DeleteResponse {
 /**
  * 测试 S3 连接
  */
-export const testS3Connection = (): Promise<Response> => {
+export const testS3Connection = (signal?: AbortSignal): Promise<Response> => {
   const url = new URL(connect_endpoint('/api/s3'), window.location.origin);
   url.searchParams.set('action', 'connect');
-  return fetch(url.toString());
+  return apiFetch(url.toString(), { signal });
 };
 
 /**
@@ -46,7 +47,7 @@ export const getS3Records = (room: string): Promise<Response> => {
   const url = new URL(connect_endpoint('/api/s3'), window.location.origin);
   url.searchParams.set('action', 'records');
   url.searchParams.set('room', room);
-  return fetch(url.toString());
+  return apiFetch(url.toString());
 };
 
 /**
@@ -56,7 +57,7 @@ export const generateS3DownloadUrl = (key: string): Promise<Response> => {
   const url = new URL(connect_endpoint('/api/s3'), window.location.origin);
   url.searchParams.set('action', 'download');
   url.searchParams.set('key', key);
-  return fetch(url.toString(), {
+  return apiFetch(url.toString(), {
     method: 'POST',
   });
 };
@@ -68,7 +69,7 @@ export const deleteS3Object = (key: string): Promise<Response> => {
   const url = new URL(connect_endpoint('/api/s3'), window.location.origin);
   url.searchParams.set('action', 'delete');
   url.searchParams.set('key', key);
-  return fetch(url.toString(), {
+  return apiFetch(url.toString(), {
     method: 'DELETE',
   });
 };

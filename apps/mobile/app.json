@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "VoceSpace",
+    "slug": "vocespace-mobile",
+    "scheme": "vocespace",
+    "version": "0.1.0",
+    "userInterfaceStyle": "dark",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.vocespace.mobile.dev"
+    },
+    "android": {
+      "package": "com.vocespace.mobile.dev"
+    },
+    "plugins": [
+      "expo-dev-client",
+      "expo-secure-store",
+      "@livekit/react-native-expo-plugin",
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          "cameraPermission": "允许 VoceSpace 在你开启摄像头时传输视频。",
+          "microphonePermission": "允许 VoceSpace 在你开启麦克风时传输声音。"
+        }
+      ]
+    ],
+    "platforms": [
+      "ios",
+      "android"
+    ]
+  }
+}

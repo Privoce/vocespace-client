@@ -1,8 +1,10 @@
+import { apiFetch } from './client';
+import { connect_endpoint } from '../std';
 import dayjs from 'dayjs';
 import { AICutAnalysisRes, AICutAnalysisResLine } from '../ai/analysis';
 import { SpaceTodo, todayTimeStamp, TodoItem } from '../std/space';
 
-const PLATFORM_URL = 'https://home.vocespace.com/api';
+const platformUrl = (suffix: string) => new URL(connect_endpoint('/api/platform' + suffix), window.location.origin);
 // const PLATFORM_URL = 'http://localhost:3001/api';
 
 export interface PlatformTodos {
@@ -36,8 +38,8 @@ const castToPlatformTodo = (todos: SpaceTodo, uid: string): PlatformTodos => {
 const updateTodo = async (uid: string, todos: SpaceTodo) => {
   // 这里我们需要对todos中的timestamp字段进行处理，修改为date字段，并且需要改为当天00:00:00的时间戳
   const platformTodo = castToPlatformTodo(todos, uid);
-  const url = new URL(PLATFORM_URL + '/todos');
-  return await fetch(url.toString(), {
+  const url = platformUrl('/todos');
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -49,11 +51,11 @@ const updateTodo = async (uid: string, todos: SpaceTodo) => {
 };
 
 const deleteTodo = async (uid: string, date: number, todoId: string) => {
-  const url = new URL(PLATFORM_URL + '/todos');
+  const url = platformUrl('/todos');
   url.searchParams.append('uid', uid);
   url.searchParams.append('date', date.toString());
   url.searchParams.append('todoId', todoId);
-  return await fetch(url.toString(), {
+  return await apiFetch(url.toString(), {
     method: 'DELETE',
     headers: {
       'Content-Type': 'application/json',
@@ -65,9 +67,9 @@ const deleteTodo = async (uid: string, date: number, todoId: string) => {
  * 获取平台端的todo数据 获取所有todo数据
  */
 const getTodos = async (uid: string) => {
-  const url = new URL(PLATFORM_URL + '/todos');
+  const url = platformUrl('/todos');
   url.searchParams.append('uid', uid);
-  return await fetch(url.toString());
+  return await apiFetch(url.toString());
 };
 
 /**
@@ -77,10 +79,10 @@ const getTodos = async (uid: string) => {
  * @returns { data }: { data: PlarformAICutAnalysis }
  */
 const getAIAnalysis = async (uid: string, date: number) => {
-  const url = new URL(PLATFORM_URL + '/ai');
+  const url = platformUrl('/ai');
   url.searchParams.append('uid', uid);
   url.searchParams.append('date', date.toString());
-  return await fetch(url.toString());
+  return await apiFetch(url.toString());
 };
 
 /**
@@ -97,8 +99,8 @@ const updateAIAnalysis = async (
   data: AICutAnalysisRes,
   screenShot?: string,
 ) => {
-  const url = new URL(PLATFORM_URL + '/ai');
-  return await fetch(url.toString(), {
+  const url = platformUrl('/ai');
+  return await apiFetch(url.toString(), {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -144,9 +146,9 @@ export const convertPlatformToACARes = (platform: PlarformAICutAnalysis): AICutA
 };
 
 const isAuth = async (uid: string): Promise<boolean> => {
-  const url = new URL(PLATFORM_URL + '/user');
+  const url = platformUrl('/user');
   url.searchParams.append('uid', uid);
-  const res = await fetch(url.toString());
+  const res = await apiFetch(url.toString());
   if (res.ok) {
     const { exist }: { exist: boolean } = await res.json();
     return exist;

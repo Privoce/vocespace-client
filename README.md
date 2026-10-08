@@ -1,3 +1,5 @@
+> 2026-10-09：项目已开始迁移到 pnpm monorepo。Web 与 API 请分别启动：`pnpm dev:web` / `pnpm dev:api`；手机子项目位于 `apps/mobile`。新版命令、构建与未完成部署项见 [迁移说明](docs/monorepo-first-batch.md)。下方旧一体化 Docker 说明尚未适配。
+
 <a href="https://space.voce.chat/rooms/bby6-x55t">
   <img src="./.github/assets/vocespace.svg" alt="VoceSpace logo" width="240" height="120">
 </a>

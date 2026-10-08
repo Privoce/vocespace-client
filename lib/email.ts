@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer';
-import { getConfig } from '@/app/api/conf/conf';
+import { getConfig } from '@/lib/server/config';
 
 let _transporter: nodemailer.Transporter | null = null;
 let _transporterKey = '';

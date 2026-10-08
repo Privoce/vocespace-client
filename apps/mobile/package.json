@@ -1,0 +1,45 @@
+{
+  "name": "@vocespace/mobile",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "dev": "expo start --dev-client",
+    "android": "expo run:android",
+    "ios": "expo run:ios",
+    "typecheck": "tsc --noEmit",
+    "export": "expo export --platform all"
+  },
+  "engines": {
+    "node": ">=20.19.4"
+  },
+  "dependencies": {
+    "@ant-design/icons-react-native": "2.3.2",
+    "@ant-design/react-native": "5.4.3",
+    "@config-plugins/react-native-webrtc": "14.0.0",
+    "@livekit/react-native": "3.0.0",
+    "@livekit/react-native-expo-plugin": "1.0.3",
+    "@livekit/react-native-webrtc": "144.2.0",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@vocespace/client-sdk": "workspace:*",
+    "@vocespace/contracts": "workspace:*",
+    "expo": "55.0.31",
+    "expo-crypto": "55.0.19",
+    "expo-dev-client": "55.0.40",
+    "expo-font": "55.0.8",
+    "expo-secure-store": "55.0.18",
+    "expo-status-bar": "55.0.6",
+    "livekit-client": "2.22.3",
+    "react": "19.2.0",
+    "react-native": "0.83.10",
+    "react-native-gesture-handler": "2.30.0",
+    "react-native-reanimated": "4.2.1",
+    "react-native-safe-area-context": "5.6.2",
+    "react-native-worklets": "0.7.4"
+  },
+  "devDependencies": {
+    "@types/react": "19.2.2",
+    "react-dom": "19.2.0",
+    "typescript": "5.9.2"
+  }
+}

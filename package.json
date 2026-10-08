@@ -4,11 +4,23 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "node server.js",
-    "build": "NODE_OPTIONS='--max-old-space-size=8192' next build",
-    "start": "NODE_ENV=production node server.js",
-    "lint": "next lint",
-    "test": "vitest run"
+    "dev": "pnpm dev:web",
+    "build": "pnpm build:api && pnpm build:web",
+    "start": "pnpm start:web",
+    "lint": "pnpm --filter @vocespace/web lint",
+    "test": "vitest run",
+    "check:boundaries": "node scripts/check-boundaries.mjs",
+    "typecheck": "tsc --noEmit --incremental false",
+    "build:api": "pnpm --filter @vocespace/api build",
+    "start:api": "pnpm --filter @vocespace/api start",
+    "dev:api": "pnpm --filter @vocespace/api dev",
+    "test:backend": "pnpm build:api && node tests/integration/backend.mjs",
+    "dev:web": "pnpm --filter @vocespace/web dev",
+    "start:web": "pnpm --filter @vocespace/web start",
+    "build:web": "pnpm --filter @vocespace/web build",
+    "dev:mobile": "pnpm --filter @vocespace/mobile dev",
+    "typecheck:mobile": "pnpm --filter @vocespace/mobile typecheck",
+    "package:api": "pnpm --filter @vocespace/api --config.inject-workspace-packages=true deploy --prod"
   },
   "dependencies": {
     "@ant-design/icons": "5.x",
@@ -63,7 +75,8 @@
     "@types/p5": "^1.7.7",
     "@types/react": "18.3.18",
     "@types/react-dom": "18.3.5",
-    "eslint": "9.18.0",
+    "esbuild": "0.25.12",
+    "eslint": "8.57.1",
     "eslint-config-next": "14.2.23",
     "jsdom": "26.1.0",
     "sass": "^1.85.1",
@@ -73,5 +86,6 @@
   },
   "engines": {
     "node": ">=18"
-  }
+  },
+  "packageManager": "pnpm@10.27.0"
 }
