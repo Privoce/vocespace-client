@@ -1,3 +1,4 @@
+import { participantRowContent } from '@vocespace/ui';
 import { Avatar, Listy, MenuProps } from 'antd';
 import styles from '@/components/Controller/index.module.scss';
 import { randomColor } from '@/lib/std';
@@ -46,19 +47,23 @@ export function ParticipantList({
           menu={item[0] === space.localParticipant.identity ? selfMenu : menu}
           onOpenChange={(open) => onOpenMenu(open, item[0])}
           isRKey={true}
-
-        >{
-            <div className={styles.particepant_item}>
-              <div className={styles.particepant_item_left}>
-                <Avatar
-                  size={size}
-                  style={{
-                    backgroundColor: randomColor(item[1].name),
-                  }}
-                >
-                  {item[1].name.substring(0, 3)}
-                </Avatar>
-                <span>{item[1].name}</span>
+        >
+          {participantRowContent({
+            row: (children) => <div className={styles.particepant_item}>{children}</div>,
+            identity: (children) => <div className={styles.particepant_item_left}>{children}</div>,
+            avatar: (
+              <Avatar
+                size={size}
+                style={{
+                  backgroundColor: randomColor(item[1].name),
+                }}
+              >
+                {item[1].name.substring(0, 3)}
+              </Avatar>
+            ),
+            name: <span>{item[1].name}</span>,
+            roles: (
+              <>
                 {item[0] === spaceInfo.ownerId && (
                   <span className={styles.particepant_item_owner}>
                     ( {t('more.participant.host')} )
@@ -69,10 +74,11 @@ export function ParticipantList({
                     ( {t('more.participant.manager')} )
                   </span>
                 )}
-              </div>
-              {suffix && suffix(item, index)}
-            </div>
-          }</ControlRKeyMenu>
+              </>
+            ),
+            suffix: suffix?.(item, index),
+          })}
+        </ControlRKeyMenu>
       )}
       styles={{ item: { padding: '12px 0', display: 'flex', alignItems: 'center' } }}
     />

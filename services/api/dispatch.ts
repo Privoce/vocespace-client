@@ -1,8 +1,14 @@
+import { nativeRecordsEndpoint } from './native-records';
+import { nativePreviewEndpoint, previewMediaEndpoint, previewRendererEndpoint } from './native-preview';
+import { nativeRoomsEndpoint, nativeSpacesEndpoint } from './native-directory';
+import { nativeSettingsEndpoint } from './native-settings';
 import { nativeSessionEndpoint } from './native-auth';
 import { nativeConferenceEndpoint } from './native-conference';
+import { nativeMediaEndpoint } from './native-media';
+import { nativeChatEndpoint } from './native-chat';
 import { ContractError } from '@vocespace/contracts';
-import { spaceRepository } from '@/lib/server/space-repository';
-import { sessions, sessionToken } from '@/lib/server/sessions';
+import { spaceRepository } from './lib/server/space-repository';
+import { sessions, sessionToken } from './lib/server/sessions';
 import { proxyPlatform } from './handlers/platform';
 import { authorizeRequest, AccessError } from './access';
 import { sessionEndpoint, platformLoginEndpoint } from './auth';
@@ -22,6 +28,17 @@ async function dispatchInternal(request: ApiRequest) {
     if (pathname === '/healthz') return ApiResponse.json({ status: 'ok', apiVersion: 1 });
     if (pathname === '/api/session/native') return await nativeSessionEndpoint(request);
     if (pathname === '/api/native/conferences') return await nativeConferenceEndpoint(request);
+    if (pathname === '/api/native/preview') return await nativePreviewEndpoint(request);
+    const previewMedia = pathname.match(/^\/api\/preview\/media\/([a-f0-9]{64})\/([^/]+)$/);
+    if (previewMedia) return await previewMediaEndpoint(request, previewMedia[1], previewMedia[2]);
+    const renderer = pathname.match(/^\/api\/preview\/(render|details|script)$/);
+    if (renderer) return await previewRendererEndpoint(request, renderer[1] as 'render' | 'details' | 'script');
+    if (pathname === '/api/native/spaces') return await nativeSpacesEndpoint(request);
+    if (pathname === '/api/native/rooms') return await nativeRoomsEndpoint(request);
+    if (pathname === '/api/native/records') return await nativeRecordsEndpoint(request);
+    if (pathname === '/api/native/settings') return await nativeSettingsEndpoint(request);
+    if (pathname === '/api/native/media') return await nativeMediaEndpoint(request);
+    if (pathname === '/api/native/chat/history') return await nativeChatEndpoint(request);
     // Native observer credentials cannot obtain publishing grants or mutate through legacy routes.
     const suppliedToken = sessionToken(request.headers);
     if (suppliedToken && (await sessions.read(suppliedToken))?.client === 'native') {

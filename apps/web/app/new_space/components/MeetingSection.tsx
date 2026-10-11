@@ -1,3 +1,4 @@
+import { spaceEntryContent } from '@vocespace/ui';
 import styles from '../index.module.scss';
 import { Button, Input, Segmented, Spin, Tooltip } from 'antd';
 import Checkbox from 'antd/es/checkbox';
@@ -21,10 +22,15 @@ export function MeetingSection({ model }: { model: MeetingModel }) {
     setHq,
   } = model;
 
-  return (
-    <div className={styles.tabContent}>
-      {contextHolder}
-      <Spin spinning={spinning} percent={percent} fullscreen />
+  return spaceEntryContent({
+    frame: (children) => <div className={styles.tabContent}>{children}</div>,
+    context: (
+      <>
+        {contextHolder}
+        <Spin spinning={spinning} percent={percent} fullscreen />
+      </>
+    ),
+    tabs: (
       <Segmented
         block
         options={options}
@@ -40,24 +46,29 @@ export function MeetingSection({ model }: { model: MeetingModel }) {
           },
         }}
       />
+    ),
+    description: (
       <p className={styles.subtitle}>
         {optionVal == 'demo' ? t('msg.info.try_free') : t('msg.info.try_enter_room')}
       </p>
-      {optionVal == 'custom' && (
-        <Input
-          size="large"
-          type="text"
-          placeholder={t('msg.info.enter_room')}
-          value={roomUrl}
-          onChange={(e) => {
-            setRoomUrl(e.target.value);
-          }}
-        />
-      )}
+    ),
+    input: optionVal == 'custom' && (
+      <Input
+        size="large"
+        type="text"
+        placeholder={t('msg.info.enter_room')}
+        value={roomUrl}
+        onChange={(e) => {
+          setRoomUrl(e.target.value);
+        }}
+      />
+    ),
+    submit: (
       <Button size="large" type="primary" onClick={startMeeting}>
         {t('common.start_metting')}
       </Button>
-
+    ),
+    options: (
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '1rem' }}>
           <Checkbox
@@ -75,6 +86,6 @@ export function MeetingSection({ model }: { model: MeetingModel }) {
           </Tooltip>
         </div>
       </div>
-    </div>
-  );
+    ),
+  });
 }

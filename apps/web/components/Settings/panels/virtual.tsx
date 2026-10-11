@@ -1,3 +1,9 @@
+import { SettingsSelectedMask } from '@vocespace/ui';
+import { Fragment } from 'react';
+import { VirtualGalleryContent, VirtualGalleryItem, virtualModels, virtualBackgrounds } from '@vocespace/ui';
+import { VirtualSettingsContent } from '@vocespace/ui';
+import { settingsElements } from '../phone-content';
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { Button, Tabs, TabsProps } from 'antd';
 import styles from '@/components/Controller/index.module.scss';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
@@ -54,6 +60,7 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
     ref,
   ) => {
     const { t } = useI18n();
+    const phoneSettings = useLayoutDevice() === 'phone';
     const videoRef = useRef<HTMLVideoElement>(null);
     const [model_selected_index, set_model_selected_index] = useState(0);
     const [bg_selected_index, set_bg_selected_index] = useState(0);
@@ -94,65 +101,91 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
       }
     }, [videoRef, close]);
 
-    const modelDatas = [
-      {
-        name: 'None',
-        src: 'none.png',
-      },
-      {
-        name: 'Haru',
-        src: 'Haru.png',
-      },
-      {
-        name: 'Hiyori',
-        src: 'Hiyori.png',
-      },
-      {
-        name: 'Mao',
-        src: 'Mao.png',
-      },
-      {
-        name: 'Mark',
-        src: 'Mark.png',
-      },
-      {
-        name: 'Natori',
-        src: 'Natori.png',
-      },
-      {
-        name: 'Rice',
-        src: 'Rice.png',
-      },
-    ];
+    const modelDatas = virtualModels;
 
-    const bgDatas = [
-      {
-        name: 'Class Room',
-        src: 'v_bg1.png',
-      },
-      {
-        name: 'Waiting Space',
-        src: 'v_bg2.jpg',
-      },
-      {
-        name: 'Office',
-        src: 'v_bg3.jpg',
-      },
-      {
-        name: 'Leisure Space',
-        src: 'v_bg4.jpg',
-      },
-      {
-        name: 'Meeting Room',
-        src: 'v_bg5.jpg',
-      },
-    ];
+    const bgDatas = virtualBackgrounds;
 
     const items: TabsProps['items'] = [
       {
         key: 'model',
         label: <TabItem type="model" label={t('settings.virtual.tab.model')}></TabItem>,
-        children: (
+        children: (phoneSettings ? (
+          VirtualGalleryContent({
+            elements: settingsElements,
+            styles,
+            t,
+            title: t('settings.virtual.model'),
+            children: modelDatas.map((item, index) => (
+              <Fragment key={item.src}>
+                {VirtualGalleryItem({
+                  elements: settingsElements,
+                  styles,
+                  t,
+                  onSelect: () => {
+                    reloadVirtual();
+                    set_model_selected_index(index);
+                    setModelRole(item.name as ModelRole);
+                    useRoomStore.getState().setVirtualMask(true);
+                    if (compare && item.name != ModelRole.None) {
+                      // 这里需要将外部视频进行遮罩
+                      setCompare(false);
+                      setTimeout(() => {
+                        setCompare(true);
+                      }, 200);
+                    } else if (item.name == ModelRole.None) {
+                      setCompare(false);
+                    } else {
+                      setCompare(true);
+                    }
+                  },
+                  selected: modelDatas.map((item, index) => (
+                    <div
+                      key={item.src}
+                      className={styles.virtual_model_box}
+                      onClick={() => {
+                        reloadVirtual();
+                        set_model_selected_index(index);
+                        setModelRole(item.name as ModelRole);
+                        useRoomStore.getState().setVirtualMask(true);
+                        if (compare && item.name != ModelRole.None) {
+                          // 这里需要将外部视频进行遮罩
+                          setCompare(false);
+                          setTimeout(() => {
+                            setCompare(true);
+                          }, 200);
+                        } else if (item.name == ModelRole.None) {
+                          setCompare(false);
+                        } else {
+                          setCompare(true);
+                        }
+                      }}
+                    >
+                      {model_selected_index == index && <SelectedMask></SelectedMask>}
+                      {/* <h4>{item.name}</h4> */}
+                      {item.name == ModelRole.None ? (
+                        <div
+                          style={{
+                            height: '120px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontWeight: '700',
+                          }}
+                        >
+                          {t('settings.virtual.none')}
+                        </div>
+                      ) : (
+                        <img src={src(`/images/models/${item.src}`)} alt="" />
+                      )}
+                    </div>
+                  )),
+                  preview: <img src={src(`/images/models/${item.src}`)} alt="" />,
+                  noneLabel: item.name == ModelRole.None ? t('settings.virtual.none') : undefined,
+                })}
+              </Fragment>
+            )),
+          })
+        ) : (
           <div>
             <h4>{t('settings.virtual.model')}</h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
@@ -199,12 +232,71 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
               ))}
             </div>
           </div>
-        ),
+        )),
       },
       {
         key: 'background',
         label: <TabItem type="bg" label={t('settings.virtual.tab.background')}></TabItem>,
-        children: (
+        children: (phoneSettings ? (
+          VirtualGalleryContent({
+            elements: settingsElements,
+            styles,
+            t,
+            title: t('settings.virtual.background'),
+            children: bgDatas.map((item, index) => (
+              <Fragment key={item.src}>
+                {VirtualGalleryItem({
+                  elements: settingsElements,
+                  styles,
+                  t,
+                  onSelect: () => {
+                    reloadVirtual();
+                    set_bg_selected_index(index);
+                    useRoomStore.getState().setVirtualMask(true);
+                    setModelBg(item.src as ModelBg);
+                    if (compare && modelRole != ModelRole.None) {
+                      setCompare(false);
+                      setTimeout(() => {
+                        setCompare(true);
+                      }, 200);
+                    } else if (modelRole == ModelRole.None && !compare) {
+                      setCompare(false);
+                    } else {
+                      setCompare(true);
+                    }
+                  },
+                  selected: bgDatas.map((item, index) => (
+                    <div
+                      key={item.src}
+                      className={styles.virtual_model_box}
+                      onClick={() => {
+                        reloadVirtual();
+                        set_bg_selected_index(index);
+                        useRoomStore.getState().setVirtualMask(true);
+                        setModelBg(item.src as ModelBg);
+                        if (compare && modelRole != ModelRole.None) {
+                          setCompare(false);
+                          setTimeout(() => {
+                            setCompare(true);
+                          }, 200);
+                        } else if (modelRole == ModelRole.None && !compare) {
+                          setCompare(false);
+                        } else {
+                          setCompare(true);
+                        }
+                      }}
+                    >
+                      {bg_selected_index == index && <SelectedMask></SelectedMask>}
+                      {/* <h4>{item.name}</h4> */}
+                      <img src={src(`/images/bg/${item.src}`)} alt="" />
+                    </div>
+                  )),
+                  preview: <img src={src(`/images/bg/${item.src}`)} alt="" />,
+                })}
+              </Fragment>
+            )),
+          })
+        ) : (
           <div>
             <h4>{t('settings.virtual.background')}</h4>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 16 }}>
@@ -236,7 +328,7 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
               ))}
             </div>
           </div>
-        ),
+        )),
       },
     ];
 
@@ -255,6 +347,69 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
       },
     }));
 
+    if (phoneSettings)
+      return VirtualSettingsContent({
+        elements: settingsElements,
+        styles,
+        t,
+        slots: {
+          preview: (
+            <>
+              {modelRole == ModelRole.None && (
+                <div className={styles.virtual_video_box_compare}>
+                  <Button
+                    color="default"
+                    variant="solid"
+                    style={{ padding: '8px' }}
+                    onClick={() => {
+                      if (modelRole != ModelRole.None) {
+                        const val = !compare;
+                        setCompare(val);
+                      } else {
+                        setShowBlur(!showBlur);
+                      }
+                    }}
+                  >
+                    <SvgResource type="switch" color="#fff" svgSize={14}></SvgResource>
+                  </Button>
+                </div>
+              )}
+              <video
+                className={compare ? '' : styles.virtual_video_box_video}
+                style={{
+                  visibility: compare ? 'hidden' : 'visible',
+                  filter: showBlur ? `blur(${blurValue}px)` : 'none',
+                  transition: 'filter 0.2s ease-in-out',
+                }}
+                ref={videoRef}
+                playsInline
+              />
+              {compare && modelRole != ModelRole.None && (
+                <div className={styles.virtual_video_box_canvas}>
+                  <VirtualRoleCanvas
+                    model_bg={modelBg}
+                    model_role={modelRole}
+                    enabled={compare}
+                    messageApi={messageApi}
+                    isLocal={true}
+                    isReplace={false}
+                    onReady={() => {}}
+                    onDestroy={() => {}}
+                  ></VirtualRoleCanvas>
+                </div>
+              )}
+            </>
+          ),
+          tabs: (
+            <Tabs
+              defaultActiveKey="general"
+              tabPosition="top"
+              items={items}
+              style={{ width: '100%', height: '100%' }}
+            />
+          ),
+        },
+      });
     return (
       <div className={styles.virtual_settings}>
         <div className={styles.virtual_video_box}>
@@ -317,9 +472,5 @@ export const VirtualSettings = forwardRef<VirtualSettingsExports, VirtualSetting
 VirtualSettings.displayName = 'VirtualSettings';
 
 export function SelectedMask() {
-  return (
-    <div className={styles.selected_mask}>
-      <SvgResource type="check" svgSize={24} color="#22CCEE"></SvgResource>
-    </div>
-  );
+  return SettingsSelectedMask({elements:settingsElements,styles,icon:<SvgResource type="check" svgSize={24} color="#22CCEE"/>});
 }

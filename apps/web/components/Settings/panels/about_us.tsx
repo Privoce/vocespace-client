@@ -1,8 +1,21 @@
+
+import { AboutSettingsContent as SharedAboutSettingsContent } from '@vocespace/ui';
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
+import { settingsElements } from '../phone-content';
 import { SvgResource } from '@/components/Icon/index';
 import { useI18n } from '@/lib/i18n/i18n';
 
 export function AboutUs() {
+  const phoneSettings = useLayoutDevice() === 'phone';
   const { t } = useI18n();
+  if (phoneSettings)
+    return SharedAboutSettingsContent({
+      elements: settingsElements,
+      styles: {},
+      t,
+      logo: <SvgResource type="logo" svgSize={64}></SvgResource>,
+    });
+
   return (
     <div
       style={{

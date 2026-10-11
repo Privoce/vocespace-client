@@ -1,5 +1,5 @@
 /** Starts only disposable Redis/API processes. Never reads the developer's configuration. */
-import { mkdtemp, writeFile, rm, symlink } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, rm, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -17,6 +17,7 @@ const children = [], sockets = [];
 let redis;
 let mediaServer;
 let mediaParticipants = [];
+const previewEgresses = [];
 let logs = '';
 const port = async () => {
   const server = createServer(); await new Promise((r) => server.listen(0,'127.0.0.1',r));
@@ -32,15 +33,40 @@ const child = (command,args,env={},cwd=directory) => {
 };
 try {
   await symlink(path.join(root,'node_modules'),path.join(directory,'node_modules'));
-  await symlink(path.join(root,'prompt'),path.join(directory,'prompt'));
-  await build({stdin:{contents:"export { DEFAULT_SPACE_INFO, DEFAULT_PARTICIPANT_SETTINGS } from './lib/std/space'; export { DEFAULT_VOCESPACE_CONFIG } from './lib/std/conf';",resolveDir:root,loader:'ts'},outfile:path.join(directory,'fixtures.cjs'),bundle:true,packages:'external',platform:'node',format:'cjs',tsconfig:path.join(root,'tsconfig.json'),logLevel:'silent'});
+  await symlink(path.join(root,'services/api/prompt'),path.join(directory,'prompt'));
+  await build({stdin:{contents:"export { DEFAULT_SPACE_INFO, DEFAULT_PARTICIPANT_SETTINGS } from './packages/domain/src/space'; export { DEFAULT_VOCESPACE_CONFIG } from './packages/domain/src/config';",resolveDir:root,loader:'ts'},outfile:path.join(directory,'fixtures.cjs'),bundle:true,packages:'external',platform:'node',format:'cjs',tsconfig:path.join(root,'tsconfig.json'),logLevel:'silent'});
   const require=createRequire(import.meta.url);
   const {DEFAULT_SPACE_INFO,DEFAULT_PARTICIPANT_SETTINGS,DEFAULT_VOCESPACE_CONFIG}=require(path.join(directory,'fixtures.cjs'));
   const redisPort=await port(), apiPort=await port();
   const mediaPort=await port();
   mediaServer=createHttpServer(async(req,res)=>{
     const chunks=[]; for await(const chunk of req) chunks.push(chunk);
+    if(req.url.endsWith('/StartWebEgress')) {
+      const body=JSON.parse(Buffer.concat(chunks).toString());
+      const entry={egressId:`EG_preview_${previewEgresses.length}`,status:'EGRESS_ACTIVE',web:body};previewEgresses.push(entry);
+      res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(entry));return;
+    }
+    if(req.url.endsWith('/ListEgress')) {
+      const body=JSON.parse(Buffer.concat(chunks).toString());
+      res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({items:previewEgresses.filter(item=>item.status==='EGRESS_ACTIVE'&&(!body.egressId||body.egressId===item.egressId))}));return;
+    }
+    if(req.url.endsWith('/StopEgress')) {
+      const body=JSON.parse(Buffer.concat(chunks).toString());const entry=previewEgresses.find(item=>item.egressId===body.egressId);
+      if(entry) entry.status='EGRESS_COMPLETE';res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(entry||{}));return;
+    }
+    if(req.url.startsWith('/preview-test/vocespace-preview/')) {
+      const body=Buffer.from(new URL(req.url,'http://test').pathname.endsWith('.m3u8')?'#EXTM3U\n#EXT-X-TARGETDURATION:2\n#EXTINF:2,\nsegment_0001.ts\n':'fake-ts-for-transport-only');
+      res.writeHead(200,{'Content-Length':body.length,'Content-Type':'application/octet-stream'});res.end(body);return;
+    }
     if(req.url.endsWith('/RemoveParticipant')) { const body=JSON.parse(Buffer.concat(chunks).toString()); mediaParticipants=mediaParticipants.filter((p)=>p.identity!==body.identity); }
+    if(req.url.endsWith('/UpdateParticipant')) {
+      const body=JSON.parse(Buffer.concat(chunks).toString());
+      const target=mediaParticipants.find((p)=>p.identity===body.identity);
+      if (!target) {res.writeHead(404);res.end('{}');return;}
+      if (body.permission) target.permission=body.permission;
+      if (body.name) target.name=body.name;
+      res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify(target));return;
+    }
     res.writeHead(200,{'Content-Type':'application/json'}); res.end(JSON.stringify({participants:mediaParticipants}));
   });
   await new Promise((resolve)=>mediaServer.listen(mediaPort,'127.0.0.1',resolve));
@@ -49,12 +75,13 @@ try {
   redis=new Redis({host:'127.0.0.1',port:redisPort,lazyConnect:true,retryStrategy:()=>50});
   redis.on('error',()=>{}); await waitUntil(()=>redis.ping());
   await writeFile(path.join(directory,'vocespace.conf.json'),JSON.stringify({...DEFAULT_VOCESPACE_CONFIG,
+    s3:{accessKey:'fixture-access',secretKey:'fixture-secret',region:'us-east-1',bucket:'preview-test'},
     create_space:'all',hostToken:'integration-admin',redis:{enabled:true,host:'127.0.0.1',port:redisPort,db:0,password:''},
     livekit:{url:`ws://127.0.0.1:${mediaPort}`,key:'test-only',secret:'test-only-secret-never-production-123456',turn:[]}}));
   const apiOrigin=`http://127.0.0.1:${apiPort}`;
   const origin=`http://127.0.0.1:${webPort}`;
   const apiDirectory=process.env.API_BUILD_DIR || path.join(root,'services/api');
-  const startApi=()=>child(process.execPath,[path.join(apiDirectory,'start.mjs')],{VOCESPACE_DATA_DIR:directory,API_PORT:String(apiPort),WORKER_ENABLED:'false',NATIVE_CONFERENCE_SPACE:'room',PUBLIC_ORIGIN:origin,PLATFORM_JWT_SECRET:'test-only-platform-signing-secret-32-characters'},apiDirectory);
+  const startApi=()=>child(process.execPath,[path.join(apiDirectory,'start.mjs')],{VOCESPACE_DATA_DIR:directory,API_PORT:String(apiPort),WORKER_ENABLED:'false',PREVIEW_ENABLED:'true',PREVIEW_RENDERER_BASE_URL:apiOrigin,PREVIEW_S3_ENDPOINT:`http://127.0.0.1:${mediaPort}`,NATIVE_CONFERENCE_SPACE:'room',PUBLIC_ORIGIN:origin,PLATFORM_JWT_SECRET:'test-only-platform-signing-secret-32-characters'},apiDirectory);
   const apiProcess=startApi();
   await waitUntil(async()=>{assert.equal((await fetch(`${apiOrigin}/healthz`)).status,200);});
   if (process.env.WEB_BUILD_DIR) {
@@ -74,12 +101,20 @@ try {
   const alice=await session('Alice','room'), bob=await session('Bob','room'), carol=await session('Carol','other');
   check(alice.id!=='forged-owner','client identity must be ignored');
   const room={...DEFAULT_SPACE_INFO(Date.now(),true),ownerId:alice.id,participants:{
-    [alice.id]:{...structuredClone(DEFAULT_PARTICIPANT_SETTINGS),name:'Alice'},
-    [bob.id]:{...structuredClone(DEFAULT_PARTICIPANT_SETTINGS),name:'Bob'},
+    [alice.id]:{...structuredClone(DEFAULT_PARTICIPANT_SETTINGS),name:'Alice',online:true},
+    [bob.id]:{...structuredClone(DEFAULT_PARTICIPANT_SETTINGS),name:'Bob',online:true},
   }};
   await redis.set('space:room',JSON.stringify(room)); await redis.sadd('space:list:','room');
   await redis.set('space:other',JSON.stringify({...DEFAULT_SPACE_INFO(Date.now(),true),ownerId:carol.id,participants:{[carol.id]:{...DEFAULT_PARTICIPANT_SETTINGS,name:'Carol'}}}));
   const post=(user,path,body,originHeader=origin)=>fetch(origin+path,{method:'POST',headers:{cookie:user.cookie,origin:originHeader,'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const nameCheck=async(user,name,id)=>{
+    const response=await post(user,'/api/space?nameCheck=true',{spaceName:'room',participantName:name,participantId:id});
+    check(response.status===200,'named prejoin succeeds for an existing Space');
+    return response.json();
+  };
+  check((await nameCheck(bob,'New Guest')).name==='New Guest','new name returns a successful response instead of falling through');
+  check((await nameCheck(bob,'Alice',alice.id)).name==='Alice 02','random session IDs still detect name conflicts and cannot be spoofed');
+  check((await nameCheck(alice,'Alice')).name==='Alice','trusted participant can retain own name');
   check((await post(bob,'/api/space?space=true&allowGuest=update',{spaceName:'room',allowGuest:'disable'})).status===403,'nonmanager rejected');
   check((await post(alice,'/api/v1/space?space=true&allowGuest=update',{spaceName:'room',allowGuest:'allow'})).status===200,'v1 owner uses same service');
   check((await post(alice,'/api/space?space=true&allowGuest=update',{spaceName:'room',allowGuest:'disable'},'https://evil.invalid')).status===403,'CSRF origin rejected');
@@ -131,29 +166,79 @@ try {
   const initialized=await post(guest,'/api/space?participant=update&space=true',{spaceName:'fresh',participantId:guest.id,init:true,settings:{...DEFAULT_PARTICIPANT_SETTINGS,name:'Guest',auth:{platform:'vocespace',identity:'owner'}}});
   check(initialized.status===200&&(await initialized.json()).success,'HTTP member initialization creates the first room owner');
   const fresh=JSON.parse(await redis.get('space:fresh'));
+  check(fresh.children.filter(room=>!room.isPrivate).map(room=>room.name).join('|')==='Meeting Room|☕️ Coffee Break','new Space retains both public rooms after actual HTTP initialization');
+  const fetchedFresh=await fetch(`${origin}/api/space?spaceName=fresh`,{headers:{cookie:guest.cookie}});
+  check((await fetchedFresh.json()).settings.children.filter(room=>!room.isPrivate).length===2,'joined viewer receives stored default rooms');
   check(fresh.ownerId===guest.id&&fresh.participants[guest.id].auth.platform==='other','initialization uses server identity and ignores forged platform');
 
   // Native pilot uses the same Redis, permissions and media adapter, with explicit Bearer auth.
   const nativeCall=(path,method,body,token,extra={})=>fetch(origin+path,{method,headers:{'Content-Type':'application/json',...(token?{authorization:`Bearer ${token}`}:{ }),...extra},body:JSON.stringify(body)});
-  const sessionPath='/api/v1/session/native', meetingPath='/api/v1/native/conferences';
+  const sessionPath='/api/v1/session/native', meetingPath='/api/v1/native/conferences', nativeHistoryPath='/api/v1/native/chat/history';
   check((await nativeCall(sessionPath,'POST',{},undefined,{origin})).status===403,'browser origin cannot use native bearer exchange');
   const nativeResponse=await nativeCall(sessionPath,'POST',{},undefined,{cookie:bob.cookie});
   const native=await nativeResponse.json();
   check(nativeResponse.status===200&&native.accessToken!==bob.cookie.split('=')[1]&&!nativeResponse.headers.has('set-cookie'),'native guest is independent from browser Cookie');
   const resumed=await (await nativeCall(sessionPath,'POST',{},native.accessToken)).json();
   check(resumed.accessToken===native.accessToken,'native session restores stable identity');
-  check((await fetch(`${origin}/api/connection-details?spaceName=room&participantName=Mobile`,{headers:{authorization:`Bearer ${native.accessToken}`}})).status===403,'native observer cannot obtain legacy publishing grants');
-  check((await nativeCall(meetingPath,'POST',{joinId:'subroom-denied-test',spaceName:'room',nickname:'Mobile'},native.accessToken)).status===409,'native observation rejects existing subrooms');
+  const previewPath='/api/v1/native/preview';
+  check((await nativeCall(previewPath,'POST',{spaceName:'room'})).status===401,'preview requires a Native session before starting a source');
+  check((await nativeCall(previewPath,'POST',{spaceName:'room'},native.accessToken,{origin})).status===403,'browser cannot mint Native preview leases');
+  const beforePreview=await redis.get('space:room');
+  const previewResponse=await nativeCall(previewPath,'POST',{spaceName:'room'},native.accessToken);
+  const preview=await previewResponse.json();
+  check(previewResponse.status===200&&preview.status==='ready','Egress/S3 adapters produce an HLS lease over real HTTP');
+  check(!JSON.stringify(preview).includes('participantToken')&&!JSON.stringify(preview).includes('fixture-secret'),'viewer receives no RTC or storage credential');
+  check(await redis.get('space:room')===beforePreview&&mediaParticipants.length===0,'preview creates no business or viewer RTC membership');
+  const previewJobs=Object.values(await redis.hgetall('v1:preview:jobs')).map(JSON.parse);
+  const sourceUrl=previewEgresses[0].web.url;
+  const renderer=await fetch(sourceUrl);
+  check(renderer.status===200&&(await renderer.text()).includes('./script'),'source template is reachable with its separate render capability');
+  const detailsUrl=new URL(sourceUrl);detailsUrl.pathname=detailsUrl.pathname.replace('/render','/details');
+  const details=await (await fetch(detailsUrl)).json();
+  check(details.members.length===Object.keys(JSON.parse(beforePreview).participants).length&&details.members.every(member=>!member.id.startsWith('native_')),'source is the main-room projection, not the browsing viewer');
+  const sourceClaims=JSON.parse(Buffer.from(details.token.split('.')[1],'base64url').toString());
+  check(sourceClaims.sub==='preview_main'&&sourceClaims.video.hidden&&!sourceClaims.video.canPublish&&!sourceClaims.video.canPublishData,'internal source token is hidden and cannot publish or send data');
+  check((await fetch(`${apiOrigin}/api/v1/preview/render?job=${previewJobs[0].id}&key=${'f'.repeat(64)}`)).status===410,'source template rejects a forged render capability');
+  const manifest=await fetch(preview.url);
+  check(manifest.status===200&&(await manifest.text()).includes('segment_0001.ts'),'playlist can be read using the short playback capability');
+  const segment=new URL('segment_0001.ts',preview.url).toString();
+  check((await fetch(segment)).status===200,'segment uses the same lease without exposing a storage URL');
+  check((await nativeCall(previewPath,'PUT',{leaseId:preview.leaseId},native.accessToken)).status===200,'own preview lease can renew');
+  const otherNative=await (await nativeCall(sessionPath,'POST',{})).json();
+  check((await nativeCall(previewPath,'DELETE',{leaseId:preview.leaseId},otherNative.accessToken)).status===403,'another Native session cannot release the lease');
+  const newerPreview=await (await nativeCall(previewPath,'POST',{spaceName:'room'},native.accessToken)).json();
+  check((await fetch(segment)).status===410&&previewEgresses.length===1,'new playback revokes the old lease and reuses a single source');
+  await redis.set('v1:preview:epoch:room','moved-into-room-and-back');
+  check((await fetch(newerPreview.url)).status===410,'Room moves invalidate even previously generated playlists');
+  check((await nativeCall(previewPath,'DELETE',{leaseId:newerPreview.leaseId},native.accessToken)).status===200,'invalidated lease can still be released');
+  const replacement=await (await nativeCall(previewPath,'POST',{spaceName:'room'},otherNative.accessToken)).json();
+  await nativeCall(sessionPath,'DELETE',{},otherNative.accessToken);
+  check((await fetch(replacement.url)).status===410,'session revocation blocks already-issued playback URLs');
+
+  check((await fetch(`${origin}/api/connection-details?spaceName=room&participantName=Mobile`,{headers:{authorization:`Bearer ${native.accessToken}`,'Content-Type':'application/json'}})).status===403,'native observer cannot obtain legacy publishing grants');
+  const privateFixture=JSON.parse(await redis.get('space:room')); privateFixture.children[0].isPrivate=true; await redis.set('space:room',JSON.stringify(privateFixture));
+  check((await nativeCall(meetingPath,'POST',{joinId:'subroom-denied-test',spaceName:'room',nickname:'Mobile',childRoom:'Meeting Room'},native.accessToken)).status===403,'Native rejects direct private-room joins');
   // Remove only disposable fixture subrooms before enabling the manual observer flow.
   const pilot=JSON.parse(await redis.get('space:room'));pilot.children=[];
   pilot.ownerId=bob.id;
   await redis.set('space:room',JSON.stringify(pilot));
   const reinitialized=await post(bob,'/api/space?participant=update&space=true',{spaceName:'room',participantId:bob.id,init:true,settings:pilot.participants[bob.id]});
-  check(reinitialized.status===200&&JSON.parse(await redis.get('space:room')).children.length===0,'Web initialization cannot create private subrooms in the opted-in pilot');
+  check(reinitialized.status===200&&JSON.parse(await redis.get('space:room')).children.some(child=>child.isPrivate),'Web keeps personal private-room behavior after removing Native env gating');
   const cancelled='cancel-before-prepare';
   await nativeCall(meetingPath,'DELETE',{joinId:cancelled},native.accessToken);
   check((await nativeCall(meetingPath,'POST',{joinId:cancelled,spaceName:'room',nickname:'Mobile'},native.accessToken)).status===409,'cancel tombstone rejects late prepare');
-  check((await nativeCall(meetingPath,'POST',{joinId:'disabled-room-join',spaceName:'fresh',nickname:'Mobile'},native.accessToken)).status===403,'native access restricted to explicitly enabled pilot room');
+  const secondPrepared=await nativeCall(meetingPath,'POST',{joinId:'second-space-join',spaceName:'fresh',nickname:'Mobile'},native.accessToken);
+  check(secondPrepared.status===200,'Native joins a second Web-created Space absent from the old env allowlist');
+  const secondJoin=await secondPrepared.json();
+  const secondClaims=JSON.parse(Buffer.from(secondJoin.participantToken.split('.')[1],'base64url').toString());
+  mediaParticipants=[{sid:'PA_second_test',identity:secondJoin.identity,name:'Mobile',metadata:secondClaims.metadata}];
+  check((await nativeCall(meetingPath,'PUT',{joinId:'second-space-join'},native.accessToken)).status===200,'second Space confirms with a private personal Room present');
+  const secondRooms=await (await nativeCall('/api/v1/native/rooms','POST',{joinId:'second-space-join'},native.accessToken)).json();
+  check(secondRooms.current==='fresh'&&secondRooms.rooms.length===3&&!JSON.stringify(secondRooms).includes("Guest's Room"),'Native directory includes only main/public Rooms');
+  check((await nativeCall(nativeHistoryPath,'POST',{joinId:'second-space-join'},native.accessToken)).status===200,'chat authorization is independent of old env');
+  check((await nativeCall('/api/v1/native/media','POST',{joinId:'second-space-join'},native.accessToken)).status===200,'media authorization is independent of old env');
+  check((await nativeCall(meetingPath,'DELETE',{joinId:'second-space-join'},native.accessToken)).status===200,'second Space cleans up normally');
+  const nativeMediaPath='/api/v1/native/media';
   const beforeNative=JSON.parse(await redis.get('space:room'));
   await redis.set('space:room',JSON.stringify({...beforeNative,children:{}}));
   check((await nativeCall(meetingPath,'POST',{joinId:'corrupt-room-test',spaceName:'room',nickname:'Mobile'},native.accessToken)).status===503,'corrupt childroom data fails closed');
@@ -164,7 +249,21 @@ try {
   const nativeJoin=await prepared.json();
   const nativeClaims=JSON.parse(Buffer.from(nativeJoin.participantToken.split('.')[1],'base64url').toString());
   check(nativeClaims.video.canPublish===false&&nativeClaims.video.canPublishData===false,'native RTC grants are observer-only');
+  check((await nativeCall(nativeMediaPath,'PUT',{joinId,device:'microphone',invitationId:''},native.accessToken)).status===403,'unconfirmed Native cannot request publishing');
   check(!JSON.parse(await redis.get('space:room')).participants[nativeJoin.identity],'prepare does not create business membership');
+  check((await nativeCall(nativeHistoryPath,'POST',{joinId},native.accessToken)).status===403,'prepared Native participants cannot read private conference chat');
+  const earlySocket=io(origin,{auth:{token:native.accessToken,joinId},extraHeaders:{'X-Vocespace-Client':'native',origin:apiOrigin},transports:['websocket'],reconnection:false});sockets.push(earlySocket);
+  const earlyError=await new Promise((resolve,reject)=>{earlySocket.once('connect',()=>reject(new Error('Unconfirmed chat connected')));earlySocket.once('connect_error',resolve);});
+  check(earlyError.message==='CHAT_MEMBERSHIP_REQUIRED','Socket refuses Native chat until membership confirmation');
+  earlySocket.disconnect();
+  const cookieNative=io(origin,{extraHeaders:{'X-Vocespace-Client':'native',origin:'http://native.invalid',cookie:bob.cookie},transports:['websocket'],reconnection:false});sockets.push(cookieNative);
+  const cookieError=await new Promise((resolve,reject)=>{cookieNative.once('connect',()=>reject(new Error('Native marker accepted a Cookie')));cookieNative.once('connect_error',resolve);});
+  check(cookieError.message==='SESSION_REQUIRED','Native Socket transport marker never authorizes a browser Cookie');
+  cookieNative.disconnect();
+  const webBearerNative=io(origin,{auth:{token:bob.cookie.split('=')[1]},extraHeaders:{'X-Vocespace-Client':'native',origin:'http://native.invalid'},transports:['websocket'],reconnection:false});sockets.push(webBearerNative);
+  const webBearerError=await new Promise((resolve,reject)=>{webBearerNative.once('connect',()=>reject(new Error('Native marker accepted a browser principal')));webBearerNative.once('connect_error',resolve);});
+  check(webBearerError.message==='NATIVE_SESSION_REQUIRED','Native Socket transport rejects browser principals even when supplied as Bearer');
+  webBearerNative.disconnect();
   check((await nativeCall(meetingPath,'PUT',{joinId},native.accessToken)).status===409,'confirmation requires server-observed RTC presence');
   mediaParticipants=[{sid:'PA_native_test',identity:nativeJoin.identity,metadata:'null'}];
   check((await nativeCall(meetingPath,'PUT',{joinId},native.accessToken)).status===409,'invalid RTC metadata is rejected without initializing membership');
@@ -172,23 +271,194 @@ try {
   const confirmed=await Promise.all([nativeCall(meetingPath,'PUT',{joinId},native.accessToken),nativeCall(meetingPath,'PUT',{joinId},native.accessToken)]);
   check(confirmed.every((r)=>r.status===200),'duplicate confirmation is idempotent');
   const member=JSON.parse(await redis.get('space:room')).participants[nativeJoin.identity];
-  assert.deepEqual(JSON.parse(await redis.get('space:room')).children, [], 'Native confirm preserves empty arrays');
+  assert.deepEqual(JSON.parse(await redis.get('space:room')).children, beforeNative.children, 'Native confirm preserves existing private rooms and their empty participant arrays');
   assert.deepEqual(member.appDatas, DEFAULT_PARTICIPANT_SETTINGS.appDatas, 'Native defaults preserve nested arrays');
   check(member.auth.identity==='guest'&&member.name==='Mobile'&&!member.ai.cut.enabled,'native member initialized from server defaults without AI');
-  const blockedChild=await post(bob,'/api/space?childRoom=create',{spaceName:'room',roomName:'private'},origin);
-  check(blockedChild.status===409,'pilot room cannot add subrooms while native observation is enabled');
-  const nativeSocket=io(origin,{auth:{token:native.accessToken},transports:['websocket'],reconnection:false});sockets.push(nativeSocket);
+  const nativeSettingsPath='/api/v1/native/settings';
+  const settingsResponse=await nativeCall(nativeSettingsPath,'POST',{joinId,identity:bob.id,spaceName:'private'},native.accessToken);
+  const nativeSettings=await settingsResponse.json();
+  check(settingsResponse.status===200&&nativeSettings.name==='Mobile'&&nativeSettings.permissions.guest.viewRoom===true&&!('ai' in nativeSettings)&&!('license' in nativeSettings)&&!('participants' in nativeSettings),'Native settings return only own display preferences and permission matrix');
+  check((await nativeCall(nativeSettingsPath,'PUT',{joinId,patch:{permissions:nativeSettings.permissions}},native.accessToken)).status===403,'Native guest cannot grant itself room permissions');
+  check((await nativeCall(nativeSettingsPath,'PUT',{joinId,patch:{status:'Working',openPromptSound:false}},native.accessToken)).status===200,'Native guest can persist its own status and preference');
+  check(JSON.parse(await redis.get('space:room')).participants[nativeJoin.identity].status==='Working','Native changes share Web participant storage');
+  check((await nativeCall(nativeSettingsPath,'PUT',{joinId,patch:{ownerId:nativeJoin.identity}},native.accessToken)).status===400,'Native settings reject protected/unrecognized fields');
+  check((await nativeCall(nativeSettingsPath,'POST',{joinId:'foreign-join-123456'},native.accessToken)).status===403,'Native settings cannot read another join');
+  const createdPrivate=await post(bob,'/api/space?childRoom=true',{spaceName:'room',roomName:'private',participantId:bob.id,isPrivate:true},origin);
+  check(createdPrivate.status===200,'Web managers retain private-room creation while Native is in the main room');
+  check((await nativeCall(nativeHistoryPath,'POST',{joinId},native.accessToken)).status===200,'creating an unrelated private room does not revoke main-room Native membership');
+  const removedPrivate=await fetch(origin+'/api/space?childRoom=delete',{method:'DELETE',headers:{cookie:bob.cookie,origin,'Content-Type':'application/json'},body:JSON.stringify({spaceName:'room',roomName:'private'})});
+  check(removedPrivate.status===200,'Web manager can remove the temporary private room');
+  const nativePrincipal=JSON.parse(await redis.get(`v1:session:${native.accessToken}`));
+  const nativeJoinKey=`v1:native-join:${nativePrincipal.id}:${joinId}`;
+  const savedJoin=await redis.get(nativeJoinKey);
+  for (const corrupt of ['invalid-json','null']) {
+    await redis.set(nativeJoinKey,corrupt);
+    check((await nativeCall(nativeHistoryPath,'POST',{joinId},native.accessToken)).status===503,'corrupt Native authorization records return storage-unavailable');
+  }
+  await redis.set(nativeJoinKey,savedJoin);
+  const historyBefore=await nativeCall(nativeHistoryPath,'POST',{joinId},native.accessToken);
+  check(historyBefore.status===200&&(await historyBefore.json()).items.some((m)=>m.id===msg.id&&m.sender.id===bob.id),'confirmed Native member reads existing Web chat');
+  check((await nativeCall(nativeHistoryPath,'POST',{joinId:'foreign-join-123456'},native.accessToken)).status===403,'history is bound to an owned join, not a supplied space or identity');
+  const nativeSocket=io(origin,{auth:{token:native.accessToken,joinId},extraHeaders:{'X-Vocespace-Client':'native',origin:apiOrigin},transports:['websocket'],reconnection:false});sockets.push(nativeSocket);
   await new Promise((resolve,reject)=>{nativeSocket.once('connect',resolve);nativeSocket.once('connect_error',reject);});
-  check((await ack(nativeSocket,'chat_msg',{...msg,id:'native-ack'})).ok===true,'native Bearer socket uses shared membership authorization');
+  let nativeReceived=[];nativeSocket.on('chat_msg_response',(m)=>nativeReceived.push(m));
+  check(JSON.parse(await redis.get('space:room')).participants[nativeJoin.identity].socketId===nativeSocket.id,'Native transport address is available to Web participant controls');
+  const mediaInput={joinId,device:'microphone',invitationId:''};
+  check((await nativeCall(nativeMediaPath,'PUT',mediaInput,native.accessToken)).status===403,'joining never grants publishing without invitation');
+  check((await nativeCall(nativeMediaPath,'PUT',{...mediaInput,device:'screen_share'},native.accessToken)).status===400,'Native grant rejects screen sharing');
+  check((await ack(nativeSocket,'invite_device',{space:'room',socketId:nativeSocket.id,device:'microphone',isOpen:true})).ok===false,'Native cannot self-invite');
+  let raised;
+  restoredBob.once('raise_response',(msg)=>{raised=msg;});
+  check((await ack(nativeSocket,'raise',{space:'room',senderName:'forged',senderSocketId:'forged'})).ok,'Native can raise hand');
+  await waitUntil(()=>assert.equal(raised?.senderSocketId,nativeSocket.id));
+  check(raised.senderName==='Mobile'&&raised.senderId===nativeJoin.identity,'raised hand identifies trusted sender and actual Socket');
+  check((await ack(restoredBob,'raise_accept',{space:'room',socketId:nativeSocket.id,receiverId:nativeJoin.identity})).ok,'Web host accepts Native raised hand');
+  const pendingMedia=await (await nativeCall(nativeMediaPath,'POST',{joinId},native.accessToken)).json();
+  check(pendingMedia.sources.length===0&&pendingMedia.invitations.length===1&&!JSON.stringify(pendingMedia).includes('issuerToken'),'invite returns no publishing grant or issuer credential');
+  const invite=pendingMedia.invitations[0];
+  check((await nativeCall(nativeMediaPath,'PUT',{...mediaInput,invitationId:'forged'},native.accessToken)).status===403,'forged invitation rejected');
+  const invitationKey=`v1:native-invite:${nativePrincipal.id}:${joinId}:microphone`;
+  const invitationRecord=JSON.parse(await redis.get(invitationKey));
+  await redis.set(invitationKey,JSON.stringify({...invitationRecord,expiresAt:1}));
+  check((await nativeCall(nativeMediaPath,'PUT',{...mediaInput,invitationId:invite.id},native.accessToken)).status===403,'expired invitation rejected');
+  await redis.set(invitationKey,JSON.stringify(invitationRecord));
+  const managerRoom=JSON.parse(await redis.get('space:room'));
+  await redis.set('space:room',JSON.stringify({...managerRoom,ownerId:'changed-owner',managers:[]}));
+  check((await nativeCall(nativeMediaPath,'PUT',{...mediaInput,invitationId:invite.id},native.accessToken)).status===403,'acceptance rechecks inviter current management authority');
+  await redis.set('space:room',JSON.stringify(managerRoom));
+  const grantedMedia=await nativeCall(nativeMediaPath,'PUT',{...mediaInput,invitationId:invite.id},native.accessToken);
+  check(grantedMedia.status===200&&(await grantedMedia.json()).sources.join(',')==='microphone','explicit acceptance grants only invited microphone');
+  check(mediaParticipants[0].permission.canPublishData!==true&&mediaParticipants[0].permission.canPublishSources.join(',')==='MICROPHONE','media server restricts publication to source allowlist');
+  check((await nativeCall(nativeMediaPath,'PUT',mediaInput,native.accessToken)).status===200,'already authorized source can be retried without consuming another invitation');
+  check((await nativeCall(nativeMediaPath,'PUT',{...mediaInput,device:'camera'},native.accessToken)).status===403,'microphone grant cannot authorize camera');
+  check((await ack(restoredBob,'invite_device',{space:'room',socketId:nativeSocket.id,device:'camera',isOpen:true})).ok,'Web host can separately invite Native camera');
+  const cameraInvite=(await (await nativeCall(nativeMediaPath,'POST',{joinId},native.accessToken)).json()).invitations.find((item)=>item.device==='camera');
+  const cameraGrant=await nativeCall(nativeMediaPath,'PUT',{...mediaInput,device:'camera',invitationId:cameraInvite.id},native.accessToken);
+  check(cameraGrant.status===200&&(await cameraGrant.json()).sources.length===2,'camera acceptance preserves existing microphone permission');
+  check((await ack(restoredBob,'control_participant',{space:'room',socketId:nativeSocket.id,type:'mute_audio'})).ok,'Web mute revokes Native source on media server');
+  check(mediaParticipants[0].permission.canPublishSources.join(',')==='CAMERA','microphone revocation preserves separately authorized camera');
+  check((await ack(restoredBob,'control_participant',{space:'room',socketId:nativeSocket.id,type:'mute_video'})).ok,'Web can revoke last Native camera source');
+  check(!mediaParticipants[0].permission.canPublish,'host mute disables publishing even without trusting client UI');
+  check((await nativeCall(nativeMediaPath,'PUT',mediaInput,native.accessToken)).status===403,'old invitation cannot reopen revoked microphone');
+  check((await nativeCall(nativeMediaPath,'PUT',{...mediaInput,device:'screen'},native.accessToken)).status===403,'screen capture requires its own invitation');
+  check((await ack(restoredBob,'invite_device',{space:'room',socketId:nativeSocket.id,device:'screen_share',isOpen:true})).ok,'host can invite Native screen sharing');
+  const screenInvite=(await (await nativeCall(nativeMediaPath,'POST',{joinId},native.accessToken)).json()).invitations.find(item=>item.device==='screen');
+  check((await nativeCall(nativeMediaPath,'PUT',{...mediaInput,device:'screen',invitationId:screenInvite.id},native.accessToken)).status===200,'explicit screen acceptance succeeds');
+  check(mediaParticipants[0].permission.canPublishSources.join(',')==='SCREEN_SHARE','screen grant never adds camera or screen audio');
+  check((await ack(restoredBob,'control_participant',{space:'room',socketId:nativeSocket.id,type:'mute_screen'})).ok&&!mediaParticipants[0].permission.canPublish,'host revokes screen publication');
+
+  const nativeMessage={...msg,id:'native-ack',joinId,extraSecret:'must-not-forward'};
+  const nativeAcks=await Promise.all([ack(nativeSocket,'chat_msg',nativeMessage),ack(nativeSocket,'chat_msg',nativeMessage)]);
+  check(nativeAcks.every((result)=>result.ok)&&nativeAcks.some((result)=>result.duplicate),'Native message retries share atomic Web deduplication');
+  const fromNative=JSON.parse(await redis.get('chat:room')).filter((m)=>m.id==='native-ack');
+  check(fromNative.length===1&&fromNative[0].sender.id===nativeJoin.identity&&!('extraSecret' in fromNative[0])&&!('joinId' in fromNative[0]),'Native text stores trusted sender and only canonical fields');
+  const webHistory=await (await fetch(`${origin}/api/space?spaceName=room&chat=true&history=true`,{headers:{cookie:bob.cookie}})).json();
+  check(JSON.stringify(webHistory).includes('native-ack'),'Web history sees Native messages through the existing data source');
+  check((await ack(nativeSocket,'chat_msg',{...nativeMessage,id:'too-long',message:'x'.repeat(4001)})).code==='INVALID_EVENT','oversized Native messages rejected before storage');
+  check((await ack(nativeSocket,'chat_msg',{...nativeMessage,id:'wrong-join',joinId:'different-join-12345'})).ok===false,'Native Socket rejects a mismatched join ID');
+  check((await ack(nativeSocket,'chat_file',{...nativeMessage,type:'file',file:{url:'https://untrusted.invalid/file'}})).ok===false,'Native text chat cannot bypass upload authorization using file events');
+  await ack(restoredBob,'chat_msg',{...msg,id:'web-to-native',message:'Web hello'});
+  await waitUntil(()=>assert.ok(nativeReceived.some((m)=>m.id==='web-to-native')));
+  check(nativeReceived.some((m)=>m.id==='web-to-native'),'Native joined channel receives Web messages');
+  await ack(restoredBob,'chat_file',{...msg,id:'file-for-native',type:'file',file:{url:'https://private.invalid/file',name:'note.txt'}});
+  const historyWithFile=await (await nativeCall(nativeHistoryPath,'POST',{joinId},native.accessToken)).json();
+  const filePreview=historyWithFile.items.find((m)=>m.id==='file-for-native');
+  check(filePreview?.type==='file'&&!('file' in filePreview)&&filePreview.message===null,'Native history exposes attachment placeholder without private URLs');
+  const savedChat=await redis.get('chat:room');
+  await redis.set('chat:room',JSON.stringify(Array.from({length:70},(_,i)=>({...msg,id:`bounded-${i}`,timestamp:i}))));
+  const boundedHistory=await (await nativeCall(nativeHistoryPath,'POST',{joinId},native.accessToken)).json();
+  check(boundedHistory.items.length===50&&boundedHistory.items[0].id==='bounded-20','Native history limits recent messages to 50');
+  await redis.set('chat:room','corrupt');
+  check((await nativeCall(nativeHistoryPath,'POST',{joinId},native.accessToken)).status===503,'history storage corruption is not reported as an empty room');
+  await redis.set('chat:room',savedChat);
+  await redis.set(`v1:revoked:room:${nativeJoin.identity}`,'1');
+  check((await nativeCall(nativeHistoryPath,'POST',{joinId},native.accessToken)).status===403,'Native history checks media membership revocation');
+  nativeReceived=[];
+  await ack(restoredBob,'chat_msg',{...msg,id:'after-native-revocation'});
+  check(nativeReceived.length===0,'revoked Native reader is evicted before Web broadcasts');
+  check((await ack(nativeSocket,'chat_msg',{...nativeMessage,id:'revoked-native-send'})).ok===false,'revoked Native writer cannot send through a previously connected Socket');
+  await redis.del(`v1:revoked:room:${nativeJoin.identity}`);
   const assigned=JSON.parse(await redis.get('space:room')); assigned.managers.push(nativeJoin.identity);
   await redis.set('space:room',JSON.stringify(assigned));
   check((await ack(nativeSocket,'clear_space_resources',{space:'room'})).ok===false,'Native observer cannot acquire Socket management even if assigned a manager role');
   assigned.managers=beforeNative.managers;await redis.set('space:room',JSON.stringify(assigned));
   check((await nativeCall(meetingPath,'DELETE',{joinId},native.accessToken)).status===200&&mediaParticipants.length===0,'native exit removes actual media participant');
+  check((await nativeCall(nativeMediaPath,'PUT',{joinId,device:'microphone',invitationId:''},native.accessToken)).status===403,'unconfirmed Native cannot request publishing');
   check(!JSON.parse(await redis.get('space:room')).participants[nativeJoin.identity],'native exit removes business membership');
+  check((await nativeCall(nativeHistoryPath,'POST',{joinId},native.accessToken)).status===403,'Native history is inaccessible after exit');
+  check((await nativeCall(nativeMediaPath,'PUT',mediaInput,native.accessToken)).status===403,'late grant cannot publish after exit');
+  check((await ack(nativeSocket,'chat_msg',{...nativeMessage,id:'after-native-exit'})).ok===false,'late Native send cannot resurrect chat membership');
   assert.deepEqual(JSON.parse(await redis.get('space:room')),beforeNative,'Native round trip preserves Web room data including empty arrays');
   check((await nativeCall(meetingPath,'PUT',{joinId},native.accessToken)).status===409,'late confirmation cannot resurrect a cancelled join');
   check((await nativeCall(meetingPath,'DELETE',{joinId},native.accessToken)).status===200,'native exit is idempotent');
+  // Public Room navigation uses a fresh join, keeping chat and membership scoped to the target.
+  const withRooms=JSON.parse(await redis.get('space:room')); withRooms.children=DEFAULT_SPACE_INFO(Date.now(),true).children;
+  await redis.set('space:room',JSON.stringify(withRooms));
+  const spacesResponse=await fetch(origin+'/api/v1/native/spaces',{headers:{authorization:`Bearer ${native.accessToken}`,'Content-Type':'application/json'}});
+  const spaceDirectory=await spacesResponse.json();
+  check(spacesResponse.status===200&&spaceDirectory.some(item=>item.name==='room'&&item.roomCount===3)&&spaceDirectory.some(item=>item.name==='fresh'&&item.roomCount===3),'directory discovers both stored spaces regardless of the old env');
+  const childJoinId='native-child-room-test';
+  const childPrepared=await nativeCall(meetingPath,'POST',{joinId:childJoinId,spaceName:'room',nickname:'Mobile',childRoom:'Meeting Room'},native.accessToken);
+  check(childPrepared.status===200,'Native can prepare a public child room');
+  const childJoin=await childPrepared.json();
+  const childClaims=JSON.parse(Buffer.from(childJoin.participantToken.split('.')[1],'base64url').toString());
+  mediaParticipants=[{sid:'PA_child_test',identity:childJoin.identity,name:'Mobile',metadata:childClaims.metadata}];
+  check((await nativeCall(meetingPath,'PUT',{joinId:childJoinId},native.accessToken)).status===200,'public child membership confirms');
+  const childDirectory=await (await nativeCall('/api/v1/native/rooms','POST',{joinId:childJoinId},native.accessToken)).json();
+  check(childDirectory.current==='Meeting Room'&&childDirectory.rooms[1].participantIds.includes(childJoin.identity)&&!childDirectory.rooms[0].participantIds.includes(childJoin.identity),'Native directory scopes the member to selected child');
+  check((await (await nativeCall(nativeHistoryPath,'POST',{joinId:childJoinId},native.accessToken)).json()).items.every(item=>item.roomName==='Meeting Room'),'child history never includes main-room chat');
+  check((await nativeCall(meetingPath,'DELETE',{joinId:childJoinId},native.accessToken)).status===200&&!JSON.parse(await redis.get('space:room')).children[0].participants.includes(childJoin.identity),'child exit removes membership from room list');
+  const creationPath = '/api/v1/native/spaces';
+  const fixtureConfig = JSON.parse(await readFile(path.join(directory,'vocespace.conf.json'),'utf8'));
+  fixtureConfig.s3 = { accessKey:'', secretKey:'', region:'', bucket:'' };
+  fixtureConfig.create_space = 'white'; fixtureConfig.whiteList = ['App owner'];
+  await writeFile(path.join(directory,'vocespace.conf.json'),JSON.stringify(fixtureConfig));
+  check((await nativeCall(creationPath,'POST',{spaceName:'native-denied'},native.accessToken)).status===403,'anonymous Native cannot impersonate a whitelist name to create');
+  check((await nativeCall(creationPath,'POST',{spaceName:'room'},native.accessToken)).status===200,'creation restrictions do not prevent joining an existing Space');
+  fixtureConfig.create_space = 'all';
+  await writeFile(path.join(directory,'vocespace.conf.json'),JSON.stringify(fixtureConfig));
+  const created = await nativeCall(creationPath, 'POST', { spaceName: 'native-created' }, native.accessToken);
+  check(created.status === 200 && (await created.json()).created, 'Native can create a Space under all creation policy');
+  const createdSpace = JSON.parse(await redis.get('space:native-created'));
+  check(createdSpace.children.length === 2 && createdSpace.children.every(room => !room.isPrivate), 'Native creation retains two default public Rooms');
+  check(Object.keys(createdSpace.participants).length === 0, 'creating a Space does not initialize an unconfirmed participant');
+  check(!(await (await nativeCall(creationPath, 'POST', { spaceName: 'native-created' }, native.accessToken)).json()).created, 'repeated creation preserves the existing Space');
+  check((await nativeCall(creationPath, 'POST', { spaceName: '../escape' }, native.accessToken)).status === 400, 'creation validates the Space name');
+  const joinOwner = async (id) => {
+    const response = await nativeCall(meetingPath,'POST',{joinId:id,spaceName:'native-created',nickname:'App owner'},native.accessToken);
+    assert.equal(response.status,200,await response.clone().text());
+    const joined = await response.json();
+    const claims = JSON.parse(Buffer.from(joined.participantToken.split('.')[1],'base64url').toString());
+    check(!claims.video.canPublish, 'creator cannot publish before RTC confirmation');
+    mediaParticipants = [{sid:'PA_owner',identity:joined.identity,name:'App owner',metadata:claims.metadata}];
+    const confirmed = await nativeCall(meetingPath,'PUT',{joinId:id},native.accessToken);
+    assert.equal(confirmed.status,200,await confirmed.clone().text());
+    return joined;
+  };
+  const ownerJoinId='native-owner-created-test';
+  const ownerJoin=await joinOwner(ownerJoinId);
+  const readSettings=async (id)=> (await nativeCall(nativeSettingsPath,'POST',{joinId:id},native.accessToken)).json();
+  const ownerSettings=await readSettings(ownerJoinId);
+  check(ownerSettings.room.isOwner && ownerSettings.room.canReadRecordings, 'creator receives server-verified ownership and settings capabilities');
+  const ownerMedia=await (await nativeCall(nativeMediaPath,'POST',{joinId:ownerJoinId},native.accessToken)).json();
+  check(ownerMedia.sources.length===3,'confirmed owner can explicitly enable camera, microphone and screen');
+  check((await nativeCall(nativeSettingsPath,'PUT',{joinId:ownerJoinId,patch:{status:'Host status',persistence:true,allowGuest:'disable',apps:['timer']}},native.accessToken)).status===200,'owner writes room policy and own preferences');
+  check((await nativeCall(nativeSettingsPath,'POST',{joinId:ownerJoinId},native.accessToken)).status===200,'owner retains access after disabling guests');
+  check((await nativeCall('/api/v1/native/records','POST',{joinId:ownerJoinId},native.accessToken)).status===200,'recording settings report unconfigured storage without exposing credentials');
+  const stranger=await (await nativeCall(sessionPath,'POST',{})).json();
+  check((await nativeCall(meetingPath,'POST',{joinId:'forged-owner-join',spaceName:'native-created',nickname:'App owner'},stranger.accessToken)).status===403,'same nickname does not grant ownership of guest-disabled Space');
+  check((await nativeCall(nativeSettingsPath,'PUT',{joinId:ownerJoinId,patch:{persistence:false}},stranger.accessToken)).status===403,'another session cannot write through the owner joinId');
+  check((await nativeCall(meetingPath,'DELETE',{joinId:ownerJoinId},native.accessToken)).status===200,'owner can exit normally');
+  check((await nativeCall(nativeSettingsPath,'PUT',{joinId:ownerJoinId,patch:{status:'late'}},native.accessToken)).status===403,'late settings write after exit is rejected');
+  const ownerAgainId='native-owner-rejoin-test';
+  const ownerAgain=await joinOwner(ownerAgainId);
+  check(ownerAgain.identity!==ownerJoin.identity,'rejoins use a fresh RTC identity so old exit cannot remove the new connection');
+  const againSettings=await readSettings(ownerAgainId);
+  check(againSettings.room.isOwner&&againSettings.status==='Host status','owner receipt and preferences survive leaving and rejoining within the same session');
+  await nativeCall(meetingPath,'DELETE',{joinId:ownerJoinId},native.accessToken);
+  check(mediaParticipants.some(item=>item.identity===ownerAgain.identity),'repeated old leave preserves the new owner RTC');
+  check((await nativeCall(meetingPath,'DELETE',{joinId:ownerAgainId},native.accessToken)).status===200,'rejoined owner cleanup succeeds');
+  await nativeCall(sessionPath,'DELETE',{},stranger.accessToken);
   await nativeCall(sessionPath,'DELETE',{},native.accessToken);
   check((await nativeCall(sessionPath,'POST',{},native.accessToken)).status===401,'revoked native credentials cannot restore');
   console.log(`${process.env.WEB_BUILD_DIR ? 'Production Web proxy + ' : ''}Independent HTTP + Redis + Socket integration: ${count} checks passed`);

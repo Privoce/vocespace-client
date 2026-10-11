@@ -1,11 +1,11 @@
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import type { MessageInstance } from 'antd/es/message/interface';
-vi.mock('@/lib/api/client', () => ({ apiFetch: (input: string, init: RequestInit) => fetch(input, init) }));
+vi.mock('../apps/web/lib/api/client', () => ({ apiFetch: (input: string, init: RequestInit) => fetch(input, init) }));
 const fixtures = vi.hoisted(() => ({ check: vi.fn() }));
-vi.mock('@/lib/api', () => ({ api: { testS3Connection: fixtures.check } }));
-vi.mock('@/lib/i18n/i18n', () => ({ useI18n: () => ({ t: (key: string) => key }) }));
-import { RecordState, useRecordingEnv } from '@/lib/std/recording';
+vi.mock('../apps/web/lib/api/index', () => ({ api: { testS3Connection: fixtures.check } }));
+vi.mock('../apps/web/lib/i18n/i18n', () => ({ useI18n: () => ({ t: (key: string) => key }) }));
+import { RecordState, useRecordingEnv } from '../apps/web/lib/std/recording';
 
 const capabilities = { configured: true, s3_bucket: 'bucket', s3_region: 'region', server_host: 'https://example.test' };
 const messages = () => ({ success: vi.fn(), error: vi.fn() } as unknown as MessageInstance);

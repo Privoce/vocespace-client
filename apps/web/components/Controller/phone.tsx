@@ -160,6 +160,15 @@ export function ControlsPhone({ model }: { model: ControlsModel }) {
           {/* <span>{t('common.leave')}</span> */}
         </div>
       )}
+      <ControlsWork model={model} />
+    </div>
+  );
+}
+
+export function ControlsWork({ model }: { model: ControlsModel }) {
+  const { space, visibleControls, spaceInfo, t } = model;
+  return (
+    <>
       {space && visibleControls.microphone && spaceInfo.ai.cut.enabled && model.showAI && (
         <Popover
           trigger="click"
@@ -189,6 +198,6 @@ export function ControlsPhone({ model }: { model: ControlsModel }) {
           />
         </Popover>
       )}
-    </div>
+    </>
   );
 }

@@ -2,9 +2,9 @@
 // test: stripe trigger payment_intent.succeeded
 import { ApiRequest, ApiResponse } from '../http';
 import Stripe from 'stripe';
-import { createLicense } from '@/lib/db/license';
-import { sendEmail, fmtContentBuy, fmtContentCancel } from '@/lib/email';
-import { getConfig, setConfigRoomLicense, writeBackConfig } from '@/lib/server/config';
+import { createLicense } from '../lib/db/license';
+import { sendEmail, fmtContentBuy, fmtContentCancel } from '../lib/email';
+import { getConfig, setConfigRoomLicense, writeBackConfig } from '../lib/server/config';
 
 const SECRET_KEY = process.env.STRIPE_SECRET_KEY ?? '';
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ?? '';

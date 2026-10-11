@@ -1,4 +1,4 @@
-import { sessions } from '@/lib/server/sessions';
+import { sessions } from './lib/server/sessions';
 import { AccessError } from './access';
 import { ApiRequest, ApiResponse } from './http';
 

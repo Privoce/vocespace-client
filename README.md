@@ -1,3 +1,5 @@
+> 当前版本已拆分为 pnpm monorepo。Web/API 独立安装、配置、升级与回退见 [独立部署手册](docs/independent-deployment.md)；旧一体化安装描述不适用于本分支。
+
 > 2026-10-09：项目已开始迁移到 pnpm monorepo。Web 与 API 请分别启动：`pnpm dev:web` / `pnpm dev:api`；手机子项目位于 `apps/mobile`。新版命令、构建与未完成部署项见 [迁移说明](docs/monorepo-first-batch.md)。下方旧一体化 Docker 说明尚未适配。
 
 <a href="https://space.voce.chat/rooms/bby6-x55t">

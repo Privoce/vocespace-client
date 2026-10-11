@@ -1,12 +1,14 @@
+import { nativeOwnerKey } from './native-create';
+import { withMediaMember } from './lib/server/media-lock';
 import { randomBytes } from 'node:crypto';
-import { AccessToken, RoomServiceClient } from 'livekit-server-sdk';
+import { AccessToken, RoomServiceClient, TrackSource } from 'livekit-server-sdk';
 import { parseJoinId, parseNativeJoinRequest } from '@vocespace/contracts';
 import { StorageUnavailableError } from '@vocespace/server-core';
-import { getConfig } from '@/lib/server/config';
-import { getSpaceRedisClient } from '@/lib/server/space-redis';
-import { spaceRepository } from '@/lib/server/space-repository';
-import { sessions } from '@/lib/server/sessions';
-import { DEFAULT_PARTICIPANT_SETTINGS, type SpaceInfo } from '@/lib/std/space';
+import { getConfig } from './lib/server/config';
+import { getSpaceRedisClient } from './lib/server/space-redis';
+import { spaceRepository } from './lib/server/space-repository';
+import { sessions } from './lib/server/sessions';
+import { DEFAULT_PARTICIPANT_SETTINGS, type SpaceInfo } from '@vocespace/domain/space';
 import { requireNative } from './native-auth';
 import { AccessError } from './access';
 import { ApiRequest, ApiResponse } from './http';
@@ -15,7 +17,9 @@ type Entry = {
   state: 'prepared' | 'joined' | 'cancelled';
   spaceName: string;
   nickname: string;
+  childRoom?: string;
   identity: string;
+  ownerIdentity?: string;
   joinId: string;
   expiresAt: number;
 };
@@ -32,28 +36,32 @@ export async function nativeConferenceEndpoint(request: ApiRequest) {
   const key = `v1:native-join:${principal.id}:${joinId}`;
   if (request.method === 'POST') {
     const input = parseNativeJoinRequest(body);
-    if (
-      !process.env.NATIVE_CONFERENCE_SPACE ||
-      input.spaceName !== process.env.NATIVE_CONFERENCE_SPACE
-    ) {
-      throw new AccessError(403, 'NATIVE_CONFERENCE_NOT_ENABLED');
-    }
     const space = await spaceRepository.get(input.spaceName);
     if (!space) throw new AccessError(404, 'SPACE_NOT_FOUND');
-    if (space.allowGuest !== 'allow') throw new AccessError(403, 'GUEST_DENIED');
+    const ownerIdentity = await redis.get(nativeOwnerKey(principal.id, input.spaceName));
+    const isOwner = !!ownerIdentity && space.ownerId === ownerIdentity;
+    if (!isOwner && space.allowGuest !== 'allow') throw new AccessError(403, 'GUEST_DENIED');
     if (!Array.isArray(space.children)) throw new StorageUnavailableError();
-    // Native subroom policy/UI is not implemented; never subscribe to a whole mixed Space.
-    if (space.children.length) throw new AccessError(409, 'NATIVE_SUBROOMS_UNSUPPORTED');
+    if (input.childRoom) {
+      const child = space.children.find((room) => room.name === input.childRoom);
+      if (!child) throw new AccessError(404, 'ROOM_NOT_FOUND');
+      if (child.isPrivate) throw new AccessError(403, 'PRIVATE_ROOM');
+    }
     const candidate: Entry = {
       ...input,
       identity: `native_${randomBytes(12).toString('hex')}`,
+      ...(isOwner ? { ownerIdentity: ownerIdentity! } : {}),
       state: 'prepared',
       expiresAt: Date.now() + 60_000,
     };
     await redis.set(key, JSON.stringify(candidate), 'EX', 600, 'NX');
     const entry: Entry = JSON.parse((await redis.get(key))!);
     if (entry.state === 'cancelled') throw new AccessError(409, 'JOIN_CANCELLED');
-    if (entry.spaceName !== input.spaceName || entry.nickname !== input.nickname)
+    if (
+      entry.spaceName !== input.spaceName ||
+      entry.nickname !== input.nickname ||
+      entry.childRoom !== input.childRoom
+    )
       throw new AccessError(409, 'JOIN_CONFLICT');
     if (entry.expiresAt <= Date.now()) throw new AccessError(410, 'JOIN_EXPIRED');
     principal.identities[entry.spaceName] = entry.identity;
@@ -79,6 +87,7 @@ export async function nativeConferenceEndpoint(request: ApiRequest) {
       serverUrl: media.url,
       roomName: entry.spaceName,
       participantName: entry.nickname,
+      childRoom: entry.childRoom,
       participantToken: await rtc.toJwt(),
     });
   }
@@ -96,9 +105,12 @@ export async function nativeConferenceEndpoint(request: ApiRequest) {
     if (!entry?.identity) return ApiResponse.json({ success: true });
     const media = getConfig().livekit;
     const client = new RoomServiceClient(media.url.replace(/^ws/, 'http'), media.key, media.secret);
-    const participants = await client.listParticipants(entry.spaceName);
-    if (participants.some((p) => p.identity === entry!.identity))
-      await client.removeParticipant(entry.spaceName, entry.identity);
+    const leaving = entry;
+    await withMediaMember(leaving.spaceName, leaving.identity, async () => {
+      const participants = await client.listParticipants(leaving.spaceName);
+      if (participants.some((p) => p.identity === leaving.identity))
+        await client.removeParticipant(leaving.spaceName, leaving.identity);
+    });
     // Compare-and-set preserves JSON empty arrays (Redis cjson would encode [] as {}).
     let removed = false;
     for (let attempt = 0; attempt < 5; attempt++) {
@@ -109,6 +121,8 @@ export async function nativeConferenceEndpoint(request: ApiRequest) {
       }
       const space: SpaceInfo = JSON.parse(raw);
       delete space.participants[entry.identity];
+      for (const child of space.children)
+        child.participants = child.participants.filter((id) => id !== entry!.identity);
       const result = await redis.eval(
         `if redis.call('GET',KEYS[1])~=ARGV[1] then return 0 end
         redis.call('SET',KEYS[1],ARGV[2]); return 1`,
@@ -134,8 +148,6 @@ export async function nativeConferenceEndpoint(request: ApiRequest) {
   if (!entry || entry.state === 'cancelled') throw new AccessError(409, 'JOIN_CANCELLED');
   if (entry.state !== 'joined' && entry.expiresAt <= Date.now())
     throw new AccessError(410, 'JOIN_EXPIRED');
-  if (entry.spaceName !== process.env.NATIVE_CONFERENCE_SPACE)
-    throw new AccessError(403, 'NATIVE_CONFERENCE_NOT_ENABLED');
   const media = getConfig().livekit;
   const client = new RoomServiceClient(media.url.replace(/^ws/, 'http'), media.key, media.secret);
   const connected = (await client.listParticipants(entry.spaceName)).find(
@@ -164,24 +176,61 @@ export async function nativeConferenceEndpoint(request: ApiRequest) {
     if (!raw) throw new AccessError(409, 'JOIN_NO_LONGER_ALLOWED');
     const space: SpaceInfo = JSON.parse(raw);
     if (!Array.isArray(space.children)) throw new StorageUnavailableError();
-    space.participants[entry.identity] = settings;
+    if (
+      entry.childRoom &&
+      !space.children.some((child) => child.name === entry!.childRoom && !child.isPrivate)
+    )
+      throw new AccessError(409, 'JOIN_NO_LONGER_ALLOWED');
+    const storedPreferences = await redis.get(
+      `v1:native-preferences:${principal.id}:${entry.spaceName}`,
+    );
+    const owns =
+      !!entry.ownerIdentity &&
+      space.ownerId === entry.ownerIdentity &&
+      (await redis.get(nativeOwnerKey(principal.id, entry.spaceName))) === entry.ownerIdentity;
+    if (owns) space.ownerId = entry.identity;
+    const ownSettings = {
+      ...settings,
+      ...(storedPreferences ? JSON.parse(storedPreferences) : {}),
+    };
+    ownSettings.name = entry.nickname;
+    ownSettings.auth = {
+      identity: space.ownerId === entry.identity ? 'owner' : 'guest',
+      platform: 'other',
+    };
+    space.participants[entry.identity] = ownSettings;
+    if (entry.childRoom) {
+      const child = space.children.find((child) => child.name === entry!.childRoom)!;
+      if (!child.participants.includes(entry.identity)) child.participants.push(entry.identity);
+    }
     outcome = await redis.eval(
       `
     local raw=redis.call('GET',KEYS[1]); local sr=redis.call('GET',KEYS[2]); local pr=redis.call('GET',KEYS[3]);
     if not raw or not sr or not pr then return 0 end
     local e=cjson.decode(raw); local s=cjson.decode(sr); local p=cjson.decode(pr)
     if e.state=='cancelled' or p.identities[e.spaceName]~=e.identity then return 0 end
-    if s.allowGuest~='allow' or #s.children>0 or redis.call('EXISTS',KEYS[4])==1 then return 0 end
+    local owns=e.ownerIdentity and s.ownerId==e.ownerIdentity and redis.call('GET',KEYS[5])==e.ownerIdentity
+    if (s.allowGuest~='allow' and s.ownerId~=e.identity and not owns) or redis.call('EXISTS',KEYS[4])==1 then return 0 end
+    local found=not e.childRoom
+    for _,child in ipairs(s.children) do
+      if child.name==e.childRoom then
+        if child.isPrivate then return 0 end
+        found=true
+      end
+    end
+    if not found then return 0 end
     if e.state=='joined' then return 1 end
     if e.expiresAt<=tonumber(ARGV[2]) then return 0 end
     if sr~=ARGV[4] then return 2 end
     e.state='joined'
+    if owns then redis.call('SET',KEYS[5],e.identity,'EX',ARGV[3]) end
     redis.call('SET',KEYS[2],ARGV[1]); redis.call('SET',KEYS[1],cjson.encode(e),'EX',ARGV[3]); return 1`,
-      4,
+      5,
       key,
       `space:${entry.spaceName}`,
       `v1:session:${token}`,
       `v1:revoked:${entry.spaceName}:${entry.identity}`,
+      nativeOwnerKey(principal.id, entry.spaceName),
       JSON.stringify(space),
       Date.now(),
       Math.max(1, Math.ceil((principal.expiresAt - Date.now()) / 1000)),
@@ -191,6 +240,23 @@ export async function nativeConferenceEndpoint(request: ApiRequest) {
   }
   if (outcome === 2) throw new StorageUnavailableError();
   if (outcome !== 1) throw new AccessError(409, 'JOIN_NO_LONGER_ALLOWED');
+  const confirmed = await spaceRepository.get(entry.spaceName);
+  if (confirmed?.ownerId === entry.identity) {
+    await client.updateParticipant(entry.spaceName, entry.identity, {
+      permission: {
+        canPublish: true,
+        canPublishSources: [TrackSource.MICROPHONE, TrackSource.CAMERA, TrackSource.SCREEN_SHARE],
+        canSubscribe: true,
+        canPublishData: false,
+        canUpdateMetadata: false,
+      },
+    });
+    const current = await sessions.read(token);
+    if (!current || JSON.parse((await redis.get(key)) || '{}').state !== 'joined') {
+      await client.removeParticipant(entry.spaceName, entry.identity);
+      throw new AccessError(409, 'JOIN_CANCELLED');
+    }
+  }
   globalThis.vocespaceSocketServer
     ?.to(`space:${entry.spaceName}`)
     .emit('user_status_updated', { space: entry.spaceName });

@@ -1,6 +1,6 @@
-import { getConfig } from '@/lib/server/config';
-import { sendEmail } from '@/lib/email';
-import { connect_endpoint } from '@/lib/std';
+import { getConfig } from '../lib/server/config';
+import { sendEmail } from '../lib/email';
+const connect_endpoint = (url: string) => `${process.env.NEXT_PUBLIC_BASE_PATH || ''}${url}`;
 import { mkdir, writeFile } from 'fs/promises';
 import { ApiRequest, ApiResponse } from '../http';
 import path from 'path';

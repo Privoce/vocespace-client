@@ -11,11 +11,12 @@ import styles from '@/components/Controller/index.module.scss';
 import { Drawer, Input, Modal } from 'antd';
 import { ControlsPC } from './pc';
 import { ControlsPhone } from './phone';
+import { ControlsShared } from './sharedPhone';
 import { Settings } from '../Settings';
 export * from '@/components/Controller/shared';
 
 export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
-  function Controls(props, ref) {
+  function Controls({ sharedUI, ...props }, ref) {
     const model = useControls(props, ref);
     const {
       updateSettings,
@@ -90,7 +91,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
       <>
         {contextHolder}
         {noteHolder}
-        {device === 'phone' ? <ControlsPhone model={model} /> : <ControlsPC model={model} />}
+        {device === 'phone' ? sharedUI ? <ControlsShared model={model} /> : <ControlsPhone model={model} /> : <ControlsPC model={model} />}
         <Drawer
           {...DEFAULT_DRAWER_PROP}
           title={t('common.setting')}

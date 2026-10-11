@@ -1,5 +1,5 @@
-import { startRealtime } from '../realtime/server';
-import { startWorker } from '../worker';
+import { startRealtime } from './realtime/server';
+import { startWorker } from './worker/index';
 import { createServer } from 'node:http';
 import { Readable } from 'node:stream';
 import { ApiRequest } from './http';

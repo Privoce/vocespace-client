@@ -67,3 +67,7 @@ apps/web/public/license/
 # Expo CNG output; app.json and the workspace lockfile are the source of truth.
 /apps/mobile/ios/
 /apps/mobile/android/
+
+# Local deployment secrets and scratch package store
+/deploy/compose.env
+/.pnpm-store/

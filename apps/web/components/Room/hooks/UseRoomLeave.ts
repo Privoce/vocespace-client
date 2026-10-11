@@ -16,7 +16,7 @@ function clearSessionState() {
   document.getElementById('local-in-ear-monitor-audio')?.remove();
 }
 
-export function useRoomLeave(room: Room, view: RefObject<{ clearRoom: () => Promise<void> }>,
+export function useRoomLeave(room: Room, view: RefObject<{ clearRoom: () => Promise<void> } | null>,
   setShouldConfirmLeave: (value: boolean) => void) {
   const router = useRouter();
   useEffect(() => {

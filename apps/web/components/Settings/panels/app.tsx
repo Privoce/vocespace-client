@@ -1,3 +1,7 @@
+
+import { AppSettingsContent as SharedAppSettingsContent } from '@vocespace/ui';
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
+import { settingsElements } from '../phone-content';
 import { useI18n } from '@/lib/i18n/i18n';
 import { AppAuth, AppKey, SpaceInfo } from '@/lib/std/space';
 import { CarryOutOutlined, ClockCircleOutlined, HistoryOutlined } from '@ant-design/icons';
@@ -23,6 +27,7 @@ export function AppSettings({
   spaceName,
   messageApi,
 }: AppSettingsProps) {
+  const phoneSettings = useLayoutDevice() === 'phone';
   const { t } = useI18n();
   const [isOwner, setIsOwner] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(false);
@@ -82,6 +87,58 @@ export function AppSettings({
       messageApi.error(t('more.app.settings.sync.update.error'));
     }
   };
+
+  if (phoneSettings)
+    return SharedAppSettingsContent({
+      elements: settingsElements,
+      styles,
+      t,
+      slots: {
+        owner: isOwner && (
+          <>
+            <Tooltip title={t('more.app.settings.desc')} placement="right">
+              <div className={styles.common_space}>{t('more.app.settings.filter')}:</div>
+            </Tooltip>
+            {appOptions.map((item) => (
+              <div className={styles.common_space} style={{ width: '100%' }} key={item.value}>
+                <Checkbox
+                  onChange={(e) => onChange(e, item.value as AppKey)}
+                  style={{ width: '100%' }}
+                  checked={item.checked}
+                  disabled={loading}
+                >
+                  <div className={styles.checkbox_item}>
+                    {item.icon}
+                    <span>{item.label}</span>
+                  </div>
+                </Checkbox>
+              </div>
+            ))}
+          </>
+        ),
+        syncLabel: (
+          <Tooltip title={t('more.app.settings.sync.auth_desc')} placement="right">
+            <div className={styles.common_space}>{t('more.app.settings.sync.auth')}:</div>
+          </Tooltip>
+        ),
+        sync: (
+          <Radio.Group
+            size="large"
+            block
+            value={auth}
+            onChange={async (e) => {
+              setAuth(e.target.value);
+              await updateSpaceAppAuth(e.target.value);
+            }}
+          >
+            <Radio.Button value="read">{t('more.app.settings.sync.read')}</Radio.Button>
+            <Radio.Button value="write" disabled>
+              {t('more.app.settings.sync.write')}
+            </Radio.Button>
+          </Radio.Group>
+        ),
+      },
+    });
 
   return (
     <div className={styles.setting_box}>

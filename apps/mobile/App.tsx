@@ -1,3 +1,4 @@
+import { NativeI18nProvider } from './src/i18n';
 import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -6,7 +7,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { MeetingsScreen } from './src/screens/MeetingsScreen';
-import { MessagesScreen } from './src/screens/MessagesScreen';
+// import { MessagesScreen } from './src/screens/MessagesScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { useLocalSettings } from './src/settings/useLocalSettings';
 import { antdTheme, colors, tabBarStyles, ui } from './src/theme';
@@ -16,7 +17,7 @@ import { AntProvider, IconOutline, TabBar, TabItem } from './src/ui/controls';
 const tabs = [
   { key: 'home', label: '首页', icon: 'home' },
   { key: 'meetings', label: '会议', icon: 'video-camera' },
-  { key: 'messages', label: '消息', icon: 'message' },
+  // { key: 'messages', label: '消息', icon: 'message' },
   { key: 'profile', label: '我的', icon: 'user' },
 ] as const;
 type Tab = (typeof tabs)[number]['key'];
@@ -57,15 +58,30 @@ function MobileShell() {
             >
               {item.key === 'home' && (
                 <HomeScreen
+                  model={conference}
+                  onJoin={(space) => {
+                    setTab('meetings');
+                    void conference.join(
+                      space,
+                      settings.settings.nickname.trim() || '访客',
+                      undefined,
+                      true,
+                    );
+                  }}
                   openMeetings={() => {
                     void changeTab('meetings');
                   }}
                 />
               )}
               {item.key === 'meetings' && (
-                <MeetingsScreen model={conference} nickname={settings.settings.nickname} />
+                <MeetingsScreen
+                  model={conference}
+                  nickname={settings.settings.nickname}
+                  preferences={settings.settings}
+                  preferencesReady={settings.ready}
+                />
               )}
-              {item.key === 'messages' && <MessagesScreen />}
+              {/* Messages remains disabled until messaging is available. */}
               {item.key === 'profile' && <ProfileScreen model={settings} />}
             </TabItem>
           ))}
@@ -84,7 +100,9 @@ export default function App() {
       <SafeAreaProvider>
         <AntProvider theme={antdTheme}>
           {fontsLoaded ? (
-            <MobileShell />
+            <NativeI18nProvider>
+              <MobileShell />
+            </NativeI18nProvider>
           ) : (
             <SafeAreaView style={[styles.root, ui.page]}>
               {fontError ? (

@@ -1,4 +1,8 @@
 'use client';
+import { ProfileSettingsContent as SharedProfileSettingsContent } from '@vocespace/ui';
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
+import { settingsElements } from '../phone-content';
+
 
 import { Input } from 'antd';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -21,7 +25,36 @@ export const ProfileSettings = ({
   saving,
   onSave,
 }: ProfileSettingsProps) => {
+  const phoneSettings = useLayoutDevice() === 'phone';
   const { t } = useI18n();
+
+  if (phoneSettings)
+    return SharedProfileSettingsContent({
+      elements: settingsElements,
+      styles,
+      t,
+      slots: {
+        username: (
+          <Input
+            size="large"
+            className={styles.common_space}
+            value={username}
+            onChange={(e) => {
+              setUsername(e.target.value);
+            }}
+          />
+        ),
+        avo: (
+          <AvoConfigPanel
+            direction="vertical"
+            name={username}
+            avoList={avoList}
+            saving={saving}
+            onSave={onSave}
+          />
+        ),
+      },
+    });
 
   return (
     <div>

@@ -1,12 +1,12 @@
 // app/api/ai/analysis/route.ts
 import { ApiRequest, ApiResponse } from '../http';
-import { getConfig } from '@/lib/server/config';
-import { AnalysisRequestBody } from '@/lib/api/ai';
-import { AICutAnalysisService, Extraction } from '@/lib/ai/analysis';
-import { getDefaultPrompts } from '@/lib/ai/load';
-import { convertPlatformToACARes, PlarformAICutAnalysis, platformAPI } from '@/lib/server/platform';
-import { todayTimeStamp } from '@/lib/std/space';
-import { blurBase64Image } from '@/lib/std/blur';
+import { getConfig } from '../lib/server/config';
+import { AnalysisRequestBody } from '@vocespace/domain/requests/ai';
+import { AICutAnalysisService, Extraction } from '../lib/ai/analysis';
+import { getDefaultPrompts } from '../lib/ai/load';
+import { convertPlatformToACARes, PlarformAICutAnalysis, platformAPI } from '../lib/server/platform';
+import { todayTimeStamp } from '@vocespace/domain/space';
+import { blurBase64Image } from '../lib/std/blur';
 
 const { ai } = getConfig();
 

@@ -19,7 +19,7 @@ export function VirtualRoleCanvas(props: VirtualRoleProps) {
 export default VirtualRoleCanvas;
 
 export interface VirtualRoleProps {
-  video_ele?: RefObject<HTMLVideoElement>;
+  video_ele?: RefObject<HTMLVideoElement | null>;
   model_role: ModelRole;
   model_bg: ModelBg;
   enabled: boolean;

@@ -1,3 +1,6 @@
+
+import { RecordingSettingsContent } from '@vocespace/ui';
+import { settingsElements } from '../phone-content';
 import { AboutUs } from '@/components/Settings/panels/about_us';
 import { AISettings } from '@/components/Settings/panels/ai';
 import { AppSettings } from '@/components/Settings/panels/app';
@@ -172,32 +175,56 @@ export function getSettingsPanels(model: SettingsModel) {
     {
       key: 'recording',
       label: <TabItem type="record" label={t('recording.title')}></TabItem>,
-      children: (
-        <div>
-          <div
-            style={{
-              width: '100%',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginBottom: 16,
-            }}
-          >
-            <Tag color="#22ccee">{isConnected}</Tag>
-            <Button size="small" icon={<ReloadOutlined />} onClick={searchRoomRecords}>
-              {t('recording.fresh')}
-            </Button>
-          </div>
-          <RecordingTable
-            messageApi={messageApi}
-            env={env}
-            currentRoom={space.name}
-            recordsData={recordsData}
-            setRecordsData={setRecordsData}
-            expandable={true}
-          ></RecordingTable>
-        </div>
-      ),
+      children: (model.device === 'phone' ? (
+            RecordingSettingsContent({
+              elements: settingsElements,
+              styles: {},
+              t,
+              slots: {
+                connection: <Tag color="#22ccee">{isConnected}</Tag>,
+                refresh: (
+                  <Button size="small" icon={<ReloadOutlined />} onClick={searchRoomRecords}>
+                    {t('recording.fresh')}
+                  </Button>
+                ),
+                records: (
+                  <RecordingTable
+                    messageApi={messageApi}
+                    env={env}
+                    currentRoom={space.name}
+                    recordsData={recordsData}
+                    setRecordsData={setRecordsData}
+                    expandable={true}
+                  ></RecordingTable>
+                ),
+              },
+            })
+          ) : (
+            <div>
+              <div
+                style={{
+                  width: '100%',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 16,
+                }}
+              >
+                <Tag color="#22ccee">{isConnected}</Tag>
+                <Button size="small" icon={<ReloadOutlined />} onClick={searchRoomRecords}>
+                  {t('recording.fresh')}
+                </Button>
+              </div>
+              <RecordingTable
+                messageApi={messageApi}
+                env={env}
+                currentRoom={space.name}
+                recordsData={recordsData}
+                setRecordsData={setRecordsData}
+                expandable={true}
+              ></RecordingTable>
+            </div>
+          )),
     },
     {
       key: 'license',

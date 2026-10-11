@@ -1,16 +1,15 @@
+
+import { GeneralSettingsContent as SharedGeneralSettingsContent } from '@vocespace/ui';
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
+import { settingsElements } from '../phone-content';
 import styles from '@/components/Controller/index.module.scss';
-import { Button, Input, InputRef, Radio } from 'antd';
+import { Button, Input, type InputRef, Radio } from 'antd';
 import { LangSelect } from '../../Select/lang';
-import { useI18n } from '@/lib/i18n/i18n';
-import { LocalParticipant } from 'livekit-client';
-import { MessageInstance } from 'antd/es/message/interface';
-import { TransIfSystemStatus, UserStatus } from '@/lib/std';
-import { useEffect, useRef, useState } from 'react';
-import { api } from '@/lib/api';
-import { AllowGuest, SpaceInfo } from '@/lib/std/space';
-import { socket } from '@/lib/realtime/socket';
-import { WsBase } from '@/lib/std/device';
-import { DefineUserStatusResponse } from '@/lib/api/space';
+import type { LocalParticipant } from 'livekit-client';
+import type { MessageInstance } from 'antd/es/message/interface';
+import type { SpaceInfo } from '@/lib/std/space';
+import { useEffect, useRef } from 'react';
+import { useGeneralSettings } from '../hooks/useGeneralSettings';
 export interface GeneralSettingsProps {
   space: string;
   localParticipant: LocalParticipant;
@@ -21,79 +20,106 @@ export interface GeneralSettingsProps {
   spaceInfo: SpaceInfo;
 }
 
-export function GeneralSettings({
-  space,
-  spaceInfo,
-  localParticipant,
-  messageApi,
-  appendStatus,
-  openPromptSound,
-  setOpenPromptSound,
-}: GeneralSettingsProps) {
-  const { t } = useI18n();
-  const [isOwner, setIsOwner] = useState<boolean>(false);
-  const [persistence, setPersistence] = useState(spaceInfo.persistence);
-  const [allowGuest, setAllowGuest] = useState(spaceInfo.allowGuest);
-  const [state, setState] = useState('');
+export function GeneralSettings(props: GeneralSettingsProps) {
+  return <GeneralSettingsContent key={`${props.space}:${props.localParticipant.identity}`} {...props} />;
+}
+function GeneralSettingsContent(props: GeneralSettingsProps) {
+  const phoneSettings = useLayoutDevice() === 'phone';
+  const {appendStatus, openPromptSound, setOpenPromptSound} = props;
+  const {t, isOwner, persistence, allowGuest, status: state, setStatus: setState,
+    savePersistence: setSpacePersistence, saveAllowGuest: setSpaceAllowGuest, saveStatus} = useGeneralSettings(props);
   const StateInputRef = useRef<InputRef>(null);
-  useEffect(() => {
-    setIsOwner(localParticipant.identity === spaceInfo.ownerId);
-    setState(
-      TransIfSystemStatus(
-        t,
-        spaceInfo.participants[localParticipant.identity]?.status || UserStatus.Online,
-      ),
-    );
-  }, [localParticipant.identity, spaceInfo]);
-
-  // 当appendStatus为true时自动聚焦状态输入框
-  useEffect(() => {
-    if (appendStatus && StateInputRef.current) {
-      StateInputRef.current.input?.focus();
-    }
-  }, [appendStatus, StateInputRef]);
-
-  const setSpacePersistence = async (persistence: boolean) => {
-    const response = await api.persistentSpace(space, persistence);
-    if (response.ok) {
-      messageApi.success(t('settings.general.persistence.success'));
-    } else {
-      messageApi.error(t('settings.general.persistence.error'));
-    }
-  };
-
-  const setSpaceAllowGuest = async (allowGuest: AllowGuest) => {
-    const response = await api.allowGuest(space, allowGuest);
-    if (response.ok) {
-      messageApi.success(t('settings.general.conf.allow_guest.success'));
-    } else {
-      messageApi.error(t('settings.general.conf.allow_guest.error'));
-    }
-  };
-
-  const saveStatus = async () => {
-    try {
-      // 发送到服务器保存状态
-      const response = await api.defineUserStatus(space, localParticipant.identity, state);
-      if (!response.ok) {
-        throw new Error(`Failed to save status: ${response.status}`);
-      }
-      const data: DefineUserStatusResponse = await response.json();
-      if (data.error) {
-        throw new Error(data.error);
-      }
-      messageApi.success({
-        content: t('settings.general.status.define.success'),
-      });
-      socket.emit('update_user_status', {
-        space: data.spaceName,
-      } as WsBase);
-    } catch (e) {
-      messageApi.error({
-        content: `${t('settings.general.status.define.fail')}: ${e}`,
-      });
-    }
-  };
+  useEffect(() => {if (appendStatus) StateInputRef.current?.input?.focus();}, [appendStatus]);
+  if (phoneSettings)
+    return SharedGeneralSettingsContent({
+      elements: settingsElements,
+      styles,
+      t,
+      owner: isOwner,
+      slots: {
+        language: <LangSelect style={{ width: '100%' }}></LangSelect>,
+        status: (
+          <Input
+            ref={StateInputRef}
+            size="large"
+            style={{ width: '100%' }}
+            value={state}
+            placeholder={t('settings.general.status.define.placeholder.name')}
+            onChange={(e) => {
+              setState(e.target.value);
+            }}
+          ></Input>
+        ),
+        saveStatus: (
+          <Button
+            size="large"
+            style={{ width: 'fit-content', margin: '8px 0' }}
+            type="primary"
+            onClick={saveStatus}
+          >
+            {t('settings.general.status.define.save')}
+          </Button>
+        ),
+        prompt: (
+          <Radio.Group
+            size="large"
+            block
+            value={openPromptSound}
+            onChange={(e) => {
+              setOpenPromptSound(e.target.value);
+            }}
+          >
+            <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+            <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+          </Radio.Group>
+        ),
+        persistence: (
+          <Radio.Group
+            size="large"
+            block
+            value={persistence}
+            onChange={async (e) => {
+              await setSpacePersistence(e.target.value);
+            }}
+          >
+            <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+            <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+          </Radio.Group>
+        ),
+        guests: (
+          <Radio.Group
+            size="large"
+            block
+            value={allowGuest}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+            onChange={async (e) => {
+              await setSpaceAllowGuest(e.target.value);
+            }}
+          >
+            <Radio.Button value={'allow'}>
+              {t('settings.general.conf.allow_guest.allow')}
+            </Radio.Button>
+            <Radio.Button value={'link'}>{t('settings.general.conf.allow_guest.link')}</Radio.Button>
+            <Radio.Button value={'disable'}>
+              {t('settings.general.conf.allow_guest.disable')}
+            </Radio.Button>
+          </Radio.Group>
+        ),
+        dashboard: (
+          <Button
+            size="large"
+            type="primary"
+            block
+            onClick={() => window.open(`/dashboard`, '_blank')}
+          >
+            {t('settings.general.manage_dashboard') || 'Dashboard'}
+          </Button>
+        ),
+      },
+    });
 
   return (
     <div className={`${styles.setting_box} ${styles.scroll_box}`}>
@@ -167,7 +193,6 @@ export function GeneralSettings({
             block
             value={persistence}
             onChange={async (e) => {
-              setPersistence(e.target.value);
               await setSpacePersistence(e.target.value);
             }}
           >
@@ -184,7 +209,6 @@ export function GeneralSettings({
               flexDirection: 'column',
             }}
             onChange={async (e) => {
-              setAllowGuest(e.target.value);
               await setSpaceAllowGuest(e.target.value);
             }}
           >

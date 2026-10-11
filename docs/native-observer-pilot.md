@@ -1,5 +1,7 @@
 # Native 手动观众试运行（4.4 首批）
 
+> 后续更新（2026-10-11）：下文记录早期批次。当前已支持配置的多个 Space、公开子 Room 与独立屏幕邀请；旧的「无子房间/禁止屏幕发布」限制及后台规则以 [新交付](mobile-navigation-controls.md) 为准。私密 Room、E2EE、公开发现及真实预览仍未开放。
+
 2026-10-09：用户确认 Web / API 实测通过后，继续实现原生访客会话与手动观看。此批是 4.4 的一部分，尚不是 4.5 的公开发现、直播预览或自动加入。
 
 ## 当前行为
@@ -7,9 +9,9 @@
 - 首页、会议、消息、我的四 Tab 保留。会议页输入 Space 名称，以本机昵称加入已开放的测试会议；消息和我的不增加账号、私信功能。
 - 访客由 API 生成可信会话，App 使用 Bearer。凭证通过 Expo SecureStore 保存，按 API 地址隔离；AsyncStorage 只保存非敏感偏好。浏览器 Cookie 不会被兑换为可读的 Native token。
 - 单次加入拥有独立 joinId 和服务端 identity。准备阶段不写业务成员；App 建立 RTC 后，由 API 查询 LiveKit 确认身份及 metadata，再原子写入成员；成功后 App 才订阅轨道。
-- 当前仅观众：RTC token 禁止发布音视频、数据及修改自身 metadata，不启动麦克风/摄像头采集。可接收会议音频、摄像头视频和屏幕共享。
+- 初始以观众进入：RTC token 禁止发布音视频、数据及修改自身 metadata。2026-10-10 新增独立的主持人邀请授权后上麦/开摄像头流程，只有 App 用户主动操作后才采集；协议与验证范围见 [会中交付](native-meeting-controls.md)。可接收会议音频、摄像头视频和屏幕共享。
 - 控制器位于 Tab 上方，持有唯一正式连接。退出、取消、切 Tab、进入后台均清理连接；清理失败保留重试入口，并阻止再加入。迟到的 prepare / connect / confirm 不会自动开启订阅。
-- Native 凭证禁止访问旧 HTTP 业务接口以提升权限，Socket 管理动作仍被拒绝；观众不能成为主持人。Native Socket 基础授权有集成测试，App 尚未接入聊天界面。
+- Native 凭证禁止访问旧 HTTP 业务接口以提升权限，Socket 管理动作仍被拒绝；观众不能成为主持人。App 已接入确认入房后的文字聊天，详情与本地真实 RTC 验证见 [会议聊天交付](native-conference-chat.md)。
 
 ## 为什么只开放专用测试 Space
 
@@ -44,6 +46,7 @@
 | POST `/api/v1/native/conferences` | `{joinId, spaceName, nickname}`，准备观众 RTC 令牌 |
 | PUT `/api/v1/native/conferences` | `{joinId}`，查询 RTC 并确认业务成员，重复确认幂等 |
 | DELETE `/api/v1/native/conferences` | `{joinId}`，取消/退出；先留取消墓碑，再清理媒体及业务成员 |
+| POST `/api/v1/native/chat/history` | `{joinId}`，只向已确认的会议成员返回最近 50 条消息 |
 
 Native 接口只接受 JSON 和显式 Bearer，不接受带 Origin / Sec-Fetch-Site 的浏览器请求。昵称只是展示字段。凭证只在安全存储/内存中持有，不写 URL 或日志。
 
@@ -67,4 +70,6 @@ Native 接口只接受 JSON 和显式 Bearer，不接受带 Origin / Sec-Fetch-S
 
 详细进度见 checklist.md。本地 HTTP 集成使用临时 Redis、随机端口和模拟 LiveKit 管理响应，不连接用户的实际媒体服务。JS 导出、原生编译、模拟器启动与真机音视频分别记录，互不替代。
 
-4.4 仍待会议聊天、显式上麦与设备权限、外部身份适配、完整网络/音频路由及双端真机互通。4.5 再实现公开源授权、实时预览、上下滑动、容量预留和延迟加入。Umami、账号体系、私信继续后置。
+4.4 的会议文字聊天与 iOS 本地视频 POC 已在后续批次完成；仍待显式上麦与设备权限、外部身份适配、完整网络/音频路由及双端真机互通。4.5 再实现公开源授权、实时预览、上下滑动、容量预留和延迟加入。Umami、账号体系、私信继续后置。
+
+后续验证补充：原先使用 `CODE_SIGNING_ALLOWED=NO` 的模拟器构建能显示页面，但 SecureStore 报缺少 entitlement。会议实连需使用正常签名的 development build；本机已用 Xcode 模拟器 ad-hoc 签名构建验证凭证保存、恢复与入房，未改为明文存储。后续结果以 [聊天交付记录](native-conference-chat.md) 为准。

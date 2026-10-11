@@ -21,7 +21,7 @@ export function useRecordings({
 }: RecordingContentProps) {
   const device = useLayoutDevice();
   const requestId = useRef(0);
-  const autoSearched = useRef<string>();
+  const autoSearched = useRef<string | undefined>(undefined);
   useEffect(() => () => { requestId.current++; }, []);
   const { t } = useI18n();
   const [roomName, setRoomName] = useState<string>(initialRoom || '');

@@ -5,12 +5,14 @@
   "type": "module",
   "files": [
     "dist",
-    "start.mjs"
+    "start.mjs",
+    "initialize-data.mjs"
   ],
   "scripts": {
     "build": "node ../../scripts/build-api.mjs",
     "start": "node start.mjs",
-    "dev": "pnpm build && node start.mjs"
+    "dev": "pnpm build && node start.mjs",
+    "typecheck": "tsc --noEmit --incremental false"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1068.0",
@@ -21,21 +23,26 @@
     "ioredis": "^5.6.1",
     "jsonwebtoken": "^9.0.3",
     "link-preview-js": "^3.0.14",
-    "livekit-client": "2.9.3",
     "livekit-server-sdk": "2.10.1",
     "nodemailer": "^9.0.1",
     "openai": "^6.7.0",
     "sharp": "^0.34.5",
     "socket.io": "^4.8.1",
-    "socket.io-client": "^4.8.1",
     "stripe": "^18.1.0",
-    "ulid": "^3.0.0",
-    "clsx": "^2.1.1"
+    "ulid": "^3.0.0"
   },
   "devDependencies": {
     "@vocespace/contracts": "workspace:*",
     "@vocespace/domain": "workspace:*",
     "@vocespace/server-core": "workspace:*",
-    "esbuild": "0.25.12"
+    "esbuild": "0.25.12",
+    "livekit-client": "2.9.3",
+    "@types/node": "22.10.7",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/nodemailer": "^8.0.1",
+    "typescript": "5.7.3"
+  },
+  "engines": {
+    "node": ">=24.12.0 <25"
   }
 }

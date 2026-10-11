@@ -12,7 +12,7 @@ vi.mock('fs',()=>({default:{
   renameSync:(from:string,to:string)=>{state.files.set(to,state.files.get(from)!);state.files.delete(from);},
 }}));
 vi.mock('@aws-sdk/client-s3',()=>({S3Client:class{send=state.send;},DeleteObjectCommand:class{constructor(public input:unknown){}}}));
-import { addCleanTask, removeCleanTask, runDueCleanTasks } from '@/lib/s3-clean';
+import { addCleanTask, removeCleanTask, runDueCleanTasks } from '../services/api/lib/s3-clean';
 beforeEach(()=>{state.files.clear();state.send.mockReset().mockResolvedValue({});});
 it('persists without starting timers and deduplicates schedule keys',async()=>{
   const timer=vi.spyOn(globalThis,'setTimeout');

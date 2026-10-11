@@ -1,4 +1,5 @@
 'use client';
+import { tileWidgetsContent } from '@vocespace/ui';
 
 import React, { useCallback, useRef, useState, type CSSProperties } from 'react';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -123,15 +124,20 @@ export function AppFlotIconCollect({
   );
 
   return participant && participant.sync ? (
-    <div className="lk-focus-toggle-button" style={style}>
-      {participant.sync.length > 0 && trackReference?.source !== Track.Source.ScreenShare && (
+    tileWidgetsContent({
+      frame: (children) => (
+        <div className="lk-focus-toggle-button" style={style}>
+          {children}
+        </div>
+      ),
+      app: participant.sync.length > 0 && trackReference?.source !== Track.Source.ScreenShare && (
         <AppFlotIcon
           appKey="todo"
           pin={() => showApp()}
           contextUndefined={contextUndefined}
         ></AppFlotIcon>
-      )}
-      {canCustomizeAvo && (
+      ),
+      avo: canCustomizeAvo && (
         <Tooltip placement="bottom" title="Design AVO">
           <button
             className="lk-button"
@@ -141,11 +147,11 @@ export function AppFlotIconCollect({
             <SvgResource type="smile" svgSize={16} />
           </button>
         </Tooltip>
-      )}
-      {trackReference?.source === Track.Source.ScreenShare && !isFullScreen && (
+      ),
+      fullscreen: trackReference?.source === Track.Source.ScreenShare && !isFullScreen && (
         <FullScreenBtn trackReference={trackReference}></FullScreenBtn>
-      )}
-      {participant && (
+      ),
+      dialog: participant && (
         <ParticipantAvoEditorModal
           open={avoModalOpen}
           name={participant.name || localParticipant.name || 'guest'}
@@ -154,9 +160,9 @@ export function AppFlotIconCollect({
           onCancel={() => setAvoModalOpen(false)}
           onSave={handleSaveAvo}
         />
-      )}
-      {trackReference && <FocusToggle trackRef={trackReference} />}
-    </div>
+      ),
+      focus: trackReference && <FocusToggle trackRef={trackReference} />,
+    })
   ) : (
     <div>
       {canCustomizeAvo && (

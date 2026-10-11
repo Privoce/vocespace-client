@@ -222,7 +222,7 @@ export function ConfQulity({ isOwner, messageApi, space, onReload }: ConfQulityP
 }
 
 export function useVoceSpaceConf() {
-  const verifiedToken = useRef<string>();
+  const verifiedToken = useRef<string | undefined>(undefined);
   const [conf, setConf] = useState<ReadableConf | null>(null);
   // useCallback 稳定引用：getConf 被 useDashboardData 的 effect 依赖，
   // 若每次渲染都是新函数，配合 setConf 触发的重渲染会形成请求死循环

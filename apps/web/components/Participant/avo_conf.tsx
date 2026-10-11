@@ -1,4 +1,6 @@
 'use client';
+import { AvoPhoneContent, AvoPresetsContent, AvoPresetContent } from '@vocespace/ui';
+import { settingsElements } from '../Settings/phone-content';
 
 import * as React from 'react';
 import {
@@ -457,6 +459,205 @@ export const AvoConfigPanel = React.forwardRef<AvoConfigPanelExports, AvoConfigP
   React.useImperativeHandle(ref, () => ({
     state: draftList,
   }));
+
+  if (mobile && direction === 'vertical')
+    return AvoPhoneContent({
+      elements: settingsElements,
+      styles: {},
+      t,
+      slots: {
+        preview: (
+          <ParticipantAvoPlaceholder
+            key={previewKey}
+            name={selectedAvo.name}
+            avo={selectedAvo.enabled ? selectedAvo : undefined}
+            interactive
+            fallbackToPlaceholder={!selectedAvo.enabled}
+          />
+        ),
+        name: (
+          <Input
+            size="large"
+            value={selectedAvo.name}
+            onChange={(e) => updateCurrent({ name: e.target.value })}
+            placeholder={name || 'guest'}
+            style={{ marginTop: 6 }}
+          />
+        ),
+        enabled: (
+          <Radio.Group
+            optionType="button"
+            buttonStyle="solid"
+            value={selectedAvo.enabled}
+            onChange={(event) => {
+              const enabled = event.target.value;
+              updateCurrent({ enabled });
+              onSave([
+                ...draftList.slice(0, selectedIndex),
+                { ...draftList[selectedIndex], enabled },
+                ...draftList.slice(selectedIndex + 1),
+              ]);
+            }}
+          >
+            <Radio.Button value={true}>{t('avo.enabled') || 'ON'}</Radio.Button>
+            <Radio.Button value={false}>{t('avo.disabled') || 'OFF'}</Radio.Button>
+          </Radio.Group>
+        ),
+        style: (
+          <Radio.Group
+            block
+            optionType="button"
+            buttonStyle="solid"
+            value={selectedAvo.style}
+            onChange={(event) =>
+              updateCurrent({ style: event.target.value as ParticipantAvoParams['style'] })
+            }
+          >
+            {AVO_STYLES.map((style) => (
+              <Radio.Button key={style} value={style}>
+                {t(`avo.styles.${style}`)}
+              </Radio.Button>
+            ))}
+          </Radio.Group>
+        ),
+        palette: AVO_PALETTE.map((hue) => {
+          const active = selectedAvo.hue === hue;
+          return (
+            <button
+              key={hue}
+              type="button"
+              onClick={() => updateCurrent({ hue })}
+              style={{
+                height: 42,
+                width: 42,
+                borderRadius: 999,
+                border: active ? '2px solid #ffffff' : '1px solid rgba(255,255,255,0.12)',
+                background: `hsl(${hue} 72% 62%)`,
+                boxShadow: active ? '0 0 0 2px rgba(34, 204, 238, 0.5)' : 'none',
+                cursor: 'pointer',
+              }}
+            />
+          );
+        }),
+        energy: (
+          <Slider
+            min={0.1}
+            max={1}
+            step={0.05}
+            value={selectedAvo.energy}
+            onChange={(value) => updateCurrent({ energy: Number(value) })}
+          />
+        ),
+        shuffle: (
+          <Button
+            style={{ ...basicButtonStyle }}
+            onClick={() => updateCurrent(randomizeAvo(selectedAvo.name || name || 'guest'))}
+          >
+            {t('avo.shuffle')}
+          </Button>
+        ),
+        reset: (
+          <Button
+            style={{ ...basicButtonStyle }}
+            onClick={() => {
+              const idx = selectedIndex;
+              setDraftList((prev) => {
+                const next = [...prev];
+                next[idx] = normalizeAvoParams(undefined, next[idx].name || name || 'guest');
+                return next;
+              });
+            }}
+          >
+            {t('avo.reset')}
+          </Button>
+        ),
+        save: (
+          <Button
+            block
+            type="primary"
+            loading={saving}
+            onClick={() => {
+              const newItem = {
+                ...selectedAvo,
+                variant: Math.floor(Math.random() * 1_000_000),
+                isUsed: false,
+              };
+              setDraftList((prev) => [...prev, newItem]);
+              onSave([...draftList, newItem]);
+            }}
+          >
+            {t('avo.saveAsPreset') || 'Save as Preset'}
+          </Button>
+        ),
+        export: (
+          <Button style={{ ...basicButtonStyle }} icon={<DownloadOutlined />} onClick={handleExport}>
+            {t('avo.export') || 'Export'}
+          </Button>
+        ),
+        import: (
+          <Upload
+            style={{ display: 'inline-block', width: '100%' }}
+            accept=".json"
+            showUploadList={false}
+            beforeUpload={handleImport}
+          >
+            <Button style={{ ...basicButtonStyle, width: '100%' }} icon={<UploadOutlined />}>
+              {t('avo.import') || 'Import'}
+            </Button>
+          </Upload>
+        ),
+        presets:
+          draftList.length > 0 &&
+          AvoPresetsContent({
+            elements: settingsElements,
+            styles: {},
+            t,
+            children: draftList.map((item, idx) => (
+              <React.Fragment key={`${idx}-${item.variant}`}>
+                {AvoPresetContent({
+                  elements: settingsElements,
+                  styles: {},
+                  t,
+                  active: idx === selectedIndex,
+                  name: item.name,
+                  style: item.style,
+                  preview: (
+                    <ParticipantAvoPlaceholder
+                      key={`list-${idx}-${item.variant}`}
+                      name={item.name}
+                      avo={item}
+                      interactive={false}
+                      fallbackToPlaceholder={false}
+                    />
+                  ),
+                  actions: (
+                    <Space size={4}>
+                      <Button
+                        size="small"
+                        type={idx === selectedIndex ? 'primary' : 'default'}
+                        onClick={() => loadItem(idx)}
+                      >
+                        {t('avo.load') || 'Load'}
+                      </Button>
+                      <Button
+                        size="small"
+                        style={{
+                          backgroundColor: 'transparent',
+                          color: '#da3535ff',
+                          border: '1px solid #da3535ff',
+                        }}
+                        onClick={() => deleteItem(idx)}
+                      >
+                        {t('avo.delete') || 'Delete'}
+                      </Button>
+                    </Space>
+                  ),
+                })}
+              </React.Fragment>
+            )),
+          }),
+      },
+    });
 
   if (direction === 'horizontal') {
     return (

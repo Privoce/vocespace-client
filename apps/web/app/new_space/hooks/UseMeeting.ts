@@ -17,7 +17,7 @@ export function useMeeting({ hq, setHq }: MeetingTabProps) {
   const [roomUrl, setRoomUrl] = useState('');
   const [optionVal, setOptionVal] = useState('demo');
   const [spinning, setSpinning] = useState(false);
-  const timer = useRef<ReturnType<typeof setTimeout>>();
+  const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const options = [
     { label: t('common.demo'), value: 'demo' },
     { label: t('common.custom'), value: 'custom' },

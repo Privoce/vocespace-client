@@ -1,0 +1,13 @@
+{
+  "name": "@vocespace/i18n",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./en_US": "./src/en_US.ts",
+    "./zh_CN": "./src/zh_CN.ts",
+    "./ru_RU": "./src/ru_RU.ts"
+  },
+  "types": "./src/index.ts"
+}

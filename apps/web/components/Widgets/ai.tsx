@@ -1,3 +1,7 @@
+
+import { AIAnalysisContent } from '@vocespace/ui';
+import { settingsElements } from '../Settings/phone-content';
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { AICutDeps, Extraction } from '@/lib/ai/analysis';
 import { useI18n } from '@/lib/i18n/i18n';
 import { SpaceInfo } from '@/lib/std/space';
@@ -117,12 +121,86 @@ export function AICutAnalysisSettingsPanel({
   isPanel = true,
   isManager,
 }: AICutAnalysisSettingsPanelProps) {
+ const phoneSettings=useLayoutDevice()==='phone';
   const { t } = useI18n();
 
   const showSettings = useMemo(() => {
     return isPanel ? isServiceOpen : true;
   }, [isPanel, isServiceOpen]);
 
+  if (phoneSettings)
+    return AIAnalysisContent({
+      elements: settingsElements,
+      styles,
+      t,
+      isPanel,
+      manager: isManager,
+      owner: space?.localParticipant.identity === spaceInfo.ownerId,
+      hasSpace: !!space,
+      showSettings,
+      slots: {
+        enabled: (
+          <Radio.Group
+            size="large"
+            block
+            value={isServiceOpen}
+            onChange={(e) => setIsServiceOpen(e.target.value)}
+          >
+            <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+            <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+          </Radio.Group>
+        ),
+        frequencyInfo: (
+          <Tooltip title={t('ai.cut.freq_desc')} trigger={['hover']}>
+            <InfoCircleFilled></InfoCircleFilled>
+          </Tooltip>
+        ),
+        frequency: (
+          <Slider min={1} max={15} value={cutFreq} onChange={(v) => setCutFreq(v)} step={0.5} />
+        ),
+        sourcesInfo: (
+          <Tooltip title={t('ai.cut.source_dep_desc')} trigger={['hover']}>
+            <InfoCircleFilled></InfoCircleFilled>
+          </Tooltip>
+        ),
+        sources: (
+          <Checkbox.Group value={aiCutDeps} options={aiCutOptions} onChange={aiCutOptionsChange} />
+        ),
+        extractionInfo: (
+          <Tooltip title={t('ai.cut.extraction.desc')} trigger={['hover']}>
+            <InfoCircleFilled></InfoCircleFilled>
+          </Tooltip>
+        ),
+        extraction: (
+          <Radio.Group
+            size="large"
+            block
+            value={extraction}
+            onChange={(e) => setExtraction(e.target.value)}
+          >
+            <Radio.Button value="easy">{t('ai.cut.extraction.easy')}</Radio.Button>
+            <Radio.Button value="medium">{t('ai.cut.extraction.medium')}</Radio.Button>
+            <Radio.Button value="max">{t('ai.cut.extraction.max')}</Radio.Button>
+          </Radio.Group>
+        ),
+        blurInfo: (
+          <Tooltip title={t('ai.cut.blur.desc')} trigger={['hover']}>
+            <InfoCircleFilled></InfoCircleFilled>
+          </Tooltip>
+        ),
+        blur: (
+          <Radio.Group
+            size="large"
+            block
+            value={cutBlur}
+            onChange={(e) => setCutBlur(e.target.value)}
+          >
+            <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+            <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+          </Radio.Group>
+        ),
+      },
+    });
   return (
     <div>
       <div>{t('more.ai.desc')}</div>

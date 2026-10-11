@@ -36,7 +36,7 @@ export interface PaginationControlProps
   > {
   /** Reference to an HTML element that holds the pages, while interacting (`mouseover`)
    *  with it, the pagination controls will appear for a while. */
-  pagesContainer?: React.RefObject<HTMLElement>;
+  pagesContainer?: React.RefObject<HTMLElement | null>;
 }
 
 export function PaginationControl({

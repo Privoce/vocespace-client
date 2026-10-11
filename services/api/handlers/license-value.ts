@@ -1,5 +1,5 @@
 import { ApiRequest, ApiResponse } from '../http';
-import { getLicenseByValue, parseLicenseClaims } from '@/lib/db/license';
+import { getLicenseByValue, parseLicenseClaims } from '../lib/db/license';
 
 interface ValidateResult {
   inDb: boolean;

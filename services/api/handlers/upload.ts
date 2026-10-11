@@ -1,12 +1,12 @@
-import { sessions, sessionToken } from '@/lib/server/sessions';
+import { sessions, sessionToken } from '../lib/server/sessions';
 import { membership } from '../access';
 import { ApiRequest, ApiResponse } from '../http';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
 import { ulid } from 'ulid';
-import { HandleFileSystemBody, HandleTilePlayerFileBody } from '@/lib/api/chat';
+import { HandleFileSystemBody, HandleTilePlayerFileBody } from '@vocespace/domain/requests/chat';
 import fs from 'fs/promises';
-import { getConfig } from '@/lib/server/config';
+import { getConfig } from '../lib/server/config';
 
 const uploadDirPath = (roomName: string) => path.join(process.cwd(), 'uploads', roomName);
 

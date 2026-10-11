@@ -13,14 +13,14 @@ const state = vi.hoisted(() => ({
     create_space: 'all' as const, license: '', ai: { apiKey: 'private-ai-key' },
   },
 }));
-vi.mock('@/lib/server/config', () => ({
+vi.mock('../services/api/lib/server/config', () => ({
   getConfig: () => structuredClone(state.config),
   isConfigInitialized: () => state.initialized,
   setStoredConf: vi.fn(), setConfigEnv: state.write, setConfigLicense: state.write,
   setConfigRoomLicense: state.write, setConfigSMTP: state.write, setConfigHyperbeam: state.write,
   setFullConfig: state.write, writeBackConfig: state.write,
 }));
-vi.mock('@/lib/s3-clean', () => ({ addCleanTask: vi.fn() }));
+vi.mock('../services/api/lib/s3-clean', () => ({ addCleanTask: vi.fn() }));
 import { GET, POST } from '@/services/api/handlers/conf';
 import { GET as recordGET } from '@/services/api/handlers/record';
 

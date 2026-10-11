@@ -1,3 +1,7 @@
+
+import { AudioSettingsContent as SharedAudioSettingsContent } from '@vocespace/ui';
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
+import { settingsElements } from '../phone-content';
 import styles from '@/components/Controller/index.module.scss';
 import { Radio, Slider } from 'antd';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -28,6 +32,7 @@ export function AudioSettings({
   setAutoGainControl,
   localParticipant,
 }: AudioSettingsProps) {
+  const phoneSettings = useLayoutDevice() === 'phone';
   const { t } = useI18n();
 
   // 当音频处理设置变化时，应用到本地音频轨道
@@ -48,6 +53,64 @@ export function AudioSettings({
         console.warn('Failed to apply audio constraints:', err);
       });
   }, [noiseSuppression, echoCancellation, autoGainControl, localParticipant]);
+
+  if (phoneSettings)
+    return SharedAudioSettingsContent({
+      elements: settingsElements,
+      styles,
+      t,
+      slots: {
+        device: <AudioSelect className={styles.common_space}></AudioSelect>,
+        volume: (
+          <Slider
+            value={volume}
+            className={styles.common_space}
+            min={0.0}
+            max={100.0}
+            step={1.0}
+            onChange={(e) => {
+              setVolume(e);
+            }}
+          />
+        ),
+        noise_suppression: (
+          <Radio.Group
+            size="large"
+            block
+            className={styles.common_space}
+            value={noiseSuppression}
+            onChange={(e) => setNoiseSuppression(e.target.value)}
+          >
+            <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+            <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+          </Radio.Group>
+        ),
+        echo_cancellation: (
+          <Radio.Group
+            size="large"
+            block
+            className={styles.common_space}
+            value={echoCancellation}
+            onChange={(e) => setEchoCancellation(e.target.value)}
+          >
+            <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+            <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+          </Radio.Group>
+        ),
+        auto_gain_control: (
+          <Radio.Group
+            size="large"
+            block
+            className={styles.common_space}
+            value={autoGainControl}
+            onChange={(e) => setAutoGainControl(e.target.value)}
+          >
+            <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+            <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+          </Radio.Group>
+        ),
+      },
+    });
 
   return (
     <div>

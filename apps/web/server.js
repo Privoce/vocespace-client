@@ -35,6 +35,10 @@ function proxy(req, res) {
   req.pipe(upstream);
 }
 const server = createServer((req, res) => {
+  if (req.url === '/healthz') {
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    return res.end(JSON.stringify({ status: 'ok', service: 'web' }));
+  }
   if ([`${basePath}/api/`, `${basePath}/socket.io`, `${basePath}/uploads/`].some((prefix) => req.url?.startsWith(prefix))) return proxy(req, res);
   return nextHandler(req, res);
 });

@@ -1,9 +1,9 @@
 // @vitest-environment node
 import { expect, it, vi } from 'vitest';
-vi.mock('@/lib/server/config',()=>({getConfig:()=>({hostToken:'test-host'})}));
-vi.mock('@/lib/server/host-authorization',()=>({verifyHostToken:()=>false}));
-vi.mock('@/lib/server/sessions',()=>({sessionToken:()=> 'test',sessions:{read:async()=>({id:'session',identities:{room:'owner'}})}}));
-vi.mock('@/lib/server/space-repository',()=>({spaceRepository:{get:async()=>({ownerId:'owner',managers:[],children:[],participants:{owner:{},member:{socketId:'member-socket',auth:{identity:'guest',platform:'other'}}}})}}));
+vi.mock('../services/api/lib/server/config',()=>({getConfig:()=>({hostToken:'test-host'})}));
+vi.mock('../services/api/lib/server/host-authorization',()=>({verifyHostToken:()=>false}));
+vi.mock('../services/api/lib/server/sessions',()=>({sessionToken:()=> 'test',sessions:{read:async()=>({id:'session',identities:{room:'owner'}})}}));
+vi.mock('../services/api/lib/server/space-repository',()=>({spaceRepository:{get:async()=>({ownerId:'owner',managers:[],children:[],participants:{owner:{},member:{socketId:'member-socket',auth:{identity:'guest',platform:'other'}}}})}}));
 import { authorizeRequest } from '@/services/api/access';
 import { ApiRequest } from '@/services/api/http';
 const request=(query:string,body:unknown)=>new ApiRequest(`https://web.test/api/${query}`,{method:'POST',headers:{'Content-Type':'application/json',origin:'https://web.test'},body:JSON.stringify(body)});

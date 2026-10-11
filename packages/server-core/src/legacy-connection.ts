@@ -1,5 +1,6 @@
 import { parseConnectionRequest, type ConnectionDetails } from '@vocespace/contracts';
-import { generateBasicIdentity, matchesCreateWhitelist } from '@vocespace/domain';
+import { generateBasicIdentity } from '@vocespace/contracts';
+import { matchesCreateWhitelist } from './creation-whitelist';
 
 export interface LegacyConnectionConfig {
   serverUrl: string;

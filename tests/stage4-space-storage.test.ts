@@ -2,17 +2,17 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { createSpaceRepository, StorageUnavailableError } from '@vocespace/server-core';
 
-vi.mock('@/lib/server/space-files', () => ({ removeSpaceFiles: vi.fn() }));
+vi.mock('../services/api/lib/server/space-files', () => ({ removeSpaceFiles: vi.fn() }));
 const state = vi.hoisted(() => ({
   values: new Map<string, string>(),
   sets: new Map<string, Set<string>>(),
   enabled: true,
   fail: false,
 }));
-vi.mock('@/lib/server/config', () => ({
+vi.mock('../services/api/lib/server/config', () => ({
   getConfig: () => ({ create_space: 'all', whiteList: [] }),
 }));
-vi.mock('@/lib/server/space-redis', () => {
+vi.mock('../services/api/lib/server/space-redis', () => {
   const client = {
     get: async (key: string) => {
       if (state.fail) throw new Error('private infrastructure failure');
@@ -47,9 +47,9 @@ vi.mock('@/lib/server/space-redis', () => {
   return { getSpaceRedisClient: () => state.enabled ? client : null };
 });
 
-import { spaceRepository } from '@/lib/server/space-repository';
-import { SpaceManager } from '@/lib/server/legacy-space-manager';
-import { DEFAULT_PARTICIPANT_SETTINGS, DEFAULT_SPACE_INFO } from '@/lib/std/space';
+import { spaceRepository } from '../services/api/lib/server/space-repository';
+import { SpaceManager } from '../services/api/lib/server/legacy-space-manager';
+import { DEFAULT_PARTICIPANT_SETTINGS, DEFAULT_SPACE_INFO } from '../apps/web/lib/std/space';
 
 beforeEach(() => {
   state.values.clear(); state.sets.clear(); state.enabled = true; state.fail = false;
@@ -130,4 +130,36 @@ it('keeps the core repository independent of Redis and preserves adapter failure
     writeAndIndex: vi.fn(), names: async () => [],
   }, (value) => value);
   await expect(repository.get('room')).rejects.toBeInstanceOf(StorageUnavailableError);
+});
+
+it('creates both original public rooms for a newly initialized Native-enabled Space', async () => {
+  vi.stubEnv('NATIVE_CONFERENCE_SPACE', 'new-native-space');
+  try {
+    const participant = structuredClone(DEFAULT_PARTICIPANT_SETTINGS);
+    participant.name = 'Host';
+    expect(await SpaceManager.updateParticipant('new-native-space', 'host', participant, true)).toBe(true);
+    const space = await spaceRepository.get('new-native-space');
+    expect(space?.children.filter(room => !room.isPrivate).map(room => ({ name: room.name, private: room.isPrivate }))).toEqual([
+      { name: 'Meeting Room', private: false },
+      { name: '☕️ Coffee Break', private: false },
+    ]);
+  } finally { vi.unstubAllEnvs(); }
+});
+
+it('invalidates the preview epoch on a child Room move and return, but not unrelated settings', async () => {
+  const space = DEFAULT_SPACE_INFO(1, true);
+  space.participants.host = structuredClone(DEFAULT_PARTICIPANT_SETTINGS);
+  await spaceRepository.save('preview-test', space);
+  const first = state.values.get('v1:preview:epoch:preview-test');
+  space.children[0].participants.push('host');
+  await spaceRepository.save('preview-test', space);
+  const second = state.values.get('v1:preview:epoch:preview-test');
+  expect(second).not.toBe(first);
+  space.children[0].participants = [];
+  await spaceRepository.save('preview-test', space);
+  const third = state.values.get('v1:preview:epoch:preview-test');
+  expect(third).not.toBe(second);
+  space.participants.host.name = 'Renamed';
+  await spaceRepository.save('preview-test', space);
+  expect(state.values.get('v1:preview:epoch:preview-test')).toBe(third);
 });

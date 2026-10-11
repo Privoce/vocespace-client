@@ -1,5 +1,5 @@
 import { ApiRequest, ApiResponse } from '../http';
-import { getLicenseByDomain, validateLicense } from '@/lib/db/license';
+import { getLicenseByDomain, validateLicense } from '../lib/db/license';
 
 const WEBHOOK = process.env.WEBHOOK ?? false;
 const VOCESPACE_API = 'https://vocespace.com';

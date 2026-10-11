@@ -2,14 +2,14 @@
 
 ## 工具与代码风格
 
-沿用 `pnpm-lock.yaml` 和 pnpm。现有栈为 Next 14、React 18、TypeScript、Ant Design、LiveKit、Socket.IO；具体版本以 package.json / lockfile 为准，不顺带升级框架。格式遵循 `.prettierrc`（两空格、单引号、分号、尾逗号、100 列）。只格式化本次相关文件。
+沿用 `pnpm-lock.yaml` 和 pnpm。当前 Web 为 Next 15.5.27、React 19.2.0（本次用户明确授权升级），Native React 同版本；其余版本以 package.json / lockfile 为准，不顺带升级框架。格式遵循 `.prettierrc`（两空格、单引号、分号、尾逗号、100 列）。只格式化本次相关文件。
 
 根命令：`pnpm dev` / `pnpm start` 只启动 Web，后端使用 `pnpm dev:api` / `pnpm start:api` 独立启动；Web 不再自动创建 API 子进程。不要在已有服务占用的端口或构建目录上重复启动破坏用户会话。
 
 ## 必需检查
 
 - `pnpm check:boundaries`：新共享库及客户端/服务端导入边界。
-- `pnpm typecheck`：全项目 TypeScript。
+- `pnpm typecheck`：全项目 TypeScript；`pnpm typecheck:api` 独立 API 类型；`pnpm check:deployment` 在 build:api 后验证临时数据目录初始化。
 - `pnpm test`：Vitest；服务/契约/SDK 测试使用 node 环境，Web UI 测试使用 jsdom。
 - `pnpm --filter @vocespace/web exec next lint --dir <改动目录>`：针对相关模块；生产验证使用标准 `pnpm build`，不能以关闭 lint 或类型检查代替修复。
 - `git diff --check`：空白错误。根据变更运行真实服务、浏览器、真机检查，自动测试不能代替媒体互通。
@@ -33,6 +33,8 @@
 
 ## Native 工具链
 
-统一开发 Node 版本见 .nvmrc；mobile 有独立 React/TS 版本，使用 pnpm typecheck:mobile。根 typecheck 不包含 Native UI；CI 另行检查 mobile。Expo export 只验证 JS 打包，不代表 iOS/Android 原生编译、模拟器或真机通过；LiveKit/WebRTC 需 development build。检查新增 API 外部 runtime 依赖声明，独立构建不能依赖根 node_modules 偶然补齐。
+统一开发 Node 版本见 .nvmrc；mobile 保持独立平台类型与 TS 配置，使用 pnpm typecheck:mobile。共享 UI 使用 pnpm typecheck:ui，不能只验证消费者的公开类型声明。根 typecheck 不包含 Native UI；CI 另行检查 mobile。Expo export 只验证 JS 打包，不代表 iOS/Android 原生编译、模拟器或真机通过；LiveKit/WebRTC 需 development build。检查新增 API 外部 runtime 依赖声明，独立构建不能依赖根 node_modules 偶然补齐。
 
 隔离 Next 构建必须在副本中独立安装依赖（可用 pnpm 离线缓存），不能把整个 node_modules 软链接到工作区。Next standalone 追踪与清理可能沿这些目录链接影响源码；制品 node_modules 必须解析在制品目录内。验证失败后先检查并恢复工作区，再继续。
+
+2026-10-11：check:boundaries 还检查每个工作区的直接依赖声明及服务端不得导入 Web 类型。Dockerfile web/api 两个目标分别验证；Compose config、Node 制品启动与 Docker 容器/amd64/arm64 验证分别记录。本机未启动 Docker daemon 时不可标记镜像运行验收通过。

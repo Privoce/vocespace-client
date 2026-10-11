@@ -19,16 +19,17 @@ import { PaginationCtl, PaginationInfo } from '@/components/Widgets/pagination';
  * @returns
  */
 export function GLayout({ tracks, ...props }: GridLayoutProps) {
-  const gridEl = React.createRef<HTMLDivElement>();
+  // LiveKit 2.8 uses React 18 ref declarations; its hooks guard null at runtime.
+  const gridEl = React.useRef<HTMLDivElement>(null);
 
   const elementProps = React.useMemo(
     () => mergeProps(props, { className: 'lk-grid-layout' }),
     [props],
   );
-  const { layout } = useGridLayout(gridEl, tracks.length);
+  const { layout } = useGridLayout(gridEl as React.RefObject<HTMLDivElement>, tracks.length);
   const pagination = usePagination(layout.maxTiles, tracks);
 
-  useSwipe(gridEl, {
+  useSwipe(gridEl as React.RefObject<HTMLElement>, {
     onLeftSwipe: pagination.nextPage,
     onRightSwipe: pagination.prevPage,
   });
@@ -65,7 +66,8 @@ export function GLayout2({
   players,
   ...props
 }: GridLayoutProps & { players?: React.ReactNode[] }) {
-  const gridEl = React.createRef<HTMLDivElement>();
+  // LiveKit 2.8 uses React 18 ref declarations; its hooks guard null at runtime.
+  const gridEl = React.useRef<HTMLDivElement>(null);
   const shouldForceTwoColumns = !isMobile() && !!players && players.length > 0 && tracks.length <= 2;
 
   const elementProps = React.useMemo(
@@ -82,10 +84,10 @@ export function GLayout2({
       }),
     [props, shouldForceTwoColumns],
   );
-  const { layout } = useGridLayout(gridEl, tracks.length);
+  const { layout } = useGridLayout(gridEl as React.RefObject<HTMLDivElement>, tracks.length);
   const pagination = usePagination(layout.maxTiles, tracks);
 
-  useSwipe(gridEl, {
+  useSwipe(gridEl as React.RefObject<HTMLElement>, {
     onLeftSwipe: pagination.nextPage,
     onRightSwipe: pagination.prevPage,
   });

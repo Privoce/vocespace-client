@@ -1,11 +1,11 @@
 import { randomBytes } from 'node:crypto';
-import { getConfig } from '@/lib/server/config';
+import { getConfig } from './lib/server/config';
 import { canCreateSpace } from '@vocespace/server-core';
 import { spaceAccess } from '@vocespace/server-core';
 import type { SessionPrincipal } from '@vocespace/server-core';
-import { sessions, sessionToken } from '@/lib/server/sessions';
-import { verifyHostToken } from '@/lib/server/host-authorization';
-import { spaceRepository } from '@/lib/server/space-repository';
+import { sessions, sessionToken } from './lib/server/sessions';
+import { verifyHostToken } from './lib/server/host-authorization';
+import { spaceRepository } from './lib/server/space-repository';
 import { ApiRequest } from './http';
 
 export class AccessError extends Error {
@@ -51,14 +51,6 @@ export async function authorizeRequest(request: ApiRequest, path: string) {
     path === '/api/record' && method === 'GET' && q.has('env') ||
     path === '/api/s3' && q.get('action') === 'connect' ||
     path === '/api/webhook' && method === 'POST'; // Stripe adapter verifies raw signature.
-  // Explicit Native pilot rooms use the main room only, including host-admin calls.
-  // This opt-in prevents a later subroom edit from exposing private tracks to Native observers.
-  const nativeRoom = process.env.NATIVE_CONFERENCE_SPACE;
-  if (nativeRoom && path === '/api/space' &&
-      (body.spaceName || body.space || q.get('spaceName')) === nativeRoom &&
-      ((q.has('childRoom') && method !== 'GET') || body.info?.children !== undefined)) {
-    throw new AccessError(409, 'NATIVE_MAIN_ROOM_ONLY');
-  }
   if (publicRead) return request;
   if (admin) return request;
   if (method === 'GET' && (q.get('space') === 'create' || q.has('clearHeartbeatLog') || q.has('clearCleanupRecords')) &&

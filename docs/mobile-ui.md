@@ -31,3 +31,17 @@
 TabBar 使用受控选中状态；切离会议前仍等待原控制器完成退出。连接、设置及凭证持有者位于 TabBar 上方，不因组件库切换重新创建。主色、输入框和按钮样式应从主题/控件入口获取，不在页面重新硬编码。
 
 消息和我的仍限于入口与本机偏好。预览静音和自动加入只保存偏好，预览功能尚未开放。
+
+## 本批验证
+
+Native / 全项目类型检查、依赖边界、70 项现有测试、iOS/Android JS 导出通过。新增原生依赖后 iOS Debug development build 编译成功；iPhone 17 / iOS 26.2 模拟器实际验证青色首页、图标字体、会议输入与禁用态、Tab 切换、设置开关和昵称跨 Tab 更新。测试昵称和开关已恢复原值。Android 本批仅验证 JS 导出，未执行原生编译或真机媒体验证。
+
+会议内聊天沿用 Ant Design Native 的输入与按钮，展示 Web/App 共用的会议消息；它独立于底部「消息」Tab。界面与控制器位于 `apps/mobile/src/chat`，不把 Socket 所有权放进页面。新增联调证据见 [会议聊天交付](native-conference-chat.md)。
+
+## 原生会中页面（2026-10-10）
+
+`src/conference/MeetingRoom.tsx` 负责会中视图，`useMeetingRoom.ts` 组织画面/成员/聊天、固定画面和举手状态；唯一 RTC、聊天、设备控制器仍由稳定 App 层拥有。视频区使用 LiveKit 原生 VideoTrack，控件使用 Ant Design Native，未导入 Web DOM 组件。操作栏独立于滚动区，聊天增长不会把退出按钮推到屏幕之外。参照 PC 的功能结构，不把录制、AI、文件、白板等 Web 工具标为已移植。新界面的真机排版与交互仍需回归。
+
+## 共享界面试验（2026-10-10）
+
+共享组件统一位于 packages/ui（2026-10-11 合并原 meeting-ui 包），使用 RN primitives；Web 通过 react-native-web 渲染同一份布局。Ant Design 按钮由消费者按统一 props 适配，仍采用 #22CCEE。用户已确认试验并授权扩大迁移。App 默认使用新版会中界面，Web 保留对照参数入口；顶栏、卡片、控制栏、聊天、成员与更多面板共用，四 Tab 保留。详见 [扩大迁移说明](shared-meeting-ui-migration.md)。

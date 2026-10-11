@@ -10,19 +10,31 @@
       "bundleIdentifier": "com.vocespace.mobile.dev"
     },
     "android": {
-      "package": "com.vocespace.mobile.dev"
+      "package": "com.vocespace.mobile.dev",
+      "permissions": [
+        "android.permission.FOREGROUND_SERVICE",
+        "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"
+      ]
     },
     "plugins": [
       "expo-dev-client",
       "expo-secure-store",
-      "@livekit/react-native-expo-plugin",
+      [
+        "@livekit/react-native-expo-plugin",
+        {
+          "android": {
+            "enableScreenShareService": true
+          }
+        }
+      ],
       [
         "@config-plugins/react-native-webrtc",
         {
-          "cameraPermission": "允许 VoceSpace 在你开启摄像头时传输视频。",
-          "microphonePermission": "允许 VoceSpace 在你开启麦克风时传输声音。"
+          "cameraPermission": "\u5141\u8bb8 VoceSpace \u5728\u4f60\u5f00\u542f\u6444\u50cf\u5934\u65f6\u4f20\u8f93\u89c6\u9891\u3002",
+          "microphonePermission": "\u5141\u8bb8 VoceSpace \u5728\u4f60\u5f00\u542f\u9ea6\u514b\u98ce\u65f6\u4f20\u8f93\u58f0\u97f3\u3002"
         }
-      ]
+      ],
+      "./plugins/withScreenSharing.cjs"
     ],
     "platforms": [
       "ios",

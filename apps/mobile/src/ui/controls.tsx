@@ -11,7 +11,7 @@ import { colors, primaryButtonStyles, ui } from '../theme';
 // Explicit component imports keep unused legacy components out of the Native bundle.
 export { default as AntProvider } from '@ant-design/react-native/lib/provider';
 export { TabBar };
-export { IconOutline } from '@ant-design/icons-react-native';
+export { IconOutline, IconFill } from '@ant-design/icons-react-native';
 
 export function PrimaryButton(props: ButtonProps) {
   return <AntButton type="primary" styles={primaryButtonStyles} {...props} />;

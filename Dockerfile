@@ -1,95 +1,39 @@
-# Dockerfile for Vocespace
-
-# 使用 Node.js 18 作为基础镜像 --------------------------------------------------
-FROM node:23-alpine AS base
-
-# 设置工作目录 -----------------------------------------------------------------
-WORKDIR /app
-
-# 安装依赖阶段 -----------------------------------------------------------------
-FROM base AS deps
-# 安装构建工具 -----------------------------------------------------------------
-RUN apk add --no-cache libc6-compat git
-# 复制 package.json 相关文件 ---------------------------------------------------
-COPY package.json ./
-# COPY package-lock.json* ./
-# COPY yarn.lock* ./
-COPY next.config.js ./
-COPY pnpm-lock.yaml* ./
-COPY entrypoint.sh ./entrypoint.sh
-
-# 安装依赖 --------------------------------------------------------------------
-RUN npm install pnpm -g
-RUN pnpm install
-
-# 构建阶段 --------------------------------------------------------------------
-FROM deps AS builder
-# 不需要再复制node_modules，因为deps阶段已经有了 ----------------------------------
-# 复制所有源代码
+# Build from repository root. Select --target web or --target api.
+FROM node:24.12.0-bookworm-slim AS dependencies
+WORKDIR /workspace
+ENV npm_config_store_dir=/pnpm/store
+RUN npm install --global pnpm@10.27.0
 COPY . .
+RUN --mount=type=cache,id=vocespace-pnpm,target=/pnpm/store \
+    pnpm install --frozen-lockfile --store-dir /pnpm/store
 
-# 设置环境变量 -----------------------------------------------------------------
-# 设置最基础的环境变量配置
-ARG LIVEKIT_API_KEY="devkey"
-ARG LIVEKIT_API_SECRET="secret"
-ARG LIVEKIT_URL="ws://localhost:7880"
+FROM dependencies AS web-build
+ENV NEXT_TELEMETRY_DISABLED=1
+ARG NEXT_PUBLIC_BASE_PATH=""
+ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
+RUN pnpm build:web
 
-# 将构建参数写入.env.local ------------------------------------------------------
-RUN echo "LIVEKIT_API_KEY=${LIVEKIT_API_KEY}" > .env.local \
-    && echo "LIVEKIT_API_SECRET=${LIVEKIT_API_SECRET}" >> .env.local \
-    && echo "LIVEKIT_URL=${LIVEKIT_URL}" >> .env.local 
+FROM dependencies AS api-build
+RUN --mount=type=cache,id=vocespace-pnpm,target=/pnpm/store \
+    pnpm build:api && pnpm package:api /runtime
 
-# 配置 next.config.js 启用 standalone 输出
-RUN sed -i 's/output: undefined/output: "standalone"/g' next.config.js || echo 'output already set'
-
-# 构建项目 ---------------------------------------------------------------------
-ENV NODE_OPTIONS="--max-old-space-size=8192"
-ENV NODE_ENV production
-RUN pnpm build
-# 删除构建缓存
-RUN rm -rf .next/cache
-# 运行阶段 ---------------------------------------------------------------------
-# FROM deps AS runner
-FROM node:23-alpine AS runner
+FROM node:24.12.0-bookworm-slim AS web
 WORKDIR /app
-# 设置为生产环境 ----------------------------------------------------------------
-ENV NODE_ENV production
-# 安装必要工具
-RUN apk add --no-cache bash tar supervisor 
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000 NEXT_TELEMETRY_DISABLED=1
+COPY --from=web-build --chown=node:node /workspace/apps/web/.next/standalone ./
+USER node
+EXPOSE 3000
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
+  CMD node -e "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "server.js"]
 
-# 复制预下载的 LiveKit 服务器二进制包
-COPY livekit_1.8.4_linux_arm64.tar.gz /tmp/
-# 解压二进制文件到 /usr/local/bin 目录
-RUN tar -xzf /tmp/livekit_1.8.4_linux_arm64.tar.gz -C /usr/local/bin --wildcards --no-anchored "livekit*" && \
-    chmod +x /usr/local/bin/livekit-server && \
-    rm /tmp/livekit_1.8.4_linux_arm64.tar.gz
-
-# 添加非root用户 ---------------------------------------------------------------
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
-
-# 创建uploads目录并设置权限, 作为文件存储目录 --------------------------------------
-RUN mkdir -p /app/uploads && chown -R nextjs:nodejs /app/uploads
-
-# 创建并配置入口点脚本 -----------------------------------------------------------
-COPY --from=builder --chown=nextjs:nodejs /app/entrypoint.sh /app/entrypoint.sh
-RUN chmod +x /app/entrypoint.sh
-# RUN ln -sf /app/entrypoint.sh /entrypoint.sh
-# RUN chmod +x /entrypoint.sh
-
-# 复制整个应用 ------------------------------------------------------------------
-COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
-COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
-COPY --from=builder --chown=nextjs:nodejs /app/public ./public
-COPY --from=builder --chown=nextjs:nodejs /app/.env.local ./.env.local
-RUN npm install -g pnpm 
-
-USER root
-# RUN chmod +x ./entrypoint.sh
-# USER nextjs
-
-# 暴露3000端口 -----------------------------------------------------------------
-EXPOSE 3000 7880
-
-# 使用入口脚本启动服务 -----------------------------------------------------------
-ENTRYPOINT ["/app/entrypoint.sh"]
+FROM node:24.12.0-bookworm-slim AS api
+WORKDIR /app
+ENV NODE_ENV=production API_HOST=0.0.0.0 API_PORT=3001 VOCESPACE_DATA_DIR=/data
+COPY --from=api-build --chown=node:node /runtime ./
+RUN mkdir -p /data && chown node:node /data
+USER node
+EXPOSE 3001
+HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
+  CMD node -e "fetch('http://127.0.0.1:3001/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "start.mjs"]

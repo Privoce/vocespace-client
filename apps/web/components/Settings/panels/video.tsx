@@ -1,3 +1,7 @@
+
+import { VideoSettingsContent as SharedVideoSettingsContent } from '@vocespace/ui';
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
+import { settingsElements } from '../phone-content';
 import styles from '@/components/Controller/index.module.scss';
 import { Radio, Slider } from 'antd';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -10,7 +14,7 @@ export interface VideoSettingsProps {
   setVideoBlur: (value: number) => void;
   setScreenBlur: (value: number) => void;
   virtual: VirtualSettingsProps;
-  virtualSettingsRef: React.RefObject<VirtualSettingsExports>;
+  virtualSettingsRef: React.RefObject<VirtualSettingsExports | null>;
   openShareAudio: boolean;
   setOpenShareAudio: (value: boolean) => void;
 }
@@ -25,7 +29,64 @@ export function VideoSettings({
   openShareAudio,
   setOpenShareAudio,
 }: VideoSettingsProps) {
+  const phoneSettings = useLayoutDevice() === 'phone';
   const { t } = useI18n();
+  if (phoneSettings)
+    return SharedVideoSettingsContent({
+      elements: settingsElements,
+      styles,
+      t,
+      slots: {
+        device: <VideoSelect className={styles.common_space}></VideoSelect>,
+        shareAudio: (
+          <Radio.Group
+            block
+            size="large"
+            value={openShareAudio}
+            onChange={(e) => {
+              setOpenShareAudio(e.target.value);
+            }}
+          >
+            <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+            <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+          </Radio.Group>
+        ),
+        videoBlur: (
+          <Slider
+            defaultValue={0.0}
+            className={`${styles.common_space} ${styles.slider}`}
+            value={videoBlur}
+            min={0.0}
+            max={1.0}
+            step={0.05}
+            onChange={(e) => {
+              setVideoBlur(e);
+            }}
+            onChangeComplete={(e) => {
+              setVideoBlur(e);
+            }}
+          />
+        ),
+        screenBlur: (
+          <Slider
+            defaultValue={0.0}
+            className={`${styles.common_space} ${styles.slider}`}
+            value={screenBlur}
+            min={0.0}
+            max={1.0}
+            step={0.05}
+            onChange={(e) => {
+              setScreenBlur(e);
+            }}
+            onChangeComplete={(e) => {
+              setScreenBlur(e);
+            }}
+          />
+        ),
+        virtual: <VirtualSettings ref={virtualSettingsRef} {...virtual}></VirtualSettings>,
+      },
+    });
+
   return (
     <div className={styles.scroll_box}>
       <div className={styles.setting_box}>

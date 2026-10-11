@@ -4,7 +4,7 @@ import { createSessionService } from '@vocespace/server-core';
 import { randomBytes } from 'node:crypto';
 import { ApiRequest } from '@/services/api/http';
 const fixture = vi.hoisted(() => ({ values: new Map<string, string>() }));
-vi.mock('@/lib/server/sessions', () => ({
+vi.mock('../services/api/lib/server/sessions', () => ({
   sessions: createSessionService(
     {
       read: async (key) => fixture.values.get(key) || null,
@@ -20,7 +20,7 @@ vi.mock('@/lib/server/sessions', () => ({
   ),
 }));
 import { nativeSessionEndpoint } from '@/services/api/native-auth';
-import { sessions } from '@/lib/server/sessions';
+import { sessions } from '../services/api/lib/server/sessions';
 import { createNativeApi } from '../apps/mobile/src/api/session';
 const request = (headers: Record<string, string> = {}, method = 'POST', body = {}) =>
   new ApiRequest('https://api.test/api/v1/session/native', {
@@ -93,4 +93,33 @@ it('replaces a revoked credential only during bootstrap, persisting the replacem
   expect(store.clear).toHaveBeenCalledOnce();
   expect(store.write).toHaveBeenCalledWith(JSON.stringify(fresh));
   expect(new Headers(fetcher.mock.calls[1][1].headers).has('Authorization')).toBe(false);
+});
+
+it('uses a prefix-aware Native Socket with Bearer handshake and no URL credential', async () => {
+  const credential = { accessToken: 'a'.repeat(64), expiresAt: Date.now() + 10000 };
+  const client = createNativeApi(
+    'https://api.test/meet/',
+    {
+      read: async () => JSON.stringify(credential),
+      write: async () => {},
+      clear: async () => {},
+    },
+    async () => Response.json(credential),
+  );
+  await client.ensureSession();
+  const socket = client.createChatSocket('chat-join-12345678');
+  try {
+    expect(socket.connected).toBe(false);
+    expect(socket.io.opts.path).toBe('/meet/socket.io');
+    expect(socket.io.opts.extraHeaders).toEqual({ 'X-Vocespace-Client': 'native' });
+    expect(socket.io.opts.query).toBeUndefined();
+    const auth = socket.auth;
+    expect(typeof auth).toBe('function');
+    if (typeof auth === 'function')
+      auth((payload) => {
+        expect(payload).toEqual({ token: credential.accessToken, joinId: 'chat-join-12345678' });
+      });
+  } finally {
+    socket.disconnect();
+  }
 });

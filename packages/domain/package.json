@@ -4,13 +4,15 @@
   "private": true,
   "type": "module",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./*": "./src/*.ts"
   },
   "types": "./src/index.ts",
   "files": [
     "src"
   ],
   "dependencies": {
-    "@vocespace/contracts": "workspace:*"
+    "@vocespace/contracts": "workspace:*",
+    "dayjs": "^1.11.13"
   }
 }

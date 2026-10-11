@@ -1,4 +1,4 @@
-import { ApiError, createClient } from '@vocespace/client-sdk';
+import { ApiError, createClient, createRealtimeClient } from '@vocespace/client-sdk';
 import { parseNativeSession, type NativeSession } from '@vocespace/contracts';
 
 export interface CredentialStore {
@@ -49,6 +49,18 @@ export function createNativeApi(baseUrl: string, store: CredentialStore, fetcher
   }
   return {
     sdk,
+    createChatSocket(joinId: string) {
+      const endpoint = new URL(baseUrl);
+      return createRealtimeClient(endpoint.origin, {
+        path: `${endpoint.pathname.replace(/\/+$/, '')}/socket.io`,
+        transports: ['websocket'],
+        // iOS WebSocket supplies its own Origin; identify the Bearer-only transport explicitly.
+        extraHeaders: { 'X-Vocespace-Client': 'native' },
+        timeout: 10_000,
+        // Reconnect uses the existing credential, never silently changes the meeting identity.
+        auth: (callback) => callback({ token: credential?.accessToken, joinId }),
+      });
+    },
     ensureSession() {
       flight ||= restore().finally(() => {
         flight = undefined;

@@ -10,12 +10,14 @@ import { useRouter } from 'next/navigation';
 import { api } from '@/lib/api';
 
 export default function Page({
-  params,
-  searchParams,
+  params: paramsPromise,
+  searchParams: searchParamsPromise,
 }: {
-  params: { spaceName: string };
-  searchParams: SearchParams;
+  params: Promise<{ spaceName: string }>;
+  searchParams: Promise<SearchParams>;
 }) {
+  const params = React.use(paramsPromise);
+  const searchParams = React.use(searchParamsPromise);
   const router = useRouter();
   const [loading, setLoading] = React.useState(true);
   const [messageApi, contextHolder] = message.useMessage();

@@ -1,5 +1,5 @@
 import { ApiRequest, ApiResponse } from '../http';
-import { sessions, sessionToken } from '@/lib/server/sessions';
+import { sessions, sessionToken } from '../lib/server/sessions';
 
 export async function proxyPlatform(request: ApiRequest, suffix: string) {
   const principal = await sessions.read(sessionToken(request.headers));

@@ -76,4 +76,29 @@ describe('platform-neutral SDK', () => {
       expect(first.io).not.toBe(second.io);
     } finally { first.disconnect(); second.disconnect(); }
   });
+
+  it('scopes Native history to an owned join with Bearer JSON and no browser credentials', async () => {
+    const fetcher = vi.fn<typeof fetch>(async () => Response.json({ items: [] }));
+    const client = createClient({ baseUrl: 'https://example.test/meet', fetch: fetcher,
+      getAccessToken: () => 'test-token', credentials: 'include' });
+    const controller = new AbortController();
+    expect(await client.native.chatHistory('chat-join-12345678', controller.signal)).toEqual([]);
+    const [url, init] = fetcher.mock.calls[0];
+    expect(url).toBe('https://example.test/meet/api/v1/native/chat/history');
+    expect(init).toMatchObject({ method: 'POST', credentials: 'omit', signal: controller.signal,
+      body: JSON.stringify({ joinId: 'chat-join-12345678' }) });
+    expect(new Headers(init?.headers).get('authorization')).toBe('Bearer test-token');
+    expect(new Headers(init?.headers).get('content-type')).toBe('application/json');
+  });
+  it('sends Native media acceptance through the scoped JSON Bearer endpoint and parses rights', async () => {
+    const fetcher = vi.fn<typeof fetch>(async () => Response.json({ sources: ['camera'], invitations: [] }));
+    const client = createClient({ baseUrl: 'https://example.test/meet', fetch: fetcher, getAccessToken: () => 'test-token' });
+    const controller = new AbortController();
+    expect(await client.native.enableMedia('media-join-123456', 'camera', 'invite-1', controller.signal)).toEqual({ sources: ['camera'], invitations: [] });
+    expect(fetcher.mock.calls[0][0]).toBe('https://example.test/meet/api/v1/native/media');
+    expect(fetcher.mock.calls[0][1]).toMatchObject({ method: 'PUT', credentials: 'omit', signal: controller.signal,
+      body: JSON.stringify({ joinId: 'media-join-123456', device: 'camera', invitationId: 'invite-1' }) });
+    expect(new Headers(fetcher.mock.calls[0][1]?.headers).get('authorization')).toBe('Bearer test-token');
+  });
+
 });

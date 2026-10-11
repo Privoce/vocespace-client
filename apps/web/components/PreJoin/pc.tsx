@@ -159,7 +159,7 @@ const PreJoinVideo = ({
 }: {
   videoTrack: LocalVideoTrack | null;
   videoEnabled: boolean;
-  videoEl: React.RefObject<HTMLVideoElement>;
+  videoEl: React.RefObject<HTMLVideoElement | null>;
   facingMode: string;
   blurValue: number;
   permissionPlaceholderText: string;

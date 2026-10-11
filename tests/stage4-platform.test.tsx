@@ -1,9 +1,9 @@
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import type { MessageInstance } from 'antd/es/message/interface';
-vi.mock('@/lib/i18n/i18n', () => ({ useI18n: () => ({ t: (key:string) => key }) }));
-vi.mock('@/lib/realtime/socket', () => ({ socket: { connected: false } }));
-import { usePlatformUser } from '@/lib/hooks/platform';
+vi.mock('../apps/web/lib/i18n/i18n', () => ({ useI18n: () => ({ t: (key:string) => key }) }));
+vi.mock('../apps/web/lib/realtime/socket', () => ({ socket: { connected: false } }));
+import { usePlatformUser } from '../apps/web/lib/hooks/platform';
 const messageApi={} as MessageInstance;
 afterEach(()=>{vi.unstubAllGlobals();localStorage.clear();});
 it('exchanges login once, removes the code and obtains RTC credentials through the SDK',async()=>{

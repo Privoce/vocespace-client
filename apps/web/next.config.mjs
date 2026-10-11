@@ -12,10 +12,21 @@ for (const name of ['.env.local', `.env.${process.env.NODE_ENV || 'development'}
 const nextConfig = {
   reactStrictMode: false,
   output: 'standalone',
-  experimental: { externalDir: true, outputFileTracingRoot: path.resolve(directory, '../..') },
-  transpilePackages: ['@vocespace/contracts', '@vocespace/domain', '@vocespace/client-sdk'],
+  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  experimental: { externalDir: true },
+  outputFileTracingRoot: path.resolve(directory, '../..'),
+  transpilePackages: [
+    '@vocespace/i18n',
+    '@vocespace/contracts',
+    '@vocespace/domain',
+    '@vocespace/client-sdk',
+    '@vocespace/ui',
+    '@vocespace/meeting-core',
+    'react-native-web',
+  ],
   productionBrowserSourceMaps: true,
   webpack: (config, { isServer }) => {
+    config.resolve.alias = { ...config.resolve.alias, 'react-native$': 'react-native-web' };
     // 处理 face-api.js 的 Node.js 模块依赖
     if (!isServer) {
       config.resolve.fallback = {
@@ -34,11 +45,9 @@ const nextConfig = {
         loader: 'babel-loader',
         options: {
           presets: ['@babel/preset-env'],
-          plugins: [
-            ['@babel/plugin-transform-runtime', { regenerator: true }]
-          ]
-        }
-      }
+          plugins: [['@babel/plugin-transform-runtime', { regenerator: true }]],
+        },
+      },
     });
 
     return config;

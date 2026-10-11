@@ -1,3 +1,9 @@
+
+import { LicenseUpdateContent, LicenseCancelContent } from '@vocespace/ui';
+
+import { LicenseSettingsContent as SharedLicenseSettingsContent } from '@vocespace/ui';
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
+import { settingsElements } from '../phone-content';
 import { LicenseWithAnalysis } from '@/lib/store/license';
 import { useLicenseStore, useRoomStore } from '@/lib/store';
 import { socket } from '@/lib/realtime/socket';
@@ -32,6 +38,7 @@ export function LicenseControl({
   messageApi: MessageInstance;
   space: string;
 }) {
+  const phoneSettings = useLayoutDevice() === 'phone';
   const { t } = useI18n();
   const userLicense = useLicenseStore();
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -318,6 +325,138 @@ export function LicenseControl({
       url === '127.0.0.1'
     );
   }, [config.serverUrl]);
+
+  if (phoneSettings)
+    return SharedLicenseSettingsContent({
+      elements: settingsElements,
+      styles,
+      t,
+      slots: {
+        calendar: (
+          <Modal
+            title={''}
+            closable
+            footer={<></>}
+            open={calendlyOpen}
+            onCancel={() => setCalendlyOpen(false)}
+            width={1000}
+            height={720}
+          >
+            <Calendly></Calendly>
+          </Modal>
+        ),
+        updateDialog: (
+          <Modal
+            title={t('settings.license.update')}
+            closable
+            open={isModalOpen}
+            onOk={onUpdate}
+            okText={t('settings.license.update')}
+            cancelText={t('common.cancel')}
+            onCancel={() => {
+              setIsModalOpen(false);
+            }}
+          >
+            {LicenseUpdateContent({
+              elements: settingsElements,
+              styles,
+              t,
+              circleIp: isCircleIp,
+              slots: {
+                ip: (
+                  <Input
+                    style={{ color: '#888', marginTop: '8px' }}
+                    disabled
+                    type="text"
+                    size="large"
+                    value={ipAddress}
+                    onChange={(e) => {
+                      setIpAddress(e.target.value);
+                    }}
+                  ></Input>
+                ),
+                license: (
+                  <TextArea
+                    rows={5}
+                    placeholder={t('settings.license.input')}
+                    value={licenseValue}
+                    onChange={(e) => {
+                      setLicenseValue(e.target.value);
+                    }}
+                  />
+                ),
+              },
+            })}
+          </Modal>
+        ),
+        cancelDialog: (
+          <Modal
+            title={t('settings.license.cancel_subscription')}
+            closable
+            open={cancelModalOpen}
+            onOk={onCancelSubscription}
+            okText={t('settings.license.cancel_subscription')}
+            okButtonProps={{ danger: true, loading: cancelingSubscription }}
+            cancelText={t('common.cancel')}
+            onCancel={() => {
+              if (cancelingSubscription) return;
+              setCancelModalOpen(false);
+              setCancelEmail('');
+            }}
+          >
+            {LicenseCancelContent({
+              elements: settingsElements,
+              styles,
+              t,
+              email: (
+                <Input
+                  type="email"
+                  value={cancelEmail}
+                  placeholder={t('settings.license.cancel_email_placeholder')}
+                  onChange={(e) => {
+                    setCancelEmail(e.target.value);
+                  }}
+                />
+              ),
+            })}
+          </Modal>
+        ),
+        details: roomLicense ? (
+          items
+        ) : (
+          <div style={{ padding: '24px 0', color: '#888' }}>
+            {t('settings.license.no_room_license')}
+          </div>
+        ),
+        buy: (
+          <Button type="primary" onClick={toBuyPage}>
+            {t('settings.license.buy')}
+          </Button>
+        ),
+        cancel: roomLicense && (
+          <Button
+            danger
+            loading={cancelingSubscription}
+            onClick={() => {
+              setCancelEmail('');
+              setCancelModalOpen(true);
+            }}
+          >
+            {t('settings.license.cancel_subscription')}
+          </Button>
+        ),
+        update: (
+          <Button
+            type="default"
+            onClick={() => {
+              setIsModalOpen(true);
+            }}
+          >
+            {t('settings.license.update')}
+          </Button>
+        ),
+      },
+    });
 
   return (
     <div>

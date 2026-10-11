@@ -1,4 +1,10 @@
+import { parseNativeRecords } from '@vocespace/contracts';
+import { parseNativePreview } from '@vocespace/contracts';
+import { parseNativeSpaces, parseNativeRoomDirectory } from '@vocespace/contracts';
+import { parseNativeSettingsSnapshot, type NativeSettingsPatch } from '@vocespace/contracts';
+import { parseNativeMediaStatus, type NativeDevice } from '@vocespace/contracts';
 import { parseConnectionDetails, parseNativeSession, parseNativeJoin, type NativeJoinRequest, type ConnectionRequest } from '@vocespace/contracts';
+import { parseConferenceHistory } from '@vocespace/contracts';
 
 export interface ClientOptions {
   /** Absolute service URL, optionally including a deployment path prefix. */
@@ -84,6 +90,46 @@ export function createClient(options: ClientOptions) {
   return {
     connections,
     native: {
+      async records(joinId: string, signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/records', 'POST', { joinId }, signal), parseNativeRecords);
+      },
+      async downloadRecording(joinId: string, key: string, signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/records', 'PUT', { joinId, key }, signal), value => {
+          if (!value || typeof value !== 'object' || !('url' in value) || typeof value.url !== 'string' || new URL(value.url).protocol !== 'https:') throw new Error('Invalid recording URL');
+          return value.url;
+        });
+      },
+      async deleteRecording(joinId: string, key: string, signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/records', 'DELETE', { joinId, key }, signal), () => undefined);
+      },
+      async createSpace(spaceName: string, signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/spaces', 'POST', { spaceName }, signal), (value) => {
+          if (!value || typeof value !== 'object' || !('created' in value) || typeof value.created !== 'boolean' ||
+              !('spaceName' in value) || typeof value.spaceName !== 'string') throw new Error('Invalid creation response');
+          return { created: value.created, spaceName: value.spaceName };
+        });
+      },
+      async updateSettings(joinId: string, patch: NativeSettingsPatch, signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/settings', 'PUT', { joinId, patch }, signal), parseNativeSettingsSnapshot);
+      },
+      async preview(spaceName: string, signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/preview', 'POST', { spaceName }, signal), parseNativePreview);
+      },
+      async renewPreview(leaseId: string, signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/preview', 'PUT', { leaseId }, signal), () => undefined);
+      },
+      async releasePreview(leaseId: string) {
+        return json(await nativeRequest('api/v1/native/preview', 'DELETE', { leaseId }), () => undefined);
+      },
+      async spaces(signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/spaces', 'GET', undefined, signal), parseNativeSpaces);
+      },
+      async rooms(joinId: string, signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/rooms', 'POST', { joinId }, signal), parseNativeRoomDirectory);
+      },
+      async settings(joinId: string, signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/settings', 'POST', { joinId }, signal), parseNativeSettingsSnapshot);
+      },
       async session(signal?: AbortSignal) {
         return json(await nativeRequest('api/v1/session/native', 'POST', {}, signal), parseNativeSession);
       },
@@ -102,6 +148,15 @@ export function createClient(options: ClientOptions) {
       },
       async leave(joinId: string) {
         return json(await nativeRequest('api/v1/native/conferences', 'DELETE', { joinId }), () => undefined);
+      },
+      async mediaStatus(joinId: string, signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/media', 'POST', { joinId }, signal), parseNativeMediaStatus);
+      },
+      async enableMedia(joinId: string, device: NativeDevice, invitationId: string, signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/media', 'PUT', { joinId, device, invitationId }, signal), parseNativeMediaStatus);
+      },
+      async chatHistory(joinId: string, signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/chat/history', 'POST', { joinId }, signal), parseConferenceHistory);
       },
     },
     async transport(input: string | URL, init: RequestInit = {}) {

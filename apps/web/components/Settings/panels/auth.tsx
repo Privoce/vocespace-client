@@ -1,4 +1,8 @@
 'use client';
+import { AuthSettingsContent as SharedAuthSettingsContent } from '@vocespace/ui';
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
+import { settingsElements } from '../phone-content';
+
 
 import React, { useMemo } from 'react';
 import styles from '@/components/Controller/index.module.scss';
@@ -31,6 +35,7 @@ export interface AuthSettingsProps {
 }
 
 export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps) {
+  const phoneSettings = useLayoutDevice() === 'phone';
   const { t } = useI18n();
   const isOwner = useMemo(() => {
     return isSpaceManager(spaceInfo, space.localParticipant.identity).ty === 'Owner';
@@ -189,6 +194,36 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
       messageApi.error(t('auth.saveFail'));
     }
   };
+
+  if (phoneSettings)
+    return SharedAuthSettingsContent({
+      elements: settingsElements,
+      styles,
+      t,
+      slots: {
+        table: (
+          <Table<PermissionRow>
+            columns={columns}
+            dataSource={data}
+            pagination={false}
+            bordered
+            rowKey="key"
+            size="middle"
+          />
+        ),
+        save: isOwner && (
+          <Button
+            block
+            type="primary"
+            size="large"
+            style={{ marginTop: 16 }}
+            onClick={saveAuthChange}
+          >
+            {t('auth.save')}
+          </Button>
+        ),
+      },
+    });
 
   return (
     <div className={`${styles.setting_box} ${styles.scroll_box}`}>

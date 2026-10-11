@@ -20,11 +20,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check:boundaries
       - run: pnpm typecheck
+      - run: pnpm typecheck:api
       - run: pnpm test
+      - run: pnpm typecheck:ui
       - run: pnpm typecheck:mobile
       - run: pnpm --filter @vocespace/mobile export
       - run: pnpm --filter @vocespace/web typecheck
       - run: pnpm build:api
+      - run: pnpm check:deployment
       - run: pnpm build:web
       - run: sudo apt-get update && sudo apt-get install -y redis-server
       - run: pnpm package:api /tmp/vocespace-api-runtime

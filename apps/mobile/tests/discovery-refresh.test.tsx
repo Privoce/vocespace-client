@@ -1,0 +1,28 @@
+import { act, renderHook } from '@testing-library/react';
+import { afterEach, expect, it, vi } from 'vitest';
+const app = vi.hoisted(() => ({ listener: undefined as ((state: string) => void) | undefined, remove: vi.fn() }));
+vi.mock('react-native', () => ({ AppState: { currentState: 'active', addEventListener: (_: string, listener: (state: string) => void) => { app.listener = listener; return { remove: app.remove }; } } }));
+import { useSpaceBrowser } from '../src/conference/useSpaceBrowser';
+afterEach(() => vi.useRealTimers());
+it('refreshes on list opening and foreground, cancels pending work on unmount, and avoids overlapping polls', async () => {
+  vi.useFakeTimers();
+  let pending: ((items: never[]) => void) | undefined;
+  const list = vi.fn().mockResolvedValue([]);
+  const model = { configured: true, listSpaces: list, state: {}, leave: vi.fn() } as unknown as Parameters<typeof useSpaceBrowser>[0];
+  const { result, unmount } = renderHook(() => useSpaceBrowser(model));
+  await act(async () => {});
+  expect(list).toHaveBeenCalledTimes(1);
+  await act(async () => { result.current.setOpen(true); });
+  expect(list).toHaveBeenCalledTimes(2);
+  await act(async () => { app.listener?.('active'); });
+  expect(list).toHaveBeenCalledTimes(3);
+  list.mockImplementation(() => new Promise(resolve => { pending = resolve; }));
+  await act(async () => { await vi.advanceTimersByTimeAsync(30000); });
+  expect(list).toHaveBeenCalledTimes(4);
+  const signal = list.mock.lastCall![0] as AbortSignal;
+  unmount();
+  expect(signal.aborted).toBe(true);
+  expect(app.remove).toHaveBeenCalled();
+  await act(async () => { pending?.([]); await vi.advanceTimersByTimeAsync(30000); });
+  expect(list).toHaveBeenCalledTimes(4);
+});

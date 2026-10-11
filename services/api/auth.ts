@@ -1,4 +1,4 @@
-import { sessions, sessionToken, sessionCookie } from '@/lib/server/sessions';
+import { sessions, sessionToken, sessionCookie } from './lib/server/sessions';
 import { ApiRequest, ApiResponse } from './http';
 import type { SessionPrincipal } from '@vocespace/server-core';
 

@@ -11,10 +11,10 @@ import {
   setConfigHyperbeam,
   setFullConfig,
   writeBackConfig,
-} from '@/lib/server/config';
-import { AIConf, clearReadableConf, HyperbeamConf, RTCConf, SMTPConf, VocespaceConfig } from '@/lib/std/conf';
-import { UpdateCreateSpaceConfBody } from '@/lib/api/conf';
-import { authorizeConfigMutation, verifyHostToken } from '@/lib/server/host-authorization';
+} from '../lib/server/config';
+import { AIConf, clearReadableConf, HyperbeamConf, RTCConf, SMTPConf, VocespaceConfig } from '@vocespace/domain/config';
+import { UpdateCreateSpaceConfBody } from '@vocespace/domain/requests/conf';
+import { authorizeConfigMutation, verifyHostToken } from '../lib/server/host-authorization';
 import { HostAuthorizationError } from '@vocespace/server-core';
 
 export async function GET(request: ApiRequest) {

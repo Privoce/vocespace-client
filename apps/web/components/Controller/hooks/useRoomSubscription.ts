@@ -31,7 +31,11 @@ export function useRoomSubscription({
   useEffect(() => {
     if (!space || space.state !== ConnectionState.Connected || !selfRoom) return;
 
-    const auth: ParticipantTrackPermission[] = [];
+    const auth: ParticipantTrackPermission[] = [{
+      participantIdentity: 'preview_main',
+      allowAll: selfRoom.name === space.name,
+      allowedTrackSids: [],
+    }];
     const videoTrackSid = space.localParticipant.getTrackPublication(Track.Source.Camera)?.trackSid;
     const shareTrackSid = space.localParticipant.getTrackPublication(Track.Source.ScreenShare)?.trackSid;
     const allowedTrackSids: string[] = [];
@@ -40,7 +44,10 @@ export function useRoomSubscription({
     const localScreenShareVolumes = settings.participants[space.localParticipant.identity]?.screenShareVolumes || {};
 
     space.remoteParticipants.forEach((rp) => {
-      if (selfRoom.participants.includes(rp.identity)) {
+      // Native guests can join only public rooms. Never expose private-room tracks to them.
+      if (selfRoom.isPrivate && rp.identity.startsWith('native_')) {
+        auth.push({ participantIdentity: rp.identity, allowAll: false, allowedTrackSids: [] });
+      } else if (selfRoom.participants.includes(rp.identity)) {
         auth.push({ participantIdentity: rp.identity, allowAll: true });
         const volume = settings.participants[rp.identity]?.volume / 100.0 || 1.0;
         const volumeScreen = (localScreenShareVolumes[rp.identity] ?? 100.0) / 100.0;

@@ -1,8 +1,11 @@
 'use client';
 
 import * as React from 'react';
+import dynamic from 'next/dynamic';
+import { useSearchParams } from 'next/navigation';
+const SharedMeeting = dynamic(() => import('./components/sharedMeeting'), { ssr: false });
 import { useConference } from '@/components/Layout/conference/hooks/useConference';
-import {  FlotLayout } from '@/components/Flot/layout';
+import { FlotLayout } from '@/components/Flot/layout';
 import { ChatPanel } from '@/components/Chat';
 import { Controls } from '@/components/Controller';
 import { Channel } from '@/components/Channel';
@@ -12,13 +15,18 @@ import phone from './components/phone.module.scss';
 import { VideoContainerPC } from './components/pc';
 import { PhoneRoomHeader, VideoContainerPhone } from './components/phone';
 import { VideoContainerProps, VideoContainerExports } from '@/components/Layout/conference/types';
-import { ConnectionStateToast, LayoutContextProvider, RoomAudioRenderer } from '@livekit/components-react';
+import {
+  ConnectionStateToast,
+  LayoutContextProvider,
+  RoomAudioRenderer,
+} from '@livekit/components-react';
 import { FlotButton } from '@/components/Flot';
-
 
 export const VideoContainer = React.forwardRef<VideoContainerExports, VideoContainerProps>(
   function VideoContainer(props, ref) {
     const model = useConference(props, ref);
+    const searchParams = useSearchParams();
+    const sharedUI = model.device === 'phone' && searchParams.get('meetingUi') === 'shared';
     const {
       SettingsComponent,
       messageApi,
@@ -67,6 +75,26 @@ export const VideoContainer = React.forwardRef<VideoContainerExports, VideoConta
       handleDrag,
       mainViewWidth,
     } = model;
+    const controls = (
+      <Controls
+        sharedUI={sharedUI}
+        ref={controlsRef}
+        setUserStatus={setUserStatus}
+        controls={{ chat: true, settings: !!SettingsComponent }}
+        updateSettings={updateSettings}
+        spaceInfo={settings}
+        fetchSettings={fetchSettings}
+        updateRecord={updateRecord}
+        setPermissionDevice={setPermissionDevice}
+        openApp={openApp}
+        setOpenApp={setOpenApp}
+        toRenameSettings={toSettingGeneral}
+        startOrStopAICutAnalysis={startOrStopAICutAnalysis}
+        openAIServiceAskNote={openAIServiceAskNote}
+        downloadAIMdReport={FlotLayoutRef.current?.downloadAIMdReport}
+        config={config}
+      ></Controls>
+    );
     return (
       <div
         className={
@@ -154,17 +182,19 @@ export const VideoContainer = React.forwardRef<VideoContainerExports, VideoConta
                   paddingRight: model.device === 'phone' ? 0 : 8,
                 }}
               >
-                {model.device === 'phone' && <PhoneRoomHeader model={model} />}
+                {model.device === 'phone' && !sharedUI && <PhoneRoomHeader model={model} />}
                 {!hasRoomLicense && (
                   <LicenseAlert toBuyRoomLicense={toBuyRoomLicense}></LicenseAlert>
                 )}
                 <div style={{ display: 'flex', flex: 1, width: '100%', minHeight: 0 }}>
-                  {model.device === 'phone' ? (
+                  {sharedUI ? (
+                    <SharedMeeting model={model} controls={controls} />
+                  ) : model.device === 'phone' ? (
                     <VideoContainerPhone model={model} />
                   ) : (
                     <VideoContainerPC model={model} />
                   )}
-                  {chatOpen && space && (
+                  {!sharedUI && chatOpen && space && (
                     <div
                       style={{
                         width: model.device === 'phone' ? 0 : 280,
@@ -186,23 +216,7 @@ export const VideoContainer = React.forwardRef<VideoContainerExports, VideoConta
                     </div>
                   )}
                 </div>
-                <Controls
-                  ref={controlsRef}
-                  setUserStatus={setUserStatus}
-                  controls={{ chat: true, settings: !!SettingsComponent }}
-                  updateSettings={updateSettings}
-                  spaceInfo={settings}
-                  fetchSettings={fetchSettings}
-                  updateRecord={updateRecord}
-                  setPermissionDevice={setPermissionDevice}
-                  openApp={openApp}
-                  setOpenApp={setOpenApp}
-                  toRenameSettings={toSettingGeneral}
-                  startOrStopAICutAnalysis={startOrStopAICutAnalysis}
-                  openAIServiceAskNote={openAIServiceAskNote}
-                  downloadAIMdReport={FlotLayoutRef.current?.downloadAIMdReport}
-                  config={config}
-                ></Controls>
+                {!sharedUI && controls}
               </div>
               {SettingsComponent && (
                 <div

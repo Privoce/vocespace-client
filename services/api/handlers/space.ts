@@ -1,7 +1,7 @@
 import { parsePageLimit } from '@vocespace/contracts';
-import { verifyHostToken } from '@/lib/server/host-authorization';
-import { sessions, sessionToken } from '@/lib/server/sessions';
-import { SpaceManager } from '@/lib/server/legacy-space-manager';
+import { verifyHostToken } from '../lib/server/host-authorization';
+import { sessions, sessionToken } from '../lib/server/sessions';
+import { SpaceManager } from '../lib/server/legacy-space-manager';
 // /app/api/space/route.ts
 import {
   AuthType,
@@ -11,9 +11,9 @@ import {
   IdentityType,
   isUndefinedString,
   splitPlatformUser,
-} from '@/lib/std';
+} from '@vocespace/domain';
 import { ApiRequest, ApiResponse } from '../http';
-import { ChatMsgItem } from '@/lib/std/chat';
+import { ChatMsgItem } from '@vocespace/domain/chat';
 import {
   ChildRoom,
   DEFAULT_SPACE_INFO,
@@ -30,10 +30,10 @@ import {
   DEFAULT_SPACE_AUTH_CONF,
   SpaceRBACConf,
   handleIdentityType,
-} from '@/lib/std/space';
+} from '@vocespace/domain/space';
 import { RoomServiceClient } from 'livekit-server-sdk';
-import { notifyParticipantReinit } from '@/lib/realtime/server';
-import { WsParticipant } from '@/lib/std/device';
+import { notifyParticipantReinit } from '../lib/realtime/server';
+import { WsParticipant } from '@vocespace/domain/socket';
 import {
   AllowGuestBody,
   CheckNameBody,
@@ -51,8 +51,8 @@ import {
   UpdateSpaceParticipantBody,
   UploadSpaceAppBody,
   WorkModeBody,
-} from '@/lib/api/space';
-import { UpdateRecordBody } from '@/lib/api/record';
+} from '@vocespace/domain/requests/space';
+import { UpdateRecordBody } from '@vocespace/domain/requests/record';
 import {
   ChildRoomMethods,
   CreateRoomBody,
@@ -60,10 +60,10 @@ import {
   JoinRoomBody,
   LeaveRoomBody,
   UpdateRoomBody,
-} from '@/lib/api/channel';
-import { getConfig } from '@/lib/server/config';
-import { platformAPI } from '@/lib/server/platform';
-import { generateToken, getServerParticipantPlatformInfo } from '@/lib/server/platform-token';
+} from '@vocespace/domain/requests/channel';
+import { getConfig } from '../lib/server/config';
+import { platformAPI } from '../lib/server/platform';
+import { generateToken, getServerParticipantPlatformInfo } from '../lib/server/platform-token';
 
 
 
@@ -126,7 +126,7 @@ export async function GET(request: ApiRequest) {
         return ApiResponse.json({ error: ERROR_CODE.createSpace.SpaceExist }, { status: 200 });
       }
       const newSpaceInfo = {
-        ...DEFAULT_SPACE_INFO(Date.now(), realSpaceName !== process.env.NATIVE_CONFERENCE_SPACE),
+        ...DEFAULT_SPACE_INFO(Date.now(), true),
         ownerId: ownerId || `${spaceOwner}__${spaceOwner}`,
       } as SpaceInfo;
 
@@ -554,37 +554,29 @@ export async function POST(request: ApiRequest) {
 
     // 处理用户唯一名 -------------------------------------------------------------------------
     if (isNameCheck) {
-      const { spaceName, participantName, participantId }: CheckNameBody = await request.json();
-      // 获取房间设置
-      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
-      if (!spaceInfo) {
-        // 房间不存在说明是第一次创建
-        return ApiResponse.json({ success: true, name: participantName }, { status: 200 });
-      } else {
-        const pid = participantId || `${participantName}__${spaceName}`;
-        const participantSettings = spaceInfo.participants[pid];
-        if (participantSettings) {
-          // 有参与者，判断当前参与者的online状态，如果为false，说明是重连，可以直接使用该名字
-          if (participantSettings.online) {
-            // 在线状态，那么不允许使用该名字, 需要分配一个新的名字给用户，如果是Bob就需要分配Bob 02 这样的名字给用户, 数字用个数类推
-            let newName = participantName;
-            let suffix = 1;
-            const existingNames = Object.values(spaceInfo.participants).map((p) => p.name);
-            while (existingNames.includes(newName)) {
-              suffix += 1;
-              let suffix_str = suffix.toString();
-              if (suffix < 10) {
-                suffix_str = `0${suffix}`;
-              }
-              newName = `${participantName} ${suffix_str}`;
-            }
-            return ApiResponse.json({ success: true, name: newName }, { status: 200 });
-          } else {
-            // 离线状态，允许使用该名字
-            return ApiResponse.json({ success: true, name: participantName }, { status: 200 });
-          }
-        }
+      const { spaceName, participantName }: CheckNameBody = await request.json();
+      if (
+        typeof spaceName !== 'string' || !spaceName ||
+        typeof participantName !== 'string' || !participantName.trim()
+      ) {
+        return ApiResponse.json({ error: 'Invalid username request' }, { status: 400 });
       }
+      const spaceInfo = await SpaceManager.getSpaceInfo(spaceName);
+      const viewer = await sessions.read(sessionToken(request.headers));
+      // Names are display values; participant IDs now come from the trusted session.
+      // A caller-supplied participantId must not exempt another user's name from checking.
+      const ownId = viewer?.identities[spaceName];
+      const existingNames = new Set(
+        Object.entries(spaceInfo?.participants || {})
+          .filter(([id, participant]) => id !== ownId && participant.online)
+          .map(([, participant]) => participant.name),
+      );
+      const requestedName = participantName.trim();
+      let name = requestedName;
+      for (let suffix = 2; existingNames.has(name); suffix++) {
+        name = `${requestedName} ${String(suffix).padStart(2, '0')}`;
+      }
+      return ApiResponse.json({ success: true, name }, { status: 200 });
     }
 
     // 如果是创建子房间/进入子房间 -------------------------------------------------------------------------

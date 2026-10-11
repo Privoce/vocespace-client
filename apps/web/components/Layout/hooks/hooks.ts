@@ -1,6 +1,6 @@
 import React from 'react';
 
-export const useSize = (target: React.RefObject<HTMLDivElement>) => {
+export const useSize = (target: React.RefObject<HTMLDivElement | null>) => {
   const [size, setSize] = React.useState({ width: 0, height: 0 });
   React.useLayoutEffect(() => {
     if (target.current) {
@@ -19,7 +19,7 @@ export const useSize = (target: React.RefObject<HTMLDivElement>) => {
 };
 
 export function useResizeObserver<T extends HTMLElement>(
-  target: React.RefObject<T>,
+  target: React.RefObject<T | null>,
   callback: UseResizeObserverCallback,
 ) {
   const resizeObserver = getResizeObserver();

@@ -1,9 +1,9 @@
-import { SendRecordRequestBody } from '@/lib/api/record';
+import { SendRecordRequestBody } from '@vocespace/domain/requests/record';
 import { EgressClient, EncodedFileOutput, S3Upload } from 'livekit-server-sdk';
 import { ApiRequest, ApiResponse } from '../http';
-import { getConfig } from '@/lib/server/config';
-import { isUndefinedString } from '@/lib/std';
-import { addCleanTask } from '@/lib/s3-clean';
+import { getConfig } from '../lib/server/config';
+import { isUndefinedString } from '@vocespace/domain';
+import { addCleanTask } from '../lib/s3-clean';
 
 const {
   livekit: { key: LIVEKIT_API_KEY, secret: LIVEKIT_API_SECRET, url: LIVEKIT_URL },

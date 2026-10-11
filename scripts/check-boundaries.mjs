@@ -1,3 +1,4 @@
+import { isBuiltin } from 'node:module';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -8,9 +9,12 @@ const configFile = ts.readConfigFile(path.join(root, 'tsconfig.json'), ts.sys.re
 const { options } = ts.parseJsonConfigFileContent(configFile.config, ts.sys, root);
 const rules = {
   contracts: [],
-  domain: ['@vocespace/contracts'],
+  i18n: [],
+  'meeting-core': [],
+  ui: ['react', 'react-native', '@vocespace/meeting-core'],
+  domain: ['@vocespace/contracts', 'dayjs'],
   'client-sdk': ['@vocespace/contracts', 'socket.io-client'],
-  'server-core': ['@vocespace/contracts', '@vocespace/domain'],
+  'server-core': ['@vocespace/contracts'],
 };
 const errors = new Set();
 const modules = new Map();
@@ -57,7 +61,7 @@ for (const [name, allowed] of Object.entries(rules)) {
     for (const specifier of imports) {
       const resolved = ts.resolveModuleName(specifier, file, options, ts.sys).resolvedModule;
       const local = resolved && path.resolve(resolved.resolvedFileName).startsWith(directory + path.sep);
-      if (!local && !allowed.includes(specifier)) {
+      if (!local && !allowed.some((name) => specifier === name || specifier.startsWith(`${name}/`))) {
         errors.add(`${relative(file)}: forbidden dependency ${specifier}`);
       }
     }
@@ -71,7 +75,7 @@ for (const [name, allowed] of Object.entries(rules)) {
 const visited = new Set();
 function visitClient(file, via) {
   const name = relative(file);
-  if (name.startsWith('packages/server-core/') || name.startsWith('lib/server/')) {
+  if (name.startsWith('packages/server-core/') || name.startsWith('services/') || name.startsWith('apps/web/lib/server/')) {
     errors.add(`${relative(via)}: client reaches server-only module ${name}`);
     return;
   }
@@ -87,23 +91,45 @@ function visitClient(file, via) {
     }
   }
 }
-for (const directory of ['apps/web/app', 'apps/web/components', 'lib']) {
+for (const directory of ['apps/web/app', 'apps/web/components', 'apps/web/lib']) {
   for (const file of files(path.join(root, directory))) {
-    if (readModule(file).client || relative(file).startsWith('lib/api/')) visitClient(file, file);
+    if (readModule(file).client || relative(file).startsWith('apps/web/lib/api/')) visitClient(file, file);
   }
 }
-// Native is a separate product; the transitional root lib is deliberately off limits.
+// Native imports only its own source and explicitly shared workspace packages.
 for (const file of files(path.join(root, 'apps/mobile'))) {
   for (const specifier of readModule(file).imports) {
-    if (specifier.startsWith('@vocespace/') && !['@vocespace/contracts', '@vocespace/domain', '@vocespace/client-sdk'].includes(specifier)) {
+    if (specifier.startsWith('@vocespace/') && !['@vocespace/contracts', '@vocespace/domain', '@vocespace/meeting-core', '@vocespace/client-sdk', '@vocespace/ui', '@vocespace/i18n'].includes(specifier.split('/').slice(0, 2).join('/'))) {
       errors.add(`${relative(file)}: forbidden Native dependency ${specifier}`);
     }
     const resolved = ts.resolveModuleName(specifier, file, options, ts.sys).resolvedModule;
     if (resolved && !resolved.isExternalLibraryImport) {
       const target = relative(path.resolve(resolved.resolvedFileName));
-      if (!['apps/mobile/', 'packages/contracts/', 'packages/domain/', 'packages/client-sdk/'].some((prefix) => target.startsWith(prefix))) {
+      if (!['apps/mobile/', 'packages/contracts/', 'packages/domain/', 'packages/client-sdk/', 'packages/ui/', 'packages/meeting-core/', 'packages/i18n/'].some((prefix) => target.startsWith(prefix))) {
         errors.add(`${relative(file)}: Native reaches non-shared source ${target}`);
       }
+    }
+  }
+}
+// All backend imports (including type-only imports) stay out of the Web application.
+for (const file of files(path.join(root, 'services'))) {
+  for (const specifier of readModule(file).imports) {
+    const resolved = ts.resolveModuleName(specifier, file, options, ts.sys).resolvedModule;
+    const target = resolved && relative(path.resolve(resolved.resolvedFileName));
+    if (/^(next|react|react-dom|antd)(\/|$)/.test(specifier) || target?.startsWith('apps/') || target?.startsWith('lib/')) {
+      errors.add(`${relative(file)}: backend reaches application/legacy source ${specifier}`);
+    }
+  }
+}
+// Each workspace owns its dependencies; root node_modules must not mask missing declarations.
+for (const directory of ['apps/web', 'apps/mobile', 'services/api', ...Object.keys(rules).map((name) => `packages/${name}`)]) {
+  const manifest = JSON.parse(fs.readFileSync(path.join(root, directory, 'package.json'), 'utf8'));
+  const declared = { ...manifest.dependencies, ...manifest.devDependencies, ...manifest.peerDependencies };
+  for (const file of files(path.join(root, directory))) {
+    for (const specifier of readModule(file).imports) {
+      if (specifier.startsWith('.') || specifier.startsWith('@/') || isBuiltin(specifier)) continue;
+      const name = specifier.startsWith('@') ? specifier.split('/').slice(0, 2).join('/') : specifier.split('/')[0];
+      if (!declared[name]) errors.add(`${relative(file)}: undeclared workspace dependency ${name}`);
     }
   }
 }

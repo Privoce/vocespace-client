@@ -29,7 +29,7 @@
         "./*"
       ],
       "@/lib/*": [
-        "../../lib/*"
+        "./lib/*"
       ],
       "@vocespace/contracts": [
         "../../packages/contracts/src/index.ts"
@@ -39,6 +39,21 @@
       ],
       "@vocespace/client-sdk": [
         "../../packages/client-sdk/src/index.ts"
+      ],
+      "@vocespace/ui": [
+        "../../packages/ui/src/public.d.ts"
+      ],
+      "@vocespace/meeting-core": [
+        "../../packages/meeting-core/src/index.ts"
+      ],
+      "@vocespace/i18n": [
+        "../../packages/i18n/src/index.ts"
+      ],
+      "@vocespace/i18n/*": [
+        "../../packages/i18n/src/*"
+      ],
+      "@vocespace/domain/*": [
+        "../../packages/domain/src/*"
       ]
     }
   },

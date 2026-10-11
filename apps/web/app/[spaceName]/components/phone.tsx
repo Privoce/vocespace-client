@@ -6,6 +6,14 @@ import styles from './phone.module.scss';
 export function PhoneRoomHeader({ model }: { model: ConferenceModel }) {
   return (
     <header className={styles.header}>
+      {model.showSideChannel && (
+        <Button
+          type="text"
+          aria-label={model.t('more.channel')}
+          icon={<MenuOutlined />}
+          onClick={model.toggleChannel}
+        />
+      )}
       <div className={styles.identity}>
         <strong title={model.space?.name}>{model.space?.name}</strong>
         <span>
@@ -18,14 +26,6 @@ export function PhoneRoomHeader({ model }: { model: ConferenceModel }) {
         icon={<CopyOutlined />}
         onClick={model.copyRoomName}
       />
-      {model.showSideChannel && (
-        <Button
-          type="text"
-          aria-label={model.t('more.participant.title')}
-          icon={<MenuOutlined />}
-          onClick={model.toggleChannel}
-        />
-      )}
     </header>
   );
 }

@@ -5,12 +5,12 @@ import { createSessionService } from '@vocespace/server-core';
 import { randomBytes } from 'node:crypto';
 
 const fixture = vi.hoisted(() => ({ createMode: 'all', exists: false, values: new Map<string,string>() }));
-vi.mock('@/lib/server/space-redis', () => ({ getSpaceRedisClient: () => null }));
-vi.mock('@/lib/server/config', () => ({ getConfig: () => ({ create_space: fixture.createMode, whiteList: [],
+vi.mock('../services/api/lib/server/space-redis', () => ({ getSpaceRedisClient: () => null }));
+vi.mock('../services/api/lib/server/config', () => ({ getConfig: () => ({ create_space: fixture.createMode, whiteList: [],
   livekit: { url: 'wss://test.invalid', key: 'test-only', secret: 'test-only-secret-never-production-123456' } }) }));
-vi.mock('@/lib/server/space-repository', () => ({ spaceRepository: { get: async () => fixture.exists ? { allowGuest: 'allow', participants: {} } : null } }));
-vi.mock('@/lib/server/sessions', async () => {
-  const actual = await vi.importActual<typeof import('@/lib/server/sessions')>('@/lib/server/sessions');
+vi.mock('../services/api/lib/server/space-repository', () => ({ spaceRepository: { get: async () => fixture.exists ? { allowGuest: 'allow', participants: {} } : null } }));
+vi.mock('../services/api/lib/server/sessions', async () => {
+  const actual = await vi.importActual<typeof import('../services/api/lib/server/sessions')>('../services/api/lib/server/sessions');
   return { ...actual, sessions: createSessionService({
     read: async (k) => fixture.values.get(k) || null,
     write: async (k,v) => { fixture.values.set(k,v); },

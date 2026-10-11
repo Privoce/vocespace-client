@@ -3,7 +3,7 @@ import type { NativeJoin } from '@vocespace/contracts';
 export interface ConferenceRoom {
   connect(details: NativeJoin): Promise<void>;
   disconnect(): Promise<void>;
-  subscribe(): void;
+  subscribe(): void | Promise<void>;
 }
 export type Phase = 'idle' | 'joining' | 'joined' | 'leaving' | 'error';
 export interface ConferenceState<R> {
@@ -11,6 +11,7 @@ export interface ConferenceState<R> {
   room?: R;
   spaceName?: string;
   error?: unknown;
+  joined?: Pick<NativeJoin, 'joinId' | 'identity' | 'roomName' | 'participantName' | 'childRoom'>;
 }
 interface Ports<R extends ConferenceRoom> {
   ensureSession(): Promise<void>;
@@ -19,6 +20,8 @@ interface Ports<R extends ConferenceRoom> {
     nickname: string,
     joinId: string,
     signal: AbortSignal,
+    childRoom?: string,
+    createIfMissing?: boolean,
   ): Promise<NativeJoin>;
   confirm(joinId: string, signal: AbortSignal): Promise<void>;
   leave(joinId: string): Promise<void>;
@@ -87,7 +90,7 @@ export function createConferenceController<R extends ConferenceRoom>(ports: Port
     },
     hasPendingCleanup: () => !!active,
     leave,
-    join(spaceName: string, nickname: string) {
+    join(spaceName: string, nickname: string, childRoom?: string, createIfMissing = false) {
       if (active) return active.work;
       const attempt: Attempt<R> = {
         id: ports.newId(),
@@ -107,6 +110,8 @@ export function createConferenceController<R extends ConferenceRoom>(ports: Port
             nickname,
             attempt.id,
             attempt.abort.signal,
+            childRoom,
+            createIfMissing,
           );
           if (attempt.cancelled) return;
           attempt.room = ports.createRoom(() => {
@@ -116,8 +121,20 @@ export function createConferenceController<R extends ConferenceRoom>(ports: Port
           if (attempt.cancelled) return;
           await ports.confirm(attempt.id, attempt.abort.signal);
           if (attempt.cancelled) return;
-          attempt.room.subscribe();
-          set({ phase: 'joined', room: attempt.room, spaceName });
+          await attempt.room.subscribe();
+          if (attempt.cancelled) return;
+          set({
+            phase: 'joined',
+            room: attempt.room,
+            spaceName,
+            joined: {
+              joinId: details.joinId,
+              identity: details.identity,
+              roomName: details.roomName,
+              participantName: details.participantName,
+              childRoom: details.childRoom,
+            },
+          });
         } catch (error) {
           if (!attempt.cancelled) set({ phase: 'error', error });
         } finally {

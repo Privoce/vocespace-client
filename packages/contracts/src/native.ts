@@ -8,10 +8,12 @@ export interface NativeJoinRequest {
   joinId: string;
   spaceName: string;
   nickname: string;
+  childRoom?: string;
 }
 export interface NativeJoin extends ConnectionDetails {
   joinId: string;
   identity: string;
+  childRoom?: string;
 }
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== 'object' || Array.isArray(value))
@@ -51,11 +53,12 @@ export function parseNativeJoinRequest(value: unknown): NativeJoinRequest {
     nickname.length > 30
   )
     throw new ContractError('Invalid meeting request');
-  return { joinId, spaceName, nickname };
+  if (input.childRoom !== undefined && (typeof input.childRoom !== 'string' || !input.childRoom.trim() || input.childRoom.length > 200)) throw new ContractError('Invalid child room');
+  return { joinId, spaceName, nickname, ...(input.childRoom !== undefined ? { childRoom: input.childRoom as string } : {}) };
 }
 export function parseNativeJoin(value: unknown): NativeJoin {
   const input = record(value);
   if (typeof input.identity !== 'string' || !input.identity)
     throw new ContractError('Invalid identity');
-  return { ...parseConnectionDetails(input), joinId: parseJoinId(input), identity: input.identity };
+  return { ...parseConnectionDetails(input), joinId: parseJoinId(input), identity: input.identity, ...(typeof input.childRoom === 'string' ? { childRoom: input.childRoom } : {}) };
 }

@@ -1,7 +1,8 @@
 // @vitest-environment node
 import { describe, expect, it, vi } from 'vitest';
 import { parseConnectionDetails, parseConnectionRequest } from '@vocespace/contracts';
-import { generateBasicIdentity, matchesCreateWhitelist } from '@vocespace/domain';
+import { generateBasicIdentity } from '@vocespace/contracts';
+import { matchesCreateWhitelist } from '@vocespace/server-core';
 import { createLegacyConnectionService, type LegacyConnectionConfig } from '@vocespace/server-core';
 
 function setup(config: Partial<LegacyConnectionConfig> = {}, exists = false) {

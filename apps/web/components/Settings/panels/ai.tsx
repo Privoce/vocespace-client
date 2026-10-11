@@ -1,4 +1,10 @@
 'use client';
+import { AIDeploymentContent } from '@vocespace/ui';
+
+import { AISettingsContent as SharedAISettingsContent } from '@vocespace/ui';
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
+import { settingsElements } from '../phone-content';
+
 
 import { AICutDeps } from '@/lib/ai/analysis';
 import { api } from '@/lib/api';
@@ -30,6 +36,7 @@ export function AISettings({
   space,
   updateSettings,
 }: AISettingProps) {
+  const phoneSettings = useLayoutDevice() === 'phone';
   const [preCheck, setPreCheck] = useState<boolean>(false);
   const [hostToken, setHostToken] = useState<string>('');
   const { t } = useI18n();
@@ -189,6 +196,129 @@ export function AISettings({
       space: space.name,
     } as WsBase);
   };
+
+  if (phoneSettings)
+    return SharedAISettingsContent({
+      elements: settingsElements,
+      styles,
+      t,
+      slots: {
+        analysis: (
+          <AICutAnalysisSettingsPanel
+            space={space}
+            spaceInfo={spaceInfo}
+            aiCutDeps={aiCutDeps}
+            setAICutDeps={setAICutDeps}
+            extraction={extraction}
+            setExtraction={setExtraction}
+            cutFreq={cutFreq}
+            setCutFreq={setCutFreq}
+            cutBlur={cutBlur}
+            setCutBlur={setCutBlur}
+            isServiceOpen={enabled}
+            setIsServiceOpen={setIsServiceOpen}
+            aiCutOptions={aiCutOptions}
+            aiCutOptionsChange={aiCutOptionsChange}
+            isPanel={false}
+            isManager={isOwner}
+          ></AICutAnalysisSettingsPanel>
+        ),
+        save: (
+          <Button
+            type="primary"
+            block
+            className={styles.common_space}
+            size="large"
+            onClick={saveAICutSettings}
+          >
+            {t('settings.ai.update.save')}
+          </Button>
+        ),
+        deployment: AIDeploymentContent({
+          elements: settingsElements,
+          styles,
+          t,
+          verified: preCheck,
+          owner: isOwner,
+          changed: isUpdate,
+          slots: {
+            model: (
+              <Input
+                size="large"
+                className={styles.common_space}
+                value={model}
+                onChange={(e: any) => {
+                  setModel(e.target.value);
+                }}
+              ></Input>
+            ),
+            key: (
+              <Input.Password
+                size="large"
+                className={styles.common_space}
+                value={apiKey}
+                onChange={(e: any) => {
+                  setApiKey(e.target.value);
+                }}
+              ></Input.Password>
+            ),
+            url: (
+              <Input
+                size="large"
+                className={styles.common_space}
+                value={url}
+                onChange={(e: any) => {
+                  setUrl(e.target.value);
+                }}
+              ></Input>
+            ),
+            enabled: (
+              <Radio.Group
+                size="large"
+                block
+                value={enabled}
+                onChange={(e) => setIsServiceOpen(e.target.value)}
+              >
+                <Radio.Button value={true}>{t('common.open')}</Radio.Button>
+                <Radio.Button value={false}>{t('common.close')}</Radio.Button>
+              </Radio.Group>
+            ),
+            save: (
+              <Button
+                type="primary"
+                onClick={saveAIUpdate}
+                block
+                size="large"
+                className={styles.common_space}
+              >
+                {t('settings.ai.update.save')}
+              </Button>
+            ),
+            token: (
+              <Input
+                size="large"
+                placeholder={t('settings.ai.precheck.placeholder')}
+                value={hostToken}
+                onChange={(e) => {
+                  setHostToken(e.target.value);
+                }}
+              ></Input>
+            ),
+            verify: (
+              <Button
+                type="primary"
+                onClick={checkHostToken}
+                block
+                size="large"
+                className={styles.common_space}
+              >
+                {t('settings.ai.precheck.check')}
+              </Button>
+            ),
+          },
+        }),
+      },
+    });
 
   return (
     <div className={`${styles.setting_box} ${styles.scroll_box}`}>

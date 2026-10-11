@@ -18,6 +18,7 @@ export type ControlBarControls = {
 };
 
 export interface ControlBarProps extends React.HTMLAttributes<HTMLDivElement> {
+  sharedUI?: boolean;
   onDeviceError?: (error: { source: Track.Source; error: Error }) => void;
   variation?: 'minimal' | 'verbose' | 'textOnly';
   controls?: ControlBarControls;
