@@ -21,6 +21,10 @@ export interface PhoneSettingsNavigationProps {
   name: string;
   spaceName: string;
   panels: readonly PhoneSettingsPanel[];
+  groupLabels?: string[];
+  hideHeader?: boolean;
+  hostLabel?: string;
+  onlineLabel?: string;
   activePanel?: string;
   onSelect: (id: string) => void;
   onBack: () => void;

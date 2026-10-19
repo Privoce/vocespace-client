@@ -18,6 +18,11 @@ vi.mock('../apps/web/lib/i18n/i18n', () => ({
     changeLocale: () => {},
   }),
 }));
+vi.mock('../apps/web/components/Settings/panels/PhoneDeviceSwitch', () => ({
+  PhoneDeviceSwitch: ({ device }: { device: string }) => (
+    <button role="switch" aria-label={device} disabled />
+  ),
+}));
 vi.mock('../apps/web/lib/api/index', () => ({ api: {} }));
 vi.mock('../apps/web/lib/realtime/socket', () => ({ socket: { emit: vi.fn() } }));
 vi.mock('../apps/web/lib/std/index', () => ({
@@ -197,7 +202,7 @@ beforeAll(() => {
 });
 afterEach(cleanup);
 describe('Extracted Phone internals preserve approved DOM and controls', () => {
-  it.each(cases)(
+  it.each(cases.filter(([name]) => name !== 'general' && name !== 'permissions'))(
     '%s preserves the original view in all languages and owner/guest modes',
     (name, element) => {
       for (const locale of ['zh', 'en', 'ru'] as const)
@@ -217,6 +222,32 @@ describe('Extracted Phone internals preserve approved DOM and controls', () => {
         }
     },
   );
+  it('redesigns only Phone general/permissions and keeps owner-only policy editing gated', () => {
+    const general = cases.find(([name]) => name === 'general')![1];
+    for (const locale of ['zh', 'en', 'ru'] as const)
+      for (const owner of [false, true]) {
+        state.locale = locale;
+        state.owner = owner;
+        const t = createTranslator(locale);
+        state.phone = false;
+        const pc = renderToStaticMarkup(<AntApp>{general}</AntApp>);
+        expect(pc).not.toContain(t('phone_meeting.general_title'));
+        expect(pc).toContain('ant-radio-button-wrapper');
+        state.phone = true;
+        const phone = renderToStaticMarkup(<AntApp>{general}</AntApp>);
+        expect(phone).toContain(t('phone_meeting.general_title'));
+        expect(phone).toContain('role="switch"');
+        expect(phone.includes(t('settings.general.conf.allow_guest.title'))).toBe(owner);
+        const permissions = renderToStaticMarkup(
+          <AntApp>{cases.find(([name]) => name === 'permissions')![1]}</AntApp>,
+        );
+        expect(permissions).toContain(t('phone_meeting.permissions_title'));
+        expect(permissions).toContain('aria-label="microphone"');
+        expect(permissions).toContain('aria-label="camera"');
+        expect(permissions).toContain('RBAC');
+        expect(permissions.includes(t('auth.save'))).toBe(owner);
+      }
+  });
   it('keeps the same device input and its draft across Phone / PC switching', () => {
     state.phone = false;
     const props = base as unknown as ComponentProps<typeof AudioSettings>;

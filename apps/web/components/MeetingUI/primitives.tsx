@@ -17,9 +17,10 @@ const icons = {
   camera: 'camera',
   screen: 'lkScreen',
   chat: 'chat',
-  more: 'more',
+  more: 'more2',
   leave: 'lkLeave',
   copy: 'copy',
+  link: 'link',
   members: 'user',
   close: 'close',
   send: 'send',
@@ -55,6 +56,7 @@ export function MeetingButton({
   appearance,
   label,
 }: MeetingButtonProps) {
+  const control = appearance === 'control' || appearance === 'controlDanger';
   const circle = appearance === 'circle' || appearance === 'danger' || appearance === 'icon';
   return (
     <Button
@@ -67,22 +69,36 @@ export function MeetingButton({
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
-        padding: appearance === 'plain' || circle ? 0 : '4px 12px',
-        width: circle ? 44 : appearance === 'plain' ? '100%' : undefined,
-        height: circle ? 44 : appearance === 'plain' ? 'auto' : 40,
-        borderRadius: circle ? '50%' : 10,
+        padding: appearance === 'plain' || appearance === 'row' || circle ? 0 : '4px 12px',
+        width: control
+          ? 48
+          : circle
+            ? 44
+            : appearance === 'plain' || appearance === 'row'
+              ? '100%'
+              : undefined,
+        height: control
+          ? 46
+          : circle
+            ? 44
+            : appearance === 'plain' || appearance === 'row'
+              ? 'auto'
+              : 40,
+        borderRadius: appearance === 'row' ? 0 : control ? 14 : circle ? '50%' : 14,
         background:
-          appearance === 'icon'
+          appearance === 'icon' || appearance === 'row'
             ? 'transparent'
-            : appearance === 'danger'
+            : appearance === 'danger' || appearance === 'controlDanger'
               ? '#24171A'
               : active
-                ? circle
+                ? circle || control
                   ? '#153B46'
                   : '#22CCEE'
-                : '#1E252E',
+                : '#1A2832',
+        borderWidth: appearance === 'icon' || appearance === 'row' ? 0 : 1,
+        boxShadow: 'none',
         borderColor:
-          appearance === 'danger' || appearance === 'destructive'
+          appearance === 'danger' || appearance === 'controlDanger' || appearance === 'destructive'
             ? '#FF4D4F'
             : active
               ? '#22CCEE'

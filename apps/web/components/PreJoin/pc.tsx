@@ -1,5 +1,6 @@
 'use client';
 
+import { preJoinContent } from '@vocespace/ui';
 import { LangSelect } from '@/components/Select/lang';
 import { LoginButtons, LoginStateBtn } from '@/components/PreJoin/login';
 import { SvgResource } from '@/components/Icon/index';
@@ -45,37 +46,45 @@ export function PreJoinPC(m: PreJoinModel) {
     return <PageLoading></PageLoading>;
   }
 
-  return (
-    <div className={styles.view}>
-      {contextHolder}
-      <Spin spinning={spinning} fullscreen />
-      <Modal
-        open={permissionModalVisible}
-        centered
-        closable={true}
-        mask={{ closable: false }}
-        title={t('msg.request.device.pre_join.modal_title')}
-        onOk={requestMediaPermissions}
-        onCancel={continueWithoutPermissions}
-        footer={[
-          <Button type="primary" key={'request'} onClick={requestMediaPermissions}>
-            {t('msg.request.device.pre_join.allow_media')}
-          </Button>,
-        ]}
-      >
-        <div className={styles.view__permission_modal__content}>
-          <p>{t('msg.request.device.pre_join.modal_desc')}</p>
-          {missingPermissions.length > 0 && (
-            <p>
-              {t('msg.request.device.pre_join.current_permission_prefix')}
-              {missingPermissions.join(t('msg.request.device.pre_join.permission_joiner'))}
-            </p>
-          )}
-        </div>
-      </Modal>
+  return preJoinContent({
+    frame: (children) => <div className={styles.view}>{children}</div>,
+    controls: (children) => <div className={styles.view__controls}>{children}</div>,
+    context: (
+      <>
+        {contextHolder}
+        <Spin spinning={spinning} fullscreen />
+        <Modal
+          open={permissionModalVisible}
+          centered
+          closable={true}
+          mask={{ closable: false }}
+          title={t('msg.request.device.pre_join.modal_title')}
+          onOk={requestMediaPermissions}
+          onCancel={continueWithoutPermissions}
+          footer={[
+            <Button type="primary" key={'request'} onClick={requestMediaPermissions}>
+              {t('msg.request.device.pre_join.allow_media')}
+            </Button>,
+          ]}
+        >
+          <div className={styles.view__permission_modal__content}>
+            <p>{t('msg.request.device.pre_join.modal_desc')}</p>
+            {missingPermissions.length > 0 && (
+              <p>
+                {t('msg.request.device.pre_join.current_permission_prefix')}
+                {missingPermissions.join(t('msg.request.device.pre_join.permission_joiner'))}
+              </p>
+            )}
+          </div>
+        </Modal>
+      </>
+    ),
+    language: (
       <span className={styles.view__lang_select}>
         <LangSelect></LangSelect>
       </span>
+    ),
+    preview: (
       <PreJoinVideo
         videoTrack={videoTrack}
         videoEnabled={videoEnabled}
@@ -85,37 +94,39 @@ export function PreJoinPC(m: PreJoinModel) {
         permissionPlaceholderText={permissionPlaceholderText}
         m={m}
       />
-      <div className={styles.view__controls}>
-        <AudioGroupItem m={m} />
-        <VideoGroupItem m={m} />
-        {showLoginBtn && <LoginButtons serverUrl={config.serverUrl} space={space}></LoginButtons>}
-        <Input
-          ref={inputRef}
-          size="large"
-          style={{ width: '100%' }}
-          id="username"
-          name="username"
-          type="text"
-          placeholder={userLabel}
-          value={username}
-          onChange={(inputEl) => {
-            setUsername(inputEl.target.value);
-          }}
-          autoComplete="off"
-        />
-        <button
-          style={{ backgroundColor: '#22CCEE' }}
-          className={styles.view__controls__form__button}
-          disabled={spinning}
-          type="submit"
-          onClick={handleSubmit}
-        >
-          {joinLabel}
-        </button>
-      </div>
-      <LoginStateBtn data={data} />
-    </div>
-  );
+    ),
+    audio: <AudioGroupItem m={m} />,
+    video: <VideoGroupItem m={m} />,
+    login: showLoginBtn && <LoginButtons serverUrl={config.serverUrl} space={space}></LoginButtons>,
+    username: (
+      <Input
+        ref={inputRef}
+        size="large"
+        style={{ width: '100%' }}
+        id="username"
+        name="username"
+        type="text"
+        placeholder={userLabel}
+        value={username}
+        onChange={(inputEl) => {
+          setUsername(inputEl.target.value);
+        }}
+        autoComplete="off"
+      />
+    ),
+    submit: (
+      <button
+        style={{ backgroundColor: '#22CCEE' }}
+        className={styles.view__controls__form__button}
+        disabled={spinning}
+        type="submit"
+        onClick={handleSubmit}
+      >
+        {joinLabel}
+      </button>
+    ),
+    status: <LoginStateBtn data={data} />,
+  });
 }
 
 const PageLoading = () => {
@@ -186,10 +197,10 @@ const PreJoinVideo = ({
           <SvgResource type="user_lk" svgSize={64}></SvgResource>
           <p className={styles.view__video__permission}>{permissionPlaceholderText}</p>
           <Button
-            shape='round'
+            shape="round"
             type="primary"
             icon={<VideoCameraOutlined />}
-            style={{ fontSize: 14}}
+            style={{ fontSize: 14 }}
             onClick={() => m.permissions.handleVideoToggleChange(true)}
           >
             {m.camLabel}

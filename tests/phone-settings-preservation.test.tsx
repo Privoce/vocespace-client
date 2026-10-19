@@ -4,7 +4,6 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { PhoneSettingsNavigation } from '@vocespace/ui';
 import { SettingsPhone } from '../apps/web/components/Settings/phone';
-import { OriginalSettingsPhone } from './fixtures/settings-phone-original';
 import { Settings, type SettingsProps } from '../apps/web/components/Settings';
 import type { SettingsModel } from '../apps/web/components/Settings/panels';
 
@@ -46,6 +45,7 @@ function model(open = false): SettingsModel {
     username: 'Guest',
     localParticipant: { identity: 'visitor' },
     space: { name: 'test-space' },
+    spaceInfo: { ownerId: 'host' },
     key: 'general',
     phonePanelOpen: open,
     device: 'phone',
@@ -80,19 +80,31 @@ afterEach(() => {
 });
 
 describe('Phone-only extraction preserves approved Web settings', () => {
-  it.each([false, true])(
-    'keeps the exact original Web DOM, classes and icons (panel open: %s)',
-    (open) => {
-      const props = { model: model(open) };
-      expect(renderToStaticMarkup(<SettingsPhone {...props} />)).toBe(
-        renderToStaticMarkup(<OriginalSettingsPhone {...props} />),
-      );
-    },
-  );
+  it('uses the shared Phone menu and delegates the selected panel header to its sheet', () => {
+    const view = render(<SettingsPhone model={model()} />);
+    expect(screen.getByText('Guest')).toBeTruthy();
+    expect(screen.getByText('phone_meeting.preferences')).toBeTruthy();
+    expect(screen.getByText('phone_meeting.devices')).toBeTruthy();
+    view.rerender(<SettingsPhone model={model(true)} />);
+    expect(screen.queryByRole('button')).toBeNull();
+  });
   it('preserves the original grouped order and forwards navigation without replacing panel content', () => {
     const m = model();
     render(<SettingsPhone model={m} />);
-    expect(screen.getAllByRole('button').map((button) => button.textContent)).toEqual(labels);
+    expect(
+      screen.getAllByRole('button').map((button) => button.textContent?.replace('›', '')),
+    ).toEqual([
+      'general',
+      'profile',
+      'auth',
+      'audio',
+      'video',
+      'app',
+      'ai',
+      'recording',
+      'license',
+      'about_us',
+    ]);
     fireEvent.click(screen.getByRole('button', { name: /^audio/ }));
     expect(m.selectPanel).toHaveBeenCalledExactlyOnceWith('audio');
   });

@@ -37,7 +37,7 @@ export function SpaceBrowser({
     active: !dragging && !busy && preferencesReady && !!height,
     preferences,
     join,
-  });
+    });
   useEffect(() => () => clearTimeout(settleTimer.current), []);
   const settle = () => {
     clearTimeout(settleTimer.current);
@@ -57,7 +57,11 @@ export function SpaceBrowser({
             {joinError}
           </Text>
         )}
-        {browser.error && <Text style={ui.body}>{t('native_navigation.error')}</Text>}
+        {browser.error && (
+          <Text style={ui.body}>
+            {t('native_navigation.error')} {browser.error}
+          </Text>
+        )}
         <PrimaryButton size="small" onPress={browser.refresh}>
           {t('native_navigation.refresh')}
         </PrimaryButton>

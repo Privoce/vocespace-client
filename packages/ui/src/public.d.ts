@@ -26,3 +26,5 @@ export { meetingVector, type MeetingVectorName } from './meeting-icons';
 
 export { Creature, participantColor, normalizeAvo } from '@vocespace/meeting-core';
 export type { AvoParams, AvoDrawing } from '@vocespace/meeting-core';
+
+export * from './svg-resource';

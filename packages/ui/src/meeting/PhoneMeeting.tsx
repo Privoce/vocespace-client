@@ -1,5 +1,6 @@
 'use client';
-import { useEffect } from 'react';
+import { MeetingSheet } from './MeetingSheet';
+import { Fragment, useEffect } from 'react';
 import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
 import { meetingColors as c } from '../theme';
 import type { MeetingTile } from '@vocespace/meeting-core';
@@ -14,6 +15,7 @@ export function PhoneMeeting({
   connected = true,
   avoidKeyboard = true,
   focusedExtraTile,
+  fullscreenTileId,
   onFocusTrack,
   tiles,
   labels,
@@ -27,18 +29,21 @@ export function PhoneMeeting({
   renderVideo,
   extraTiles = [],
   controls,
+  dock,
+  renderSheet,
   notice,
   chat,
   panel,
 }: PhoneMeetingProps) {
   const model = usePhoneMeeting(
     [...tiles, ...extraTiles.map((extra) => ({ id: extra.id, name: '' }))],
-    focusedExtraTile,
+    fullscreenTileId || focusedExtraTile,
+    !!dock,
   );
   const { layout, size, viewport } = model;
   useEffect(() => {
-    onFocusedChange?.(!!layout.focus);
-  }, [!!layout.focus, onFocusedChange]);
+    onFocusedChange?.(model.explicitlyFocused);
+  }, [model.explicitlyFocused, onFocusedChange]);
   const chatPanel = chat && { ...chat, title: labels.chat, variant: undefined };
   const panels = [chatPanel, panel].filter((item) => !!item);
   const anyPanel = panels.some((item) => item.open);
@@ -47,6 +52,7 @@ export function PhoneMeeting({
       <MeetingTileView
         key={item.id}
         item={item}
+        compact={!!dock && !!layout.focus && !focus}
         Icon={Icon}
         width={
           focus
@@ -57,17 +63,41 @@ export function PhoneMeeting({
                 ? '100%'
                 : '48.5%'
         }
-        height={viewport.height ? (focus ? size.focusHeight : size.railHeight || size.height) : 220}
+        height={
+          fullscreenTileId === item.id
+            ? Math.max(220, viewport.height - 16)
+            : dock && layout.focus && !focus
+              ? 72
+              : viewport.height
+                ? Math.max(
+                    140,
+                    focus
+                      ? dock
+                        ? Math.max(
+                            220,
+                            viewport.height -
+                              Math.ceil(layout.tiles.length / 2) * 78 -
+                              16 -
+                              (layout.pages > 1 ? 40 : 0),
+                          )
+                        : size.focusHeight
+                      : size.railHeight || size.height,
+                  )
+                : 220
+        }
         label={`${focus ? labels.unfocus : labels.focus} ${item.name}`}
         onPress={() => {
           onFocusTrack?.();
           model.setPinned(focus ? null : item.id);
         }}
         avatar={renderAvatar?.(item)}
-        actions={renderTileActions?.(item, focus, () => {
-          onFocusTrack?.();
-          model.setPinned(focus ? null : item.id);
-        })}
+        actions={
+          (!dock || focus || !layout.focus) &&
+          renderTileActions?.(item, focus, () => {
+            onFocusTrack?.();
+            model.setPinned(focus ? null : item.id);
+          })
+        }
         video={item.video ? renderVideo(item.id) : null}
       />
     );
@@ -82,7 +112,7 @@ export function PhoneMeeting({
         accessibilityElementsHidden={anyPanel}
         importantForAccessibility={anyPanel ? 'no-hide-descendants' : 'auto'}
       >
-        <View style={styles.header}>
+        <View style={[styles.header, !!fullscreenTileId && styles.hidden]}>
           {leadingAction && (
             <Button appearance="icon" label={leadingAction.label} onPress={leadingAction.onPress}>
               {Icon ? <Icon name={leadingAction.icon} size={20} /> : leadingAction.label}
@@ -116,7 +146,7 @@ export function PhoneMeeting({
           contentContainerStyle={styles.stage}
           keyboardShouldPersistTaps="handled"
           onLayout={(event) =>
-            model.measure(event.nativeEvent.layout.width, event.nativeEvent.layout.height)
+            model.measure(event.nativeEvent.layout.width - 12, event.nativeEvent.layout.height)
           }
         >
           {notice}
@@ -124,7 +154,7 @@ export function PhoneMeeting({
             !extraTiles.some((item) => item.id === layout.focus?.id) &&
             tile(layout.focus, true)}
           {!tiles.length && !extraTiles.length && <Text style={styles.muted}>{labels.empty}</Text>}
-          <View style={styles.grid}>
+          <View style={[styles.grid, !!fullscreenTileId && styles.hidden]}>
             {/* Stable keyed siblings keep embedded players mounted when paging/focusing. */}
             {[
               ...extraTiles
@@ -162,7 +192,7 @@ export function PhoneMeeting({
               );
             })}
           </View>
-          {layout.pages > 1 && (
+          {layout.pages > 1 && !fullscreenTileId && (
             <View style={styles.pager}>
               <Button disabled={layout.page === 0} onPress={() => model.setPage(layout.page - 1)}>
                 {labels.previous}
@@ -179,27 +209,19 @@ export function PhoneMeeting({
             </View>
           )}
         </ScrollView>
-        {controls}
+        <View style={fullscreenTileId ? styles.hidden : undefined}>
+          {dock}
+          {controls}
+        </View>
       </View>
       {panels.map((item, index) => (
-        <View
-          key={index}
-          style={[
-            styles.sheet,
-            item.variant === 'settings' && styles.settingsSheet,
-            item.variant === 'drawer' && { right: '12%', borderRightWidth: 1, borderColor: '#333' },
-            !item.open && styles.hidden,
-          ]}
-          accessibilityViewIsModal={item.open}
-        >
-          <View style={[styles.sheetHeader, item.variant === 'settings' && styles.settingsHeader]}>
-            <Text style={styles.title}>{item.title}</Text>
-            <Button label={labels.close} appearance="icon" onPress={item.onClose}>
-              {Icon ? <Icon name="close" size={20} color="#C6D1E2" /> : labels.close}
-            </Button>
-          </View>
-          <View style={styles.flex}>{item.content}</View>
-        </View>
+        <Fragment key={index}>
+          {renderSheet ? (
+            renderSheet({ ...item, Button, Icon, closeLabel: labels.close })
+          ) : (
+            <MeetingSheet {...item} Button={Button} Icon={Icon} closeLabel={labels.close} />
+          )}
+        </Fragment>
       ))}
     </KeyboardAvoidingView>
   );
@@ -220,7 +242,7 @@ const styles = StyleSheet.create({
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#41D7A0' },
   offline: { backgroundColor: '#E5A54B' },
-  stage: { paddingHorizontal: 8, paddingBottom: 8, gap: 6 },
+  stage: { paddingHorizontal: 14, paddingBottom: 8, gap: 10 },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',

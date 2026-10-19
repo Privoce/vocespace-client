@@ -1,8 +1,9 @@
 'use client';
+import { SvgResource } from '@/components/Icon';
+import { PhoneDeviceSwitch } from './PhoneDeviceSwitch';
 import { AuthSettingsContent as SharedAuthSettingsContent } from '@vocespace/ui';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { settingsElements } from '../phone-content';
-
 
 import React, { useMemo } from 'react';
 import styles from '@/components/Controller/index.module.scss';
@@ -17,7 +18,15 @@ import { api } from '@/lib/api';
 import { socket } from '@/lib/realtime/socket';
 import { WsBase } from '@/lib/std/device';
 
-type PermissionKey = 'createRoom' | 'manageRoom' | 'manageRole' | 'controlUser' | 'recording' | 'viewRoom' | "manageFile" | "managePlayer";
+type PermissionKey =
+  | 'createRoom'
+  | 'manageRoom'
+  | 'manageRole'
+  | 'controlUser'
+  | 'recording'
+  | 'viewRoom'
+  | 'manageFile'
+  | 'managePlayer';
 
 type PermissionRow = {
   key: PermissionKey;
@@ -47,26 +56,27 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
     guest: { ...spaceInfo.auth.guest },
   });
 
-  const renderSwitch = (roleKey: keyof SpaceInfo['auth']) => function PermissionSwitch(_: any, record: PermissionRow) {
-    const field = record.key as PermissionKey;
-    const checked = Boolean((changeableAuth as any)[roleKey]?.[field]);
-    return (
-      <Switch
-        style={{}}
-        checked={checked}
-        disabled={!isOwner}
-        onChange={(val: boolean) => {
-          setChangeableAuth((prev) => ({
-            ...prev,
-            [roleKey]: {
-              ...((prev as any)[roleKey] || {}),
-              [field]: val,
-            },
-          }));
-        }}
-      />
-    );
-  };
+  const renderSwitch = (roleKey: keyof SpaceInfo['auth']) =>
+    function PermissionSwitch(_: any, record: PermissionRow) {
+      const field = record.key as PermissionKey;
+      const checked = Boolean((changeableAuth as any)[roleKey]?.[field]);
+      return (
+        <Switch
+          style={{}}
+          checked={checked}
+          disabled={!isOwner}
+          onChange={(val: boolean) => {
+            setChangeableAuth((prev) => ({
+              ...prev,
+              [roleKey]: {
+                ...((prev as any)[roleKey] || {}),
+                [field]: val,
+              },
+            }));
+          }}
+        />
+      );
+    };
 
   const columns: ColumnsType<PermissionRow> = useMemo(() => {
     return [
@@ -110,7 +120,7 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
   const data: PermissionRow[] = useMemo(() => {
     return [
       {
-        key: "viewRoom",
+        key: 'viewRoom',
         permLabel: t('auth.viewRoom'),
         owner: changeableAuth.owner.viewRoom,
         manager: changeableAuth.manager.viewRoom,
@@ -201,6 +211,10 @@ export function AuthSettings({ spaceInfo, space, messageApi }: AuthSettingsProps
       styles,
       t,
       slots: {
+        introIcon: <SvgResource type="auth" svgSize={24} color="#22CCEE" />,
+        microphone: <PhoneDeviceSwitch device="microphone" messageApi={messageApi} />,
+        camera: <PhoneDeviceSwitch device="camera" messageApi={messageApi} />,
+        management: <div>{t('phone_meeting.manage_permissions')}</div>,
         table: (
           <Table<PermissionRow>
             columns={columns}

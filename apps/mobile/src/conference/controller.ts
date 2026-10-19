@@ -1,3 +1,4 @@
+import { atJoinStage } from './join-error';
 import type { NativeJoin } from '@vocespace/contracts';
 
 export interface ConferenceRoom {
@@ -102,26 +103,28 @@ export function createConferenceController<R extends ConferenceRoom>(ports: Port
       set({ phase: 'joining', spaceName });
       attempt.work = (async () => {
         try {
-          await ports.ensureSession();
+          await atJoinStage('session', ports.ensureSession);
           if (attempt.cancelled) return;
           attempt.prepared = true; // The server may receive prepare even when its response is lost.
-          const details = await ports.prepare(
-            spaceName,
-            nickname,
-            attempt.id,
-            attempt.abort.signal,
-            childRoom,
-            createIfMissing,
+          const details = await atJoinStage('prepare', () =>
+            ports.prepare(
+              spaceName,
+              nickname,
+              attempt.id,
+              attempt.abort.signal,
+              childRoom,
+              createIfMissing,
+            ),
           );
           if (attempt.cancelled) return;
           attempt.room = ports.createRoom(() => {
             if (!attempt.cancelled) void leave();
           });
-          await attempt.room.connect(details);
+          await atJoinStage('connect', () => attempt.room!.connect(details));
           if (attempt.cancelled) return;
-          await ports.confirm(attempt.id, attempt.abort.signal);
+          await atJoinStage('confirm', () => ports.confirm(attempt.id, attempt.abort.signal));
           if (attempt.cancelled) return;
-          await attempt.room.subscribe();
+          await atJoinStage('settings', async () => attempt.room!.subscribe());
           if (attempt.cancelled) return;
           set({
             phase: 'joined',

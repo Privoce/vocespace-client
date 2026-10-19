@@ -133,10 +133,10 @@ function presentation(style: CSSProperties = {}) {
       const [vertical, horizontal = vertical] = value.split(' ');
       view[`${key}Vertical`] = parseFloat(vertical);
       view[`${key}Horizontal`] = parseFloat(horizontal);
-    } else if (key === 'border' && typeof value === 'string') {
+    } else if (['border', 'borderTop', 'borderBottom'].includes(key) && typeof value === 'string') {
       const [width, , color] = value.split(' ');
-      view.borderWidth = parseFloat(width);
-      view.borderColor = color;
+      view[`${key}Width`] = parseFloat(width);
+      view[`${key}Color`] = color;
     }
   }
   return { view: view as ViewStyle, text: text as TextStyle };
@@ -169,7 +169,14 @@ function SettingsDiv({
   return (
     <TextTheme.Provider value={text}>
       <View
-        style={[...(className?.split(' ').map((name) => classStyles[name]) ?? []), converted.view]}
+        pointerEvents={style?.display === 'none' ? 'none' : 'auto'}
+        accessibilityElementsHidden={style?.display === 'none'}
+        importantForAccessibility={style?.display === 'none' ? 'no-hide-descendants' : 'auto'}
+        style={[
+          ...(className?.split(' ').map((name) => classStyles[name]) ?? []),
+          converted.view,
+          style?.display === 'none' && { height: 0, opacity: 0, overflow: 'hidden', marginTop: 0 },
+        ]}
       >
         {paragraph ? <Text style={text}>{children}</Text> : children}
       </View>
@@ -187,10 +194,11 @@ export function createSettingsElements(onLinkError: () => void): SettingsElement
         {children}
       </Text>
     ),
-    Clickable: ({ children, className, onClick }) => (
+    Clickable: ({ children, className, onClick, role, 'aria-expanded': expanded }) => (
       <Pressable
+        accessibilityRole={role}
         disabled={!onClick}
-        accessibilityState={{ disabled: !onClick }}
+        accessibilityState={{ disabled: !onClick, expanded }}
         onPress={onClick}
         style={className?.split(' ').map((name) => classStyles[name])}
       >

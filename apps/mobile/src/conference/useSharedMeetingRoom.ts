@@ -1,6 +1,6 @@
 import { useI18n } from '../i18n';
 import { useEffect, useState } from 'react';
-import { BackHandler, Share } from 'react-native';
+import { BackHandler, Clipboard } from 'react-native';
 import { isTrackReference } from '@livekit/react-native';
 import { Track } from 'livekit-client';
 import type { MeetingAction, MeetingTile } from '@vocespace/ui';
@@ -51,6 +51,8 @@ export function useSharedMeetingRoom(
           name: person.name,
           owner: person.owner,
           manager: person.manager,
+          local: id === room.raw.localParticipant.identity,
+          speaking: rtc?.isSpeaking,
           microphone: rtc?.isMicrophoneEnabled,
           video: rtc?.isCameraEnabled,
         };
@@ -60,8 +62,11 @@ export function useSharedMeetingRoom(
     model.media.sources.includes(device) ||
     model.invitations.some((item) => item.device === device);
   const open = (
-    panel: 'stage' | 'chat' | 'participants' | 'more' | 'settings' | 'channel' | 'apps',
-  ) => model.setPanel(panel);
+    panel: 'stage' | 'chat' | 'participants' | 'more' | 'settings' | 'channel' | 'apps' | 'share',
+  ) => {
+    if (panel === 'share') setShareError('');
+    model.setPanel(panel);
+  };
   const actions: MeetingAction[] = (['microphone', 'camera', 'screen'] as const).map((device) => ({
     id: device,
     icon: device,
@@ -74,7 +79,6 @@ export function useSharedMeetingRoom(
     },
   }));
   actions.push(
-    { id: 'chat', icon: 'chat', label: '会议聊天', onPress: () => open('chat') },
     { id: 'more', icon: 'more', label: '更多', onPress: () => open('more') },
     {
       id: 'leave',
@@ -99,7 +103,8 @@ export function useSharedMeetingRoom(
   const share = async () => {
     setShareError('');
     try {
-      await Share.share({ message: conference.state.spaceName || room.raw.name });
+      Clipboard.setString(conference.state.spaceName || room.raw.name);
+      setShareError(t('phone_meeting.copied'));
     } catch {
       setShareError('未能打开系统分享，请重试。');
     }
@@ -109,6 +114,7 @@ export function useSharedMeetingRoom(
       id: 'settings',
       icon: 'settings',
       label: settings.t('settings.title'),
+      description: t('phone_meeting.settings_hint'),
 
       onPress: () => {
         settings.retry();
@@ -119,15 +125,15 @@ export function useSharedMeetingRoom(
     {
       id: 'members',
       icon: 'members',
-      label: '会议成员',
+      label: t('phone_meeting.members'),
       description: `${model.participants.length} 人在会议中`,
       onPress: () => open('participants'),
     },
     {
       id: 'hand',
       icon: 'hand',
-      label: model.raising ? '正在举手…' : '举手发言',
-      description: '收到主持人邀请后，由你主动开启设备',
+      label: model.raising ? '正在举手…' : t('phone_meeting.hand'),
+      description: t('phone_meeting.hand_hint'),
       disabled: model.raising || conference.chat.state.connection !== 'connected',
       onPress: () => {
         open('stage');
@@ -136,22 +142,36 @@ export function useSharedMeetingRoom(
     },
     {
       id: 'share',
-      icon: 'copy',
-      label: '分享 Space 名称',
+      icon: 'link',
+      label: t('phone_meeting.share'),
+      description: t('phone_meeting.share_hint'),
       onPress: () => {
-        void share();
+        open('share');
       },
     },
-    ...actions
-      .filter(
-        (action) => action.id === 'microphone' || action.id === 'camera' || action.id === 'screen',
-      )
-      .map((action) => ({
-        ...action,
-        description: !canUse(action.id as 'microphone' | 'camera' | 'screen')
-          ? '需要主持人邀请'
-          : undefined,
-      })),
+    {
+      id: 'apps',
+      icon: 'app',
+      label: t('more.app.title'),
+      description: t('phone_meeting.apps_hint'),
+      onPress: () => {
+        settings.retry();
+        settings.select('app');
+        open('settings');
+      },
+    },
   ];
-  return { ...model, members, connected, tiles, actions, menu, shareError, share, open, settings };
+  return {
+    ...model,
+    t,
+    members,
+    connected,
+    tiles,
+    actions,
+    menu,
+    shareError,
+    share,
+    open,
+    settings,
+  };
 }

@@ -4,6 +4,7 @@ import { ParticipantSettings, SettingState, SpaceInfo } from '@/lib/std/space';
 import { MessageInstance } from 'antd/es/message/interface';
 import { LocalParticipant, Room } from 'livekit-client';
 export interface SettingsProps {
+  onClose?: () => void;
   username: string;
   close: boolean;
   tab: {

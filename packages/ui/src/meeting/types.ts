@@ -31,7 +31,12 @@ export interface MeetingPrimitives {
   Icon: ComponentType<MeetingIconProps>;
 }
 export interface MeetingPanel {
+  backLabel?: string;
   variant?: 'settings' | 'drawer';
+  subtitle?: string;
+  onBack?: () => void;
+  height?: `${number}%`;
+  hideHeader?: boolean;
   title: string;
   open: boolean;
   onClose: () => void;
@@ -43,6 +48,7 @@ export interface PhoneMeetingProps {
   connected?: boolean;
   avoidKeyboard?: boolean;
   focusedExtraTile?: string;
+  fullscreenTileId?: string;
   onFocusTrack?: () => void;
   tiles: readonly MeetingTile[];
   labels: MeetingLabels;
@@ -57,6 +63,8 @@ export interface PhoneMeetingProps {
   /** Existing Web widgets keep their lifecycle and capabilities in an adapter. */
   extraTiles?: { id: string; content: ReactNode }[];
   controls: ReactNode;
+  dock?: ReactNode;
+  renderSheet?: (props: MeetingSheetProps) => ReactNode;
   notice?: ReactNode;
   chat?: { open: boolean; onClose: () => void; content: ReactNode };
   panel?: MeetingPanel;
@@ -72,8 +80,14 @@ export interface MeetingMembersProps extends MeetingPrimitives {
   managerLabel?: string;
   inviteLabel?: string;
   onInvite?: () => void;
+  selfLabel?: string;
+  speakingLabel?: string;
+  onlineLabel?: string;
+  compact?: boolean;
+  renderActions?: (member: MeetingTile) => ReactNode;
 }
 export interface MeetingMenuProps extends MeetingPrimitives {
+  footer?: string;
   actions: MeetingAction[];
 }
 export interface MeetingChatMessage {
@@ -82,6 +96,7 @@ export interface MeetingChatMessage {
   text: string;
   local: boolean;
   attachment?: ReactNode;
+  time?: string;
 }
 export interface MeetingChatProps extends MeetingPrimitives {
   Input: ComponentType<MeetingInputProps>;
@@ -98,4 +113,35 @@ export interface MeetingChatProps extends MeetingPrimitives {
   status?: string;
   error?: string;
   tools?: ReactNode;
+  compact?: boolean;
+  roomName?: string;
+  roomSubtitle?: string;
+}
+
+export interface MeetingSheetProps extends MeetingPanel {
+  Button: ComponentType<MeetingButtonProps>;
+  Icon?: ComponentType<MeetingIconProps>;
+  closeLabel: string;
+  backLabel?: string;
+}
+export interface MeetingShareProps extends MeetingPrimitives {
+  name: string;
+  title: string;
+  description: string;
+  copyLabel: string;
+  onCopy: () => void;
+  extra?: ReactNode;
+}
+export interface MeetingDockProps extends MeetingPrimitives {
+  chatLabel: string;
+  membersLabel: string;
+  expandLabel: string;
+  count: number;
+  unread?: number;
+  chat: ReactNode;
+  members: ReactNode;
+  onExpand: (tab: 'chat' | 'members') => void;
+}
+export interface MeetingTileActionsProps extends MeetingPrimitives {
+  actions: MeetingAction[];
 }

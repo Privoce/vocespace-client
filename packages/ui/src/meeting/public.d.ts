@@ -30,4 +30,29 @@ export * from './settings/content';
 export type { SettingsElements, SettingsViewProps, SettingsSlots } from './settings/types';
 
 export * from './settings/advanced';
-export { avoStyles, avoPalette, virtualModels, virtualBackgrounds, licenseDetailKeys } from '@vocespace/meeting-core';
+export {
+  avoStyles,
+  avoPalette,
+  virtualModels,
+  virtualBackgrounds,
+  licenseDetailKeys,
+} from '@vocespace/meeting-core';
+
+import type {
+  MeetingSheetProps,
+  MeetingShareProps,
+  MeetingDockProps,
+  MeetingTileActionsProps,
+} from './types';
+export declare function MeetingSheet(props: MeetingSheetProps): ReactElement;
+export declare function MeetingShare(props: MeetingShareProps): ReactElement;
+export declare function MeetingDock(props: MeetingDockProps): ReactElement;
+export declare function MeetingTileActions(props: MeetingTileActionsProps): ReactElement;
+export declare function InitialAvatar(props: { name: string; size?: number }): ReactElement;
+
+export declare function MeetingSheetHeader(
+  props: Pick<
+    MeetingSheetProps,
+    'title' | 'subtitle' | 'onClose' | 'onBack' | 'Button' | 'Icon' | 'closeLabel' | 'backLabel'
+  >,
+): ReactElement;

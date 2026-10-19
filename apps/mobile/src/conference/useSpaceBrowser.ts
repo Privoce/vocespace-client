@@ -1,3 +1,4 @@
+import { meetingFailure } from './meetingFailure';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import type { NativeSpaceSummary } from '@vocespace/contracts';
@@ -6,7 +7,7 @@ export function useSpaceBrowser(model: ReturnType<typeof useConference>, initial
   const [spaces, setSpaces] = useState<NativeSpaceSummary[]>([]);
   const [open, setOpen] = useState(initiallyOpen);
   const [index, setIndex] = useState(0);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<string>();
   const [revision, setRevision] = useState(0);
   const switching = useRef(false);
   useEffect(() => {
@@ -20,11 +21,11 @@ export function useSpaceBrowser(model: ReturnType<typeof useConference>, initial
         const items = await model.listSpaces(abort.signal);
         if (!abort.signal.aborted) {
           setSpaces(items);
-          setError(false);
+          setError(undefined);
           setIndex((previous) => Math.min(previous, Math.max(0, items.length - 1)));
         }
-      } catch {
-        if (!abort.signal.aborted) setError(true);
+      } catch (error) {
+        if (!abort.signal.aborted) setError(meetingFailure(error));
       } finally {
         pending = false;
       }

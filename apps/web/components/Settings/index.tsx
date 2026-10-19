@@ -3,11 +3,12 @@ import * as React from 'react';
 import { useSettings } from './hooks/useSettings';
 import { Tabs } from 'antd';
 import { SettingsProps, SettingsExports } from '@/components/Settings/types';
-import { getSettingsPanels, type SettingsModel } from './panels';
+import { getSettingsPanels } from './panels';
 import styles from './index.module.scss';
-import mobile from '@/styles/mobile.module.scss';
+import phoneStyles from './phone.module.scss';
+import { MeetingSheetHeader } from '@vocespace/ui';
+import { MeetingButton, MeetingIcon } from '@/components/MeetingUI/primitives';
 import { SettingsPhone } from './phone';
-
 
 export * from '@/components/Settings/types';
 
@@ -16,9 +17,7 @@ export const Settings = React.forwardRef<SettingsExports, SettingsProps>(
     const model = useSettings(props, ref);
     const phone = model.device === 'phone';
 
-    return (
-    <div className={phone ? mobile.surface : undefined} style={{ width: '100%', minWidth: 0 }}>
-      {phone && <SettingsPhone model={model} />}
+    const tabs = (
       <Tabs
         className={phone ? styles.panel : undefined}
         activeKey={model.key}
@@ -32,7 +31,43 @@ export const Settings = React.forwardRef<SettingsExports, SettingsProps>(
           display: phone && !model.phonePanelOpen ? 'none' : undefined,
         }}
       />
-    </div>
-  );
+    );
+    const title = model.phonePanelOpen
+      ? model.t(
+          model.key === 'app'
+            ? 'more.app.title'
+            : model.key === 'recording'
+              ? 'recording.title'
+              : `settings.${model.key}.title`,
+        )
+      : model.t('settings.title');
+    return (
+      <div
+        className={phone ? phoneStyles.phone : undefined}
+        style={{
+          width: '100%',
+          minWidth: 0,
+          ...(phone ? { height: '100%', display: 'flex', flexDirection: 'column' as const } : {}),
+        }}
+      >
+        {phone && props.onClose && (
+          <MeetingSheetHeader
+            title={title}
+            Button={MeetingButton}
+            Icon={MeetingIcon}
+            closeLabel={model.t('common.close')}
+            backLabel={model.t('common.back')}
+            onClose={props.onClose}
+            onBack={model.phonePanelOpen ? () => model.setPhonePanelOpen(false) : undefined}
+          />
+        )}
+        <div style={phone ? { overflowY: 'auto', flex: 1, minHeight: 0 } : { display: 'contents' }}>
+          <>
+            {phone && <SettingsPhone model={model} />}
+            {tabs}
+          </>
+        </div>
+      </div>
+    );
   },
 );

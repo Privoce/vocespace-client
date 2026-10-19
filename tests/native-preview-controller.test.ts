@@ -80,3 +80,12 @@ it('honors disabled auto-join and cancels a pending handoff when the card change
   await work;
   expect(join).not.toHaveBeenCalled();
 });
+
+it('manual entry releases HLS before directly joining RTC without a PreJoin step', async () => {
+  const stop = vi.fn(async () => {});
+  const join = vi.fn(async () => { expect(stop).toHaveBeenCalledOnce(); });
+  const c = createPreviewController({ now: Date.now, stop, join });
+  c.activate('new-space', true);
+  await c.join();
+  expect(join).toHaveBeenCalledWith('new-space');
+});

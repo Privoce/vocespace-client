@@ -1,17 +1,20 @@
 'use client';
+import { useState } from 'react';
+import { socket } from '@/lib/realtime/socket';
+import { audio } from '@/lib/audio';
+import { PhoneSheet } from '@/components/MeetingUI/PhoneSheet';
 import { useTrackToggle } from '@livekit/components-react';
 import { Track } from 'livekit-client';
 import { Popover } from 'antd';
 import { DownOutlined } from '@ant-design/icons';
-import { MeetingControls, type MeetingAction } from '@vocespace/ui';
+import { MeetingControls, MeetingMenu, type MeetingAction } from '@vocespace/ui';
 import { MeetingButton as Button, MeetingIcon as Icon } from '@/components/MeetingUI/primitives';
 import { DevicesSelector } from '@/app/api/devices/device_selector';
 import { MediaDeviceKind } from '@/lib/std/device';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { MoreButton } from '@/components/Toggles/MoreButton';
 import { ControlsWork, type ControlsModel } from './phone';
-import styles from './index.module.scss';
-function useSharedControls(model: ControlsModel) {
+function useSharedControls(model: ControlsModel, onMore: () => void) {
   const { t, visibleControls, space } = model;
   const mic = useTrackToggle({
     source: Track.Source.Microphone,
@@ -120,41 +123,7 @@ function useSharedControls(model: ControlsModel) {
       void screen.toggle().catch(() => undefined);
     },
   });
-  if (visibleControls.chat)
-    actions.push({
-      id: 'chat',
-      icon: 'chat',
-      label: t('common.chat'),
-      badge: model.chatMsg.unhandled,
-      active: model.chatOpen,
-      onPress: () => model.setChatOpen(!model.chatOpen),
-    });
-  if (space)
-    actions.push({
-      id: 'more',
-      icon: 'more',
-      label: t('more.title'),
-      onPress: () => {},
-      content: (
-        <div className={styles.action}>
-          <MoreButton
-            space={space}
-            spaceInfo={model.spaceInfo}
-            config={model.config}
-            size="small"
-            controlWidth={model.controlWidth}
-            setOpenMore={model.setOpenMore}
-            setMoreType={model.setMoreType}
-            onSettingOpen={async () => model.setSettingVis(true)}
-            onClickAI={model.onClickAI}
-            onClickRecord={model.onClickRecord}
-            onClickManage={model.fetchSettings}
-            onClickApp={model.onClickApp}
-            isRecording={model.isRecording}
-          />
-        </div>
-      ),
-    });
+  if (space) actions.push({ id: 'more', icon: 'more', label: t('more.title'), onPress: onMore });
   if (visibleControls.leave)
     actions.push({
       id: 'leave',
@@ -169,7 +138,9 @@ function useSharedControls(model: ControlsModel) {
   return actions;
 }
 export function ControlsShared({ model }: { model: ControlsModel }) {
-  const actions = useSharedControls(model);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const actions = useSharedControls(model, () => setMoreOpen(true));
+  const { t, space } = model;
   return (
     <div
       {...model.htmlProps}
@@ -178,6 +149,103 @@ export function ControlsShared({ model }: { model: ControlsModel }) {
     >
       <MeetingControls Button={Button} Icon={Icon} actions={actions} />
       <ControlsWork model={model} />
+      {space && (
+        <PhoneSheet
+          open={moreOpen}
+          onClose={() => setMoreOpen(false)}
+          title={t('phone_meeting.more_title')}
+          subtitle={t('phone_meeting.more_subtitle')}
+          closeLabel={t('common.close')}
+          height="78%"
+        >
+          <MoreButton
+            space={space}
+            spaceInfo={model.spaceInfo}
+            config={model.config}
+            size="small"
+            controlWidth={model.controlWidth}
+            setOpenMore={model.setOpenMore}
+            setMoreType={model.setMoreType}
+            onSettingOpen={async () => model.setSettingVis(true)}
+            onClickAI={model.onClickAI}
+            onClickRecord={model.onClickRecord}
+            onClickManage={model.fetchSettings}
+            onClickApp={model.onClickApp}
+            isRecording={model.isRecording}
+            renderMenu={(items, select) => (
+              <MeetingMenu
+                Button={Button}
+                Icon={Icon}
+                footer={t('phone_meeting.media_hint')}
+                actions={[
+                  {
+                    id: 'hand',
+                    icon: 'hand',
+                    label: t('phone_meeting.hand'),
+                    description: t('phone_meeting.hand_hint'),
+                    onPress: async () => {
+                      setMoreOpen(false);
+                      await model.updateSettings({ raiseHand: true });
+                      socket.emit('update_user_status', { space: space.name });
+                      socket.emit('raise', {
+                        space: space.name,
+                        senderId: space.localParticipant.identity,
+                        senderName: space.localParticipant.name,
+                        senderSocketId:
+                          model.spaceInfo.participants[space.localParticipant.identity]?.socketId,
+                      });
+                      void audio.raise();
+                    },
+                  },
+                  {
+                    id: 'share',
+                    icon: 'link',
+                    label: t('phone_meeting.share'),
+                    description: t('phone_meeting.share_hint'),
+                    onPress: () => {
+                      setMoreOpen(false);
+                      model.setOpenShareModal(true);
+                    },
+                  },
+                  ...items
+                    .filter((item): item is Exclude<typeof item, null> => !!item)
+                    .map((item) => {
+                      const id = String(item.key);
+                      const labels: Record<string, string> = {
+                        app: t('more.app.title'),
+                        participant: t('phone_meeting.members'),
+                        setting: t('common.setting'),
+                        record: t(model.isRecording ? 'more.record.stop' : 'more.record.start'),
+                        platform_user: t('more.platform'),
+                      };
+                      return {
+                        id,
+                        icon: (id === 'setting'
+                          ? 'settings'
+                          : id === 'participant'
+                            ? 'members'
+                            : id === 'record'
+                              ? 'camera'
+                              : 'app') as MeetingAction['icon'],
+                        label: labels[id] || id,
+                        description:
+                          id === 'app'
+                            ? t('phone_meeting.apps_hint')
+                            : id === 'setting'
+                              ? t('phone_meeting.settings_hint')
+                              : undefined,
+                        onPress: () => {
+                          setMoreOpen(false);
+                          select(id);
+                        },
+                      };
+                    }),
+                ]}
+              />
+            )}
+          />
+        </PhoneSheet>
+      )}
     </div>
   );
 }

@@ -22,7 +22,7 @@ export function useMeetingRoom(conference: ReturnType<typeof useConference>, roo
   ]);
   const media = useSyncExternalStore(room.media.subscribe, room.media.getSnapshot);
   const [panel, setPanel] = useState<
-    'stage' | 'participants' | 'chat' | 'more' | 'settings' | 'channel' | 'apps'
+    'stage' | 'participants' | 'chat' | 'more' | 'settings' | 'channel' | 'apps' | 'share'
   >('stage');
   const [pinned, setPinned] = useState<string | null>();
   const [trackPage, setTrackPage] = useState(0);

@@ -29,6 +29,44 @@ export function SettingsChoice({
   compact?: boolean;
   size?: 'small' | 'default' | 'large';
 }) {
+  if (vertical)
+    return (
+      <View style={{ width: '100%' }}>
+        {options.map((option, index) => (
+          <Pressable
+            key={String(option.value)}
+            accessibilityRole="radio"
+            accessibilityState={{
+              checked: value === option.value,
+              disabled: disabled || option.disabled,
+            }}
+            disabled={disabled || option.disabled}
+            onPress={() => onChange?.(option.value)}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              paddingVertical: 14,
+              borderTopWidth: index ? 1 : 0,
+              borderColor: '#2A3D49',
+            }}
+          >
+            <View
+              style={{
+                width: 18,
+                height: 18,
+                borderRadius: 9,
+                borderWidth: value === option.value ? 5 : 1,
+                borderColor: value === option.value ? '#22CCEE' : '#40535E',
+              }}
+            />
+            <Text style={{ color: disabled ? '#728390' : '#C8D6DF', fontSize: 14, flex: 1 }}>
+              {option.label}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+    );
   return (
     <View
       style={{
@@ -70,21 +108,17 @@ export function SettingsToggle({
   onChange?: (value: boolean) => void;
   disabled?: boolean;
 }) {
-  const { t } = useI18n();
   return (
-    <SettingsChoice
-      value={value}
-      options={[
-        { value: true, label: t('common.open') },
-        { value: false, label: t('common.close') },
-      ]}
+    <Switch
+      checked={!!value}
       disabled={disabled}
-      onChange={(v) => {
-        if (typeof v === 'boolean') onChange?.(v);
-      }}
+      onChange={onChange}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: !!value, disabled }}
     />
   );
 }
+
 export function SettingsSelect({
   value,
   options,
@@ -112,10 +146,10 @@ export function SettingsSelect({
         onPress={() => setOpen(true)}
         style={{
           borderWidth: 1,
-          borderColor: disabled ? '#333' : '#22CCEE',
-          borderRadius: 4,
+          borderColor: disabled ? '#29343C' : '#304753',
+          borderRadius: 12,
           minHeight: 40,
-          backgroundColor: '#1E1E1E',
+          backgroundColor: '#1A2832',
           paddingHorizontal: 12,
           flexDirection: 'row',
           alignItems: 'center',
@@ -133,7 +167,7 @@ export function SettingsSelect({
         <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#0009' }}>
           <View
             style={{
-              backgroundColor: '#1E1E1E',
+              backgroundColor: '#1A2832',
               borderRadius: 12,
               padding: 16,
               maxHeight: '80%',
@@ -228,7 +262,7 @@ export function SettingsPermissionTable({
               key={name}
               style={[
                 cells,
-                { width: i === 0 ? 140 : i === 3 ? 120 : 100, backgroundColor: '#1E1E1E' },
+                { width: i === 0 ? 140 : i === 3 ? 120 : 100, backgroundColor: '#1A2832' },
               ]}
             >
               <Text style={{ color: '#fff', fontWeight: '600' }}>{name}</Text>
@@ -294,7 +328,7 @@ export function SettingsDialog({
       <View style={{ flex: 1, justifyContent: 'center', backgroundColor: '#0008', padding: 16 }}>
         <View
           style={{
-            backgroundColor: '#1E1E1E',
+            backgroundColor: '#1A2832',
             borderRadius: 8,
             padding: 24,
             gap: 16,

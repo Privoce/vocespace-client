@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import dynamic from 'next/dynamic';
-import { useSearchParams } from 'next/navigation';
 const SharedMeeting = dynamic(() => import('./components/sharedMeeting'), { ssr: false });
 import { useConference } from '@/components/Layout/conference/hooks/useConference';
 import { FlotLayout } from '@/components/Flot/layout';
@@ -25,8 +24,7 @@ import { FlotButton } from '@/components/Flot';
 export const VideoContainer = React.forwardRef<VideoContainerExports, VideoContainerProps>(
   function VideoContainer(props, ref) {
     const model = useConference(props, ref);
-    const searchParams = useSearchParams();
-    const sharedUI = model.device === 'phone' && searchParams.get('meetingUi') === 'shared';
+    const sharedUI = model.device === 'phone';
     const {
       SettingsComponent,
       messageApi,

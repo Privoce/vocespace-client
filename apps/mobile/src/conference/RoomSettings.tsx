@@ -27,17 +27,25 @@ export function RoomSettings({ model }: { model: ReturnType<typeof useRoomSettin
     <ScrollView
       ref={scroll}
       keyboardShouldPersistTaps="handled"
-      style={{ backgroundColor: '#111' }}
+      style={{ backgroundColor: '#121C24' }}
       contentContainerStyle={{ paddingBottom: 24 }}
     >
       <PhoneSettingsNavigation
+        hideHeader
+        groupLabels={[
+          model.t('phone_meeting.preferences'),
+          model.t('phone_meeting.devices'),
+          model.t('more.title'),
+        ]}
+        hostLabel={model.snapshot?.room?.isOwner ? model.t('more.participant.host') : undefined}
+        onlineLabel={model.t('phone_meeting.online')}
         name={model.name}
         spaceName={model.spaceName}
         panels={model.panels.map((panel) => ({
           id: panel.id,
           label: (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <SettingsIcon name={icons[panel.id]} size={panel.id === 'ai' ? 16 : 14} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+              <SettingsIcon name={icons[panel.id]} size={20} color="#9CB3C0" />
               <Text
                 style={{
                   fontSize: model.selected ? 18 : 14,

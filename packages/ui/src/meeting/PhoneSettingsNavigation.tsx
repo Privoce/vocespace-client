@@ -1,17 +1,21 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import type { PhoneSettingsNavigationProps, PhoneSettingsParts } from './phone-settings-types';
 
-// Order and grouping come directly from the established Web Settings/phone.tsx.
+// Phone menu grouping is shared by the App and mobile Web.
 const groups = [
   ['general', 'profile', 'auth'],
   ['audio', 'video', 'app', 'ai'],
   ['recording', 'license', 'about_us'],
 ];
 
-/** Shared Phone composition. Web injects its original DOM/SCSS primitives verbatim. */
+/** Shared Phone composition with optional platform renderers. */
 export function PhoneSettingsNavigation({
   name,
   spaceName,
+  groupLabels,
+  hideHeader,
+  hostLabel,
+  onlineLabel,
   panels,
   activePanel,
   onSelect,
@@ -22,7 +26,7 @@ export function PhoneSettingsNavigation({
   parts: { Menu, Profile, Group, Row, Header } = nativeParts,
 }: PhoneSettingsNavigationProps) {
   if (activePanel)
-    return (
+    return hideHeader ? null : (
       <Header
         backIcon={backIcon}
         title={panels.find((panel) => panel.id === activePanel)?.label}
@@ -32,17 +36,24 @@ export function PhoneSettingsNavigation({
     );
   return (
     <Menu>
-      <Profile name={name} spaceName={spaceName} />
-      {groups.map((group) => (
-        <Group key={group[0]}>
-          {panels
-            .filter((panel) => group.includes(panel.id))
-            .map((panel) => (
-              <Row nextIcon={nextIcon} key={panel.id} onPress={() => onSelect(panel.id)}>
-                {panel.label}
-              </Row>
-            ))}
-        </Group>
+      <Profile
+        name={hostLabel ? `${name} · ${hostLabel}` : name}
+        spaceName={[onlineLabel, spaceName].filter(Boolean).join(' · ')}
+      />
+      {groups.map((group, index) => (
+        <View key={group[0]}>
+          {groupLabels?.[index] && <Text style={styles.groupLabel}>{groupLabels[index]}</Text>}
+          <Group>
+            {panels
+              .filter((panel) => group.includes(panel.id))
+              .sort((a, b) => group.indexOf(a.id) - group.indexOf(b.id))
+              .map((panel) => (
+                <Row nextIcon={nextIcon} key={panel.id} onPress={() => onSelect(panel.id)}>
+                  {panel.label}
+                </Row>
+              ))}
+          </Group>
+        </View>
       ))}
     </Menu>
   );
@@ -95,8 +106,15 @@ const nativeParts: PhoneSettingsParts = {
   ),
 };
 
-/** Values copied from Web Settings/index.module.scss and styles/mobile.module.scss. */
+/** Phone-only visual tokens; PC settings retain their original layout. */
 const styles = StyleSheet.create({
+  groupLabel: {
+    color: '#7391A3',
+    fontSize: 12,
+    marginHorizontal: 22,
+    marginTop: 26,
+    marginBottom: -6,
+  },
   menu: { width: '100%', minWidth: 0, paddingBottom: 16 },
   profile: {
     // Web block margins collapse to a single 16px gap; RN margins do not.
@@ -104,8 +122,8 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     padding: 16,
     borderWidth: 1,
-    borderColor: '#FFFFFF12',
-    backgroundColor: '#1E1E1E',
+    borderColor: '#324954',
+    backgroundColor: '#1A2832',
     borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -124,27 +142,27 @@ const styles = StyleSheet.create({
   initial: { fontSize: 20, color: '#EDF2FA' },
   identity: { flex: 1, minWidth: 0 },
   name: { fontSize: 14, fontWeight: '600', color: '#EDF2FA' },
-  space: { fontSize: 12, marginTop: 6, color: '#8E99AB' },
+  space: { fontSize: 12, marginTop: 6, color: '#829EAE' },
   group: {
     // Web block margins collapse to a single 16px gap; RN margins do not.
     marginTop: 16,
     marginHorizontal: 16,
     borderWidth: 1,
-    borderColor: '#FFFFFF0C',
+    borderColor: '#2A3D49',
     borderRadius: 16,
     overflow: 'hidden',
   },
   row: {
     width: '100%',
-    minHeight: 56,
+    minHeight: 58,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: '#1A2832',
     borderBottomWidth: 1,
-    borderBottomColor: '#FFFFFF08',
+    borderBottomColor: '#2A3D49',
   },
   rowLabel: { fontSize: 14, color: '#E7EDF5', flexShrink: 1 },
   chevron: { fontSize: 20, color: '#E7EDF5' },
@@ -152,7 +170,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    minHeight: 56,
+    minHeight: 58,
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderBottomWidth: 1,

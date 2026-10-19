@@ -84,8 +84,17 @@ async function dispatchInternal(request: ApiRequest) {
     return ApiResponse.json({ code: 'NOT_FOUND', requestId }, { status: 404 });
   } catch (error) {
     const status = error instanceof AccessError ? error.status : error instanceof ContractError || error instanceof SyntaxError ? 400 : error instanceof StorageUnavailableError ? 503 : 500;
+    if (status >= 500) {
+      // Correlate Native's error screen without logging credentials, payloads or stored data.
+      console.error('API request failed', {
+        requestId,
+        method: request.method,
+        kind: error instanceof Error ? error.name : 'UnknownError',
+        status,
+      });
+    }
     return ApiResponse.json({ code: error instanceof AccessError ? error.code : status === 400 ? 'INVALID_REQUEST' : status === 503 ? 'STORAGE_UNAVAILABLE' : 'INTERNAL_ERROR',
-      message: status === 503 ? 'Storage unavailable' : 'Request failed', requestId }, { status });
+      message: status === 503 ? 'Storage unavailable' : 'Request failed', requestId }, { status, headers: { 'X-Request-Id': requestId } });
   }
 }
 

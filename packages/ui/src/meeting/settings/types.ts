@@ -3,7 +3,15 @@ import type { CSSProperties, ElementType, ReactNode } from 'react';
 /** DOM on Web, RN primitives on App. Only presentation travels through these ports. */
 export interface SettingsElements {
   Heading4: ElementType<{ children?: ReactNode }>;
-  Clickable: ElementType<{ children?: ReactNode; className?: string; onClick?: () => void }>;
+  Clickable: ElementType<{
+    children?: ReactNode;
+    className?: string;
+    onClick?: () => void;
+    role?: 'button';
+    tabIndex?: number;
+    'aria-expanded'?: boolean;
+    onKeyDown?: (event: { key: string; preventDefault: () => void }) => void;
+  }>;
   Article: ElementType<{ children?: ReactNode; className?: string }>;
   Bold: ElementType<{ children?: ReactNode }>;
   Break: ElementType;

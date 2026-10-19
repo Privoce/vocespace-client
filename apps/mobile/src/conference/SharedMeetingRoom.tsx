@@ -1,5 +1,5 @@
 import { TileWidgets } from './TileWidgets';
-import { MeetingAvo } from '../ui/MeetingAvo';
+
 import { ParticipantApps } from './ParticipantApps';
 import { useEffect, useState } from 'react';
 import Drawer from '@ant-design/react-native/lib/drawer';
@@ -8,7 +8,15 @@ import { RoomNavigation } from './RoomNavigation';
 import { Modal, Text, View } from 'react-native';
 import { VideoTrack, isTrackReference } from '@livekit/react-native';
 import { Track } from 'livekit-client';
-import { PhoneMeeting, MeetingControls, MeetingMembers, MeetingMenu } from '@vocespace/ui';
+import {
+  PhoneMeeting,
+  MeetingControls,
+  MeetingMembers,
+  MeetingMenu,
+  MeetingShare,
+  MeetingDock,
+  InitialAvatar,
+} from '@vocespace/ui';
 import {
   MeetingButton as Button,
   MeetingIcon as Icon,
@@ -34,11 +42,6 @@ export function SharedMeetingRoom({
   const [focused, setFocused] = useState(false);
   const [fullscreen, setFullscreen] = useState<string>();
   const [appsId, setAppsId] = useState<string>();
-  const ownAvoList = model.settings.snapshot?.avoList;
-  const avatar = (item: (typeof model.tiles)[number]) =>
-    item.local && ownAvoList?.length
-      ? (ownAvoList.find((avo) => avo.isUsed) ?? ownAvoList[0])
-      : item.avo;
   const fullscreenTile = model.tiles.find((item) => item.id === fullscreen);
   useEffect(() => {
     if (fullscreen && !fullscreenTile) setFullscreen(undefined);
@@ -124,13 +127,6 @@ export function SharedMeetingRoom({
             Button={Button}
             Icon={Icon}
             tiles={model.tiles}
-            renderAvatar={(item) => (
-              <MeetingAvo
-                avo={avatar(item)}
-                level={item.speaking ? 0.65 : 0}
-                animate={model.panel === 'stage' && !fullscreen}
-              />
-            )}
             renderTileActions={(item, focused, toggle) => {
               const track = model.allTracks.find((track) => model.key(track) === item.id);
               const id = track?.participant.identity;
@@ -165,7 +161,7 @@ export function SharedMeetingRoom({
                 icon: 'copy',
                 label: '分享 Space 名称',
                 onPress: () => {
-                  void model.share();
+                  model.open('share');
                 },
               },
               {
@@ -181,29 +177,66 @@ export function SharedMeetingRoom({
               onClose: () => model.open('stage'),
               content: (
                 <SharedConferenceChat
+                  roomName={conference.state.spaceName || room.raw.name}
                   model={conference.chat}
                   identity={conference.state.joined!.identity}
                 />
               ),
             }}
             panel={{
+              backLabel: model.t('common.back'),
               variant: model.panel === 'settings' ? 'settings' : undefined,
               open:
                 model.panel === 'participants' ||
                 model.panel === 'more' ||
                 model.panel === 'settings' ||
-                model.panel === 'apps',
+                model.panel === 'apps' ||
+                model.panel === 'share',
+              height:
+                model.panel === 'more' || model.panel === 'share'
+                  ? '76%'
+                  : model.panel === 'participants' && model.members.length <= 4
+                    ? '62%'
+                    : '88%',
+              subtitle:
+                model.panel === 'more'
+                  ? model.t('phone_meeting.more_subtitle')
+                  : model.panel === 'participants'
+                    ? model
+                        .t('phone_meeting.members_count')
+                        .replace('$count', String(model.members.length))
+                    : undefined,
+              onBack:
+                model.panel === 'settings' && model.settings.selected
+                  ? () => model.settings.select(undefined)
+                  : undefined,
               title:
-                model.panel === 'participants'
-                  ? `${model.settings.t('more.participant.manage')} · ${model.members.length}`
-                  : model.panel === 'apps'
-                    ? model.settings.t('more.app.title')
-                    : model.panel === 'settings'
-                      ? model.settings.t('settings.title')
-                      : '更多',
+                model.panel === 'share'
+                  ? model.t('phone_meeting.share')
+                  : model.panel === 'participants'
+                    ? model.t('phone_meeting.members')
+                    : model.panel === 'apps'
+                      ? model.settings.t('more.app.title')
+                      : model.panel === 'settings'
+                        ? model.settings.panels.find((p) => p.id === model.settings.selected)
+                            ?.label || model.settings.t('settings.title')
+                        : model.t('phone_meeting.more_title'),
               onClose: () => model.open('stage'),
               content:
-                model.panel === 'apps' ? (
+                model.panel === 'share' ? (
+                  <MeetingShare
+                    Button={Button}
+                    Icon={Icon}
+                    name={conference.state.spaceName || room.raw.name}
+                    title={model.t('phone_meeting.share_title')}
+                    description={model.t('phone_meeting.share_description')}
+                    copyLabel={model.t('phone_meeting.copy')}
+                    onCopy={() => {
+                      void model.share();
+                    }}
+                    extra={model.shareError && <Text style={ui.body}>{model.shareError}</Text>}
+                  />
+                ) : model.panel === 'apps' ? (
                   <ParticipantApps
                     apps={appsId ? model.directory?.participants?.[appsId]?.apps : undefined}
                   />
@@ -217,20 +250,27 @@ export function SharedMeetingRoom({
                     searchLabel={model.settings.t('more.participant.search')}
                     hostLabel={model.settings.t('more.participant.host')}
                     managerLabel={model.settings.t('more.participant.manager')}
-                    inviteLabel={model.settings.t('channel.menu.share')}
+                    inviteLabel={model.t('phone_meeting.invite')}
                     onInvite={() => {
-                      void model.share();
+                      model.open('share');
                     }}
+                    selfLabel={model.t('phone_meeting.self')}
+                    speakingLabel={model.t('phone_meeting.speaking')}
+                    onlineLabel={model.t('phone_meeting.online')}
                     members={model.members}
                   />
                 ) : (
-                  <MeetingMenu Button={Button} Icon={Icon} actions={model.menu} />
+                  <MeetingMenu
+                    Button={Button}
+                    Icon={Icon}
+                    actions={model.menu}
+                    footer={model.t('phone_meeting.media_hint')}
+                  />
                 ),
             }}
             notice={
               <>
                 {model.notice ? <Text style={ui.body}>{model.notice}</Text> : null}
-                {model.shareError ? <Text style={ui.body}>{model.shareError}</Text> : null}
                 {model.invitations.map((item) => (
                   <View key={item.id} style={ui.card}>
                     <Text style={ui.body}>
@@ -258,6 +298,37 @@ export function SharedMeetingRoom({
                 )}
               </>
             }
+            dock={
+              <MeetingDock
+                Button={Button}
+                Icon={Icon}
+                chatLabel={model.t('common.chat')}
+                membersLabel={model.t('phone_meeting.members')}
+                expandLabel={model.t('common.full_screen')}
+                count={model.members.length}
+                unread={conference.chat.state.messages.length}
+                onExpand={(tab) => model.open(tab === 'chat' ? 'chat' : 'participants')}
+                chat={
+                  <SharedConferenceChat
+                    compact
+                    model={conference.chat}
+                    identity={conference.state.joined!.identity}
+                  />
+                }
+                members={
+                  <MeetingMembers
+                    compact
+                    Button={Button}
+                    Icon={Icon}
+                    members={model.members}
+                    hostLabel={model.t('more.participant.host')}
+                    selfLabel={model.t('phone_meeting.self')}
+                    speakingLabel={model.t('phone_meeting.speaking')}
+                    onlineLabel={model.t('phone_meeting.online')}
+                  />
+                }
+              />
+            }
             controls={<MeetingControls Button={Button} Icon={Icon} actions={model.actions} />}
           />
           <Modal
@@ -281,10 +352,7 @@ export function SharedMeetingRoom({
                   (fullscreenTile.video ? (
                     video(fullscreenTile.id)
                   ) : (
-                    <MeetingAvo
-                      avo={avatar(fullscreenTile)}
-                      level={fullscreenTile.speaking ? 0.65 : 0}
-                    />
+                    <InitialAvatar name={fullscreenTile.name} size={160} />
                   ))}
               </View>
             </View>

@@ -1,9 +1,10 @@
+import { SvgResource } from '@/components/Icon';
 
 import { GeneralSettingsContent as SharedGeneralSettingsContent } from '@vocespace/ui';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { settingsElements } from '../phone-content';
 import styles from '@/components/Controller/index.module.scss';
-import { Button, Input, type InputRef, Radio } from 'antd';
+import { Button, Input, type InputRef, Radio, Switch } from 'antd';
 import { LangSelect } from '../../Select/lang';
 import type { LocalParticipant } from 'livekit-client';
 import type { MessageInstance } from 'antd/es/message/interface';
@@ -21,15 +22,28 @@ export interface GeneralSettingsProps {
 }
 
 export function GeneralSettings(props: GeneralSettingsProps) {
-  return <GeneralSettingsContent key={`${props.space}:${props.localParticipant.identity}`} {...props} />;
+  return (
+    <GeneralSettingsContent key={`${props.space}:${props.localParticipant.identity}`} {...props} />
+  );
 }
 function GeneralSettingsContent(props: GeneralSettingsProps) {
   const phoneSettings = useLayoutDevice() === 'phone';
-  const {appendStatus, openPromptSound, setOpenPromptSound} = props;
-  const {t, isOwner, persistence, allowGuest, status: state, setStatus: setState,
-    savePersistence: setSpacePersistence, saveAllowGuest: setSpaceAllowGuest, saveStatus} = useGeneralSettings(props);
+  const { appendStatus, openPromptSound, setOpenPromptSound } = props;
+  const {
+    t,
+    isOwner,
+    persistence,
+    allowGuest,
+    status: state,
+    setStatus: setState,
+    savePersistence: setSpacePersistence,
+    saveAllowGuest: setSpaceAllowGuest,
+    saveStatus,
+  } = useGeneralSettings(props);
   const StateInputRef = useRef<InputRef>(null);
-  useEffect(() => {if (appendStatus) StateInputRef.current?.input?.focus();}, [appendStatus]);
+  useEffect(() => {
+    if (appendStatus) StateInputRef.current?.input?.focus();
+  }, [appendStatus]);
   if (phoneSettings)
     return SharedGeneralSettingsContent({
       elements: settingsElements,
@@ -37,6 +51,7 @@ function GeneralSettingsContent(props: GeneralSettingsProps) {
       t,
       owner: isOwner,
       slots: {
+        introIcon: <SvgResource type="setting" svgSize={24} color="#22CCEE" />,
         language: <LangSelect style={{ width: '100%' }}></LangSelect>,
         status: (
           <Input
@@ -60,31 +75,14 @@ function GeneralSettingsContent(props: GeneralSettingsProps) {
             {t('settings.general.status.define.save')}
           </Button>
         ),
-        prompt: (
-          <Radio.Group
-            size="large"
-            block
-            value={openPromptSound}
-            onChange={(e) => {
-              setOpenPromptSound(e.target.value);
-            }}
-          >
-            <Radio.Button value={true}>{t('common.open')}</Radio.Button>
-            <Radio.Button value={false}>{t('common.close')}</Radio.Button>
-          </Radio.Group>
-        ),
+        prompt: <Switch checked={openPromptSound} onChange={setOpenPromptSound} />,
         persistence: (
-          <Radio.Group
-            size="large"
-            block
-            value={persistence}
-            onChange={async (e) => {
-              await setSpacePersistence(e.target.value);
+          <Switch
+            checked={persistence}
+            onChange={(value) => {
+              void setSpacePersistence(value);
             }}
-          >
-            <Radio.Button value={true}>{t('common.open')}</Radio.Button>
-            <Radio.Button value={false}>{t('common.close')}</Radio.Button>
-          </Radio.Group>
+          />
         ),
         guests: (
           <Radio.Group
@@ -99,13 +97,9 @@ function GeneralSettingsContent(props: GeneralSettingsProps) {
               await setSpaceAllowGuest(e.target.value);
             }}
           >
-            <Radio.Button value={'allow'}>
-              {t('settings.general.conf.allow_guest.allow')}
-            </Radio.Button>
-            <Radio.Button value={'link'}>{t('settings.general.conf.allow_guest.link')}</Radio.Button>
-            <Radio.Button value={'disable'}>
-              {t('settings.general.conf.allow_guest.disable')}
-            </Radio.Button>
+            <Radio value={'allow'}>{t('settings.general.conf.allow_guest.allow')}</Radio>
+            <Radio value={'link'}>{t('settings.general.conf.allow_guest.link')}</Radio>
+            <Radio value={'disable'}>{t('settings.general.conf.allow_guest.disable')}</Radio>
           </Radio.Group>
         ),
         dashboard: (
@@ -228,7 +222,7 @@ function GeneralSettingsContent(props: GeneralSettingsProps) {
       <div className={styles.common_space}>
         {t('settings.general.manage_dashboard') || 'Dashboard'}:
       </div>
-      <Button size="large" type='primary' block onClick={() => window.open(`/dashboard`, '_blank')}>
+      <Button size="large" type="primary" block onClick={() => window.open(`/dashboard`, '_blank')}>
         {t('settings.general.manage_dashboard') || 'Dashboard'}
       </Button>
     </div>

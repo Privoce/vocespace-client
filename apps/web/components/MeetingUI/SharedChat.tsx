@@ -5,16 +5,31 @@ import { MeetingButton, MeetingIcon, MeetingInput } from './primitives';
 import type { ChatPanelModel } from '@/components/Chat/pc';
 import { chatMessageKey } from '@/components/Chat/message-key';
 import { FS } from '@/components/Chat/fs';
-export function SharedChat({ model }: { model: ChatPanelModel }) {
+export function SharedChat({
+  model,
+  compact,
+  roomName,
+}: {
+  model: ChatPanelModel;
+  compact?: boolean;
+  roomName?: string;
+}) {
   return (
     <>
       <MeetingChat
+        compact={compact}
+        roomName={roomName}
+        roomSubtitle={model.t('phone_meeting.chat_hint')}
         Button={MeetingButton}
         Icon={MeetingIcon}
         Input={MeetingInput}
         messages={model.chatMsg.msgs.map((item) => ({
           id: chatMessageKey(item),
           name: item.sender.name,
+          time: new Date(item.timestamp).toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit',
+          }),
           local: model.isLocal(item.sender.id),
           text: item.message || '',
           attachment:
@@ -58,19 +73,21 @@ export function SharedChat({ model }: { model: ChatPanelModel }) {
           </div>
         }
       />
-      <Modal
-        title={model.t('shared_meeting.files')}
-        open={model.fsModal}
-        onCancel={() => model.setFsModal(false)}
-        footer={null}
-      >
-        <FS
-          files={model.files}
-          space={model.space}
-          onFresh={model.openLocalFileSystem}
-          canDeleteRBAC={model.canDeleteRBAC}
-        />
-      </Modal>
+      {!compact && (
+        <Modal
+          title={model.t('shared_meeting.files')}
+          open={model.fsModal}
+          onCancel={() => model.setFsModal(false)}
+          footer={null}
+        >
+          <FS
+            files={model.files}
+            space={model.space}
+            onFresh={model.openLocalFileSystem}
+            canDeleteRBAC={model.canDeleteRBAC}
+          />
+        </Modal>
+      )}
     </>
   );
 }

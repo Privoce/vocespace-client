@@ -31,7 +31,7 @@ export function PhoneSettingsButton({
       style={{
         height,
         minHeight: height,
-        borderRadius: 4,
+        borderRadius: 12,
         ...(position
           ? {
               borderTopLeftRadius: position === 'first' ? 4 : 0,
@@ -85,9 +85,9 @@ export function PhoneSettingsInput({
       style={{
         minHeight: 40,
         borderWidth: 1,
-        borderColor: '#22CCEE',
-        borderRadius: 4,
-        backgroundColor: '#1E1E1E',
+        borderColor: '#304753',
+        borderRadius: 12,
+        backgroundColor: '#1A2832',
         paddingHorizontal: 12,
       }}
     />

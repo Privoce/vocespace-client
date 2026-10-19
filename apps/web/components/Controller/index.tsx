@@ -6,98 +6,140 @@ import { DEFAULT_DRAWER_PROP, DrawerCloser } from '@/components/Drawer/tools';
 import { AICutAnalysisSettingsPanel } from '@/components/Widgets/ai';
 import { WorkModal } from '@/components/Widgets/work';
 import { ParticipantManage } from '@/components/Participant/manage';
-import mobile from '@/styles/mobile.module.scss';
 import styles from '@/components/Controller/index.module.scss';
 import { Drawer, Input, Modal } from 'antd';
 import { ControlsPC } from './pc';
 import { ControlsPhone } from './phone';
 import { ControlsShared } from './sharedPhone';
+import { PhoneSheet } from '@/components/MeetingUI/PhoneSheet';
+import { MeetingShare } from '@vocespace/ui';
+import { MeetingButton, MeetingIcon } from '@/components/MeetingUI/primitives';
 import { Settings } from '../Settings';
 export * from '@/components/Controller/shared';
 
-export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
-  function Controls({ sharedUI, ...props }, ref) {
-    const model = useControls(props, ref);
-    const {
-      updateSettings,
-      spaceInfo,
-      toRenameSettings,
-      ref: controlsRef,
-      t,
-      inviteTextRef,
-      aiCutModalOpen,
-      aiCutServiceRef,
-      messageApi,
-      contextHolder,
-      noteHolder,
-      userChoices,
-      space,
-      showAI,
-      openMore,
-      setOpenMore,
-      openShareModal,
-      setOpenShareModal,
-      selectedParticipant,
-      setSelectedParticipant,
-      username,
-      setUsername,
-      openNameModal,
-      setOpenNameModal,
-      participantList,
-      isManager,
-      settingVis,
-      setSettingVis,
-      key,
-      setKey,
-      settingsRef,
-      closeSetting,
-      openRecordModal,
-      isDownload,
-      recordModalOnOk,
-      recordModalOnCancel,
-      aiCutDeps,
-      setAICutDeps,
-      extraction,
-      setExtraction,
-      cutFreq,
-      setCutFreq,
-      cutBlur,
-      setCutBlur,
-      isServiceOpen,
-      setIsServiceOpen,
-      aiCutOptions,
-      aiCutOptionsChange,
-      saveAICutServiceSettings,
-      workModalOpen,
-      setWorkModalOpen,
-      workEnabled,
-      setWorkEnabled,
-      isUseAI,
-      setIsUseAI,
-      isSync,
-      setIsSync,
-      videoBlur,
-      setVideoBlur,
-      screenBlur,
-      setScreenBlur,
-      handleWorkMode,
-      device,
-      copyInvite,
-      changeParticipantName,
-      inviteUrl,
-    } = model;
+export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(function Controls(
+  { sharedUI, ...props },
+  ref,
+) {
+  const model = useControls(props, ref);
+  const {
+    updateSettings,
+    spaceInfo,
+    toRenameSettings,
+    ref: controlsRef,
+    t,
+    inviteTextRef,
+    aiCutModalOpen,
+    aiCutServiceRef,
+    messageApi,
+    contextHolder,
+    noteHolder,
+    userChoices,
+    space,
+    showAI,
+    openMore,
+    setOpenMore,
+    openShareModal,
+    setOpenShareModal,
+    selectedParticipant,
+    setSelectedParticipant,
+    username,
+    setUsername,
+    openNameModal,
+    setOpenNameModal,
+    participantList,
+    isManager,
+    settingVis,
+    setSettingVis,
+    key,
+    setKey,
+    settingsRef,
+    closeSetting,
+    openRecordModal,
+    isDownload,
+    recordModalOnOk,
+    recordModalOnCancel,
+    aiCutDeps,
+    setAICutDeps,
+    extraction,
+    setExtraction,
+    cutFreq,
+    setCutFreq,
+    cutBlur,
+    setCutBlur,
+    isServiceOpen,
+    setIsServiceOpen,
+    aiCutOptions,
+    aiCutOptionsChange,
+    saveAICutServiceSettings,
+    workModalOpen,
+    setWorkModalOpen,
+    workEnabled,
+    setWorkEnabled,
+    isUseAI,
+    setIsUseAI,
+    isSync,
+    setIsSync,
+    videoBlur,
+    setVideoBlur,
+    screenBlur,
+    setScreenBlur,
+    handleWorkMode,
+    device,
+    copyInvite,
+    changeParticipantName,
+    inviteUrl,
+  } = model;
 
-    return (
-      <>
-        {contextHolder}
-        {noteHolder}
-        {device === 'phone' ? sharedUI ? <ControlsShared model={model} /> : <ControlsPhone model={model} /> : <ControlsPC model={model} />}
+  return (
+    <>
+      {contextHolder}
+      {noteHolder}
+      {device === 'phone' ? (
+        sharedUI ? (
+          <ControlsShared model={model} />
+        ) : (
+          <ControlsPhone model={model} />
+        )
+      ) : (
+        <ControlsPC model={model} />
+      )}
+      {device === 'phone' ? (
+        <PhoneSheet
+          open={settingVis}
+          title={t('settings.title')}
+          closeLabel={t('common.close')}
+          hideHeader
+          onClose={() => {
+            setSettingVis(false);
+            closeSetting();
+          }}
+        >
+          {space && (
+            <Settings
+              showAI={showAI}
+              updateSettings={updateSettings}
+              ref={settingsRef}
+              close={settingVis}
+              onClose={() => {
+                setSettingVis(false);
+                closeSetting();
+              }}
+              messageApi={messageApi}
+              space={space}
+              username={userChoices.username}
+              tab={{ key, setKey }}
+              localParticipant={space.localParticipant}
+              spaceInfo={spaceInfo}
+            />
+          )}
+        </PhoneSheet>
+      ) : (
         <Drawer
           {...DEFAULT_DRAWER_PROP}
           title={t('common.setting')}
-          size={device === 'phone' ? '100%' : 640}
-          rootClassName={device === 'phone' ? mobile.drawer : undefined}
-          styles={{ body: { padding: device === 'phone' ? 0 : '0 24px', overflow: 'auto' } }}
+          size={640}
+          styles={{ body: { padding: '0 24px', overflow: 'auto' } }}
           open={settingVis}
           onClose={() => {
             setSettingVis(false);
@@ -127,22 +169,50 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             )}
           </div>
         </Drawer>
-        <ParticipantManage
-          open={openMore}
-          setOpen={setOpenMore}
-          space={space}
-          participantList={participantList}
-          setOpenShareModal={setOpenShareModal}
-          spaceInfo={spaceInfo}
-          selectedParticipant={selectedParticipant}
-          setSelectedParticipant={setSelectedParticipant}
-          setOpenNameModal={setOpenNameModal}
-          setUsername={setUsername}
-          updateSettings={updateSettings}
-          toRenameSettings={toRenameSettings}
-          messageApi={messageApi}
-        ></ParticipantManage>
-        {/* ------------- share space modal -------------------------------------------------------- */}
+      )}
+      <ParticipantManage
+        open={openMore}
+        setOpen={setOpenMore}
+        space={space}
+        participantList={participantList}
+        setOpenShareModal={setOpenShareModal}
+        spaceInfo={spaceInfo}
+        selectedParticipant={selectedParticipant}
+        setSelectedParticipant={setSelectedParticipant}
+        setOpenNameModal={setOpenNameModal}
+        setUsername={setUsername}
+        updateSettings={updateSettings}
+        toRenameSettings={toRenameSettings}
+        messageApi={messageApi}
+      ></ParticipantManage>
+      {/* ------------- share space modal -------------------------------------------------------- */}
+      {device === 'phone' ? (
+        <PhoneSheet
+          open={openShareModal}
+          title={t('phone_meeting.share')}
+          closeLabel={t('common.close')}
+          onClose={() => setOpenShareModal(false)}
+          height="76%"
+        >
+          <MeetingShare
+            Button={MeetingButton}
+            Icon={MeetingIcon}
+            name={space?.name || ''}
+            title={t('phone_meeting.share_title')}
+            description={t('phone_meeting.share_description')}
+            copyLabel={t('phone_meeting.copy')}
+            onCopy={() => {
+              void navigator.clipboard
+                .writeText(space?.name || '')
+                .then(() => messageApi.success(t('phone_meeting.copied')))
+                .catch(() => messageApi.error(t('copy_fail')));
+            }}
+            extra={
+              <MeetingButton onPress={copyInvite}>{t('more.participant.invite.ok')}</MeetingButton>
+            }
+          />
+        </PhoneSheet>
+      ) : (
         <Modal
           open={openShareModal}
           onCancel={() => setOpenShareModal(false)}
@@ -167,98 +237,98 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(
             </div>
           </div>
         </Modal>
-        {/* -------------- control participant name modal ---------------------------------------- */}
-        <Modal
-          open={openNameModal}
-          title={t('more.participant.set.control.change_name')}
-          okText={t('common.confirm')}
-          cancelText={t('common.cancel')}
-          onCancel={() => {
-            setOpenNameModal(false);
+      )}
+      {/* -------------- control participant name modal ---------------------------------------- */}
+      <Modal
+        open={openNameModal}
+        title={t('more.participant.set.control.change_name')}
+        okText={t('common.confirm')}
+        cancelText={t('common.cancel')}
+        onCancel={() => {
+          setOpenNameModal(false);
+        }}
+        onOk={changeParticipantName}
+      >
+        <Input
+          placeholder={t('settings.general.username')}
+          value={username}
+          onChange={(e) => {
+            setUsername(e.target.value);
           }}
-          onOk={changeParticipantName}
-        >
-          <Input
-            placeholder={t('settings.general.username')}
-            value={username}
-            onChange={(e) => {
-              setUsername(e.target.value);
-            }}
-          ></Input>
-        </Modal>
-        {/* ---------------- record modal ------------------------------------------------------- */}
-        <Modal
-          open={openRecordModal}
-          title={isDownload ? t('more.record.download') : t('more.record.title')}
-          okText={
-            isDownload
-              ? t('more.record.to_download')
-              : isManager
-                ? t('more.record.confirm')
-                : t('more.record.confirm_request')
-          }
-          cancelText={t('more.record.cancel')}
-          onCancel={recordModalOnCancel}
-          onOk={recordModalOnOk}
-        >
-          {isDownload ? (
-            <div>{t('more.record.download_msg')}</div>
-          ) : (
-            <div>{isManager ? t('more.record.desc') : t('more.record.request')}</div>
-          )}
-        </Modal>
-        {/* -------------------- ai cut modal --------------------------------------------------- */}
-        {showAI && (
-          <Modal
-            open={aiCutModalOpen}
-            title={t('ai.cut.title')}
-            footer={null}
-            okText={aiCutServiceRef.current.isRunning ? t('common.close') : t('common.open')}
-            cancelText={t('common.cancel')}
-            onCancel={saveAICutServiceSettings}
-          >
-            <AICutAnalysisSettingsPanel
-              space={space}
-              spaceInfo={spaceInfo}
-              aiCutDeps={aiCutDeps}
-              setAICutDeps={setAICutDeps}
-              extraction={extraction}
-              setExtraction={setExtraction}
-              cutFreq={cutFreq}
-              setCutFreq={setCutFreq}
-              cutBlur={cutBlur}
-              setCutBlur={setCutBlur}
-              isServiceOpen={isServiceOpen}
-              setIsServiceOpen={setIsServiceOpen}
-              aiCutOptions={aiCutOptions}
-              aiCutOptionsChange={aiCutOptionsChange}
-              isManager={isManager}
-            ></AICutAnalysisSettingsPanel>
-            {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
-          </Modal>
+        ></Input>
+      </Modal>
+      {/* ---------------- record modal ------------------------------------------------------- */}
+      <Modal
+        open={openRecordModal}
+        title={isDownload ? t('more.record.download') : t('more.record.title')}
+        okText={
+          isDownload
+            ? t('more.record.to_download')
+            : isManager
+              ? t('more.record.confirm')
+              : t('more.record.confirm_request')
+        }
+        cancelText={t('more.record.cancel')}
+        onCancel={recordModalOnCancel}
+        onOk={recordModalOnOk}
+      >
+        {isDownload ? (
+          <div>{t('more.record.download_msg')}</div>
+        ) : (
+          <div>{isManager ? t('more.record.desc') : t('more.record.request')}</div>
         )}
-        {/* ------------------ work ----------------------------------------------------- */}
-        {space && showAI && (
-          <WorkModal
+      </Modal>
+      {/* -------------------- ai cut modal --------------------------------------------------- */}
+      {showAI && (
+        <Modal
+          open={aiCutModalOpen}
+          title={t('ai.cut.title')}
+          footer={null}
+          okText={aiCutServiceRef.current.isRunning ? t('common.close') : t('common.open')}
+          cancelText={t('common.cancel')}
+          onCancel={saveAICutServiceSettings}
+        >
+          <AICutAnalysisSettingsPanel
             space={space}
             spaceInfo={spaceInfo}
-            open={workModalOpen}
-            setOpen={setWorkModalOpen}
-            isStartWork={workEnabled}
-            setIsStartWork={setWorkEnabled}
-            isUseAI={isUseAI}
-            setIsUseAI={setIsUseAI}
-            isSync={isSync}
-            setIsSync={setIsSync}
-            videoBlur={videoBlur}
-            setVideoBlur={setVideoBlur}
-            screenBlur={screenBlur}
-            setScreenBlur={setScreenBlur}
-            handleWorkMode={handleWorkMode}
-            updateSettings={updateSettings}
-          ></WorkModal>
-        )}
-      </>
-    );
-  },
-);
+            aiCutDeps={aiCutDeps}
+            setAICutDeps={setAICutDeps}
+            extraction={extraction}
+            setExtraction={setExtraction}
+            cutFreq={cutFreq}
+            setCutFreq={setCutFreq}
+            cutBlur={cutBlur}
+            setCutBlur={setCutBlur}
+            isServiceOpen={isServiceOpen}
+            setIsServiceOpen={setIsServiceOpen}
+            aiCutOptions={aiCutOptions}
+            aiCutOptionsChange={aiCutOptionsChange}
+            isManager={isManager}
+          ></AICutAnalysisSettingsPanel>
+          {/* <Button onClick={checkMyAICutAnalysis}>{t('ai.cut.myAnalysis')}</Button> */}
+        </Modal>
+      )}
+      {/* ------------------ work ----------------------------------------------------- */}
+      {space && showAI && (
+        <WorkModal
+          space={space}
+          spaceInfo={spaceInfo}
+          open={workModalOpen}
+          setOpen={setWorkModalOpen}
+          isStartWork={workEnabled}
+          setIsStartWork={setWorkEnabled}
+          isUseAI={isUseAI}
+          setIsUseAI={setIsUseAI}
+          isSync={isSync}
+          setIsSync={setIsSync}
+          videoBlur={videoBlur}
+          setVideoBlur={setVideoBlur}
+          screenBlur={screenBlur}
+          setScreenBlur={setScreenBlur}
+          handleWorkMode={handleWorkMode}
+          updateSettings={updateSettings}
+        ></WorkModal>
+      )}
+    </>
+  );
+});

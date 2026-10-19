@@ -34,9 +34,9 @@ const child = (command,args,env={},cwd=directory) => {
 try {
   await symlink(path.join(root,'node_modules'),path.join(directory,'node_modules'));
   await symlink(path.join(root,'services/api/prompt'),path.join(directory,'prompt'));
-  await build({stdin:{contents:"export { DEFAULT_SPACE_INFO, DEFAULT_PARTICIPANT_SETTINGS } from './packages/domain/src/space'; export { DEFAULT_VOCESPACE_CONFIG } from './packages/domain/src/config';",resolveDir:root,loader:'ts'},outfile:path.join(directory,'fixtures.cjs'),bundle:true,packages:'external',platform:'node',format:'cjs',tsconfig:path.join(root,'tsconfig.json'),logLevel:'silent'});
+  await build({stdin:{contents:"export { DEFAULT_SPACE_INFO, DEFAULT_PARTICIPANT_SETTINGS } from './packages/domain/src/space'; export { DEFAULT_VOCESPACE_CONFIG } from './packages/domain/src/config'; export { parseNativeJoin, parseNativeSettingsSnapshot, parseNativeSpaces, parseNativeRoomDirectory } from './packages/contracts/src/index';",resolveDir:root,loader:'ts'},outfile:path.join(directory,'fixtures.cjs'),bundle:true,packages:'external',platform:'node',format:'cjs',tsconfig:path.join(root,'tsconfig.json'),logLevel:'silent'});
   const require=createRequire(import.meta.url);
-  const {DEFAULT_SPACE_INFO,DEFAULT_PARTICIPANT_SETTINGS,DEFAULT_VOCESPACE_CONFIG}=require(path.join(directory,'fixtures.cjs'));
+  const {DEFAULT_SPACE_INFO,DEFAULT_PARTICIPANT_SETTINGS,DEFAULT_VOCESPACE_CONFIG,parseNativeJoin,parseNativeSettingsSnapshot,parseNativeSpaces,parseNativeRoomDirectory}=require(path.join(directory,'fixtures.cjs'));
   const redisPort=await port(), apiPort=await port();
   const mediaPort=await port();
   mediaServer=createHttpServer(async(req,res)=>{
@@ -98,6 +98,34 @@ try {
     const data=await response.json(); const claims=JSON.parse(Buffer.from(data.participantToken.split('.')[1],'base64url').toString());
     return {cookie,id:claims.sub,room,name};
   };
+  // First business requests on a blank Redis: no Web-created Space or member exists.
+  const coldSessionResponse = await fetch(`${origin}/api/v1/session/native`, {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+  const coldSession = await coldSessionResponse.json();
+  const coldCall = (route, method, body) => fetch(`${origin}/api/v1/native/${route}`, {method,headers:{'Content-Type':'application/json',authorization:`Bearer ${coldSession.accessToken}`}, ...(body ? {body:JSON.stringify(body)} : {})});
+  const invalidCreate = await coldCall('spaces','POST',{spaceName:'../escape'});
+  const invalidCreateBody = await invalidCreate.json();
+  check(invalidCreate.status===400 && invalidCreateBody.requestId === invalidCreate.headers.get('X-Request-Id'), 'Native error body and header retain one request ID for diagnosis');
+  for (const spaceName of ['abcd-1234', 'mobile-new-named']) {
+    const created = await coldCall('spaces', 'POST', {spaceName});
+    assert.equal(created.status, 200, await created.clone().text());
+    check((await created.json()).created, 'cold Native random/named Space creation works before any Web request');
+    const listed = await coldCall('spaces', 'GET');
+    check(parseNativeSpaces(await listed.json()).some(space => space.name === spaceName && space.roomCount === 3), 'new empty Space can be parsed by the Mobile directory');
+    const joinId = `cold-${spaceName}-join`;
+    const prepared = await coldCall('conferences', 'POST', {spaceName, nickname:'Mobile first', joinId});
+    assert.equal(prepared.status,200,await prepared.clone().text());
+    const details = parseNativeJoin(await prepared.json());
+    const claims = JSON.parse(Buffer.from(details.participantToken.split('.')[1],'base64url').toString());
+    mediaParticipants = [{sid:'PA_cold',identity:details.identity,name:'Mobile first',metadata:claims.metadata}];
+    const confirmed = await coldCall('conferences','PUT',{joinId});
+    assert.equal(confirmed.status,200,await confirmed.clone().text());
+    const settings = await coldCall('settings','POST',{joinId});
+    check(parseNativeSettingsSnapshot(await settings.json()).room.isOwner, 'cold Native owner settings parse without Web initialization');
+    const rooms = await coldCall('rooms','POST',{joinId});
+    check(parseNativeRoomDirectory(await rooms.json()).rooms.length === 3,'cold Native join retains both default Rooms');
+    check((await coldCall('conferences','DELETE',{joinId})).status===200,'cold Native can leave cleanly');
+    await redis.del(`space:${spaceName}`); await redis.srem('space:list:',spaceName);
+  }
   const alice=await session('Alice','room'), bob=await session('Bob','room'), carol=await session('Carol','other');
   check(alice.id!=='forged-owner','client identity must be ignored');
   const room={...DEFAULT_SPACE_INFO(Date.now(),true),ownerId:alice.id,participants:{

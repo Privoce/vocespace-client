@@ -1,3 +1,11 @@
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
+import { PhoneSheet } from '@/components/MeetingUI/PhoneSheet';
+import { MeetingMembers } from '@vocespace/ui';
+import {
+  MeetingButton,
+  MeetingIcon,
+  MeetingSettingsInput,
+} from '@/components/MeetingUI/primitives';
 import { Button, Drawer, Select } from 'antd';
 import { DEFAULT_DRAWER_PROP, DrawerCloser, DrawerHeader } from '../Drawer/tools';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -24,7 +32,7 @@ export interface ParticipantManageProps {
   setUsername: (username: string) => void;
   updateSettings: (newSettings: Partial<ParticipantSettings>) => Promise<boolean | undefined>;
   toRenameSettings: () => void;
-  messageApi: MessageInstance
+  messageApi: MessageInstance;
 }
 
 export function ParticipantManage({
@@ -43,6 +51,7 @@ export function ParticipantManage({
   messageApi,
 }: ParticipantManageProps) {
   const { t } = useI18n();
+  const phone = useLayoutDevice() === 'phone';
 
   const { optItems, handleOptClick, optOpen, optSelfItems, handleSelfOptClick } =
     useControlRKeyMenu({
@@ -57,6 +66,70 @@ export function ParticipantManage({
       messageApi,
       isScreenShare: false,
     } as UseControlRKeyMenuProps);
+
+  if (phone)
+    return (
+      <PhoneSheet
+        open={open}
+        height={participantList.length <= 4 ? '62%' : '88%'}
+        title={t('phone_meeting.members')}
+        subtitle={t('phone_meeting.members_count').replace(
+          '$count',
+          String(participantList.length),
+        )}
+        closeLabel={t('common.close')}
+        onClose={() => setOpen(false)}
+      >
+        <MeetingMembers
+          Button={MeetingButton}
+          Icon={MeetingIcon}
+          Input={MeetingSettingsInput}
+          searchLabel={t('more.participant.search')}
+          hostLabel={t('more.participant.host')}
+          managerLabel={t('more.participant.manager')}
+          selfLabel={t('phone_meeting.self')}
+          speakingLabel={t('phone_meeting.speaking')}
+          onlineLabel={t('phone_meeting.online')}
+          inviteLabel={t('phone_meeting.invite')}
+          onInvite={() => {
+            setOpen(false);
+            setOpenShareModal(true);
+          }}
+          members={participantList.map(([id, person]) => {
+            const rtc = space?.getParticipantByIdentity(id);
+            return {
+              id,
+              name: person.name,
+              owner: id === spaceInfo.ownerId,
+              manager: spaceInfo.managers.includes(id),
+              local: id === space?.localParticipant.identity,
+              speaking: rtc?.isSpeaking,
+              microphone: rtc?.isMicrophoneEnabled,
+              video: rtc?.isCameraEnabled,
+            };
+          })}
+          renderActions={(member) => {
+            const participant = space?.getParticipantByIdentity(member.id);
+            if (!participant) return null;
+            return (
+              <ControlRKeyMenu
+                menu={{
+                  items: member.local ? optSelfItems : optItems,
+                  onClick: member.local ? handleSelfOptClick : handleOptClick,
+                }}
+                onOpenChange={(open) => optOpen(open, participant)}
+              >
+                <Button
+                  type="text"
+                  aria-label={t('more.title')}
+                  icon={<MeetingIcon name="more" />}
+                />
+              </ControlRKeyMenu>
+            );
+          }}
+        />
+      </PhoneSheet>
+    );
 
   return (
     <Drawer
@@ -151,12 +224,13 @@ export function ParticipantManage({
                           onOpenChange={(open) => {
                             optOpen(open, space.getParticipantByIdentity(item[0])!);
                           }}
-
-                        >{
+                        >
+                          {
                             <Button shape="circle" type="text">
                               <SvgResource type="more2" svgSize={16}></SvgResource>
                             </Button>
-                          }</ControlRKeyMenu>
+                          }
+                        </ControlRKeyMenu>
                       )}
                     </div>
                   )}

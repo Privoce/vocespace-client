@@ -1,8 +1,8 @@
 import type { ComponentType, ReactNode } from 'react';
 import { View, Text, Pressable, StyleSheet } from 'react-native';
-import { avatarColor, type MeetingTile } from '@vocespace/meeting-core';
+import { type MeetingTile } from '@vocespace/meeting-core';
 import type { MeetingIconProps } from '../types';
-import { MeetingAvatar } from './MeetingAvatar';
+import { InitialAvatar } from './InitialAvatar';
 export function MeetingTileView({
   item,
   width,
@@ -13,8 +13,10 @@ export function MeetingTileView({
   Icon,
   avatar,
   actions,
+  compact,
 }: {
   item: MeetingTile;
+  compact?: boolean;
   width: number | `${number}%`;
   height: number;
   label: string;
@@ -25,29 +27,52 @@ export function MeetingTileView({
   Icon?: ComponentType<MeetingIconProps>;
 }) {
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={label}
-      onPress={onPress}
+    <View
+      nativeID={`meeting-tile-${item.id}`}
       style={[styles.tile, { width, height }, item.speaking && styles.speaking]}
     >
-      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-        {item.video ? (
-          video
-        ) : (
-          <View style={styles.placeholder}>
-            {avatar ?? (
-              <MeetingAvatar
-                color={item.avatarColor || avatarColor(item.id)}
-                speaking={item.speaking}
-              />
-            )}
-          </View>
-        )}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={label}
+        onPress={onPress}
+        style={StyleSheet.absoluteFill}
+      >
+        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+          {item.video ? (
+            video
+          ) : (
+            <View
+              style={[styles.placeholder, compact && { alignItems: 'flex-start', paddingLeft: 10 }]}
+            >
+              {avatar ?? (
+                <InitialAvatar name={item.name} size={compact ? 34 : height > 230 ? 104 : 64} />
+              )}
+            </View>
+          )}
+        </View>
+      </Pressable>
+      <View
+        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#172229F2' }}
+      >
+        {actions}
       </View>
-      <View style={{ position: 'absolute', top: 4, right: 4 }}>{actions}</View>
-      <View pointerEvents="none" style={styles.metadata}>
-        <View style={styles.identity}>
+      <View
+        pointerEvents="none"
+        style={[
+          styles.metadata,
+          actions
+            ? { bottom: 50 }
+            : compact
+              ? { left: 54, bottom: 14, flexDirection: 'column', alignItems: 'flex-start' }
+              : undefined,
+        ]}
+      >
+        <View
+          style={[
+            styles.identity,
+            compact && { maxWidth: '100%', backgroundColor: 'transparent', padding: 0 },
+          ]}
+        >
           {Icon && (
             <View style={styles.mic}>
               <Icon
@@ -64,7 +89,12 @@ export function MeetingTileView({
           </Text>
         </View>
         {item.status && (
-          <View style={styles.status}>
+          <View
+            style={[
+              styles.status,
+              compact && { maxWidth: '100%', backgroundColor: 'transparent', padding: 0 },
+            ]}
+          >
             <View style={[styles.dot, { backgroundColor: item.statusColor || '#28C776' }]} />
             <Text numberOfLines={1} style={styles.statusText}>
               {item.status}
@@ -72,7 +102,7 @@ export function MeetingTileView({
           </View>
         )}
       </View>
-    </Pressable>
+    </View>
   );
 }
 const styles = StyleSheet.create({
@@ -80,9 +110,9 @@ const styles = StyleSheet.create({
     flexShrink: 0,
     borderRadius: 14,
     overflow: 'hidden',
-    backgroundColor: '#1E1E1E',
+    backgroundColor: '#1A252C',
     borderWidth: 1,
-    borderColor: '#FFFFFF08',
+    borderColor: '#34434C',
   },
   speaking: { borderColor: '#22CCEE55' },
   placeholder: { flex: 1, alignItems: 'center', justifyContent: 'center' },

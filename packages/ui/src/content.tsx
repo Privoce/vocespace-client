@@ -70,3 +70,36 @@ export function tileWidgetsContent(slots: {
     </>,
   );
 }
+
+/** Existing Web PreJoin structure; devices and connection lifecycle stay in the adapters. */
+export function preJoinContent(slots: {
+  frame: (children: ReactNode) => ReactNode;
+  controls: (children: ReactNode) => ReactNode;
+  context?: ReactNode;
+  language: ReactNode;
+  preview: ReactNode;
+  audio: ReactNode;
+  video: ReactNode;
+  login?: ReactNode;
+  username: ReactNode;
+  submit: ReactNode;
+  status?: ReactNode;
+}) {
+  return slots.frame(
+    <>
+      {slots.context}
+      {slots.language}
+      {slots.preview}
+      {slots.controls(
+        <>
+          {slots.audio}
+          {slots.video}
+          {slots.login}
+          {slots.username}
+          {slots.submit}
+        </>,
+      )}
+      {slots.status}
+    </>,
+  );
+}

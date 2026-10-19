@@ -6,7 +6,16 @@ export interface MeetingButtonProps {
   onPress: () => void;
   disabled?: boolean;
   active?: boolean;
-  appearance?: 'circle' | 'danger' | 'plain' | 'icon' | 'destructive' | 'option';
+  appearance?:
+    | 'circle'
+    | 'danger'
+    | 'plain'
+    | 'icon'
+    | 'destructive'
+    | 'option'
+    | 'control'
+    | 'controlDanger'
+    | 'row';
   label?: string;
 }
 export type MeetingIconName =
@@ -17,6 +26,7 @@ export type MeetingIconName =
   | 'more'
   | 'leave'
   | 'copy'
+  | 'link'
   | 'members'
   | 'close'
   | 'send'

@@ -16,4 +16,15 @@ export * from './settings/content';
 export type { SettingsElements, SettingsViewProps, SettingsSlots } from './settings/types';
 
 export * from './settings/advanced';
-export { avoStyles, avoPalette, virtualModels, virtualBackgrounds, licenseDetailKeys } from '@vocespace/meeting-core';
+export {
+  avoStyles,
+  avoPalette,
+  virtualModels,
+  virtualBackgrounds,
+  licenseDetailKeys,
+} from '@vocespace/meeting-core';
+
+export { MeetingSheet, MeetingSheetHeader } from './MeetingSheet';
+export { InitialAvatar } from './InitialAvatar';
+export { MeetingShare } from './MeetingShare';
+export { MeetingDock, MeetingTileActions } from './MeetingDock';

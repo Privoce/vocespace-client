@@ -62,6 +62,7 @@ export function RoomSettingsPanel({ model, panel }: { model: RoomSettingsModel; 
             ...common,
             owner: !!snapshot?.room?.isOwner,
             slots: {
+              introIcon: <SettingsIcon name="setting" size={24} color="#22CCEE" />,
               language: (
                 <SettingsSelect
                   label={t('settings.general.lang')}
@@ -105,6 +106,7 @@ export function RoomSettingsPanel({ model, panel }: { model: RoomSettingsModel; 
               ),
               guests: (
                 <SettingsChoice
+                  vertical
                   value={snapshot?.room?.allowGuest}
                   disabled={disabled}
                   options={(['allow', 'link', 'disable'] as const).map((value) => ({
@@ -163,6 +165,10 @@ export function RoomSettingsPanel({ model, panel }: { model: RoomSettingsModel; 
           {AuthSettingsContent({
             ...common,
             slots: {
+              introIcon: <SettingsIcon name="auth" size={24} color="#22CCEE" />,
+              microphone: device('microphone'),
+              camera: device('camera'),
+              management: <SettingsNote>{t('phone_meeting.manage_permissions')}</SettingsNote>,
               table: (
                 <SettingsPermissionTable
                   permissions={draft.permissions ?? snapshot?.permissions}

@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { View, Text, ScrollView, StyleSheet } from 'react-native';
-import { participantColor } from '@vocespace/meeting-core';
-import { participantRowContent } from '../content';
+import { InitialAvatar } from './InitialAvatar';
 import type { MeetingMembersProps } from './types';
 export function MeetingMembers({
   members,
@@ -12,91 +11,93 @@ export function MeetingMembers({
   hostLabel = '',
   managerLabel = '',
   inviteLabel = '',
+  selfLabel,
+  speakingLabel,
+  onlineLabel,
   onInvite,
+  compact,
+  renderActions,
 }: MeetingMembersProps) {
   const [search, setSearch] = useState('');
   return (
-    <ScrollView contentContainerStyle={styles.list} keyboardShouldPersistTaps="handled">
-      {(Input || onInvite) && (
-        <View style={styles.header}>
-          {Input && (
-            <View style={{ flex: 1 }}>
-              <Input
-                value={search}
-                onChangeText={setSearch}
-                placeholder={searchLabel}
-                onSubmit={() => {}}
-              />
-            </View>
-          )}
-          {onInvite && (
-            <Button onPress={onInvite} label={inviteLabel}>
-              <Icon name="userAdd" size={16} />
-            </Button>
-          )}
-        </View>
+    <ScrollView
+      contentContainerStyle={[s.list, compact && { padding: 0 }]}
+      keyboardShouldPersistTaps="handled"
+    >
+      {Input && members.length > 6 && (
+        <Input
+          value={search}
+          onChangeText={setSearch}
+          placeholder={searchLabel}
+          onSubmit={() => {}}
+        />
       )}
       {members
         .filter((m) => m.name.toLocaleLowerCase().includes(search.toLocaleLowerCase()))
         .map((member) => (
-          <View key={member.id}>
-            {participantRowContent({
-              row: (children) => <View style={styles.member}>{children}</View>,
-              identity: (children) => <View style={styles.identity}>{children}</View>,
-              avatar: (
-                <View style={[styles.avatar, { backgroundColor: participantColor(member.name) }]}>
-                  <Text style={{ color: '#fff' }}>{member.name.substring(0, 3)}</Text>
-                </View>
-              ),
-              name: (
-                <Text numberOfLines={1} style={styles.name}>
-                  {member.name}
-                </Text>
-              ),
-              roles: (
-                <>
-                  {member.owner && <Text style={styles.role}>( {hostLabel} )</Text>}
-                  {member.manager && <Text style={styles.role}>( {managerLabel} )</Text>}
-                </>
-              ),
-              suffix: (
-                <View style={styles.header}>
-                  {(['microphone', 'camera'] as const).map((name) => (
-                    <View key={name}>
-                      <Icon name={name} size={18} color="#ccc" />
-                      {!(name === 'camera' ? member.video : member.microphone) && (
-                        <View style={styles.slash} />
-                      )}
-                    </View>
-                  ))}
-                </View>
-              ),
-            })}
+          <View key={member.id} style={s.member}>
+            <InitialAvatar name={member.name} size={compact ? 32 : 44} />
+            <View style={s.identity}>
+              <Text numberOfLines={1} style={s.name}>
+                {member.name}
+              </Text>
+              <Text style={[s.status, member.speaking && { color: '#22CCEE' }]}>
+                {[
+                  member.local && selfLabel,
+                  member.owner ? hostLabel : member.manager ? managerLabel : undefined,
+                  member.speaking ? speakingLabel : member.status || onlineLabel,
+                ]
+                  .filter(Boolean)
+                  .join(' · ')}
+              </Text>
+            </View>
+            <View>
+              <Icon name="microphone" size={20} color={member.speaking ? '#22CCEE' : '#7894A5'} />
+              {!member.microphone && <View style={s.slash} />}
+            </View>
+            {renderActions?.(member)}
           </View>
         ))}
+      {!compact && onInvite && (
+        <View style={s.invite}>
+          <Button appearance="plain" onPress={onInvite} label={inviteLabel}>
+            <View style={s.inviteContent}>
+              <Icon name="link" />
+              <Text style={s.name}>{inviteLabel}</Text>
+            </View>
+          </Button>
+        </View>
+      )}
     </ScrollView>
   );
 }
-const styles = StyleSheet.create({
-  list: { paddingHorizontal: 24, paddingTop: 16 },
-  header: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  member: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, gap: 8 },
-  identity: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8, minWidth: 0 },
-  avatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+const s = StyleSheet.create({
+  list: { paddingHorizontal: 22, paddingVertical: 18 },
+  member: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    paddingVertical: 16,
+    gap: 12,
+    borderBottomWidth: 1,
+    borderColor: '#2A3E4B',
   },
-  name: { color: '#eee', fontSize: 14, flexShrink: 1 },
-  role: { color: '#aaa', fontSize: 12 },
+  identity: { flex: 1, minWidth: 0, gap: 6 },
+  name: { color: '#E7EDF5', fontSize: 14, fontWeight: '500' },
+  status: { color: '#829EAE', fontSize: 12 },
   slash: {
     position: 'absolute',
-    width: 20,
+    width: 22,
     height: 1,
-    backgroundColor: '#ccc',
-    top: 9,
+    backgroundColor: '#7894A5',
+    top: 10,
     transform: [{ rotate: '45deg' }],
+  },
+  invite: { marginTop: 20 },
+  inviteContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    padding: 10,
   },
 });

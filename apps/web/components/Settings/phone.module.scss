@@ -1,0 +1,51 @@
+.phone {
+  color: #c8d6df;
+  background: #121c24;
+  :global(.ant-tabs-content-holder) {
+    border: 0;
+    min-width: 0;
+  }
+  :global(.ant-tabs-tabpane) {
+    padding: 0 20px 24px !important;
+  }
+  :global(.ant-input),
+  :global(.ant-select),
+  :global(.ant-select-selector),
+  :global(.ant-input-number),
+  :global(.ant-radio-button-wrapper) {
+    background: #1a2832 !important;
+    border-color: #304753 !important;
+    color: #dbe6ec !important;
+  }
+  :global(.ant-input),
+  :global(.ant-select),
+  :global(.ant-select-selector) {
+    border-radius: 12px;
+    min-height: 44px;
+  }
+  :global(.ant-radio-button-wrapper) {
+    height: auto;
+    min-height: 44px;
+    white-space: normal;
+    display: flex;
+    align-items: center;
+  }
+  :global(.ant-radio-button-wrapper-checked) {
+    color: #22ccee !important;
+  }
+  :global(.ant-switch-checked) {
+    background: #22ccee;
+  }
+}
+
+.phone :global(.ant-radio-wrapper) {
+  min-height: 48px;
+  padding: 12px 0;
+  margin-inline-end: 0;
+  color: #c8d6df;
+  border-bottom: 1px solid #304753;
+  align-items: center;
+}
+.phone :global(.ant-radio-wrapper:last-child) {
+  border-bottom: 0;
+}

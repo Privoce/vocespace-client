@@ -1,7 +1,7 @@
 import { Badge, Button, Dropdown, MenuProps } from 'antd';
 import { SvgResource } from '@/components/Icon/index';
 import { useI18n } from '@/lib/i18n/i18n';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
 import { ViewAdjusts } from '@/lib/std/window';
 import { exportRBAC, usePlatformUserInfo } from '@/lib/hooks/platform';
@@ -12,6 +12,10 @@ import { SpaceInfo } from '@/lib/std/space';
 import { ReadableConf } from '@/lib/std/conf';
 
 export interface MoreButtonProps {
+  renderMenu?: (
+    items: NonNullable<MenuProps['items']>,
+    onSelect: (key: string) => void,
+  ) => ReactNode;
   space: Room;
   showText?: boolean;
   setOpenMore: (open: boolean) => void;
@@ -41,6 +45,7 @@ export interface MoreButtonInnerProps extends MoreButtonProps {
 
 export function MoreButtonInner({
   space,
+  renderMenu,
   showText = true,
   setOpenMore,
   setMoreType,
@@ -62,7 +67,7 @@ export function MoreButtonInner({
 
   const showTextOrHide = useMemo(() => {
     return ViewAdjusts(controlWidth).w960 ? false : showText;
-  }, [controlWidth]);
+  }, [controlWidth, showText]);
 
   const { localParticipant } = useLocalParticipant();
   const { recording } = useMemo(() => {
@@ -152,7 +157,7 @@ export function MoreButtonInner({
       });
     }
     return moreItems;
-  }, [isRecording, chat, t, fromVocespace, recording]);
+  }, [isRecording, chat, t, fromVocespace, recording, hasRoomLicense, isDot]);
 
   const handleMenuClick: MenuProps['onClick'] = async (e) => {
     switch (e.key) {
@@ -199,6 +204,15 @@ export function MoreButtonInner({
     items,
     onClick: handleMenuClick,
   };
+
+  if (renderMenu)
+    return (
+      <>
+        {renderMenu(items || [], (key) => {
+          void handleMenuClick({ key } as Parameters<NonNullable<MenuProps['onClick']>>[0]);
+        })}
+      </>
+    );
 
   return (
     <Dropdown menu={menuProps} trigger={['click']}>

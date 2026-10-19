@@ -1,3 +1,4 @@
+import { atJoinStage } from './join-error';
 import { useI18n } from '../i18n';
 import { useCallback, useEffect, useState, useSyncExternalStore, useRef } from 'react';
 import { Alert, AppState, BackHandler } from 'react-native';
@@ -20,7 +21,8 @@ export function useConference() {
         await api.ensureSession();
       },
       prepare: async (spaceName, nickname, joinId, signal, childRoom, createIfMissing) => {
-        if (createIfMissing) await api!.sdk.native.createSpace(spaceName, signal);
+        if (createIfMissing)
+          await atJoinStage('create', () => api!.sdk.native.createSpace(spaceName, signal));
         return api!.sdk.native.prepare({ spaceName, nickname, joinId, childRoom }, signal);
       },
       confirm: (id, signal) => api!.sdk.native.confirm(id, signal),
