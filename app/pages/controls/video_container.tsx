@@ -1212,47 +1212,6 @@ export const VideoContainer = forwardRef<VideoContainerExports, VideoContainerPr
     );
 
     useEffect(() => {
-      if (!isMobile()) return;
-
-      let lastNativeClickAt = 0;
-
-      const onNativeClickCapture = () => {
-        lastNativeClickAt = Date.now();
-      };
-
-      const onPointerUpCapture = (e: PointerEvent) => {
-        if (e.pointerType !== 'touch') return;
-        if (!e.isPrimary) return;
-
-        const target = e.target as HTMLElement | null;
-        if (!target) return;
-
-        const clickable = target.closest(
-          'button, a, [role="button"], .lk-button, .ant-btn',
-        ) as HTMLElement | null;
-
-        if (!clickable) return;
-        if ((clickable as HTMLButtonElement).disabled) return;
-
-        const pointerUpAt = Date.now();
-        requestAnimationFrame(() => {
-          // 若系统 click 未触发，则主动补发一次 click
-          if (lastNativeClickAt < pointerUpAt) {
-            clickable.click();
-          }
-        });
-      };
-
-      document.addEventListener('click', onNativeClickCapture, true);
-      document.addEventListener('pointerup', onPointerUpCapture, true);
-
-      return () => {
-        document.removeEventListener('click', onNativeClickCapture, true);
-        document.removeEventListener('pointerup', onPointerUpCapture, true);
-      };
-    }, []);
-
-    useEffect(() => {
       if (!focusedTilePlayerId) return;
       if (tilePlayerItems.some((item) => item.id === focusedTilePlayerId)) return;
 
