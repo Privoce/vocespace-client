@@ -23,7 +23,7 @@ vi.mock('react-native', () => ({
   },
 }));
 vi.mock('expo-video', () => ({ useVideoPlayer: () => fake.player }));
-import { useSpacePreview } from '../src/conference/useSpacePreview';
+import { useSpacePreview } from '../src/conference/hooks/useSpacePreview';
 beforeEach(() => {
   vi.useFakeTimers();
   vi.clearAllMocks();

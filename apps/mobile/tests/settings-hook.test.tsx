@@ -5,12 +5,12 @@ import {
   settingsRoles,
   settingsPermissionKeys,
 } from '@vocespace/contracts';
-vi.mock('../src/conference/useNativeDevices', () => ({ useNativeDevices: () => ({}) }));
+vi.mock('../src/conference/hooks/useNativeDevices', () => ({ useNativeDevices: () => ({}) }));
 vi.mock('../src/i18n', () => ({
   useI18n: () => ({ t: (key: string) => key, locale: 'zh' }),
 }));
 vi.mock('../src/ui/settings-elements', () => ({ createSettingsElements: () => ({}) }));
-import { useRoomSettings } from '../src/conference/useRoomSettings';
+import { useRoomSettings } from '../src/conference/hooks/useRoomSettings';
 const initial = parseNativeSettingsSnapshot({
   name: 'Ada',
   status: 'Online',

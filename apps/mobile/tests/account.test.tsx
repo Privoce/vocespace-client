@@ -25,7 +25,7 @@ vi.mock('../src/account/client', () => ({
   }),
 }));
 vi.mock('@react-native-async-storage/async-storage', () => ({ default: mocks }));
-import { useAccount } from '../src/account/useAccount';
+import { useAccount } from '../src/account/hooks/useAccount';
 const user = {
   id: '11111111-2222-3333-4444-555555555555',
   email: 'person@example.test',

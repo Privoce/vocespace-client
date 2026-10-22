@@ -1,4 +1,4 @@
-import { meetingFailure } from './meetingFailure';
+import { meetingFailure } from '../meetingFailure';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import type { NativeSpaceSummary } from '@vocespace/contracts';

@@ -1,8 +1,8 @@
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SvgResource } from '../ui/SvgResource';
 import { MailOutlined } from '../ui/MailOutlined';
-import { useAuthForm } from '../account/useAuthForm';
-import type { AccountModel } from '../account/useAccount';
+import { useAuthForm } from '../account/hooks/useAuthForm';
+import type { AccountModel } from '../account/hooks/useAccount';
 import { accountColors as c, accountStyles as s } from '../account/styles';
 import { useI18n } from '../i18n';
 import { IconOutline, Input, PrimaryButton, Switch } from '../ui/controls';

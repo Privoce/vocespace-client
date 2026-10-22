@@ -443,3 +443,9 @@
 - [x] 根 / UI / Mobile 类型、边界、12 项设置回归和相关 lint 通过；390×844 浏览器实测对齐，预览已使用真实 Web Phone 适配器。
 - [ ] Native 视觉回归；PC Tabs 与设置草稿生命周期保持原行为。
 - [x] 隔离副本标准 Web 生产构建通过，保留已有 Hook / img 警告；未重启或覆盖当前开发服务。
+
+### 2026-10-22：Mobile Hook 目录整理
+
+- [x] 13 个 `useXXX.ts` 移入所属模块的 `hooks/`，覆盖 account、chat、conference、conference/settings 和 settings；更新组件、类型引用、测试及 mock 路径，无旧路径兼容副本。
+- [x] 根 / Mobile 类型、边界、253 项现有测试和 iOS / Android JS 导出通过；仅调整文件组织和引用，不改业务逻辑。
+- [x] 目录约定补充至 Mobile README，后续新增 Hook 按相同规则放置。

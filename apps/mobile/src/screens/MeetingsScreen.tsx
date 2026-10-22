@@ -1,9 +1,9 @@
 import type { LocalSettings } from '../settings/model';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { RoomContext } from '@livekit/react-native';
-import { useSpaceBrowser } from '../conference/useSpaceBrowser';
+import { useSpaceBrowser } from '../conference/hooks/useSpaceBrowser';
 import { ScreenSharePicker } from '../conference/ScreenSharePicker';
-import type { useConference } from '../conference/useConference';
+import type { useConference } from '../conference/hooks/useConference';
 import { meetingFailure } from '../conference/meetingFailure';
 import { SharedMeetingRoom } from '../conference/SharedMeetingRoom';
 import { SpaceBrowser } from './SpaceBrowser';

@@ -1,13 +1,13 @@
-import { atJoinStage } from './join-error';
-import { useI18n } from '../i18n';
+import { atJoinStage } from '../join-error';
+import { useI18n } from '../../i18n';
 import { useCallback, useEffect, useState, useSyncExternalStore, useRef } from 'react';
 import { Alert, AppState, BackHandler } from 'react-native';
 import * as Crypto from 'expo-crypto';
-import { createConfiguredApi } from '../api';
-import { createConferenceController } from './controller';
-import { createLeaveGuard } from './leave-guard';
-import { NativeRoom } from './room';
-import { useConferenceChat } from '../chat/useConferenceChat';
+import { createConfiguredApi } from '../../api';
+import { createConferenceController } from '../controller';
+import { createLeaveGuard } from '../leave-guard';
+import { NativeRoom } from '../room';
+import { useConferenceChat } from '../../chat/hooks/useConferenceChat';
 
 export function useConference() {
   const { t } = useI18n();

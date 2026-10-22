@@ -1,8 +1,8 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import type { useLocalSettings } from '../settings/useLocalSettings';
-import type { AccountModel } from '../account/useAccount';
-import { useProfileScreen } from '../account/useProfileScreen';
+import type { useLocalSettings } from '../settings/hooks/useLocalSettings';
+import type { AccountModel } from '../account/hooks/useAccount';
+import { useProfileScreen } from '../account/hooks/useProfileScreen';
 import { accountColors as c, accountStyles as s } from '../account/styles';
 import { useI18n } from '../i18n';
 import { IconOutline, Input, PrimaryButton, Switch } from '../ui/controls';

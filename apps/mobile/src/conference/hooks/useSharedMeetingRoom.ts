@@ -1,11 +1,11 @@
-import { useI18n } from '../i18n';
+import { useI18n } from '../../i18n';
 import { useEffect, useState } from 'react';
 import { BackHandler, Clipboard } from 'react-native';
 import { isTrackReference } from '@livekit/react-native';
 import { Track } from 'livekit-client';
 import type { MeetingAction, MeetingTile } from '@vocespace/ui';
 import type { useConference } from './useConference';
-import type { NativeRoom } from './room';
+import type { NativeRoom } from '../room';
 import { useMeetingRoom } from './useMeetingRoom';
 import { useRoomSettings } from './useRoomSettings';
 export function useSharedMeetingRoom(

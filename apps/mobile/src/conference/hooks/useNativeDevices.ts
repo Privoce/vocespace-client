@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 import { AudioSession } from '@livekit/react-native';
 import { Room } from 'livekit-client';
-import type { NativeRoom } from './room';
+import type { NativeRoom } from '../room';
 
 type Kind = 'audioinput' | 'videoinput' | 'audiooutput';
 type Device = { deviceId: string; label: string };

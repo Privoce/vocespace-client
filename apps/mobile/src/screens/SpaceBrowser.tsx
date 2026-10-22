@@ -1,11 +1,11 @@
 import { useI18n } from '../i18n';
 import { useEffect, useRef, useState } from 'react';
 import { VideoView } from 'expo-video';
-import { useSpacePreview } from '../conference/useSpacePreview';
-import type { useConference } from '../conference/useConference';
+import { useSpacePreview } from '../conference/hooks/useSpacePreview';
+import type { useConference } from '../conference/hooks/useConference';
 import type { LocalSettings } from '../settings/model';
 import { FlatList, Text, View } from 'react-native';
-import type { useSpaceBrowser } from '../conference/useSpaceBrowser';
+import type { useSpaceBrowser } from '../conference/hooks/useSpaceBrowser';
 import { PrimaryButton } from '../ui/controls';
 import { colors, ui } from '../theme';
 /** Controlled directory browsing. No synthetic video or implicit membership while scrolling. */

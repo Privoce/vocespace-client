@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 import { useVideoPlayer } from 'expo-video';
-import type { LocalSettings } from '../settings/model';
+import type { LocalSettings } from '../../settings/model';
 import type { useConference } from './useConference';
-import { createPreviewController } from './preview-controller';
+import { createPreviewController } from '../preview-controller';
 
 /** One independent HLS player for the visible page; it owns neither a LiveKit Room nor a chat socket. */
 export function useSpacePreview({

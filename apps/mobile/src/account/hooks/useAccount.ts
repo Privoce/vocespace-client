@@ -3,8 +3,8 @@ import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiError } from '@vocespace/client-sdk';
 import { parseAccountSession, type AccountSession, type AccountUser } from '@vocespace/contracts';
-import { configuredAccountClient } from './client';
-import type { AuthMode } from './model';
+import { configuredAccountClient } from '../client';
+import type { AuthMode } from '../model';
 const prefsKey = (id: string) => `vocespace.account.preferences.${id}`;
 const errorKeys: Record<string, string> = {
   AUTH_INVALID_CREDENTIALS: 'invalid_credentials',

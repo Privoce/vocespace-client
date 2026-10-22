@@ -1,6 +1,6 @@
 import { act, renderHook } from '@testing-library/react';
 import { expect, it } from 'vitest';
-import { useAvoDrafts } from '../apps/mobile/src/conference/settings/useAvoDrafts';
+import { useAvoDrafts } from '../apps/mobile/src/conference/settings/hooks/useAvoDrafts';
 import type { NativeAvoPreference } from '@vocespace/contracts';
 const preset = (name: string, hue: number, isUsed = false): NativeAvoPreference => ({
   name,

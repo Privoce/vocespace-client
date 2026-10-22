@@ -3,10 +3,10 @@ import type { NativeSettingsSnapshot, NativeSettingsPatch } from '@vocespace/con
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { meetingSettingsSections } from '@vocespace/ui';
 import type { MeetingAction } from '@vocespace/ui';
-import type { NativeRoom } from './room';
+import type { NativeRoom } from '../room';
 import type { useMeetingRoom } from './useMeetingRoom';
-import { useI18n } from '../i18n';
-import { createSettingsElements } from '../ui/settings-elements';
+import { useI18n } from '../../i18n';
+import { createSettingsElements } from '../../ui/settings-elements';
 
 /** Capabilities come from the server snapshot; drafts and requests belong to this room. */
 export function useRoomSettings(

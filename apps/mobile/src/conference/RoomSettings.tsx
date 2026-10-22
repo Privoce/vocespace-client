@@ -5,7 +5,7 @@ import { IconOutline } from '../ui/controls';
 import { SettingsIcon } from '../ui/SettingsIcon';
 import { Button, SettingsNote } from '../ui/settings-widgets';
 import { RoomSettingsPanel } from './settings/RoomSettingsPanel';
-import type { useRoomSettings } from './useRoomSettings';
+import type { useRoomSettings } from './hooks/useRoomSettings';
 export function RoomSettings({ model }: { model: ReturnType<typeof useRoomSettings> }) {
   const scroll = useRef<ScrollView>(null);
   useEffect(() => {

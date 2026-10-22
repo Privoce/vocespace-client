@@ -27,7 +27,7 @@ import { SettingsIcon } from '../../ui/SettingsIcon';
 import { AvoSettings } from './AvoSettings';
 import { VirtualSettings } from './VirtualSettings';
 import { AISettings } from './AISettings';
-import type { useRoomSettings } from '../useRoomSettings';
+import type { useRoomSettings } from '../hooks/useRoomSettings';
 export type RoomSettingsModel = ReturnType<typeof useRoomSettings>;
 export function RoomSettingsPanel({ model, panel }: { model: RoomSettingsModel; panel: string }) {
   const { t, snapshot, draft, saving } = model;

@@ -11,7 +11,7 @@
 
 API 地址通过 `apps/mobile/.env.local` 的 `EXPO_PUBLIC_API_URL` 配置，参考 `.env.example`。生产要求 HTTPS；手机和模拟器必须能直达 API 与 LiveKit。
 
-页面位于 `src/screens`，偏好 Hook 位于 `src/settings`。`src/conference` 的控制器由 App 稳定父层持有，`src/api` 注入安全存储和共享 SDK。Native 不导入根 lib、Web 或服务端代码。凭证使用 SecureStore，非敏感偏好使用 AsyncStorage。
+页面位于 `src/screens`，偏好 Hook 位于 `src/settings/hooks`。`src/conference` 的控制器由 App 稳定父层持有，`src/api` 注入安全存储和共享 SDK。Native 不导入根 lib、Web 或服务端代码。凭证使用 SecureStore，非敏感偏好使用 AsyncStorage。
 
 Expo 55 / RN 0.83 / React 19 与 Web React 18 分开解析。LiveKit RN 3.0.0、WebRTC 144.2.0、livekit-client 2.22.3 及 Expo 插件版本固定在 package.json / lockfile。`ios`、`android` 是被 Git 忽略的 Expo CNG 生成目录；通过 app.json / config plugin 维护原生配置。
 
@@ -44,3 +44,15 @@ iOS 模拟器也需保留正常的构建签名；不要使用 `CODE_SIGNING_ALLO
 2026-10-11：手动加入已移到首页，会议 Tab 支持主会场 HLS 预览，连续有效播放 15 秒或点击加入后进入。新增 expo-video，需要重新构建 development build。Egress/API/S3 配置与待回归项见 [Space 预览交付](../../docs/native-space-preview.md)。
 
 首页「创建/加入会议」复用 Web new_space 的说明、输入提示与按钮词条；支持 Space 名称及会议链接。首页输入不存在的 Space 会按服务端创建策略新建；创建者确认入会后拥有房主设置与主动采集权限，详见 [接口接入](../../docs/native-service-parity.md)。
+
+## Hook 文件组织
+
+与 Web 的模块内 `hooks/` 方式一致，`useXXX.ts` / `useXXX.tsx` 一律放在所属目录下的 `hooks/`，调用方直接引用对应文件：
+
+- `src/account/hooks/`：账号、登录表单和个人页面。
+- `src/chat/hooks/`：会议聊天。
+- `src/conference/hooks/`：会议、设备、设置、发现与预览。
+- `src/conference/settings/hooks/`：AVO 设置草稿等子模块 Hook。
+- `src/settings/hooks/`：本机偏好。
+
+组件、模型、纯控制器与平台适配文件保留在原模块目录；不为已移动 Hook 保留旧路径转发文件。

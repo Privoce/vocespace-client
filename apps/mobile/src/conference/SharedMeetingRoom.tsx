@@ -26,10 +26,10 @@ import {
 } from '../ui/meeting';
 import { SharedConferenceChat } from '../chat/SharedConferenceChat';
 import { ui } from '../theme';
-import { useSharedMeetingRoom } from './useSharedMeetingRoom';
+import { useSharedMeetingRoom } from './hooks/useSharedMeetingRoom';
 import { RoomSettings } from './RoomSettings';
 import { mediaFailure } from './mediaFailure';
-import type { useConference } from './useConference';
+import type { useConference } from './hooks/useConference';
 import type { NativeRoom } from './room';
 export function SharedMeetingRoom({
   conference,

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Alert, Clipboard, Share } from 'react-native';
-import { useI18n } from '../i18n';
+import { useI18n } from '../../i18n';
 import type { AccountModel } from './useAccount';
 
 export function useProfileScreen(account: AccountModel) {

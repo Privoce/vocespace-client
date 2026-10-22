@@ -2,7 +2,7 @@ import { navigationGesture } from './navigation-gesture';
 import { useRef, useState, type ReactNode } from 'react';
 import { PanResponder, View } from 'react-native';
 import type { NativeRoomDirectory } from '@vocespace/contracts';
-import type { useConference } from './useConference';
+import type { useConference } from './hooks/useConference';
 /** Gesture changes use the same guarded exit path as explicit navigation. */
 export function RoomNavigation({
   conference,

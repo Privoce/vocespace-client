@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import { MeetingChat } from '@vocespace/ui';
 import { CONFERENCE_MESSAGE_LIMIT } from '@vocespace/contracts';
 import { MeetingButton, MeetingIcon, MeetingInput } from '../ui/meeting';
-import type { useConferenceChat } from './useConferenceChat';
+import type { useConferenceChat } from './hooks/useConferenceChat';
 export function SharedConferenceChat({
   model,
   identity,

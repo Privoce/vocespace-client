@@ -2,7 +2,7 @@ import { act, renderHook } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 const app = vi.hoisted(() => ({ listener: undefined as ((state: string) => void) | undefined, remove: vi.fn() }));
 vi.mock('react-native', () => ({ AppState: { currentState: 'active', addEventListener: (_: string, listener: (state: string) => void) => { app.listener = listener; return { remove: app.remove }; } } }));
-import { useSpaceBrowser } from '../src/conference/useSpaceBrowser';
+import { useSpaceBrowser } from '../src/conference/hooks/useSpaceBrowser';
 afterEach(() => vi.useRealTimers());
 it('refreshes on list opening and foreground, cancels pending work on unmount, and avoids overlapping polls', async () => {
   vi.useFakeTimers();

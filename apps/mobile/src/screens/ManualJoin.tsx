@@ -5,7 +5,7 @@ import * as Crypto from 'expo-crypto';
 import { ActivityIndicator, Text, View } from 'react-native';
 import Checkbox from '@ant-design/react-native/lib/checkbox';
 import { spaceEntryContent } from '@vocespace/ui';
-import type { useConference } from '../conference/useConference';
+import type { useConference } from '../conference/hooks/useConference';
 import { meetingFailure } from '../conference/meetingFailure';
 import { colors, ui } from '../theme';
 import { Input, PrimaryButton } from '../ui/controls';

@@ -1,6 +1,6 @@
 import { act, cleanup, renderHook } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
-import { useMeetingRoom } from '../src/conference/useMeetingRoom';
+import { useMeetingRoom } from '../src/conference/hooks/useMeetingRoom';
 import type { NativeRoomDirectory } from '@vocespace/contracts';
 const toast = vi.hoisted(() => ({ info: vi.fn(() => 1), remove: vi.fn() }));
 vi.mock('@livekit/react-native', () => ({

@@ -1,5 +1,5 @@
 import type { NativeAvoPreference } from '@vocespace/contracts';
-import { useAvoDrafts, type AvoDraft } from './useAvoDrafts';
+import { useAvoDrafts, type AvoDraft } from './hooks/useAvoDrafts';
 import { Pressable, Text, View } from 'react-native';
 import {
   avoStyles,

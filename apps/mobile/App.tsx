@@ -7,13 +7,13 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { AuthScreen } from './src/screens/AuthScreen';
-import { useAccount } from './src/account/useAccount';
+import { useAccount } from './src/account/hooks/useAccount';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { MeetingsScreen } from './src/screens/MeetingsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
-import { useLocalSettings } from './src/settings/useLocalSettings';
+import { useLocalSettings } from './src/settings/hooks/useLocalSettings';
 import { antdTheme, colors, tabBarStyles, ui } from './src/theme';
-import { useConference } from './src/conference/useConference';
+import { useConference } from './src/conference/hooks/useConference';
 import { AntProvider, IconOutline, TabBar, TabItem } from './src/ui/controls';
 
 const tabs = [

@@ -2,9 +2,9 @@ import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useConnectionState, useParticipants, useTracks } from '@livekit/react-native';
 import { Track } from 'livekit-client';
 import Toast from '@ant-design/react-native/lib/toast';
-import { useI18n } from '../i18n';
+import { useI18n } from '../../i18n';
 import type { useConference } from './useConference';
-import type { NativeRoom } from './room';
+import type { NativeRoom } from '../room';
 
 export function useMeetingRoom(conference: ReturnType<typeof useConference>, room: NativeRoom) {
   const { t } = useI18n();

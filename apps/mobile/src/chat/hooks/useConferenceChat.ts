@@ -1,7 +1,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import * as Crypto from 'expo-crypto';
-import type { createNativeApi } from '../api/session';
-import { createChatController, type ChatMeeting } from './controller';
+import type { createNativeApi } from '../../api/session';
+import { createChatController, type ChatMeeting } from '../controller';
 
 export function useConferenceChat(
   api: ReturnType<typeof createNativeApi> | undefined,
