@@ -17,6 +17,7 @@ import {
   type MeetingAction,
 } from '@vocespace/ui';
 import { MeetingButton as Button, MeetingIcon as Icon, MeetingInput as Input } from '../ui/meeting';
+import { PhoneSettingsButton } from '../ui/settings';
 import { SettingsIcon } from '../ui/SettingsIcon';
 import {
   SettingsSelect,
@@ -42,6 +43,7 @@ const panels = [
 export default function MeetingPreview() {
   const { t } = useI18n();
   const [panel, setPanel] = useState('stage');
+  const [raised, setRaised] = useState(false);
   const [selected, select] = useState<string>();
   const [draft, setDraft] = useState('');
   const [status, setStatus] = useState('在线');
@@ -55,6 +57,7 @@ export default function MeetingPreview() {
     id: String(index),
     name,
     local: index === 0,
+    raiseHand: index === 0 && raised,
     owner: index === 0,
     speaking: index === 1,
     microphone: index === 1,
@@ -97,9 +100,12 @@ export default function MeetingPreview() {
     {
       id: 'hand',
       icon: 'hand',
-      label: t('phone_meeting.hand'),
+      label: t(raised ? 'more.app.raise.cancel' : 'phone_meeting.hand'),
       description: t('phone_meeting.hand_hint'),
-      onPress: () => setPanel('stage'),
+      onPress: () => {
+        setRaised((value) => !value);
+        setPanel('stage');
+      },
     },
     {
       id: 'share',
@@ -172,9 +178,15 @@ export default function MeetingPreview() {
         {t('shared_meeting.preview_note')}
       </Text>
       <PhoneMeeting
+        handLabel={t('more.app.raise.title')}
+        lowerHandLabel={t('more.app.raise.cancel')}
+        onLowerHand={() => setRaised(false)}
         name="mobile-test"
         status="3 在线"
         labels={{
+          grid: t('phone_meeting.grid'),
+          focusLayout: t('phone_meeting.focus_layout'),
+          page: t('phone_meeting.page'),
           previous: t('shared_meeting.previous'),
           next: t('shared_meeting.next'),
           focus: t('shared_meeting.focus'),
@@ -340,9 +352,9 @@ export default function MeetingPreview() {
                         ),
                         status: <SettingsInput value={status} onChangeText={setStatus} />,
                         saveStatus: (
-                          <Button onPress={() => {}}>
+                          <PhoneSettingsButton tone="primary">
                             {t('settings.general.status.define.save')}
-                          </Button>
+                          </PhoneSettingsButton>
                         ),
                         prompt: <SettingsToggle value={mic} onChange={setMic} />,
                         persistence: <SettingsToggle value />,

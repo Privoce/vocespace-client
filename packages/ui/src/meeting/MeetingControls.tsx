@@ -31,12 +31,6 @@ export function MeetingControls({ actions, Button, Icon }: MeetingControlsProps)
               </View>
             </Button>
           )}
-          <Text
-            numberOfLines={1}
-            style={[styles.controlLabel, action.danger && { color: '#DF8290' }]}
-          >
-            {action.label}
-          </Text>
           {!!action.badge && (
             <View pointerEvents="none" style={styles.badge}>
               <Text style={styles.badgeText}>{action.badge > 99 ? '99+' : action.badge}</Text>
@@ -50,7 +44,7 @@ export function MeetingControls({ actions, Button, Icon }: MeetingControlsProps)
 }
 export function MeetingMenu({ actions, Button, Icon, footer }: MeetingMenuProps) {
   const featured = actions.filter((action) => action.id === 'hand' || action.id === 'share');
-  const order = ['members', 'participant', 'apps', 'app', 'settings', 'setting'];
+  const order = ['members', 'participant', 'apps', 'app', 'feedback', 'settings', 'setting'];
   const rows = actions
     .filter((action) => action.id !== 'hand' && action.id !== 'share')
     .sort(
@@ -104,7 +98,9 @@ export function MeetingMenu({ actions, Button, Icon, footer }: MeetingMenuProps)
                 <Text style={styles.title}>{action.label}</Text>
                 {action.description && <Text style={styles.description}>{action.description}</Text>}
               </View>
-              <Text style={styles.description}>›</Text>
+              <View style={{ transform: [{ rotate: '180deg' }] }}>
+                <Icon name="back" size={16} color="#829EAE" />
+              </View>
             </View>
           </Button>
         ))}
@@ -130,7 +126,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#0B1015',
   },
   action: { position: 'relative', alignItems: 'center', flex: 1, minWidth: 0, gap: 7 },
-  controlLabel: { color: '#8CA3B2', fontSize: 10, maxWidth: '100%' },
   featured: { flexDirection: 'row', gap: 10 },
   featuredContent: {
     padding: 14,

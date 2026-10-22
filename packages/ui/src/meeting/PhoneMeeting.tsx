@@ -1,9 +1,18 @@
 'use client';
 import { MeetingSheet } from './MeetingSheet';
-import { Fragment, useEffect } from 'react';
-import { View, Text, ScrollView, StyleSheet, KeyboardAvoidingView, Platform } from 'react-native';
+import { Fragment, useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  PanResponder,
+} from 'react-native';
 import { meetingColors as c } from '../theme';
-import type { MeetingTile } from '@vocespace/meeting-core';
+import { meetingPageSwipe, type MeetingTile } from '@vocespace/meeting-core';
+import { MeetingLayoutSwitch, MeetingPagination } from './MeetingLayoutControls';
 import { MeetingTileView } from './MeetingTileView';
 import { usePhoneMeeting } from './usePhoneMeeting';
 import type { PhoneMeetingProps } from './types';
@@ -24,6 +33,9 @@ export function PhoneMeeting({
   headerActions,
   leadingAction,
   renderAvatar,
+  onLowerHand,
+  handLabel,
+  lowerHandLabel,
   renderTileActions,
   onFocusedChange,
   renderVideo,
@@ -38,65 +50,84 @@ export function PhoneMeeting({
   const model = usePhoneMeeting(
     [...tiles, ...extraTiles.map((extra) => ({ id: extra.id, name: '' }))],
     fullscreenTileId || focusedExtraTile,
-    !!dock,
   );
   const { layout, size, viewport } = model;
+  const swipeOrigin = useRef<{ x: number; y: number } | null>(null);
   useEffect(() => {
     onFocusedChange?.(model.explicitlyFocused);
   }, [model.explicitlyFocused, onFocusedChange]);
+  const pan = PanResponder.create({
+    onMoveShouldSetPanResponderCapture: (event, gesture) => {
+      const capture =
+        !fullscreenTileId &&
+        !anyPanel &&
+        layout.pages > 1 &&
+        gesture.numberActiveTouches === 1 &&
+        Math.abs(gesture.dx) > 16 &&
+        Math.abs(gesture.dx) > Math.abs(gesture.dy) * 1.5;
+      // PanResponder resets dx/dy when granted. Include the initial movement for quick flicks.
+      if (capture)
+        swipeOrigin.current = {
+          x: event.nativeEvent.pageX - gesture.dx,
+          y: event.nativeEvent.pageY - gesture.dy,
+        };
+      return capture;
+    },
+    onPanResponderStart: (_, gesture) => {
+      if (gesture.numberActiveTouches !== 1) swipeOrigin.current = null;
+    },
+    onPanResponderRelease: (event) => {
+      const origin = swipeOrigin.current;
+      swipeOrigin.current = null;
+      if (!origin) return;
+      const direction = meetingPageSwipe(
+        event.nativeEvent.pageX - origin.x,
+        event.nativeEvent.pageY - origin.y,
+      );
+      if (direction)
+        model.setPage(Math.max(0, Math.min(layout.pages - 1, layout.page + direction)));
+    },
+    onPanResponderTerminate: () => {
+      swipeOrigin.current = null;
+    },
+    onPanResponderTerminationRequest: () => true,
+  });
   const chatPanel = chat && { ...chat, title: labels.chat, variant: undefined };
   const panels = [chatPanel, panel].filter((item) => !!item);
   const anyPanel = panels.some((item) => item.open);
   function tile(item: MeetingTile, focus = false) {
+    const rail = !!layout.focus && !focus;
+    const toggleFocus = () => {
+      onFocusTrack?.();
+      model.setPinned(focus ? null : item.id);
+    };
     return (
       <MeetingTileView
         key={item.id}
         item={item}
-        compact={!!dock && !!layout.focus && !focus}
+        rail={rail}
         Icon={Icon}
-        width={
-          focus
-            ? '100%'
-            : viewport.width
-              ? size.width
-              : layout.tiles.length === 1
-                ? '100%'
-                : '48.5%'
-        }
+        width={focus || tiles.length + extraTiles.length === 1 ? '100%' : '48.5%'}
         height={
           fullscreenTileId === item.id
             ? Math.max(220, viewport.height - 16)
-            : dock && layout.focus && !focus
-              ? 72
-              : viewport.height
-                ? Math.max(
-                    140,
-                    focus
-                      ? dock
-                        ? Math.max(
-                            220,
-                            viewport.height -
-                              Math.ceil(layout.tiles.length / 2) * 78 -
-                              16 -
-                              (layout.pages > 1 ? 40 : 0),
-                          )
-                        : size.focusHeight
-                      : size.railHeight || size.height,
-                  )
-                : 220
+            : focus
+              ? size.focusHeight
+              : rail
+                ? size.railHeight
+                : size.height
         }
-        label={`${focus ? labels.unfocus : labels.focus} ${item.name}`}
-        onPress={() => {
-          onFocusTrack?.();
-          model.setPinned(focus ? null : item.id);
-        }}
-        avatar={renderAvatar?.(item)}
+        handLabel={item.local ? lowerHandLabel : handLabel}
+        onLowerHand={item.local && onLowerHand ? () => onLowerHand(item) : undefined}
+        avatar={renderAvatar?.(item, false)}
         actions={
-          (!dock || focus || !layout.focus) &&
-          renderTileActions?.(item, focus, () => {
-            onFocusTrack?.();
-            model.setPinned(focus ? null : item.id);
-          })
+          rail && Icon ? (
+            <Button appearance="icon" label={`${labels.focus} ${item.name}`} onPress={toggleFocus}>
+              <Icon name="focus" size={18} color="#ADC1CD" />
+            </Button>
+          ) : (
+            renderTileActions?.(item, focus, toggleFocus)
+          )
         }
         video={item.video ? renderVideo(item.id) : null}
       />
@@ -129,6 +160,24 @@ export function PhoneMeeting({
               </Text>
             </View>
           </View>
+          <MeetingLayoutSwitch
+            labels={labels}
+            Icon={Icon}
+            focused={!!layout.focus}
+            disabled={!tiles.length && !extraTiles.length}
+            onChange={(focus) => {
+              onFocusTrack?.();
+              model.setPinned(
+                focus
+                  ? layout.focus?.id ||
+                      layout.tiles[0]?.id ||
+                      tiles[0]?.id ||
+                      extraTiles[0]?.id ||
+                      null
+                  : null,
+              );
+            }}
+          />
           {headerActions?.map((action) => (
             <Button
               key={action.id}
@@ -141,74 +190,86 @@ export function PhoneMeeting({
             </Button>
           ))}
         </View>
-        <ScrollView
-          style={styles.flex}
-          contentContainerStyle={styles.stage}
-          keyboardShouldPersistTaps="handled"
-          onLayout={(event) =>
-            model.measure(event.nativeEvent.layout.width - 12, event.nativeEvent.layout.height)
-          }
-        >
-          {notice}
-          {layout.focus &&
-            !extraTiles.some((item) => item.id === layout.focus?.id) &&
-            tile(layout.focus, true)}
-          {!tiles.length && !extraTiles.length && <Text style={styles.muted}>{labels.empty}</Text>}
-          <View style={[styles.grid, !!fullscreenTileId && styles.hidden]}>
-            {/* Stable keyed siblings keep embedded players mounted when paging/focusing. */}
-            {[
-              ...extraTiles
-                .filter((extra) => extra.id === layout.focus?.id)
-                .map((extra) => extra.id),
-              ...layout.tiles.map((item) => item.id),
-              ...extraTiles
-                .filter(
-                  (extra) =>
-                    extra.id !== layout.focus?.id &&
-                    !layout.tiles.some((item) => item.id === extra.id),
-                )
-                .map((extra) => extra.id),
-            ].map((id) => {
-              const extra = extraTiles.find((item) => item.id === id);
-              if (!extra) return tile(layout.tiles.find((item) => item.id === id)!);
-              const focus = layout.focus?.id === id;
-              return (
-                <View
-                  key={id}
-                  style={[
-                    {
-                      width: focus ? '100%' : viewport.width ? size.width : '48.5%',
-                      height: focus
-                        ? size.focusHeight
-                        : size.railHeight || (viewport.height ? size.height : 220),
-                      overflow: 'hidden',
-                      borderRadius: 14,
-                    },
-                    !focus && !layout.tiles.some((item) => item.id === id) && styles.hidden,
-                  ]}
-                >
-                  {extra.content}
-                </View>
-              );
-            })}
-          </View>
-          {layout.pages > 1 && !fullscreenTileId && (
-            <View style={styles.pager}>
-              <Button disabled={layout.page === 0} onPress={() => model.setPage(layout.page - 1)}>
-                {labels.previous}
-              </Button>
-              <Text style={styles.muted}>
-                {layout.page + 1} / {layout.pages}
-              </Text>
-              <Button
-                disabled={layout.page === layout.pages - 1}
-                onPress={() => model.setPage(layout.page + 1)}
-              >
-                {labels.next}
-              </Button>
+        <View style={styles.flex} {...pan.panHandlers} testID="meeting-stage">
+          <ScrollView
+            style={styles.flex}
+            contentContainerStyle={styles.stage}
+            keyboardShouldPersistTaps="handled"
+            onLayout={(event) =>
+              model.measure(event.nativeEvent.layout.width, event.nativeEvent.layout.height)
+            }
+          >
+            {notice}
+            {!tiles.length && !extraTiles.length && (
+              <Text style={styles.muted}>{labels.empty}</Text>
+            )}
+            <View style={styles.grid}>
+              {/* Stable keyed siblings keep embedded players mounted when paging/focusing. */}
+              {[
+                ...(layout.focus ? [layout.focus.id] : []),
+                ...layout.tiles.map((item) => item.id),
+                ...extraTiles
+                  .filter(
+                    (extra) =>
+                      extra.id !== layout.focus?.id &&
+                      !layout.tiles.some((item) => item.id === extra.id),
+                  )
+                  .map((extra) => extra.id),
+              ].map((id) => {
+                const extra = extraTiles.find((item) => item.id === id);
+                if (!extra) {
+                  const item = tiles.find((item) => item.id === id)!;
+                  return fullscreenTileId && fullscreenTileId !== id
+                    ? null
+                    : tile(item, layout.focus?.id === id);
+                }
+                const focus = layout.focus?.id === id;
+                return (
+                  <View
+                    key={id}
+                    pointerEvents={
+                      !focus && !layout.tiles.some((item) => item.id === id) ? 'none' : 'auto'
+                    }
+                    accessibilityElementsHidden={
+                      !focus && !layout.tiles.some((item) => item.id === id)
+                    }
+                    importantForAccessibility={
+                      !focus && !layout.tiles.some((item) => item.id === id)
+                        ? 'no-hide-descendants'
+                        : 'auto'
+                    }
+                    style={[
+                      {
+                        width: focus || tiles.length + extraTiles.length === 1 ? '100%' : '48.5%',
+                        height: focus
+                          ? size.focusHeight
+                          : layout.focus
+                            ? size.railHeight
+                            : size.height,
+                        overflow: 'hidden',
+                        borderRadius: 14,
+                      },
+                      ((!focus && !layout.tiles.some((item) => item.id === id)) ||
+                        (!!fullscreenTileId && fullscreenTileId !== id)) &&
+                        styles.hidden,
+                    ]}
+                  >
+                    {extra.content}
+                  </View>
+                );
+              })}
             </View>
+          </ScrollView>
+          {!fullscreenTileId && (
+            <MeetingPagination
+              labels={labels}
+              Icon={Icon}
+              page={layout.page}
+              pages={layout.pages}
+              onChange={model.setPage}
+            />
           )}
-        </ScrollView>
+        </View>
         <View style={fullscreenTileId ? styles.hidden : undefined}>
           {dock}
           {controls}
@@ -232,42 +293,27 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    gap: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    gap: 4,
+    flexWrap: 'wrap',
   },
-  identity: { flex: 1, minWidth: 0, gap: 6 },
+  identity: { flex: 1, minWidth: 64, gap: 6 },
   title: { color: '#F1F5FB', fontSize: 16, fontWeight: '700' },
   muted: { color: '#96A5BB', fontSize: 11 },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: '#41D7A0' },
   offline: { backgroundColor: '#E5A54B' },
-  stage: { paddingHorizontal: 14, paddingBottom: 8, gap: 10 },
+  stage: { paddingHorizontal: 14, paddingTop: 4, paddingBottom: 4, gap: 8 },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     alignItems: 'flex-start',
     justifyContent: 'space-between',
-    rowGap: 6,
+    rowGap: 8,
   },
-  pager: {
-    height: 34,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 16,
-  },
-  sheet: { ...StyleSheet.absoluteFillObject, backgroundColor: '#0C1118', zIndex: 10 },
-  sheetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: '#FFFFFF0D',
-  },
-  settingsSheet: { backgroundColor: '#111111' },
-  settingsHeader: { borderBottomWidth: 0, paddingHorizontal: 24, paddingVertical: 16 },
-  hidden: { display: 'none' },
+  hidden:
+    Platform.OS === 'web'
+      ? { display: 'none' }
+      : { position: 'absolute', opacity: 0, zIndex: -1, left: 0, top: 0 },
 });

@@ -1,8 +1,6 @@
 'use client';
 
-import {
-  UserStatus
-} from '@/lib/std';
+import { UserStatus } from '@/lib/std';
 import { ReadableConf } from '@/lib/std/conf';
 import { ChildRoom, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
 import { TrackReferenceOrPlaceholder } from '@livekit/components-react';
@@ -31,12 +29,3 @@ export interface ChannelExports {
 }
 
 export type RoomPrivacy = 'public' | 'private';
-
-export type FeedbackType = 'bug' | 'error' | 'question' | 'suggestion' | 'other';
-
-export interface FeedbackUploadItem {
-  uid: string;
-  name: string;
-  status: 'uploading' | 'done' | 'error';
-  url?: string;
-}

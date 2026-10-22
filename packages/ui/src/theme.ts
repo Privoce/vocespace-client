@@ -6,3 +6,5 @@ export const meetingColors = {
   accent: '#22CCEE',
   border: '#333333',
 };
+
+export { phoneButtonColors, meetingButtonVisual } from './button-theme';

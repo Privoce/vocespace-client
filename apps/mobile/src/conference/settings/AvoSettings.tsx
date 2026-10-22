@@ -162,6 +162,7 @@ export function AvoSettings({
           save: (
             <View style={{ width: '100%' }}>
               <Button
+                tone="primary"
                 disabled={disabled || displayedPresets.length >= 30}
                 size="default"
                 onPress={() => {
@@ -224,6 +225,7 @@ export function AvoSettings({
                         {t('avo.load')}
                       </Button>
                       <Button
+                        tone="danger"
                         disabled={disabled || displayedPresets.length <= 1}
                         size="small"
                         onPress={() => {

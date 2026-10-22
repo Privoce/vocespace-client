@@ -9,3 +9,4 @@ export * from './native-media';
 export * from './preview';
 
 export * from './creation-whitelist';
+export * from './account';

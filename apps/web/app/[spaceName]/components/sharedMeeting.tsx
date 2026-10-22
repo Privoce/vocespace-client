@@ -1,14 +1,18 @@
 'use client';
 import { useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
-import { isTrackReference, VideoTrack } from '@livekit/components-react';
+import { isTrackReference, VideoTrack, ParticipantPlaceholder } from '@livekit/components-react';
 import { Track } from 'livekit-client';
+import { ParticipantAvoPlaceholder } from '@/components/Participant/avo';
+import { DEFAULT_PARTICIPANT_SETTINGS } from '@vocespace/domain/space';
+import { useUserStore } from '@/lib/store';
+import { socket } from '@/lib/realtime/socket';
 import {
   PhoneMeeting,
   MeetingMembers,
   MeetingShare,
   MeetingDock,
-  MeetingTileActions,
+  MeetingParticipantTools,
 } from '@vocespace/ui';
 import {
   MeetingButton as Button,
@@ -29,6 +33,7 @@ export default function SharedMeeting({
   controls: ReactNode;
 }) {
   const { membersOpen, setMembersOpen, chat, tracks, key, t, tiles } = useSharedMeeting(model);
+  const localAvoList = useUserStore((state) => state.avoList);
   const [fullscreen, setFullscreen] = useState<string>();
   useEffect(() => {
     if (fullscreen && !tiles.some((item) => item.id === fullscreen)) setFullscreen(undefined);
@@ -36,15 +41,30 @@ export default function SharedMeeting({
   const [shareOpen, setShareOpen] = useState(false);
   return (
     <PhoneMeeting
+      handLabel={t('more.app.raise.title')}
+      lowerHandLabel={t('more.app.raise.cancel')}
+      onLowerHand={() => {
+        void model
+          .updateSettings({ raiseHand: false })
+          .then((ok) => {
+            if (!ok) throw new Error('HAND_UPDATE_FAILED');
+            socket.emit('update_user_status', { space: model.space?.name });
+            model.messageApi.info(t('phone_meeting.hand_lowered'));
+          })
+          .catch(() => model.messageApi.error(t('phone_meeting.hand_failed')));
+      }}
       renderSheet={(props) => <PhoneSheet {...props}>{props.content}</PhoneSheet>}
       fullscreenTileId={fullscreen}
       name={model.space?.name || ''}
       status={`${model.onlineCount} ${t('channel.menu.active')}`}
       labels={{
+        grid: t('phone_meeting.grid'),
+        focusLayout: t('phone_meeting.focus_layout'),
+        page: t('phone_meeting.page'),
         previous: t('shared_meeting.previous'),
         next: t('shared_meeting.next'),
-        focus: t('shared_meeting.focus'),
-        unfocus: t('shared_meeting.unfocus'),
+        focus: t('phone_meeting.focus_layout'),
+        unfocus: t('phone_meeting.grid'),
         cameraOff: t('shared_meeting.camera_off'),
         empty: t('shared_meeting.empty'),
         chat: t('phone_meeting.chat'),
@@ -53,45 +73,77 @@ export default function SharedMeeting({
       Button={Button}
       Icon={Icon}
       tiles={tiles}
+      renderAvatar={(item, compact) => {
+        const participant = tracks.find((track) => key(track) === item.id)?.participant;
+        const remoteList =
+          participant && model.settings.participants[participant.identity]?.avoList;
+        const list = item.local ? localAvoList || remoteList : remoteList;
+        const effectiveList = list?.length ? list : DEFAULT_PARTICIPANT_SETTINGS.avoList!;
+        const avo = effectiveList.find((value) => value.isUsed) ?? effectiveList[0];
+        return (
+          <div
+            style={{
+              width: compact ? 34 : '100%',
+              height: compact ? 34 : '100%',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            {!item.screen && avo?.enabled ? (
+              <ParticipantAvoPlaceholder
+                interactive
+                name={item.name}
+                avo={avo}
+                participant={participant}
+                audioLevel={participant?.audioLevel}
+              />
+            ) : (
+              <ParticipantPlaceholder
+                style={{ width: '60%', height: '60%', maxWidth: 160, maxHeight: 160 }}
+              />
+            )}
+          </div>
+        );
+      }}
       renderTileActions={(item, focused, toggle) => {
         const participant = tracks.find((track) => key(track) === item.id)?.participant;
         const settings = participant && model.settings.participants[participant.identity];
         return (
-          <MeetingTileActions
+          <MeetingParticipantTools
             Button={Button}
             Icon={Icon}
-            actions={[
-              {
-                id: 'focus',
-                icon: focused ? 'unfocus' : 'focus',
-                label: t(focused ? 'shared_meeting.unfocus' : 'shared_meeting.focus'),
-                onPress: () => {
-                  setFullscreen(undefined);
-                  toggle();
-                },
-              },
-              {
-                id: 'fullscreen',
-                icon: fullscreen === item.id ? 'fullscreenExit' : 'fullscreen',
-                label: t(
-                  fullscreen === item.id ? 'phone_meeting.exit_fullscreen' : 'common.full_screen',
-                ),
-                onPress: () => setFullscreen(fullscreen === item.id ? undefined : item.id),
-              },
-              ...(!item.screen && participant && settings?.sync?.length
-                ? [
-                    {
-                      id: 'apps',
-                      icon: 'app' as const,
-                      label: t('more.app.title'),
-                      onPress: () => {
-                        setFullscreen(undefined);
-                        model.showFlotApp(participant.identity, participant.name, settings.appAuth);
-                      },
-                    },
-                  ]
-                : []),
-            ]}
+            focused={focused}
+            fullscreen={fullscreen === item.id}
+            onFocus={() => {
+              setFullscreen(undefined);
+              toggle();
+            }}
+            onFullscreen={() => setFullscreen(fullscreen === item.id ? undefined : item.id)}
+            onAvatar={
+              item.local && !item.screen
+                ? () => {
+                    setFullscreen(undefined);
+                    model.toRenameSetting();
+                  }
+                : undefined
+            }
+            onApps={
+              !item.screen && participant && settings?.sync?.length
+                ? () => {
+                    setFullscreen(undefined);
+                    model.showFlotApp(participant.identity, participant.name, settings.appAuth);
+                  }
+                : undefined
+            }
+            labels={{
+              focus: t('phone_meeting.focus_layout'),
+              unfocus: t('phone_meeting.grid'),
+              fullscreen: t('common.full_screen'),
+              exitFullscreen: t('phone_meeting.exit_fullscreen'),
+              avatar: t('phone_meeting.avatar'),
+              apps: t('more.app.title'),
+            }}
           />
         );
       }}

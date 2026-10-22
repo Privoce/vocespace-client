@@ -1,23 +1,11 @@
 import { useEffect, useRef } from 'react';
-import { ScrollView, View, Text } from 'react-native';
+import { ScrollView, View } from 'react-native';
 import { PhoneSettingsNavigation } from '@vocespace/ui';
 import { IconOutline } from '../ui/controls';
 import { SettingsIcon } from '../ui/SettingsIcon';
 import { Button, SettingsNote } from '../ui/settings-widgets';
 import { RoomSettingsPanel } from './settings/RoomSettingsPanel';
 import type { useRoomSettings } from './useRoomSettings';
-const icons = {
-  general: 'setting',
-  profile: 'smile',
-  auth: 'auth',
-  ai: 'ai',
-  audio: 'audio',
-  video: 'video',
-  app: 'app',
-  recording: 'record',
-  license: 'license',
-  about_us: 'logo',
-} as const;
 export function RoomSettings({ model }: { model: ReturnType<typeof useRoomSettings> }) {
   const scroll = useRef<ScrollView>(null);
   useEffect(() => {
@@ -43,26 +31,14 @@ export function RoomSettings({ model }: { model: ReturnType<typeof useRoomSettin
         spaceName={model.spaceName}
         panels={model.panels.map((panel) => ({
           id: panel.id,
-          label: (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <SettingsIcon name={icons[panel.id]} size={20} color="#9CB3C0" />
-              <Text
-                style={{
-                  fontSize: model.selected ? 18 : 14,
-                  color: '#E7EDF5',
-                  fontWeight: model.selected ? '600' : '400',
-                }}
-              >
-                {panel.label}
-              </Text>
-            </View>
-          ),
+          label: panel.label,
+          icon: <SettingsIcon name={panel.icon} size={20} color="#9CB3C0" />,
         }))}
         activePanel={model.selected}
         onSelect={model.select}
         onBack={() => model.select(undefined)}
         backLabel={model.t('native_settings.back')}
-        nextIcon={<IconOutline name="right" size={14} color="#E7EDF5" />}
+        nextIcon={<IconOutline name="right" size={16} color="#E7EDF5" />}
         backIcon={<IconOutline name="arrow-left" size={16} color="#EDF2FA" />}
       />
       {model.error && (

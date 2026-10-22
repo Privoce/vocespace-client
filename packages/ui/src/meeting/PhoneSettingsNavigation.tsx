@@ -49,7 +49,14 @@ export function PhoneSettingsNavigation({
               .sort((a, b) => group.indexOf(a.id) - group.indexOf(b.id))
               .map((panel) => (
                 <Row nextIcon={nextIcon} key={panel.id} onPress={() => onSelect(panel.id)}>
-                  {panel.label}
+                  <View style={styles.rowContent}>
+                    {panel.icon && <View style={styles.icon}>{panel.icon}</View>}
+                    {typeof panel.label === 'string' ? (
+                      <Text style={styles.rowLabel}>{panel.label}</Text>
+                    ) : (
+                      panel.label
+                    )}
+                  </View>
                 </Row>
               ))}
           </Group>
@@ -164,7 +171,16 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#2A3D49',
   },
-  rowLabel: { fontSize: 14, color: '#E7EDF5', flexShrink: 1 },
+  rowContent: {
+    flex: 1,
+    minWidth: 0,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingRight: 12,
+  },
+  icon: { width: 20, height: 20, flexShrink: 0, alignItems: 'center', justifyContent: 'center' },
+  rowLabel: { fontSize: 14, color: '#E7EDF5', flexShrink: 1, textAlign: 'left' },
   chevron: { fontSize: 20, color: '#E7EDF5' },
   header: {
     flexDirection: 'row',

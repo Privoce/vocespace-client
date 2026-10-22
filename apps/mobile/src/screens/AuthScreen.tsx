@@ -2,17 +2,11 @@ import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-nati
 import { SvgResource } from '../ui/SvgResource';
 import { MailOutlined } from '../ui/MailOutlined';
 import { useAuthForm } from '../account/useAuthForm';
-import type { DemoAccountModel } from '../account/useDemoAccount';
+import type { AccountModel } from '../account/useAccount';
 import { accountColors as c, accountStyles as s } from '../account/styles';
 import { useI18n } from '../i18n';
 import { IconOutline, Input, PrimaryButton, Switch } from '../ui/controls';
-export function AuthScreen({
-  account,
-  onBrowse,
-}: {
-  account: DemoAccountModel;
-  onBrowse: () => void;
-}) {
+export function AuthScreen({ account, onBrowse }: { account: AccountModel; onBrowse: () => void }) {
   const { t } = useI18n();
   const m = useAuthForm(account);
   const text = (key: string) => t(`native_account.${key}`);
@@ -94,13 +88,24 @@ export function AuthScreen({
             />
             <Text style={s.muted}>{text('remember')}</Text>
           </View>
-          <Pressable accessibilityRole="button" onPress={() => notice('forgot', 'forgot_notice')}>
+          <Pressable
+            accessibilityRole="button"
+            disabled={account.busy}
+            onPress={() => {
+              void m.forgot();
+            }}
+          >
             <Text style={s.link}>{text('forgot')}</Text>
           </Pressable>
         </View>
         {(m.invalid || account.error) && (
           <Text accessibilityRole="alert" style={{ color: '#FF6B82', fontSize: 12 }}>
             {m.invalid ? text('email_invalid') : t(account.error!)}
+          </Text>
+        )}
+        {account.message && (
+          <Text accessibilityRole="alert" style={s.link}>
+            {t(account.message)}
           </Text>
         )}
         <PrimaryButton
@@ -111,7 +116,7 @@ export function AuthScreen({
             void m.submit();
           }}
         >
-          {text('submit')}
+          {text(account.screen === 'register' ? 'register' : 'login')}
         </PrimaryButton>
         <View style={[s.row, { marginTop: 4 }]}>
           <View style={s.line} />

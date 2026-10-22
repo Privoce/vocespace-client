@@ -2,8 +2,9 @@ import type { ComponentType, ReactNode } from 'react';
 
 export interface PhoneSettingsPanel {
   id: string;
-  /** Platform adapter supplies the existing icon + text presentation. */
+  /** Plain text is laid out by the shared row; platform icons occupy a fixed slot. */
   label: ReactNode;
+  icon?: ReactNode;
 }
 export interface PhoneSettingsParts {
   Menu: ComponentType<{ children: ReactNode }>;

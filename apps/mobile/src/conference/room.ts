@@ -25,6 +25,25 @@ export class NativeRoom implements ConferenceRoom {
       this.directoryListeners.delete(listener);
     };
   };
+  async feedback(
+    body:
+      | FormData
+      | { email: string; feedbackType: string; content: string; attachments: string[] },
+  ) {
+    const response = await this.api.sdk.transport('api/v1/native/feedback', {
+      method: 'POST',
+      ...(body instanceof FormData
+        ? { body }
+        : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }),
+    });
+    if (!response.ok) throw new Error('FEEDBACK_FAILED');
+    return response.json();
+  }
+  async syncDirectory() {
+    // A poll started before the write may still carry the previous hand state.
+    await this.directoryFlight;
+    await this.refreshDirectory();
+  }
   private refreshDirectory = () => {
     if (this.directoryFlight) return this.directoryFlight;
     this.directoryFlight = (async () => {

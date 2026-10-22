@@ -1,3 +1,4 @@
+import { phoneButtonColors } from '@vocespace/ui';
 import { StyleSheet } from 'react-native';
 import type { Theme } from '@ant-design/react-native/lib/style';
 import defaultTheme from '@ant-design/react-native/lib/style/themes/default';
@@ -11,9 +12,9 @@ export const colors = {
   body: '#AAAAAA',
   muted: '#8C8C8C',
   disabled: '#333333',
-  accent: '#22CCEE',
-  active: '#06AED4',
-  onAccent: '#1E1E1E',
+  accent: phoneButtonColors.primary,
+  active: phoneButtonColors.primaryPressed,
+  onAccent: phoneButtonColors.primaryText,
   border: '#333333',
 };
 export const antdTheme: Partial<Theme> = {

@@ -1,8 +1,7 @@
 import type { ComponentProps, ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { useLocalSettings } from '../settings/useLocalSettings';
-import type { DemoAccountModel } from '../account/useDemoAccount';
-import { demoRoomName } from '../account/model';
+import type { AccountModel } from '../account/useAccount';
 import { useProfileScreen } from '../account/useProfileScreen';
 import { accountColors as c, accountStyles as s } from '../account/styles';
 import { useI18n } from '../i18n';
@@ -15,13 +14,15 @@ export function ProfileScreen({
   onBrowse,
   onJoin,
   onLogout,
+  onDelete,
   joining,
 }: {
   model: ReturnType<typeof useLocalSettings>;
-  account: DemoAccountModel;
+  account: AccountModel;
   onBrowse: () => void;
   onJoin: (space: string) => void;
   onLogout: () => Promise<void>;
+  onDelete: (password: string) => Promise<boolean>;
   joining: boolean;
 }) {
   const { t } = useI18n();
@@ -72,10 +73,10 @@ export function ProfileScreen({
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={text('copy_uid')}
-              onPress={m.copy}
+              onPress={m.copyUid}
               style={s.row}
             >
-              <Text style={[s.muted, { letterSpacing: 1 }]}>UID {demoRoomName}</Text>
+              <Text style={[s.muted, { letterSpacing: 1 }]}>UID {account.profile.id}</Text>
               <IconOutline name="copy" size={14} color={c.muted} />
             </Pressable>
             <View style={styles.member}>
@@ -133,7 +134,7 @@ export function ProfileScreen({
             <Text style={styles.status}>{text('available')}</Text>
           </View>
           <View style={s.row}>
-            <Text style={styles.roomName}>{demoRoomName}</Text>
+            <Text style={styles.roomName}>{m.roomName}</Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={text('copy_room')}
@@ -145,11 +146,7 @@ export function ProfileScreen({
           </View>
           <View style={s.row}>
             <View style={{ flex: 1 }}>
-              <PrimaryButton
-                disabled={joining}
-                onPress={() => onJoin(demoRoomName)}
-                style={s.button}
-              >
+              <PrimaryButton disabled={joining} onPress={() => onJoin(m.roomName)} style={s.button}>
                 <View style={[s.row, { gap: 6 }]}>
                   <IconOutline name="video-camera" size={17} color="#142128" />
                   <Text style={{ color: '#142128', fontSize: 16 }}>{text('quick_meeting')}</Text>
@@ -253,6 +250,54 @@ export function ProfileScreen({
           <Text style={{ color: '#FF5376', fontSize: 16, letterSpacing: 2 }}>{text('logout')}</Text>
         </Pressable>
       )}
+      {signedIn && (
+        <Pressable
+          accessibilityRole="button"
+          disabled={account.busy}
+          style={styles.logout}
+          onPress={() => {
+            m.setDeletePassword('');
+            m.setPanel('delete');
+          }}
+        >
+          <Text style={{ color: '#FF5376' }}>{t('account_auth.delete_account')}</Text>
+        </Pressable>
+      )}
+      <SettingsDialog
+        open={m.panel === 'delete'}
+        title={t('account_auth.delete_account')}
+        onClose={() => {
+          if (!account.busy) {
+            m.setDeletePassword('');
+            m.setPanel(undefined);
+          }
+        }}
+        confirmLabel={t('account_auth.delete_confirm')}
+        disabled={account.busy || !m.deletePassword}
+        onConfirm={() => {
+          void onDelete(m.deletePassword).then((ok) => {
+            if (ok) {
+              m.setDeletePassword('');
+              m.setPanel(undefined);
+            }
+          });
+        }}
+      >
+        <Text style={s.muted}>{t('account_auth.delete_warning')}</Text>
+        <Input
+          value={m.deletePassword}
+          onChangeText={m.setDeletePassword}
+          secureTextEntry
+          accessibilityLabel={text('password')}
+          placeholder={text('password')}
+          editable={!account.busy}
+        />
+        {account.error && (
+          <Text accessibilityRole="alert" style={s.muted}>
+            {t(account.error)}
+          </Text>
+        )}
+      </SettingsDialog>
       {(account.error || model.error) && (
         <Text accessibilityRole="alert" style={s.muted}>
           {account.error ? t(account.error) : model.error}

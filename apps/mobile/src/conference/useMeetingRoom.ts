@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useConnectionState, useParticipants, useTracks } from '@livekit/react-native';
 import { Track } from 'livekit-client';
+import Toast from '@ant-design/react-native/lib/toast';
+import { useI18n } from '../i18n';
 import type { useConference } from './useConference';
 import type { NativeRoom } from './room';
 
-const TRACKS_PER_PAGE = 4;
-
 export function useMeetingRoom(conference: ReturnType<typeof useConference>, room: NativeRoom) {
+  const { t } = useI18n();
   const { onControl } = conference.chat;
   const directory = useSyncExternalStore(room.subscribeDirectory, room.getDirectory);
   const allowed = new Set(
@@ -24,9 +25,9 @@ export function useMeetingRoom(conference: ReturnType<typeof useConference>, roo
   const [panel, setPanel] = useState<
     'stage' | 'participants' | 'chat' | 'more' | 'settings' | 'channel' | 'apps' | 'share'
   >('stage');
-  const [pinned, setPinned] = useState<string | null>();
-  const [trackPage, setTrackPage] = useState(0);
   const [raising, setRaising] = useState(false);
+  const raisePending = useRef(false);
+  const raised = !!directory?.participants?.[room.raw.localParticipant.identity]?.raiseHand;
   const active = useRef(true);
   useEffect(() => {
     active.current = true;
@@ -35,6 +36,11 @@ export function useMeetingRoom(conference: ReturnType<typeof useConference>, roo
     };
   }, []);
   const [notice, setNotice] = useState('');
+  useEffect(() => {
+    if (!notice) return;
+    const id = Toast.info(notice, 3, () => setNotice(''), false);
+    return () => Toast.remove(id);
+  }, [notice]);
   const [now, setNow] = useState(Date.now);
   const key = (track: (typeof tracks)[number]) => `${track.participant.identity}:${track.source}`;
   const activeTracks = tracks.filter(
@@ -42,15 +48,6 @@ export function useMeetingRoom(conference: ReturnType<typeof useConference>, roo
       (track.participant.isLocal || allowed.has(track.participant.identity)) &&
       (track.source !== Track.Source.ScreenShare || !track.publication?.isMuted),
   );
-  const trackPageCount = Math.max(1, Math.ceil(activeTracks.length / TRACKS_PER_PAGE));
-  useEffect(() => {
-    setTrackPage((page) => Math.min(page, trackPageCount - 1));
-  }, [trackPageCount]);
-  const focus =
-    pinned === null
-      ? undefined
-      : activeTracks.find((track) => key(track) === pinned) ||
-        activeTracks.find((track) => track.source === Track.Source.ScreenShare);
   useEffect(() => {
     if (!media.invitations.length) return;
     setNow(Date.now());
@@ -73,30 +70,43 @@ export function useMeetingRoom(conference: ReturnType<typeof useConference>, roo
     media,
     panel,
     setPanel,
+    channelTracks: tracks,
     allTracks: activeTracks,
-    tracks: activeTracks.slice(trackPage * TRACKS_PER_PAGE, (trackPage + 1) * TRACKS_PER_PAGE),
-    trackPage,
-    trackPageCount,
-    setTrackPage,
-    focus,
     key,
-    pin: (id: string) => setPinned(focus && key(focus) === id ? null : id),
     raising,
-    notice,
+    raised,
     invitations: media.invitations.filter((item) => item.expiresAt > now),
     toggle: room.media.toggle,
     accept: room.media.accept,
     async raise() {
-      if (raising) return;
+      if (raisePending.current) return;
+      raisePending.current = true;
       setRaising(true);
-      const ok = await conference.chat.raise();
-      if (!active.current) return;
-      setRaising(false);
-      setNotice(
-        ok
-          ? '已向主持人举手。收到邀请后，点击开启麦克风。'
-          : '举手未发送成功，请检查会议连接后重试。',
-      );
+      const next = !raised;
+      try {
+        const ok = await conference.chat.raise(next);
+        if (!active.current) return;
+        if (ok) {
+          await room.syncDirectory();
+          if (!active.current) return;
+          const confirmed =
+            room.getDirectory()?.participants?.[room.raw.localParticipant.identity]?.raiseHand;
+          setNotice(
+            t(
+              confirmed === next
+                ? next
+                  ? 'phone_meeting.hand_raised'
+                  : 'phone_meeting.hand_lowered'
+                : 'phone_meeting.hand_failed',
+            ),
+          );
+        } else setNotice(t('phone_meeting.hand_failed'));
+      } catch {
+        if (active.current) setNotice(t('phone_meeting.hand_failed'));
+      } finally {
+        raisePending.current = false;
+        if (active.current) setRaising(false);
+      }
     },
   };
 }

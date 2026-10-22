@@ -1,21 +1,26 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { MeetingAvo } from '../ui/MeetingAvo';
 import { channelContent } from '@vocespace/ui';
 import { Pressable, ScrollView, Text, View } from 'react-native';
 import type { NativeRoomDirectory } from '@vocespace/contracts';
 import { useI18n } from '../i18n';
-import { MeetingButton, MeetingIcon } from '../ui/meeting';
+import { PrimaryButton } from '../ui/controls';
+import { MeetingIcon } from '../ui/meeting';
 
 export function ChannelDrawer({
   directory,
   space,
   onJoin,
   busy,
+  active = true,
+  renderMedia,
 }: {
   directory?: NativeRoomDirectory;
   space: string;
   onJoin: (name: string) => Promise<void>;
   busy: boolean;
+  active?: boolean;
+  renderMedia?: (id: string) => ReactNode;
 }) {
   const { t } = useI18n();
   const [collapsed, setCollapsed] = useState<string[]>([]);
@@ -43,14 +48,16 @@ export function ChannelDrawer({
           </Text>
         </Pressable>
         <Text style={{ color: '#aaa' }}>{room.participantIds.length}</Text>
-        <MeetingButton
+        <PrimaryButton
+          size="small"
+          type="ghost"
           disabled={busy || directory?.current === room.name}
           onPress={() => {
             void onJoin(room.name);
           }}
         >
           {t('channel.menu.join')}
-        </MeetingButton>
+        </PrimaryButton>
       </View>
       {!collapsed.includes(room.name) && !!room.participantIds.length && (
         <ScrollView horizontal contentContainerStyle={{ gap: 6 }}>
@@ -66,8 +73,18 @@ export function ChannelDrawer({
                 alignItems: 'center',
               }}
             >
-              <View style={{ width: 90, height: 92 }}>
-                <MeetingAvo avo={directory?.participants?.[id]?.avo} animate={false} />
+              <View
+                style={{
+                  width: '100%',
+                  height: 92,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  overflow: 'hidden',
+                }}
+              >
+                {(active && renderMedia?.(id)) || (
+                  <MeetingAvo avo={directory?.participants?.[id]?.avo} animate={active} />
+                )}
               </View>
               <Text numberOfLines={1} style={{ color: '#eee', fontSize: 11, paddingHorizontal: 4 }}>
                 {directory?.participants?.[id]?.name || id}

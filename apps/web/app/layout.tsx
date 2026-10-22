@@ -1,3 +1,4 @@
+import { phoneButtonColors } from '@vocespace/ui/theme';
 import { DeviceLayoutSync } from '../components/Layout/DeviceLayoutSync';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { WeChatAccessGuard } from '../components/Guard/WeChatAccessGuard';
@@ -60,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <ConfigProvider
       theme={{
         token: {
-          colorPrimary: '#22CCEE',
+          colorPrimary: phoneButtonColors.primary,
           borderRadius: 4,
           colorText: brand.primaryText,
           colorTextDisabled: '#333',
@@ -73,7 +74,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             itemColor: '#fff'
           },
           Button: {
-            defaultColor: '#8c8c8c',
+            defaultColor: phoneButtonColors.defaultText,
           },
           Dropdown: {
             colorBgElevated: '#1E1E1E',

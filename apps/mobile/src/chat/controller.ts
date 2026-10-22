@@ -56,7 +56,7 @@ export function createChatController(ports: Ports) {
   let refresh: (() => Promise<void>) | undefined;
   let reconnect: (() => void) | undefined;
   const controls = new Set<(event: string, value: unknown) => void>();
-  let raise: (() => Promise<boolean>) | undefined;
+  let raise: ((raised: boolean) => Promise<boolean>) | undefined;
   const listeners = new Set<() => void>();
   const update = (change: Partial<ChatState>) => {
     state = { ...state, ...change };
@@ -77,7 +77,7 @@ export function createChatController(ports: Ports) {
         controls.delete(listener);
       };
     },
-    raise: () => raise?.() || Promise.resolve(false),
+    raise: (raised = true) => raise?.(raised) || Promise.resolve(false),
     subscribe(listener: () => void) {
       listeners.add(listener);
       return () => {
@@ -219,10 +219,11 @@ export function createChatController(ports: Ports) {
         });
         return flight;
       };
-      raise = async () => {
+      raise = async (raised) => {
         if (!active || forbidden || !socket.connected) return false;
         try {
           const response = (await socket.timeout(8000).emitWithAck('raise', {
+            raised,
             space: meeting.roomName,
             senderId: meeting.identity,
             senderName: meeting.participantName,

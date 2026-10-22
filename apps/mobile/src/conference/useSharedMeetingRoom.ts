@@ -22,7 +22,7 @@ export function useSharedMeetingRoom(
       model.directory?.participants?.[track.participant.identity]?.name ||
       track.participant.name ||
       '参与者',
-    role: model.directory?.participants?.[track.participant.identity]?.owner ? '👑' : undefined,
+    raiseHand: model.directory?.participants?.[track.participant.identity]?.raiseHand,
     owner: model.directory?.participants?.[track.participant.identity]?.owner,
     manager: model.directory?.participants?.[track.participant.identity]?.manager,
     avo: model.directory?.participants?.[track.participant.identity]?.avo,
@@ -132,7 +132,7 @@ export function useSharedMeetingRoom(
     {
       id: 'hand',
       icon: 'hand',
-      label: model.raising ? '正在举手…' : t('phone_meeting.hand'),
+      label: t(model.raised ? 'more.app.raise.cancel' : 'phone_meeting.hand'),
       description: t('phone_meeting.hand_hint'),
       disabled: model.raising || conference.chat.state.connection !== 'connected',
       onPress: () => {

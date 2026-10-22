@@ -1,24 +1,12 @@
+import { FeedbackDialog } from '../Feedback';
 import { GLayout } from '@/components/Layout/grid';
 import { ParticipantTileMini } from '@/components/Participant/mini';
 import { SvgResource } from '@/components/Icon/index';
-import { FeedbackType, RoomPrivacy } from '@/components/Channel/types';
+import { RoomPrivacy } from '@/components/Channel/types';
 import { encodeChildRoomEnter } from '@/lib/std';
 import styles from './index.module.scss';
 import { LockOutlined, PlusCircleOutlined } from '@ant-design/icons';
-import {
-  Button,
-  Collapse,
-  CollapseProps,
-  Dropdown,
-  Form,
-  Input,
-  Modal,
-  Popover,
-  Radio,
-  Tag,
-  Upload,
-} from 'antd';
-import TextArea from 'antd/es/input/TextArea';
+import { Button, Collapse, CollapseProps, Dropdown, Input, Modal, Popover, Radio, Tag } from 'antd';
 import { ReactNode } from 'react';
 import type { useChannel } from './hooks/useChannel';
 export type ChannelModel = ReturnType<typeof useChannel>;
@@ -50,11 +38,7 @@ export function getChannelContent(model: ChannelModel) {
     shareRoomOpen,
     setShareRoomOpen,
     feedbackOpen,
-    feedbackType,
-    setFeedbackType,
-    feedbackUploading,
-    feedbackSubmitting,
-    feedbackUploads,
+    setFeedbackOpen,
     renameRoomName,
     setRenameRoomName,
     joinParticipant,
@@ -63,11 +47,9 @@ export function getChannelContent(model: ChannelModel) {
     setMainActiveKey,
     roomPrivacy,
     setRoomPrivacy,
-    feedbackForm,
     createRoom,
     roomPrivacyOptions,
     isMobile,
-    feedbackTypeOptions,
     hideTimeoutRef,
     mainHideTimeoutRef,
     allParticipants,
@@ -83,9 +65,6 @@ export function getChannelContent(model: ChannelModel) {
     panelStyle,
     subStyle,
     shareRoomToClipboard,
-    closeFeedbackModal,
-    handleFeedbackUpload,
-    submitFeedback,
   } = model;
   const mainContext: ReactNode = (() => {
     let allChildParticipants = childRooms.reduce((acc, room) => {
@@ -478,74 +457,7 @@ export function getChannelContent(model: ChannelModel) {
         </Modal>
       )}
 
-      <Modal
-        open={feedbackOpen}
-        title={t('channel.feedback.title')}
-        onCancel={closeFeedbackModal}
-        onOk={submitFeedback}
-        confirmLoading={feedbackSubmitting}
-        okText={t('channel.feedback.submit')}
-        cancelText={t('common.cancel')}
-      >
-        <Form
-          form={feedbackForm}
-          layout="vertical"
-          initialValues={{ email: '', content: '', otherType: '' }}
-        >
-          <Form.Item
-            label={t('channel.feedback.email')}
-            name="email"
-            rules={[
-              { required: true, message: t('channel.feedback.validation.email_required') },
-              { type: 'email', message: t('channel.feedback.validation.email_invalid') },
-            ]}
-          >
-            <Input placeholder={t('channel.feedback.email_placeholder')} />
-          </Form.Item>
-          <Form.Item label={t('channel.feedback.type')}>
-            <Radio.Group
-              options={feedbackTypeOptions}
-              value={feedbackType}
-              onChange={(e) => setFeedbackType(e.target.value as FeedbackType)}
-            />
-          </Form.Item>
-          {feedbackType === 'other' && (
-            <Form.Item
-              name="otherType"
-              rules={[{ required: true, message: t('channel.feedback.validation.type_required') }]}
-            >
-              <Input placeholder={t('channel.feedback.other_placeholder')} />
-            </Form.Item>
-          )}
-          <Form.Item
-            label={t('channel.feedback.content')}
-            name="content"
-            rules={[{ required: true, message: t('channel.feedback.validation.content_required') }]}
-          >
-            <TextArea rows={5} placeholder={t('channel.feedback.content_placeholder')} />
-          </Form.Item>
-          <Form.Item label={t('channel.feedback.attachments')}>
-            <Upload beforeUpload={handleFeedbackUpload} showUploadList={false} multiple>
-              <Button loading={feedbackUploading}>{t('channel.feedback.upload_action')}</Button>
-            </Upload>
-            <div className={styles.feedback_hint}>{t('channel.feedback.upload_hint')}</div>
-            <div className={styles.feedback_upload_list}>
-              {feedbackUploads.map((item) => (
-                <div key={item.uid} className={styles.feedback_upload_item}>
-                  <span>{item.name}</span>
-                  <span>
-                    {item.status === 'uploading'
-                      ? t('channel.feedback.uploading')
-                      : item.status === 'done'
-                        ? t('channel.feedback.upload_done')
-                        : t('channel.feedback.upload_failed')}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </Form.Item>
-        </Form>
-      </Modal>
+      <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
     </>
   );
   return { mainItems, modals: renderModals() };

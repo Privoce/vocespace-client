@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import { PhoneSettingsNavigation } from '@vocespace/ui';
+import { PhoneSettingsNavigation, meetingSettingsSections } from '@vocespace/ui';
 import { SettingsPhone } from '../apps/web/components/Settings/phone';
 import { Settings, type SettingsProps } from '../apps/web/components/Settings';
 import type { SettingsModel } from '../apps/web/components/Settings/panels';
@@ -49,7 +49,8 @@ function model(open = false): SettingsModel {
     key: 'general',
     phonePanelOpen: open,
     device: 'phone',
-    t: (key: string) => key,
+    showAI: true,
+    t: (key: string) => meetingSettingsSections.find((panel) => panel.labelKey === key)?.id || key,
     selectPanel: vi.fn(),
     setPhonePanelOpen: vi.fn(),
   } as unknown as SettingsModel;
@@ -83,6 +84,9 @@ describe('Phone-only extraction preserves approved Web settings', () => {
   it('uses the shared Phone menu and delegates the selected panel header to its sheet', () => {
     const view = render(<SettingsPhone model={model()} />);
     expect(screen.getByText('Guest')).toBeTruthy();
+    const icons = screen.getByRole('button', { name: 'general' }).querySelectorAll('svg');
+    expect(icons[0].getAttribute('width')).toBe('20');
+    expect(icons[1].getAttribute('width')).toBe('16');
     expect(screen.getByText('phone_meeting.preferences')).toBeTruthy();
     expect(screen.getByText('phone_meeting.devices')).toBeTruthy();
     view.rerender(<SettingsPhone model={model(true)} />);

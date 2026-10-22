@@ -25,6 +25,7 @@ export function useSharedMeeting(model: ConferenceModel) {
     id: key(track),
     name: track.participant.name || track.participant.identity,
     local: track.participant.isLocal,
+    raiseHand: model.settings.participants[track.participant.identity]?.raiseHand,
     owner: model.settings.ownerId === track.participant.identity,
     manager: model.settings.managers.includes(track.participant.identity),
     microphone: track.participant.isMicrophoneEnabled,

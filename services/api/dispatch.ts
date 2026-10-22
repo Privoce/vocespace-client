@@ -1,3 +1,5 @@
+import { nativeFeedbackEndpoint, feedbackAccountEndpoint } from './native-feedback';
+import { accountEndpoint } from './account/endpoint';
 import { nativeRecordsEndpoint } from './native-records';
 import { nativePreviewEndpoint, previewMediaEndpoint, previewRendererEndpoint } from './native-preview';
 import { nativeRoomsEndpoint, nativeSpacesEndpoint } from './native-directory';
@@ -25,6 +27,10 @@ async function dispatchInternal(request: ApiRequest) {
     if (prefix && pathname.startsWith(prefix + '/')) pathname = pathname.slice(prefix.length);
     pathname = pathname.replace(/^\/uploads\//, '/api/files/');
     pathname = pathname.replace(/^\/api\/v1\//, '/api/');
+    const accountAction = pathname.match(/^\/api\/account\/([a-z-]+)$/);
+    if (accountAction) return await accountEndpoint(request, accountAction[1]);
+    if (pathname === '/api/native/feedback') return await nativeFeedbackEndpoint(request);
+    if (pathname === '/api/feedback/account') return await feedbackAccountEndpoint(request);
     if (pathname === '/healthz') return ApiResponse.json({ status: 'ok', apiVersion: 1 });
     if (pathname === '/api/session/native') return await nativeSessionEndpoint(request);
     if (pathname === '/api/native/conferences') return await nativeConferenceEndpoint(request);

@@ -28,3 +28,8 @@ export { MeetingSheet, MeetingSheetHeader } from './MeetingSheet';
 export { InitialAvatar } from './InitialAvatar';
 export { MeetingShare } from './MeetingShare';
 export { MeetingDock, MeetingTileActions } from './MeetingDock';
+
+export { MeetingRaisedHand } from './MeetingRaisedHand';
+export { MeetingParticipantTools } from './MeetingParticipantTools';
+export * from './FeedbackForm';
+export type { FeedbackFormProps, FeedbackPayload } from './feedback-types';

@@ -28,3 +28,6 @@ export { Creature, participantColor, normalizeAvo } from '@vocespace/meeting-cor
 export type { AvoParams, AvoDrawing } from '@vocespace/meeting-core';
 
 export * from './svg-resource';
+
+export { meetingIconSource, meetingIconSources } from './meeting-icon-source';
+export { phoneButtonColors, meetingButtonVisual } from './button-theme';

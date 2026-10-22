@@ -1,18 +1,13 @@
 'use client';
 
 import { api } from '@/lib/api';
-import {
-  CreateSpaceError
-} from '@/lib/std';
-import {
-  Modal
-} from 'antd';
-import {
-  useImperativeHandle
-} from 'react';
-import type { useChannelFeedback } from './useChannelFeedback';
-export function useChannelActions(context: ReturnType<typeof useChannelFeedback>) {
-  const { config, settings, messageApi, localParticipantId, ref, t, joinChildRoom, joinMainRoom } = context;
+import { CreateSpaceError } from '@/lib/std';
+import { Modal } from 'antd';
+import { useImperativeHandle } from 'react';
+import type { useChannelRooms } from './useChannelRooms';
+export function useChannelActions(context: ReturnType<typeof useChannelRooms>) {
+  const { config, settings, messageApi, localParticipantId, ref, t, joinChildRoom, joinMainRoom } =
+    context;
   const createOwnSpace = async () => {
     let ownSpace = settings.participants[localParticipantId].name;
     const response = await api.createSpace(ownSpace);

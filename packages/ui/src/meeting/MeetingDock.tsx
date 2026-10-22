@@ -70,17 +70,14 @@ export function MeetingTileActions({ actions, Icon }: MeetingTileActionsProps) {
           }}
           style={s.tileAction}
         >
-          <Icon name={action.icon} size={17} color="#ADC1CD" />
-          <Text numberOfLines={1} style={s.actionText}>
-            {action.label}
-          </Text>
+          <Icon name={action.icon} size={18} color="#ADC1CD" />
         </Pressable>
       ))}
     </View>
   );
 }
 const s = StyleSheet.create({
-  root: { marginHorizontal: 14, marginTop: 10, marginBottom: 4 },
+  root: { marginHorizontal: 14, marginTop: 4, marginBottom: 4 },
   tabs: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -126,7 +123,6 @@ const s = StyleSheet.create({
     gap: 7,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 38,
+    minHeight: 30,
   },
-  actionText: { fontSize: 12, color: '#ADC1CD', flexShrink: 1 },
 });

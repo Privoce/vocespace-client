@@ -1,18 +1,20 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { AppState, View } from 'react-native';
+import { AppState, View, Pressable } from 'react-native';
 import Svg, { Ellipse, Rect, Path } from 'react-native-svg';
-import { Creature, normalizeAvo, type AvoParams } from '@vocespace/ui';
+import { Creature, normalizeAvo, meetingVector, type AvoParams } from '@vocespace/ui';
 import { SvgAvoDrawing } from './avo-drawing';
-import { MeetingIcon } from './meeting';
+import { VectorIcon } from './SettingsIcon';
 const elements = { ellipse: Ellipse, rect: Rect, path: Path };
 export function MeetingAvo({
   avo,
   level = 0,
   animate = true,
+  interactive = false,
 }: {
   avo?: AvoParams;
   level?: number;
   animate?: boolean;
+  interactive?: boolean;
 }) {
   const creature = useMemo(() => new Creature(), []);
   const live = useRef({ avo, level });
@@ -47,15 +49,28 @@ export function MeetingAvo({
     const timer = setInterval(draw, 1000 / 18);
     return () => clearInterval(timer);
   }, [avo?.enabled, avo?.name, avo?.variant, avo?.style, avo?.hue, avo?.energy, animate, creature]);
-  if (!avo?.enabled) return <MeetingIcon name="members" size={80} color="#666" />;
+  if (!avo?.enabled) {
+    const placeholder = meetingVector('participantPlaceholder', 160);
+    return (
+      <View style={{ width: '60%', height: '60%', maxWidth: 160, maxHeight: 160 }}>
+        <VectorIcon
+          node={{ ...placeholder, attrs: { ...placeholder.attrs, width: '100%', height: '100%' } }}
+        />
+      </View>
+    );
+  }
   return (
-    <View style={{ width: '100%', height: '100%', maxWidth: 260, maxHeight: 260, aspectRatio: 1 }}>
+    <Pressable
+      disabled={!interactive}
+      onPress={() => creature.pop()}
+      style={{ width: '100%', height: '100%', maxWidth: 260, maxHeight: 260, aspectRatio: 1 }}
+    >
       <Svg width="100%" height="100%" viewBox="0 0 200 200">
         {drawing?.shapes.map((shape, index) => {
           const Shape = elements[shape.tag];
           return <Shape key={index} {...shape.props} />;
         })}
       </Svg>
-    </View>
+    </Pressable>
   );
 }

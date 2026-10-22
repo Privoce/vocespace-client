@@ -13,12 +13,14 @@ export interface MeetingTile {
   avatarColor?: string;
   manager?: boolean;
   owner?: boolean;
+  raiseHand?: boolean;
   avo?: import('./avo').AvoParams;
 }
 export function meetingPage<T extends MeetingTile>(
   tiles: readonly T[],
   requestedPage: number,
   pinned: string | null | undefined,
+  pageSize = 4,
 ) {
   // undefined: follow screen sharing; null: explicitly return to the grid.
   const focus =
@@ -26,9 +28,15 @@ export function meetingPage<T extends MeetingTile>(
       ? undefined
       : tiles.find((tile) => tile.id === pinned) || tiles.find((tile) => tile.screen);
   const grid = tiles.filter((tile) => tile.id !== focus?.id);
-  const pages = Math.max(1, Math.ceil(grid.length / 4));
+  const limit = Number.isFinite(pageSize) ? Math.max(1, Math.trunc(pageSize)) : 4;
+  const pages = Math.max(1, Math.ceil(grid.length / limit));
   const page = Math.max(0, Math.min(Math.trunc(requestedPage) || 0, pages - 1));
-  return { focus, page, pages, tiles: grid.slice(page * 4, page * 4 + 4) };
+  return { focus, page, pages, tiles: grid.slice(page * limit, page * limit + limit) };
+}
+
+/** A committed horizontal swipe; short drags, vertical scrolling and returning cancel it. */
+export function meetingPageSwipe(dx: number, dy: number) {
+  return Math.abs(dx) >= 64 && Math.abs(dx) > Math.abs(dy) * 1.5 ? (dx < 0 ? 1 : -1) : 0;
 }
 
 /** Use the available stage height; narrow/short windows can scroll without crushing tiles. */

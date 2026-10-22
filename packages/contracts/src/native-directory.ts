@@ -18,6 +18,7 @@ export interface NativeRoomDirectory {
       status: string;
       owner: boolean;
       manager?: boolean;
+      raiseHand?: boolean;
       hue?: number;
       avo?: NativeAvoPreference;
       apps?: NativeParticipantApps;
@@ -83,6 +84,8 @@ export function parseNativeRoomDirectory(value: unknown): NativeRoomDirectory {
       let avo: NativeAvoPreference | undefined;
       if (item.manager !== undefined && typeof item.manager !== 'boolean')
         throw new ContractError('Invalid participant role');
+      if (item.raiseHand !== undefined && typeof item.raiseHand !== 'boolean')
+        throw new ContractError('Invalid hand state');
       if (item.avo !== undefined) {
         const a = object(item.avo);
         if (
@@ -118,6 +121,7 @@ export function parseNativeRoomDirectory(value: unknown): NativeRoomDirectory {
         name: text(item.name),
         status: item.status,
         owner: item.owner,
+        ...(item.raiseHand !== undefined ? { raiseHand: item.raiseHand as boolean } : {}),
         ...(item.manager !== undefined ? { manager: item.manager as boolean } : {}),
         ...(avo ? { avo } : {}),
         ...(item.apps !== undefined ? { apps: parseNativeParticipantApps(item.apps) } : {}),

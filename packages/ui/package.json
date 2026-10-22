@@ -7,6 +7,10 @@
     ".": {
       "types": "./src/public.d.ts",
       "default": "./src/index.ts"
+    },
+    "./theme": {
+      "types": "./src/theme.ts",
+      "default": "./src/theme.ts"
     }
   },
   "types": "./src/public.d.ts",

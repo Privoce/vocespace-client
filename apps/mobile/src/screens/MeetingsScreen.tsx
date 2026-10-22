@@ -11,12 +11,14 @@ import { PrimaryButton } from '../ui/controls';
 import { colors, ui } from '../theme';
 export function MeetingsScreen({
   model,
+  accountEmail,
   nickname,
   preferences,
   preferencesReady,
 }: {
   model: ReturnType<typeof useConference>;
   nickname: string;
+  accountEmail?: string;
   preferences: LocalSettings;
   preferencesReady: boolean;
 }) {
@@ -29,6 +31,7 @@ export function MeetingsScreen({
       <RoomContext.Provider value={connected.raw}>
         <SharedMeetingRoom
           key={state.joined!.joinId}
+          accountEmail={accountEmail}
           conference={model}
           room={connected}
           onBrowse={browser.browse}

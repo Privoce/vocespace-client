@@ -1,39 +1,34 @@
 'use client';
 
-import { ChannelExports, ChannelProps, FeedbackType, FeedbackUploadItem, RoomPrivacy } from '@/components/Channel/types';
+import { ChannelExports, ChannelProps, RoomPrivacy } from '@/components/Channel/types';
 import { exportRBAC } from '@/lib/hooks/platform';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { useI18n } from '@/lib/i18n/i18n';
 import { WsSender } from '@/lib/std/device';
 import { ChildRoom } from '@/lib/std/space';
 import { useSpaceStore } from '@/lib/store';
-import {
-  Form,
-  theme
-} from 'antd';
+import { theme } from 'antd';
 import { CheckboxGroupProps } from 'antd/es/checkbox';
 import * as React from 'react';
-import {
-  useEffect,
-  useMemo,
-  useRef,
-  useState
-} from 'react';
-export function useChannelState({
-  space,
-  config,
-  settings,
-  messageApi,
-  localParticipantId,
-  onUpdate,
-  tracks,
-  isActive = false,
-  updateSettings,
-  toRenameSettings,
-  toSettings,
-  setUserStatus,
-  showFlotApp,
-}: ChannelProps, ref: React.ForwardedRef<ChannelExports>) {
+import { useEffect, useMemo, useRef, useState } from 'react';
+export function useChannelState(
+  {
+    space,
+    config,
+    settings,
+    messageApi,
+    localParticipantId,
+    onUpdate,
+    tracks,
+    isActive = false,
+    updateSettings,
+    toRenameSettings,
+    toSettings,
+    setUserStatus,
+    showFlotApp,
+  }: ChannelProps,
+  ref: React.ForwardedRef<ChannelExports>,
+) {
   const device = useLayoutDevice();
   const { t } = useI18n();
   const collapsed = useSpaceStore((s) => s.collapsed);
@@ -49,10 +44,6 @@ export function useChannelState({
   const [renameModalOpen, setRenameModalOpen] = useState(false);
   const [shareRoomOpen, setShareRoomOpen] = useState(false);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
-  const [feedbackType, setFeedbackType] = useState<FeedbackType>('bug');
-  const [feedbackUploading, setFeedbackUploading] = useState(false);
-  const [feedbackSubmitting, setFeedbackSubmitting] = useState(false);
-  const [feedbackUploads, setFeedbackUploads] = useState<FeedbackUploadItem[]>([]);
   const [renameRoomName, setRenameRoomName] = useState('');
   const [joinParticipant, setJoinParticipant] = useState<{
     id: string;
@@ -64,11 +55,6 @@ export function useChannelState({
   const [subRoomsTmp, setSubRoomsTmp] = useState<string[]>([]);
   const [mainActiveKey, setMainActiveKey] = useState<string[]>(['main', 'sub']);
   const [roomPrivacy, setRoomPrivacy] = useState<RoomPrivacy>('public');
-  const [feedbackForm] = Form.useForm<{
-    email: string;
-    otherType?: string;
-    content: string;
-  }>();
   const { createRoom, manageRoom } = useMemo(() => {
     return exportRBAC(localParticipantId, settings);
   }, [localParticipantId, settings]);
@@ -83,16 +69,6 @@ export function useChannelState({
     },
   ];
   const isMobile = device === 'phone';
-  const feedbackTypeOptions = useMemo(
-    () => [
-      { label: t('channel.feedback.types.bug'), value: 'bug' },
-      { label: t('channel.feedback.types.error'), value: 'error' },
-      { label: t('channel.feedback.types.question'), value: 'question' },
-      { label: t('channel.feedback.types.suggestion'), value: 'suggestion' },
-      { label: t('channel.feedback.types.other'), value: 'other' },
-    ],
-    [t],
-  );
   const hideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const mainHideTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   useEffect(() => {
@@ -132,12 +108,7 @@ export function useChannelState({
       .map(([pid, _]) => pid);
   }, [settings]);
   const wsSender = useMemo(() => {
-    if (
-      settings &&
-      space.name &&
-      localParticipantId &&
-      settings.participants[localParticipantId]
-    ) {
+    if (settings && space.name && localParticipantId && settings.participants[localParticipantId]) {
       const senderName = settings.participants[localParticipantId].name;
       return {
         space: space.name,
@@ -186,14 +157,6 @@ export function useChannelState({
     setShareRoomOpen,
     feedbackOpen,
     setFeedbackOpen,
-    feedbackType,
-    setFeedbackType,
-    feedbackUploading,
-    setFeedbackUploading,
-    feedbackSubmitting,
-    setFeedbackSubmitting,
-    feedbackUploads,
-    setFeedbackUploads,
     renameRoomName,
     setRenameRoomName,
     joinParticipant,
@@ -208,12 +171,10 @@ export function useChannelState({
     setMainActiveKey,
     roomPrivacy,
     setRoomPrivacy,
-    feedbackForm,
     createRoom,
     manageRoom,
     roomPrivacyOptions,
     isMobile,
-    feedbackTypeOptions,
     hideTimeoutRef,
     mainHideTimeoutRef,
     allParticipants,

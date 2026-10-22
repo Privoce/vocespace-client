@@ -138,7 +138,11 @@ export function RecordingSettings({
                         {t('recording.download.title')}
                       </Button>
                       {data?.canDelete && (
-                        <Button disabled={loading} onPress={() => setDeleting(item.key)}>
+                        <Button
+                          tone="danger"
+                          disabled={loading}
+                          onPress={() => setDeleting(item.key)}
+                        >
                           {t('recording.delete.title')}
                         </Button>
                       )}

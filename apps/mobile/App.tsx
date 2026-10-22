@@ -7,10 +7,9 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { useFonts } from 'expo-font';
 import { AuthScreen } from './src/screens/AuthScreen';
-import { useDemoAccount } from './src/account/useDemoAccount';
+import { useAccount } from './src/account/useAccount';
 import { HomeScreen } from './src/screens/HomeScreen';
 import { MeetingsScreen } from './src/screens/MeetingsScreen';
-// import { MessagesScreen } from './src/screens/MessagesScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { useLocalSettings } from './src/settings/useLocalSettings';
 import { antdTheme, colors, tabBarStyles, ui } from './src/theme';
@@ -27,7 +26,7 @@ type Tab = (typeof tabs)[number]['key'];
 
 function MobileShell() {
   const [tab, setTab] = useState<Tab>('home');
-  const account = useDemoAccount();
+  const account = useAccount();
   const settings = useLocalSettings();
   // Keep the connection owner above Ant Design's selected Tab pane.
   const conference = useConference();
@@ -70,12 +69,13 @@ function MobileShell() {
               ...tabBarStyles,
               tabs: {
                 ...tabBarStyles.tabs,
+                // Ant's WithTheme retains merged styles; omission does not undo display:none.
                 ...(tab === 'meetings' &&
                 (conference.state.phase === 'joined' ||
                   conference.state.phase === 'joining' ||
                   conference.hasPendingCleanup)
                   ? { display: 'none' as const }
-                  : {}),
+                  : { display: 'flex' as const }),
               },
             }}
           >
@@ -101,6 +101,7 @@ function MobileShell() {
                 )}
                 {item.key === 'meetings' && (
                   <MeetingsScreen
+                    accountEmail={account.signedIn ? account.profile.email : undefined}
                     model={conference}
                     nickname={nickname}
                     preferences={settings.settings}
@@ -116,6 +117,10 @@ function MobileShell() {
                     onJoin={join}
                     onBrowse={() => {
                       void changeTab('meetings');
+                    }}
+                    onDelete={async (password) => {
+                      if (!(await conference.leave())) return false;
+                      return account.remove(password);
                     }}
                     onLogout={async () => {
                       if (await conference.leave()) await account.logout();

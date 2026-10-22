@@ -33,3 +33,20 @@ Native 隐藏但保留挂载的列表使用透明、脱离正常排版并屏蔽�
 ## 待用户回归
 
 真实会议下验证两端聊天发送/附件、成员管理与举手、设置写入、聚焦/全屏/应用、Channel、重连和退出；确认 App 退出后 TabBar 恢复。真机验证软键盘、安全区、屏幕旋转、音视频与屏幕共享。Web PC 仍需一次外观/交互回归，本次自动对照测试不替代用户验收。
+
+## 2026-10-20 晚间修正：会议 Tile 的 AVO
+
+用户进一步明确：首字母头像仅用于成员/聊天等列表，会议 Tile 仍按原 AVO 行为展示。Web Phone 重新接入现有 ParticipantAvoPlaceholder，使用与原 Web Tile 相同的本机/远端已选 AVO 配置；Native 重新接入 MeetingAvo，使用目录下发的配置。视频轨道仍优先显示视频；AVO 关闭时 Web 使用 ParticipantPlaceholder，Native 复用该组件的 SVG 路径。全屏和紧凑 Tile 同步，列表首字母头像保持不变。
+
+自己的摄像头 Tile 工具栏补回“形象”，点击打开设置的 profile / AVO 页面；不提供修改其他成员形象的入口。共用图标与中英俄文案已同步。
+
+验证：206 项测试、根/Mobile/UI 类型、边界、相关 Web lint、iOS/Android JS 导出及空白检查通过。本次未重复连接真实 RTC 或执行模拟器视觉验收；待用户验证 AVO 开关、预设保存后的两端同步、全屏及“形象”跳转。
+
+## 2026-10-20：Tile 交互、举手与退出导航修正
+
+- Mobile / Web Phone 移除 Tile 外层的放大点击区域，让 AVO 接收交互。Web 使用原 ParticipantAvoPlaceholder 的 interactive 模式，Native 点击调用同一 Creature.pop 动画；放大仅由工具按钮触发，紧凑成员卡片也保留独立放大按钮。
+- 房主标记使用已有 SvgResource 的 host 资源、颜色 #FFAA33；Tile 工具和底部控制栏隐藏可见文字，保留按钮的无障碍标签。PC 分支未修改。
+- 举手反馈改为临时 Ant 提醒，不再占据主画面上方。共享 Tile 左上角根据成员 raiseHand 状态显示图标；本人可点击放下，更多菜单也可切换举手/放下。Native Socket 验证当前已确认会话，只更新本人状态，使用 CAS 保留并发更新和 JSON 数组；放下仅广播状态刷新，不重复通知主持人。目录 DTO 新字段为可选布尔值，兼容旧响应；举手不授予媒体权限。
+- TabBar 原因是 Ant WithTheme 保留已合并样式，省略 display 属性无法撤销先前的 none。退出清理完成后显式恢复 flex，不重新挂载 TabBar 或会议连接所有者。
+
+验证：212 项单元/组件测试、187 项隔离 HTTP/Redis/Socket 检查、根/API/Mobile/UI 类型、边界、iOS/Android JS 导出和 diff 空白检查通过。相关 Web lint 无错误，原有 Controller hooks 依赖警告仍在。本轮未连接真实 RTC、操作模拟器或真机；待回归 AVO 点击、放大/全屏、跨端举手/放下与退出后 TabBar 恢复。更新后需重启 API 并重新加载客户端。

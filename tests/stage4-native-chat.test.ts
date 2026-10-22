@@ -300,15 +300,36 @@ it('unlocks sending after a synchronous transport failure so a retry remains pos
 
 it('child-room chat filters history and incoming main-room messages while raising hands in the owning Space', async () => {
   const f = fixture();
-  f.ports.history.mockResolvedValue([message('main', 'host', 'room'), message('child', 'host', 'Meeting Room')]);
+  f.ports.history.mockResolvedValue([
+    message('main', 'host', 'room'),
+    message('child', 'host', 'Meeting Room'),
+  ]);
   f.controller.start({ ...meeting, childRoom: 'Meeting Room' });
   const socket = f.sockets.at(-1)!;
   socket.fire('connect');
   await f.controller.refresh();
-  expect(f.controller.getSnapshot().messages.map(item => item.id)).toEqual(['child']);
+  expect(f.controller.getSnapshot().messages.map((item) => item.id)).toEqual(['child']);
   socket.fire('chat_msg_response', message('main-late', 'host', 'room'));
-  expect(f.controller.getSnapshot().messages.map(item => item.id)).toEqual(['child']);
+  expect(f.controller.getSnapshot().messages.map((item) => item.id)).toEqual(['child']);
   await f.controller.raise();
   expect(socket.emit).toHaveBeenCalledWith('raise', expect.objectContaining({ space: 'room' }));
   f.controller.stop();
+});
+
+it('sends explicit hand transitions only for a connected meeting and reports rejected changes', async () => {
+  const { controller, sockets } = fixture();
+  expect(await controller.raise()).toBe(false);
+  const socket = sockets[0];
+  socket.fire('connect');
+  expect(await controller.raise()).toBe(true);
+  expect(socket.emit).toHaveBeenLastCalledWith(
+    'raise',
+    expect.objectContaining({ raised: true, space: 'room' }),
+  );
+  expect(await controller.raise(false)).toBe(true);
+  expect(socket.emit).toHaveBeenLastCalledWith('raise', expect.objectContaining({ raised: false }));
+  socket.emit.mockResolvedValueOnce({ ok: false });
+  expect(await controller.raise()).toBe(false);
+  controller.stop();
+  expect(await controller.raise(false)).toBe(false);
 });

@@ -99,14 +99,14 @@ export interface MeetingSettingsRangeProps {
   onChange: (value: number) => void;
 }
 export const meetingSettingsSections = [
-  { id: 'general', group: 'general', labelKey: 'settings.general.title' },
-  { id: 'profile', group: 'general', labelKey: 'settings.profile.title' },
-  { id: 'auth', group: 'general', labelKey: 'settings.auth.title' },
-  { id: 'ai', group: 'media', labelKey: 'settings.ai.title' },
-  { id: 'audio', group: 'media', labelKey: 'settings.audio.title' },
-  { id: 'video', group: 'media', labelKey: 'settings.video.title' },
-  { id: 'app', group: 'media', labelKey: 'more.app.title' },
-  { id: 'recording', group: 'service', labelKey: 'recording.title' },
-  { id: 'license', group: 'service', labelKey: 'settings.license.title' },
-  { id: 'about_us', group: 'service', labelKey: 'settings.about_us.title' },
+  { id: 'general', icon: 'setting', group: 'general', labelKey: 'settings.general.title' },
+  { id: 'profile', icon: 'smile', group: 'general', labelKey: 'settings.profile.title' },
+  { id: 'auth', icon: 'auth', group: 'general', labelKey: 'settings.auth.title' },
+  { id: 'ai', icon: 'ai', group: 'media', labelKey: 'settings.ai.title' },
+  { id: 'audio', icon: 'audio', group: 'media', labelKey: 'settings.audio.title' },
+  { id: 'video', icon: 'video', group: 'media', labelKey: 'settings.video.title' },
+  { id: 'app', icon: 'app', group: 'media', labelKey: 'more.app.title' },
+  { id: 'recording', icon: 'record', group: 'service', labelKey: 'recording.title' },
+  { id: 'license', icon: 'license', group: 'service', labelKey: 'settings.license.title' },
+  { id: 'about_us', icon: 'logo', group: 'service', labelKey: 'settings.about_us.title' },
 ] as const;

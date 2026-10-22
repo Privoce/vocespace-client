@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import {
   PhoneMeeting,
+  FeedbackForm,
   MeetingShare,
   MeetingDock,
-  MeetingTileActions,
-  PhoneSettingsNavigation,
+  MeetingParticipantTools,
   GeneralSettingsContent,
   AuthSettingsContent,
   MeetingControls,
@@ -22,9 +22,10 @@ import {
   MeetingInput as Input,
   MeetingSettingsInput,
 } from '@/components/MeetingUI/primitives';
-import { Switch, Select, Radio } from 'antd';
+import { Button as AntButton, Switch, Select, Radio } from 'antd';
 import phoneStyles from '@/components/Settings/phone.module.scss';
 import { settingsElements } from '@/components/Settings/phone-content';
+import { SettingsPhone } from '@/components/Settings/phone';
 import { PhoneSheet } from '@/components/MeetingUI/PhoneSheet';
 import { SvgResource } from '@/components/Icon';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -33,9 +34,11 @@ import { useI18n } from '@/lib/i18n/i18n';
 export default function Preview() {
   const { t } = useI18n();
   const [panel, setPanel] = useState('stage');
+  const [raised, setRaised] = useState(false);
   const [draft, setDraft] = useState('');
   const [settingsPanel, setSettingsPanel] = useState<string>();
-  const [count, setCount] = useState(3);
+  const [count, setCount] = useState(6);
+  const [fullscreen, setFullscreen] = useState<string>();
   const [microphone, setMicrophone] = useState(false);
   const [messages, setMessages] = useState<MeetingChatMessage[]>([
     { id: '1', name: 'Lin', text: '晚上好，听得到吗？ 👋', local: false, time: '22:19' },
@@ -49,6 +52,7 @@ export default function Preview() {
     status: t('settings.general.status.online'),
     owner: index === 0,
     local: index === 0,
+    raiseHand: index === 0 && raised,
     role: index === 0 ? '👑' : undefined,
   }));
   const actions: MeetingAction[] = [
@@ -89,11 +93,20 @@ export default function Preview() {
   ];
   const menu: MeetingAction[] = [
     {
+      id: 'feedback',
+      icon: 'chat',
+      label: t('channel.feedback.title'),
+      onPress: () => setPanel('feedback'),
+    },
+    {
       id: 'hand',
       icon: 'hand',
-      label: t('phone_meeting.hand'),
+      label: t(raised ? 'more.app.raise.cancel' : 'phone_meeting.hand'),
       description: t('phone_meeting.hand_hint'),
-      onPress: () => setPanel('stage'),
+      onPress: () => {
+        setRaised((value) => !value);
+        setPanel('stage');
+      },
     },
     {
       id: 'share',
@@ -160,17 +173,6 @@ export default function Preview() {
     speakingLabel: t('phone_meeting.speaking'),
     onlineLabel: t('phone_meeting.online'),
   };
-  const panels = [
-    ['general', 'setting'],
-    ['profile', 'smile'],
-    ['auth', 'auth'],
-    ['audio', 'audio'],
-    ['video', 'video'],
-    ['app', 'app'],
-    ['recording', 'record'],
-    ['license', 'license'],
-    ['about_us', 'logo'],
-  ] as const;
   return (
     <main
       style={{
@@ -187,13 +189,20 @@ export default function Preview() {
       </div>
       <div style={{ width: '100%', maxWidth: 430, flex: 1, minHeight: 0, display: 'flex' }}>
         <PhoneMeeting
+          handLabel={t('more.app.raise.title')}
+          lowerHandLabel={t('more.app.raise.cancel')}
+          onLowerHand={() => setRaised(false)}
           renderSheet={(props) => <PhoneSheet {...props}>{props.content}</PhoneSheet>}
+          fullscreenTileId={fullscreen}
           name="mobile-test"
           status={`${count} ${t('channel.menu.active')}`}
           labels={{
+            grid: t('phone_meeting.grid'),
+            focusLayout: t('phone_meeting.focus_layout'),
+            page: t('phone_meeting.page'),
             previous: t('shared_meeting.previous'),
             next: t('shared_meeting.next'),
-            focus: t('shared_meeting.focus'),
+            focus: t('phone_meeting.focus_layout'),
             unfocus: t('shared_meeting.unfocus'),
             cameraOff: t('shared_meeting.camera_off'),
             empty: t('shared_meeting.empty'),
@@ -214,19 +223,33 @@ export default function Preview() {
             menu.find((item) => item.id === 'members')!,
           ]}
           renderTileActions={(item, focused, toggle) => (
-            <MeetingTileActions
+            <MeetingParticipantTools
               Button={Button}
               Icon={Icon}
-              actions={[
-                { id: 'focus', icon: 'focus', label: t('shared_meeting.focus'), onPress: toggle },
-                { id: 'full', icon: 'fullscreen', label: t('common.full_screen'), onPress: toggle },
-                {
-                  id: 'app',
-                  icon: 'app',
-                  label: t('more.app.title'),
-                  onPress: () => setPanel('settings'),
-                },
-              ]}
+              focused={focused}
+              fullscreen={fullscreen === item.id}
+              onFocus={() => {
+                setFullscreen(undefined);
+                toggle();
+              }}
+              onFullscreen={() => setFullscreen(fullscreen === item.id ? undefined : item.id)}
+              onAvatar={
+                item.local
+                  ? () => {
+                      setSettingsPanel('profile');
+                      setPanel('settings');
+                    }
+                  : undefined
+              }
+              onApps={() => setPanel('settings')}
+              labels={{
+                focus: t('phone_meeting.focus_layout'),
+                unfocus: t('phone_meeting.grid'),
+                fullscreen: t('common.full_screen'),
+                exitFullscreen: t('phone_meeting.exit_fullscreen'),
+                avatar: t('phone_meeting.avatar'),
+                apps: t('more.app.title'),
+              }}
             />
           )}
           dock={
@@ -256,25 +279,27 @@ export default function Preview() {
             ),
           }}
           panel={{
-            open: ['members', 'more', 'settings', 'share'].includes(panel),
+            open: ['members', 'more', 'settings', 'share', 'feedback'].includes(panel),
             height:
               panel === 'more' || panel === 'share' ? '76%' : panel === 'members' ? '62%' : '88%',
             title:
-              panel === 'members'
-                ? t('phone_meeting.members')
-                : panel === 'share'
-                  ? t('phone_meeting.share')
-                  : panel === 'settings'
-                    ? settingsPanel
-                      ? t(
-                          settingsPanel === 'app'
-                            ? 'more.app.title'
-                            : settingsPanel === 'recording'
-                              ? 'recording.title'
-                              : `settings.${settingsPanel}.title`,
-                        )
-                      : t('settings.title')
-                    : t('phone_meeting.more_title'),
+              panel === 'feedback'
+                ? t('channel.feedback.title')
+                : panel === 'members'
+                  ? t('phone_meeting.members')
+                  : panel === 'share'
+                    ? t('phone_meeting.share')
+                    : panel === 'settings'
+                      ? settingsPanel
+                        ? t(
+                            settingsPanel === 'app'
+                              ? 'more.app.title'
+                              : settingsPanel === 'recording'
+                                ? 'recording.title'
+                                : `settings.${settingsPanel}.title`,
+                          )
+                        : t('settings.title')
+                      : t('phone_meeting.more_title'),
             subtitle:
               panel === 'more'
                 ? t('phone_meeting.more_subtitle')
@@ -286,7 +311,19 @@ export default function Preview() {
               panel === 'settings' && settingsPanel ? () => setSettingsPanel(undefined) : undefined,
             onClose: () => setPanel('stage'),
             content:
-              panel === 'share' ? (
+              panel === 'feedback' ? (
+                <FeedbackForm
+                  t={t}
+                  accountEmail="preview@example.test"
+                  Button={Button}
+                  Input={MeetingSettingsInput}
+                  onUpload={async () => undefined}
+                  onSubmit={async () => {
+                    throw new Error('PREVIEW_ONLY');
+                  }}
+                  onDone={() => setPanel('stage')}
+                />
+              ) : panel === 'share' ? (
                 <MeetingShare
                   Button={Button}
                   Icon={Icon}
@@ -300,36 +337,19 @@ export default function Preview() {
                 />
               ) : panel === 'settings' ? (
                 <div className={phoneStyles.phone} style={{ overflowY: 'auto', height: '100%' }}>
-                  <PhoneSettingsNavigation
-                    hideHeader
-                    name="访客"
-                    hostLabel={t('more.participant.host')}
-                    onlineLabel={t('phone_meeting.online')}
-                    spaceName="mobile-test"
-                    groupLabels={[
-                      t('phone_meeting.preferences'),
-                      t('phone_meeting.devices'),
-                      t('more.title'),
-                    ]}
-                    panels={panels.map(([id, icon]) => ({
-                      id,
-                      label: (
-                        <span style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-                          <SvgResource type={icon} svgSize={20} color="#9CB3C0" />
-                          {t(
-                            id === 'app'
-                              ? 'more.app.title'
-                              : id === 'recording'
-                                ? 'recording.title'
-                                : `settings.${id}.title`,
-                          )}
-                        </span>
-                      ),
-                    }))}
-                    activePanel={settingsPanel}
-                    onSelect={setSettingsPanel}
-                    onBack={() => setSettingsPanel(undefined)}
-                    backLabel={t('common.back')}
+                  <SettingsPhone
+                    model={{
+                      username: '访客',
+                      localParticipant: { identity: '0' },
+                      space: { name: 'mobile-test' },
+                      spaceInfo: { ownerId: '0' },
+                      phonePanelOpen: !!settingsPanel,
+                      key: settingsPanel || 'general',
+                      t,
+                      selectPanel: setSettingsPanel,
+                      setPhonePanelOpen: () => setSettingsPanel(undefined),
+                      showAI: false,
+                    }}
                   />
                   {settingsPanel === 'general' && (
                     <div style={{ padding: 22 }}>
@@ -356,9 +376,9 @@ export default function Preview() {
                             />
                           ),
                           saveStatus: (
-                            <Button onPress={() => {}}>
+                            <AntButton type="primary" size="large">
                               {t('settings.general.status.define.save')}
-                            </Button>
+                            </AntButton>
                           ),
                           prompt: <Switch checked={microphone} onChange={setMicrophone} />,
                           persistence: <Switch defaultChecked />,

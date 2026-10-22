@@ -84,6 +84,7 @@ export function RoomSettingsPanel({ model, panel }: { model: RoomSettingsModel; 
               ),
               saveStatus: (
                 <Button
+                  tone="primary"
                   disabled={disabled}
                   onPress={() => save({ status: draft.status ?? snapshot!.status })}
                 >
@@ -138,6 +139,7 @@ export function RoomSettingsPanel({ model, panel }: { model: RoomSettingsModel; 
                     onChangeText={(name) => model.edit({ name })}
                   />
                   <Button
+                    tone="primary"
                     disabled={disabled || !draft.name?.trim()}
                     onPress={() => save({ name: draft.name!.trim() })}
                   >
@@ -182,6 +184,7 @@ export function RoomSettingsPanel({ model, panel }: { model: RoomSettingsModel; 
               ),
               save: snapshot?.room?.isOwner ? (
                 <Button
+                  tone="primary"
                   disabled={disabled || !draft.permissions}
                   onPress={() => save({ permissions: draft.permissions })}
                 >

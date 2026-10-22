@@ -14,3 +14,5 @@ Web 和 React Native 共用的 UI 包。2026-10-11 将原 `@vocespace/meeting-ui
 `createSvgResource(render)` 将同一份资源绑定到平台渲染器：Web 的 `components/Icon/index.tsx` 保持兼容入口并生成原 DOM；Native 的 `src/ui/SvgResource.tsx` 通过 `react-native-svg` 渲染，容器/文字映射到 View/Text。使用方式一致：`<SvgResource type="google" svgSize={25} />`。Logo 等非正方形资源默认保持 Web 原尺寸，可通过 `width` / `height` 显式调整。颜色、路径、渐变和 viewBox 均维护在本包。Ant Design 的 Email 图标仍使用平台库；Native 提供 `MailOutlined` 命名适配。
 
 仅依赖 React / React Native 和 `@vocespace/meeting-core` 的纯规则。平台按钮/图标/输入框、媒体渲染等通过 props 注入；LiveKit 实例、网络、会话、权限和持久化留在端内。Web 使用 react-native-web 映射。本次合并只调整包与引用，组件 JSX、样式和交互保持原样。
+
+2026-10-20：会议图标映射统一到 `meetingIconSource`；Tile 工具由 `MeetingParticipantTools` 组合，持续举手由 `MeetingRaisedHand` 呈现。`phoneButtonColors` / `meetingButtonVisual` 共用 Web 的颜色语义。Next 服务端引用纯主题使用 `@vocespace/ui/theme`，平台组件仍通过各自 Ant 适配器。完整盘点见 `docs/phone-component-parity.md`。

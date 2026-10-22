@@ -59,7 +59,11 @@ export function AISettings({ common }: { common: SettingsViewProps }) {
               blur: <SettingsToggle disabled />,
             },
           }),
-          save: <Button disabled>{t('settings.ai.update.save')}</Button>,
+          save: (
+            <Button tone="primary" disabled>
+              {t('settings.ai.update.save')}
+            </Button>
+          ),
           deployment: AIDeploymentContent({
             ...common,
             verified: false,
@@ -75,7 +79,11 @@ export function AISettings({ common }: { common: SettingsViewProps }) {
                   onChangeText={() => {}}
                 />
               ),
-              verify: <Button disabled>{t('settings.ai.precheck.check')}</Button>,
+              verify: (
+                <Button tone="primary" disabled>
+                  {t('settings.ai.precheck.check')}
+                </Button>
+              ),
               model: null,
               key: null,
               url: null,

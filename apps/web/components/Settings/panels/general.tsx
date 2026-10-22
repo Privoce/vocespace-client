@@ -120,23 +120,7 @@ function GeneralSettingsContent(props: GeneralSettingsProps) {
       <div className={styles.common_space}>{t('settings.general.lang')}:</div>
       <LangSelect style={{ width: '100%' }}></LangSelect>
       <div className={styles.common_space}>{t('settings.general.status.title')}:</div>
-      {/* <div className={styles.setting_box_line}>
-        <StatusSelect
-          style={{ width: 'calc(100% - 52px)' }}
-          setUserStatus={setUserStatus}
-          localParticipant={localParticipant}
-        ></StatusSelect>
-        <Button
-          type="primary"
-          shape="circle"
-          style={{ cursor: 'pointer' }}
-          onClick={() => {
-            setAppendStatus(!appendStatus);
-          }}
-        >
-          <SvgResource type="add" svgSize={16}></SvgResource>
-        </Button>
-      </div> */}
+
       {/* {appendStatus && (
         <BuildUserStatus
           messageApi={messageApi}

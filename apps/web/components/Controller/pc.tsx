@@ -176,14 +176,6 @@ export function ControlsPC({ model }: { model: ControlsModel }) {
       </TrackToggle>
     )}
     {space && visibleControls.microphone && spaceInfo.ai.cut.enabled && showAI && (
-      // <Reaction
-      //   updateSettings={updateSettings}
-      //   space={space.name}
-      //   size={controlSize}
-      //   controlWidth={controlWidth}
-      //   spaceInfo={spaceInfo}
-      // ></Reaction>
-
       <Work
         isStartWork={workEnabled}
         setIsStartWork={setWorkEnabled}

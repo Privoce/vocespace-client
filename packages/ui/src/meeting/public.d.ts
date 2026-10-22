@@ -56,3 +56,8 @@ export declare function MeetingSheetHeader(
     'title' | 'subtitle' | 'onClose' | 'onBack' | 'Button' | 'Icon' | 'closeLabel' | 'backLabel'
   >,
 ): ReactElement;
+
+export declare function MeetingRaisedHand(props: import('./types').MeetingRaisedHandProps): ReactElement | null;
+export declare function MeetingParticipantTools(props: import('./types').MeetingParticipantToolsProps): ReactElement;
+export type { FeedbackFormProps, FeedbackPayload } from './feedback-types';
+export declare function FeedbackForm(props: import('./feedback-types').FeedbackFormProps): import('react').ReactElement;

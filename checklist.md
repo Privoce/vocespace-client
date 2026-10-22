@@ -366,3 +366,80 @@
 - [x] Web Phone 与 iOS 模拟器静态界面验证：更多、设置、常规/权限、成员/分享、聊天与草稿保留；没有连接真实 RTC。
 - [ ] 用户回归真实会议：聊天/附件、举手和成员操作、设置保存、Channel、聚焦/全屏/应用、退出后导航恢复；Web PC 外观与交互复核。
 - [ ] iPhone / Android 真机软键盘、安全区、旋转与音视频/屏幕共享验证。
+
+### 2026-10-20：会议 Tile AVO 与形象入口修正
+
+- [x] Mobile / Web Phone 会议 Tile 恢复既有 AVO 渲染，沿用成员的颜色、类型和启用状态；AVO 关闭时显示 Web ParticipantPlaceholder（Native 使用相同 SVG），全屏与紧凑 Tile 同步。
+- [x] 自己的 Tile 增加“形象”按钮，直达 AVO 设置；成员列表和聊天保留首字母头像。
+- [x] 206 项测试、根/Mobile/UI 类型检查、边界、相关 lint、iOS/Android JS 导出通过。
+- [ ] 用户回归 AVO 开关/预设保存与跨端同步、全屏和形象入口；本次自动检查不替代真实会议视觉验收。
+
+### 2026-10-20：手机会议交互与退出导航修正
+
+- [x] Mobile / Web Phone 点击 Tile 触发 AVO 交互，放大仅由按钮触发；紧凑成员卡片保留独立放大入口。
+- [x] 房主使用共用 SvgResource host 图标（#FFAA33）；Tile 工具和控制栏仅保留图标及无障碍标签。
+- [x] 举手改为临时提醒和 Tile 左上角标记；可再次点击放下。Native 补齐本人状态写入、目录同步和失败反馈，不授予媒体权限。
+- [x] 退出清理完成后显式恢复 TabBar，处理 Ant 样式缓存导致持续隐藏的问题。
+- [x] 212 项测试、187 项隔离后端检查、根/API/Mobile/UI 类型、边界和 iOS/Android JS 导出通过；相关 lint 无错误（保留已有 Hook 依赖警告）。详见 [交付说明](docs/phone-meeting-redesign.md)。
+- [ ] 重启 API、重新加载客户端后回归：AVO 点击、图标工具、跨端举手/放下、会议退出后预览列表导航恢复；模拟器/真机体验尚未验收。
+
+### 2026-10-20：持续举手与 Phone 公用组件、按钮对齐
+
+- [x] 对照 Web RaiseKeeper 提取 MeetingRaisedHand，明确覆盖层级并用于 Native 全屏；提醒消失不清除举手，失败不误报成功。
+- [x] 提取两端会议图标映射、Tile 工具组合、按钮颜色规则；复用盘点见 [Phone 组件对齐](docs/phone-component-parity.md)。
+- [x] Mobile 主按钮、设置保存按钮、选项和危险按钮按 Web 语义与主题对齐；权限与禁用条件保持原有行为。
+- [x] 218 项测试、根/Mobile/UI 类型、边界、相关 Web lint 与 iOS/Android JS 导出通过；浏览器静态预览已验证持续举手和主按钮颜色。
+- [ ] 当前服务进程早于举手持久化修改；重启 API、重新加载 App 后回归真实跨端举手/放下、Native 全屏标记及按钮状态。
+
+### 2026-10-21：Phone / Mobile 四宫格与聚焦分页
+
+- [x] 共用会议布局默认四宫格，每页最多四张；顶部增加网格/聚焦切换，Tile 聚焦后显示主卡片和每页两张下方卡片。
+- [x] 布局区底部分页圆点、页数与前后按钮，左右滑动换页；Native 横滑不再触发 Room 切换，Channel 入口保留。
+- [x] 223 项测试通过，覆盖页面收敛、成员离开、触摸取消、媒体节点和嵌入播放器保持；类型、边界、相关 lint 和 iOS/Android JS 导出通过。见 [布局交付](docs/phone-meeting-layout.md)。
+- [x] 浏览器静态预览已检查 390×844 四宫格、聚焦与分页按钮。
+- [ ] 用户回归 Mobile / Web Phone 真正会议的触摸翻页、AVO、视频/共享、全屏和成员进出；PC 保持原布局。
+
+### 2026-10-22：Tile 状态与工具栏间距
+
+- [x] Mobile / Web Phone 共用 Tile 的名称与在线状态恢复同一行，状态右对齐；工具栏高度减少 8px，图标由 20px 改为 18px，同步调整上方信息和媒体区留白。
+- [x] 223 项测试、根/UI 类型检查、共享包边界与差异空白检查通过；本次样式调整未作真机视觉验收。
+
+### 2026-10-22：Supabase 用户体系首批接入
+
+- [x] 沿用旧平台 Supabase 项目，独立 API / contracts / server-core / SDK 接入邮箱登录、注册、刷新、退出、邮件找回密码及注销；Mobile 删除演示账号兜底并接入真实账号表单和 SecureStore。
+- [x] Web 新增邮件密码重置页；PKCE 一次性回调、HttpOnly 恢复 Cookie、固定回跳、限流、CSRF 与服务端用户验证。
+- [x] 用户确认注销全部删除：清理旧平台资料、所属 Space、Todo、AI 数据与已知上传文件，重验当前密码后执行，最后删除 Auth；失败可重试，不误报成功。
+- [x] 241 项测试（其中 24 项认证专项）、187 项隔离后端检查、根/API/Mobile/UI 类型、边界、相关 lint、隔离标准 API/Web 生产构建、部署检查、Compose 配置解析及 iOS/Android JS 导出通过。生产构建存在原有 Hook / img 警告，没有关闭检查。
+- [x] 环境示例及部署映射补齐，本机 Supabase 配置放在被 Git 忽略的 API env；未改远程 Supabase 项目、未启动或重启用户服务。见 [账号接入说明](docs/supabase-account-auth.md)。
+- [ ] 配置实际 Web 邮件回调 allowlist / SMTP 后，验证旧账号登录、注册确认、邮件重置、测试账号全量注销与手机安全存储。没有发送真实邮件或删除真实用户。
+- [ ] 后续：账号与 RTC/Space 权属迁移、资料写回、Google OAuth、个人数据与权益接口；不因本批登录成功而开放房主或发布权限。
+
+### 2026-10-22：两人布局、Channel 媒体与会议反馈
+
+- [x] Mobile / Web Phone 两人 Grid 保持半高、Focus 单张副卡保持半宽；名称和状态覆盖媒体，仅保留工具栏占位。
+- [x] Native Channel 使用既有摄像头轨道、AVO 动画及居中占位，加入按钮改为常规按钮；隐藏抽屉停止对应媒体视图和动画。
+- [x] 更多箭头 16px，设置上方增加反馈；共用反馈表单、沿用 Web 上传/邮件处理，登录邮箱自动带入，失败保留草稿。
+- [x] 248 项测试、187 项隔离后端检查、根/API/Mobile/UI 类型、边界、相关 lint、独立标准 API/Web 构建、部署检查和 iOS/Android JS 导出通过；390×844 静态预览已检查。见 [交付说明](docs/phone-meeting-feedback.md)。
+- [ ] 新增 document picker 后重建 development build，重启 API；回归真实 Channel 视频/AVO、软键盘、附件选择上传与邮件投递。本次没有发送真实邮件或重启用户服务。
+
+### 2026-10-22：旧 App 缺少 ExpoDocumentPicker 的启动修复
+
+- [x] 去掉启动时的 picker 静态导入；点击附件前检查原生模块，缺失时提示重建，会议和纯文字反馈可继续使用。
+- [x] 本机 CocoaPods 已安装 ExpoDocumentPicker 55.0.17 并注册模块；根/Mobile/UI 类型、6 项专项测试、边界和 iOS JS 导出通过。
+- [ ] 使用中的设备需重新编译安装 App，之后回归原生文件选择。热更新不能增加原生模块。
+- [x] 包含 DocumentPicker 的 arm64 iOS Simulator 原生 Debug 构建通过；未替换设备上已安装的 App。
+
+### 2026-10-22：反馈关闭方式与组件去重
+
+- [x] Native 反馈移除底部取消栏，复用公共弹窗标题的右上角 X；原设置确认弹窗保持原行为。
+- [x] Web PC / Phone 反馈统一到公共表单，删除旧反馈 Hook、状态、类型和样式；清理 11 个确认无引用或已替代的文件，以及 Native 旧分页/聚焦状态。详见 [组件清理](docs/component-cleanup.md)。
+- [x] 根/Mobile/UI 类型、边界、253 项测试、状态清理后 21 项会议专项、相关 lint、隔离标准生产构建和双端 JS 导出通过。
+- [ ] 真机回归反馈弹窗关闭、软键盘滚动及提交按钮可见性。
+- [x] 用户明确授权后已恢复本地 Web 开发服务：清理受损构建缓存，首页与会议预览返回 200，健康检查正常；API / 数据库未重启。
+
+### 2026-10-22：Web Phone 设置菜单对齐
+
+- [x] 修复 Web Phone 复用 PC TabItem 导致文字靠右、图标过小的问题；公共导航统一图标槽和文字布局，两端使用共享图标映射，20px 主图标 / 16px 箭头。
+- [x] 根 / UI / Mobile 类型、边界、12 项设置回归和相关 lint 通过；390×844 浏览器实测对齐，预览已使用真实 Web Phone 适配器。
+- [ ] Native 视觉回归；PC Tabs 与设置草稿生命周期保持原行为。
+- [x] 隔离副本标准 Web 生产构建通过，保留已有 Hook / img 警告；未重启或覆盖当前开发服务。

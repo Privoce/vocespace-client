@@ -1,3 +1,4 @@
+import { setNativeHand } from '../lib/server/native-hand';
 import { bindNativeSocket, inviteNativeMedia, revokeNativeMedia } from '../lib/server/native-media';
 import { removeMediaMember } from '../lib/server/media-members';
 import { Server } from 'socket.io';
@@ -93,8 +94,15 @@ export function startRealtime(server: HttpServer) {
           if (policy.startsWith('manage') && !member.manager) throw new Error('MANAGER_REQUIRED');
           await socket.join(`space:${space}`);
           if (msg.senderId) msg.senderId = member.id;
+          let nativeHand: boolean | undefined;
           if (event === 'raise') {
             msg.senderId = member.id; msg.senderName = member.participant.name; msg.senderSocketId = socket.id;
+            if (current.client === 'native') {
+              if (msg.raised !== undefined && typeof msg.raised !== 'boolean') throw new Error('INVALID_EVENT');
+              const raised = msg.raised !== false;
+              await setNativeHand(current, socket.data.nativeJoinId, raised);
+              nativeHand = raised;
+            }
           }
           if (msg.sender) msg.sender = { id: member.id, name: member.participant.name };
           // Revalidate recipients too: revoked sessions must not keep reading a joined channel.
@@ -107,6 +115,11 @@ export function startRealtime(server: HttpServer) {
               try { await requireNativeChatMember(reader, peer.data.nativeJoinId); }
               catch { peer.leave(`space:${space}`); }
             }
+          }
+          if (nativeHand !== undefined) {
+            io.to(`space:${space}`).emit('user_status_updated', { space });
+            // Lowering updates the badge without notifying the host of a new request.
+            if (!nativeHand) { reply({ ok: true }); return; }
           }
           const response = event === 'update_user_status' ? 'user_status_updated' : `${event}_response`;
           if (policy.toLowerCase().includes('target')) {

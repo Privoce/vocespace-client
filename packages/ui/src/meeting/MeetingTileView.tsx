@@ -1,5 +1,6 @@
+import { MeetingRaisedHand } from './MeetingRaisedHand';
 import type { ComponentType, ReactNode } from 'react';
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet } from 'react-native';
 import { type MeetingTile } from '@vocespace/meeting-core';
 import type { MeetingIconProps } from '../types';
 import { InitialAvatar } from './InitialAvatar';
@@ -7,20 +8,22 @@ export function MeetingTileView({
   item,
   width,
   height,
-  label,
-  onPress,
+  handLabel,
+  onLowerHand,
   video,
   Icon,
   avatar,
   actions,
   compact,
+  rail,
 }: {
   item: MeetingTile;
   compact?: boolean;
+  rail?: boolean;
   width: number | `${number}%`;
   height: number;
-  label: string;
-  onPress: () => void;
+  handLabel?: string;
+  onLowerHand?: () => void;
   video: ReactNode;
   avatar?: ReactNode;
   actions?: ReactNode;
@@ -31,28 +34,27 @@ export function MeetingTileView({
       nativeID={`meeting-tile-${item.id}`}
       style={[styles.tile, { width, height }, item.speaking && styles.speaking]}
     >
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={label}
-        onPress={onPress}
-        style={StyleSheet.absoluteFill}
-      >
-        <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-          {item.video ? (
-            video
-          ) : (
-            <View
-              style={[styles.placeholder, compact && { alignItems: 'flex-start', paddingLeft: 10 }]}
-            >
-              {avatar ?? (
-                <InitialAvatar name={item.name} size={compact ? 34 : height > 230 ? 104 : 64} />
-              )}
-            </View>
-          )}
-        </View>
-      </Pressable>
+      <View style={[StyleSheet.absoluteFill, !compact && { bottom: !rail && actions ? 38 : 0 }]}>
+        {item.video ? (
+          video
+        ) : (
+          <View
+            style={[styles.placeholder, compact && { alignItems: 'flex-start', paddingLeft: 10 }]}
+          >
+            {avatar ?? (
+              <InitialAvatar name={item.name} size={compact ? 34 : height > 230 ? 104 : 64} />
+            )}
+          </View>
+        )}
+      </View>
       <View
-        style={{ position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#172229F2' }}
+        style={
+          rail
+            ? { position: 'absolute', right: 2, top: 2 }
+            : compact
+              ? { position: 'absolute', right: 2, top: 0, bottom: 0, justifyContent: 'center' }
+              : { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#172229F2' }
+        }
       >
         {actions}
       </View>
@@ -60,10 +62,16 @@ export function MeetingTileView({
         pointerEvents="none"
         style={[
           styles.metadata,
-          actions
-            ? { bottom: 50 }
-            : compact
-              ? { left: 54, bottom: 14, flexDirection: 'column', alignItems: 'flex-start' }
+          compact
+            ? {
+                left: 54,
+                right: actions ? 48 : 6,
+                bottom: 14,
+                flexDirection: 'column',
+                alignItems: 'flex-start',
+              }
+            : actions && !rail
+              ? { bottom: 42 }
               : undefined,
         ]}
       >
@@ -83,7 +91,11 @@ export function MeetingTileView({
               {!item.microphone && !item.screen && <View style={styles.slash} />}
             </View>
           )}
-          {item.role && <Text style={styles.role}>{item.role}</Text>}
+          {item.owner && Icon ? (
+            <Icon name="host" color="#FFAA33" size={14} />
+          ) : item.role ? (
+            <Text style={styles.role}>{item.role}</Text>
+          ) : null}
           <Text numberOfLines={1} style={styles.name}>
             {item.name}
           </Text>
@@ -102,6 +114,14 @@ export function MeetingTileView({
           </View>
         )}
       </View>
+      {Icon && (
+        <MeetingRaisedHand
+          raised={item.raiseHand}
+          label={handLabel}
+          onLower={onLowerHand}
+          Icon={Icon}
+        />
+      )}
     </View>
   );
 }

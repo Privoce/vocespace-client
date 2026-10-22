@@ -1,4 +1,5 @@
 'use client';
+import { FeedbackDialog } from '../Feedback';
 import { useState } from 'react';
 import { socket } from '@/lib/realtime/socket';
 import { audio } from '@/lib/audio';
@@ -139,6 +140,7 @@ function useSharedControls(model: ControlsModel, onMore: () => void) {
 }
 export function ControlsShared({ model }: { model: ControlsModel }) {
   const [moreOpen, setMoreOpen] = useState(false);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const actions = useSharedControls(model, () => setMoreOpen(true));
   const { t, space } = model;
   return (
@@ -149,6 +151,7 @@ export function ControlsShared({ model }: { model: ControlsModel }) {
     >
       <MeetingControls Button={Button} Icon={Icon} actions={actions} />
       <ControlsWork model={model} />
+      <FeedbackDialog open={feedbackOpen} onClose={() => setFeedbackOpen(false)} />
       {space && (
         <PhoneSheet
           open={moreOpen}
@@ -181,20 +184,37 @@ export function ControlsShared({ model }: { model: ControlsModel }) {
                   {
                     id: 'hand',
                     icon: 'hand',
-                    label: t('phone_meeting.hand'),
+                    label: t(
+                      model.spaceInfo.participants[space.localParticipant.identity]?.raiseHand
+                        ? 'more.app.raise.cancel'
+                        : 'phone_meeting.hand',
+                    ),
                     description: t('phone_meeting.hand_hint'),
                     onPress: async () => {
                       setMoreOpen(false);
-                      await model.updateSettings({ raiseHand: true });
-                      socket.emit('update_user_status', { space: space.name });
-                      socket.emit('raise', {
-                        space: space.name,
-                        senderId: space.localParticipant.identity,
-                        senderName: space.localParticipant.name,
-                        senderSocketId:
-                          model.spaceInfo.participants[space.localParticipant.identity]?.socketId,
-                      });
-                      void audio.raise();
+                      const raised =
+                        !model.spaceInfo.participants[space.localParticipant.identity]?.raiseHand;
+                      try {
+                        const ok = await model.updateSettings({ raiseHand: raised });
+                        if (!ok) throw new Error('HAND_UPDATE_FAILED');
+                        socket.emit('update_user_status', { space: space.name });
+                        if (raised) {
+                          socket.emit('raise', {
+                            space: space.name,
+                            senderId: space.localParticipant.identity,
+                            senderName: space.localParticipant.name,
+                            senderSocketId:
+                              model.spaceInfo.participants[space.localParticipant.identity]
+                                ?.socketId,
+                          });
+                          void audio.raise();
+                        }
+                        model.messageApi.info(
+                          t(raised ? 'phone_meeting.hand_raised' : 'phone_meeting.hand_lowered'),
+                        );
+                      } catch {
+                        model.messageApi.error(t('phone_meeting.hand_failed'));
+                      }
                     },
                   },
                   {
@@ -207,6 +227,7 @@ export function ControlsShared({ model }: { model: ControlsModel }) {
                       model.setOpenShareModal(true);
                     },
                   },
+                  { id: 'feedback', icon: 'chat', label: t('channel.feedback.title'), onPress: () => { setMoreOpen(false); setFeedbackOpen(true); } },
                   ...items
                     .filter((item): item is Exclude<typeof item, null> => !!item)
                     .map((item) => {

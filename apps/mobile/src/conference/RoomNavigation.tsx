@@ -8,12 +8,14 @@ export function RoomNavigation({
   conference,
   directory,
   enabled,
+  allowRoomSwipe = true,
   onBrowse,
   children,
 }: {
   conference: ReturnType<typeof useConference>;
   directory?: NativeRoomDirectory;
   enabled: boolean;
+  allowRoomSwipe?: boolean;
   onBrowse?: (direction: number) => Promise<void>;
   children: (navigation: { move: (name: string) => Promise<void>; busy: boolean }) => ReactNode;
 }) {
@@ -44,13 +46,13 @@ export function RoomNavigation({
         !flight.current &&
         gesture.numberActiveTouches === 1 &&
         !!navigation &&
-        (navigation.axis === 'room' || !!onBrowse)
+        (navigation.axis === 'room' ? allowRoomSwipe : !!onBrowse)
       );
     },
     onPanResponderRelease: (_, gesture) => {
       if (flight.current || !enabled) return;
       const navigation = navigationGesture(gesture.dx, gesture.dy);
-      if (navigation?.axis === 'room') {
+      if (navigation?.axis === 'room' && allowRoomSwipe) {
         const room = directory?.rooms[current + navigation.direction];
         if (room) void move(room.name);
       } else if (navigation?.axis === 'space') void onBrowse?.(navigation.direction);

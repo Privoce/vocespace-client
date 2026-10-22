@@ -55,6 +55,7 @@ export async function nativeRoomsEndpoint(request: ApiRequest) {
           {
             name: value.name || '访客',
             status: value.status || '',
+            raiseHand: !!value.raiseHand,
             owner: space!.ownerId === id,
             manager: space!.managers.includes(id),
             ...(inRoom.has(id)

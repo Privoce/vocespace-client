@@ -121,3 +121,17 @@ it('rejects corrupt avatar and tool payloads instead of leaking arbitrary metada
   expect(parsed.participants?.self.apps).toEqual({ todo: [] });
   expect(JSON.stringify(parsed)).not.toContain('secret');
 });
+
+it('projects and validates hand state while retaining compatibility with old directories', async () => {
+  const space = await mocks.get();
+  space.participants.self.raiseHand = true;
+  const result = parseNativeRoomDirectory(await (await nativeRoomsEndpoint(request())).json());
+  expect(result.participants?.self.raiseHand).toBe(true);
+  expect(result.participants?.other.raiseHand).toBe(false);
+  const self = result.participants!.self;
+  delete self.raiseHand;
+  expect(parseNativeRoomDirectory(result).participants?.self.raiseHand).toBeUndefined();
+  expect(() =>
+    parseNativeRoomDirectory({ ...result, participants: { self: { ...self, raiseHand: 'true' } } }),
+  ).toThrow();
+});

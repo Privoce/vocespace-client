@@ -100,7 +100,11 @@ export function LicenseSettings({ common }: { common: SettingsViewProps }) {
           <SettingsNote>{t('native_settings.license_unavailable')}</SettingsNote>
         </>
       ),
-      buy: <Button disabled>{t('settings.license.buy')}</Button>,
+      buy: (
+        <Button tone="primary" disabled>
+          {t('settings.license.buy')}
+        </Button>
+      ),
       cancel: null,
       update: <Button onPress={() => setDialog('update')}>{t('settings.license.update')}</Button>,
     },

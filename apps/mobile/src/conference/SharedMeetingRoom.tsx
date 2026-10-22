@@ -1,4 +1,6 @@
+import { FeedbackDialog } from '../feedback/FeedbackDialog';
 import { TileWidgets } from './TileWidgets';
+import { MeetingAvo } from '../ui/MeetingAvo';
 
 import { ParticipantApps } from './ParticipantApps';
 import { useEffect, useState } from 'react';
@@ -15,7 +17,7 @@ import {
   MeetingMenu,
   MeetingShare,
   MeetingDock,
-  InitialAvatar,
+  MeetingRaisedHand,
 } from '@vocespace/ui';
 import {
   MeetingButton as Button,
@@ -31,14 +33,17 @@ import type { useConference } from './useConference';
 import type { NativeRoom } from './room';
 export function SharedMeetingRoom({
   conference,
+  accountEmail,
   room,
   onBrowse,
 }: {
   conference: ReturnType<typeof useConference>;
   room: NativeRoom;
+  accountEmail?: string;
   onBrowse?: (direction: number) => Promise<void>;
 }) {
   const model = useSharedMeetingRoom(conference, room);
+  const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [focused, setFocused] = useState(false);
   const [fullscreen, setFullscreen] = useState<string>();
   const [appsId, setAppsId] = useState<string>();
@@ -60,6 +65,7 @@ export function SharedMeetingRoom({
     <RoomNavigation
       conference={conference}
       directory={model.directory}
+      allowRoomSwipe={false}
       enabled={model.panel === 'stage' && !focused && !fullscreen}
       onBrowse={onBrowse}
     >
@@ -91,6 +97,23 @@ export function SharedMeetingRoom({
                 </Button>
               </View>
               <ChannelDrawer
+                active={model.panel === 'channel'}
+                renderMedia={(id) => {
+                  const track = model.channelTracks.find(
+                    (item) =>
+                      item.participant.identity === id && item.source === Track.Source.Camera,
+                  );
+                  return track &&
+                    isTrackReference(track) &&
+                    track.publication.track &&
+                    !track.publication.isMuted ? (
+                    <VideoTrack
+                      trackRef={track}
+                      style={{ width: '100%', height: '100%' }}
+                      objectFit="cover"
+                    />
+                  ) : null;
+                }}
                 directory={model.directory}
                 space={conference.state.spaceName || room.raw.name}
                 busy={busy}
@@ -102,7 +125,22 @@ export function SharedMeetingRoom({
             </View>
           }
         >
+          <FeedbackDialog
+            open={feedbackOpen}
+            accountEmail={accountEmail}
+            room={room}
+            onClose={() => setFeedbackOpen(false)}
+          />
           <PhoneMeeting
+            handLabel={model.t('more.app.raise.title')}
+            lowerHandLabel={model.t('more.app.raise.cancel')}
+            onLowerHand={
+              model.raising
+                ? undefined
+                : () => {
+                    void model.raise();
+                  }
+            }
             leadingAction={{
               id: 'channel',
               icon: 'menu',
@@ -115,10 +153,13 @@ export function SharedMeetingRoom({
             connected={model.connected}
             status={model.connected ? `${model.participants.length} 在线` : '正在重新连接'}
             labels={{
+              grid: model.t('phone_meeting.grid'),
+              focusLayout: model.t('phone_meeting.focus_layout'),
+              page: model.t('phone_meeting.page'),
               previous: '上一页',
               next: '下一页',
-              focus: '放大',
-              unfocus: '取消固定',
+              focus: model.t('phone_meeting.focus_layout'),
+              unfocus: model.t('phone_meeting.grid'),
               cameraOff: '摄像头关闭',
               empty: '等待参与者',
               chat: '会议聊天',
@@ -127,6 +168,30 @@ export function SharedMeetingRoom({
             Button={Button}
             Icon={Icon}
             tiles={model.tiles}
+            renderAvatar={(item, compact) => (
+              <View
+                style={
+                  compact
+                    ? { width: 34, height: 34 }
+                    : {
+                        width: '100%',
+                        height: '100%',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }
+                }
+              >
+                <MeetingAvo
+                  interactive
+                  avo={item.screen ? undefined : item.avo}
+                  level={
+                    model.allTracks.find((track) => model.key(track) === item.id)?.participant
+                      .audioLevel
+                  }
+                  animate={!fullscreen}
+                />
+              </View>
+            )}
             renderTileActions={(item, focused, toggle) => {
               const track = model.allTracks.find((track) => model.key(track) === item.id);
               const id = track?.participant.identity;
@@ -263,14 +328,24 @@ export function SharedMeetingRoom({
                   <MeetingMenu
                     Button={Button}
                     Icon={Icon}
-                    actions={model.menu}
+                    actions={[
+                      ...model.menu,
+                      {
+                        id: 'feedback',
+                        icon: 'chat',
+                        label: model.t('channel.feedback.title'),
+                        onPress: () => {
+                          model.open('stage');
+                          setFeedbackOpen(true);
+                        },
+                      },
+                    ]}
                     footer={model.t('phone_meeting.media_hint')}
                   />
                 ),
             }}
             notice={
               <>
-                {model.notice ? <Text style={ui.body}>{model.notice}</Text> : null}
                 {model.invitations.map((item) => (
                   <View key={item.id} style={ui.card}>
                     <Text style={ui.body}>
@@ -352,8 +427,30 @@ export function SharedMeetingRoom({
                   (fullscreenTile.video ? (
                     video(fullscreenTile.id)
                   ) : (
-                    <InitialAvatar name={fullscreenTile.name} size={160} />
+                    <MeetingAvo
+                      interactive
+                      avo={fullscreenTile.screen ? undefined : fullscreenTile.avo}
+                      level={
+                        model.allTracks.find((track) => model.key(track) === fullscreenTile.id)
+                          ?.participant.audioLevel
+                      }
+                    />
                   ))}
+                <MeetingRaisedHand
+                  raised={fullscreenTile?.raiseHand}
+                  label={model.t(
+                    fullscreenTile?.local ? 'more.app.raise.cancel' : 'more.app.raise.title',
+                  )}
+                  Icon={Icon}
+                  disabled={model.raising}
+                  onLower={
+                    fullscreenTile?.local
+                      ? () => {
+                          void model.raise();
+                        }
+                      : undefined
+                  }
+                />
               </View>
             </View>
           </Modal>

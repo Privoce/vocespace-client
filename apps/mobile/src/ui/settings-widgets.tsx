@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react';
 import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
 import { PhoneSettingsButton as Button, PhoneSettingsInput as Input } from './settings';
-import { MeetingSettingsRange } from './meeting';
+import { MeetingSettingsRange, MeetingButton, MeetingIcon } from './meeting';
+import { MeetingSheetHeader } from '@vocespace/ui';
 import { useI18n } from '../i18n';
 import { Switch, IconOutline } from './controls';
 export { Button, Input };
@@ -313,14 +314,16 @@ export function SettingsDialog({
   onConfirm,
   confirmLabel,
   disabled = false,
+  closeInHeader = false,
 }: {
   open: boolean;
   title: string;
   children: ReactNode;
   onClose: () => void;
   onConfirm?: () => void;
-  confirmLabel: string;
+  confirmLabel?: string;
   disabled?: boolean;
+  closeInHeader?: boolean;
 }) {
   const { t } = useI18n();
   return (
@@ -330,19 +333,35 @@ export function SettingsDialog({
           style={{
             backgroundColor: '#1A2832',
             borderRadius: 8,
-            padding: 24,
+            padding: closeInHeader ? 0 : 24,
             gap: 16,
             maxHeight: '85%',
           }}
         >
-          <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>{title}</Text>
-          <ScrollView keyboardShouldPersistTaps="handled">{children}</ScrollView>
-          <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
-            <Button onPress={onClose}>{t('common.cancel')}</Button>
-            <Button active disabled={disabled || !onConfirm} onPress={onConfirm}>
-              {confirmLabel}
-            </Button>
-          </View>
+          {closeInHeader ? (
+            <MeetingSheetHeader
+              title={title}
+              closeLabel={t('common.close')}
+              onClose={onClose}
+              Button={MeetingButton}
+              Icon={MeetingIcon}
+            />
+          ) : (
+            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>{title}</Text>
+          )}
+          <ScrollView keyboardShouldPersistTaps="handled" style={{ flexGrow: 0, minHeight: 0 }}>
+            {children}
+          </ScrollView>
+          {(!closeInHeader || confirmLabel) && (
+            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
+              {!closeInHeader && <Button onPress={onClose}>{t('common.cancel')}</Button>}
+              {confirmLabel && (
+                <Button active disabled={disabled || !onConfirm} onPress={onConfirm}>
+                  {confirmLabel}
+                </Button>
+              )}
+            </View>
+          )}
         </View>
       </View>
     </Modal>

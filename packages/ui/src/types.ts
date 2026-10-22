@@ -7,6 +7,7 @@ export interface MeetingButtonProps {
   disabled?: boolean;
   active?: boolean;
   appearance?:
+    | 'primary'
     | 'circle'
     | 'danger'
     | 'plain'
@@ -30,6 +31,7 @@ export type MeetingIconName =
   | 'members'
   | 'close'
   | 'send'
+  | 'host'
   | 'hand'
   | 'settings'
   | 'file'
@@ -40,6 +42,7 @@ export type MeetingIconName =
   | 'unfocus'
   | 'focus'
   | 'app'
+  | 'avatar'
   | 'userAdd'
   | 'room'
   | 'space';

@@ -15,7 +15,7 @@ const server = createServer(async (req, res) => {
     let bytes = 0;
     for await (const chunk of req) {
       bytes += chunk.length;
-      if (bytes > maxBytes) { res.writeHead(413).end(); return; }
+      if (bytes > (req.url?.split('?')[0].includes('/account/') ? 20_000 : maxBytes)) { res.writeHead(413).end(); return; }
       chunks.push(chunk);
     }
     const publicUrl = process.env.PUBLIC_ORIGIN || `http://${req.headers.host}`;

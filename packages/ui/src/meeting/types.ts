@@ -3,6 +3,9 @@ import type { MeetingTile } from '@vocespace/meeting-core';
 import type { MeetingButtonProps, MeetingIconProps, MeetingInputProps } from '../types';
 
 export interface MeetingLabels {
+  grid?: string;
+  focusLayout?: string;
+  page?: string;
   previous: string;
   next: string;
   focus: string;
@@ -56,7 +59,10 @@ export interface PhoneMeetingProps {
   Icon?: ComponentType<MeetingIconProps>;
   leadingAction?: MeetingAction;
   headerActions?: MeetingAction[];
-  renderAvatar?: (item: MeetingTile) => ReactNode;
+  onLowerHand?: (item: MeetingTile) => void;
+  handLabel?: string;
+  lowerHandLabel?: string;
+  renderAvatar?: (item: MeetingTile, compact: boolean) => ReactNode;
   renderTileActions?: (item: MeetingTile, focused: boolean, toggleFocus: () => void) => ReactNode;
   onFocusedChange?: (focused: boolean) => void;
   renderVideo: (id: string) => ReactNode;
@@ -144,4 +150,29 @@ export interface MeetingDockProps extends MeetingPrimitives {
 }
 export interface MeetingTileActionsProps extends MeetingPrimitives {
   actions: MeetingAction[];
+}
+
+export interface MeetingRaisedHandProps {
+  raised?: boolean;
+  label?: string;
+  onLower?: () => void;
+  disabled?: boolean;
+  Icon: ComponentType<MeetingIconProps>;
+}
+
+export interface MeetingParticipantToolsProps extends MeetingPrimitives {
+  focused: boolean;
+  fullscreen?: boolean;
+  onFocus: () => void;
+  onFullscreen: () => void;
+  onAvatar?: () => void;
+  onApps?: () => void;
+  labels: {
+    focus: string;
+    unfocus: string;
+    fullscreen: string;
+    exitFullscreen: string;
+    avatar: string;
+    apps: string;
+  };
 }

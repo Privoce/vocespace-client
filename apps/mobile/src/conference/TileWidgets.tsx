@@ -1,4 +1,4 @@
-import { MeetingTileActions } from '@vocespace/ui';
+import { MeetingParticipantTools } from '@vocespace/ui';
 import { MeetingIcon, MeetingButton as Button } from '../ui/meeting';
 import { useI18n } from '../i18n';
 export function TileWidgets({
@@ -16,26 +16,22 @@ export function TileWidgets({
 }) {
   const { t } = useI18n();
   return (
-    <MeetingTileActions
+    <MeetingParticipantTools
       Button={Button}
       Icon={MeetingIcon}
-      actions={[
-        {
-          id: 'focus',
-          icon: focused ? 'unfocus' : 'focus',
-          label: t(focused ? 'shared_meeting.unfocus' : 'shared_meeting.focus'),
-          onPress: onFocus,
-        },
-        {
-          id: 'fullscreen',
-          icon: 'fullscreen',
-          label: t('common.full_screen'),
-          onPress: onFullscreen,
-        },
-        ...(onApps
-          ? [{ id: 'apps', icon: 'app' as const, label: t('more.app.title'), onPress: onApps }]
-          : []),
-      ]}
+      focused={focused}
+      onFocus={onFocus}
+      onFullscreen={onFullscreen}
+      onAvatar={onAvo}
+      onApps={onApps}
+      labels={{
+        focus: t('phone_meeting.focus_layout'),
+        unfocus: t('phone_meeting.grid'),
+        fullscreen: t('common.full_screen'),
+        exitFullscreen: t('phone_meeting.exit_fullscreen'),
+        avatar: t('phone_meeting.avatar'),
+        apps: t('more.app.title'),
+      }}
     />
   );
 }

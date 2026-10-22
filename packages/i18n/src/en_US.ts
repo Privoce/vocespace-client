@@ -1,5 +1,12 @@
 export default {
   phone_meeting: {
+    grid: 'Grid',
+    focus_layout: 'Focus',
+    page: 'Page',
+    hand_raised: 'Hand raised. When invited, tap to enable your microphone.',
+    hand_lowered: 'Hand lowered.',
+    hand_failed: 'Could not update your hand. Check the meeting connection and try again.',
+    avatar: 'Avatar',
     exit_fullscreen: 'Exit fullscreen',
     more_title: 'More actions',
     more_subtitle: 'Your space, your way',
@@ -32,6 +39,30 @@ export default {
     permissions_title: 'Choose how you participate',
     permissions_hint: 'Manage the devices you use in meetings.',
     manage_permissions: 'Manage guest permissions',
+  },
+  account_auth: {
+    reset_password: 'Reset password',
+    new_password: 'New password (at least 8 characters)',
+    confirm_password: 'Confirm password',
+    password_mismatch: 'Use at least 8 characters and enter the same password twice.',
+    recovery_failed: 'The link expired or the reset failed. Request another email from the app.',
+    email_confirmed: 'Email confirmed. Return to the app to log in.',
+    reset_done: 'Password updated. Return to the app and log in with your new password.',
+    unavailable: 'Account service is unavailable. Please try again later.',
+    invalid_credentials: 'Incorrect email/password or expired session.',
+    confirm_email: 'Check your email to confirm your account, then log in.',
+    rate_limited: 'Too many requests. Please try again later.',
+    email_exists: 'Email already registered. Log in or reset your password.',
+    password_short: 'Use at least 8 characters and meet the password strength requirements.',
+    not_configured: 'Account service is not configured. Contact the administrator.',
+    deletion_not_configured: 'Account deletion is not configured. Contact the administrator.',
+    deletion_failed: 'Account deletion did not complete. Retry or contact the administrator.',
+    reset_sent: 'If this email is registered, a password reset email will arrive shortly.',
+    deleted: 'Account deleted.',
+    delete_account: 'Delete account',
+    delete_confirm: 'Permanently delete',
+    delete_warning:
+      'This permanently deletes your account, profile, owned Spaces, todos, AI data and uploaded files. Enter your current password to confirm.',
   },
   native_account: {
     my_following: 'My following',
@@ -87,11 +118,9 @@ export default {
     version: 'v1.0.0 UI prototype',
     logout: 'Log out',
     prototype: 'UI prototype: personal statistics and benefits are demo data.',
-    not_connected: 'This screen is ready; the service will be connected later.',
-    forgot_notice:
-      'This prototype uses a configured demo account; password recovery is not available.',
-    credentials_error:
-      'Incorrect credentials. Login and registration use the demo account configured in env.',
+    not_connected:
+      'This screen is ready; the service will be connected later.This prototype uses a configured demo account; password recovery is not available.Incorrect credentials. Login and registration use the demo account configured in env.',
+
     storage_error: 'Could not save locally. Please retry.',
     saved: 'Saved',
     copied: 'Copied',
@@ -101,7 +130,7 @@ export default {
     preview_muted: 'Mute previews by default',
     auto_join: 'Join automatically after watching',
     preview_hint: 'Join after 15 seconds of valid playback. Camera and microphone stay off.',
-    email_invalid: 'Enter a valid email and a password of at least 6 characters.',
+    email_invalid: 'Enter a valid email and password; registration requires at least 8 characters.',
     copy_uid: 'Copy UID',
     copy_room: 'Copy room number',
     close: 'Close',
@@ -548,6 +577,7 @@ export default {
       upload_hint:
         'Uploads are async. Each file is limited to 10MB and will be saved under the feedback directory, then attached as a link in the email.',
       upload_success: 'Attachment uploaded',
+      document_picker_unavailable: 'This app build does not include the file picker. Rebuild and reinstall the app; text feedback is still available.',
       upload_error: 'Attachment upload failed',
       uploading: 'Uploading',
       upload_done: 'Uploaded',
