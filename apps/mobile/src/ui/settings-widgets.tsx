@@ -1,8 +1,16 @@
-import { useState, type ReactNode } from 'react';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import { useRef, useState, type ReactNode } from 'react';
+import {
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from 'react-native';
 import { PhoneSettingsButton as Button, PhoneSettingsInput as Input } from './settings';
 import { MeetingSettingsRange, MeetingButton, MeetingIcon } from './meeting';
-import { MeetingSheetHeader } from '@vocespace/ui';
+import { MeetingSheetHeader, meetingColors } from '@vocespace/ui';
 import { useI18n } from '../i18n';
 import { Switch, IconOutline } from './controls';
 export { Button, Input };
@@ -150,7 +158,7 @@ export function SettingsSelect({
           borderColor: disabled ? '#29343C' : '#304753',
           borderRadius: 12,
           minHeight: 40,
-          backgroundColor: '#1A2832',
+          backgroundColor: 'transparent',
           paddingHorizontal: 12,
           flexDirection: 'row',
           alignItems: 'center',
@@ -168,7 +176,7 @@ export function SettingsSelect({
         <View style={{ flex: 1, justifyContent: 'center', padding: 24, backgroundColor: '#0009' }}>
           <View
             style={{
-              backgroundColor: '#1A2832',
+              backgroundColor: meetingColors.modal,
               borderRadius: 12,
               padding: 16,
               maxHeight: '80%',
@@ -256,14 +264,14 @@ export function SettingsPermissionTable({
   };
   return (
     <ScrollView horizontal>
-      <View style={{ borderLeftWidth: 1, borderTopWidth: 1, borderColor: '#303030' }}>
+      <View style={{ borderTopWidth: 1, borderColor: '#303030' }}>
         <View style={{ flexDirection: 'row' }}>
           {['RBAC', 'Owner', 'Manager', 'Participant', 'Guest'].map((name, i) => (
             <View
               key={name}
               style={[
                 cells,
-                { width: i === 0 ? 140 : i === 3 ? 120 : 100, backgroundColor: '#1A2832' },
+                { width: i === 0 ? 140 : i === 3 ? 120 : 100, backgroundColor: 'transparent' },
               ]}
             >
               <Text style={{ color: '#fff', fontWeight: '600' }}>{name}</Text>
@@ -326,44 +334,79 @@ export function SettingsDialog({
   closeInHeader?: boolean;
 }) {
   const { t } = useI18n();
+  const scroll = useRef<ScrollView>(null);
   return (
-    <Modal visible={open} transparent animationType="fade" onRequestClose={onClose}>
-      <View style={{ flex: 1, justifyContent: 'center', backgroundColor: '#0008', padding: 16 }}>
-        <View
-          style={{
-            backgroundColor: '#1A2832',
-            borderRadius: 8,
-            padding: closeInHeader ? 0 : 24,
-            gap: 16,
-            maxHeight: '85%',
-          }}
-        >
-          {closeInHeader ? (
-            <MeetingSheetHeader
-              title={title}
-              closeLabel={t('common.close')}
-              onClose={onClose}
-              Button={MeetingButton}
-              Icon={MeetingIcon}
-            />
-          ) : (
-            <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>{title}</Text>
-          )}
-          <ScrollView keyboardShouldPersistTaps="handled" style={{ flexGrow: 0, minHeight: 0 }}>
-            {children}
-          </ScrollView>
-          {(!closeInHeader || confirmLabel) && (
-            <View style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8 }}>
-              {!closeInHeader && <Button onPress={onClose}>{t('common.cancel')}</Button>}
-              {confirmLabel && (
-                <Button active disabled={disabled || !onConfirm} onPress={onConfirm}>
-                  {confirmLabel}
-                </Button>
+    <Modal
+      visible={open}
+      transparent
+      animationType="fade"
+      onRequestClose={onClose}
+      onShow={() => scroll.current?.flashScrollIndicators()}
+    >
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      >
+        <View style={{ flex: 1, justifyContent: 'center', backgroundColor: '#0008', padding: 12 }}>
+          <View
+            style={{
+              backgroundColor: meetingColors.modal,
+              borderRadius: 8,
+              padding: closeInHeader ? 0 : 24,
+              gap: 16,
+              // Feedback needs a bounded viewport; maxHeight alone leaves its content-sized
+              // ScrollView dependent on Yoga's intrinsic measurement of the long form.
+              height: closeInHeader ? '85%' : undefined,
+              maxHeight: '85%',
+            }}
+          >
+            <View style={{ flexShrink: 0 }}>
+              {closeInHeader ? (
+                <MeetingSheetHeader
+                  title={title}
+                  closeLabel={t('common.close')}
+                  onClose={onClose}
+                  Button={MeetingButton}
+                  Icon={MeetingIcon}
+                />
+              ) : (
+                <Text style={{ color: '#fff', fontWeight: '600', fontSize: 16 }}>{title}</Text>
               )}
             </View>
-          )}
+            <ScrollView
+              ref={scroll}
+              keyboardShouldPersistTaps="handled"
+              keyboardDismissMode="on-drag"
+              nestedScrollEnabled
+              showsVerticalScrollIndicator
+              indicatorStyle="white"
+              persistentScrollbar
+              onContentSizeChange={() => scroll.current?.flashScrollIndicators()}
+              style={{
+                flexGrow: closeInHeader ? 1 : 0,
+                flexShrink: 1,
+                flexBasis: closeInHeader ? 0 : 'auto',
+                minHeight: 0,
+              }}
+              contentContainerStyle={{ paddingBottom: 16 }}
+            >
+              {children}
+            </ScrollView>
+            {(!closeInHeader || confirmLabel) && (
+              <View
+                style={{ flexDirection: 'row', justifyContent: 'flex-end', gap: 8, flexShrink: 0 }}
+              >
+                {!closeInHeader && <Button onPress={onClose}>{t('common.cancel')}</Button>}
+                {confirmLabel && (
+                  <Button active disabled={disabled || !onConfirm} onPress={onConfirm}>
+                    {confirmLabel}
+                  </Button>
+                )}
+              </View>
+            )}
+          </View>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     </Modal>
   );
 }

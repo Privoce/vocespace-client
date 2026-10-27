@@ -3,7 +3,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import type { NativeSpaceSummary } from '@vocespace/contracts';
 import type { useConference } from './useConference';
-export function useSpaceBrowser(model: ReturnType<typeof useConference>, initiallyOpen = false) {
+export function useSpaceBrowser(
+  model: ReturnType<typeof useConference>,
+  initiallyOpen = false,
+  active = true,
+) {
   const [spaces, setSpaces] = useState<NativeSpaceSummary[]>([]);
   const [open, setOpen] = useState(initiallyOpen);
   const [index, setIndex] = useState(0);
@@ -11,7 +15,7 @@ export function useSpaceBrowser(model: ReturnType<typeof useConference>, initial
   const [revision, setRevision] = useState(0);
   const switching = useRef(false);
   useEffect(() => {
-    if (!model.configured) return;
+    if (!model.configured || !active) return;
     const abort = new AbortController();
     let pending = false;
     const reload = async () => {
@@ -46,7 +50,7 @@ export function useSpaceBrowser(model: ReturnType<typeof useConference>, initial
       clearInterval(timer);
       listener?.remove();
     };
-  }, [model.configured, model.listSpaces, revision, open]);
+  }, [model.configured, model.listSpaces, revision, open, active]);
   const browse = useCallback(
     async (direction: number) => {
       if (switching.current || spaces.length < 2) return;

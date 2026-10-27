@@ -51,7 +51,7 @@ const classStyles: Record<string, ViewStyle> = {
   },
   card: {
     padding: 16,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: 'transparent',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#ffffff12',

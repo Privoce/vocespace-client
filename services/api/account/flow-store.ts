@@ -40,4 +40,15 @@ export const accountFlows = {
       throw new StorageUnavailableError();
     }
   },
+  async read(key: string): Promise<unknown> {
+    if (!/^[a-f0-9]{64}$/.test(key)) return null;
+    try {
+      const redis = getSpaceRedisClient();
+      if (!redis) throw new Error();
+      const raw = await redis.get(`v1:account-flow:${key}`);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      throw new StorageUnavailableError();
+    }
+  },
 };

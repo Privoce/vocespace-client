@@ -2,8 +2,13 @@ import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ApiError } from '@vocespace/client-sdk';
 const mocks = vi.hoisted(() => ({
+  profile: vi.fn(),
+  avatar: vi.fn(),
   login: vi.fn(),
   register: vi.fn(),
+  sendRegistrationCode: vi.fn(),
+  verifyRegistration: vi.fn(),
+  resetCode: vi.fn(),
   refresh: vi.fn(),
   me: vi.fn(),
   logout: vi.fn(),
@@ -25,6 +30,7 @@ vi.mock('../src/account/client', () => ({
   }),
 }));
 vi.mock('@react-native-async-storage/async-storage', () => ({ default: mocks }));
+import { AppState } from 'react-native';
 import { useAccount } from '../src/account/hooks/useAccount';
 const user = {
   id: '11111111-2222-3333-4444-555555555555',
@@ -52,6 +58,9 @@ beforeEach(() => {
   mocks.login.mockResolvedValue(session);
   mocks.logout.mockResolvedValue(undefined);
   mocks.forgot.mockResolvedValue(undefined);
+  mocks.sendRegistrationCode.mockResolvedValue(undefined);
+  mocks.verifyRegistration.mockResolvedValue(session);
+  mocks.resetCode.mockResolvedValue(undefined);
   mocks.remove.mockResolvedValue(undefined);
 });
 afterEach(cleanup);
@@ -79,21 +88,26 @@ it('uses the server identity and secure session storage, without persisting pass
   expect(saved).toBeNull();
   expect(restored.result.current.signedIn).toBe(false);
 });
-it('does not log in after confirmation-required registration and never falls back to demo credentials', async () => {
-  mocks.register.mockResolvedValue({ session: null, confirmationRequired: true });
+it('sends registration mail without signing in and requires successful code verification', async () => {
   const hook = await setup();
   act(() => hook.result.current.open('register'));
   await act(async () => {
-    await hook.result.current.authenticate(user.email, 'password', true);
+    await hook.result.current.sendRegistrationCode(user.email, 'password', false);
   });
   expect(hook.result.current.signedIn).toBe(false);
   expect(saved).toBeNull();
-  expect(hook.result.current.message).toBe('account_auth.confirm_email');
-  mocks.login.mockRejectedValue(new ApiError(401, 'AUTH_INVALID_CREDENTIALS', 'invalid'));
+  mocks.verifyRegistration.mockRejectedValueOnce(new ApiError(400, 'AUTH_INVALID_CODE', 'invalid'));
   await act(async () => {
-    await hook.result.current.authenticate('syf@outlook.com', 'test001', true);
+    await hook.result.current.authenticate(user.email, 'password', true, '123456');
   });
   expect(hook.result.current.signedIn).toBe(false);
+  expect(hook.result.current.error).toBe('account_auth.invalid_code');
+  await act(async () => {
+    await hook.result.current.authenticate(user.email, 'password', true, '654321');
+  });
+  expect(hook.result.current.signedIn).toBe(true);
+  expect(mocks.verifyRegistration).toHaveBeenLastCalledWith(user.email, '654321');
+  expect(saved).not.toContain('654321');
 });
 it('refreshes an expired stored session before verifying the account', async () => {
   saved = JSON.stringify({ ...session, expiresAt: 1 });
@@ -151,4 +165,115 @@ it('finishes restoring a revoked session even if local keychain deletion fails',
   const hook = await setup();
   expect(hook.result.current.ready).toBe(true);
   expect(hook.result.current.signedIn).toBe(false);
+});
+it('does not restore an unchecked login after restarting the app', async () => {
+  const hook = await setup();
+  await act(async () => {
+    await hook.result.current.authenticate(user.email, 'password', false);
+  });
+  expect(hook.result.current.signedIn).toBe(true);
+  hook.unmount();
+  const restarted = await setup();
+  expect(restarted.result.current.signedIn).toBe(false);
+  expect(saved).toBeNull();
+});
+it('opens code reset after sending mail and returns to login after password reset', async () => {
+  const hook = await setup();
+  await act(async () => {
+    await hook.result.current.forgot(user.email);
+  });
+  expect(hook.result.current.screen).toBe('reset');
+  mocks.resetCode.mockRejectedValueOnce(new ApiError(400, 'AUTH_INVALID_CODE', 'expired'));
+  await act(async () => {
+    await hook.result.current.resetPassword(user.email, '123456', 'new-password');
+  });
+  expect(hook.result.current.screen).toBe('reset');
+  await act(async () => {
+    await hook.result.current.resetPassword(user.email, '654321', 'new-password');
+  });
+  expect(hook.result.current.screen).toBe('login');
+  expect(hook.result.current.message).toBe('account_auth.reset_done');
+  expect(saved).toBeNull();
+});
+
+it('updates the visible and remembered avatar only after a successful upload', async () => {
+  const hook = await setup();
+  await act(async () => {
+    await hook.result.current.authenticate(user.email, 'password', true);
+  });
+  mocks.avatar.mockRejectedValueOnce(new Error('upload failed'));
+  const form = new FormData();
+  await act(async () => {
+    expect(await hook.result.current.uploadAvatar(form)).toBe(false);
+  });
+  expect(hook.result.current.profile.avatar).toBeUndefined();
+  const avatar = 'https://images.test/profile.png';
+  mocks.avatar.mockResolvedValueOnce({ ...user, avatar });
+  await act(async () => {
+    expect(await hook.result.current.uploadAvatar(form)).toBe(true);
+  });
+  expect(hook.result.current.profile.avatar).toBe(avatar);
+  expect(JSON.parse(saved!).user.avatar).toBe(avatar);
+  expect(mocks.avatar).toHaveBeenLastCalledWith('access', form);
+});
+
+it('saves nicknames remotely, persists the confirmed value and keeps the old name on failure', async () => {
+  const hook = await setup();
+  await act(async () => {
+    await hook.result.current.authenticate(user.email, 'password', true);
+  });
+  mocks.profile.mockRejectedValueOnce(new ApiError(502, 'PROFILE_UPDATE_FAILED', 'failed'));
+  await act(async () => {
+    expect(await hook.result.current.updateNickname('新昵称')).toBe(false);
+  });
+  expect(hook.result.current.profile.nickname).toBe(user.nickname);
+  expect(hook.result.current.error).toBe('account_auth.profile_failed');
+  const updated = { ...user, nickname: '新昵称' };
+  mocks.profile.mockResolvedValueOnce(updated);
+  await act(async () => {
+    expect(await hook.result.current.updateNickname('新昵称')).toBe(true);
+  });
+  expect(mocks.profile).toHaveBeenLastCalledWith('access', '新昵称');
+  expect(hook.result.current.profile.nickname).toBe('新昵称');
+  expect(JSON.parse(saved!).user.nickname).toBe('新昵称');
+  hook.unmount();
+  mocks.me.mockResolvedValue(updated);
+  const restored = await setup();
+  expect(restored.result.current.profile.nickname).toBe('新昵称');
+});
+
+it('waits for foreground account refresh when returning from the image picker', async () => {
+  let foreground: (state: 'active') => void = () => {};
+  const listener = vi.spyOn(AppState, 'addEventListener').mockImplementation((_, callback) => {
+    foreground = callback;
+    return { remove: () => {} };
+  });
+  try {
+    const hook = await setup();
+    await act(async () => {
+      await hook.result.current.authenticate(user.email, 'password', true);
+    });
+    let resolveProfile!: (value: typeof user) => void;
+    mocks.me.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          resolveProfile = resolve;
+        }),
+    );
+    act(() => foreground('active'));
+    mocks.avatar.mockResolvedValueOnce({ ...user, avatar: 'https://images.test/new.png' });
+    let uploading!: Promise<boolean>;
+    await act(async () => {
+      uploading = hook.result.current.uploadAvatar(new FormData());
+    });
+    expect(mocks.avatar).not.toHaveBeenCalled();
+    await act(async () => {
+      resolveProfile(user);
+      expect(await uploading).toBe(true);
+    });
+    expect(hook.result.current.profile.avatar).toBe('https://images.test/new.png');
+    hook.unmount();
+  } finally {
+    listener.mockRestore();
+  }
 });

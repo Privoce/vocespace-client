@@ -1,3 +1,8 @@
+import { useState } from 'react';
+import type { AccountModel } from '../account/hooks/useAccount';
+import { MeetingTabHeader, type MeetingTab } from './meetings/MeetingTabHeader';
+import { MySpaces } from './meetings/MySpaces';
+import { meetingTabStyles } from './meetings/styles';
 import type { LocalSettings } from '../settings/model';
 import { ActivityIndicator, Text, View } from 'react-native';
 import { RoomContext } from '@livekit/react-native';
@@ -11,18 +16,23 @@ import { PrimaryButton } from '../ui/controls';
 import { colors, ui } from '../theme';
 export function MeetingsScreen({
   model,
-  accountEmail,
+  account,
+  active,
+  onPreferences,
   nickname,
   preferences,
   preferencesReady,
 }: {
   model: ReturnType<typeof useConference>;
   nickname: string;
-  accountEmail?: string;
+  account: AccountModel;
+  active: boolean;
+  onPreferences: (patch: Partial<LocalSettings>) => void;
   preferences: LocalSettings;
   preferencesReady: boolean;
 }) {
-  const browser = useSpaceBrowser(model, true);
+  const [section, setSection] = useState<MeetingTab>(account.signedIn ? 'mine' : 'plaza');
+  const browser = useSpaceBrowser(model, true, active);
   const { state } = model;
   const busy = state.phase === 'joining' || state.phase === 'leaving';
   const connected = state.phase === 'joined' && state.room;
@@ -31,10 +41,13 @@ export function MeetingsScreen({
       <RoomContext.Provider value={connected.raw}>
         <SharedMeetingRoom
           key={state.joined!.joinId}
-          accountEmail={accountEmail}
+          accountEmail={account.signedIn ? account.profile.email : undefined}
           conference={model}
           room={connected}
-          onBrowse={browser.browse}
+          onBrowse={async (direction) => {
+            await browser.browse(direction);
+            setSection('plaza');
+          }}
         />
         <ScreenSharePicker room={connected} />
       </RoomContext.Provider>
@@ -54,17 +67,36 @@ export function MeetingsScreen({
         </PrimaryButton>
       </View>
     );
+  const joinError = state.error != null ? meetingFailure(state.error) : undefined;
   return (
-    <SpaceBrowser
-      browser={browser}
-      busy={busy}
-      model={model}
-      preferences={preferences}
-      preferencesReady={preferencesReady}
-      joinError={state.error != null ? meetingFailure(state.error) : undefined}
-      join={async (name) => {
-        await model.join(name, nickname.trim() || '访客');
-      }}
-    />
+    <View style={meetingTabStyles.screen}>
+      <MeetingTabHeader selected={section} onSelect={setSection} />
+      {section === 'mine' ? (
+        <MySpaces
+          account={account}
+          active={active}
+          spaces={browser.spaces}
+          disabled={!model.configured || !preferencesReady || !account.ready || account.busy}
+          error={joinError}
+          onJoin={(name, create) => {
+            void model.join(name, nickname.trim() || '访客', undefined, create);
+          }}
+        />
+      ) : (
+        <SpaceBrowser
+          browser={browser}
+          active={active}
+          busy={busy}
+          model={model}
+          preferences={preferences}
+          onPreferences={onPreferences}
+          preferencesReady={preferencesReady}
+          joinError={joinError}
+          join={async (name) => {
+            await model.join(name, nickname.trim() || '访客');
+          }}
+        />
+      )}
+    </View>
   );
 }

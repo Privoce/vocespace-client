@@ -1,3 +1,4 @@
+import Link from 'next/link';
 
 import { AboutSettingsContent as SharedAboutSettingsContent } from '@vocespace/ui';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
@@ -8,10 +9,26 @@ import { useI18n } from '@/lib/i18n/i18n';
 export function AboutUs() {
   const phoneSettings = useLayoutDevice() === 'phone';
   const { t } = useI18n();
+  const legalLinks = (
+    <div style={{ width: '100%', display: 'flex', gap: 24, flexWrap: 'wrap' }}>
+      {(['privacy', 'terms'] as const).map((document) => (
+        <Link
+          key={document}
+          href={`/legal/${document}`}
+          target="_blank"
+          rel="noreferrer"
+          style={{ color: '#22CCEE', padding: '12px 0' }}
+        >
+          {t(`legal.${document}`)}
+        </Link>
+      ))}
+    </div>
+  );
   if (phoneSettings)
     return SharedAboutSettingsContent({
       elements: settingsElements,
       styles: {},
+      legalLinks,
       t,
       logo: <SvgResource type="logo" svgSize={64}></SvgResource>,
     });
@@ -65,6 +82,7 @@ export function AboutUs() {
           </a>
         </div>
       </div>
+      {legalLinks}
     </div>
   );
 }

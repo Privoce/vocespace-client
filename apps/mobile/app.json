@@ -20,6 +20,15 @@
       "expo-dev-client",
       "expo-secure-store",
       [
+        "expo-localization",
+        {
+          "supportedLocales": {
+            "ios": ["en", "zh-Hans", "ru"],
+            "android": ["en", "zh", "ru"]
+          }
+        }
+      ],
+      [
         "@livekit/react-native-expo-plugin",
         {
           "android": {

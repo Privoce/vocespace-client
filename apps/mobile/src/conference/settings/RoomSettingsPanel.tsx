@@ -1,3 +1,4 @@
+import { AboutContent } from '../../ui/AboutContent';
 import { RecordingSettings } from './RecordingSettings';
 import { DeviceSettings } from './DeviceSettings';
 import { LicenseSettings } from './LicenseSettings';
@@ -9,9 +10,8 @@ import {
   VideoSettingsContent,
   AuthSettingsContent,
   AppSettingsContent,
-  AboutSettingsContent,
 } from '@vocespace/ui';
-import { langOptions } from '@vocespace/i18n';
+import { LanguageSelect } from '../../ui/LanguageSelect';
 import { settingsStyleNames } from '../../ui/settings-elements';
 import {
   Button,
@@ -19,7 +19,6 @@ import {
   SettingsChoice,
   SettingsNote,
   SettingsPermissionTable,
-  SettingsSelect,
   SettingsSlider,
   SettingsToggle,
 } from '../../ui/settings-widgets';
@@ -63,15 +62,7 @@ export function RoomSettingsPanel({ model, panel }: { model: RoomSettingsModel; 
             owner: !!snapshot?.room?.isOwner,
             slots: {
               introIcon: <SettingsIcon name="setting" size={24} color="#22CCEE" />,
-              language: (
-                <SettingsSelect
-                  label={t('settings.general.lang')}
-                  icon={<SettingsIcon name="lang" color="#22CCEE" size={16} />}
-                  value={model.locale}
-                  options={langOptions}
-                  onChange={model.changeLocale}
-                />
-              ),
+              language: <LanguageSelect />,
               status: (
                 <View style={{ flex: 1 }}>
                   <Input
@@ -359,7 +350,7 @@ export function RoomSettingsPanel({ model, panel }: { model: RoomSettingsModel; 
     case 'license':
       return <LicenseSettings common={common} />;
     case 'about_us':
-      return AboutSettingsContent({ ...common, logo: <SettingsIcon name="logo" size={64} /> });
+      return <AboutContent />;
     default:
       return null;
   }

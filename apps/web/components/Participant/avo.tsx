@@ -239,8 +239,9 @@ async function mountAvoRuntime(
     p.touchStarted = (event?: TouchEvent) => {
       if (isTopmostPressInsideContainer(event)) {
         creature.pop();
+        // p5 listens globally; only cancel touches handled by this avatar.
+        return false;
       }
-      return false;
     };
   }, container);
 

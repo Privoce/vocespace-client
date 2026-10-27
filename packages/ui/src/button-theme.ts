@@ -11,7 +11,7 @@ export const phoneButtonColors = {
   disabledText: '#333333',
   disabledBackground: 'rgba(0,0,0,0.04)',
   selectedText: '#22CCEE',
-  optionBackground: '#1A2832',
+  optionBackground: 'transparent',
   optionBorder: '#304753',
   optionText: '#DBE6EC',
 } as const;
@@ -24,15 +24,15 @@ export function meetingButtonVisual({
   const circle = appearance === 'circle' || appearance === 'danger' || appearance === 'icon';
   return {
     backgroundColor:
-      appearance === 'icon' || appearance === 'row'
+      appearance === 'icon' || appearance === 'row' || (appearance === 'plain' && !active)
         ? 'transparent'
         : appearance === 'danger' || appearance === 'controlDanger'
           ? '#24171A'
           : active || appearance === 'primary'
             ? circle || control
-              ? '#153B46'
+              ? '#1f1f1f'
               : phoneButtonColors.primary
-            : '#1A2832',
+            : '#1f1f1f',
     borderColor:
       appearance === 'danger' || appearance === 'controlDanger' || appearance === 'destructive'
         ? '#FF4D4F'

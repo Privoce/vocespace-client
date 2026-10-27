@@ -30,7 +30,6 @@ export function MeetingButton({
           width: '100%',
           minHeight: 44,
           ...visual,
-          borderRadius: appearance === 'row' ? 0 : 14,
           opacity: disabled ? 0.5 : pressed ? 0.75 : 1,
         })}
       >
@@ -66,7 +65,6 @@ export function MeetingButton({
         control && {
           width: 48,
           height: 46,
-          borderRadius: 14,
           paddingHorizontal: 0,
         },
         visual,
@@ -92,28 +90,19 @@ export function MeetingInput({
       editable={!disabled}
       multiline
       maxLength={maxLength}
-      style={styles.input}
+      style={ui.input}
     />
   );
 }
 const styles = StyleSheet.create({
   button: {
     minHeight: 40,
-    borderRadius: 10,
-    backgroundColor: '#1A2832',
+    backgroundColor: '#1f1f1f',
     borderColor: '#FFFFFF16',
     paddingHorizontal: 10,
   },
   circle: { width: 44, height: 44, borderRadius: 22, paddingHorizontal: 0 },
   content: { width: '100%', alignItems: 'center', justifyContent: 'center', minHeight: 24 },
-  input: {
-    minHeight: 42,
-    maxHeight: 120,
-    backgroundColor: '#1A222C',
-    borderRadius: 10,
-    borderWidth: 0,
-    paddingHorizontal: 12,
-  },
 });
 
 export function MeetingSettingsInput({
@@ -137,7 +126,7 @@ export function MeetingSettingsInput({
       secureTextEntry={secure}
       multiline={multiline && !secure}
       onSubmitEditing={onSubmit}
-      style={[styles.input, multiline && { minHeight: 120 }]}
+      style={[ui.input, multiline && { minHeight: 120 }]}
       inputStyle={[ui.inputText, multiline && { textAlignVertical: 'top' }]}
     />
   );

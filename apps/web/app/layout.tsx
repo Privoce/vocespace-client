@@ -1,4 +1,4 @@
-import { phoneButtonColors } from '@vocespace/ui/theme';
+import { phoneButtonColors, meetingColors } from '@vocespace/ui/theme';
 import { DeviceLayoutSync } from '../components/Layout/DeviceLayoutSync';
 import { I18nProvider } from '@/lib/i18n/i18n';
 import { WeChatAccessGuard } from '../components/Guard/WeChatAccessGuard';
@@ -71,7 +71,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             itemSelectedBg: '#22CCEE',
             itemSelectedColor: '#1E1E1E',
             trackBg: '#1E1E1E',
-            itemColor: '#fff'
+            itemColor: '#fff',
           },
           Button: {
             defaultColor: phoneButtonColors.defaultText,
@@ -100,7 +100,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             paddingBlockLG: 8,
             colorBorderSecondary: '#1E1E1E',
             colorText: '#ffffff',
-            colorTextDisabled: "#8c8c8c"
+            colorTextDisabled: '#8c8c8c',
           },
           InputNumber: {
             colorBgBase: '#1E1E1E',
@@ -145,6 +145,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             colorIconHover: '#ffffff',
             hoverBorderColor: '#22CCEE',
             optionSelectedBg: '#22CCEE',
+            controlItemBgActiveHover: '#22CCEE',
             optionSelectedColor: '#fff',
             optionActiveBg: '#333',
             colorBgBase: '#1E1E1E',
@@ -157,9 +158,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             colorBgElevated: '#1E1E1E',
           },
           Modal: {
-            contentBg: '#1E1E1E',
-            headerBg: '#1E1E1E',
-            footerBg: '#1E1E1E',
+            contentBg: meetingColors.modal,
+            headerBg: meetingColors.modal,
+            footerBg: meetingColors.modal,
             titleColor: '#ffffff',
           },
           Avatar: {
@@ -222,7 +223,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       }}
     >
       <html lang="en">
-        <body  style={{backgroundColor: '#1a1a1a'}}>
+        <body style={{ backgroundColor: '#1a1a1a' }}>
           <I18nProvider initialLocale="en">
             {/* component={false} 不渲染额外 DOM，仅为 App.useApp() 提供上下文（message 等消费主题） */}
             <App component={false}>

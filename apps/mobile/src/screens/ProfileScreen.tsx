@@ -1,3 +1,8 @@
+import { AccountAvatar } from '../account/AccountAvatar';
+import { FeedbackPage } from '../feedback/FeedbackPage';
+import type { FeedbackSend } from '../feedback/client';
+import { ProfilePage } from '../account/ProfilePage';
+import { AboutContent } from '../ui/AboutContent';
 import type { ComponentProps, ReactNode } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import type { useLocalSettings } from '../settings/hooks/useLocalSettings';
@@ -7,6 +12,7 @@ import { accountColors as c, accountStyles as s } from '../account/styles';
 import { useI18n } from '../i18n';
 import { IconOutline, Input, PrimaryButton, Switch } from '../ui/controls';
 import { SettingsDialog } from '../ui/settings-widgets';
+import { LanguageSelect } from '../ui/LanguageSelect';
 type IconName = ComponentProps<typeof IconOutline>['name'];
 export function ProfileScreen({
   model,
@@ -16,6 +22,7 @@ export function ProfileScreen({
   onLogout,
   onDelete,
   joining,
+  sendFeedback,
 }: {
   model: ReturnType<typeof useLocalSettings>;
   account: AccountModel;
@@ -24,11 +31,13 @@ export function ProfileScreen({
   onLogout: () => Promise<void>;
   onDelete: (password: string) => Promise<boolean>;
   joining: boolean;
+  sendFeedback: FeedbackSend;
 }) {
-  const { t } = useI18n();
+  const { t, error: languageError } = useI18n();
   const text = (key: string) => t(`native_account.${key}`);
   const m = useProfileScreen(account);
   const signedIn = account.signedIn;
+  /* 我的内容尚未接入，保留布局供后续恢复。
   const library = (
     <>
       <Row
@@ -52,13 +61,36 @@ export function ProfileScreen({
       />
     </>
   );
+  */
+  if (m.panel === 'feedback')
+    return (
+      <FeedbackPage
+        accountEmail={signedIn ? account.profile.email : undefined}
+        send={sendFeedback}
+        onBack={() => m.setPanel(undefined)}
+      />
+    );
+  if (m.panel === 'about')
+    return (
+      <ProfilePage title={text('about')} onBack={() => m.setPanel(undefined)}>
+        <AboutContent fullPage />
+      </ProfilePage>
+    );
   return (
     <ScrollView style={s.screen} contentContainerStyle={s.page} keyboardShouldPersistTaps="handled">
       {signedIn ? (
         <View style={styles.identity}>
-          <View style={styles.avatar}>
-            <IconOutline name="user" size={42} color={c.accent} />
-          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={t('account_auth.change_avatar')}
+            disabled={account.busy || m.pickingAvatar}
+            onPress={() => void m.pickAvatar()}
+          >
+            <AccountAvatar
+              username={account.profile.username || account.profile.email}
+              avatar={account.profile.avatar}
+            />
+          </Pressable>
           <View style={{ flex: 1, gap: 5 }}>
             <View style={[s.row, { justifyContent: 'space-between', flexWrap: 'wrap' }]}>
               <Text style={s.title} numberOfLines={1}>
@@ -69,14 +101,13 @@ export function ProfileScreen({
                 <Text style={s.link}>{text('edit')}</Text>
               </Pressable>
             </View>
-            <Text style={styles.level}>{text('level')}</Text>
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={text('copy_uid')}
-              onPress={m.copyUid}
+              accessibilityLabel={text('email')}
+              onPress={m.copyEmail}
               style={s.row}
             >
-              <Text style={[s.muted, { letterSpacing: 1 }]}>UID {account.profile.id}</Text>
+              <Text style={[s.muted, { flex: 1, flexShrink: 1 }]}>{account.profile.email}</Text>
               <IconOutline name="copy" size={14} color={c.muted} />
             </Pressable>
             <View style={styles.member}>
@@ -114,16 +145,6 @@ export function ProfileScreen({
           </View>
         </View>
       )}
-      <View style={styles.stats}>
-        {(['following', 'followers', 'likes', 'duration'] as const).map((key, i) => (
-          <View key={key} style={styles.stat}>
-            <Text style={signedIn ? styles.count : s.muted}>
-              {signedIn ? ['128', '3,456', '1.2万', '86h'][i] : '—'}
-            </Text>
-            <Text style={s.muted}>{text(key)}</Text>
-          </View>
-        ))}
-      </View>
       {signedIn ? (
         <View style={s.panel}>
           <View style={[s.row, { justifyContent: 'space-between', flexWrap: 'wrap' }]}>
@@ -131,14 +152,15 @@ export function ProfileScreen({
               <IconOutline name="desktop" size={20} color={c.accent} />
               <Text style={[s.text, { fontWeight: '700' }]}>{text('my_room')}</Text>
             </View>
-            <Text style={styles.status}>{text('available')}</Text>
+            {!!m.roomName && <Text style={styles.status}>{text('available')}</Text>}
           </View>
           <View style={s.row}>
-            <Text style={styles.roomName}>{m.roomName}</Text>
+            <Text style={styles.roomName}>{m.roomName || t('account_auth.room_unavailable')}</Text>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={text('copy_room')}
               onPress={m.copy}
+              disabled={!m.roomName}
               style={styles.copy}
             >
               <IconOutline name="copy" size={20} color={c.text} />
@@ -146,7 +168,11 @@ export function ProfileScreen({
           </View>
           <View style={s.row}>
             <View style={{ flex: 1 }}>
-              <PrimaryButton disabled={joining} onPress={() => onJoin(m.roomName)} style={s.button}>
+              <PrimaryButton
+                disabled={joining || !m.roomName}
+                onPress={() => onJoin(m.roomName)}
+                style={s.button}
+              >
                 <View style={[s.row, { gap: 6 }]}>
                   <IconOutline name="video-camera" size={17} color="#142128" />
                   <Text style={{ color: '#142128', fontSize: 16 }}>{text('quick_meeting')}</Text>
@@ -156,6 +182,7 @@ export function ProfileScreen({
             <View style={{ flex: 1 }}>
               <PrimaryButton
                 type="ghost"
+                disabled={!m.roomName}
                 onPress={() => {
                   void m.share();
                 }}
@@ -181,6 +208,7 @@ export function ProfileScreen({
           </Text>
         </View>
       )}
+      {/* 我的内容尚未接入，暂时隐藏。
       <Section title={text('library')}>
         {signedIn ? (
           library
@@ -200,6 +228,7 @@ export function ProfileScreen({
           </Pressable>
         )}
       </Section>
+      */}
       <Section title={text('general')}>
         <Row
           icon="notification"
@@ -228,14 +257,8 @@ export function ProfileScreen({
           }
         />
         <Row icon="setting" title={text('preferences')} onPress={() => m.setPanel('preferences')} />
-        <Row icon="question-circle" title={text('help')} onPress={() => m.notice('help')} />
-        <Row
-          icon="info-circle"
-          title={text('about')}
-          detail={text('version')}
-          onPress={() => m.notice('about')}
-          last
-        />
+        <Row icon="question-circle" title={text('help')} onPress={() => m.setPanel('feedback')} />
+        <Row icon="info-circle" title={text('about')} onPress={() => m.setPanel('about')} last />
       </Section>
       {signedIn && (
         <Pressable
@@ -303,15 +326,38 @@ export function ProfileScreen({
           {account.error ? t(account.error) : model.error}
         </Text>
       )}
-      <Text style={[s.muted, { fontSize: 10, textAlign: 'center' }]}>{text('prototype')}</Text>
       <SettingsDialog
         open={m.panel === 'edit'}
         title={text('edit')}
-        onClose={() => m.setPanel(undefined)}
+        onClose={() => {
+          if (!account.busy && !m.pickingAvatar) m.setPanel(undefined);
+        }}
         onConfirm={m.save}
         confirmLabel={t('auth.save')}
-        disabled={!m.nickname.trim()}
+        disabled={!m.nickname.trim() || account.busy || m.pickingAvatar}
       >
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={t('account_auth.change_avatar')}
+          disabled={account.busy || m.pickingAvatar}
+          onPress={() => void m.pickAvatar()}
+          style={{ alignItems: 'center', gap: 8, marginBottom: 16 }}
+        >
+          <AccountAvatar
+            username={account.profile.username || account.profile.email}
+            avatar={account.profile.avatar}
+            size={80}
+          />
+          <Text style={s.link}>
+            {t(m.pickingAvatar ? 'account_auth.avatar_uploading' : 'account_auth.change_avatar')}
+          </Text>
+          <Text style={s.muted}>{t('account_auth.avatar_hint')}</Text>
+        </Pressable>
+        {account.error && (
+          <Text accessibilityRole="alert" style={s.muted}>
+            {t(account.error)}
+          </Text>
+        )}
         <Text style={[s.muted, { marginBottom: 10 }]}>{account.profile.email}</Text>
         <Input
           accessibilityLabel={text('nickname')}
@@ -328,6 +374,13 @@ export function ProfileScreen({
         onConfirm={() => m.setPanel(undefined)}
         confirmLabel={text('close')}
       >
+        <Text style={s.muted}>{t('settings.general.lang')}</Text>
+        <LanguageSelect />
+        {languageError && (
+          <Text accessibilityRole="alert" style={s.muted}>
+            {t(languageError)}
+          </Text>
+        )}
         {!signedIn && (
           <Input
             accessibilityLabel={text('nickname')}
@@ -414,16 +467,6 @@ function Row({
 }
 const styles = StyleSheet.create({
   identity: { flexDirection: 'row', gap: 12, paddingVertical: 18, alignItems: 'flex-start' },
-  avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    borderWidth: 3,
-    borderColor: '#505050',
-    backgroundColor: '#10252C',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   edit: {
     flexDirection: 'row',
     gap: 5,
@@ -433,17 +476,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#22CCEE88',
     borderRadius: 4,
-  },
-  level: {
-    color: c.accent,
-    fontSize: 11,
-    fontWeight: '600',
-    borderWidth: 1,
-    borderColor: '#22CCEE88',
-    borderRadius: 5,
-    paddingVertical: 2,
-    paddingHorizontal: 7,
-    alignSelf: 'flex-start',
   },
   member: {
     flexDirection: 'row',
@@ -470,16 +502,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 4,
   },
-  stats: {
-    flexDirection: 'row',
-    backgroundColor: c.panel,
-    borderWidth: 1,
-    borderColor: c.line,
-    borderRadius: 12,
-    paddingVertical: 14,
-  },
-  stat: { flex: 1, alignItems: 'center', gap: 5 },
-  count: { color: c.text, fontSize: 22, fontWeight: '700' },
   status: {
     color: '#EDBC43',
     borderColor: '#846D24',
@@ -490,7 +512,14 @@ const styles = StyleSheet.create({
     fontSize: 11,
     backgroundColor: '#393422',
   },
-  roomName: { color: c.accent, fontWeight: '700', fontSize: 28, letterSpacing: 2 },
+  roomName: {
+    flex: 1,
+    flexShrink: 1,
+    color: c.accent,
+    fontWeight: '700',
+    fontSize: 28,
+    letterSpacing: 2,
+  },
   copy: { padding: 8, borderWidth: 1, borderColor: '#3C3C3C', borderRadius: 20 },
   gift: { backgroundColor: '#202323', borderRadius: 20, padding: 9 },
   section: { backgroundColor: '#202020', borderRadius: 10, padding: 12, gap: 8 },

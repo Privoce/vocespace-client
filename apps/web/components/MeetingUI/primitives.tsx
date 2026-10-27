@@ -35,10 +35,7 @@ export function MeetingButton({
       onClick={onPress}
       type={active || appearance === 'primary' ? 'primary' : 'default'}
       style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: appearance === 'plain' || appearance === 'row' || circle ? 0 : '4px 12px',
+        padding: 0,
         width: control
           ? 48
           : circle
@@ -53,7 +50,6 @@ export function MeetingButton({
             : appearance === 'plain' || appearance === 'row'
               ? 'auto'
               : 40,
-        borderRadius: appearance === 'row' ? 0 : control ? 14 : circle ? '50%' : 14,
         ...visual,
         boxShadow: 'none',
       }}
@@ -91,12 +87,10 @@ export function MeetingInput({
         }
       }}
       style={{
-        background: '#1A222C',
         border: 0,
         color: '#E7EDF5',
         minHeight: 42,
         padding: '10px 12px',
-        borderRadius: 10,
       }}
     />
   );
@@ -141,11 +135,9 @@ export function MeetingSettingsInput({
         }
       }}
       style={{
-        background: '#1A222C',
         color: '#E7EDF5',
         borderColor: '#FFFFFF16',
         minHeight: multiline ? 120 : 42,
-        borderRadius: 10,
       }}
     />
   );

@@ -44,7 +44,7 @@ export function PhoneSettingsButton({
       ? c.disabledBackground
       : primary
         ? c.primary
-        : c.defaultBackground;
+        : 'transparent';
   const borderColor = disabled
     ? c.defaultBorder
     : option
@@ -123,7 +123,7 @@ export function PhoneSettingsInput({
         borderWidth: 1,
         borderColor: '#304753',
         borderRadius: 12,
-        backgroundColor: '#1A2832',
+        backgroundColor: 'transparent',
         paddingHorizontal: 12,
       }}
     />

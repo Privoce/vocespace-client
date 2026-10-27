@@ -1,4 +1,5 @@
 import { View, Text, Pressable, StyleSheet, Platform } from 'react-native';
+import { meetingColors } from '../theme';
 import type { MeetingSheetProps } from './types';
 /** Kept mounted when closed so drafts and platform controls retain their owners. */
 export function MeetingSheet({
@@ -79,7 +80,7 @@ export function MeetingSheetHeader({
         {subtitle && <Text style={s.subtitle}>{subtitle}</Text>}
       </View>
       <Button appearance="icon" label={closeLabel} onPress={onClose}>
-        {Icon ? <Icon name="close" size={22} color="#9AAEBB" /> : closeLabel}
+        {Icon ? <Icon name="close" size={16} color="#9AAEBB" /> : closeLabel}
       </Button>
     </View>
   );
@@ -88,7 +89,7 @@ const s = StyleSheet.create({
   overlay: { ...StyleSheet.absoluteFillObject, zIndex: 30, justifyContent: 'flex-end' },
   backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: '#02080DCF' },
   sheet: {
-    backgroundColor: '#121C24',
+    backgroundColor: meetingColors.modal,
     borderColor: '#344650',
     borderWidth: 1,
     borderTopLeftRadius: 26,
@@ -110,14 +111,14 @@ const s = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 20,
+    paddingHorizontal: 18,
+    paddingTop: 4,
+    paddingBottom: 4,
     borderBottomWidth: 1,
     borderColor: '#293740',
   },
   heading: { flex: 1, minWidth: 0, gap: 6 },
-  title: { color: '#E8EFF3', fontSize: 20, fontWeight: '600' },
+  title: { color: '#E8EFF3', fontSize: 18, fontWeight: '600' },
   subtitle: { color: '#829EAE', fontSize: 12, lineHeight: 18 },
   content: { flex: 1, minHeight: 0 },
   hidden: Platform.OS === 'web' ? { display: 'none' } : { opacity: 0, zIndex: -1 },

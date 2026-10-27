@@ -1,3 +1,4 @@
+import { sendFeedback, type FeedbackBody } from '../../feedback/client';
 import { atJoinStage } from '../join-error';
 import { useI18n } from '../../i18n';
 import { useCallback, useEffect, useState, useSyncExternalStore, useRef } from 'react';
@@ -141,6 +142,11 @@ export function useConference() {
     [api],
   );
   return {
+    feedback: async (body: FeedbackBody) => {
+      if (!api) throw new Error('SERVICE_NOT_CONFIGURED');
+      await api.ensureSession();
+      return sendFeedback(api, body);
+    },
     preview,
     releasePreview,
     renewPreview,

@@ -70,4 +70,12 @@ apps/web/public/license/
 
 # Local deployment secrets and scratch package store
 /deploy/compose.env
+/deploy/compose.data.yml
+/apps/mobile/credentials.json
+/apps/mobile/credentials/
+/apps/mobile/*.jks
+/apps/mobile/*.keystore
+/apps/mobile/*.p8
+/apps/mobile/*.p12
+/apps/mobile/*.mobileprovision
 /.pnpm-store/

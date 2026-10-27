@@ -23,3 +23,5 @@ export * from './svg-resource';
 
 export { meetingIconSource, meetingIconSources } from './meeting-icon-source';
 export { phoneButtonColors, meetingButtonVisual } from './button-theme';
+
+export * from './legal';

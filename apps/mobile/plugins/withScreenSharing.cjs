@@ -6,6 +6,34 @@ const targetName = 'VoceSpaceBroadcast';
 module.exports = function withScreenSharing(config) {
   const bundle = config.ios.bundleIdentifier;
   const group = `group.${bundle}`;
+  // CNG builds need the extension declared before Xcode generation so EAS can sign both targets.
+  const eas = config.extra?.eas || {};
+  const build = eas.build || {};
+  const experimental = build.experimental || {};
+  const ios = experimental.ios || {};
+  config.extra = {
+    ...config.extra,
+    eas: {
+      ...eas,
+      build: {
+        ...build,
+        experimental: {
+          ...experimental,
+          ios: {
+            ...ios,
+            appExtensions: [
+              ...(ios.appExtensions || []).filter((item) => item.targetName !== targetName),
+              {
+                targetName,
+                bundleIdentifier: `${bundle}.broadcast`,
+                entitlements: { 'com.apple.security.application-groups': [group] },
+              },
+            ],
+          },
+        },
+      },
+    },
+  };
   config = withInfoPlist(config, (mod) => {
     mod.modResults.RTCAppGroupIdentifier = group;
     mod.modResults.RTCScreenSharingExtension = `${bundle}.broadcast`;

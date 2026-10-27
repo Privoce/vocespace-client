@@ -15,6 +15,7 @@ import { MediaDeviceKind } from '@/lib/std/device';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { MoreButton } from '@/components/Toggles/MoreButton';
 import { ControlsWork, type ControlsModel } from './phone';
+import styles from './sharedPhone.module.scss';
 function useSharedControls(model: ControlsModel, onMore: () => void) {
   const { t, visibleControls, space } = model;
   const mic = useTrackToggle({
@@ -98,15 +99,7 @@ function useSharedControls(model: ControlsModel, onMore: () => void) {
           <button
             aria-label={label}
             type="button"
-            style={{
-              width: 20,
-              height: 20,
-              padding: 0,
-              borderRadius: '50%',
-              background: '#29323E',
-              color: '#C6D1E2',
-              border: 0,
-            }}
+            className={styles.deviceMenu}
           >
             <DownOutlined />
           </button>

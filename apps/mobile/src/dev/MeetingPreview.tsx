@@ -272,7 +272,7 @@ export default function MeetingPreview() {
                             : `settings.${selected}.title`,
                       )
                     : t('settings.title'),
-          subtitle: panel === 'more' ? t('phone_meeting.more_subtitle') : undefined,
+          subtitle: undefined,
           height:
             panel === 'more' || panel === 'share' ? '76%' : panel === 'members' ? '62%' : '88%',
           onClose: () => setPanel('stage'),

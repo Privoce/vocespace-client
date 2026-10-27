@@ -1,4 +1,4 @@
-export const PREVIEW_JOIN_DELAY_MS = 15_000;
+export const PREVIEW_JOIN_DELAY_MS = 10_000;
 export interface PreviewState {
   space?: string;
   phase: 'idle' | 'loading' | 'playing' | 'joining' | 'error';

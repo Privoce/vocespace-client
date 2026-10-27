@@ -1,11 +1,8 @@
 import { useState } from 'react';
-import Toast from '@ant-design/react-native/lib/toast';
-import { pickFeedbackDocument } from './document-picker';
-import { FeedbackForm } from '@vocespace/ui';
 import { SettingsDialog } from '../ui/settings-widgets';
-import { MeetingButton, MeetingSettingsInput } from '../ui/meeting';
 import { useI18n } from '../i18n';
 import type { NativeRoom } from '../conference/room';
+import { FeedbackContent } from './FeedbackContent';
 export function FeedbackDialog({
   open,
   onClose,
@@ -29,36 +26,11 @@ export function FeedbackDialog({
       }}
     >
       {open && (
-        <FeedbackForm
-          t={t}
+        <FeedbackContent
           accountEmail={accountEmail}
-          Button={MeetingButton}
-          Input={MeetingSettingsInput}
+          send={(body) => room.feedback(body)}
           onBusyChange={setBusy}
-          onUpload={async (email) => {
-            const selected = await pickFeedbackDocument();
-            if (selected.canceled) return;
-            const file = selected.assets[0];
-            if (file.size !== undefined && file.size > 10 * 1024 * 1024)
-              throw new Error('FILE_TOO_LARGE');
-            const body = new FormData();
-            body.append('email', email);
-            body.append('file', {
-              uri: file.uri,
-              name: file.name,
-              type: file.mimeType || 'application/octet-stream',
-            } as unknown as Blob);
-            const value = await room.feedback(body);
-            return { name: file.name, url: value.absoluteUrl || value.fileUrl };
-          }}
-          onSubmit={async (value) => {
-            await room.feedback(value);
-          }}
-          onDone={() => {
-            setBusy(false);
-            Toast.success(t('channel.feedback.submit_success'));
-            onClose();
-          }}
+          onDone={onClose}
         />
       )}
     </SettingsDialog>

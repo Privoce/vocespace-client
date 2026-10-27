@@ -1,5 +1,6 @@
+import { LegalPages } from './src/legal/LegalPages';
 import MeetingPreview from './src/dev/MeetingPreview';
-import { NativeI18nProvider } from './src/i18n';
+import { NativeI18nProvider, useI18n } from './src/i18n';
 import { useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -17,14 +18,15 @@ import { useConference } from './src/conference/hooks/useConference';
 import { AntProvider, IconOutline, TabBar, TabItem } from './src/ui/controls';
 
 const tabs = [
-  { key: 'home', label: '首页', icon: 'home' },
-  { key: 'meetings', label: '会议', icon: 'video-camera' },
+  { key: 'home', icon: 'home' },
+  { key: 'meetings', icon: 'video-camera' },
   // { key: 'messages', label: '消息', icon: 'message' },
-  { key: 'profile', label: '我的', icon: 'user' },
+  { key: 'profile', icon: 'user' },
 ] as const;
 type Tab = (typeof tabs)[number]['key'];
 
-function MobileShell() {
+export function MobileShell() {
+  const { t } = useI18n();
   const [tab, setTab] = useState<Tab>('home');
   const account = useAccount();
   const settings = useLocalSettings();
@@ -32,7 +34,7 @@ function MobileShell() {
   const conference = useConference();
   const nickname = account.signedIn
     ? account.profile.nickname
-    : settings.settings.nickname.trim() || '访客';
+    : settings.settings.nickname.trim() || t('native_account.guest');
   const join = (space: string) => {
     if (!account.ready || !settings.ready || conference.hasPendingCleanup) return;
     setTab('meetings');
@@ -50,87 +52,92 @@ function MobileShell() {
         style={styles.content}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        {!account.ready ? (
-          <ActivityIndicator color={colors.accent} style={{ flex: 1 }} />
-        ) : account.screen ? (
-          <AuthScreen
-            account={account}
-            onBrowse={() => {
-              account.browse();
-              setTab('meetings');
-            }}
-          />
-        ) : (
-          <TabBar
-            tintColor={colors.accent}
-            unselectedTintColor={colors.muted}
-            barTintColor={colors.surface}
-            styles={{
-              ...tabBarStyles,
-              tabs: {
-                ...tabBarStyles.tabs,
-                // Ant's WithTheme retains merged styles; omission does not undo display:none.
-                ...(tab === 'meetings' &&
-                (conference.state.phase === 'joined' ||
-                  conference.state.phase === 'joining' ||
-                  conference.hasPendingCleanup)
-                  ? { display: 'none' as const }
-                  : { display: 'flex' as const }),
-              },
-            }}
-          >
-            {tabs.map((item) => (
-              <TabItem
-                key={item.key}
-                title={item.label}
-                selected={tab === item.key}
-                icon={<IconOutline name={item.icon} size={24} color={colors.muted} />}
-                selectedIcon={<IconOutline name={item.icon} size={24} color={colors.accent} />}
-                onPress={() => {
-                  void changeTab(item.key);
-                }}
-              >
-                {item.key === 'home' && (
-                  <HomeScreen
-                    model={conference}
-                    onJoin={join}
-                    openMeetings={() => {
-                      void changeTab('meetings');
-                    }}
-                  />
-                )}
-                {item.key === 'meetings' && (
-                  <MeetingsScreen
-                    accountEmail={account.signedIn ? account.profile.email : undefined}
-                    model={conference}
-                    nickname={nickname}
-                    preferences={settings.settings}
-                    preferencesReady={settings.ready}
-                  />
-                )}
-                {/* Messages remains disabled until messaging is available. */}
-                {item.key === 'profile' && (
-                  <ProfileScreen
-                    model={settings}
-                    account={account}
-                    joining={!settings.ready || conference.hasPendingCleanup}
-                    onJoin={join}
-                    onBrowse={() => {
-                      void changeTab('meetings');
-                    }}
-                    onDelete={async (password) => {
-                      if (!(await conference.leave())) return false;
-                      return account.remove(password);
-                    }}
-                    onLogout={async () => {
-                      if (await conference.leave()) await account.logout();
-                    }}
-                  />
-                )}
-              </TabItem>
-            ))}
-          </TabBar>
-        )}
+        <LegalPages>
+          {!account.ready ? (
+            <ActivityIndicator color={colors.accent} style={{ flex: 1 }} />
+          ) : account.screen ? (
+            <AuthScreen
+              account={account}
+              onBrowse={() => {
+                account.browse();
+                setTab('meetings');
+              }}
+            />
+          ) : (
+            <TabBar
+              tintColor={colors.accent}
+              unselectedTintColor={colors.muted}
+              barTintColor={colors.surface}
+              styles={{
+                ...tabBarStyles,
+                tabs: {
+                  ...tabBarStyles.tabs,
+                  // Ant's WithTheme retains merged styles; omission does not undo display:none.
+                  ...(tab === 'meetings' &&
+                  (conference.state.phase === 'joined' ||
+                    conference.state.phase === 'joining' ||
+                    conference.hasPendingCleanup)
+                    ? { display: 'none' as const }
+                    : { display: 'flex' as const }),
+                },
+              }}
+            >
+              {tabs.map((item) => (
+                <TabItem
+                  key={item.key}
+                  title={t(`native_tabs.${item.key}`)}
+                  selected={tab === item.key}
+                  icon={<IconOutline name={item.icon} size={24} color={colors.muted} />}
+                  selectedIcon={<IconOutline name={item.icon} size={24} color={colors.accent} />}
+                  onPress={() => {
+                    void changeTab(item.key);
+                  }}
+                >
+                  {item.key === 'home' && (
+                    <HomeScreen
+                      model={conference}
+                      onJoin={join}
+                      openMeetings={() => {
+                        void changeTab('meetings');
+                      }}
+                    />
+                  )}
+                  {item.key === 'meetings' && (
+                    <MeetingsScreen
+                      account={account}
+                      active={tab === 'meetings'}
+                      onPreferences={settings.update}
+                      model={conference}
+                      nickname={nickname}
+                      preferences={settings.settings}
+                      preferencesReady={settings.ready}
+                    />
+                  )}
+                  {/* Messages remains disabled until messaging is available. */}
+                  {item.key === 'profile' && (
+                    <ProfileScreen
+                      model={settings}
+                      account={account}
+                      sendFeedback={conference.feedback}
+                      joining={!settings.ready || conference.hasPendingCleanup}
+                      onJoin={join}
+                      onBrowse={() => {
+                        void changeTab('meetings');
+                      }}
+                      onDelete={async (password) => {
+                        if (!(await conference.leave())) return false;
+                        return account.remove(password);
+                      }}
+                      onLogout={async () => {
+                        if (await conference.leave()) await account.logout();
+                      }}
+                    />
+                  )}
+                </TabItem>
+              ))}
+            </TabBar>
+          )}
+        </LegalPages>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );

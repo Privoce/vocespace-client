@@ -22,7 +22,7 @@ export function GeneralSettingsContent({
     gap: 12,
   } as const;
   const card = {
-    backgroundColor: '#1A2832',
+    backgroundColor: 'transparent',
     border: '1px solid #2A3D49',
     borderRadius: 16,
     padding: 16,
@@ -225,7 +225,7 @@ export function AuthSettingsContent({
       {(slots.microphone || slots.camera) && (
         <Div
           style={{
-            backgroundColor: '#1A2832',
+            backgroundColor: 'transparent',
             border: '1px solid #2A3D49',
             borderRadius: 16,
             padding: 16,
@@ -297,7 +297,7 @@ function PermissionDetails({
           style={{
             border: '1px solid #304753',
             borderRadius: 14,
-            backgroundColor: '#1A2832',
+            backgroundColor: 'transparent',
             padding: 16,
             color: '#E8EFF3',
             fontWeight: 600,
@@ -397,7 +397,8 @@ export function AboutSettingsContent({
   elements: { Div, Span, Link },
   t,
   logo,
-}: SettingsViewProps & { logo: ReactNode }) {
+  legalLinks,
+}: SettingsViewProps & { logo: ReactNode; legalLinks?: ReactNode }) {
   return (
     <Div
       style={{
@@ -447,6 +448,7 @@ export function AboutSettingsContent({
           </Link>
         </Div>
       </Div>
+      {legalLinks}
     </Div>
   );
 }

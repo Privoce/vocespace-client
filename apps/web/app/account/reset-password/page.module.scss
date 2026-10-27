@@ -1,0 +1,57 @@
+.page {
+  width: min(440px, 100%);
+  margin: 48px auto;
+  padding: 0 24px 32px;
+  color: #e5e7eb;
+}
+.brand {
+  text-align: center;
+  margin-bottom: 32px;
+  color: #999;
+}
+.brand small {
+  letter-spacing: 2px;
+}
+.card {
+  padding: 28px;
+  background: #242424;
+  border: 1px solid #383838;
+  border-radius: 16px;
+  h1 {
+    margin: 0 0 16px;
+    font-size: 22px;
+    color: #fff;
+  }
+  p {
+    color: #999;
+    margin-bottom: 24px;
+  }
+  :global(.ant-otp) {
+    width: 100%;
+    gap: 8px;
+  }
+  :global(.ant-otp-input) {
+    width: 100%;
+    min-width: 0;
+    height: 48px;
+    border-color: #444;
+    border-radius: 6px;
+  }
+  :global(.ant-otp-input-wrapper) {
+    flex: 1;
+    min-width: 0;
+  }
+  form > :global(.ant-input),
+  :global(.ant-input-affix-wrapper) {
+    min-height: 44px;
+    border-color: #444;
+    border-radius: 6px;
+    background: #202020;
+  }
+  :global(.ant-input-password-icon) {
+    color: #999;
+  }
+  :global(.ant-btn) {
+    min-height: 48px;
+  }
+}

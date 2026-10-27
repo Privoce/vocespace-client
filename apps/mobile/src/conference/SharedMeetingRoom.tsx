@@ -66,7 +66,7 @@ export function SharedMeetingRoom({
       conference={conference}
       directory={model.directory}
       allowRoomSwipe={false}
-      enabled={model.panel === 'stage' && !focused && !fullscreen}
+      enabled={model.panel === 'stage' && !focused && !fullscreen && !feedbackOpen}
       onBrowse={onBrowse}
     >
       {({ move, busy }) => (
@@ -265,7 +265,7 @@ export function SharedMeetingRoom({
                     : '88%',
               subtitle:
                 model.panel === 'more'
-                  ? model.t('phone_meeting.more_subtitle')
+                  ? undefined
                   : model.panel === 'participants'
                     ? model
                         .t('phone_meeting.members_count')

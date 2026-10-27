@@ -67,5 +67,5 @@ export const ui = StyleSheet.create({
     paddingHorizontal: 12,
     minHeight: 48,
   },
-  inputText: { color: colors.text, fontSize: 16 },
+  inputText: { color: colors.text, fontSize: 14 },
 });

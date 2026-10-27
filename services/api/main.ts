@@ -1,3 +1,4 @@
+import { ACCOUNT_AVATAR_MAX_BYTES } from '@vocespace/contracts';
 import { startRealtime } from './realtime/server';
 import { startWorker } from './worker/index';
 import { createServer } from 'node:http';
@@ -13,9 +14,13 @@ const server = createServer(async (req, res) => {
   try {
     const chunks: Buffer[] = [];
     let bytes = 0;
+    const pathname = req.url?.split('?')[0] || '';
+    const bodyLimit = /\/api\/(?:v1\/)?account\/avatar$/.test(pathname)
+      ? Math.min(maxBytes, ACCOUNT_AVATAR_MAX_BYTES + 64 * 1024)
+      : pathname.includes('/account/') ? 20_000 : maxBytes;
     for await (const chunk of req) {
       bytes += chunk.length;
-      if (bytes > (req.url?.split('?')[0].includes('/account/') ? 20_000 : maxBytes)) { res.writeHead(413).end(); return; }
+      if (bytes > bodyLimit) { res.writeHead(413, { Connection: 'close' }).end(); return; }
       chunks.push(chunk);
     }
     const publicUrl = process.env.PUBLIC_ORIGIN || `http://${req.headers.host}`;

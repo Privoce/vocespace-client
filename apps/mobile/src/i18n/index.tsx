@@ -1,4 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { AppState } from 'react-native';
+import { readSystemLanguage } from './system-language';
 import {
   createContext,
   useCallback,
@@ -12,7 +14,6 @@ import {
 import {
   createTranslator,
   isLocale,
-  resolveLocale,
   type Locale,
   type Trans,
 } from '@vocespace/i18n';
@@ -21,20 +22,33 @@ const Context = createContext<
   { locale: Locale; t: Trans; changeLocale: (locale: string) => void; error?: string } | undefined
 >(undefined);
 export function NativeI18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocale] = useState<Locale>(() =>
-    resolveLocale(Intl.DateTimeFormat().resolvedOptions().locale, 'zh'),
-  );
+  const [locale, setLocale] = useState<Locale>('en');
   const [error, setError] = useState<string>();
   const revision = useRef(0);
   const writes = useRef(Promise.resolve());
   const mounted = useRef(true);
+  const manualPreference = useRef(false);
   useEffect(() => {
     mounted.current = true;
     const version = revision.current;
     let active = true;
+    let systemRead = 0;
+    const refreshSystemLanguage = async () => {
+      if (manualPreference.current) return;
+      const read = ++systemRead;
+      const detected = await readSystemLanguage();
+      if (active && !manualPreference.current && read === systemRead) setLocale(detected);
+    };
+    void refreshSystemLanguage();
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') void refreshSystemLanguage();
+    });
     void AsyncStorage.getItem(key)
       .then((saved) => {
-        if (active && revision.current === version && isLocale(saved)) setLocale(saved);
+        if (active && revision.current === version && isLocale(saved)) {
+          manualPreference.current = true;
+          setLocale(saved);
+        }
       })
       .catch(() => {
         if (active) setError('native_settings.storage_error');
@@ -42,11 +56,13 @@ export function NativeI18nProvider({ children }: { children: ReactNode }) {
     return () => {
       active = false;
       mounted.current = false;
+      subscription.remove();
     };
   }, []);
   const changeLocale = useCallback((next: string) => {
     if (!isLocale(next)) return;
     const version = ++revision.current;
+    manualPreference.current = true;
     setLocale(next);
     writes.current = writes.current
       .then(() => AsyncStorage.setItem(key, next))

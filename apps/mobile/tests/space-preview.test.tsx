@@ -36,13 +36,11 @@ beforeEach(() => {
 });
 afterEach(() => vi.useRealTimers());
 function setup() {
-  const preview = vi
-    .fn()
-    .mockResolvedValue({
-      status: 'ready',
-      leaseId: 'lease',
-      url: 'https://api.test/preview/live.m3u8',
-    });
+  const preview = vi.fn().mockResolvedValue({
+    status: 'ready',
+    leaseId: 'lease',
+    url: 'https://api.test/preview/live.m3u8',
+  });
   const releasePreview = vi.fn().mockResolvedValue(undefined);
   const renewPreview = vi.fn().mockResolvedValue(undefined);
   const join = vi.fn().mockResolvedValue(undefined);
@@ -62,7 +60,7 @@ function setup() {
   );
   return { ...hook, preview, releasePreview, join };
 }
-it('waits for a rendered frame, then joins after 15 seconds and unloads HLS before the join', async () => {
+it('waits for a rendered frame, then joins after 10 seconds and unloads HLS before the join', async () => {
   const { result, join, releasePreview, unmount } = setup();
   await act(async () => {
     await vi.advanceTimersByTimeAsync(300);
@@ -72,7 +70,7 @@ it('waits for a rendered frame, then joins after 15 seconds and unloads HLS befo
   });
   expect(result.current.state.phase).toBe('loading');
   act(() => result.current.firstFrame());
-  for (let i = 0; i <= 60; i++)
+  for (let i = 0; i <= 40; i++)
     await act(async () => {
       await vi.advanceTimersByTimeAsync(250);
       fake.events.get('timeUpdate')?.({ currentTime: 30 + i / 4 });
@@ -133,5 +131,30 @@ it('keeps unavailable previews manual and cancels before a short swipe can start
     result.current.join();
   });
   expect(join).toHaveBeenCalledExactlyOnceWith('A');
+  unmount();
+});
+
+it('releases a playing preview and prevents delayed auto-join when the meeting tab is hidden', async () => {
+  const { result, rerender, releasePreview, join, unmount } = setup();
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(300);
+  });
+  act(() => result.current.firstFrame());
+  await act(async () => {
+    fake.events.get('timeUpdate')?.({ currentTime: 0 });
+    await vi.advanceTimersByTimeAsync(250);
+    fake.events.get('timeUpdate')?.({ currentTime: 0.25 });
+  });
+  expect(result.current.state.phase).toBe('playing');
+  await act(async () => {
+    rerender({ space: 'A', active: false });
+  });
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(20000);
+  });
+  expect(releasePreview).toHaveBeenCalledWith('lease');
+  expect(fake.player.replaceAsync).toHaveBeenLastCalledWith(null);
+  expect(join).not.toHaveBeenCalled();
+  expect(result.current.state.phase).toBe('idle');
   unmount();
 });

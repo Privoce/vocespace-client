@@ -302,7 +302,7 @@ export default function Preview() {
                       : t('phone_meeting.more_title'),
             subtitle:
               panel === 'more'
-                ? t('phone_meeting.more_subtitle')
+                ? undefined
                 : panel === 'members'
                   ? t('phone_meeting.members_count').replace('$count', String(count))
                   : undefined,

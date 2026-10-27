@@ -4,6 +4,8 @@ import { AccountError, createAccountService } from '@vocespace/server-core';
 import { ApiRequest, ApiResponse } from '../http';
 import { accountConfig, createSupabaseAccountProvider } from './supabase';
 import { accountFlows } from './flow-store';
+import { readAccountAvatar } from './avatar';
+import { webAccountEndpoint } from './web';
 const cookie = 'vocespace_password_recovery';
 function baseUrl() {
   const raw = process.env.ACCOUNT_PUBLIC_URL || process.env.PUBLIC_ORIGIN;
@@ -52,6 +54,7 @@ export async function accountEndpoint(request: ApiRequest, action: string) {
           return ApiResponse.redirect(destination, 303);
         }
         if (flow.kind !== 'recovery') throw new Error();
+        destination.searchParams.set('method', 'link');
         const ticket = randomBytes(32).toString('hex');
         await accountFlows.write(ticket, { token: auth.accessToken }, 600);
         return ApiResponse.redirect(destination, {
@@ -70,11 +73,23 @@ export async function accountEndpoint(request: ApiRequest, action: string) {
       }
     }
     if (request.method !== 'POST') throw new AccountError(405, 'METHOD_NOT_ALLOWED');
+    if (action === 'avatar') {
+      if (request.headers.has('origin') || request.headers.has('sec-fetch-site'))
+        throw new AccountError(403, 'NATIVE_TRANSPORT_REQUIRED');
+      const token = bearer(request);
+      const hash = createHash('sha256').update(token).digest('hex');
+      if (!(await accountFlows.allow(`avatar:${hash}`, 10)))
+        throw new AccountError(429, 'AUTH_RATE_LIMITED');
+      const image = await readAccountAvatar(request);
+      return ApiResponse.json(await service.avatar(token, image.bytes, image.type));
+    }
     if (!request.headers.get('content-type')?.startsWith('application/json'))
       throw new AccountError(415, 'JSON_REQUIRED');
     const raw = await request.text();
     if (raw.length > 20_000) throw new AccountError(413, 'REQUEST_TOO_LARGE');
     const body: unknown = JSON.parse(raw);
+    if (action.startsWith('web-'))
+      return await webAccountEndpoint(request, action, body, service, baseUrl());
     if (action === 'reset-password') {
       const base = baseUrl();
       if (
@@ -93,9 +108,28 @@ export async function accountEndpoint(request: ApiRequest, action: string) {
       );
     }
     // Token-returning endpoints are Native-only. Browsers never receive refresh tokens from them.
-    if (request.headers.has('origin') || request.headers.has('sec-fetch-site'))
+    const browser = request.headers.has('origin') || request.headers.has('sec-fetch-site');
+    if (
+      browser &&
+      (action !== 'reset-code' ||
+        request.headers.get('origin') !== baseUrl().origin ||
+        request.headers.get('x-vocespace-request') !== '1')
+    )
       throw new AccountError(403, 'NATIVE_TRANSPORT_REQUIRED');
-    if (['login', 'register', 'forgot-password', 'refresh', 'delete'].includes(action)) {
+    if (
+      [
+        'login',
+        'register',
+        'forgot-password',
+        'refresh',
+        'delete',
+        'profile',
+        'registration-code',
+        'resend-registration',
+        'verify-registration',
+        'reset-code',
+      ].includes(action)
+    ) {
       if (!(await accountFlows.allow('global', 200)))
         throw new AccountError(429, 'AUTH_RATE_LIMITED');
       const input = accountObject(body);
@@ -106,12 +140,34 @@ export async function accountEndpoint(request: ApiRequest, action: string) {
       const hash = createHash('sha256').update(identity).digest('hex');
       if (!(await accountFlows.allow(`${action}:${hash}`, 10)))
         throw new AccountError(429, 'AUTH_RATE_LIMITED');
+      if (
+        ['register', 'registration-code', 'resend-registration', 'forgot-password'].includes(
+          action,
+        ) &&
+        !(await accountFlows.allow(`send-code:${hash}`, 1))
+      )
+        throw new AccountError(429, 'AUTH_RATE_LIMITED');
     }
     switch (action) {
+      case 'registration-code':
+        await service.registrationCode(body);
+        break;
+      case 'resend-registration':
+        await service.resendRegistration(body);
+        break;
+      case 'verify-registration':
+        return ApiResponse.json(await service.verifyRegistration(body));
+      case 'reset-code':
+        await service.resetCode(body);
+        break;
       case 'login':
         return ApiResponse.json(await service.login(body));
       case 'refresh':
         return ApiResponse.json(await service.refresh(body));
+      case 'spaces':
+        return ApiResponse.json(await service.spaces(bearer(request)));
+      case 'profile':
+        return ApiResponse.json(await service.profile(bearer(request), body));
       case 'me':
         return ApiResponse.json(await service.me(bearer(request)));
       case 'logout':
@@ -122,6 +178,10 @@ export async function accountEndpoint(request: ApiRequest, action: string) {
         break;
       case 'register':
       case 'forgot-password': {
+        if (action === 'forgot-password' && accountObject(body).delivery === 'code') {
+          await service.recover(body, '', '');
+          break;
+        }
         const state = randomBytes(32).toString('hex');
         const verifier = randomBytes(32).toString('base64url');
         const challenge = createHash('sha256').update(verifier).digest('base64url');

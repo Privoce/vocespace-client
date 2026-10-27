@@ -1,8 +1,8 @@
 # VoceSpace Mobile
 
-独立 React Native / Expo development build 子项目。使用根 `.nvmrc` 和 pnpm workspace。四 Tab 为首页 / 会议 / 消息 / 我的；消息和我的只保留入口与本机设置。
+独立 React Native / Expo development build 子项目。使用根 `.nvmrc` 和 pnpm workspace。当前三个 Tab 为首页 / 会议 / 我的，消息暂时隐藏；Supabase 账号、资料与会议页面已有实现。
 
-已接入访客 Bearer、安全存储、手动观众加入、LiveKit 接收音视频、会议文字聊天及退出控制器。此功能默认关闭，仅用于明确配置的无子房间测试 Space。配置及限制见 [Native 观众试运行](../../docs/native-observer-pilot.md)。公开 feed、实时预览、滑动和自动加入尚未实现。
+已接入访客 Bearer、安全存储、LiveKit 会议与权限控制，以及 HLS 预览 / 10 秒有效播放后加入。真实服务和设备验收独立记录，当前进度见 [checklist](../../checklist.md)。本批修复后暂停新增功能，转入测试发布；构建、原生模块更新、签名和商店测试见 [mobile_build.md](../../mobile_build.md)，服务器部署见 [linux_deploy.md](../../linux_deploy.md)。
 
 - `pnpm dev:mobile`：启动 Metro，使用已安装的 development build。
 - `pnpm --filter @vocespace/mobile ios` / `android`：生成、构建并安装原生开发客户端，需要对应原生工具链；不能使用 Expo Go。

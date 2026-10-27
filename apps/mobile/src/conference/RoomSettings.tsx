@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { ScrollView, View } from 'react-native';
-import { PhoneSettingsNavigation } from '@vocespace/ui';
+import { PhoneSettingsNavigation, meetingColors } from '@vocespace/ui';
 import { IconOutline } from '../ui/controls';
 import { SettingsIcon } from '../ui/SettingsIcon';
 import { Button, SettingsNote } from '../ui/settings-widgets';
@@ -15,7 +15,7 @@ export function RoomSettings({ model }: { model: ReturnType<typeof useRoomSettin
     <ScrollView
       ref={scroll}
       keyboardShouldPersistTaps="handled"
-      style={{ backgroundColor: '#121C24' }}
+      style={{ backgroundColor: meetingColors.modal }}
       contentContainerStyle={{ paddingBottom: 24 }}
     >
       <PhoneSettingsNavigation

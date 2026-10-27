@@ -44,6 +44,6 @@ it('does not turn radio choices into filled primary buttons when selected', () =
     </PhoneSettingsButton>,
   );
   const button = screen.getByRole('button');
-  expect(button.style.backgroundColor).toBe('rgb(26, 40, 50)');
+  expect(button.style.backgroundColor).toBe('transparent');
   expect(button.getAttribute('data-text-color')).toBe(phoneButtonColors.selectedText);
 });

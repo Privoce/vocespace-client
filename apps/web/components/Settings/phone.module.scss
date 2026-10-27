@@ -1,19 +1,20 @@
 .phone {
   color: #c8d6df;
-  background: #121c24;
-  :global(.ant-tabs-content-holder) {
+  background: #1f1f1f;
+  :global(.ant-tabs-left > .ant-tabs-content-holder) {
     border: 0;
     min-width: 0;
   }
   :global(.ant-tabs-tabpane) {
     padding: 0 20px 24px !important;
   }
+  :global(.ant-input-affix-wrapper),
   :global(.ant-input),
   :global(.ant-select),
   :global(.ant-select-selector),
   :global(.ant-input-number),
   :global(.ant-radio-button-wrapper) {
-    background: #1a2832 !important;
+    background: transparent !important;
     border-color: #304753 !important;
     color: #dbe6ec !important;
   }
@@ -32,6 +33,10 @@
   }
   :global(.ant-radio-button-wrapper-checked) {
     color: #22ccee !important;
+  }
+  :global(.ant-btn-default) {
+    background: transparent;
+    color: inherit;
   }
   :global(.ant-switch-checked) {
     background: #22ccee;

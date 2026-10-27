@@ -70,6 +70,8 @@ export function useConferenceMedia(context: ReturnType<typeof useConferenceMembe
     return roomTracks;
   }, [originTracks, selfRoom]);
   const widgetUpdate = (state: WidgetState) => {
+    // Phone owns its sheets; LiveKit widget updates must not open a second overlay.
+    if (context.device === 'phone') return;
     if (cacheWidgetState && cacheWidgetState == state) {
       return;
     } else {

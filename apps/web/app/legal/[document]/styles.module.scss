@@ -1,0 +1,28 @@
+.page {
+  max-width: 860px;
+  width: 100%;
+  min-width: 0;
+  height: 100dvh;
+  overflow-y: auto;
+  margin: 0 auto;
+  padding: 24px;
+  background: #1f1f1f;
+  overflow-wrap: anywhere;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 28px;
+  color: #fff;
+  font-size: 18px;
+  button {
+    min-height: 44px;
+    padding: 8px 16px;
+    border: 1px solid #555;
+    border-radius: 8px;
+    color: #22ccee;
+    background: transparent;
+    cursor: pointer;
+  }
+}

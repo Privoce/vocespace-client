@@ -7,7 +7,14 @@ import { configuredAccountClient } from '../client';
 import type { AuthMode } from '../model';
 const prefsKey = (id: string) => `vocespace.account.preferences.${id}`;
 const errorKeys: Record<string, string> = {
+  ACCOUNT_STORAGE_UNAVAILABLE: 'storage_unavailable',
+  PROFILE_UPDATE_FAILED: 'profile_failed',
+  AVATAR_TOO_LARGE: 'avatar_size',
+  AVATAR_INVALID_IMAGE: 'avatar_format',
+  AVATAR_UPDATE_FAILED: 'avatar_failed',
   AUTH_INVALID_CREDENTIALS: 'invalid_credentials',
+  AUTH_INVALID_CODE: 'invalid_code',
+  EMAIL_CONFIRMATION_REQUIRED: 'confirmation_required',
   EMAIL_NOT_CONFIRMED: 'confirm_email',
   AUTH_RATE_LIMITED: 'rate_limited',
   EMAIL_ALREADY_REGISTERED: 'email_exists',
@@ -35,6 +42,7 @@ export function useAccount() {
   const remember = useRef(true);
   const active = useRef(false);
   const flight = useRef(false);
+  const restoring = useRef<Promise<void> | undefined>(undefined);
   async function persist(next: AccountSession) {
     if (!client) throw new Error();
     // Keep a rotated refresh token in memory even when keychain is temporarily unavailable.
@@ -99,9 +107,17 @@ export function useAccount() {
         if (active.current && initial) setReady(true);
       }
     };
-    void restore(true);
+    const startRestore = (initial = false) => {
+      if (restoring.current) return;
+      const pending = restore(initial);
+      restoring.current = pending;
+      void pending.finally(() => {
+        if (restoring.current === pending) restoring.current = undefined;
+      });
+    };
+    startRestore(true);
     const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') void restore();
+      if (state === 'active') startRestore();
     });
     return () => {
       active.current = false;
@@ -130,18 +146,15 @@ export function useAccount() {
       if (active.current) setBusy(false);
     }
   }
-  const authenticate = (email: string, password: string, save: boolean) =>
+  const authenticate = (email: string, password: string, save: boolean, code?: string) =>
     run(async () => {
       remember.current = save;
-      const result =
-        screen === 'register'
-          ? await client!.api.register(email, password)
-          : { session: await client!.api.login(email, password) };
-      if (!result.session) {
-        setMessage('account_auth.confirm_email');
-        setScreen('login');
-        return;
-      }
+      const result = {
+        session:
+          screen === 'register'
+            ? await client!.api.verifyRegistration(email, code || '')
+            : await client!.api.login(email, password),
+      };
       try {
         await persist(result.session);
       } catch (error) {
@@ -200,20 +213,60 @@ export function useAccount() {
       id: user?.id || '',
       email: user?.email || '',
       nickname: user?.nickname || '',
+      username: user?.username || '',
+      avatar: user?.avatar,
       ...preferences,
     },
+    listSpaces: async () => {
+      await restoring.current;
+      await latestValidated.current();
+      return client!.api.spaces(session.current!.accessToken);
+    },
     authenticate,
+    updateNickname: async (nickname: string) => {
+      await restoring.current;
+      if (!active.current) return false;
+      return run(async () => {
+        await validated();
+        const updated = await client!.api.profile(session.current!.accessToken, nickname);
+        if (!active.current) return;
+        setUser(updated);
+        await persist({ ...session.current!, user: updated });
+      });
+    },
+    uploadAvatar: async (file: FormData) => {
+      // Returning from the system picker may trigger a foreground session refresh first.
+      await restoring.current;
+      if (!active.current) return false;
+      return run(async () => {
+        await validated();
+        const updated = await client!.api.avatar(session.current!.accessToken, file);
+        if (!active.current) return;
+        setUser(updated);
+        await persist({ ...session.current!, user: updated });
+      });
+    },
+    sendRegistrationCode: (email: string, password: string, resend: boolean) =>
+      run(async () => {
+        await client!.api.sendRegistrationCode(email, password, resend);
+        setMessage('account_auth.code_sent');
+      }),
+    resetPassword: (email: string, code: string, password: string) =>
+      run(async () => {
+        await client!.api.resetCode(email, code, password);
+        setScreen('login');
+        setMessage('account_auth.reset_done');
+      }),
     logout,
     remove,
     forgot: (email: string) =>
       run(async () => {
         await client!.api.forgot(email);
         setMessage('account_auth.reset_sent');
+        setScreen('reset');
       }),
-    update: (patch: Partial<{ nickname: string; notifications: boolean; gestures: boolean }>) => {
-      // Notification/gesture preferences stay local. Nickname edits are display-only for this phase.
-      if (patch.nickname && user)
-        setUser({ ...user, nickname: patch.nickname.trim().slice(0, 30) });
+    update: (patch: Partial<{ notifications: boolean; gestures: boolean }>) => {
+      // These device preferences stay local; account profile edits go through the API.
       const next = {
         notifications: patch.notifications ?? preferences.notifications,
         gestures: patch.gestures ?? preferences.gestures,

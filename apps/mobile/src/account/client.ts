@@ -1,6 +1,10 @@
 import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
-import { createAccountClient } from '@vocespace/client-sdk';
+import { ApiError, createAccountClient } from '@vocespace/client-sdk';
+async function secureStorage<T>(work: () => Promise<T>): Promise<T> {
+  try { return await work(); }
+  catch { throw new ApiError(503, 'ACCOUNT_STORAGE_UNAVAILABLE', 'Secure account storage unavailable'); }
+}
 /** Independent keychain namespace: Supabase account sessions are not RTC bearer sessions. */
 export function configuredAccountClient() {
   const configured = process.env.EXPO_PUBLIC_API_URL;
@@ -28,11 +32,11 @@ export function configuredAccountClient() {
       baseUrl: url.toString(),
       fetch: (input, init) => fetch(input, init),
     }),
-    read: async () => SecureStore.getItemAsync(await key),
+    read: () => secureStorage(async () => SecureStore.getItemAsync(await key)),
     write: async (value: string) =>
-      SecureStore.setItemAsync(await key, value, {
+      secureStorage(async () => SecureStore.setItemAsync(await key, value, {
         keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
-      }),
-    clear: async () => SecureStore.deleteItemAsync(await key),
+      })),
+    clear: () => secureStorage(async () => SecureStore.deleteItemAsync(await key)),
   };
 }

@@ -101,9 +101,9 @@ export const VideoContainer = React.forwardRef<VideoContainerExports, VideoConta
             : 'video_container_wrapper'
         }
         style={{ position: 'relative' }}
-        onDragEnter={handleDrag}
-        onDragOver={handleDragOver}
-        onDrop={handleDrop}
+        onDragEnter={sharedUI ? undefined : handleDrag}
+        onDragOver={sharedUI ? undefined : handleDragOver}
+        onDrop={sharedUI ? undefined : handleDrop}
       >
         {/* 右侧应用浮窗，悬浮态 */}
         {model.device !== 'phone' &&
@@ -216,7 +216,7 @@ export const VideoContainer = React.forwardRef<VideoContainerExports, VideoConta
                 </div>
                 {!sharedUI && controls}
               </div>
-              {SettingsComponent && (
+              {!sharedUI && SettingsComponent && (
                 <div
                   className="lk-settings-menu-modal"
                   style={{ display: widgetState.showSettings ? 'block' : 'none' }}
