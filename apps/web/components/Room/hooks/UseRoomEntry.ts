@@ -5,6 +5,7 @@ import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/i18n';
 import { DEFAULT_VOCESPACE_CONFIG, type ReadableConf } from '@/lib/std/conf';
 import {
+  DEFAULT_PARTICIPANT_SETTINGS,
   PARTICIPANT_SETTINGS_KEY,
   VOCESPACE_PLATFORM_USER,
   type ParticipantSettings,
@@ -143,7 +144,7 @@ export function useRoomEntry({
       } catch {
         /* Discard corrupt preferences. */
       }
-      if (settings?.version === '0.5.5') useUserStore.setState(settings);
+      if (settings?.version === DEFAULT_PARTICIPANT_SETTINGS.version) useUserStore.setState(settings);
       else {
         localStorage.removeItem(PARTICIPANT_SETTINGS_KEY);
         localStorage.removeItem(VOCESPACE_PLATFORM_USER);

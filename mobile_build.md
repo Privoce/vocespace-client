@@ -27,7 +27,7 @@ pnpm test
 | 项目 | 当前值 / 发布要求 |
 | --- | --- |
 | `name` | VoceSpace |
-| `version` | 当前 `0.1.0`，发布者决定对外版本 |
+| `version` | 当前 `1.0.0`，由 `apps/mobile/app.json` 设置对外版本 |
 | `ios.bundleIdentifier` | 当前 `com.vocespace.mobile.dev`，首次注册商店前改成你控制且长期使用的正式 ID |
 | `android.package` | 当前 `com.vocespace.mobile.dev`，首次上传 Play 前确认正式 package；后续不能把改包名当作原 App 更新 |
 | `ios.supportsTablet` | 当前 true；需测试 iPad 并准备相应截图，不能只验收 iPhone |

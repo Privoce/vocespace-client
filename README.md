@@ -8,7 +8,7 @@
 
 # VoceSpace
 
-[![Version](https://img.shields.io/badge/version-0.5.5-blue.svg)](./log/CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg)](./log/CHANGELOG.md)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 [![Node](https://img.shields.io/badge/node-%3E%3D18-brightgreen.svg)](package.json)
 
