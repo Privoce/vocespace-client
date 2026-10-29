@@ -22,7 +22,7 @@ bash scripts/ubuntu/deploy.sh init /var/vocespace
 
 ### 首次准备
 
-上传或检出完整 monorepo 到源码目录（示例 `/var/vocespace/source`），使用**普通部署用户**操作；不要 `sudo bash deploy.sh` 或 `sudo pm2`。如果已有 Node / pnpm / PM2，版本满足 `.nvmrc` / `packageManager`，且有 `rsync`、`flock`、`curl`、`tar`、`redis-cli`，可跳过 setup。
+上传或检出完整 monorepo 到源码目录（示例 `/var/vocespace/source`）。**支持直接使用 root，也支持有 sudo 权限的普通用户**；setup、build、activate 和 PM2 始终使用同一个用户。原服务由 root 管理时，可以继续在 root shell 中操作，无需创建新用户或搬移源码。如果已有 Node / pnpm / PM2，版本满足 `.nvmrc` / `packageManager`，且有 `rsync`、`flock`、`curl`、`tar`、`redis-cli`，可跳过 setup。
 
 ```bash
 cd /var/vocespace/source
@@ -33,9 +33,23 @@ nano /var/vocespace/api-data/.env.production
 chmod 600 /var/vocespace/api-data/.env.production
 ```
 
-setup 只在安装系统包、创建尚不存在的部署根目录时调用 sudo。已有 `/var/vocespace` 必须可由部署用户写入；脚本不会递归修改静态首页等既有目录的所有者。它不安装 Redis 服务端；沿用现有 Redis、LiveKit、Egress 和 Supabase。
+root 执行 setup 时直接安装系统包和创建目录，不依赖 sudo；普通用户仅在这两步调用 sudo。已有 `/var/vocespace` 必须可由部署用户写入；脚本不会递归修改静态首页等既有目录的所有者。它不安装 Redis 服务端；沿用现有 Redis、LiveKit、Egress 和 Supabase。
 
 在模板里填写真实 Supabase 项目 URL、publishable / anon key、service role key，以及公共 origin。**旧部署必须保留原 `vocespace.conf.json`、uploads、sql、lib/uploads 和对应 Redis，不能开启首次初始化替代迁移。** 全新部署才取消模板里的 `VOCESPACE_INIT_CONFIG=true` 等注释，填写 LiveKit / Redis / host token；已有配置中的 Redis / LiveKit 参数不会被环境变量改写。
+
+### root 用户示例
+
+在当前服务器更新本仓库的部署脚本后，可以沿用已有路径：
+
+```bash
+cd /root/vocespace/vocespac-client
+bash scripts/ubuntu/setup.sh /var/vocespace/main
+source /var/vocespace/main/tools/env.sh
+bash scripts/ubuntu/deploy.sh init /var/vocespace/main
+nano /var/vocespace/main/api-data/.env.production
+```
+
+后续 build / activate / status 继续传入同一个 `/var/vocespace/main`。PM2 沿用当前用户的环境（默认 root 为 `/root/.pm2`）；切换用户不会自动迁移原 PM2 进程。脚本仍拒绝接管同名但不属于本次部署的旧进程，首次切换依照下文迁移步骤操作。
 
 ### 构建与首次切换
 
@@ -67,7 +81,7 @@ bash scripts/ubuntu/deploy.sh status /var/vocespace
 pm2 logs vocespace-api --lines 60 --nostream
 pm2 logs vocespace-web --lines 60 --nostream
 
-# 首次配置开机自启；执行 PM2 输出的那一条 sudo 命令。
+# 首次配置开机自启；按 PM2 输出操作，保持同一部署用户。
 pm2 startup
 # activate 已执行 pm2 save；修改进程清单后需要再次保存。
 pm2 save

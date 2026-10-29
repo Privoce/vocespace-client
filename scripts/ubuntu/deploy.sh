@@ -23,7 +23,7 @@ case $COMMAND in init|build|activate|rollback|status) ;; *) usage >&2; exit 1 ;;
 ROOT=${2:-/var/vocespace}
 [[ $(uname -s) = Linux && -f /etc/os-release ]] || { echo 'Run on Ubuntu.' >&2; exit 1; }
 . /etc/os-release
-[[ $ID = ubuntu && $EUID != 0 ]] || { echo 'Run as a non-root Ubuntu deployment user.' >&2; exit 1; }
+[[ $ID = ubuntu ]] || { echo 'Run on Ubuntu.' >&2; exit 1; }
 [[ $ROOT = /* && $ROOT != / && -d $ROOT && -w $ROOT ]] || { echo 'Run setup.sh first with an absolute writable ROOT.' >&2; exit 1; }
 ROOT=$(cd "$ROOT" && pwd -P)
 [[ $ROOT != "$SOURCE/"* ]] || { echo "Deployment ROOT must not be inside the source tree." >&2; exit 1; }

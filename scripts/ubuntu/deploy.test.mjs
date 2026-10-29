@@ -16,6 +16,59 @@ const write = (file, body, mode = 0o600) => {
   fs.writeFileSync(file, body, { mode });
 };
 
+for (const uid of ['0', '1000']) {
+  test(`setup supports uid ${uid} with elevated commands isolated from package installs`, () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vocespace-setup-test-'));
+    try {
+      const source = path.join(dir, 'source');
+      const root = path.join(dir, 'deployment');
+      const bin = path.join(dir, 'bin');
+      const log = path.join(dir, 'log');
+      let script = fs.readFileSync(path.join(here, 'setup.sh'), 'utf8');
+      // Emulate only the host and effective uid; all installer actions are local stubs.
+      for (const guard of [
+        "[[ $(uname -s) = Linux && -f /etc/os-release ]] || { echo 'Ubuntu is required.' >&2; exit 1; }\n",
+        '. /etc/os-release\n',
+        "[[ $ID = ubuntu ]] || { echo 'Ubuntu is required.' >&2; exit 1; }\n",
+      ]) {
+        assert.ok(script.includes(guard));
+        script = script.replace(guard, '');
+      }
+      script = script.replaceAll('$EUID', '${TEST_EUID}');
+      write(path.join(source, 'scripts/ubuntu/setup.sh'), script);
+      write(path.join(source, '.nvmrc'), process.versions.node);
+      write(path.join(source, 'package.json'), JSON.stringify({ packageManager: 'pnpm@10.27.0' }));
+      const nodeRoot = path.join(root, 'tools', `node-v${process.versions.node}-linux-${process.arch}`);
+      fs.mkdirSync(nodeRoot, { recursive: true });
+      write(log, '');
+      for (const name of ['apt-get', 'npm', 'pm2', 'flock', 'sudo', 'curl']) {
+        write(path.join(bin, name), `#!${process.execPath}
+          const fs = require('node:fs');
+          const args = process.argv.slice(2);
+          fs.appendFileSync(process.env.TEST_LOG, JSON.stringify([${JSON.stringify(name)}, ...args]) + '\\n');
+          if (${JSON.stringify(name)} === 'curl') process.exit(1);
+          if (${JSON.stringify(name)} === 'sudo') {
+            const result = require('node:child_process').spawnSync(args[0], args.slice(1), { stdio: 'inherit' });
+            process.exit(result.status ?? 1);
+          }
+        `, 0o700);
+      }
+      const result = spawnSync('bash', [path.join(source, 'scripts/ubuntu/setup.sh'), root], {
+        env: { ...process.env, TEST_EUID: uid, TEST_LOG: log,
+          PATH: `${bin}:${path.dirname(process.execPath)}:${process.env.PATH}` }, encoding: 'utf8',
+      });
+      assert.equal(result.status, 0, result.stdout + result.stderr);
+      const calls = fs.readFileSync(log, 'utf8').trim().split('\n').map(line => JSON.parse(line));
+      assert.equal(calls.filter(call => call[0] === 'sudo').length, uid === '0' ? 0 : 2);
+      assert.equal(calls.filter(call => call[0] === 'apt-get').length, 2);
+      assert.deepEqual(calls.find(call => call[0] === 'npm'),
+        ['npm', 'install', '--global', '--prefix', nodeRoot, 'pnpm@10.27.0']);
+      assert.ok(!calls.some(call => call[0] === 'pm2' || call[0] === 'curl'));
+      assert.ok(fs.readFileSync(path.join(root, 'tools/env.sh'), 'utf8').includes(nodeRoot));
+    } finally { fs.rmSync(dir, { recursive: true, force: true }); }
+  });
+}
+
 test('PM2 config isolates API data, uses two ports and one API writer, never serializes secrets', () => {
   const config = configuration('/release', '/data root', { SUPABASE_SERVICE_ROLE_KEY: 'hidden', WEB_PORT: '3030', API_PORT: '3031' });
   assert.equal(config.apps[0].instances, 1);
@@ -46,12 +99,12 @@ function fixture() {
   const root = path.join(dir, 'deployment');
   const bin = path.join(dir, 'bin');
   fs.mkdirSync(root);
-  // Only remove host guards in the disposable COPY, so the lifecycle can be tested on macOS/CI root.
+  // Only remove Ubuntu host guards in the disposable COPY for macOS tests.
   let script = bash;
   const guards = [
     "[[ $(uname -s) = Linux && -f /etc/os-release ]] || { echo 'Run on Ubuntu.' >&2; exit 1; }\n",
     '. /etc/os-release\n',
-    "[[ $ID = ubuntu && $EUID != 0 ]] || { echo 'Run as a non-root Ubuntu deployment user.' >&2; exit 1; }\n",
+    "[[ $ID = ubuntu ]] || { echo 'Run on Ubuntu.' >&2; exit 1; }\n",
   ];
   for (const guard of guards) { assert.ok(script.includes(guard)); script = script.replace(guard, ''); }
   write(path.join(source, 'scripts/ubuntu/deploy.sh'), script);

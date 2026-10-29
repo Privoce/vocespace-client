@@ -1,18 +1,24 @@
 #!/usr/bin/env bash
-# Run as the deployment user, not with sudo. Only apt/directory creation use sudo.
+# Keep setup and deployment under the same user, including root.
 set -Eeuo pipefail
 umask 027
 SOURCE=$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)
 ROOT=${1:-/var/vocespace}
 [[ $ROOT = /* && $ROOT != / ]] || { echo 'Use an absolute deployment directory.' >&2; exit 1; }
-[[ $EUID != 0 ]] || { echo 'Run as the deployment user; the script invokes sudo where needed.' >&2; exit 1; }
 [[ $(uname -s) = Linux && -f /etc/os-release ]] || { echo 'Ubuntu is required.' >&2; exit 1; }
 . /etc/os-release
 [[ $ID = ubuntu ]] || { echo 'Ubuntu is required.' >&2; exit 1; }
-sudo apt-get update
-sudo apt-get install -y ca-certificates curl xz-utils git rsync build-essential python3 redis-tools util-linux
+if [[ $EUID != 0 ]] && ! command -v sudo >/dev/null; then
+  echo 'Install sudo or run setup as root.' >&2
+  exit 1
+fi
+as_root() {
+  if [[ $EUID == 0 ]]; then "$@"; else sudo "$@"; fi
+}
+as_root apt-get update
+as_root apt-get install -y ca-certificates curl xz-utils git rsync build-essential python3 redis-tools util-linux
 if [[ ! -e $ROOT ]]; then
-  sudo install -d -m 750 -o "$(id -un)" -g "$(id -gn)" "$ROOT"
+  as_root install -d -m 750 -o "$(id -un)" -g "$(id -gn)" "$ROOT"
 fi
 [[ -w $ROOT ]] || { echo "Deployment user must own/write $ROOT" >&2; exit 1; }
 mkdir -p "$ROOT/tools"
