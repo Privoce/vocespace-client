@@ -1,3 +1,4 @@
+vi.mock('expo-constants', () => ({ default: { expoConfig: { extra: {} } } }));
 import { act, renderHook } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 const fake = vi.hoisted(() => ({

@@ -31,3 +31,5 @@
 apps/mobile/ios
 apps/mobile/android
 apps/web/public/license
+
+!vocespace.conf.example.json

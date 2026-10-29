@@ -9,9 +9,10 @@ import {
   VocespaceConfig,
 } from '@vocespace/domain/config';
 import { existsSync, readFileSync, writeFileSync } from 'fs';
-import { join } from 'path';
+import { configPath, normalizeConfiguration } from '@vocespace/config-node';
+import type { ResolvedVocespaceConfig } from '@vocespace/domain/config';
 
-const getConfigPath = () => join(process.cwd(), 'vocespace.conf.json');
+const getConfigPath = () => configPath();
 
 export const hasConfigFile = (): boolean => {
   return existsSync(getConfigPath());
@@ -25,11 +26,11 @@ export const isConfigInitialized = (): boolean => {
   return !isDefaultVocespaceConfig(getConfig());
 };
 
-export const getConfig = (): VocespaceConfig => {
+export const getConfig = (): ResolvedVocespaceConfig => {
   try {
     const configPath = getConfigPath();
     const configContent = readFileSync(configPath, 'utf-8');
-    const config = JSON.parse(configContent) as VocespaceConfig;
+    const config = normalizeConfiguration(JSON.parse(configContent));
     if (!config.roomLicenses) {
       config.roomLicenses = [];
     }
@@ -41,8 +42,7 @@ export const getConfig = (): VocespaceConfig => {
     }
     return config;
   } catch (error) {
-    console.error('Error reading vocespace.conf.json:', error);
-    return DEFAULT_VOCESPACE_CONFIG as VocespaceConfig;
+    throw new Error('Cannot load vocespace.conf.json; check its path and configuration fields.');
   }
 };
 
@@ -85,7 +85,7 @@ export const setConfigHyperbeam = (
 };
 
 export const setFullConfig = (config: VocespaceConfig): { success: boolean; error?: Error } => {
-  return writeBackConfig(config);
+  return writeBackConfig({ ...getConfig(), ...config });
 };
 
 export const setConfigRoomLicense = (license: string, roomName: string): { success: boolean; error?: Error } => {
@@ -108,7 +108,7 @@ export const setConfigRoomLicense = (license: string, roomName: string): { succe
 export const writeBackConfig = (config: VocespaceConfig): { success: boolean; error?: Error } => {
   try {
     const configPath = getConfigPath();
-    writeFileSync(configPath, `${JSON.stringify(config, null, 2)}\n`);
+    writeFileSync(configPath, `${JSON.stringify(normalizeConfiguration(config), null, 2)}\n`);
     setStoredConf(config);
     return {
       success: true,

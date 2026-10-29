@@ -1,3 +1,4 @@
+import { getConfig } from '../lib/server/config';
 import { randomUUID } from 'node:crypto';
 import {
   accountObject,
@@ -16,10 +17,7 @@ export interface SupabaseAccountConfig {
   serviceKey?: string;
 }
 export function accountConfig(): SupabaseAccountConfig {
-  const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key =
-    process.env.SUPABASE_PUBLISHABLE_KEY ||
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY;
+  const { url, publishableKey: key, serviceRoleKey } = getConfig().account.supabase;
   if (!url || !key) throw new AccountError(503, 'AUTH_NOT_CONFIGURED');
   const parsed = new URL(url);
   if (
@@ -30,7 +28,7 @@ export function accountConfig(): SupabaseAccountConfig {
     parsed.hash
   )
     throw new AccountError(503, 'AUTH_NOT_CONFIGURED');
-  return { url: url.replace(/\/$/, ''), key, serviceKey: process.env.SUPABASE_SERVICE_ROLE_KEY };
+  return { url: url.replace(/\/$/, ''), key, serviceKey: serviceRoleKey };
 }
 export function createSupabaseAccountProvider(
   config: SupabaseAccountConfig,

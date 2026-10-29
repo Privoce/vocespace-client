@@ -44,7 +44,7 @@ export function DashboardLicense({ messageApi }: { messageApi: MessageInstance }
   const [key, setKey] = useState<ModelKey>('renew');
   const [value, setValue] = useState<OptionValue>('renew');
   const [licenseValue, setLicenseValue] = useState<string>('');
-  const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
+  const [config, setConfig] = useState<ReadableConf>(DEFAULT_VOCESPACE_CONFIG);
   const [ipAddress, setIpAddress] = useState<string | undefined>(undefined);
 
   const validLicense = async (configData?: ReadableConf) => {

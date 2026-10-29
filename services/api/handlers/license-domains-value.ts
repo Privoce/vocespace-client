@@ -1,13 +1,13 @@
+import { getConfig } from '../lib/server/config';
 import { ApiRequest, ApiResponse } from '../http';
 import { getLicenseByDomain, validateLicense } from '../lib/db/license';
 
-const WEBHOOK = process.env.WEBHOOK ?? false;
 const VOCESPACE_API = 'https://vocespace.com';
 
 /**
  * GET /api/license/domains/[value] - Get license by domain
  * Used by the server to check if a domain has a valid license
- * When WEBHOOK=false, proxy to vocespace.com
+ * When getConfig().billing.stripe.enabled=false, proxy to vocespace.com
  */
 export async function GET(
   _request: ApiRequest,
@@ -19,8 +19,8 @@ export async function GET(
     return ApiResponse.json({ error: 'Missing domain value' }, { status: 400 });
   }
 
-  // WEBHOOK=false 时，代理到 vocespace.com 处理
-  if (!WEBHOOK) {
+  // getConfig().billing.stripe.enabled=false 时，代理到 vocespace.com 处理
+  if (!getConfig().billing.stripe.enabled) {
     const proxyRes = await fetch(`${VOCESPACE_API}/api/license/${encodeURIComponent(value)}`, {
       method: 'GET',
     });

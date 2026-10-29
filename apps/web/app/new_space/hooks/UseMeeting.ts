@@ -1,4 +1,6 @@
 'use client';
+import { basePath as configuredBasePath } from '@/lib/runtime-config';
+
 
 import { encodePassphrase,generateRoomId,randomString } from '@/lib/client_utils';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -33,7 +35,7 @@ export function useMeeting({ hq, setHq }: MeetingTabProps) {
     if (spinning) return;
     const target = e2ee || !roomUrl.trim()
       ? temporaryRoomLink(generateRoomId(), hq, e2ee ? encodePassphrase(randomString(64)) : undefined)
-      : resolveRoomLink(roomUrl, window.location.origin, process.env.SERVER_NAME);
+      : resolveRoomLink(roomUrl, window.location.origin, undefined);
     if (!target) { messageApi.error(t('msg.error.room.invalid')); return; }
     setSpinning(true);
     clearTimeout(timer.current);
@@ -64,7 +66,7 @@ export function resolveRoomLink(input: string, origin: string, extraHost = ''): 
   try {
     const url = new URL(isBareHost ? `https://${value}` : value.startsWith('/') || hasScheme ? value : `/${value}`, origin);
     if (!['http:', 'https:'].includes(url.protocol) || !allowedHosts.has(url.hostname) || url.username || url.password) return null;
-    const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    const basePath = configuredBasePath;
     let pathname = url.pathname;
     for (const prefix of [basePath, '/chat', '/dev'].filter(Boolean)) {
       if (pathname.startsWith(`${prefix}/`)) { pathname = pathname.slice(prefix.length); break; }

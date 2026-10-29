@@ -1,3 +1,4 @@
+import { mobileConfig } from '../config';
 import { useI18n } from '../i18n';
 import { resolveSpaceInput } from '../conference/space-input';
 import { useState } from 'react';
@@ -28,7 +29,7 @@ export function ManualJoin({
     const name =
       mode === 'demo' || !spaceName.trim()
         ? `${random.slice(0, 4)}-${random.slice(4, 8)}`
-        : resolveSpaceInput(spaceName, process.env.EXPO_PUBLIC_API_URL);
+        : resolveSpaceInput(spaceName, mobileConfig.mobile.apiUrl);
     if (!name) {
       setInvalid(true);
       return;

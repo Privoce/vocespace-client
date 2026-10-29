@@ -1,3 +1,4 @@
+import { basePath as configuredBasePath } from '@/lib/runtime-config';
 import {
   Option,
   Size,
@@ -144,7 +145,7 @@ export function isTablet(): boolean {
  */
 export function src(url: string): string {
   const prefix =
-    (typeof process !== 'undefined' ? process.env?.NEXT_PUBLIC_BASE_PATH : undefined) ?? '';
+    configuredBasePath;
   if (!prefix || prefix === '' || prefix === '/') {
     return url;
   }
@@ -158,7 +159,7 @@ export function src(url: string): string {
  */
 export function connect_endpoint(url: string): string {
   const prefix =
-    (typeof process !== 'undefined' ? process.env?.NEXT_PUBLIC_BASE_PATH : undefined) ?? '';
+    configuredBasePath;
   if (!prefix || prefix === '' || prefix === '/') {
     return url;
   }

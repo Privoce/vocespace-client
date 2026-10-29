@@ -1,0 +1,105 @@
+{
+  "deployment": {
+    "publicOrigin": "https://vocespace.com",
+    "basePath": "",
+    "dataDir": ".",
+    "api": {
+      "host": "127.0.0.1",
+      "port": 3031,
+      "uploadLimitBytes": 115343360,
+      "workerEnabled": true,
+      "promptDir": "",
+      "previewAssetsDir": ""
+    },
+    "web": {
+      "host": "127.0.0.1",
+      "port": 3030,
+      "apiUrl": "http://127.0.0.1:3031"
+    },
+    "mobile": {
+      "apiUrl": "https://vocespace.com",
+      "meetingUiPreview": false
+    }
+  },
+  "account": {
+    "publicUrl": "",
+    "supabase": {
+      "url": "",
+      "publishableKey": "",
+      "serviceRoleKey": ""
+    },
+    "platformJwtSecret": ""
+  },
+  "billing": {
+    "licenseSecret": "",
+    "stripe": {
+      "enabled": false,
+      "secretKey": "",
+      "webhookSecret": "",
+      "siteUrl": "https://vocespace.com"
+    }
+  },
+  "preview": {
+    "enabled": false,
+    "rendererBaseUrl": "",
+    "s3Endpoint": "",
+    "maxSources": 3
+  },
+  "analytics": {
+    "enabled": false,
+    "url": "https://rds.vocespace.com",
+    "websiteId": "d2fe7209-e79d-45cc-8c0d-20b5f6035ce7"
+  },
+  "debug": {
+    "datadogClientToken": "",
+    "datadogSite": ""
+  },
+  "livekit": {
+    "url": "wss://vocespace.com",
+    "key": "",
+    "secret": ""
+  },
+  "codec": "vp9",
+  "resolution": "2k",
+  "maxBitrate": 3000000,
+  "maxFramerate": 30,
+  "priority": "medium",
+  "redis": {
+    "enabled": true,
+    "host": "127.0.0.1",
+    "port": 6379,
+    "password": "",
+    "db": 0
+  },
+  "serverUrl": "vocespace.com",
+  "hostToken": "",
+  "license": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImhhbkBwcml2b2NlLmNvbSIsImV4cGlyZXNfYXQiOjE3NzkyNzg0MDAsImNyZWF0ZWRfYXQiOjE3NDc3NDI0MDAsImRvbWFpbnMiOiIqIiwibGltaXQiOiJwcm8iLCJpZCI6IjZkZjgyMTMyLTIyODQtNGY2MS1iYmZhLWZkZmU4YmMzMWE2NyJ9.PiagYRDWSpzhIdbnY-pp8QeOf5Ij7neV8RMEafDgVT4",
+  "smtp": {
+    "host": "smtp.gmail.com",
+    "port": 587,
+    "secure": false,
+    "user": "",
+    "pass": "",
+    "from": ""
+  },
+  "hyperbeam": {
+    "apiKey": "",
+    "apiBase": "https://engine.hyperbeam.com",
+    "defaultStartUrl": "https://www.google.com/search?q="
+  },
+  "create_space": "all",
+  "whiteList": [],
+  "s3": {
+    "accessKey": "",
+    "secretKey": "",
+    "bucket": "",
+    "region": ""
+  },
+  "ai": {
+    "enabled": false,
+    "apiKey": "",
+    "apiUrl": "",
+    "model": "",
+    "maxTokens": 4096
+  }
+}

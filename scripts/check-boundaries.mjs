@@ -82,8 +82,8 @@ function visitClient(file, via) {
   if (visited.has(file)) return;
   visited.add(file);
   for (const specifier of readModule(file).imports) {
-    if (specifier === '@vocespace/server-core') {
-      errors.add(`${name}: client imports @vocespace/server-core`);
+    if (specifier === '@vocespace/server-core' || specifier === '@vocespace/config-node') {
+      errors.add(`${name}: client imports ${specifier}`);
     }
     const resolved = ts.resolveModuleName(specifier, file, options, ts.sys).resolvedModule;
     if (resolved && !resolved.isExternalLibraryImport && /\.[cm]?[jt]sx?$/.test(resolved.resolvedFileName)) {
@@ -98,6 +98,7 @@ for (const directory of ['apps/web/app', 'apps/web/components', 'apps/web/lib'])
 }
 // Native imports only its own source and explicitly shared workspace packages.
 for (const file of files(path.join(root, 'apps/mobile'))) {
+  if (relative(file) === 'apps/mobile/app.config.js') continue; // Node-only Expo build adapter.
   for (const specifier of readModule(file).imports) {
     if (specifier.startsWith('@vocespace/') && !['@vocespace/contracts', '@vocespace/domain', '@vocespace/meeting-core', '@vocespace/client-sdk', '@vocespace/ui', '@vocespace/i18n'].includes(specifier.split('/').slice(0, 2).join('/'))) {
       errors.add(`${relative(file)}: forbidden Native dependency ${specifier}`);

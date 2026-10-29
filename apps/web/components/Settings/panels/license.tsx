@@ -47,7 +47,7 @@ export function LicenseControl({
   const [cancelingSubscription, setCancelingSubscription] = useState(false);
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelEmail, setCancelEmail] = useState('');
-  const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
+  const [config, setConfig] = useState<ReadableConf>(DEFAULT_VOCESPACE_CONFIG);
   const [ipAddress, setIpAddress] = useState<string | undefined>(undefined);
 
   const roomLicense = userLicense.room;

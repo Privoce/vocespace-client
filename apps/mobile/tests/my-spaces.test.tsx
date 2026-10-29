@@ -1,3 +1,4 @@
+vi.mock('expo-constants', () => ({ default: { expoConfig: { extra: {} } } }));
 import { act, renderHook, waitFor } from '@testing-library/react';
 import { expect, it, vi } from 'vitest';
 import { useMySpaces } from '../src/screens/meetings/hooks/useMySpaces';

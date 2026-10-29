@@ -1,3 +1,4 @@
+import { getConfig } from '../lib/server/config';
 import { randomBytes, createHash } from 'node:crypto';
 import { accountObject, accountString } from '@vocespace/contracts';
 import { AccountError, createAccountService } from '@vocespace/server-core';
@@ -8,7 +9,7 @@ import { readAccountAvatar } from './avatar';
 import { webAccountEndpoint } from './web';
 const cookie = 'vocespace_password_recovery';
 function baseUrl() {
-  const raw = process.env.ACCOUNT_PUBLIC_URL || process.env.PUBLIC_ORIGIN;
+  const raw = getConfig().account.publicUrl || `${getConfig().deployment.publicOrigin}${getConfig().deployment.basePath}`;
   if (!raw) throw new AccountError(503, 'AUTH_NOT_CONFIGURED');
   const url = new URL(raw);
   if (

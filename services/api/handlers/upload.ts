@@ -25,14 +25,11 @@ interface TilePlayerEntry {
 const createHyperbeamSession = async (startUrl?: string) => {
   const conf = getConfig();
   const hyperbeam = conf.hyperbeam;
-  const apiKey = hyperbeam?.apiKey || process.env.HYPERBEAM_API_KEY;
-  const apiBase = hyperbeam?.apiBase || process.env.HYPERBEAM_API_BASE || 'https://engine.hyperbeam.com';
-  const defaultStartUrl =
-    hyperbeam?.defaultStartUrl ||
-    process.env.HYPERBEAM_DEFAULT_START_URL ||
-    'https://www.google.com/search?q=';
+  const apiKey = hyperbeam?.apiKey;
+  const apiBase = hyperbeam?.apiBase || 'https://engine.hyperbeam.com';
+  const defaultStartUrl = hyperbeam?.defaultStartUrl || 'https://www.google.com/search?q=';
   if (!apiKey) {
-    throw new Error('HYPERBEAM_API_KEY is not configured');
+    throw new Error('hyperbeam.apiKey is not configured in vocespace.conf.json');
   }
 
   const body: Record<string, unknown> = {
@@ -542,7 +539,7 @@ export async function POST(request: ApiRequest) {
     await writeFile(filePath, buffer);
 
     // 构建文件访问 URL
-    const fileUrl = `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/uploads/${encodeURIComponent(roomName)}/${encodeURIComponent(fileName)}`;
+    const fileUrl = `${getConfig().deployment.basePath}/uploads/${encodeURIComponent(roomName)}/${encodeURIComponent(fileName)}`;
 
     return ApiResponse.json({
       success: true,

@@ -2,7 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import net from 'node:net';
-import { createRequire } from 'node:module';
+import { readConfiguration } from '../../packages/config-node/index.cjs';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 
@@ -26,30 +26,19 @@ export function port(value, name) {
   }
   return Number(value);
 }
-export function configuration(release, root, env = process.env) {
-  const webPort = port(env.WEB_PORT || '3030', 'WEB_PORT');
-  const apiPort = port(env.API_PORT || '3031', 'API_PORT');
+export function configuration(release, root, conf = readConfiguration({ file: path.join(root, 'api-data/vocespace.conf.json') })) {
+  const webPort = port(conf.deployment.web.port, 'deployment.web.port');
+  const apiPort = port(conf.deployment.api.port, 'deployment.api.port');
   if (webPort === apiPort) throw new Error('Web and API ports must differ');
-  const basePath = env.NEXT_PUBLIC_BASE_PATH || '';
-  if (basePath && !/^\/[A-Za-z0-9_/-]*[A-Za-z0-9_-]$/.test(basePath)) {
-    throw new Error('NEXT_PUBLIC_BASE_PATH must be empty or a path without a trailing slash');
-  }
   const common = {
     interpreter: process.execPath, exec_mode: 'fork', instances: 1,
     watch: false, autorestart: true, restart_delay: 3000, kill_timeout: 30000, time: true,
+    args: ['--config', path.join(root, 'api-data/vocespace.conf.json')],
+    env: { NODE_ENV: 'production' },
   };
   return { apps: [
-    { ...common, name: 'vocespace-api', cwd: release,
-      script: path.join(release, 'services/api/start.mjs'),
-      env: { NODE_ENV: 'production', API_HOST: '127.0.0.1', API_PORT: String(apiPort),
-        VOCESPACE_DATA_DIR: path.join(root, 'api-data'), WORKER_ENABLED: 'true' } },
-    { ...common, name: 'vocespace-web', cwd: path.join(release, 'apps/web'),
-      script: path.join(release, 'apps/web/server.js'),
-      env: { NODE_ENV: 'production', HOST: '127.0.0.1', PORT: String(webPort),
-        VOCESPACE_API_URL: `http://127.0.0.1:${apiPort}`, NEXT_PUBLIC_BASE_PATH: basePath,
-        NEXT_PUBLIC_UMAMI_ENABLED: env.NEXT_PUBLIC_UMAMI_ENABLED === 'true' ? 'true' : 'false',
-        NEXT_PUBLIC_UMAMI_URL: env.NEXT_PUBLIC_UMAMI_URL || 'https://rds.vocespace.com',
-        NEXT_PUBLIC_UMAMI_WEBSITE_ID: env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || 'd2fe7209-e79d-45cc-8c0d-20b5f6035ce7' } },
+    { ...common, name: 'vocespace-api', cwd: release, script: path.join(release, 'services/api/start.mjs') },
+    { ...common, name: 'vocespace-web', cwd: path.join(release, 'apps/web'), script: path.join(release, 'apps/web/server.js') },
   ] };
 }
 export function validateManaged(processes, old) {
@@ -61,20 +50,6 @@ export function validateManaged(processes, old) {
       throw new Error(`${name} does not match the current release/single fork process; inspect PM2 before proceeding`);
     }
   }
-}
-function apiEnvironment(release, root) {
-  const require = createRequire(path.join(release, 'services/api/package.json'));
-  const dotenv = require('dotenv');
-  const env = { ...process.env };
-  for (const name of ['.env.local', '.env.production', '.env']) {
-    const file = path.join(root, 'api-data', name);
-    if (!fs.existsSync(file)) continue;
-    if ((fs.statSync(file).mode & 0o077) !== 0) throw new Error(`Restrict permissions to 600: ${file}`);
-    for (const [key, value] of Object.entries(dotenv.parse(fs.readFileSync(file)))) {
-      if (env[key] === undefined) env[key] = value;
-    }
-  }
-  return env;
 }
 function existingConfig(root) {
   const file = path.join(root, 'api-data/vocespace.conf.json');
@@ -124,10 +99,12 @@ async function main([command, release, root, backup]) {
       break;
     }
     case 'configure': {
-      const config = configuration(release, root);
+      const runtime = readConfiguration({ file: path.join(root, 'api-data/vocespace.conf.json') });
+      const config = configuration(release, root, runtime);
+      fs.writeFileSync(path.join(release, 'apps/web/vocespace.build.json'), JSON.stringify({ deployment: { basePath: runtime.deployment.basePath } }), { flag: 'wx' });
       fs.writeFileSync(path.join(release, 'ecosystem.config.cjs'), `module.exports = ${JSON.stringify(config, null, 2)};\n`, { flag: 'wx' });
       fs.writeFileSync(path.join(release, '.deploy.json'), JSON.stringify({
-        webPort: Number(config.apps[1].env.PORT), apiPort: Number(config.apps[0].env.API_PORT),
+        webPort: runtime.deployment.web.port, apiPort: runtime.deployment.api.port, basePath: runtime.deployment.basePath,
         root, node: process.versions.node, builtAt: new Date().toISOString(),
       }, null, 2), { flag: 'wx' });
       break;
@@ -141,26 +118,21 @@ async function main([command, release, root, backup]) {
       break;
     case 'preflight': {
       if (readJson(path.join(release, '.deploy.json')).root !== root) throw new Error('Release belongs to a different deployment root');
-      const env = apiEnvironment(release, root);
-      const origin = validUrl(env.PUBLIC_ORIGIN, 'PUBLIC_ORIGIN', ['https:', 'http:']);
-      const account = validUrl(env.ACCOUNT_PUBLIC_URL, 'ACCOUNT_PUBLIC_URL', ['https:', 'http:']);
-      if (origin.origin !== account.origin) throw new Error('PUBLIC_ORIGIN and ACCOUNT_PUBLIC_URL must share an origin');
-      validUrl(env.SUPABASE_URL || env.NEXT_PUBLIC_SUPABASE_URL, 'SUPABASE_URL', ['https:', 'http:']);
-      requireValue(env.SUPABASE_PUBLISHABLE_KEY || env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_OR_ANON_KEY, 'SUPABASE_PUBLISHABLE_KEY');
-      requireValue(env.SUPABASE_SERVICE_ROLE_KEY, 'SUPABASE_SERVICE_ROLE_KEY');
-      const config = existingConfig(root);
-      if (config) {
-        redisConfig(config);
-        validUrl(config.livekit?.url, 'livekit.url', ['wss:', 'ws:', 'https:', 'http:']);
-        requireValue(config.livekit?.key, 'livekit.key');
-        requireValue(config.livekit?.secret, 'livekit.secret');
-        requireValue(config.hostToken, 'hostToken');
-      } else {
-        if (env.VOCESPACE_INIT_CONFIG !== 'true') throw new Error('Migrate the existing config/data, or explicitly enable VOCESPACE_INIT_CONFIG for a fresh installation');
-        validUrl(env.LIVEKIT_URL, 'LIVEKIT_URL', ['wss:', 'ws:', 'https:', 'http:']);
-        for (const key of ['LIVEKIT_API_KEY', 'LIVEKIT_API_SECRET', 'HOST_TOKEN']) requireValue(env[key], key);
-        redisConfig({ redis: { enabled: true, host: env.REDIS_HOST || '127.0.0.1', port: env.REDIS_PORT || '6379', db: Number(env.REDIS_DB || 0) } });
-      }
+      const config = readConfiguration({ file: path.join(root, 'api-data/vocespace.conf.json') });
+      const origin = validUrl(config.deployment.publicOrigin, 'deployment.publicOrigin', ['https:', 'http:']);
+      const account = validUrl(config.account.publicUrl || config.deployment.publicOrigin, 'account.publicUrl', ['https:', 'http:']);
+      if (origin.origin !== account.origin) throw new Error('Account and public deployment URLs must share an origin');
+      validUrl(config.account.supabase.url, 'account.supabase.url', ['https:']);
+      requireValue(config.account.supabase.publishableKey, 'account.supabase.publishableKey');
+      requireValue(config.account.supabase.serviceRoleKey, 'account.supabase.serviceRoleKey');
+      if (path.resolve(root, 'api-data', config.deployment.dataDir) !== path.join(root, 'api-data')) throw new Error('Ubuntu scripts require deployment.dataDir to resolve to ROOT/api-data');
+      const meta = readJson(path.join(release, '.deploy.json'));
+      if (meta.webPort !== config.deployment.web.port || meta.apiPort !== config.deployment.api.port || meta.basePath !== config.deployment.basePath) throw new Error('Deployment ports/basePath differ from release metadata; build a new release');
+      redisConfig(config);
+      validUrl(config.livekit?.url, 'livekit.url', ['wss:', 'ws:', 'https:', 'http:']);
+      requireValue(config.livekit?.key, 'livekit.key');
+      requireValue(config.livekit?.secret, 'livekit.secret');
+      requireValue(config.hostToken, 'hostToken');
       console.log('API configuration validated (values hidden).');
       break;
     }

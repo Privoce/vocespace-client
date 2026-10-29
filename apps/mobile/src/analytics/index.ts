@@ -1,11 +1,12 @@
+import { mobileConfig } from '../config';
 import { Platform } from 'react-native';
 import appConfig from '../../app.json';
 const version = appConfig.expo.version;
 import { createAnalytics } from '@vocespace/client-sdk';
 import type { AnalyticsPayload } from '@vocespace/contracts';
 const enabled = () =>
-  typeof __DEV__ !== 'undefined' && !__DEV__ && process.env.EXPO_PUBLIC_UMAMI_ENABLED === 'true';
-const host = process.env.EXPO_PUBLIC_UMAMI_URL || 'https://rds.vocespace.com';
+  typeof __DEV__ !== 'undefined' && !__DEV__ && mobileConfig.analytics.enabled;
+const host = mobileConfig.analytics.url;
 let common: Record<string, unknown> = {
   app_version: version,
   auth_state: 'unknown',
@@ -49,7 +50,7 @@ async function send(payload: AnalyticsPayload) {
 export const analytics = createAnalytics({
   enabled,
   now: Date.now,
-  website: process.env.EXPO_PUBLIC_UMAMI_WEBSITE_ID || 'd2fe7209-e79d-45cc-8c0d-20b5f6035ce7',
+  website: mobileConfig.analytics.websiteId,
   hostname: 'vocespace.app',
   context: () => ({ ...common, platform: Platform.OS }),
   send(payload) {

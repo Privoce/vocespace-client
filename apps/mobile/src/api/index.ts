@@ -1,9 +1,10 @@
+import { mobileConfig } from '../config';
 import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 import { createNativeApi } from './session';
 
 export function createConfiguredApi() {
-  const configured = process.env.EXPO_PUBLIC_API_URL;
+  const configured = mobileConfig.mobile.apiUrl;
   if (!configured) return undefined;
   let endpoint: URL;
   try {

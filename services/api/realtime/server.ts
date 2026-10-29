@@ -1,3 +1,4 @@
+import { getConfig } from '../lib/server/config';
 import { setNativeHand } from '../lib/server/native-hand';
 import { bindNativeSocket, inviteNativeMedia, revokeNativeMedia } from '../lib/server/native-media';
 import { removeMediaMember } from '../lib/server/media-members';
@@ -23,10 +24,10 @@ export const eventPolicy = {
 
 export function startRealtime(server: HttpServer) {
   const io = new Server(server, { maxHttpBufferSize: 1024 * 1024,
-    path: `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/socket.io`,
+    path: `${getConfig().deployment.basePath}/socket.io`,
     allowRequest(req, done) {
       const origin = req.headers.origin;
-      const allowed = process.env.PUBLIC_ORIGIN || `http://${req.headers.host}`;
+      const allowed = getConfig().deployment.publicOrigin;
       const nativeTransport = req.headers['x-vocespace-client'] === 'native' &&
         req.headers.upgrade?.toLowerCase() === 'websocket';
       // This marker only selects a transport. Middleware still requires a Native Bearer session

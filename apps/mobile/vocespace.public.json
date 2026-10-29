@@ -1,0 +1,16 @@
+{
+  "basePath": "",
+  "mobile": {
+    "apiUrl": "http://127.0.0.1:3001",
+    "meetingUiPreview": false
+  },
+  "analytics": {
+    "enabled": false,
+    "url": "https://rds.vocespace.com",
+    "websiteId": "d2fe7209-e79d-45cc-8c0d-20b5f6035ce7"
+  },
+  "debug": {
+    "datadogClientToken": "",
+    "datadogSite": ""
+  }
+}

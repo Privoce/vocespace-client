@@ -1,8 +1,69 @@
 // 用来读取vocespace.conf.json这个配置文件
-// 这个配置文件的位置在项目根目录下
+// 默认从工作区根目录读取；生产可通过 --config 指定挂载路径。
 // 只会在服务器端使用
 import type { VideoCodec } from './model';
 import { DEFAULT_LICENSE } from './license';
+import runtimeDefaults from './runtime-defaults.json';
+
+/** Deployment, integrations and public build settings, all persisted in vocespace.conf.json. */
+export interface DeploymentConf {
+  publicOrigin: string;
+  basePath: string;
+  /** Relative to the configuration file, never to the release directory. */
+  dataDir: string;
+  api: {
+    host: string;
+    port: number;
+    uploadLimitBytes: number;
+    workerEnabled: boolean;
+    promptDir: string;
+    previewAssetsDir: string;
+  };
+  web: { host: string; port: number; apiUrl: string };
+  mobile: { apiUrl: string; meetingUiPreview: boolean };
+}
+
+export interface AccountConf {
+  /** Empty means deployment.publicOrigin + deployment.basePath. */
+  publicUrl: string;
+  supabase: { url: string; publishableKey: string; serviceRoleKey: string };
+  platformJwtSecret: string;
+}
+
+export interface BillingConf {
+  licenseSecret: string;
+  stripe: { enabled: boolean; secretKey: string; webhookSecret: string; siteUrl: string };
+}
+
+export interface PreviewConf {
+  enabled: boolean;
+  rendererBaseUrl: string;
+  s3Endpoint: string;
+  maxSources: number;
+}
+
+export interface AnalyticsConf {
+  enabled: boolean;
+  url: string;
+  websiteId: string;
+}
+
+export interface RuntimeConf {
+  deployment: DeploymentConf;
+  account: AccountConf;
+  billing: BillingConf;
+  preview: PreviewConf;
+  analytics: AnalyticsConf;
+  debug: { datadogClientToken: string; datadogSite: string };
+}
+export type ResolvedVocespaceConfig = VocespaceConfig & RuntimeConf;
+export interface PublicClientConf {
+  basePath: string;
+  mobile: RuntimeConf['deployment']['mobile'];
+  analytics: RuntimeConf['analytics'];
+  debug: RuntimeConf['debug'];
+}
+
 
 export interface TurnConf {
   credential?: string;
@@ -103,7 +164,7 @@ export interface ReadableConf {
   }[];
 }
 
-export interface VocespaceConfig {
+export interface VocespaceConfig extends Partial<RuntimeConf> {
   livekit: LivekitConf;
   codec?: VideoCodec;
   resolution?: Resolution;
@@ -268,6 +329,12 @@ const normalizeConfigForCompare = (
       ...defaults.hyperbeam,
       ...(nextConf.hyperbeam || {}),
     },
+    deployment: nextConf.deployment ?? defaults.deployment,
+    account: nextConf.account ?? defaults.account,
+    billing: nextConf.billing ?? defaults.billing,
+    preview: nextConf.preview ?? defaults.preview,
+    analytics: nextConf.analytics ?? defaults.analytics,
+    debug: nextConf.debug ?? defaults.debug,
     create_space: nextConf.create_space ?? defaults.create_space,
     whiteList: nextConf.whiteList ?? [],
     roomLicenses: nextConf.roomLicenses ?? [],
@@ -284,7 +351,8 @@ export const isDefaultVocespaceConfig = (
 };
 
 // 2k, 30fps, 3Mbps
-export const DEFAULT_VOCESPACE_CONFIG: VocespaceConfig | ReadableConf = {
+export const DEFAULT_VOCESPACE_CONFIG: ResolvedVocespaceConfig = {
+  ...runtimeDefaults,
   livekit: {
     key: 'apikey',
     secret: 'secret',

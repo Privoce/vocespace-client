@@ -1,81 +1,30 @@
 name: vocespace
 services:
   web:
-    image: ${WEB_IMAGE:-vocespace-web:local}
+    image: vocespace-web:local
     build:
       context: .
       target: web
-      args:
-        NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-}
-        NEXT_PUBLIC_UMAMI_ENABLED: ${NEXT_PUBLIC_UMAMI_ENABLED:-false}
-        NEXT_PUBLIC_UMAMI_URL: ${NEXT_PUBLIC_UMAMI_URL:-https://rds.vocespace.com}
-        NEXT_PUBLIC_UMAMI_WEBSITE_ID: ${NEXT_PUBLIC_UMAMI_WEBSITE_ID:-d2fe7209-e79d-45cc-8c0d-20b5f6035ce7}
+      secrets: [vocespace_config]
     init: true
     restart: unless-stopped
-    ports:
-      - "${WEB_BIND:-127.0.0.1}:${WEB_PORT:-3000}:3000"
-    environment:
-      VOCESPACE_API_URL: ${VOCESPACE_API_URL:-http://api:3001}
-      NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-}
+    ports: ["127.0.0.1:3030:3030"]
+    volumes:
+      - ./deploy/api-data:/data:ro
     depends_on:
       api:
         condition: service_healthy
-
   api:
-    image: ${API_IMAGE:-vocespace-api:local}
+    image: vocespace-api:local
     build:
       context: .
       target: api
     init: true
     restart: unless-stopped
     stop_grace_period: 30s
-    ports:
-      - "${API_BIND:-127.0.0.1}:${API_PORT:-3001}:3001"
-    environment:
-      PUBLIC_ORIGIN: ${PUBLIC_ORIGIN:-http://localhost:3000}
-      NEXT_PUBLIC_BASE_PATH: ${NEXT_PUBLIC_BASE_PATH:-}
-      VOCESPACE_INIT_CONFIG: "true"
-      LIVEKIT_URL: ${LIVEKIT_URL:-}
-      LIVEKIT_API_KEY: ${LIVEKIT_API_KEY:-}
-      LIVEKIT_API_SECRET: ${LIVEKIT_API_SECRET:-}
-      HOST_TOKEN: ${HOST_TOKEN:-}
-      REDIS_HOST: ${REDIS_HOST:-redis}
-      REDIS_PORT: ${REDIS_PORT:-6379}
-      REDIS_DB: ${REDIS_DB:-0}
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-      SUPABASE_URL: ${SUPABASE_URL:-}
-      SUPABASE_PUBLISHABLE_KEY: ${SUPABASE_PUBLISHABLE_KEY:-}
-      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
-      ACCOUNT_PUBLIC_URL: ${ACCOUNT_PUBLIC_URL:-}
-      PLATFORM_JWT_SECRET: ${PLATFORM_JWT_SECRET:-}
-      LICENSE_SECRET: ${LICENSE_SECRET:-}
-      WORKER_ENABLED: "true"
-      PREVIEW_ENABLED: ${PREVIEW_ENABLED:-false}
-      PREVIEW_RENDERER_BASE_URL: ${PREVIEW_RENDERER_BASE_URL:-}
-      PREVIEW_S3_ENDPOINT: ${PREVIEW_S3_ENDPOINT:-}
-      PREVIEW_MAX_SOURCES: ${PREVIEW_MAX_SOURCES:-3}
+    ports: ["127.0.0.1:3031:3031"]
     volumes:
-      - api-data:/data
-
-  # Optional: omit this profile when using external Redis.
-  redis:
-    image: redis:7.4-alpine
-    profiles: [local-redis]
-    restart: unless-stopped
-    environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
-    command:
-      - /bin/sh
-      - -ec
-      - 'exec redis-server --appendonly yes --requirepass "$${REDIS_PASSWORD}"'
-    volumes:
-      - redis-data:/data
-    healthcheck:
-      test: [CMD-SHELL, 'REDISCLI_AUTH="$${REDIS_PASSWORD}" redis-cli ping | grep -q PONG']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-
-volumes:
-  api-data:
-  redis-data:
+      - ./deploy/api-data:/data
+secrets:
+  vocespace_config:
+    file: ./deploy/api-data/vocespace.conf.json

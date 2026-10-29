@@ -1,3 +1,4 @@
+import { mobileConfig } from '../../../config';
 import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import type { AccountSpace } from '@vocespace/contracts';
@@ -45,7 +46,7 @@ export function useMySpaces(account: AccountModel, active: boolean) {
   }, [active, owner, revision]);
   const rooms = (rows?.owner === owner ? rows.rooms : []).map((room) => ({
     ...room,
-    spaceName: resolveSpaceInput(room.url, process.env.EXPO_PUBLIC_API_URL),
+    spaceName: resolveSpaceInput(room.url, mobileConfig.mobile.apiUrl),
   }));
   const primary = account.profile.username;
   if (owner && primary && !rooms.some((room) => room.spaceName === primary))

@@ -1,10 +1,11 @@
+import { getConfig } from './config';
 import jwt from 'jsonwebtoken';
 import type { TokenResult, IdentityType, RoomType } from '@vocespace/domain';
 import type { ParticipantSettings } from '@vocespace/domain/space';
 
 const signingKey = () => {
-  const key = process.env.PLATFORM_JWT_SECRET;
-  if (!key || key.length < 32) throw new Error('PLATFORM_JWT_SECRET must contain at least 32 characters');
+  const key = getConfig().account.platformJwtSecret;
+  if (!key || key.length < 32) throw new Error('account.platformJwtSecret must contain at least 32 characters');
   return key;
 };
 

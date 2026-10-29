@@ -40,9 +40,9 @@ export interface PreviewJob {
 }
 function config() {
   const conf = getConfig();
-  const renderer = process.env.PREVIEW_RENDERER_BASE_URL;
+  const renderer = getConfig().preview.rendererBaseUrl;
   if (
-    process.env.PREVIEW_ENABLED !== 'true' ||
+    !getConfig().preview.enabled ||
     !renderer ||
     !conf.s3?.bucket ||
     !conf.s3.accessKey ||
@@ -152,7 +152,7 @@ export async function ensurePreview(space: string): Promise<PreviewJob | null> {
       }
       await stopJob(job);
     }
-    const limit = Math.max(1, Math.min(20, Number(process.env.PREVIEW_MAX_SOURCES) || 3));
+    const limit = Math.max(1, Math.min(20, getConfig().preview.maxSources));
     if ((await previewRedis().hlen(JOBS)) >= limit) return null;
     const job: PreviewJob = {
       id: randomUUID(),
@@ -180,7 +180,7 @@ export async function ensurePreview(space: string): Promise<PreviewJob | null> {
                 secret: conf.s3.secretKey,
                 bucket: conf.s3.bucket,
                 region: conf.s3.region,
-                endpoint: process.env.PREVIEW_S3_ENDPOINT || '',
+                endpoint: getConfig().preview.s3Endpoint || '',
                 forcePathStyle: true,
               }),
             },
@@ -230,7 +230,7 @@ export async function reconcilePreviews() {
     if (conf.s3) {
       const storage = new S3Client({
         region: conf.s3.region,
-        endpoint: process.env.PREVIEW_S3_ENDPOINT || undefined,
+        endpoint: getConfig().preview.s3Endpoint || undefined,
         forcePathStyle: true,
         credentials: { accessKeyId: conf.s3.accessKey, secretAccessKey: conf.s3.secretKey },
       });
@@ -266,7 +266,7 @@ export async function previewObject(job: PreviewJob, name: string) {
   if (!conf) throw new Error('PREVIEW_UNAVAILABLE');
   const client = new S3Client({
     region: conf.s3.region,
-    endpoint: process.env.PREVIEW_S3_ENDPOINT || undefined,
+    endpoint: getConfig().preview.s3Endpoint || undefined,
     forcePathStyle: true,
     credentials: { accessKeyId: conf.s3.accessKey, secretAccessKey: conf.s3.secretKey },
   });

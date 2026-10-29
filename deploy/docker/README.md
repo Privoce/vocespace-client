@@ -1,8 +1,3 @@
-```bash
-# clear cache
-docker system prune -f
-# 导入image
-docker load -i live_meet-livemeet-prod.tar
-# 运行image -> container
-docker run -p 3000:3000 live_meet-livemeet-prod:latest
-```
+# Docker 部署
+
+当前使用根目录 Dockerfile 的 web / api 两个目标，配置挂载 `vocespace.conf.json`。操作步骤见 [Docker 部署](../../docs/docker-deployment.md)。旧合并镜像及清理镜像的命令不再适用。

@@ -1,3 +1,4 @@
+import { getConfig } from './lib/server/config';
 import { moderationEndpoint } from './moderation';
 import { nativeFeedbackEndpoint, feedbackAccountEndpoint } from './native-feedback';
 import { accountEndpoint } from './account/endpoint';
@@ -24,7 +25,7 @@ async function dispatchInternal(request: ApiRequest) {
   const requestId = randomUUID();
   try {
     let pathname = request.nextUrl.pathname;
-    const prefix = process.env.NEXT_PUBLIC_BASE_PATH || '';
+    const prefix = getConfig().deployment.basePath;
     if (prefix && pathname.startsWith(prefix + '/')) pathname = pathname.slice(prefix.length);
     pathname = pathname.replace(/^\/uploads\//, '/api/files/');
     pathname = pathname.replace(/^\/api\/v1\//, '/api/');

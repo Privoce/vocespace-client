@@ -1,3 +1,4 @@
+vi.mock('expo-constants', () => ({ default: { expoConfig: { extra: {} } } }));
 import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ApiError } from '@vocespace/client-sdk';

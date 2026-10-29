@@ -32,7 +32,7 @@
 
 ## Monorepo 启动
 
-services/api/start.mjs 固定数据目录，工作区默认沿用仓库根的数据，独立部署显式设置 VOCESPACE_DATA_DIR。API entry 在导入业务模块之前切换 cwd，避免模块级路径指向子项目。VOCESPACE_PROMPT_DIR 指向随制品打包的 prompt，业务配置/上传/sql/清理队列继续由单 API 写入。不得因移动目录重置用户数据。
+services/api/start.mjs 通过 --config 或工作区根目录定位 vocespace.conf.json，按 deployment.dataDir（相对配置文件）固定数据目录，在导入业务模块前切换 cwd。运行时不加载 .env 或旧业务环境变量。默认 prompt / preview 资源来自制品 dist，也可在 deployment.api 中指定路径；配置/上传/sql/清理队列继续由单 API 写入。结构入口为 packages/domain/src/config.ts，Node 读取器为 @vocespace/config-node；客户端仅使用显式公开投影。不得因移动目录重置用户数据。
 
 ## Native 观众试运行
 

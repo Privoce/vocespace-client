@@ -36,15 +36,16 @@ Give it a try at [vocespace demo](https://space.voce.chat/rooms/bby6-x55t)
 Steps to get a local dev setup up and running:
 
 1. Run `pnpm install` to install all dependencies.
-2. Copy `.env.example` in the project root and rename it to `.env.local`.
-3. Create the configuration file `vocespace.conf.json` (see configuration reference below).
-4. Run `pnpm dev` to start the development server and visit [http://localhost:3000](http://localhost:3000) to see the result.
-5. Start development
+2. Copy `vocespace.conf.example.json` to `vocespace.conf.json` and configure it. Existing deployments should follow [JSON configuration migration](docs/configuration.md); runtime no longer loads `.env` files.
+3. Fill the existing service credentials and set `deployment.publicOrigin` to your development Web origin. The example uses Web 3030 and API 3031.
+4. Start `pnpm dev:api` and `pnpm dev:web` in separate terminals, then visit [http://localhost:3030](http://localhost:3030).
+5. For production, follow [Ubuntu deployment](linux_deploy.md) or [Docker deployment](docs/docker-deployment.md).
 
 ### Common Commands
 
 ```bash
-pnpm dev       # Start development server
+pnpm dev:web   # Start Web
+pnpm dev:api   # Build and start the independent API
 pnpm build     # Build production version
 pnpm start     # Start production server
 pnpm lint      # Run code linting
@@ -54,63 +55,7 @@ pnpm lint      # Run code linting
 
 ### vocespace.conf.json
 
-```json
-{
-  "livekit": {
-    "key": "your-production-key",
-    "secret": "your-production-secret",
-    "url": "ws://host.docker.internal:7880",
-    "turn": {
-      "urls": "turn:your-turn-server:3478",
-      "username": "your-turn-username",
-      "credential": "your-turn-password"
-    }
-  },
-  "codec": "vp9",
-  "resolution": "1080p",
-  "maxBitrate": 3000000,
-  "maxFramerate": 30,
-  "priority": "medium",
-  "redis": {
-    "enabled": true,
-    "host": "host.docker.internal",
-    "port": 6379,
-    "password": "",
-    "db": 0
-  },
-  "s3": {
-    "enabled": false,
-    "endpoint": "your-s3-endpoint",
-    "bucket": "your-bucket",
-    "accessKey": "your-access-key",
-    "secretKey": "your-secret-key",
-    "region": "your-region"
-  },
-  "serverUrl": "your-domain.com",
-  "hostToken": "your-host-token",
-  "license": "your-license-token",
-  "ai": {
-    "enabled": true,
-    "apiKey": "your-ai-api-key",
-    "apiUrl": "your-ai-api-url",
-    "model": "your-ai-model",
-    "maxTokens": 4000
-  },
-  "smtp": {
-    "host": "smtp.gmail.com",
-    "port": 587,
-    "secure": false,
-    "user": "your-email@gmail.com",
-    "pass": "your-smtp-password",
-    "from": "your-email@gmail.com"
-  },
-  "hyperbeam": {
-    "apiKey": "your-hyperbeam-api-key",
-    "apiBase": "https://engine.hyperbeam.com",
-    "defaultStartUrl": "https://www.google.com/search?q="
-  }
-}
-```
+Use the complete [JSON template](vocespace.conf.example.json), the [TypeScript structure](packages/domain/src/config.ts), and the [configuration reference](docs/configuration.md). Keep real credentials out of Git. Web/API accept `--config /absolute/path/vocespace.conf.json`; Mobile uses only the generated public projection. Runtime does not load `.env` files.
 
 ## Features
 

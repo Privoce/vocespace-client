@@ -1,3 +1,4 @@
+import { mobileConfig } from '../config';
 import * as Crypto from 'expo-crypto';
 import * as SecureStore from 'expo-secure-store';
 import { ApiError, createAccountClient } from '@vocespace/client-sdk';
@@ -7,7 +8,7 @@ async function secureStorage<T>(work: () => Promise<T>): Promise<T> {
 }
 /** Independent keychain namespace: Supabase account sessions are not RTC bearer sessions. */
 export function configuredAccountClient() {
-  const configured = process.env.EXPO_PUBLIC_API_URL;
+  const configured = mobileConfig.mobile.apiUrl;
   if (!configured) return undefined;
   let url: URL;
   try {

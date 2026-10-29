@@ -1,3 +1,4 @@
+vi.mock('expo-constants', () => ({ default: { expoConfig: { extra: {} } } }));
 import { cleanup, render, screen } from '@testing-library/react';
 import { afterEach, expect, it, vi } from 'vitest';
 import { createTranslator, type Locale } from '@vocespace/i18n';

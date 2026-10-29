@@ -1,0 +1,15 @@
+{
+  "deployment": {
+    "publicOrigin": "http://localhost:3000",
+    "basePath": "",
+    "dataDir": ".",
+    "api": { "host": "127.0.0.1", "port": 3001, "uploadLimitBytes": 115343360, "workerEnabled": true, "promptDir": "", "previewAssetsDir": "" },
+    "web": { "host": "127.0.0.1", "port": 3000, "apiUrl": "http://127.0.0.1:3001" },
+    "mobile": { "apiUrl": "https://vocespace.com", "meetingUiPreview": false }
+  },
+  "account": { "publicUrl": "", "supabase": { "url": "", "publishableKey": "", "serviceRoleKey": "" }, "platformJwtSecret": "" },
+  "billing": { "licenseSecret": "", "stripe": { "enabled": false, "secretKey": "", "webhookSecret": "", "siteUrl": "https://vocespace.com" } },
+  "preview": { "enabled": false, "rendererBaseUrl": "", "s3Endpoint": "", "maxSources": 3 },
+  "analytics": { "enabled": false, "url": "https://rds.vocespace.com", "websiteId": "d2fe7209-e79d-45cc-8c0d-20b5f6035ce7" },
+  "debug": { "datadogClientToken": "", "datadogSite": "" }
+}

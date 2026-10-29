@@ -576,3 +576,26 @@
 - [x] setup 增加 `VOCESPACE_APT_SOURCES`，可仅本次使用已有 Ubuntu `.sources` / `.list` 文件，解决第三方 CrowdSec 源 404 阻断依赖安装的问题；update / install 使用相同源参数，保留签名校验及其他源的配置和缓存索引。
 - [x] 源路径无效或 update 失败即停止，不继续安装依赖；默认仍使用全部系统源。Linux 文档补充实际命令及第三方源本身仍需修复的说明。
 - [x] 11 项隔离部署测试、Shell 语法与差异检查通过；覆盖 root / 普通用户、默认 / 指定源、缺失源和 update 失败。未连接服务器或修改真实 APT 配置，Ubuntu 实机重试由用户执行。
+
+### 2026-10-29：Linux 部署文档重写
+
+- [x] 按用户要求将 `linux_deploy.md` 重写为“脚本部署”和“源码部署”两部分，每部分按步骤 1–10 排列，统一使用 root、现有源码路径和 `/var/vocespace/main`，明确配置来源、APT 源问题、独立构建、首次迁移、启动验收及升级回退。
+- [x] 文档中的 29 个 Shell 示例、PM2 配置语法、步骤连续性和统一路径检查通过；本次仅修改文档，未执行安装、构建、PM2 或 Caddy 切换。
+
+### 2026-10-29：部署配置来源核对与统一
+
+- [x] 核对 Web `getConf()` → `/api/conf` → API `getConfig()`，以及 Native / 预览 / Redis / LiveKit 调用链：会议业务配置来自固定数据目录的 `vocespace.conf.json`；Supabase、公开 origin、进程参数和预览开关仍是独立环境变量。
+- [x] Linux 文档及 Ubuntu 环境模板移除重复填写 LiveKit / Redis / hostToken 的要求；新安装直接创建 JSON，旧部署迁移真实 JSON。激活前缺少 JSON 即停止，不再允许用初始化环境变量代替；原启动器的显式初始化兼容入口保留，不覆盖既有文件。
+- [x] 修复 Hyperbeam 清空 JSON 密钥后仍回退旧环境变量的问题；移除 SMTP 环境回退并修正报错指向 `smtp.pass`。仅配置过 Hyperbeam 环境变量的部署需将值迁到 JSON。
+- [x] 81 项测试（含 4 项配置来源回归）、13 项隔离部署脚本测试、根 / API 类型、API 构建、部署初始化兼容检查、边界和差异检查通过；文档 30 个 Shell 示例语法及两组步骤 1–10 连续性通过。
+- [ ] 未执行服务器部署、重启业务服务或真实邮件 / Hyperbeam 请求；本地隔离测试不代替生产验收。
+
+### 2026-10-29：应用配置统一为 vocespace.conf.json（取代上条环境变量保留方案）
+
+- [x] `packages/domain/src/config.ts` 增加 deployment / account / billing / preview / analytics / debug 类型；Node 读取器统一定位、默认值和字段校验。Web/API 启动不再加载 .env，不再用旧业务环境变量覆盖 JSON；删除环境生成 JSON 的旧启动入口。
+- [x] Supabase、平台 JWT、Stripe、许可证签名、预览、监听地址/端口、数据及资源目录切换到 JSON。控制台保存原配置时保留新增段，Redis/会议模型和现有持久化不变。
+- [x] Web 从服务端白名单投影公开运行配置；子路径从 JSON 构建并在启动时校验。Mobile 用公开生成物及 Expo extra/Constants，不将完整配置或服务端密钥加入客户端。
+- [x] Ubuntu init/build/activate、PM2、Docker Compose 和镜像挂载同步调整；新增一次性环境迁移/备份、公开配置导出和 JSON 检查工具。Linux 文档保留脚本/源码两部分，各步骤 1–10；补配置与 Docker 指南，更新 Mobile/统计说明。
+- [x] 本机原 JSON 已迁入旧环境文件中尚未支持的配置，保留 0600 权限备份；没有删除原环境文件、重启用户服务或操作远程数据。
+- [x] 86 项测试、13 项隔离部署测试、根/API/Mobile 类型、边界、隔离标准 Web/API 构建和 API 生产制品打包通过。隔离 API + standalone Web 验证 JSON 端口、子路径、HTTP/Socket 代理、旧环境无效及运行配置更新；Expo 公开配置、iOS/Android JS 导出和秘密哨兵扫描通过。
+- [ ] Docker Compose 语法校验通过；本机 daemon 未启动，容器构建/运行尚未验证。未执行 Ubuntu 生产部署、真实 Supabase/LiveKit/邮件交易或移动端原生签名构建/真机验收。

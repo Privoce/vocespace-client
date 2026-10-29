@@ -16,7 +16,7 @@ for (const directory of [app, path.join(app, 'node_modules'), path.join(app, '.n
   }
 }
 // Next's generated server does not include our HTTP / Socket upgrade proxy.
-// Package the actual custom server and its one extra runtime dependency.
+// Package the actual custom server and its configuration reader.
 await cp(path.join(web, 'server.js'), path.join(app, 'proxy-server.mjs'));
 // Match Next's standalone bootstrapping: avoid loading build-time webpack hooks
 // from next.config when only traced production dependencies are present.
@@ -38,10 +38,14 @@ await cp(publicDirectory, path.join(app, 'public'), {
 });
 await rm(path.join(app, '.next/static'), { recursive: true, force: true });
 await cp(path.join(web, '.next/static'), path.join(app, '.next/static'), { recursive: true });
-const dotenv = path.dirname(await realpath(require.resolve('dotenv/package.json')));
-// Tracing may already create a symlink here; replace only this generated artifact entry.
-await rm(path.join(app, 'node_modules/dotenv'), { recursive: true, force: true });
-await cp(dotenv, path.join(app, 'node_modules/dotenv'), { recursive: true });
+// The custom server needs the Node-only JSON reader and its public defaults.
+for (const name of ['config-node', 'domain']) {
+  const source = path.join(root, 'packages', name);
+  const target = path.join(app, 'node_modules/@vocespace', name);
+  await rm(target, { recursive: true, force: true });
+  await mkdir(path.dirname(target), { recursive: true });
+  await cp(source, target, { recursive: true, filter: (file) => !file.split(path.sep).includes('node_modules') });
+}
 await writeFile(path.join(output, 'package.json'), JSON.stringify({ private: true, type: 'module' }));
 await writeFile(path.join(output, 'server.js'), "import './apps/web/server.js';\n");
 console.log('Web runtime packaged: apps/web/.next/standalone (node server.js)');

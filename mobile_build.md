@@ -38,13 +38,13 @@ pnpm test
 
 生产 App 的构建环境必须有：
 
-```dotenv
-EXPO_PUBLIC_API_URL=https://space.example.com
+在唯一的 `vocespace.conf.json` 设置 `deployment.mobile.apiUrl`，然后从仓库根执行：
+
+```bash
+node scripts/config.mjs public --config /实际路径/vocespace.conf.json
 ```
 
-这是公开地址，**会编译进入 JS**，不能放 Supabase service role、LiveKit secret、管理员令牌或签名密码。可使用 Web 同站代理域名，也可使用独立 API HTTPS 域名。不能使用 localhost / 局域网 IP / 自签证书作为商店构建的服务地址。
-
-本机开发设置 `apps/mobile/.env.local`；EAS 设置对应 environment 的变量。更改生产地址后必须重新构建包含新 JS 的安装包。本项目未配置 EAS Update，不要假设服务端改 env 或热更新会自动修改已安装包。
+生成的 `apps/mobile/vocespace.public.json` 是公开构建投影，由 `app.config.js` 选择 mobile / analytics 字段写入 Expo extra。它可随 EAS 上传；完整服务端 JSON 必须留在服务端，不进入安装包。地址改变后重新导出并构建，不再读取 `EXPO_PUBLIC_API_URL` 或 `.env.local`。
 
 ## 3. 头像报错的处理
 
@@ -87,12 +87,10 @@ EAS 命令从 `apps/mobile` 执行，上传范围包含 monorepo 的共享 packa
 cd apps/mobile
 npx eas-cli@latest login
 npx eas-cli@latest init
-# 按需替换 preview / production 的公开 API 地址：
-npx eas-cli@latest env:create --environment preview --name EXPO_PUBLIC_API_URL --value https://space.example.com --visibility plaintext
-npx eas-cli@latest env:create --environment production --name EXPO_PUBLIC_API_URL --value https://space.example.com --visibility plaintext
+# 构建前，回到仓库根按上面的命令重新生成公开配置。
 ```
 
-已有 EAS 项目时连接原项目，不重复创建；`eas init` 写入的 projectId 应保留。变量已存在时通过 EAS 控制台或 `eas env:update` 更新。先用 `eas whoami` 核对所属组织。CLI 示例使用官方最新版；在团队 CI 中记录本次验证过的 EAS CLI 版本后固定使用。
+已有 EAS 项目时连接原项目，不重复创建；`eas init` 写入的 projectId 应保留。旧 EAS 业务环境变量不再被代码读取，改动公开配置后重新导出。先用 `eas whoami` 核对所属组织。CLI 示例使用官方最新版；在团队 CI 中记录本次验证过的 EAS CLI 版本后固定使用。
 
 ### iOS 屏幕共享签名
 
@@ -175,14 +173,6 @@ pnpm exec expo run:android --variant release --device
 
 ## Umami 统计（2026-10-29）
 
-首期 Web / App 共用事件字典。Native 直接调用 HTTP 采集接口，不需要新增原生模块或 WebView。默认关闭；在实际使用的 EAS `production` / `preview` 环境或本机 `apps/mobile/.env` 中配置：
+首期 Web / App 共用事件字典。Native 直接调用 HTTP 接口。在唯一 JSON 的 `analytics` 中设置 `enabled`、`url`、`websiteId`，再运行上述 public 导出命令并重新构建。development build + Metro 的 `__DEV__` 模式仍不发送统计。
 
-```dotenv
-EXPO_PUBLIC_UMAMI_ENABLED=true
-EXPO_PUBLIC_UMAMI_URL=https://rds.vocespace.com
-EXPO_PUBLIC_UMAMI_WEBSITE_ID=d2fe7209-e79d-45cc-8c0d-20b5f6035ce7
-```
-
-这些是公共构建参数，须让构建进程读取；只设置 API 服务器环境变量无效。EAS 的远程环境配置与本地 `.env` 不是同一份文件。切换开关后重新生成 release JS / 安装包，按本文已有签名与发布流程操作；development build + Metro 的 `__DEV__` 模式强制不发送。
-
-验收包请改用独立测试 Website ID，确认 iOS / Android 页面访问、入会和账号事件正常，网络失败不影响业务，抓包没有邮箱、房间名、正文或凭证。未进行真实 Umami / 真机采集验收，JS 导出和 Mock HTTP 测试不替代该步骤。首期不承诺跨启动 / 跨端唯一用户统计。完整范围见 [埋点文档](埋点文档.md)。
+本次配置迁移的结构、秘密隔离和生效方式见 [JSON 配置说明](docs/configuration.md)。JS 导出不代替商店签名或真机验收。

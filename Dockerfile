@@ -9,13 +9,8 @@ RUN --mount=type=cache,id=vocespace-pnpm,target=/pnpm/store \
 
 FROM dependencies AS web-build
 ENV NEXT_TELEMETRY_DISABLED=1
-ARG NEXT_PUBLIC_UMAMI_ENABLED=false
-ARG NEXT_PUBLIC_UMAMI_URL=https://rds.vocespace.com
-ARG NEXT_PUBLIC_UMAMI_WEBSITE_ID=d2fe7209-e79d-45cc-8c0d-20b5f6035ce7
-ENV NEXT_PUBLIC_UMAMI_ENABLED=$NEXT_PUBLIC_UMAMI_ENABLED NEXT_PUBLIC_UMAMI_URL=$NEXT_PUBLIC_UMAMI_URL NEXT_PUBLIC_UMAMI_WEBSITE_ID=$NEXT_PUBLIC_UMAMI_WEBSITE_ID
-ARG NEXT_PUBLIC_BASE_PATH=""
-ENV NEXT_PUBLIC_BASE_PATH=$NEXT_PUBLIC_BASE_PATH
-RUN pnpm build:web
+# Mount configuration only for the basePath build constant; never COPY secrets into an image.
+RUN --mount=type=secret,id=vocespace_config,target=/workspace/vocespace.conf.json,required=true pnpm build:web
 
 FROM dependencies AS api-build
 RUN --mount=type=cache,id=vocespace-pnpm,target=/pnpm/store \
@@ -23,21 +18,21 @@ RUN --mount=type=cache,id=vocespace-pnpm,target=/pnpm/store \
 
 FROM node:24.12.0-bookworm-slim AS web
 WORKDIR /app
-ENV NODE_ENV=production HOST=0.0.0.0 PORT=3000 NEXT_TELEMETRY_DISABLED=1
+ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
 COPY --from=web-build --chown=node:node /workspace/apps/web/.next/standalone ./
 USER node
-EXPOSE 3000
+EXPOSE 3030
 HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
-  CMD node -e "fetch('http://127.0.0.1:3000/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-CMD ["node", "server.js"]
+  CMD node -e "fetch('http://127.0.0.1:'+JSON.parse(require('node:fs').readFileSync('/data/vocespace.conf.json','utf8')).deployment.web.port+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "server.js", "--config", "/data/vocespace.conf.json"]
 
 FROM node:24.12.0-bookworm-slim AS api
 WORKDIR /app
-ENV NODE_ENV=production API_HOST=0.0.0.0 API_PORT=3001 VOCESPACE_DATA_DIR=/data
+ENV NODE_ENV=production
 COPY --from=api-build --chown=node:node /runtime ./
 RUN mkdir -p /data && chown node:node /data
 USER node
-EXPOSE 3001
+EXPOSE 3031
 HEALTHCHECK --interval=15s --timeout=5s --start-period=30s --retries=5 \
-  CMD node -e "fetch('http://127.0.0.1:3001/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
-CMD ["node", "start.mjs"]
+  CMD node -e "fetch('http://127.0.0.1:'+JSON.parse(require('node:fs').readFileSync('/data/vocespace.conf.json','utf8')).deployment.api.port+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+CMD ["node", "start.mjs", "--config", "/data/vocespace.conf.json"]

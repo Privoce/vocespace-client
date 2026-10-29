@@ -43,7 +43,7 @@ export function AISettings({
   const [model, setModel] = useState<string>('');
   const [url, setUrl] = useState<string>('');
   const [apiKey, setApiKey] = useState<string>('');
-  const [config, setConfig] = useState(DEFAULT_VOCESPACE_CONFIG);
+  const [config, setConfig] = useState<ReadableConf>(DEFAULT_VOCESPACE_CONFIG);
   const {
     aiCutDeps,
     setAICutDeps,

@@ -21,7 +21,7 @@ export async function GET(request: ApiRequest) {
     catch { return ApiResponse.json({ code: 'INVALID_PLATFORM_TOKEN' }, { status: 401 }); }
     if (!safeSegment(platform.space)) return new ApiResponse(null, { status: 400 });
     const code = await sessions.code({ ...platform, auth: query.get('auth') });
-    const url = new URL(`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/${encodeURIComponent(platform.space)}`, request.nextUrl.origin);
+    const url = new URL(`${getConfig().deployment.basePath}/${encodeURIComponent(platform.space)}`, request.nextUrl.origin);
     url.searchParams.set('code', code);
     const headers = { 'Referrer-Policy': 'no-referrer', 'Cache-Control': 'no-store' };
     return query.get('fromServer') === 'true' ? ApiResponse.json({ redirectUrl: url.toString() }, { headers }) : ApiResponse.redirect(url, { headers, status: 303 });

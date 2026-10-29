@@ -1,8 +1,9 @@
+import { basePath as configuredBasePath } from '@/lib/runtime-config';
 import { ensureWebSession } from '@/lib/api/client';
 import { createRealtimeClient } from '@vocespace/client-sdk';
 
 // Importing a view or rendering on the server must never open a connection.
-export const socket = createRealtimeClient(undefined, { path: `${process.env.NEXT_PUBLIC_BASE_PATH || ''}/socket.io` });
+export const socket = createRealtimeClient(undefined, { path: `${configuredBasePath}/socket.io` });
 
 let owners = 0;
 export function retainSocket() {

@@ -1,3 +1,4 @@
+import { getConfig } from './lib/server/config';
 import { ACCOUNT_AVATAR_MAX_BYTES } from '@vocespace/contracts';
 import { startRealtime } from './realtime/server';
 import { startWorker } from './worker/index';
@@ -6,7 +7,7 @@ import { Readable } from 'node:stream';
 import { ApiRequest } from './http';
 import { dispatch } from './dispatch';
 
-const maxBytes = Number(process.env.API_UPLOAD_LIMIT_BYTES || 110 * 1024 * 1024);
+const maxBytes = getConfig().deployment.api.uploadLimitBytes;
 const server = createServer(async (req, res) => {
   const abort = new AbortController();
   req.on('aborted', () => abort.abort());
@@ -23,7 +24,7 @@ const server = createServer(async (req, res) => {
       if (bytes > bodyLimit) { res.writeHead(413, { Connection: 'close' }).end(); return; }
       chunks.push(chunk);
     }
-    const publicUrl = process.env.PUBLIC_ORIGIN || `http://${req.headers.host}`;
+    const publicUrl = getConfig().deployment.publicOrigin;
     const headers = new Headers();
     for (const [name, value] of Object.entries(req.headers)) {
       if (value !== undefined) headers.set(name, Array.isArray(value) ? value.join(', ') : value);
@@ -39,10 +40,10 @@ const server = createServer(async (req, res) => {
   } catch { if (!res.headersSent) res.writeHead(400); res.end(); }
 });
 const io = startRealtime(server);
-const stopWorker = process.env.WORKER_ENABLED === 'false' ? () => {} : startWorker();
+const stopWorker = !getConfig().deployment.api.workerEnabled ? () => {} : startWorker();
 server.requestTimeout = 120_000;
 server.headersTimeout = 30_000;
-server.listen(Number(process.env.API_PORT || 3001), process.env.API_HOST || '127.0.0.1', () => {
+server.listen(getConfig().deployment.api.port, getConfig().deployment.api.host, () => {
   console.log('VoceSpace API ready');
 });
 for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => { stopWorker(); io.close(); server.close(() => process.exit(0)); });

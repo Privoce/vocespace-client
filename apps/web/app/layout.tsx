@@ -1,3 +1,5 @@
+import { readConfiguration, publicConfiguration } from '@vocespace/config-node';
+export const dynamic = 'force-dynamic';
 import { AnalyticsProvider } from '@/lib/analytics/AnalyticsProvider';
 import { phoneButtonColors, meetingColors } from '@vocespace/ui/theme';
 import { DeviceLayoutSync } from '../components/Layout/DeviceLayoutSync';
@@ -59,6 +61,7 @@ const brand = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const clientConfig = JSON.stringify(publicConfiguration(readConfiguration())).replace(/</g, '\\u003c');
   return (
     <ConfigProvider
       theme={{
@@ -226,6 +229,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     >
       <html lang="en">
         <body style={{ backgroundColor: '#1a1a1a' }}>
+          <script dangerouslySetInnerHTML={{ __html: `window.__VOCESPACE_CONFIG__=${clientConfig};` }} />
           <I18nProvider initialLocale="en">
             {/* component={false} 不渲染额外 DOM，仅为 App.useApp() 提供上下文（message 等消费主题） */}
             <App component={false}>

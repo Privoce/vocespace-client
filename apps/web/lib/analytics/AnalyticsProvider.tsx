@@ -1,5 +1,8 @@
 'use client';
+import { basePath as configuredBasePath } from '@/lib/runtime-config';
+
 import Script from 'next/script';
+import { publicConfig } from '../runtime-config';
 import { usePathname } from 'next/navigation';
 import { useEffect } from 'react';
 import { webAnalyticsPage, analyticsLanguage } from '@vocespace/contracts';
@@ -11,24 +14,23 @@ import {
   setWebAnalyticsContext,
   flushWebAnalytics,
   webAnalyticsEnabled,
-  umamiHost,
-  umamiWebsite,
 } from './index';
 export function AnalyticsProvider() {
+  const { url: umamiHost, websiteId: umamiWebsite } = publicConfig().analytics;
   const pathname = usePathname();
   const { locale, ready } = useI18n();
   const layout = useLayoutDevice();
   useEffect(() => {
     if (!ready) return;
     setWebAnalyticsContext({ language: analyticsLanguage(locale), layout: getLayoutDevice() });
-    const page = webAnalyticsPage(pathname || '/', process.env.NEXT_PUBLIC_BASE_PATH || '');
+    const page = webAnalyticsPage(pathname || '/', configuredBasePath);
     analytics.scope(!!page);
     if (page) analytics.page(page);
   }, [pathname, locale, layout, ready]);
   if (
     !ready ||
     !webAnalyticsEnabled() ||
-    !webAnalyticsPage(pathname || '/', process.env.NEXT_PUBLIC_BASE_PATH || '')
+    !webAnalyticsPage(pathname || '/', configuredBasePath)
   )
     return null;
   return (

@@ -1,13 +1,11 @@
+import { publicConfig } from '../runtime-config';
 import { version } from '../../package.json';
 import { createAnalytics } from '@vocespace/client-sdk';
 import type { AnalyticsPayload } from '@vocespace/contracts';
 const enabled = () =>
   typeof window !== 'undefined' &&
   process.env.NODE_ENV === 'production' &&
-  process.env.NEXT_PUBLIC_UMAMI_ENABLED === 'true';
-export const umamiWebsite =
-  process.env.NEXT_PUBLIC_UMAMI_WEBSITE_ID || 'd2fe7209-e79d-45cc-8c0d-20b5f6035ce7';
-export const umamiHost = process.env.NEXT_PUBLIC_UMAMI_URL || 'https://rds.vocespace.com';
+  publicConfig().analytics.enabled;
 let common: Record<string, unknown> = {
   platform: 'web',
   auth_state: 'unknown',
@@ -37,7 +35,7 @@ export function flushWebAnalytics() {
 export const analytics = createAnalytics({
   enabled,
   now: Date.now,
-  website: umamiWebsite,
+  get website() { return publicConfig().analytics.websiteId; },
   hostname: 'vocespace.com',
   context: () => common,
   send: (payload) => {

@@ -6,7 +6,8 @@ dist/
 .expo/
 .pnpm-store/
 .env*
-vocespace*.json
+vocespace.conf.json
+vocespace.conf.json.backup-*
 vocespace*.txt
 uploads/
 sql/
@@ -25,3 +26,6 @@ credentials/
 /apps/mobile/ios/
 /apps/mobile/android/
 /apps/web/public/license/
+
+vocespace.public.json
+vocespace.build.json

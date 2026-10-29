@@ -1,4 +1,5 @@
-import dotenv from 'dotenv';
+import { configPath, setConfigPath, readConfiguration } from '@vocespace/config-node';
+import { readFileSync } from 'node:fs';
 import next from 'next';
 import { createServer, request as httpRequest } from 'node:http';
 import { request as httpsRequest } from 'node:https';
@@ -6,20 +7,18 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const webRoot = path.dirname(fileURLToPath(import.meta.url));
-const repositoryRoot = path.resolve(webRoot, '../..');
-
-// App-specific environment wins; root env remains a migration compatibility input.
-for (const directory of [webRoot, repositoryRoot]) {
-  for (const name of ['.env.local', `.env.${process.env.NODE_ENV || 'development'}`, '.env']) {
-    dotenv.config({ path: path.join(directory, name) });
-  }
-}
+setConfigPath(configPath());
+const conf = readConfiguration();
 process.chdir(webRoot);
 const dev = process.env.NODE_ENV !== 'production';
-const hostname = process.env.HOST || 'localhost';
-const port = Number(process.env.PORT || 3000);
-const basePath = process.env.NEXT_PUBLIC_BASE_PATH || '';
-const apiUrl = new URL(process.env.VOCESPACE_API_URL || 'http://127.0.0.1:3001');
+const hostname = conf.deployment.web.host;
+const port = conf.deployment.web.port;
+const basePath = conf.deployment.basePath;
+const apiUrl = new URL(conf.deployment.web.apiUrl);
+if (!dev) {
+  const built = JSON.parse(readFileSync(path.join(webRoot, '.next/required-server-files.json'), 'utf8'));
+  if ((built.config.basePath || '') !== basePath) throw new Error('deployment.basePath differs from the Web build; rebuild with this JSON configuration');
+}
 const app = next({ dev, hostname, port, dir: webRoot });
 await app.prepare();
 const nextHandler = app.getRequestHandler();

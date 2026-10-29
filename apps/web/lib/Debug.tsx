@@ -1,3 +1,4 @@
+import { publicConfig } from './runtime-config';
 import * as React from 'react';
 import { useRoomContext } from '@livekit/components-react';
 import { setLogLevel, LogLevel, RemoteTrackPublication, setLogExtension } from 'livekit-client';
@@ -13,11 +14,11 @@ export const useDebugMode = ({ logLevel }: { logLevel?: LogLevel }) => {
   React.useEffect(() => {
     setLogLevel(logLevel ?? 'debug');
 
-    if (process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN && process.env.NEXT_PUBLIC_DATADOG_SITE) {
+    if (publicConfig().debug.datadogClientToken && publicConfig().debug.datadogSite) {
       console.log('setting up datadog logs');
       datadogLogs.init({
-        clientToken: process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN,
-        site: process.env.NEXT_PUBLIC_DATADOG_SITE,
+        clientToken: publicConfig().debug.datadogClientToken,
+        site: publicConfig().debug.datadogSite,
         forwardErrorsToLogs: true,
         sessionSampleRate: 100,
       });

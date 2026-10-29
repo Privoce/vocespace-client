@@ -1,3 +1,4 @@
+import { mobileConfig } from './src/config';
 import { useEffect } from 'react';
 import { analyticsLanguage } from '@vocespace/contracts';
 import { setNativeAnalyticsContext } from './src/analytics';
@@ -165,7 +166,7 @@ export default function App() {
         <AntProvider theme={antdTheme}>
           {fontsLoaded ? (
             <NativeI18nProvider>
-              {__DEV__ && process.env.EXPO_PUBLIC_MEETING_UI_PREVIEW === '1' ? (
+              {__DEV__ && mobileConfig.mobile.meetingUiPreview ? (
                 <MeetingPreview />
               ) : (
                 <MobileShell />

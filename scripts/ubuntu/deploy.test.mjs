@@ -6,6 +6,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import { normalizeConfiguration } from '../../packages/config-node/index.cjs';
 import { configuration, validateManaged } from './deploy-tools.mjs';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -89,15 +90,16 @@ for (const [uid, scenario] of [['0', 'default'], ['1000', 'default'], ['0', 'sel
 }
 
 test('PM2 config isolates API data, uses two ports and one API writer, never serializes secrets', () => {
-  const config = configuration('/release', '/data root', { SUPABASE_SERVICE_ROLE_KEY: 'hidden', WEB_PORT: '3030', API_PORT: '3031' });
+  const input = normalizeConfiguration({ account: { supabase: { serviceRoleKey: 'hidden' } }, deployment: { web: { port: 3030 }, api: { port: 3031 } } });
+  const config = configuration('/release', '/data root', input);
   assert.equal(config.apps[0].instances, 1);
   assert.equal(config.apps[0].exec_mode, 'fork');
-  assert.equal(config.apps[0].env.VOCESPACE_DATA_DIR, '/data root/api-data');
-  assert.equal(config.apps[1].env.VOCESPACE_API_URL, 'http://127.0.0.1:3031');
+  assert.deepEqual(config.apps[0].args, ['--config', '/data root/api-data/vocespace.conf.json']);
+  assert.deepEqual(config.apps[1].env, { NODE_ENV: 'production' });
   assert.ok(!JSON.stringify(config).includes('hidden'));
-  assert.throws(() => configuration('/r', '/d', { WEB_PORT: '3031', API_PORT: '3031' }));
-  assert.throws(() => configuration('/r', '/d', { API_PORT: '0' }));
-  assert.throws(() => configuration('/r', '/d', { NEXT_PUBLIC_BASE_PATH: '/test/' }));
+  input.deployment.api.port = 3030;
+  assert.throws(() => configuration('/r', '/d', input));
+
 });
 
 test('refuses takeover of unmanaged/duplicate/cluster PM2 processes', () => {
@@ -127,9 +129,10 @@ function fixture() {
   ];
   for (const guard of guards) { assert.ok(script.includes(guard)); script = script.replace(guard, ''); }
   write(path.join(source, 'scripts/ubuntu/deploy.sh'), script);
-  for (const name of ['api.env.example', 'source.exclude']) {
+  for (const name of ['source.exclude']) {
     write(path.join(source, 'scripts/ubuntu', name), fs.readFileSync(path.join(here, name)));
   }
+  write(path.join(source, 'vocespace.conf.example.json'), fs.readFileSync(path.join(here, '../../vocespace.conf.example.json')));
   // Delegate real validation/config/backup logic; fake only liveness and port binding.
   write(path.join(source, 'scripts/ubuntu/deploy-tools.mjs'), `
     import { spawnSync } from 'node:child_process';
@@ -165,11 +168,6 @@ function fixture() {
     if (a[0] === 'build') for (const file of ['services/api/dist/api.cjs', 'services/api/dist/default-config.cjs', 'services/api/dist/preview/renderer.js', 'services/api/start.mjs', 'apps/web/server.js', 'apps/web/.next/BUILD_ID']) {
       fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, 'fixture');
     }
-    if (a[0] === 'install') {
-      fs.mkdirSync('services/api/node_modules/dotenv', { recursive: true });
-      fs.writeFileSync('services/api/package.json', '{}');
-      fs.writeFileSync('services/api/node_modules/dotenv/index.js', 'exports.parse = data => Object.fromEntries(String(data).split("\\\\n").filter(x => x && !x.startsWith("#")).map(x => [x.slice(0, x.indexOf("=")), x.slice(x.indexOf("=") + 1)]));');
-    }
   `);
   executable('pm2', `
     const fs = require('fs'); const a = process.argv.slice(2);
@@ -186,7 +184,7 @@ function fixture() {
   `);
   executable('redis-cli', `
     const fs = require('fs');
-    fs.appendFileSync(process.env.TEST_LOG, 'redis-backup\\n');
+    fs.appendFileSync(process.env.TEST_LOG, 'redis-backup ' + process.argv.slice(2).join(' ') + '\\n');
     if (process.env.FAIL_BACKUP) process.exit(1);
     fs.writeFileSync(process.argv.at(-1), 'fixture-rdb');
   `);
@@ -195,7 +193,7 @@ function fixture() {
   const run = (command, release, extra = {}) => spawnSync('bash', [path.join(source, 'scripts/ubuntu/deploy.sh'), command, root, ...(release ? [release] : [])], { env: { ...env, ...extra }, encoding: 'utf8' });
   const success = (result) => assert.equal(result.status, 0, result.stdout + result.stderr);
   success(run('init'));
-  const config = { livekit: { url: 'wss://rtc.invalid', key: 'test', secret: 'test' }, redis: { enabled: true, host: 'localhost', port: 6379, db: 0, password: 'private' }, hostToken: 'test' };
+  const config = { account: { supabase: { url: 'https://supabase.invalid', publishableKey: 'test', serviceRoleKey: 'private' } }, deployment: { publicOrigin: 'https://space.invalid', web: { port: 3030 }, api: { port: 3031 } }, livekit: { url: 'wss://rtc.invalid', key: 'test', secret: 'test' }, redis: { enabled: true, host: 'localhost', port: 6379, db: 0, password: 'private' }, hostToken: 'test' };
   write(path.join(root, 'api-data/vocespace.conf.json'), JSON.stringify(config));
   write(path.join(root, 'api-data/.env.production'), 'PUBLIC_ORIGIN=https://space.invalid\nACCOUNT_PUBLIC_URL=https://space.invalid\nSUPABASE_URL=https://supabase.invalid\nSUPABASE_PUBLISHABLE_KEY=test\nSUPABASE_SERVICE_ROLE_KEY=test\n');
   return { dir, root, env, run, success, cleanup: () => fs.rmSync(dir, { recursive: true, force: true }) };
@@ -204,9 +202,9 @@ function fixture() {
 test('build isolates data; init preserves configuration; failed build never stops PM2', () => {
   const f = fixture();
   try {
-    const original = fs.readFileSync(path.join(f.root, 'api-data/.env.production'), 'utf8');
+    const original = fs.readFileSync(path.join(f.root, 'api-data/vocespace.conf.json'), 'utf8');
     f.success(f.run('init'));
-    assert.equal(fs.readFileSync(path.join(f.root, 'api-data/.env.production'), 'utf8'), original);
+    assert.equal(fs.readFileSync(path.join(f.root, 'api-data/vocespace.conf.json'), 'utf8'), original);
     f.success(f.run('build', 'one'));
     for (const file of ['.env.local', 'vocespace.conf.json', 'apps/web/.env.production', 'services/api/uploads/private.txt', 'apps/mobile/credentials/key.p12', 'apps/web/.next/old', 'packages/test/node_modules/secret']) {
       assert.equal(fs.existsSync(path.join(f.root, 'releases/one', file)), false, file);
@@ -254,5 +252,42 @@ test('invalid API config prevents stopping the running release', () => {
     assert.notEqual(f.run('activate', 'two').status, 0);
     assert.ok(!fs.readFileSync(f.env.TEST_LOG, 'utf8').includes('pm2 stop'));
     assert.equal(fs.readFileSync(path.join(f.root, 'api-data/vocespace.conf.json'), 'utf8'), 'invalid');
+  } finally { f.cleanup(); }
+});
+
+test('JSON drives activation and Redis backup despite conflicting legacy environment', () => {
+  const f = fixture();
+  try {
+    f.success(f.run('build', 'one'));
+    const file = path.join(f.root, 'api-data/vocespace.conf.json');
+    const original = fs.readFileSync(file, 'utf8');
+    const result = f.run('activate', 'one', {
+      VOCESPACE_INIT_CONFIG: 'true', LIVEKIT_URL: 'invalid', LIVEKIT_API_KEY: '',
+      LIVEKIT_API_SECRET: '', HOST_TOKEN: '', REDIS_HOST: 'wrong-host', REDIS_PORT: 'invalid',
+    });
+    f.success(result);
+    assert.equal(fs.readFileSync(file, 'utf8'), original);
+    const log = fs.readFileSync(f.env.TEST_LOG, 'utf8');
+    assert.ok(log.includes('localhost'));
+    assert.ok(!log.includes('wrong-host'));
+  } finally { f.cleanup(); }
+});
+
+test('missing JSON cannot be replaced by bootstrap environment during activation', () => {
+  const f = fixture();
+  try {
+    for (const name of ['one', 'two']) f.success(f.run('build', name));
+    f.success(f.run('activate', 'one'));
+    const file = path.join(f.root, 'api-data/vocespace.conf.json');
+    fs.unlinkSync(file);
+    write(f.env.TEST_LOG, '');
+    const result = f.run('activate', 'two', {
+      VOCESPACE_INIT_CONFIG: 'true', LIVEKIT_URL: 'wss://rtc.invalid',
+      LIVEKIT_API_KEY: 'test', LIVEKIT_API_SECRET: 'test', HOST_TOKEN: 'test',
+    });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /Cannot read configuration JSON/);
+    assert.ok(!fs.existsSync(file));
+    assert.ok(!fs.readFileSync(f.env.TEST_LOG, 'utf8').includes('pm2 stop'));
   } finally { f.cleanup(); }
 });

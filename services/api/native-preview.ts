@@ -1,3 +1,4 @@
+import { runtimeAssetPath } from './runtime-paths';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -151,7 +152,7 @@ export async function previewRendererEndpoint(
   if (request.method !== 'GET') return new ApiResponse(null, { status: 405 });
   if (kind === 'script') {
     const asset = path.join(
-      process.env.VOCESPACE_PREVIEW_ASSETS || path.resolve('services/api/dist/preview'),
+      runtimeAssetPath('preview'),
       'renderer.js',
     );
     return new ApiResponse(await readFile(asset), {

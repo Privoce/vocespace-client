@@ -5,7 +5,8 @@
   "type": "module",
   "exports": {
     ".": "./src/index.ts",
-    "./*": "./src/*.ts"
+    "./*": "./src/*.ts",
+    "./runtime-defaults.json": "./src/runtime-defaults.json"
   },
   "types": "./src/index.ts",
   "files": [

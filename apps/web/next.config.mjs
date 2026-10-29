@@ -1,18 +1,18 @@
 import path from 'node:path';
-import dotenv from 'dotenv';
+import { existsSync } from 'node:fs';
+import { readConfiguration } from '@vocespace/config-node';
 import { fileURLToPath } from 'node:url';
 
 const directory = path.dirname(fileURLToPath(import.meta.url));
-// Next loads apps/web env first. Preserve root public build settings during migration.
-for (const name of ['.env.local', `.env.${process.env.NODE_ENV || 'development'}`, '.env']) {
-  dotenv.config({ path: path.resolve(directory, '../..', name) });
-}
+// Only public build constants are emitted; private configuration stays on the server.
+const buildFile = path.join(directory, 'vocespace.build.json');
+const deployment = readConfiguration({ file: existsSync(buildFile) ? buildFile : undefined, optional: true }).deployment;
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
   output: 'standalone',
-  basePath: process.env.NEXT_PUBLIC_BASE_PATH || '',
+  basePath: deployment.basePath,
   experimental: { externalDir: true },
   outputFileTracingRoot: path.resolve(directory, '../..'),
   transpilePackages: [
@@ -25,7 +25,8 @@ const nextConfig = {
     'react-native-web',
   ],
   productionBrowserSourceMaps: true,
-  webpack: (config, { isServer }) => {
+  webpack: (config, { isServer, webpack }) => {
+    config.plugins.push(new webpack.DefinePlugin({ __VOCESPACE_BASE_PATH__: JSON.stringify(deployment.basePath) }));
     config.resolve.alias = { ...config.resolve.alias, 'react-native$': 'react-native-web' };
     // 处理 face-api.js 的 Node.js 模块依赖
     if (!isServer) {

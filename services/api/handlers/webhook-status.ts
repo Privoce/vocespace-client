@@ -1,7 +1,7 @@
+import { getConfig } from '../lib/server/config';
 import { ApiResponse } from '../http';
 
-const WEBHOOK = process.env.WEBHOOK === 'true';
 
 export async function GET() {
-  return ApiResponse.json({ webhook: WEBHOOK });
+  return ApiResponse.json({ webhook: getConfig().billing.stripe.enabled });
 }

@@ -1,0 +1,9 @@
+{
+  "name": "@vocespace/config-node",
+  "version": "0.1.0",
+  "private": true,
+  "main": "index.cjs",
+  "types": "index.d.ts",
+  "files": ["index.cjs", "index.d.ts"],
+  "dependencies": { "@vocespace/domain": "workspace:*" }
+}

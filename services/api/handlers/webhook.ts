@@ -6,11 +6,7 @@ import { createLicense } from '../lib/db/license';
 import { sendEmail, fmtContentBuy, fmtContentCancel } from '../lib/email';
 import { getConfig, setConfigRoomLicense, writeBackConfig } from '../lib/server/config';
 
-const SECRET_KEY = process.env.STRIPE_SECRET_KEY ?? '';
-const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET ?? '';
-const WEBHOOK = process.env.WEBHOOK ?? false;
 
-const SITE_URL = process.env.SITE_URL || 'https://vocespace.com';
 const VOCESPACE_API = 'https://vocespace.com';
 
 const ACTIVE_SUBSCRIPTION_STATUSES = new Set([
@@ -87,15 +83,15 @@ export async function GET(request: ApiRequest) {
     return ApiResponse.json({ error: 'session_ip is required' }, { status: 400 });
   }
 
-  // WEBHOOK=false 时，代理到 vocespace.com 处理
-  if (!WEBHOOK) {
+  // getConfig().billing.stripe.enabled=false 时，代理到 vocespace.com 处理
+  if (!getConfig().billing.stripe.enabled) {
     const proxyUrl = `${VOCESPACE_API}/api/webhook?session_ip=${encodeURIComponent(ip)}`;
     const proxyRes = await fetch(proxyUrl, { method: 'GET' });
     const data = await proxyRes.json();
     return ApiResponse.json(data, { status: proxyRes.status });
   }
 
-  const stripe = new Stripe(SECRET_KEY);
+  const stripe = new Stripe(getConfig().billing.stripe.secretKey);
   // 创建session, product: prod_S8YXSKlgQvaYdH, 
   // pro证书: price_1REHPyGGoUDRyc3jW5AlM49w
   // room证书: price_1TqCPGGGoUDRyc3jjpRg67VD
@@ -128,7 +124,7 @@ export async function GET(request: ApiRequest) {
         server_ip: ip,
         license_type: licenseType,
       },
-      success_url: SITE_URL,
+      success_url: getConfig().billing.stripe.siteUrl,
     });
     return ApiResponse.json({ url: session.url }, { status: 200 });
   } catch (error) {
@@ -140,7 +136,7 @@ export async function DELETE(request: ApiRequest) {
   const ip = request.nextUrl.searchParams.get('session_ip');
   const email = request.nextUrl.searchParams.get('email');
   const licenseType = request.nextUrl.searchParams.get('license_type') || 'room';
-  const returnUrl = request.nextUrl.searchParams.get('return_url') || SITE_URL;
+  const returnUrl = request.nextUrl.searchParams.get('return_url') || getConfig().billing.stripe.siteUrl;
 
   if (!ip) {
     return ApiResponse.json({ error: 'session_ip is required' }, { status: 400 });
@@ -150,7 +146,7 @@ export async function DELETE(request: ApiRequest) {
     return ApiResponse.json({ error: 'email is required' }, { status: 400 });
   }
 
-  if (!WEBHOOK) {
+  if (!getConfig().billing.stripe.enabled) {
     const proxyUrl = new URL(`${VOCESPACE_API}/api/webhook`);
     proxyUrl.searchParams.set('session_ip', ip);
     proxyUrl.searchParams.set('email', email);
@@ -162,7 +158,7 @@ export async function DELETE(request: ApiRequest) {
   }
 
   try {
-    const stripe = new Stripe(SECRET_KEY);
+    const stripe = new Stripe(getConfig().billing.stripe.secretKey);
     const customers = await stripe.customers.list({ email, limit: 10 });
 
     for (const customer of customers.data) {
@@ -233,11 +229,11 @@ export async function DELETE(request: ApiRequest) {
 }
 
 export async function POST(request: Request) {
-  if (!WEBHOOK) {
+  if (!getConfig().billing.stripe.enabled) {
     return ApiResponse.json({ error: 'Webhook is not enabled' }, { status: 400 });
   }
   // 验证stripe webhook signature
-  const stripe = new Stripe(SECRET_KEY);
+  const stripe = new Stripe(getConfig().billing.stripe.secretKey);
   const sig: any = request.headers.get('stripe-signature');
   const rawBody = await request.arrayBuffer();
   const body = Buffer.from(rawBody);
@@ -245,7 +241,7 @@ export async function POST(request: Request) {
   let event;
 
   try {
-    event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
+    event = stripe.webhooks.constructEvent(body, sig, getConfig().billing.stripe.webhookSecret);
   } catch (err: any) {
     return ApiResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
   }

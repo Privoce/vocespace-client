@@ -37,11 +37,11 @@ node "$HELPER" versions "$SOURCE"
 mkdir -p "$ROOT/releases" "$ROOT/backups" "$DATA"
 case $COMMAND in
   init)
-    if [[ ! -e $DATA/.env.production ]]; then
-      cp "$HERE/api.env.example" "$DATA/.env.production"
-      chmod 600 "$DATA/.env.production"
+    if [[ ! -e $DATA/vocespace.conf.json ]]; then
+      cp "$SOURCE/vocespace.conf.example.json" "$DATA/vocespace.conf.json"
+      chmod 600 "$DATA/vocespace.conf.json"
     fi
-    echo "Edit $DATA/.env.production. For migration, preserve the existing config/data as described in linux_deploy.md."
+    echo "Edit $DATA/vocespace.conf.json. For migration, preserve the existing JSON/data and merge legacy env once with scripts/config.mjs."
     exit 0 ;;
   status)
     pm2 describe vocespace-api || true
@@ -55,14 +55,13 @@ case $COMMAND in
     [[ ! -e $DEST ]] || { echo 'Release exists; choose a new name. Never rebuild a running release.' >&2; exit 1; }
     # Explicit build inputs; do not copy root config, uploads, env, or deployment secrets.
     mkdir "$DEST"
-    for input in apps packages services scripts patches package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json .nvmrc .eslintrc.json .prettierrc .prettierignore LICENSE; do
+    for input in apps packages services scripts patches package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.json .nvmrc .eslintrc.json .prettierrc .prettierignore LICENSE vocespace.conf.example.json; do
       rsync -a --safe-links --exclude-from="$HERE/source.exclude" "$SOURCE/$input" "$DEST/"
     done
     node "$HELPER" configure "$DEST" "$ROOT"
     (
       cd "$DEST"
       unset NODE_ENV
-      export NEXT_PUBLIC_BASE_PATH=${NEXT_PUBLIC_BASE_PATH:-}
       pnpm install --frozen-lockfile
       pnpm check:boundaries
       pnpm build

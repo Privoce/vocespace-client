@@ -751,7 +751,7 @@ export async function POST(request: ApiRequest) {
         const code = await sessions.code({ ...DEFAULT_TOKEN_RESULT(space, username, room),
           id, auth: platform?.auth || 'other', identity: platform?.identity || 'guest',
           iat: now, exp: now + 3600 });
-        const url = new URL(`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/${encodeURIComponent(space)}`, request.nextUrl.origin);
+        const url = new URL(`${getConfig().deployment.basePath}/${encodeURIComponent(space)}`, request.nextUrl.origin);
         url.searchParams.set('code', code);
         return ApiResponse.json({ redirectUrl: url.toString() });
       }

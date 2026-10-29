@@ -1,3 +1,4 @@
+import { getConfig } from '../server/config';
 import fs from 'fs';
 import path from 'path';
 import jwt from 'jsonwebtoken';
@@ -5,7 +6,11 @@ import jwt from 'jsonwebtoken';
 const DB_DIR = path.join(process.cwd(), 'sql');
 const SHARD_PREFIX = 'licenses';
 const MAX_PER_SHARD = 1000;
-const LICENSE_SECRET = process.env.LICENSE_SECRET || 'privoce_vocespace_secret_key';
+function licenseSecret() {
+  const secret = getConfig().billing.licenseSecret;
+  if (!secret) throw new Error('billing.licenseSecret is not configured');
+  return secret;
+}
 
 export interface LicenseRow {
   id: string;
@@ -144,11 +149,11 @@ export function generateLicenseValue(
   if (roomName) {
     payload.roomName = roomName;
   }
-  return jwt.sign(payload, LICENSE_SECRET, { algorithm: 'HS256' });
+  return jwt.sign(payload, licenseSecret(), { algorithm: 'HS256' });
 }
 
 export function parseLicenseClaims(licenseValue: string): LicenseClaims {
-  const claims = jwt.verify(licenseValue, LICENSE_SECRET, {
+  const claims = jwt.verify(licenseValue, licenseSecret(), {
     algorithms: ['HS256'],
   }) as LicenseClaims;
   return claims;

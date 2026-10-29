@@ -80,3 +80,9 @@ apps/web/public/license/
 /apps/mobile/*.mobileprovision
 /.pnpm-store/
 /tests
+**/vocespace.conf.json.backup-*
+/apps/web/vocespace.build.json
+/deploy/api-data/
+!vocespace.conf.example.json
+!/apps/mobile/vocespace.public.json
+**/vocespace.conf.json.migrating-*
