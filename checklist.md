@@ -565,3 +565,14 @@
 - [x] 77 项全量测试（含独立 Redis）、根 / API / Mobile / UI 类型、边界、相关 lint 与隔离 Web / API 标准构建通过；390px 浏览器实际长按与举报表单展示验证通过。详见 [会议管理交付](docs/meeting-moderation.md)。
 - [ ] 真实 LiveKit 移出 / 重入、真机长按及测试邮箱投递待回归；没有拉黑真实成员或发送真实举报。匿名会话更换设备后无同人识别能力；Native Supabase 账号和 RTC 身份绑定不在本批范围。
 - [x] 本地 API 已重启加载新构建；healthz 返回 200，Web / Native moderation 路由未登录均返回 401。未重启 Web 或数据库。
+
+### 2026-10-29：Ubuntu 部署支持 root
+
+- [x] 按用户要求，setup / deploy 支持直接使用 root；root 安装系统依赖和创建目录时不依赖 sudo，普通用户仍在需要权限时调用 sudo。所有步骤沿用当前用户的 PM2 环境，保留旧进程归属检查、单 API 写入、备份及失败回退保护。
+- [x] 更新 Linux 文档，加入 `/root/vocespace/vocespac-client` → `/var/vocespace/main` 示例；Shell 语法、7 项隔离部署测试与差异检查通过。测试模拟 root / 普通用户的提权分支，不安装系统软件或启动真实 PM2；Ubuntu 服务器执行仍由用户进行。
+
+### 2026-10-29：部署依赖安装可指定 APT 源
+
+- [x] setup 增加 `VOCESPACE_APT_SOURCES`，可仅本次使用已有 Ubuntu `.sources` / `.list` 文件，解决第三方 CrowdSec 源 404 阻断依赖安装的问题；update / install 使用相同源参数，保留签名校验及其他源的配置和缓存索引。
+- [x] 源路径无效或 update 失败即停止，不继续安装依赖；默认仍使用全部系统源。Linux 文档补充实际命令及第三方源本身仍需修复的说明。
+- [x] 11 项隔离部署测试、Shell 语法与差异检查通过；覆盖 root / 普通用户、默认 / 指定源、缺失源和 update 失败。未连接服务器或修改真实 APT 配置，Ubuntu 实机重试由用户执行。

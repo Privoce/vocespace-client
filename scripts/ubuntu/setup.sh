@@ -15,8 +15,29 @@ fi
 as_root() {
   if [[ $EUID == 0 ]]; then "$@"; else sudo "$@"; fi
 }
-as_root apt-get update
-as_root apt-get install -y ca-certificates curl xz-utils git rsync build-essential python3 redis-tools util-linux
+APT_SOURCES=${VOCESPACE_APT_SOURCES:-}
+if [[ -n $APT_SOURCES ]]; then
+  [[ $APT_SOURCES = /* && -f $APT_SOURCES && -r $APT_SOURCES && -s $APT_SOURCES ]] || {
+    echo 'VOCESPACE_APT_SOURCES must be an absolute, readable, nonempty .list or .sources file.' >&2
+    exit 1
+  }
+  case $APT_SOURCES in *.list|*.sources) ;; *) echo 'APT sources must end in .list or .sources.' >&2; exit 1 ;; esac
+fi
+apt_run() {
+  if [[ -n $APT_SOURCES ]]; then
+    # Limit this invocation only; retain other repositories' configuration and cached lists.
+    as_root apt-get -o "Dir::Etc::sourcelist=$APT_SOURCES" -o 'Dir::Etc::sourceparts=-' \
+      -o 'APT::Get::List-Cleanup=false' "$@"
+  else
+    as_root apt-get "$@"
+  fi
+}
+if ! apt_run update; then
+  echo 'APT update failed; setup stopped before installing dependencies.' >&2
+  echo 'To use only an existing Ubuntu source file for this run, set VOCESPACE_APT_SOURCES to its absolute path and retry. System source files are not modified.' >&2
+  exit 1
+fi
+apt_run install -y ca-certificates curl xz-utils git rsync build-essential python3 redis-tools util-linux
 if [[ ! -e $ROOT ]]; then
   as_root install -d -m 750 -o "$(id -un)" -g "$(id -gn)" "$ROOT"
 fi

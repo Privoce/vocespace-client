@@ -51,6 +51,22 @@ nano /var/vocespace/main/api-data/.env.production
 
 后续 build / activate / status 继续传入同一个 `/var/vocespace/main`。PM2 沿用当前用户的环境（默认 root 为 `/root/.pm2`）；切换用户不会自动迁移原 PM2 进程。脚本仍拒绝接管同名但不属于本次部署的旧进程，首次切换依照下文迁移步骤操作。
 
+### APT 第三方源报错时
+
+如果 setup 在 `apt-get update` 阶段遇到第三方源 404 或缺少 Release 文件，会停止安装。例如 CrowdSec 的 `questing Release` 返回 404。可以让本次 setup 只读取服务器已有的 Ubuntu 源文件；Ubuntu 当前默认文件位置见 [Ubuntu 软件包管理文档](https://ubuntu.com/server/docs/how-to/software/package-management/)。
+
+```bash
+# 先确认文件存在，再在更新后的脚本上执行。
+ls -l /etc/apt/sources.list.d/ubuntu.sources
+VOCESPACE_APT_SOURCES=/etc/apt/sources.list.d/ubuntu.sources \
+  bash scripts/ubuntu/setup.sh /var/vocespace/main
+source /var/vocespace/main/tools/env.sh
+```
+
+`VOCESPACE_APT_SOURCES` 必须是现有、非空、可读的 `.sources` 或 `.list` 文件的绝对路径。如果你的 Ubuntu 源在其他文件中，改为对应路径；不要指向包含故障第三方源的配置。可用 `ls -l /etc/apt/sources.list /etc/apt/sources.list.d/` 查看文件位置。
+
+此选项同时限制 update 和 install 的源，保留签名校验；仅作用于这次命令，不改写、删除或禁用系统源文件，也不清理其他源的缓存索引。默认不设置时仍使用系统全部源。原第三方源的问题仍需单独修复，之后直接执行普通 `apt-get update` 仍可能报同样的错；setup 不会自动替换发行版代号或忽略 APT 错误。
+
 ### 构建与首次切换
 
 ```bash

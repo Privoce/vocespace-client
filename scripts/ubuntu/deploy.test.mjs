@@ -16,8 +16,8 @@ const write = (file, body, mode = 0o600) => {
   fs.writeFileSync(file, body, { mode });
 };
 
-for (const uid of ['0', '1000']) {
-  test(`setup supports uid ${uid} with elevated commands isolated from package installs`, () => {
+for (const [uid, scenario] of [['0', 'default'], ['1000', 'default'], ['0', 'selected'], ['1000', 'selected'], ['0', 'missing'], ['0', 'update_failure']]) {
+  test(`setup uid ${uid}: ${scenario} sources and privilege handling`, () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vocespace-setup-test-'));
     try {
       const source = path.join(dir, 'source');
@@ -41,12 +41,16 @@ for (const uid of ['0', '1000']) {
       const nodeRoot = path.join(root, 'tools', `node-v${process.versions.node}-linux-${process.arch}`);
       fs.mkdirSync(nodeRoot, { recursive: true });
       write(log, '');
+      const aptSources = path.join(dir, 'Ubuntu sources', 'ubuntu.sources');
+      const sourceText = 'Types: deb\nURIs: https://archive.ubuntu.com/ubuntu\nSuites: questing\nComponents: main universe\n';
+      write(aptSources, sourceText);
       for (const name of ['apt-get', 'npm', 'pm2', 'flock', 'sudo', 'curl']) {
         write(path.join(bin, name), `#!${process.execPath}
           const fs = require('node:fs');
           const args = process.argv.slice(2);
           fs.appendFileSync(process.env.TEST_LOG, JSON.stringify([${JSON.stringify(name)}, ...args]) + '\\n');
           if (${JSON.stringify(name)} === 'curl') process.exit(1);
+          if (${JSON.stringify(name)} === 'apt-get' && args.includes('update') && process.env.FAIL_APT_UPDATE === '1') process.exit(100);
           if (${JSON.stringify(name)} === 'sudo') {
             const result = require('node:child_process').spawnSync(args[0], args.slice(1), { stdio: 'inherit' });
             process.exit(result.status ?? 1);
@@ -55,10 +59,25 @@ for (const uid of ['0', '1000']) {
       }
       const result = spawnSync('bash', [path.join(source, 'scripts/ubuntu/setup.sh'), root], {
         env: { ...process.env, TEST_EUID: uid, TEST_LOG: log,
+          VOCESPACE_APT_SOURCES: scenario === 'selected' ? aptSources : scenario === 'missing' ? path.join(dir, 'missing.sources') : '',
+          FAIL_APT_UPDATE: scenario === 'update_failure' ? '1' : '',
           PATH: `${bin}:${path.dirname(process.execPath)}:${process.env.PATH}` }, encoding: 'utf8',
       });
+      const entries = fs.readFileSync(log, 'utf8').trim();
+      const calls = entries ? entries.split('\n').map(line => JSON.parse(line)) : [];
+      assert.equal(fs.readFileSync(aptSources, 'utf8'), sourceText);
+      if (scenario === 'missing' || scenario === 'update_failure') {
+        assert.notEqual(result.status, 0);
+        assert.match(result.stderr, scenario === 'missing' ? /VOCESPACE_APT_SOURCES must/ : /APT update failed/);
+        assert.equal(calls.length, scenario === 'missing' ? 0 : 1);
+        assert.ok(!fs.existsSync(path.join(root, 'tools/env.sh')));
+        return;
+      }
       assert.equal(result.status, 0, result.stdout + result.stderr);
-      const calls = fs.readFileSync(log, 'utf8').trim().split('\n').map(line => JSON.parse(line));
+      const aptOptions = scenario === 'selected' ? ['-o', `Dir::Etc::sourcelist=${aptSources}`, '-o', 'Dir::Etc::sourceparts=-', '-o', 'APT::Get::List-Cleanup=false'] : [];
+      const aptCalls = calls.filter(call => call[0] === 'apt-get');
+      assert.deepEqual(aptCalls[0], ['apt-get', ...aptOptions, 'update']);
+      assert.deepEqual(aptCalls[1], ['apt-get', ...aptOptions, 'install', '-y', 'ca-certificates', 'curl', 'xz-utils', 'git', 'rsync', 'build-essential', 'python3', 'redis-tools', 'util-linux']);
       assert.equal(calls.filter(call => call[0] === 'sudo').length, uid === '0' ? 0 : 2);
       assert.equal(calls.filter(call => call[0] === 'apt-get').length, 2);
       assert.deepEqual(calls.find(call => call[0] === 'npm'),
