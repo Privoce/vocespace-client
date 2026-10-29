@@ -51,11 +51,6 @@ export function validateManaged(processes, old) {
     }
   }
 }
-function existingConfig(root) {
-  const file = path.join(root, 'api-data/vocespace.conf.json');
-  if (!fs.existsSync(file)) return null;
-  try { return readJson(file); } catch { throw new Error('Existing vocespace.conf.json is invalid; preserved without changes'); }
-}
 function redisConfig(config) {
   if (!config.redis?.enabled) throw new Error('Redis must be enabled in vocespace.conf.json');
   requireValue(config.redis.host, 'redis.host');
@@ -87,7 +82,7 @@ async function health(release, only) {
     console.log(`${name}: healthy (127.0.0.1:${number})`);
   }
 }
-async function main([command, release, root, backup]) {
+async function main([command, release, root]) {
   switch (command) {
     case 'versions': {
       const version = fs.readFileSync(path.join(release, '.nvmrc'), 'utf8').trim();
@@ -151,23 +146,6 @@ async function main([command, release, root, backup]) {
       break;
     }
     case 'health': await health(release, root); break;
-    case 'backup-redis': {
-      const config = existingConfig(root);
-      if (!config) { console.log('Fresh config: no previous Redis configuration to back up.'); break; }
-      const redis = redisConfig(config);
-      const file = path.join(backup, 'redis.rdb');
-      // --rdb creates a replication snapshot of ALL Redis databases. Never stop Redis.
-      const result = spawnSync('redis-cli', ['-h', redis.host, '-p', String(redis.port), '--rdb', file], {
-        env: { ...process.env, REDISCLI_AUTH: redis.password || '' },
-        stdio: ['ignore', 'ignore', 'ignore'], timeout: 300_000,
-      });
-      if (result.status !== 0 || !fs.existsSync(file) || fs.statSync(file).size === 0) {
-        throw new Error('Redis snapshot failed. Check replication permissions or provide REDIS_BACKUP_HOOK; do not activate without a backup');
-      }
-      fs.chmodSync(file, 0o600);
-      console.log('Redis snapshot saved (all databases; no restore performed).');
-      break;
-    }
     default: throw new Error('Unknown deployment helper command');
   }
 }

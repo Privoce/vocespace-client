@@ -133,7 +133,7 @@ function fixture() {
     write(path.join(source, 'scripts/ubuntu', name), fs.readFileSync(path.join(here, name)));
   }
   write(path.join(source, 'vocespace.conf.example.json'), fs.readFileSync(path.join(here, '../../vocespace.conf.example.json')));
-  // Delegate real validation/config/backup logic; fake only liveness and port binding.
+  // Delegate real validation/config logic; fake liveness and port binding.
   write(path.join(source, 'scripts/ubuntu/deploy-tools.mjs'), `
     import { spawnSync } from 'node:child_process';
     import fs from 'node:fs';
@@ -183,10 +183,14 @@ function fixture() {
     fs.writeFileSync(process.env.TEST_STATE, JSON.stringify(procs));
   `);
   executable('redis-cli', `
-    const fs = require('fs');
-    fs.appendFileSync(process.env.TEST_LOG, 'redis-backup ' + process.argv.slice(2).join(' ') + '\\n');
-    if (process.env.FAIL_BACKUP) process.exit(1);
-    fs.writeFileSync(process.argv.at(-1), 'fixture-rdb');
+    require('fs').appendFileSync(process.env.TEST_LOG, 'unexpected-redis-cli-call\\n');
+    process.exit(1);
+  `);
+  const realTar = spawnSync('sh', ['-c', 'command -v tar'], { encoding: 'utf8' }).stdout.trim();
+  executable('tar', `
+    if (process.env.FAIL_FILE_BACKUP) process.exit(1);
+    const result = require('child_process').spawnSync(${JSON.stringify(realTar)}, process.argv.slice(2), { stdio: 'inherit' });
+    process.exit(result.status ?? 1);
   `);
   const env = { ...process.env, PATH: `${bin}:${path.dirname(process.execPath)}:${process.env.PATH}`, TEST_LOG: path.join(dir, 'log'), TEST_STATE: path.join(dir, 'state') };
   write(env.TEST_LOG, '');
@@ -227,7 +231,7 @@ test('activate backs up then starts; failed health and backup restore old proces
     assert.notEqual(failedHealth.status, 0);
     assert.ok(current().endsWith('/one'));
     assert.ok(JSON.parse(fs.readFileSync(f.env.TEST_STATE)).every(p => p.pm2_env.pm_exec_path.includes('/one/')));
-    const failedBackup = f.run('activate', 'two', { FAIL_BACKUP: '1' });
+    const failedBackup = f.run('activate', 'two', { FAIL_FILE_BACKUP: '1' });
     assert.notEqual(failedBackup.status, 0);
     assert.ok(current().endsWith('/one'));
     f.success(f.run('activate', 'two'));
@@ -238,7 +242,7 @@ test('activate backs up then starts; failed health and backup restore old proces
     assert.equal(fs.readFileSync(path.join(f.root, 'api-data/new-user-data'), 'utf8'), 'retain');
     const backups = fs.readdirSync(path.join(f.root, 'backups'));
     assert.equal(backups.length, 5);
-    assert.ok(backups.every(b => fs.existsSync(path.join(f.root, 'backups', b, 'api-data.tar.gz'))));
+    assert.equal(backups.filter(b => fs.existsSync(path.join(f.root, 'backups', b, 'api-data.tar.gz'))).length, 4);
   } finally { f.cleanup(); }
 });
 
@@ -255,7 +259,24 @@ test('invalid API config prevents stopping the running release', () => {
   } finally { f.cleanup(); }
 });
 
-test('JSON drives activation and Redis backup despite conflicting legacy environment', () => {
+test('first activation local file backup failure preserves legacy PM2 registration', () => {
+  const f = fixture();
+  try {
+    f.success(f.run('build', 'one'));
+    const legacy = [{ name: 'vocespace', pm2_env: { status: 'stopped', pm_exec_path: '/legacy/server.js' } }];
+    write(f.env.TEST_STATE, JSON.stringify(legacy));
+    write(f.env.TEST_LOG, '');
+    const result = f.run('activate', 'one', { FAIL_FILE_BACKUP: '1' });
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /before changing managed processes/);
+    assert.match(result.stderr, /must be restarted manually/);
+    assert.deepEqual(JSON.parse(fs.readFileSync(f.env.TEST_STATE)), legacy);
+    assert.ok(!/pm2 (stop|delete|start|save)/.test(fs.readFileSync(f.env.TEST_LOG, 'utf8')));
+    assert.equal(fs.existsSync(path.join(f.root, 'current')), false);
+  } finally { f.cleanup(); }
+});
+
+test('activation skips disposable Redis backup and ignores legacy environment and hooks', () => {
   const f = fixture();
   try {
     f.success(f.run('build', 'one'));
@@ -264,11 +285,15 @@ test('JSON drives activation and Redis backup despite conflicting legacy environ
     const result = f.run('activate', 'one', {
       VOCESPACE_INIT_CONFIG: 'true', LIVEKIT_URL: 'invalid', LIVEKIT_API_KEY: '',
       LIVEKIT_API_SECRET: '', HOST_TOKEN: '', REDIS_HOST: 'wrong-host', REDIS_PORT: 'invalid',
+      REDIS_BACKUP_HOOK: '/nonexistent/obsolete-hook',
     });
     f.success(result);
     assert.equal(fs.readFileSync(file, 'utf8'), original);
     const log = fs.readFileSync(f.env.TEST_LOG, 'utf8');
-    assert.ok(log.includes('localhost'));
+    assert.ok(!log.includes('unexpected-redis-cli-call'));
+    const backup = path.join(f.root, 'backups', fs.readdirSync(path.join(f.root, 'backups'))[0]);
+    assert.ok(fs.existsSync(path.join(backup, 'api-data.tar.gz')));
+    assert.equal(fs.existsSync(path.join(backup, 'redis.rdb')), false);
     assert.ok(!log.includes('wrong-host'));
   } finally { f.cleanup(); }
 });

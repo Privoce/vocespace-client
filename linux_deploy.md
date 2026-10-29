@@ -125,7 +125,11 @@ curl --fail http://127.0.0.1:3031/healthz
 curl --fail http://127.0.0.1:3030/healthz
 ```
 
-激活前校验 JSON、进程归属、端口和构建子路径；随后备份 api-data / Redis、启动单实例 API，再启动 Web。失败时尝试恢复原已管理版本，不恢复数据库。Redis 备份读取 JSON；托管 Redis 不允许复制快照时，可提供 `REDIS_BACKUP_HOOK=/绝对路径/backup.sh`，脚本接收备份目录和数据目录两个参数，失败必须非零退出。
+激活前校验 JSON、进程归属、端口和构建子路径；随后只备份 api-data 本地持久数据（配置、上传文件等）、启动单实例 API，再启动 Web。Redis 是临时会议/会话数据，不生成快照、不要求复制权限，也不主动清空 Redis。旧的 REDIS_BACKUP_HOOK 不再使用。失败时尝试恢复原已管理版本，不恢复数据库。
+
+首次迁移没有脚本管理的旧 release，因此不会自动启动手动停止的 `vocespace`。若 PM2 中仍保留这个旧进程且新 `vocespace-api` / `vocespace-web` 没有运行，可先执行 `pm2 restart vocespace` 恢复旧服务，确认恢复后再 `pm2 save`。不要同时启动新旧写入者。
+
+若旧脚本曾因 `Redis snapshot failed` 中断，同步当前源码中的部署工具后直接重新 activate 即可；已有 release 不需要为此重建。如果已经恢复旧服务，则先按步骤 5 停止旧写入者并同步本地新增数据。
 
 ### 步骤 7：检查现有公网路由和业务
 
@@ -170,7 +174,7 @@ bash scripts/ubuntu/deploy.sh rollback /var/vocespace/main
 bash scripts/ubuntu/deploy.sh status /var/vocespace/main
 ```
 
-回退代码，不覆盖配置、Redis 或新增数据。恢复数据需保留当前数据后成对恢复同一时点的文件和 Redis。首次迁移失败尚无 previous，按已记录的旧 PM2 启动方式恢复；不能同时运行新旧写入者。回到本次迁移前的版本时，还需恢复该版本所需的旧环境文件及启动参数。
+回退代码，不覆盖配置、Redis 或新增数据。本地持久文件的恢复需先保留当前数据，Redis 临时数据不纳入部署备份或恢复。首次迁移失败尚无 previous，按已记录的旧 PM2 启动方式恢复；不能同时运行新旧写入者。回到本次迁移前的版本时，还需恢复该版本所需的旧环境文件及启动参数。
 
 ## 二、源码部署
 
@@ -257,7 +261,6 @@ module.exports = { apps: [
   test -f /var/vocespace/main/api-data/vocespace.conf.json
   BACKUP=$(mktemp -d /var/vocespace/main/backups/manual.XXXXXX)
   tar -czf "$BACKUP/api-data.tar.gz" -C /var/vocespace/main/api-data .
-  node scripts/ubuntu/deploy-tools.mjs backup-redis /var/vocespace/main/releases/manual-001 /var/vocespace/main "$BACKUP"
 )
 ```
 

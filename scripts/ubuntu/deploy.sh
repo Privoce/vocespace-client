@@ -6,14 +6,13 @@ SOURCE=$(cd "$HERE/../.." && pwd)
 usage() {
   cat <<'HELP'
 Usage: bash scripts/ubuntu/deploy.sh COMMAND [ROOT] [RELEASE]
-  init      Create directories and API environment template (never overwrite).
+  init      Create directories and JSON configuration template (never overwrite).
   build     Copy this source tree to a NEW release, install and build.
-  activate  Stop managed services, back up files/Redis, start RELEASE.
+  activate  Stop managed services, back up local files, start RELEASE.
   rollback  Activate the previous release, retaining current business data.
   status    Show managed process status and local health checks.
 ROOT defaults to /var/vocespace; RELEASE is required for activate.
-Build options: WEB_PORT=3030 API_PORT=3031 NEXT_PUBLIC_BASE_PATH=
-Activation: REDIS_BACKUP_HOOK=/absolute/executable (optional provider backup).
+Build settings: ROOT/api-data/vocespace.conf.json (deployment section).
 Never changes Caddy, LiveKit, Redis configuration, or unrelated PM2 apps.
 HELP
 }
@@ -94,16 +93,21 @@ fi
 node "$HELPER" artifacts "$TARGET"
 node "$HELPER" preflight "$TARGET" "$ROOT"
 node "$HELPER" managed "$OLD"
-if [[ -n ${REDIS_BACKUP_HOOK:-} ]]; then
-  [[ $REDIS_BACKUP_HOOK = /* && -x $REDIS_BACKUP_HOOK ]] || { echo 'Backup hook must be an absolute executable.' >&2; exit 1; }
-fi
 if [[ -z $OLD ]]; then node "$HELPER" ports "$TARGET"; fi
 BACKUP=$(mktemp -d "$ROOT/backups/$(date -u +%Y%m%dT%H%M%SZ).XXXXXX")
+PROCESSES_CHANGED=false
 # On any failure after stopping, restore the old process registration, never data.
 restore_on_failure() {
   code=$?
   trap - EXIT INT TERM
   if [[ $code -ne 0 ]]; then
+    if [[ $PROCESSES_CHANGED = false ]]; then
+      echo "Activation failed before changing managed processes. Backup directory (may be incomplete): $BACKUP. Existing PM2 processes were left unchanged." >&2
+      if [[ -z $OLD ]]; then
+        echo 'No previously managed release exists. A manually stopped legacy process (for example vocespace) must be restarted manually if you need to restore service.' >&2
+      fi
+      exit "$code"
+    fi
     echo "Activation failed. Backup: $BACKUP. Restoring previous processes; data is not rolled back." >&2
     pm2 delete vocespace-web >/dev/null 2>&1 || true
     pm2 delete vocespace-api >/dev/null 2>&1 || true
@@ -116,6 +120,7 @@ restore_on_failure() {
         echo "Automatic recovery failed. Check PM2 logs and $OLD/ecosystem.config.cjs." >&2
       fi
     else
+      echo 'No previously managed release exists; new processes were removed. Restore a manually stopped legacy service using its original PM2 registration.' >&2
       pm2 save --force || true
     fi
   fi
@@ -126,20 +131,18 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 if [[ -n $OLD ]]; then
   # managed verified these names belong to OLD; no wildcard stop or cluster reload.
+  PROCESSES_CHANGED=true
   pm2 stop vocespace-web
   pm2 stop vocespace-api
 fi
 node "$HELPER" ports "$TARGET"
 tar -czf "$BACKUP/api-data.tar.gz" -C "$DATA" .
-if [[ -n ${REDIS_BACKUP_HOOK:-} ]]; then
-  "$REDIS_BACKUP_HOOK" "$BACKUP" "$DATA"
-else
-  node "$HELPER" backup-redis "$TARGET" "$ROOT" "$BACKUP"
-fi
+# Redis contains disposable session data; activation does not snapshot or clear it.
 if [[ -n $OLD ]]; then
   pm2 delete vocespace-web
   pm2 delete vocespace-api
 fi
+PROCESSES_CHANGED=true
 pm2 start "$TARGET/ecosystem.config.cjs" --only vocespace-api
 node "$HELPER" health "$TARGET" api
 pm2 start "$TARGET/ecosystem.config.cjs" --only vocespace-web
@@ -151,4 +154,4 @@ ln -sfn "$TARGET" "$ROOT/.current.new"
 mv -Tf "$ROOT/.current.new" "$ROOT/current"
 trap - EXIT INT TERM
 echo "Active: $TARGET"
-echo "Backup: $BACKUP (API files + Redis when configured). Caddy was not modified."
+echo "Backup: $BACKUP (local API files; Redis is not backed up or cleared). Caddy was not modified."
