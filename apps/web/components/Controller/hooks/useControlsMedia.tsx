@@ -1,4 +1,7 @@
 'use client';
+import { analytics } from '@/lib/analytics';
+import type { AnalyticsOperation } from '@vocespace/client-sdk';
+import { Track } from 'livekit-client';
 
 import { ControlBarExport, ControlBarProps } from '../types';
 import { supportsScreenSharing, useMediaQuery } from './useMediaQuery';
@@ -40,6 +43,66 @@ export function useControlsMedia(
   }: ControlBarProps,
   ref: React.ForwardedRef<ControlBarExport>,
 ) {
+  const mediaOperations = React.useRef(
+    new Map<string, { operation: AnalyticsOperation; expected: boolean }>(),
+  );
+  const beginMedia = (source: Track.Source) => {
+    if (mediaOperations.current.has(source)) return;
+    const participant = space?.localParticipant;
+    const enabled =
+      source === Track.Source.Microphone
+        ? participant?.isMicrophoneEnabled
+        : source === Track.Source.Camera
+          ? participant?.isCameraEnabled
+          : participant?.isScreenShareEnabled;
+    mediaOperations.current.set(source, {
+      expected: !enabled,
+      operation: analytics.begin('media_change', {
+        source: 'meeting',
+        media_type:
+          source === Track.Source.Microphone
+            ? 'microphone'
+            : source === Track.Source.Camera
+              ? 'camera'
+              : 'screen',
+        action: enabled ? 'disable' : 'enable',
+      }),
+    });
+  };
+  const finishMedia = React.useCallback(
+    (source: Track.Source, error?: unknown, enabled?: boolean) => {
+      const pending = mediaOperations.current.get(source);
+      if (error) pending?.operation.fail(error);
+      else pending?.operation.end(enabled === pending.expected ? 'success' : 'cancelled');
+      mediaOperations.current.delete(source);
+    },
+    [],
+  );
+  React.useEffect(() => {
+    const operations = mediaOperations.current;
+    return () => {
+      for (const { operation } of operations.values()) operation.end('cancelled');
+      operations.clear();
+    };
+  }, []);
+  const trackMedia = async (
+    source: Track.Source,
+    action: () => Promise<boolean | undefined | void>,
+  ) => {
+    beginMedia(source);
+    try {
+      const result = await action();
+      if (typeof result === 'boolean') finishMedia(source, undefined, result);
+      else {
+        mediaOperations.current.get(source)?.operation.end('cancelled');
+        mediaOperations.current.delete(source);
+      }
+      return result;
+    } catch (error) {
+      finishMedia(source, error);
+      throw error;
+    }
+  };
   const device = useLayoutDevice();
   const { t } = useI18n();
   const [isChatOpen, setIsChatOpen] = React.useState(false);
@@ -112,7 +175,8 @@ export function useControlsMedia(
   const [messageApi, contextHolder] = message.useMessage();
   const [noteApi, noteHolder] = notification.useNotification();
   const onScreenShareChange = React.useCallback(
-    (enabled: boolean) => {
+    (enabled: boolean, isUserInitiated = false) => {
+      if (isUserInitiated) finishMedia(Track.Source.ScreenShare, undefined, enabled);
       setIsScreenShareEnabled(enabled);
 
       if (enabled && isWeChat && !isMobile && !hasShownWeChatScreenShareNoteRef.current) {
@@ -124,7 +188,7 @@ export function useControlsMedia(
         hasShownWeChatScreenShareNoteRef.current = true;
       }
     },
-    [isMobile, isWeChat, noteApi, t],
+    [isMobile, isWeChat, noteApi, t, finishMedia],
   );
   const htmlProps = { className: 'lk-control-bar', ...props };
   const {
@@ -137,20 +201,33 @@ export function useControlsMedia(
   } = usePersistentUserChoices({ preventSave: !saveUserChoices });
   const space = useMaybeRoomContext();
   const microphoneOnChange = React.useCallback(
-    (enabled: boolean, isUserInitiated: boolean) =>
-      isUserInitiated ? saveAudioInputEnabled(enabled) : null,
-    [saveAudioInputEnabled],
+    (enabled: boolean, isUserInitiated: boolean) => {
+      if (isUserInitiated) {
+        saveAudioInputEnabled(enabled);
+        finishMedia(Track.Source.Microphone, undefined, enabled);
+      }
+    },
+    [saveAudioInputEnabled, finishMedia],
   );
   const cameraOnChange = React.useCallback(
-    (enabled: boolean, isUserInitiated: boolean) =>
-      isUserInitiated ? saveVideoInputEnabled(enabled) : null,
-    [saveVideoInputEnabled],
+    (enabled: boolean, isUserInitiated: boolean) => {
+      if (isUserInitiated) {
+        saveVideoInputEnabled(enabled);
+        finishMedia(Track.Source.Camera, undefined, enabled);
+      }
+    },
+    [saveVideoInputEnabled, finishMedia],
   );
   return {
+    beginMedia,
+    trackMedia,
     variation,
     controls,
     saveUserChoices,
-    onDeviceError,
+    onDeviceError: (value: { source: Track.Source; error: Error }) => {
+      finishMedia(value.source, value.error);
+      onDeviceError?.(value);
+    },
     updateSettings,
     setUserStatus,
     spaceInfo,

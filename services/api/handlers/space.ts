@@ -805,13 +805,15 @@ export async function POST(request: ApiRequest) {
     if (isUpdateParticipant && isSpace) {
       const { spaceName, settings, participantId, init }: UpdateSpaceParticipantBody =
         await request.json();
+      const outcome: { created?: boolean } = {};
       const success = await SpaceManager.updateParticipant(
         spaceName,
         participantId,
         settings,
         init,
+        outcome,
       );
-      return ApiResponse.json({ success }, { status: 200 });
+      return ApiResponse.json({ success, created: success && outcome.created === true }, { status: 200 });
     }
 
     return ApiResponse.json({ error: 'Invalid request' }, { status: 400 });

@@ -16,7 +16,9 @@ export interface MeetingButtonProps {
     | 'option'
     | 'control'
     | 'controlDanger'
-    | 'row';
+    | 'row'
+    | 'memberAction'
+    | 'memberDanger';
   label?: string;
 }
 export type MeetingIconName =
@@ -45,7 +47,9 @@ export type MeetingIconName =
   | 'avatar'
   | 'userAdd'
   | 'room'
-  | 'space';
+  | 'space'
+  | 'block'
+  | 'flag';
 export interface MeetingIconProps {
   name: MeetingIconName;
   size?: number;

@@ -60,8 +60,7 @@ function useSharedControls(model: ControlsModel, onMore: () => void) {
       onPress: () => {
         // Calling toggle directly doesn't set LiveKit's DOM-click flag. Persist only
         // the successful user action, never mount/reconnect/remote permission updates.
-        void toggle
-          .toggle()
+        void model.trackMedia(source, () => toggle.toggle())
           .then((enabled) => {
             if (typeof enabled === 'boolean') {
               (isCamera ? model.cameraOnChange : model.microphoneOnChange)(enabled, true);
@@ -114,7 +113,7 @@ function useSharedControls(model: ControlsModel, onMore: () => void) {
     disabled: !visibleControls.screenShare || !model.browserSupportsScreenSharing || screen.pending,
     active: screen.enabled,
     onPress: () => {
-      void screen.toggle().catch(() => undefined);
+      void model.trackMedia(Track.Source.ScreenShare, () => screen.toggle()).catch(() => undefined);
     },
   });
   if (space) actions.push({ id: 'more', icon: 'more', label: t('more.title'), onPress: onMore });

@@ -51,7 +51,7 @@ export function useAuthForm(account: AccountModel) {
       const registration = account.screen === 'register';
       const ok = registration
         ? await account.sendRegistrationCode(normalizedEmail, password, registrationSent)
-        : await account.forgot(normalizedEmail);
+        : await account.forgot(normalizedEmail, account.screen === 'reset');
       if (ok) {
         if (registration) setSentEmail(normalizedEmail);
         setCode('');

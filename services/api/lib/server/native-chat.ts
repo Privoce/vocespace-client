@@ -1,3 +1,4 @@
+import { isSpaceBlocked, memberSessionKey } from './moderation';
 import {
   canUseNativeChat,
   StorageUnavailableError,
@@ -40,6 +41,7 @@ export async function requireNativeChatMember(principal: SessionPrincipal, joinI
     }
   }
   const space = entry?.spaceName ? await spaceRepository.get(entry.spaceName) : null;
+  if (space && isSpaceBlocked(space, principal, entry?.identity)) throw new AccessError(403, 'SPACE_BLACKLISTED');
   const access =
     entry?.identity && entry.spaceName
       ? {
@@ -64,5 +66,7 @@ export async function requireNativeChatMember(principal: SessionPrincipal, joinI
       : null;
   if (!canUseNativeChat(principal, access, entry?.spaceName, Date.now()))
     throw new AccessError(403, 'CHAT_MEMBERSHIP_REQUIRED');
+  await redis.set(memberSessionKey(access.spaceName, access.identity), principal.id, 'EX',
+    Math.max(1, Math.ceil((principal.expiresAt - Date.now()) / 1000)));
   return access;
 }

@@ -1,3 +1,4 @@
+import { useMemberModeration } from './hooks/useMemberModeration';
 import {
   MouseMove,
   useVideoBlur,
@@ -95,6 +96,14 @@ export const ParticipantItem: (
     // const [uRoomStatusState, setURoomStatusState] = useRecoilState(roomStatusState);
     const appsData = useRoomStore((s) => s.remoteApp);
     const trackReference = useEnsureTrackRef(trackRef);
+    const moderation = useMemberModeration({ spaceName: space.name,
+      actorRole: settings.ownerId === localParticipant.identity ? 'owner' : settings.managers.includes(localParticipant.identity) ? 'admin' : undefined,
+      targetId: trackReference.participant.identity,
+      name: settings.participants[trackReference.participant.identity]?.name || trackReference.participant.name || '',
+      disabled: trackReference.participant.identity === localParticipant.identity,
+      canBlock: (settings.ownerId === localParticipant.identity || settings.managers.includes(localParticipant.identity)) &&
+        settings.ownerId !== trackReference.participant.identity,
+    });
     const isEncrypted = useIsEncrypted(trackReference.participant);
     const layoutContext = useMaybeLayoutContext();
     const isFullScreen = useSpaceStore((state) => state.isFullScreen);
@@ -893,7 +902,8 @@ export const ParticipantItem: (
         }}
 
       >{
-          <ParticipantTile ref={ref} trackRef={trackReference}>
+          <ParticipantTile ref={ref} trackRef={trackReference} {...moderation.handlers}>
+            {moderation.modal}
             {deviceTrack}
             <div
               className="lk-participant-placeholder"

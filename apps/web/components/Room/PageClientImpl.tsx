@@ -1,4 +1,5 @@
 'use client';
+import { webMeetingAnalytics } from '@/lib/analytics/meeting';
 
 import { useRoomConnection } from './hooks/UseRoomConnection';
 import { useRoomEntry } from './hooks/UseRoomEntry';
@@ -78,7 +79,7 @@ interface VideoConferenceProps {
 function VideoConferenceComponent(props: VideoConferenceProps) {
   const { t } = useI18n();
   const connection = useRoomConnection({ ...props,
-    onError: (error) => { console.error(error); props.messageApi.error(t('msg.error.e2ee.unsupport')); },
+    onError: (error) => { webMeetingAnalytics.fail(error); console.error(error); props.messageApi.error(t('msg.error.e2ee.unsupport')); },
   });
   if (!connection.room) return null;
   return <ConnectedConference {...props} connection={{ ...connection, room: connection.room }} />;
@@ -100,6 +101,7 @@ function ConnectedConference(props: VideoConferenceProps & {
 
   const handleOnLeave = useRoomLeave(room, videoContainerRef, setShouldConfirmLeave);
   const handleError = React.useCallback((error: Error) => {
+    webMeetingAnalytics.fail(error);
     console.error(`${t('msg.error.room.unexpect')}: ${error.message}`);
     if (error.name === 'ConnectionError') {
       props.messageApi.error(t('msg.error.room.network'));
@@ -108,6 +110,7 @@ function ConnectedConference(props: VideoConferenceProps & {
     }
   }, []);
   const handleEncryptionError = React.useCallback((error: Error) => {
+    webMeetingAnalytics.fail(error);
     props.messageApi.error(`${t('msg.error.room.unexpect')}: ${error.message}`);
   }, []);
 
@@ -227,7 +230,7 @@ function ConnectedConference(props: VideoConferenceProps & {
         connectOptions={connectOptions}
         video={props.userChoices.videoEnabled}
         audio={props.userChoices.audioEnabled}
-        onDisconnected={handleOnLeave}
+        onDisconnected={() => { webMeetingAnalytics.end(room.name, 'disconnected'); void handleOnLeave(); }}
         onEncryptionError={handleEncryptionError}
         onError={handleError}
         onMediaDeviceFailure={handleMediaDeviceFailure}

@@ -9,6 +9,7 @@ import { createContext, ReactNode, useContext, useEffect, useMemo, useState } fr
 // 创建 i18n 上下文
 interface I18nContextType {
   locale: string;
+  ready: boolean;
   t: Trans;
   changeLocale: (newLocale: string) => void;
 }
@@ -21,6 +22,7 @@ interface I18nProviderProps {
 }
 
 export function I18nProvider({ children, initialLocale = 'en' }: I18nProviderProps) {
+  const [ready, setReady] = useState(false);
   const [locale, setLocale] = useState(() => {
     return resolveLocale(initialLocale);
   });
@@ -32,6 +34,7 @@ export function I18nProvider({ children, initialLocale = 'en' }: I18nProviderPro
       const storedLocale = localStorage.getItem('locale');
       if (isLocale(storedLocale)) {
         setLocale(storedLocale);
+        setReady(true);
         return;
       }
     }
@@ -43,6 +46,7 @@ export function I18nProvider({ children, initialLocale = 'en' }: I18nProviderPro
     } else {
       setLocale(resolveLocale(initialLocale));
     }
+    setReady(true);
   }, []);
 
   const t = useMemo(() => createTranslator(locale), [locale]);
@@ -60,7 +64,7 @@ export function I18nProvider({ children, initialLocale = 'en' }: I18nProviderPro
   };
 
   return (
-    <I18nContext.Provider value={{ locale, t, changeLocale }}>{children}</I18nContext.Provider>
+    <I18nContext.Provider value={{ locale, ready, t, changeLocale }}>{children}</I18nContext.Provider>
   );
 }
 

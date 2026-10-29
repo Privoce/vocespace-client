@@ -1,3 +1,4 @@
+import { analytics, setWebAnalyticsContext } from '@/lib/analytics';
 import { useEffect, useRef, useState } from 'react';
 import { apiFetch } from '@/lib/api/client';
 
@@ -52,21 +53,25 @@ export function useDeleteAccount() {
     });
     return () => { mounted.current = false; controller.abort(); };
   }, []);
+  useEffect(() => { setWebAnalyticsContext({ auth_state: signedIn ? 'signed_in' : 'guest' }); }, [signedIn]);
   const submit = async () => {
     if (busy || flight.current || !password || (signedIn && !confirmed)) return;
     flight.current = true;
     setBusy(true);
     setError('');
     setRetry(false);
+    const operation = analytics.begin(signedIn ? 'account_delete' : 'account_login', { source: 'delete_account', method: 'email_password' });
     try {
       const result = await request(signedIn ? 'delete' : 'login', signedIn
         ? { password, confirm: 'DELETE' } : { email: email.trim(), password });
+      operation.end('success');
       if (!mounted.current) return;
       setPassword('');
       setConfirmed(false);
       if (signedIn) { setDone(true); setSignedIn(undefined); }
       else setSignedIn(result.email);
     } catch (error) {
+      operation.fail(error);
       if (!mounted.current) return;
       report(error);
       if (signedIn) { setSignedIn(undefined); setPassword(''); setConfirmed(false); setRetry(true); }

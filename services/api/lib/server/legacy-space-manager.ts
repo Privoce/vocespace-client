@@ -8,7 +8,7 @@ import { ChildRoom, DEFAULT_SPACE_INFO, ParticipantSettings, SpaceInfo, SpaceInf
 import { getConfig } from './config';
 import { getServerParticipantPlatformInfo } from './platform-token';
 import { getSpaceRedisClient } from './space-redis';
-import { spaceRepository } from './space-repository';
+import { spaceRepository, saveSpaceWithCreation } from './space-repository';
 
 const exportRBAC = (uid: string, spaceInfo?: SpaceInfo, pidentity?: string): SpaceRBACConf => {
   if (!spaceInfo) {
@@ -664,6 +664,7 @@ export class SpaceManager {
     participantId: string,
     pData: ParticipantSettings,
     init = false,
+    outcome?: { created?: boolean },
   ): Promise<boolean> {
     try {
       const redisClient = getSpaceRedisClient();
@@ -757,7 +758,9 @@ export class SpaceManager {
       }
 
       // 保存更新后的房间设置
-      return await this.setSpaceInfo(room, spaceInfo);
+      const created = await saveSpaceWithCreation(room, JSON.stringify(spaceInfo));
+      if (outcome) outcome.created = created;
+      return true;
     } catch (error) {
       console.error('Error updating participant:', error);
       return false;

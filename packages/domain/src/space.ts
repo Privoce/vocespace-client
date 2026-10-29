@@ -543,6 +543,8 @@ export interface SpaceInfo {
    *  - 更改空间证书
    */
   managers: string[];
+  /** Redis Space bans: participant IDs and server-verified session IDs. */
+  blacklist: string[];
   /**
    * 是否允许访客加入
    * 若为false，则只有认证用户才能加入空间
@@ -740,6 +742,7 @@ export const DEFAULT_SPACE_INFO = (startAt: number, createRoom: boolean): SpaceI
   persistence: true,
   record: { active: false },
   managers: [],
+  blacklist: [],
   allowGuest: 'allow',
   startAt,
   children: createRoom

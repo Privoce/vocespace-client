@@ -1,6 +1,13 @@
 import type { SettingsVectorNode } from './settings-icons';
 /** SVG sources extracted from Web SvgResource and its Ant Design icons. */
 export const meetingIcons = {
+  block: { tag: 'svg', attrs: { viewBox: '0 0 24 24', width: '$svgSize', height: '$svgSize', fill: 'none', stroke: '$color', strokeWidth: 1.6 }, children: [
+    { tag: 'circle', attrs: { cx: 12, cy: 12, r: 9 }, children: [] },
+    { tag: 'path', attrs: { d: 'M6 6l12 12' }, children: [] },
+  ] },
+  flag: { tag: 'svg', attrs: { viewBox: '0 0 24 24', width: '$svgSize', height: '$svgSize', fill: 'none', stroke: '$color', strokeWidth: 1.6 }, children: [
+    { tag: 'path', attrs: { d: 'M5 22V3c5-4 9 4 14 0v11c-5 4-9-4-14 0' }, children: [] },
+  ] },
   // Same SVG geometry as LiveKit ParticipantPlaceholder; Native uses the shared vector adapter.
   participantPlaceholder: {
     tag: 'svg',

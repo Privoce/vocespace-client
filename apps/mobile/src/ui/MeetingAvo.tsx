@@ -10,11 +10,13 @@ export function MeetingAvo({
   level = 0,
   animate = true,
   interactive = false,
+  onLongPress,
 }: {
   avo?: AvoParams;
   level?: number;
   animate?: boolean;
   interactive?: boolean;
+  onLongPress?: () => void;
 }) {
   const creature = useMemo(() => new Creature(), []);
   const live = useRef({ avo, level });
@@ -62,6 +64,8 @@ export function MeetingAvo({
   return (
     <Pressable
       disabled={!interactive}
+      onLongPress={onLongPress}
+      delayLongPress={500}
       onPress={() => creature.pop()}
       style={{ width: '100%', height: '100%', maxWidth: 260, maxHeight: 260, aspectRatio: 1 }}
     >

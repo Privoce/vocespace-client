@@ -1,3 +1,4 @@
+import { analytics } from '../../analytics';
 import { useI18n } from '../../i18n';
 import { useEffect, useState } from 'react';
 import { BackHandler, Clipboard } from 'react-native';
@@ -104,8 +105,10 @@ export function useSharedMeetingRoom(
     setShareError('');
     try {
       Clipboard.setString(conference.state.spaceName || room.raw.name);
+      analytics.track('space_share', { method: 'copy_link', result: 'success', source: 'meeting' });
       setShareError(t('phone_meeting.copied'));
     } catch {
+      analytics.track('space_share', { method: 'copy_link', result: 'failure', source: 'meeting' });
       setShareError('未能打开系统分享，请重试。');
     }
   };

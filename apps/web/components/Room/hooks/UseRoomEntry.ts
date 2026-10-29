@@ -1,4 +1,5 @@
 'use client';
+import { webMeetingAnalytics } from '@/lib/analytics/meeting';
 
 import { api } from '@/lib/api';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -45,6 +46,7 @@ export function useRoomEntry({
   const [configAttempt, setConfigAttempt] = useState(0);
   const active = useRef(false);
   const joining = useRef(false);
+  const analyticsCleanup = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const { userChoices } = usePersistentUserChoices({
     defaults: { videoEnabled: false, audioEnabled: false },
     preventSave: false,
@@ -52,11 +54,13 @@ export function useRoomEntry({
   });
 
   useEffect(() => {
+    clearTimeout(analyticsCleanup.current);
     active.current = true;
     return () => {
       active.current = false;
+      analyticsCleanup.current = setTimeout(() => webMeetingAnalytics.end(spaceName), 0);
     };
-  }, []);
+  }, [spaceName]);
 
   useEffect(() => {
     let cancelled = false;
@@ -86,13 +90,14 @@ export function useRoomEntry({
     async (choices: LocalUserChoices) => {
       if (joining.current || !active.current) return;
       joining.current = true;
+      webMeetingAnalytics.begin(spaceName);
       try {
         let connection = details as ConnectionDetails | undefined;
         if (!connection) {
           const response = await api.joinSpace(spaceName, choices.username, region, data?.id);
           if (!response.ok) {
             const result = await response.json();
-            throw new Error(result.error || `Join HTTP ${response.status}`);
+            throw Object.assign(new Error('JOIN_FAILED'), { code: result.code, status: response.status });
           }
           connection = await response.json();
         }
@@ -100,6 +105,9 @@ export function useRoomEntry({
         setPreJoinChoices(choices);
         setConnectionDetails(connection);
         if (auth) router.replace(roomUrlAfterLogin(spaceName, window.location.href));
+      } catch (error) {
+        webMeetingAnalytics.fail(error, 'prepare');
+        throw error;
       } finally {
         joining.current = false;
       }
@@ -110,6 +118,7 @@ export function useRoomEntry({
   useEffect(() => {
     if (!data || !details) return;
     if (!data.preJoin) {
+      webMeetingAnalytics.begin(spaceName, 'deep_link');
       setPreJoinChoices({
         username: data.username,
         videoEnabled: false,

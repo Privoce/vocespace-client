@@ -2,6 +2,106 @@
 
 更新：2026-10-27。按现有服务器的 **源码构建 + PM2 + Caddy** 方式部署，沿用 `vocespace.com`、静态首页、3060 服务、LiveKit / Egress / Redis / Supabase。当前 Web 与 API 必须分别启动，Web 不再拉起 API 子进程。
 
+```
+bash scripts/ubuntu/setup.sh /var/vocespace
+source /var/vocespace/tools/env.sh
+bash scripts/ubuntu/deploy.sh init /var/vocespace
+```
+
+## Ubuntu 自动部署脚本（2026-10-29）
+
+推荐使用本节脚本，替代下方手动安装、构建、PM2 切换步骤。**脚本不读写或 reload Caddy，不操作 LiveKit / Egress、3060 服务或 Redis 服务配置。** 第 6 节是之前保留的 Caddy 路由参考；已有路由正确时无需执行。默认 Web `3030`、API `3031`，与原部署方案一致。
+
+脚本在 `scripts/ubuntu/`：
+
+- `setup.sh`：为 Ubuntu x64 / arm64 安装编译工具、redis-cli、仓库指定的 Node / pnpm；缺少 PM2 时安装 PM2 6。Node 官方压缩包经 SHA-256 校验后装入部署目录，不替换系统 Node。
+- `deploy.sh init`：创建目录及 API 环境模板；已有环境文件与数据保持原样。
+- `deploy.sh build`：从当前源码复制构建输入到全新的 release，独立安装依赖并执行标准构建、架构边界及数据初始化检查。排除本地环境文件、数据、密钥文件、node_modules 和旧构建产物。
+- `deploy.sh activate`：检查配置与进程归属，停止本脚本管理的两个进程，备份文件及 Redis，顺序启动 API / Web 并检查健康状态。失败时尝试恢复旧进程，不自动恢复数据库。
+- `deploy.sh rollback` / `status`：回退到上一个成功版本 / 查看进程及本机健康状态。
+
+### 首次准备
+
+上传或检出完整 monorepo 到源码目录（示例 `/var/vocespace/source`），使用**普通部署用户**操作；不要 `sudo bash deploy.sh` 或 `sudo pm2`。如果已有 Node / pnpm / PM2，版本满足 `.nvmrc` / `packageManager`，且有 `rsync`、`flock`、`curl`、`tar`、`redis-cli`，可跳过 setup。
+
+```bash
+cd /var/vocespace/source
+bash scripts/ubuntu/setup.sh /var/vocespace
+source /var/vocespace/tools/env.sh
+bash scripts/ubuntu/deploy.sh init /var/vocespace
+nano /var/vocespace/api-data/.env.production
+chmod 600 /var/vocespace/api-data/.env.production
+```
+
+setup 只在安装系统包、创建尚不存在的部署根目录时调用 sudo。已有 `/var/vocespace` 必须可由部署用户写入；脚本不会递归修改静态首页等既有目录的所有者。它不安装 Redis 服务端；沿用现有 Redis、LiveKit、Egress 和 Supabase。
+
+在模板里填写真实 Supabase 项目 URL、publishable / anon key、service role key，以及公共 origin。**旧部署必须保留原 `vocespace.conf.json`、uploads、sql、lib/uploads 和对应 Redis，不能开启首次初始化替代迁移。** 全新部署才取消模板里的 `VOCESPACE_INIT_CONFIG=true` 等注释，填写 LiveKit / Redis / host token；已有配置中的 Redis / LiveKit 参数不会被环境变量改写。
+
+### 构建与首次切换
+
+```bash
+# 从当前源码目录运行；支持未提交源码，但不会自动 git pull 或 checkout。
+bash scripts/ubuntu/deploy.sh build /var/vocespace 20261029-1
+```
+
+目录最终如下。构建需要完整开发依赖与足够内存（Web 构建允许 8 GB Node 堆），不要设置生产依赖裁剪安装。
+
+```text
+/var/vocespace/
+  source/                        # 上传/检出的源码，继续在这里更新
+  tools/env.sh                   # 在新终端 source，选用部署 Node
+  api-data/.env.production       # 只有 API 读取；权限 600
+  api-data/vocespace.conf.json   # 原业务配置
+  api-data/uploads/              # 原数据
+  releases/20261029-1/           # 独立源码、依赖、产物、ecosystem.config.cjs
+  backups/<时间>/                # API tar 包、Redis RDB，保留供人工恢复
+  current -> releases/...        # 健康检查通过后更新
+  previous -> releases/...       # 上一个成功版本
+```
+
+**从旧手工部署迁移的首次维护窗口：** 先记录旧 PM2 名称、源码路径及启动配置，按第 3 / 9 节停止实际旧 VoceSpace 写入者，备份并迁移数据到 `api-data`。如果旧进程也叫 `vocespace-api` / `vocespace-web`，在确认已停止及备份后删除这两个旧登记。脚本遇到同名但非本脚本管理的进程，或端口被其他应用占用，会停止并报错，不自动接管。不要停止 3060 或其他业务；旧组合服务不能继续写入同一数据。首次迁移失败时需要用记录的旧配置手工恢复，只有已有 `current` 的后续升级能自动回退进程。
+
+```bash
+bash scripts/ubuntu/deploy.sh activate /var/vocespace 20261029-1
+bash scripts/ubuntu/deploy.sh status /var/vocespace
+pm2 logs vocespace-api --lines 60 --nostream
+pm2 logs vocespace-web --lines 60 --nostream
+
+# 首次配置开机自启；执行 PM2 输出的那一条 sudo 命令。
+pm2 startup
+# activate 已执行 pm2 save；修改进程清单后需要再次保存。
+pm2 save
+```
+
+在当前部署用户的 shell 中加载 `tools/env.sh` 后执行 startup，使其记录正确 Node 路径。Node 路径变更后重新生成开机服务。端口不同的部署可以在 **build 时** 指定 `WEB_PORT=... API_PORT=...`，`NEXT_PUBLIC_BASE_PATH` 也在 build 时指定并写进该版本 PM2 配置；activate 沿用版本内的值。默认部署域名根路径，不需要这些覆盖值。
+
+### 自动备份与升级回退
+
+每次 activate / rollback 都先检查配置，再停止管理中的两个进程，备份整个 `api-data` 到权限受限的目录。已有配置时，默认使用其 Redis host / port / password 通过 `redis-cli --rdb` 获取快照；密码通过子进程环境传入，不出现在命令行或输出。**RDB 包含该 Redis 实例的所有数据库，不只是 VoceSpace 的 DB**，要保密存放。备份不停止 Redis、不修改持久化设置，最长等待 5 分钟；失败会中止切换并尝试恢复旧进程。备份期间不要运行其他写同一业务数据的进程。
+
+托管 Redis 禁止复制快照，或使用 TLS / ACL 等特殊连接方式时，提供可执行备份 hook：
+
+```bash
+REDIS_BACKUP_HOOK=/var/vocespace/backup-redis.sh \
+  bash scripts/ubuntu/deploy.sh activate /var/vocespace 20261029-2
+```
+
+hook 在 API 停止后执行，参数依次为备份目录、API 数据目录。它必须等待供应方备份成功，并把快照文件或可恢复的快照 ID 保存到备份目录，成功退出 `0`，失败返回非 `0`。不要用空脚本跳过备份。外部 Supabase / 对象存储仍使用各自的备份策略。
+
+```bash
+# 更新 source 中的代码后，新建版本（已存在的 release 一律拒绝覆盖）：
+source /var/vocespace/tools/env.sh
+bash scripts/ubuntu/deploy.sh build /var/vocespace 20261029-2
+bash scripts/ubuntu/deploy.sh activate /var/vocespace 20261029-2
+
+# 需要回退时，先备份现有数据，再切回 previous 对应代码：
+bash scripts/ubuntu/deploy.sh rollback /var/vocespace
+```
+
+脚本使用部署目录文件锁，防止同一部署目录同时构建 / 发布。API 固定单实例 fork，不使用 cluster reload。失败的 release、备份与历史版本不会自动删除；确认验收后自行制定保留周期，至少保留 current / previous 及其依赖、构建产物和使用的 Node。回退**仅切代码，不回滚业务数据**；数据结构不兼容或需要数据恢复时，按第 9 节人工处理。
+
+健康检查只确认 API / Web 进程可响应，不能代替 Caddy 公网路由、账号服务、邮件、WebSocket、LiveKit / HLS 和真机验收。发布后继续执行第 10 节业务检查。本机使用 `pnpm test:deployment-scripts` 验证部署流程（模拟 PM2 / Redis / 健康响应），验证记录见 checklist；尚未在生产 Ubuntu 上实际发布。
+
 ## 1. 端口与路由
 
 | 请求 | 目标 | 本次调整 |
@@ -355,3 +455,18 @@ pm2 describe vocespace-web
 此前隔离副本标准 Web / API 构建、190 项隔离后端检查与数据初始化检查通过。本次只调整部署文档，没有连接生产服务器或执行 PM2 / Caddy 切换；本机没有 Caddy，候选配置需在服务器按第 6 节 validate 后使用。源码检查不代表 Linux 上线已验收。
 
 仓库的 `Dockerfile`、`docker-compose.yml` 和 `deploy/compose.env.example` 仍保留作为容器部署选项；当前服务器按本文 PM2 流程即可，不需要新增 Nginx 或 Docker。
+
+## Umami 统计（2026-10-29）
+
+本次 Web / API 代码包含首期埋点，默认关闭。发布前的 build shell 显式设置：
+
+```bash
+export NEXT_PUBLIC_UMAMI_ENABLED=true
+export NEXT_PUBLIC_UMAMI_URL=https://rds.vocespace.com
+export NEXT_PUBLIC_UMAMI_WEBSITE_ID=d2fe7209-e79d-45cc-8c0d-20b5f6035ce7
+bash scripts/ubuntu/deploy.sh build /var/vocespace 20261029-umami
+```
+
+然后按上文 activate 流程发布。三个变量是公共采集配置，不是 API 密钥；不要只写进 `api-data/.env.production`，该文件不参与 Web 客户端构建。手动构建同样在 `pnpm build` 前设置，Compose 流程在其 env 文件设置对应 build args 后重新 build。**仅 PM2 restart 不会更新已编译的开关**；关闭也要设置 false 后重建发布。
+
+不需要增加 Caddy 路由，浏览器直接访问 `rds.vocespace.com`。Web 和新 API 同批发布，以取得创建 Space 的真实 `created` 回执。上线前用独立测试站点验收；正式 Umami 的版本和 Native 会话行为尚待实际联调。事件字典、脱敏范围与验收清单见 [埋点文档](埋点文档.md)。

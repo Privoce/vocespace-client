@@ -1,3 +1,5 @@
+import { analyticsError } from '@vocespace/contracts';
+import type { Analytics } from '@vocespace/client-sdk';
 export const PREVIEW_JOIN_DELAY_MS = 10_000;
 export interface PreviewState {
   space?: string;
@@ -6,9 +8,10 @@ export interface PreviewState {
   error?: unknown;
 }
 interface PreviewPorts {
+  analytics?: Analytics;
   now(): number;
   stop(): Promise<void>;
-  join(space: string): Promise<void>;
+  join(space: string, automatic?: boolean): Promise<void>;
 }
 /** Media readiness is supplied by the preview player, never by an RTC prejoin connection. */
 export function createPreviewController(ports: PreviewPorts) {
@@ -18,6 +21,30 @@ export function createPreviewController(ports: PreviewPorts) {
   let lastProgressAt: number | undefined;
   let playingMs = 0;
   let previousPosition: number | undefined;
+  let totalPlayingMs = 0;
+  let trackedPlaying = false;
+  let terminal = true;
+  const playing = () => {
+    if (trackedPlaying || terminal) return;
+    trackedPlaying = true;
+    ports.analytics?.track('space_preview', {
+      phase: 'playing',
+      source: 'plaza',
+      valid_play_seconds: 0,
+    });
+  };
+  const finish = (reason: string, error?: unknown) => {
+    if (terminal) return;
+    terminal = true;
+    if (trackedPlaying || reason === 'error')
+      ports.analytics?.track('space_preview', {
+        phase: reason === 'error' ? 'failure' : 'ended',
+        source: 'plaza',
+        end_reason: reason,
+        valid_play_seconds: totalPlayingMs / 1000,
+        ...(reason === 'error' ? { error_code: analyticsError(error) } : {}),
+      });
+  };
   let autoJoin = true;
   let allowed = true;
   let joinFlight: Promise<void> | undefined;
@@ -37,13 +64,14 @@ export function createPreviewController(ports: PreviewPorts) {
     if (automatic && (!autoJoin || state.phase !== 'playing' || state.remainingMs > 0)) return;
     const space = state.space;
     const generation = version;
+    finish('join');
     set({ phase: 'joining' });
     joinFlight = (async () => {
       try {
         // The player must be fully released before the formal RTC acquires audio/video resources.
         await ports.stop();
         if (!allowed || generation !== version || state.space !== space) return;
-        await ports.join(space);
+        await ports.join(space, automatic);
       } catch (error) {
         if (generation === version) set({ phase: 'error', error });
       }
@@ -60,7 +88,14 @@ export function createPreviewController(ports: PreviewPorts) {
         listeners.delete(listener);
       };
     },
+    firstFrame(generation: number) {
+      if (generation === version && allowed) playing();
+    },
     activate(space: string, enabled: boolean) {
+      finish('swipe');
+      trackedPlaying = false;
+      terminal = false;
+      totalPlayingMs = 0;
       version++;
       allowed = true;
       autoJoin = enabled;
@@ -69,7 +104,8 @@ export function createPreviewController(ports: PreviewPorts) {
       return version;
     },
     /** Dragging, an obscuring dialog, inactive App or tab exit invalidate late player callbacks. */
-    suspend() {
+    suspend(reason: 'swipe' | 'background' | 'tab_change' = 'swipe') {
+      finish(reason);
       version++;
       allowed = false;
       resetPlayback();
@@ -94,7 +130,9 @@ export function createPreviewController(ports: PreviewPorts) {
         if (now - lastProgressAt > 1000) {
           resetPlayback();
         } else {
-          playingMs += Math.min(now - lastProgressAt, (positionSeconds - previousPosition) * 1000);
+          const delta = Math.min(now - lastProgressAt, (positionSeconds - previousPosition) * 1000);
+          playingMs += delta;
+          totalPlayingMs += delta;
         }
       }
       if (previousPosition !== undefined && positionSeconds <= previousPosition) return;
@@ -111,6 +149,7 @@ export function createPreviewController(ports: PreviewPorts) {
     fail(generation: number, error: unknown) {
       if (generation === version && allowed && state.phase !== 'joining') {
         resetPlayback();
+        finish('error', error);
         set({ phase: 'error', error, remainingMs: PREVIEW_JOIN_DELAY_MS });
       }
     },

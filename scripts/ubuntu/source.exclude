@@ -1,0 +1,27 @@
+# No runtime data, secrets, dependencies or generated output in a release copy.
+.git/
+node_modules/
+.next/
+dist/
+.expo/
+.pnpm-store/
+.env*
+vocespace*.json
+vocespace*.txt
+uploads/
+sql/
+useless/
+*.tsbuildinfo
+.DS_Store
+*.pem
+*.key
+*.p12
+*.p8
+*.jks
+*.keystore
+*.mobileprovision
+credentials.json
+credentials/
+/apps/mobile/ios/
+/apps/mobile/android/
+/apps/web/public/license/

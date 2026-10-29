@@ -1,3 +1,4 @@
+import { analytics } from '../../analytics';
 import { useEffect, useRef, useState } from 'react';
 import { Alert, Clipboard, Share } from 'react-native';
 import { ACCOUNT_AVATAR_MAX_BYTES, ACCOUNT_AVATAR_TYPES } from '@vocespace/contracts';
@@ -92,8 +93,10 @@ export function useProfileScreen(account: AccountModel) {
     },
     share: async () => {
       try {
-        await Share.share({ message: `VoceSpace · ${text('my_room')}: ${roomName}` });
+        const result = await Share.share({ message: `VoceSpace · ${text('my_room')}: ${roomName}` });
+        analytics.track('space_share', { method: 'system_share', source: 'profile', result: result.action === Share.dismissedAction ? 'cancelled' : 'opened' });
       } catch {
+        analytics.track('space_share', { method: 'system_share', source: 'profile', result: 'failure' });
         Alert.alert(text('share_room'), t('msg.error.room.unexpect'));
       }
     },

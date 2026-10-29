@@ -172,3 +172,17 @@ pnpm exec expo run:android --variant release --device
 本次准备不会自动注册商店、接受协议、签名上传或提交审核；需要开发者账号及签名资料。构建 / 自动测试、模拟器、真机和商店审核分别记录，不将其中一项成功当作全部完成。
 
 本次本地结果：iOS Debug 原生构建与模拟器更新安装完成，实际文件选择器打开 / 取消通过；双端 JS 导出通过。当前机器缺少 Java Runtime / Android SDK，未完成 Android 原生构建；尚未使用 Apple / Google / EAS 凭据签名或上传商店构建。正式昵称与头像上传仍需配套 API 和测试账号回归。
+
+## Umami 统计（2026-10-29）
+
+首期 Web / App 共用事件字典。Native 直接调用 HTTP 采集接口，不需要新增原生模块或 WebView。默认关闭；在实际使用的 EAS `production` / `preview` 环境或本机 `apps/mobile/.env` 中配置：
+
+```dotenv
+EXPO_PUBLIC_UMAMI_ENABLED=true
+EXPO_PUBLIC_UMAMI_URL=https://rds.vocespace.com
+EXPO_PUBLIC_UMAMI_WEBSITE_ID=d2fe7209-e79d-45cc-8c0d-20b5f6035ce7
+```
+
+这些是公共构建参数，须让构建进程读取；只设置 API 服务器环境变量无效。EAS 的远程环境配置与本地 `.env` 不是同一份文件。切换开关后重新生成 release JS / 安装包，按本文已有签名与发布流程操作；development build + Metro 的 `__DEV__` 模式强制不发送。
+
+验收包请改用独立测试 Website ID，确认 iOS / Android 页面访问、入会和账号事件正常，网络失败不影响业务，抓包没有邮箱、房间名、正文或凭证。未进行真实 Umami / 真机采集验收，JS 导出和 Mock HTTP 测试不替代该步骤。首期不承诺跨启动 / 跨端唯一用户统计。完整范围见 [埋点文档](埋点文档.md)。

@@ -1,3 +1,4 @@
+import { useAnalyticsPage } from '../analytics/hooks/useAnalyticsPage';
 import { AccountAvatar } from '../account/AccountAvatar';
 import { FeedbackPage } from '../feedback/FeedbackPage';
 import type { FeedbackSend } from '../feedback/client';
@@ -15,6 +16,7 @@ import { SettingsDialog } from '../ui/settings-widgets';
 import { LanguageSelect } from '../ui/LanguageSelect';
 type IconName = ComponentProps<typeof IconOutline>['name'];
 export function ProfileScreen({
+  active = true,
   model,
   account,
   onBrowse,
@@ -24,6 +26,7 @@ export function ProfileScreen({
   joining,
   sendFeedback,
 }: {
+  active?: boolean;
   model: ReturnType<typeof useLocalSettings>;
   account: AccountModel;
   onBrowse: () => void;
@@ -36,6 +39,7 @@ export function ProfileScreen({
   const { t, error: languageError } = useI18n();
   const text = (key: string) => t(`native_account.${key}`);
   const m = useProfileScreen(account);
+  useAnalyticsPage(m.panel === 'feedback' ? 'feedback' : m.panel === 'about' ? 'about' : 'profile', active, 2);
   const signedIn = account.signedIn;
   /* 我的内容尚未接入，保留布局供后续恢复。
   const library = (

@@ -1,3 +1,4 @@
+import { AnalyticsProvider } from '@/lib/analytics/AnalyticsProvider';
 import { phoneButtonColors, meetingColors } from '@vocespace/ui/theme';
 import { DeviceLayoutSync } from '../components/Layout/DeviceLayoutSync';
 import { I18nProvider } from '@/lib/i18n/i18n';
@@ -9,6 +10,7 @@ import type { Metadata, Viewport } from 'next';
 import { App, ConfigProvider } from 'antd';
 
 export const metadata: Metadata = {
+  referrer: 'strict-origin-when-cross-origin',
   title: {
     default: 'Voce Space | Self-hosted conference app',
     template: '%s',
@@ -228,6 +230,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             {/* component={false} 不渲染额外 DOM，仅为 App.useApp() 提供上下文（message 等消费主题） */}
             <App component={false}>
               <DeviceLayoutSync />
+              <AnalyticsProvider />
               <WeChatAccessGuard>{children}</WeChatAccessGuard>
             </App>
           </I18nProvider>

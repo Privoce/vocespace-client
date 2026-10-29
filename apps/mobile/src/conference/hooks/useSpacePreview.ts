@@ -1,3 +1,4 @@
+import { analytics } from '../../analytics';
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { AppState } from 'react-native';
 import { useVideoPlayer } from 'expo-video';
@@ -12,12 +13,14 @@ export function useSpacePreview({
   active,
   preferences,
   join,
+  inactiveReason = 'swipe',
 }: {
   model: ReturnType<typeof useConference>;
   space?: string;
   active: boolean;
   preferences: LocalSettings;
-  join: (space: string) => Promise<void>;
+  join: (space: string, automatic?: boolean) => Promise<void>;
+  inactiveReason?: 'swipe' | 'tab_change';
 }) {
   const player = useVideoPlayer(null, (player) => {
     player.timeUpdateEventInterval = 0.25;
@@ -56,19 +59,25 @@ export function useSpacePreview({
   }, [player]);
   const [controller] = useState(() =>
     createPreviewController({
+      analytics,
       now: Date.now,
       stop,
-      join: (name) => latest.current.join(name),
+      join: (name, automatic) => latest.current.join(name, automatic),
     }),
   );
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot);
-  const cancel = useCallback(() => {
-    controller.suspend();
-    void stop().catch(() => undefined);
-  }, [controller, stop]);
+  const exitReason = useRef(inactiveReason);
+  exitReason.current = inactiveReason;
+  const cancel = useCallback(
+    (reason: 'swipe' | 'background' | 'tab_change' = exitReason.current) => {
+      controller.suspend(reason);
+      void stop().catch(() => undefined);
+    },
+    [controller, stop],
+  );
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (next) => {
-      if (next !== 'active') cancel();
+      if (next !== 'active') cancel('background');
       setForeground(next === 'active');
     });
     return () => subscription.remove();
@@ -167,7 +176,10 @@ export function useSpacePreview({
     availability: state.phase === 'error' ? 'error' : availability,
     cancel,
     firstFrame: () => {
-      if (current.current) current.current.frame = true;
+      if (current.current) {
+        current.current.frame = true;
+        controller.firstFrame(current.current.generation);
+      }
     },
     join: () => {
       void controller.join();

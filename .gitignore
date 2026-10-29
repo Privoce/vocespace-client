@@ -79,3 +79,4 @@ apps/web/public/license/
 /apps/mobile/*.p12
 /apps/mobile/*.mobileprovision
 /.pnpm-store/
+/tests

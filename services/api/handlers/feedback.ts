@@ -1,3 +1,7 @@
+import { membership, AccessError, safeSegment } from '../access';
+import { sessions, sessionToken } from '../lib/server/sessions';
+import { requireNativeChatMember } from '../lib/server/native-chat';
+import { parseJoinId } from '@vocespace/contracts';
 import { getConfig } from '../lib/server/config';
 import { sendEmail } from '../lib/email';
 const connect_endpoint = (url: string) => `${process.env.NEXT_PUBLIC_BASE_PATH || ''}${url}`;
@@ -127,7 +131,24 @@ export async function POST(request: ApiRequest) {
 
     const body = await request.json();
     const email = normalizeEmail(body.email || '');
-    const content = String(body.content || '').trim();
+    let content = String(body.content || '').trim();
+    const report = body.varient === 'report';
+    if (body.varient !== undefined && !['feedback', 'report'].includes(body.varient))
+      throw new AccessError(400, 'INVALID_FEEDBACK_VARIANT');
+    if (report) {
+      const principal = await sessions.read(sessionToken(request.headers));
+      if (!principal) throw new AccessError(401, 'SESSION_REQUIRED');
+      if (!safeSegment(body.target?.id)) throw new AccessError(400, 'INVALID_REPORT_TARGET');
+      const spaceName = principal.client === 'native'
+        ? (await requireNativeChatMember(principal, parseJoinId(body))).spaceName : body.target.spaceName;
+      if (!safeSegment(spaceName)) throw new AccessError(400, 'INVALID_SPACE');
+      const member = await membership(principal, spaceName);
+      const target = member.info.participants[body.target.id];
+      if (!member.participant || !target || body.target.id === member.id)
+        throw new AccessError(403, 'INVALID_REPORT_TARGET');
+      if (!content) throw new AccessError(400, 'REPORT_CONTENT_REQUIRED');
+      content = `Space: ${spaceName}\nReported member: ${target.name} (${body.target.id})\nReporter: ${member.id}\n\n${content}`;
+    }
     const feedbackType = String(body.feedbackType || '').trim();
     const attachments = Array.isArray(body.attachments)
       ? body.attachments.filter((item: unknown): item is string => typeof item === 'string')
@@ -154,7 +175,7 @@ export async function POST(request: ApiRequest) {
     const sent = await sendEmail(
       email,
       recipient,
-      `[VoceSpace Feedback] ${feedbackType}`,
+      `[VoceSpace ${report ? 'User Report' : 'Feedback'}] ${feedbackType}`,
       formatFeedbackEmail({ fromEmail: email, feedbackType, content, attachments }),
     );
 
@@ -164,7 +185,8 @@ export async function POST(request: ApiRequest) {
 
     return ApiResponse.json({ success: true });
   } catch (error) {
-    console.error('feedback route error', error);
+    if (error instanceof AccessError) return ApiResponse.json({ code: error.code }, { status: error.status });
+    console.error('feedback delivery failed');
     return ApiResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

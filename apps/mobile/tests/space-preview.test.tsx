@@ -75,7 +75,7 @@ it('waits for a rendered frame, then joins after 10 seconds and unloads HLS befo
       await vi.advanceTimersByTimeAsync(250);
       fake.events.get('timeUpdate')?.({ currentTime: 30 + i / 4 });
     });
-  expect(join).toHaveBeenCalledExactlyOnceWith('A');
+  expect(join).toHaveBeenCalledExactlyOnceWith('A', true);
   expect(fake.player.replaceAsync).toHaveBeenLastCalledWith(null);
   expect(releasePreview).toHaveBeenCalledWith('lease');
   unmount();
@@ -130,7 +130,7 @@ it('keeps unavailable previews manual and cancels before a short swipe can start
   await act(async () => {
     result.current.join();
   });
-  expect(join).toHaveBeenCalledExactlyOnceWith('A');
+  expect(join).toHaveBeenCalledExactlyOnceWith('A', false);
   unmount();
 });
 

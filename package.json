@@ -23,7 +23,8 @@
     "package:api": "pnpm --filter @vocespace/api --config.inject-workspace-packages=true deploy --prod",
     "typecheck:ui": "pnpm --filter @vocespace/ui typecheck",
     "typecheck:api": "pnpm --filter @vocespace/api typecheck",
-    "check:deployment": "node scripts/check-deployment.mjs"
+    "check:deployment": "node scripts/check-deployment.mjs",
+    "test:deployment-scripts": "node --test scripts/ubuntu/deploy.test.mjs"
   },
   "devDependencies": {
     "@testing-library/react": "16.3.0",

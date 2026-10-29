@@ -1,4 +1,5 @@
 'use client';
+import { analytics } from '@/lib/analytics';
 import * as React from 'react';
 import { useControls } from '@/components/Controller/hooks/useControls';
 import { ControlBarProps, ControlBarExport } from './types';
@@ -204,8 +205,8 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(func
             onCopy={() => {
               void navigator.clipboard
                 .writeText(space?.name || '')
-                .then(() => messageApi.success(t('phone_meeting.copied')))
-                .catch(() => messageApi.error(t('copy_fail')));
+                .then(() => { analytics.track('space_share', { method: 'copy_link', result: 'success', source: 'meeting' }); return messageApi.success(t('phone_meeting.copied')); })
+                .catch(() => { analytics.track('space_share', { method: 'copy_link', result: 'failure', source: 'meeting' }); return messageApi.error(t('copy_fail')); });
             }}
             extra={
               <MeetingButton onPress={copyInvite}>{t('more.participant.invite.ok')}</MeetingButton>

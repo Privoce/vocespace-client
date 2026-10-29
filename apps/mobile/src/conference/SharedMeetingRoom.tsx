@@ -1,3 +1,5 @@
+import { MemberModeration } from './MemberModeration';
+import type { MeetingTile } from '@vocespace/ui';
 import { FeedbackDialog } from '../feedback/FeedbackDialog';
 import { TileWidgets } from './TileWidgets';
 import { MeetingAvo } from '../ui/MeetingAvo';
@@ -7,7 +9,7 @@ import { useEffect, useState } from 'react';
 import Drawer from '@ant-design/react-native/lib/drawer';
 import { ChannelDrawer } from './ChannelDrawer';
 import { RoomNavigation } from './RoomNavigation';
-import { Modal, Text, View } from 'react-native';
+import { Modal, Text, View, Pressable } from 'react-native';
 import { VideoTrack, isTrackReference } from '@livekit/react-native';
 import { Track } from 'livekit-client';
 import {
@@ -43,11 +45,19 @@ export function SharedMeetingRoom({
   onBrowse?: (direction: number) => Promise<void>;
 }) {
   const model = useSharedMeetingRoom(conference, room);
+  const [memberTarget, setMemberTarget] = useState<MeetingTile>();
+  const self = model.members.find((item) => item.local);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [focused, setFocused] = useState(false);
   const [fullscreen, setFullscreen] = useState<string>();
   const [appsId, setAppsId] = useState<string>();
   const fullscreenTile = model.tiles.find((item) => item.id === fullscreen);
+  const openMember = (tile: MeetingTile) => {
+    if (tile.local) return;
+    const id = model.allTracks.find((track) => model.key(track) === tile.id)?.participant.identity;
+    const member = model.members.find((entry) => entry.id === id);
+    if (member) { setFullscreen(undefined); setMemberTarget(member); }
+  };
   useEffect(() => {
     if (fullscreen && !fullscreenTile) setFullscreen(undefined);
   }, [fullscreen, !!fullscreenTile]);
@@ -66,7 +76,7 @@ export function SharedMeetingRoom({
       conference={conference}
       directory={model.directory}
       allowRoomSwipe={false}
-      enabled={model.panel === 'stage' && !focused && !fullscreen && !feedbackOpen}
+      enabled={model.panel === 'stage' && !focused && !fullscreen && !feedbackOpen && !memberTarget}
       onBrowse={onBrowse}
     >
       {({ move, busy }) => (
@@ -125,6 +135,9 @@ export function SharedMeetingRoom({
             </View>
           }
         >
+          {memberTarget && <MemberModeration key={memberTarget.id} member={memberTarget} room={room}
+            canBlock={!!(self?.owner || self?.manager) && !memberTarget.owner}
+            accountEmail={accountEmail} onClose={() => setMemberTarget(undefined)} />}
           <FeedbackDialog
             open={feedbackOpen}
             accountEmail={accountEmail}
@@ -168,6 +181,7 @@ export function SharedMeetingRoom({
             Button={Button}
             Icon={Icon}
             tiles={model.tiles}
+            onMemberLongPress={openMember}
             renderAvatar={(item, compact) => (
               <View
                 style={
@@ -183,6 +197,7 @@ export function SharedMeetingRoom({
               >
                 <MeetingAvo
                   interactive
+                  onLongPress={!item.local ? () => openMember(item) : undefined}
                   avo={item.screen ? undefined : item.avo}
                   level={
                     model.allTracks.find((track) => model.key(track) === item.id)?.participant
@@ -422,13 +437,15 @@ export function SharedMeetingRoom({
                   <Icon name="fullscreenExit" />
                 </Button>
               </View>
-              <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onLongPress={fullscreenTile ? () => openMember(fullscreenTile) : undefined} delayLongPress={500}
+                style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
                 {fullscreenTile &&
                   (fullscreenTile.video ? (
                     video(fullscreenTile.id)
                   ) : (
                     <MeetingAvo
                       interactive
+                      onLongPress={!fullscreenTile.local ? () => openMember(fullscreenTile) : undefined}
                       avo={fullscreenTile.screen ? undefined : fullscreenTile.avo}
                       level={
                         model.allTracks.find((track) => model.key(track) === fullscreenTile.id)
@@ -451,7 +468,7 @@ export function SharedMeetingRoom({
                       : undefined
                   }
                 />
-              </View>
+              </Pressable>
             </View>
           </Modal>
         </Drawer>

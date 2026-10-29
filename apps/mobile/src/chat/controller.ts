@@ -1,3 +1,4 @@
+import type { Analytics } from '@vocespace/client-sdk';
 import { ApiError } from '@vocespace/client-sdk';
 import {
   CONFERENCE_CHAT_LIMIT,
@@ -27,6 +28,7 @@ export interface ChatState {
   historyError: boolean;
 }
 interface Ports {
+  analytics?: Analytics;
   socket(joinId: string): ChatSocket;
   history(joinId: string, signal: AbortSignal): Promise<ConferenceMessage[]>;
   newId(): string;
@@ -189,6 +191,7 @@ export function createChatController(ports: Ports) {
         if (!pending || pending.text !== text)
           pending = { id: ports.newId(), text, draft: state.draft };
         const attempt = pending;
+        const operation = ports.analytics?.begin('chat_send', { source: 'meeting', scope: meeting.childRoom ? 'child' : 'main', message_type: 'text' });
         update({ sending: true, sendError: false });
         flight = (async () => {
           try {
@@ -203,17 +206,21 @@ export function createChatController(ports: Ports) {
             if (!active || forbidden) return;
             const ack = response as { ok?: unknown; id?: unknown; code?: unknown } | null;
             if (ack?.ok !== true || ack.id !== attempt.id) {
+              operation?.fail({ code: ack?.code });
               if (typeof ack?.code === 'string' && deniedCodes.has(ack.code)) deny();
               else throw new Error('SEND_UNCONFIRMED');
               return;
             }
+            operation?.end('success');
             delivered(attempt.id, meeting.identity);
             // A duplicate ack may have no broadcast (e.g. the first acknowledgement was lost).
             void history();
-          } catch {
+          } catch (error) {
+            operation?.fail(error);
             if (active && !forbidden && pending === attempt) update({ sendError: true });
           }
         })().finally(() => {
+          operation?.end('cancelled');
           flight = undefined;
           if (active && !forbidden) update({ sending: false });
         });

@@ -1,3 +1,5 @@
+import { analytics } from '../../analytics';
+import type { AnalyticsEvent } from '@vocespace/contracts';
 import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -125,7 +127,7 @@ export function useAccount() {
     };
     // The configured client is stable; session and transport live in refs.
   }, [client]);
-  async function run(work: () => Promise<void>) {
+  async function run(work: () => Promise<void>, event?: AnalyticsEvent, data: Record<string, unknown> = {}) {
     if (flight.current || !ready) return false;
     if (!client) {
       setError('account_auth.not_configured');
@@ -135,10 +137,13 @@ export function useAccount() {
     setBusy(true);
     setError(undefined);
     setMessage(undefined);
+    const operation = event ? analytics.begin(event, data) : undefined;
     try {
       await work();
+      operation?.end('success');
       return true;
     } catch (error) {
+      operation?.fail(error);
       if (active.current) setError(failure(error));
       return false;
     } finally {
@@ -174,7 +179,7 @@ export function useAccount() {
       } catch {
         /* Login already succeeded; retry profile lookup on foreground. */
       }
-    });
+    }, screen === 'register' ? 'account_register' : 'account_login', screen === 'register' ? { step: 'verify' } : { method: 'email_password', remember_me: save });
   const logout = () =>
     run(async () => {
       if (session.current) {
@@ -194,7 +199,7 @@ export function useAccount() {
   const remove = (password: string) =>
     run(async () => {
       const current = await validated();
-      await client!.api.remove(session.current!.accessToken, password);
+      await analytics.run('account_delete', { source: 'profile', auth_state: 'signed_in' }, () => client!.api.remove(session.current!.accessToken, password));
       session.current = undefined;
       setUser(undefined);
       setScreen('login');
@@ -250,21 +255,21 @@ export function useAccount() {
       run(async () => {
         await client!.api.sendRegistrationCode(email, password, resend);
         setMessage('account_auth.code_sent');
-      }),
+      }, 'account_register', { step: resend ? 'resend_code' : 'send_code' }),
     resetPassword: (email: string, code: string, password: string) =>
       run(async () => {
         await client!.api.resetCode(email, code, password);
         setScreen('login');
         setMessage('account_auth.reset_done');
-      }),
+      }, 'account_password_reset', { step: 'reset' }),
     logout,
     remove,
-    forgot: (email: string) =>
+    forgot: (email: string, resend = false) =>
       run(async () => {
         await client!.api.forgot(email);
         setMessage('account_auth.reset_sent');
         setScreen('reset');
-      }),
+      }, 'account_password_reset', { step: resend ? 'resend_code' : 'send_code' }),
     update: (patch: Partial<{ notifications: boolean; gestures: boolean }>) => {
       // These device preferences stay local; account profile edits go through the API.
       const next = {

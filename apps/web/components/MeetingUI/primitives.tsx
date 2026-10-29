@@ -26,6 +26,7 @@ export function MeetingButton({
 }: MeetingButtonProps) {
   const control = appearance === 'control' || appearance === 'controlDanger';
   const circle = appearance === 'circle' || appearance === 'danger' || appearance === 'icon';
+  const member = appearance === 'memberAction' || appearance === 'memberDanger';
   const visual = meetingButtonVisual({ appearance, active, disabled });
   return (
     <Button
@@ -51,7 +52,17 @@ export function MeetingButton({
               ? 'auto'
               : 40,
         ...visual,
+        ...(member
+          ? {
+              width: '100%',
+              height: 98,
+              borderRadius: 14,
+              backgroundColor: appearance === 'memberDanger' ? '#392630' : '#1B2D36',
+              borderColor: appearance === 'memberDanger' ? '#50313E' : '#304651',
+            }
+          : {}),
         boxShadow: 'none',
+        ...(appearance === 'row' ? { borderRadius: 12 } : {}),
       }}
     >
       {children}

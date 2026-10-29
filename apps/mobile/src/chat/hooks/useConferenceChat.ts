@@ -1,3 +1,4 @@
+import { analytics } from '../../analytics';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import * as Crypto from 'expo-crypto';
 import type { createNativeApi } from '../../api/session';
@@ -9,6 +10,7 @@ export function useConferenceChat(
 ) {
   const [controller] = useState(() =>
     createChatController({
+      analytics,
       socket: (joinId) => api!.createChatSocket(joinId),
       history: (joinId, signal) => api!.sdk.native.chatHistory(joinId, signal),
       newId: () => Crypto.randomUUID(),

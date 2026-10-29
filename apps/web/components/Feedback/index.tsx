@@ -1,13 +1,14 @@
 'use client';
+import { analytics } from '@/lib/analytics';
 import { useEffect, useState } from 'react';
 import { Modal, App } from 'antd';
-import { FeedbackForm } from '@vocespace/ui';
+import { FeedbackForm, FebType, type ReportTarget } from '@vocespace/ui';
 import { MeetingButton, MeetingSettingsInput } from '../MeetingUI/primitives';
 import { useI18n } from '@/lib/i18n/i18n';
 import { api } from '@/lib/api';
 import { connect_endpoint } from '@/lib/std';
 import { apiFetch } from '@/lib/api/client';
-export function FeedbackDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function FeedbackDialog({ open, onClose, varient = FebType.Feedback, target }: { open: boolean; onClose: () => void; varient?: FebType; target?: ReportTarget }) {
   const { t } = useI18n();
   const { message } = App.useApp();
   const [email, setEmail] = useState<string>();
@@ -31,7 +32,7 @@ export function FeedbackDialog({ open, onClose }: { open: boolean; onClose: () =
   return (
     <Modal
       open={open}
-      title={t('channel.feedback.title')}
+      title={t(varient === FebType.Report ? 'moderation.report.title' : 'channel.feedback.title')}
       footer={null}
       onCancel={() => {
         if (!busy) onClose();
@@ -42,6 +43,8 @@ export function FeedbackDialog({ open, onClose }: { open: boolean; onClose: () =
       {open && (
         <FeedbackForm
           t={t}
+          varient={varient}
+          target={target}
           accountEmail={email}
           Button={MeetingButton}
           Input={MeetingSettingsInput}
@@ -78,8 +81,10 @@ export function FeedbackDialog({ open, onClose }: { open: boolean; onClose: () =
             })
           }
           onSubmit={async (value) => {
-            const response = await api.sendFeedback(value);
-            if (!response.ok) throw new Error('FEEDBACK_FAILED');
+            await analytics.run('feedback_submit', { variant: varient === FebType.Report ? 'report' : 'feedback', has_attachment: !!value.attachments?.length, category: value.feedbackType }, async () => {
+              const response = await api.sendFeedback(value);
+              if (!response.ok) throw { status: response.status };
+            });
           }}
           onDone={() => {
             setBusy(false);

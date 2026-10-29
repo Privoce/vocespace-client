@@ -10,6 +10,13 @@
 
 ## API 与凭证
 
+Supabase 持久化表行类型单独位于 `services/api/account/supabase-types.ts`：
+`SBTSpaceTb`、`SBTAIAnalysis`、`SBTUserInfo`、`SBTTodos` 与 public 表的字段和可空性对应。
+UUID / timestamptz 使用 JSON 字符串，bigint 返回 number，jsonb 使用递归 `SBTJson`（包括 null），jsonb[] 使用 `SBTJson[] | null`。
+这些是完整查询行类型，带默认值的非空列也不是可选属性；部分 select / PATCH 返回使用 `Pick`，写入补丁使用 `satisfies Pick<...>`。
+表类型只属于 Supabase 服务端适配层，不复用 Web / Redis 的临时会议 Space、Room、Participant 等模型，也不直接作为客户端 DTO 输出。
+HTTP 泛型提供静态字段约束，不能代替运行时校验；既有响应校验与 Account DTO 转换仍保留。AI / Todo 当前仅用于注销清理，没有新增读取接口。
+
 全部路径以 `/api/v1/account/` 开头；除 callback 为 GET、avatar 为 multipart POST 外，均为 JSON POST。
 
 | 路径 | 输入 / 授权 | 结果 |

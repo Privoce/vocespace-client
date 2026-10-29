@@ -1,3 +1,4 @@
+import { analytics } from '../../analytics';
 import { sendFeedback, type FeedbackBody } from '../../feedback/client';
 import { atJoinStage } from '../join-error';
 import { useI18n } from '../../i18n';
@@ -17,13 +18,19 @@ export function useConference() {
   const [api] = useState(createConfiguredApi);
   const [controller] = useState(() =>
     createConferenceController({
+      analytics,
       ensureSession: async () => {
         if (!api) throw new Error('SERVICE_NOT_CONFIGURED');
         await api.ensureSession();
       },
       prepare: async (spaceName, nickname, joinId, signal, childRoom, createIfMissing) => {
-        if (createIfMissing)
-          await atJoinStage('create', () => api!.sdk.native.createSpace(spaceName, signal));
+        if (createIfMissing) {
+          const operation = analytics.begin('space_create', { space_type: 'meeting' });
+          try {
+            const result = await atJoinStage('create', () => api!.sdk.native.createSpace(spaceName, signal));
+            operation.end(result.created ? 'success' : 'cancelled');
+          } catch (error) { operation.fail(error); throw error; }
+        }
         return api!.sdk.native.prepare({ spaceName, nickname, joinId, childRoom }, signal);
       },
       confirm: (id, signal) => api!.sdk.native.confirm(id, signal),
@@ -65,8 +72,8 @@ export function useConference() {
         const media = controller.getSnapshot().room?.media;
         const current = media?.getSnapshot();
         if (current?.screen || current?.busy === 'screen') {
-          void media!.suspendCameraAndMicrophone().catch(() => controller.leave());
-        } else void controller.leave();
+          void media!.suspendCameraAndMicrophone().catch(() => controller.leave('background'));
+        } else void controller.leave('background');
       }
     });
     return () => {
@@ -93,7 +100,7 @@ export function useConference() {
         !current.screen &&
         current.busy !== 'screen'
       )
-        void controller.leave();
+        void controller.leave('background');
     });
   }, [controller, state.phase, state.room]);
   useEffect(() => {
@@ -111,7 +118,7 @@ export function useConference() {
   useEffect(() => {
     if (state.phase === 'joined' && chat.state.connection === 'connected')
       void state.room?.media.refresh();
-    if (state.phase === 'joined' && chat.state.connection === 'denied') void controller.leave();
+    if (state.phase === 'joined' && chat.state.connection === 'denied') void controller.leave('disconnected');
   }, [chat.state.connection, controller, state.phase, state.room]);
   const listSpaces = useCallback(
     async (signal: AbortSignal) => {

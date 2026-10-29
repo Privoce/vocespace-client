@@ -38,6 +38,7 @@ export function PhoneMeeting({
   lowerHandLabel,
   renderTileActions,
   onFocusedChange,
+  onMemberLongPress,
   renderVideo,
   extraTiles = [],
   controls,
@@ -105,6 +106,7 @@ export function PhoneMeeting({
       <MeetingTileView
         key={item.id}
         item={item}
+        onLongPress={!item.local && onMemberLongPress ? () => onMemberLongPress(item) : undefined}
         rail={rail}
         Icon={Icon}
         width={focus || tiles.length + extraTiles.length === 1 ? '100%' : '48.5%'}

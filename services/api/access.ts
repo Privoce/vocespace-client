@@ -1,3 +1,4 @@
+import { isSpaceBlocked } from './lib/server/moderation';
 import { randomBytes } from 'node:crypto';
 import { getConfig } from './lib/server/config';
 import { canCreateSpace } from '@vocespace/server-core';
@@ -19,6 +20,7 @@ export async function membership(principal: SessionPrincipal, space: string) {
   const id = principal.identities[space];
   const info = await spaceRepository.get(space);
   if (!id || !info) throw new AccessError(403, 'SPACE_ACCESS_DENIED');
+  if (isSpaceBlocked(info, principal, id)) throw new AccessError(403, 'SPACE_BLACKLISTED');
   const participant = info.participants[id];
   return { id, info, participant, manager: principal.client !== 'native' && (info.ownerId === id || info.managers.includes(id)) };
 }
@@ -91,6 +93,7 @@ export async function authorizeRequest(request: ApiRequest, path: string) {
   // Public pre-join read exposes configuration only; dispatch filters the response below.
   if (path === '/api/space' && method === 'GET' && !q.has('chat') && !q.has('space')) return request;
   if (!id) throw new AccessError(403, 'SPACE_ACCESS_DENIED');
+  if (info && isSpaceBlocked(info, principal, id)) throw new AccessError(403, 'SPACE_BLACKLISTED');
   const { manager } = spaceAccess(info, id);
   const fileRoom = path.startsWith('/api/files/') && path.split('/').length > 5 ? decodeURIComponent(path.split('/')[4]) : body.room;
   const privateRoom = info?.children.find((child) => child.name === fileRoom && child.isPrivate);
@@ -107,7 +110,7 @@ export async function authorizeRequest(request: ApiRequest, path: string) {
     if (info?.ownerId !== id) throw new AccessError(403, 'OWNER_REQUIRED');
   }
   if (body.info) {
-    for (const protectedField of ['ownerId', 'managers', 'participants', 'auth', 'children', 'startAt']) {
+    for (const protectedField of ['ownerId', 'managers', 'blacklist', 'participants', 'auth', 'children', 'startAt']) {
       if (protectedField in body.info) throw new AccessError(403, 'PROTECTED_SPACE_FIELD');
     }
   }

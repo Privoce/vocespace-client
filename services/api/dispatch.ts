@@ -1,3 +1,4 @@
+import { moderationEndpoint } from './moderation';
 import { nativeFeedbackEndpoint, feedbackAccountEndpoint } from './native-feedback';
 import { accountEndpoint } from './account/endpoint';
 import { nativeRecordsEndpoint } from './native-records';
@@ -29,6 +30,8 @@ async function dispatchInternal(request: ApiRequest) {
     pathname = pathname.replace(/^\/api\/v1\//, '/api/');
     const accountAction = pathname.match(/^\/api\/account\/([a-z-]+)$/);
     if (accountAction) return await accountEndpoint(request, accountAction[1]);
+    if (pathname === '/api/native/moderation') return await moderationEndpoint(request, true);
+    if (pathname === '/api/moderation') return await moderationEndpoint(request, false);
     if (pathname === '/api/native/feedback') return await nativeFeedbackEndpoint(request);
     if (pathname === '/api/feedback/account') return await feedbackAccountEndpoint(request);
     if (pathname === '/healthz') return ApiResponse.json({ status: 'ok', apiVersion: 1 });

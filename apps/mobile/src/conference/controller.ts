@@ -1,3 +1,5 @@
+import type { Analytics, AnalyticsOperation } from '@vocespace/client-sdk';
+import type { AnalyticsSource, AnalyticsLeaveReason } from '@vocespace/contracts';
 import { atJoinStage } from './join-error';
 import type { NativeJoin } from '@vocespace/contracts';
 
@@ -15,6 +17,7 @@ export interface ConferenceState<R> {
   joined?: Pick<NativeJoin, 'joinId' | 'identity' | 'roomName' | 'participantName' | 'childRoom'>;
 }
 interface Ports<R extends ConferenceRoom> {
+  analytics?: Analytics;
   ensureSession(): Promise<void>;
   prepare(
     spaceName: string,
@@ -37,6 +40,11 @@ interface Attempt<R> {
   room?: R;
   work?: Promise<void>;
   cleanup?: Promise<void>;
+  operation?: AnalyticsOperation;
+  switchOperation?: AnalyticsOperation;
+  joinedAt?: number;
+  left?: boolean;
+  reason?: AnalyticsLeaveReason;
 }
 
 /** One owner above the tabs: no new room until the previous attempt and its cleanup settle. */
@@ -52,6 +60,13 @@ export function createConferenceController<R extends ConferenceRoom>(ports: Port
     if (attempt.cleanup) return attempt.cleanup;
     attempt.cleanup = (async () => {
       await attempt.room?.disconnect();
+      if (attempt.joinedAt !== undefined && !attempt.left) {
+        attempt.left = true;
+        ports.analytics?.track('space_leave', {
+          reason: attempt.reason || 'unknown',
+          duration_seconds: (Date.now() - attempt.joinedAt) / 1000,
+        });
+      }
       if (attempt.prepared) await ports.leave(attempt.id);
       if (active === attempt) active = undefined;
     })();
@@ -62,12 +77,15 @@ export function createConferenceController<R extends ConferenceRoom>(ports: Port
       throw error;
     }
   }
-  async function leave() {
+  async function leave(reason: AnalyticsLeaveReason = 'user') {
     const attempt = active;
     if (!attempt) {
       set({ phase: 'idle' });
       return true;
     }
+    attempt.reason ??= reason;
+    attempt.operation?.end('cancelled');
+    attempt.switchOperation?.end('cancelled');
     attempt.cancelled = true;
     attempt.abort.abort();
     set({ ...state, phase: 'leaving', error: undefined });
@@ -91,13 +109,35 @@ export function createConferenceController<R extends ConferenceRoom>(ports: Port
     },
     hasPendingCleanup: () => !!active,
     leave,
-    join(spaceName: string, nickname: string, childRoom?: string, createIfMissing = false) {
+    join(
+      spaceName: string,
+      nickname: string,
+      childRoom?: string,
+      createIfMissing = false,
+      options: {
+        source?: AnalyticsSource;
+        method?: 'manual' | 'auto';
+        switchFrom?: 'main' | 'child';
+      } = {},
+    ) {
       if (active) return active.work;
       const attempt: Attempt<R> = {
         id: ports.newId(),
         cancelled: false,
         prepared: false,
         abort: new AbortController(),
+        operation: ports.analytics?.begin('space_join', {
+          source: options.source || 'unknown',
+          join_method: options.method || 'manual',
+          target: childRoom ? 'child' : 'main',
+        }),
+        switchOperation: options.switchFrom
+          ? ports.analytics?.begin('room_switch', {
+              source: 'room_switch',
+              from_type: options.switchFrom,
+              to_type: childRoom ? 'child' : 'main',
+            })
+          : undefined,
       };
       active = attempt;
       set({ phase: 'joining', spaceName });
@@ -118,7 +158,7 @@ export function createConferenceController<R extends ConferenceRoom>(ports: Port
           );
           if (attempt.cancelled) return;
           attempt.room = ports.createRoom(() => {
-            if (!attempt.cancelled) void leave();
+            if (!attempt.cancelled) void leave('disconnected');
           });
           await atJoinStage('connect', () => attempt.room!.connect(details));
           if (attempt.cancelled) return;
@@ -126,6 +166,9 @@ export function createConferenceController<R extends ConferenceRoom>(ports: Port
           if (attempt.cancelled) return;
           await atJoinStage('settings', async () => attempt.room!.subscribe());
           if (attempt.cancelled) return;
+          attempt.joinedAt = Date.now();
+          attempt.operation?.end('success');
+          attempt.switchOperation?.end('success');
           set({
             phase: 'joined',
             room: attempt.room,
@@ -139,7 +182,11 @@ export function createConferenceController<R extends ConferenceRoom>(ports: Port
             },
           });
         } catch (error) {
-          if (!attempt.cancelled) set({ phase: 'error', error });
+          if (!attempt.cancelled) {
+            attempt.operation?.fail(error, { failure_stage: (error as { stage?: string })?.stage });
+            attempt.switchOperation?.fail(error);
+            set({ phase: 'error', error });
+          }
         } finally {
           if (state.phase !== 'joined' || attempt.cancelled) {
             try {

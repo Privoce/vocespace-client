@@ -1,4 +1,25 @@
 export default {
+  moderation: {
+  "title": "Member actions",
+  "block": "Block",
+  "confirm_title": "Block this member?",
+  "confirm": "This member will be removed from the Space and prevented from joining again.",
+  "failed": "Action failed. Check your connection and management permissions, then retry.",
+  "blocked": "Member blocked",
+  "report": {
+    "title": "Report member",
+    "type": "Reason",
+    "content": "Report details",
+    "content_placeholder": "Describe the member’s behavior or violation",
+    "submit": "Submit report",
+    "types": {
+      "abuse": "Harassment",
+      "spam": "Spam",
+      "illegal": "Prohibited content",
+      "other": "Other"
+    }
+  }
+},
   phone_meeting: {
     grid: 'Grid',
     focus_layout: 'Focus',

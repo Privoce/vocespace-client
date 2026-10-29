@@ -1,6 +1,6 @@
 import { MeetingRaisedHand } from './MeetingRaisedHand';
 import type { ComponentType, ReactNode } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import { type MeetingTile } from '@vocespace/meeting-core';
 import type { MeetingIconProps } from '../types';
 import { InitialAvatar } from './InitialAvatar';
@@ -10,6 +10,7 @@ export function MeetingTileView({
   height,
   handLabel,
   onLowerHand,
+  onLongPress,
   video,
   Icon,
   avatar,
@@ -24,13 +25,18 @@ export function MeetingTileView({
   height: number;
   handLabel?: string;
   onLowerHand?: () => void;
+  onLongPress?: () => void;
   video: ReactNode;
   avatar?: ReactNode;
   actions?: ReactNode;
   Icon?: ComponentType<MeetingIconProps>;
 }) {
   return (
-    <View
+    <Pressable
+      onLongPress={onLongPress}
+      delayLongPress={500}
+      accessibilityActions={onLongPress ? [{ name: 'longpress' }] : undefined}
+      onAccessibilityAction={onLongPress ? () => onLongPress() : undefined}
       nativeID={`meeting-tile-${item.id}`}
       style={[styles.tile, { width, height }, item.speaking && styles.speaking]}
     >
@@ -122,7 +128,7 @@ export function MeetingTileView({
           Icon={Icon}
         />
       )}
-    </View>
+    </Pressable>
   );
 }
 const styles = StyleSheet.create({

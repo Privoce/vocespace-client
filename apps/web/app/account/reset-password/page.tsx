@@ -1,4 +1,5 @@
 'use client';
+import { analytics } from '@/lib/analytics';
 import { useEffect, useState } from 'react';
 import { Button, Input, Alert } from 'antd';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -36,6 +37,7 @@ export default function ResetPasswordPage() {
     }
     setBusy(true);
     setError('');
+    const operation = analytics.begin('account_password_reset', { step: 'reset' });
     try {
       const response = await apiFetch(
         legacy ? '/api/v1/account/reset-password' : '/api/v1/account/reset-code',
@@ -47,6 +49,7 @@ export default function ResetPasswordPage() {
       );
       if (!response.ok) {
         const result = await response.json().catch(() => ({}));
+        operation.fail({ code: result.code, status: response.status });
         setError(
           text(
             result.code === 'AUTH_RATE_LIMITED'
@@ -64,7 +67,9 @@ export default function ResetPasswordPage() {
       setConfirm('');
       setCode('');
       setState('done');
-    } catch {
+      operation.end('success');
+    } catch (error) {
+      operation.fail(error);
       setError(text('unavailable'));
     } finally {
       setBusy(false);

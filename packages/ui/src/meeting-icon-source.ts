@@ -3,6 +3,8 @@ import { settingsIcons, settingsVector, type SettingsIconName } from './settings
 import { meetingVector, type MeetingVectorName } from './meeting-icons';
 import { svgResource } from './svg-resource';
 export const meetingIconSources = {
+  block: 'block',
+  flag: 'flag',
   microphone: 'microphone',
   camera: 'camera',
   screen: 'lkScreen',

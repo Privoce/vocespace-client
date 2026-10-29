@@ -1,3 +1,4 @@
+import { isSpaceBlocked, memberSessionKey } from './lib/server/moderation';
 import { nativeOwnerKey } from './native-create';
 import { withMediaMember } from './lib/server/media-lock';
 import { randomBytes } from 'node:crypto';
@@ -38,6 +39,7 @@ export async function nativeConferenceEndpoint(request: ApiRequest) {
     const input = parseNativeJoinRequest(body);
     const space = await spaceRepository.get(input.spaceName);
     if (!space) throw new AccessError(404, 'SPACE_NOT_FOUND');
+    if (isSpaceBlocked(space, principal, principal.identities[input.spaceName])) throw new AccessError(403, 'SPACE_BLACKLISTED');
     const ownerIdentity = await redis.get(nativeOwnerKey(principal.id, input.spaceName));
     const isOwner = !!ownerIdentity && space.ownerId === ownerIdentity;
     if (!isOwner && space.allowGuest !== 'allow') throw new AccessError(403, 'GUEST_DENIED');
@@ -64,6 +66,7 @@ export async function nativeConferenceEndpoint(request: ApiRequest) {
     )
       throw new AccessError(409, 'JOIN_CONFLICT');
     if (entry.expiresAt <= Date.now()) throw new AccessError(410, 'JOIN_EXPIRED');
+    await redis.set(memberSessionKey(entry.spaceName, entry.identity), principal.id, 'EX', 604800);
     principal.identities[entry.spaceName] = entry.identity;
     await sessions.save(token, principal);
     const media = getConfig().livekit;
@@ -175,6 +178,7 @@ export async function nativeConferenceEndpoint(request: ApiRequest) {
     const raw = await redis.get(`space:${entry.spaceName}`);
     if (!raw) throw new AccessError(409, 'JOIN_NO_LONGER_ALLOWED');
     const space: SpaceInfo = JSON.parse(raw);
+    if (isSpaceBlocked(space, principal, entry.identity)) throw new AccessError(403, 'SPACE_BLACKLISTED');
     if (!Array.isArray(space.children)) throw new StorageUnavailableError();
     if (
       entry.childRoom &&
@@ -208,6 +212,7 @@ export async function nativeConferenceEndpoint(request: ApiRequest) {
     local raw=redis.call('GET',KEYS[1]); local sr=redis.call('GET',KEYS[2]); local pr=redis.call('GET',KEYS[3]);
     if not raw or not sr or not pr then return 0 end
     local e=cjson.decode(raw); local s=cjson.decode(sr); local p=cjson.decode(pr)
+    for _,blocked in ipairs(s.blacklist or {}) do if blocked==e.identity or blocked==p.id or (p.platform and blocked==p.platform.id) then return 0 end end
     if e.state=='cancelled' or p.identities[e.spaceName]~=e.identity then return 0 end
     local owns=e.ownerIdentity and s.ownerId==e.ownerIdentity and redis.call('GET',KEYS[5])==e.ownerIdentity
     if (s.allowGuest~='allow' and s.ownerId~=e.identity and not owns) or redis.call('EXISTS',KEYS[4])==1 then return 0 end

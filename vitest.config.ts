@@ -14,5 +14,5 @@ export default defineConfig({
     ...Object.fromEntries(['contracts', 'domain', 'client-sdk', 'server-core', 'ui', 'meeting-core'].map((name) =>
       [`@vocespace/${name}`, fileURLToPath(new URL(`./packages/${name}/src/index.ts`, import.meta.url))])),
   } },
-  test: { environment: 'jsdom', include: ['tests/**/*.test.{ts,tsx}', 'apps/mobile/tests/**/*.test.{ts,tsx}'], clearMocks: true },
+  test: { environment: 'jsdom', include: ['tests/**/*.test.{ts,tsx}', 'apps/mobile/tests/**/*.test.{ts,tsx}', 'scripts/tests/**/*.test.ts'], clearMocks: true },
 });

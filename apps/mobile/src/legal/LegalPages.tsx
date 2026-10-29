@@ -1,3 +1,4 @@
+import { useAnalyticsPage } from '../analytics/hooks/useAnalyticsPage';
 import { useCallback, useRef, useState, type ReactNode } from 'react';
 import { Keyboard, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import Toast from '@ant-design/react-native/lib/toast';
@@ -15,6 +16,7 @@ export function LegalPages({ children }: { children: ReactNode }) {
   }, []);
   const back = useCallback(() => setStack((current) => current.slice(0, -1)), []);
   const current = stack[stack.length - 1];
+  useAnalyticsPage(current?.documentId, !!current, 10);
   return (
     <LegalNavigationContext.Provider value={open}>
       <View style={{ flex: 1 }}>

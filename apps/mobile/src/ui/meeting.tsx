@@ -16,6 +16,7 @@ export function MeetingButton({
   disabled,
   onPress,
 }: MeetingButtonProps) {
+  const member = appearance === 'memberAction' || appearance === 'memberDanger';
   const visual = meetingButtonVisual({ appearance, active, disabled });
   // Rich cards own their layout; keep Ant's fixed-height text wrappers for simple controls.
   if (appearance === 'plain' || appearance === 'row')
@@ -29,6 +30,7 @@ export function MeetingButton({
         style={({ pressed }) => ({
           width: '100%',
           minHeight: 44,
+          ...(appearance === 'row' ? { borderRadius: 12 } : {}),
           ...visual,
           opacity: disabled ? 0.5 : pressed ? 0.75 : 1,
         })}
@@ -68,6 +70,7 @@ export function MeetingButton({
           paddingHorizontal: 0,
         },
         visual,
+        member && { width: '100%', height: 98, borderRadius: 14, backgroundColor: appearance === 'memberDanger' ? '#392630' : '#1B2D36', borderColor: appearance === 'memberDanger' ? '#50313E' : '#304651' },
       ])}
     >
       {typeof children === 'string' ? children : <View style={styles.content}>{children}</View>}

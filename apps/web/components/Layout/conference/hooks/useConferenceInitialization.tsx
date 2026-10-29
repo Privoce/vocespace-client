@@ -1,3 +1,5 @@
+import { webMeetingAnalytics } from '@/lib/analytics/meeting';
+import { setWebAnalyticsContext } from '@/lib/analytics';
 import { chatMessageKey, mergeChatMessages } from '@/components/Chat/message-key';
 import { api } from '@/lib/api';
 import { socket } from '@/lib/realtime/socket';
@@ -42,7 +44,7 @@ export function useConferenceInitialization(context: ReturnType<typeof useConfer
       const todos = await fetchPlatformData(fromVocespace);
       if (cancelled) return;
       // 将当前参与者的基础设置发送到服务器 ----------------------------------------------------------
-      await updateSettings(
+      const updated = await updateSettings(
         {
           ...uState,
           socketId: socket.id,
@@ -63,6 +65,12 @@ export function useConferenceInitialization(context: ReturnType<typeof useConfer
       // 如果是platform用户，有可能是需要直接进入某个子房间的 ------------------------------------------
       // 详细见usePlatformUserInfo中对于roomEnter的处理
       await roomEnter();
+      if (updated && !cancelled) {
+        setWebAnalyticsContext({ auth_state: fromVocespace ? 'signed_in' : 'guest' });
+        webMeetingAnalytics.confirmed(space.name);
+      } else if (!updated && !cancelled) {
+        webMeetingAnalytics.fail({ code: 'SETTINGS_UNAVAILABLE' }, 'settings');
+      }
     };
     const fetchChatMsg = async () => {
       const response = await api.getChatMsg(space.name);
@@ -110,7 +118,7 @@ export function useConferenceInitialization(context: ReturnType<typeof useConfer
         if (!allowed || cancelled) return;
         await Promise.all([fetchChatMsg(), syncSettings()]);
         if (!cancelled) socket.emit('update_user_status', { space: space.name } as WsBase);
-      } catch (error) { if (!cancelled) { console.error('Room initialization failed', error); messageApi.error(t('common.try_again')); } }
+      } catch (error) { if (!cancelled) { webMeetingAnalytics.fail(error, 'settings'); console.error('Room initialization failed', error); messageApi.error(t('common.try_again')); } }
       finally { if (!cancelled) setInit(false); }
     })();
     return () => { cancelled = true; };

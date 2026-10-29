@@ -1,3 +1,7 @@
+import { useEffect } from 'react';
+import { analyticsLanguage } from '@vocespace/contracts';
+import { setNativeAnalyticsContext } from './src/analytics';
+import { useAnalyticsPage } from './src/analytics/hooks/useAnalyticsPage';
 import { LegalPages } from './src/legal/LegalPages';
 import MeetingPreview from './src/dev/MeetingPreview';
 import { NativeI18nProvider, useI18n } from './src/i18n';
@@ -26,19 +30,26 @@ const tabs = [
 type Tab = (typeof tabs)[number]['key'];
 
 export function MobileShell() {
-  const { t } = useI18n();
+  const { t, locale } = useI18n();
   const [tab, setTab] = useState<Tab>('home');
   const account = useAccount();
+  useEffect(() => {
+    setNativeAnalyticsContext({ language: analyticsLanguage(locale), auth_state: account.ready ? account.signedIn ? 'signed_in' : 'guest' : 'unknown' });
+  }, [locale, account.ready, account.signedIn]);
   const settings = useLocalSettings();
   // Keep the connection owner above Ant Design's selected Tab pane.
   const conference = useConference();
+  useAnalyticsPage(!account.ready ? undefined : account.screen
+    ? account.screen === 'reset' ? 'reset_password' : account.screen === 'forgot' ? 'forgot_password' : account.screen
+    : conference.state.phase === 'joined' ? 'conference' : tab === 'meetings' ? undefined : tab,
+    true, account.screen ? 5 : 0);
   const nickname = account.signedIn
     ? account.profile.nickname
     : settings.settings.nickname.trim() || t('native_account.guest');
   const join = (space: string) => {
     if (!account.ready || !settings.ready || conference.hasPendingCleanup) return;
     setTab('meetings');
-    void conference.join(space, nickname, undefined, true);
+    void conference.join(space, nickname, undefined, true, { source: tab === 'profile' ? 'profile' : 'home' });
   };
   const changeTab = async (next: Tab) => {
     if (next === tab) return;
@@ -116,6 +127,7 @@ export function MobileShell() {
                   {/* Messages remains disabled until messaging is available. */}
                   {item.key === 'profile' && (
                     <ProfileScreen
+                      active={tab === 'profile'}
                       model={settings}
                       account={account}
                       sendFeedback={conference.feedback}

@@ -1,4 +1,5 @@
 'use client';
+import { analytics } from '@/lib/analytics';
 
 import { ControlType, type WsControlParticipant } from '@/lib/std/device';
 
@@ -208,9 +209,10 @@ export function useControlsPanels(context: ReturnType<typeof useControlsMedia>) 
     setOpenNameModal(false);
   };
   const copyInvite = async () => {
-    await navigator.clipboard.writeText(
-      inviteTextRef.current?.innerText || `${t('more.participant.invite.link')}: ${inviteUrl}`,
-    );
+    try {
+      await navigator.clipboard.writeText(inviteTextRef.current?.innerText || `${t('more.participant.invite.link')}: ${inviteUrl}`);
+      analytics.track('space_share', { method: 'copy_link', result: 'success', source: 'meeting' });
+    } catch (error) { analytics.track('space_share', { method: 'copy_link', result: 'failure', source: 'meeting' }); throw error; }
     setOpenShareModal(false);
   };
   return {

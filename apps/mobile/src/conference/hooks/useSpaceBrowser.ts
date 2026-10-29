@@ -59,7 +59,7 @@ export function useSpaceBrowser(
       if (next < 0 || next >= spaces.length) return;
       switching.current = true;
       try {
-        if (await model.leave()) {
+        if (await model.leave('browse')) {
           setIndex(next);
           setOpen(true);
         }

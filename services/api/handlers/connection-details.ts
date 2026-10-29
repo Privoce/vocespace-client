@@ -1,3 +1,4 @@
+import { isSpaceBlocked, memberSessionKey } from '../lib/server/moderation';
 import { getSpaceRedisClient } from '../lib/server/space-redis';
 import { randomBytes } from 'node:crypto';
 import { ApiRequest, ApiResponse } from '../http';
@@ -40,6 +41,8 @@ export async function GET(request: ApiRequest) {
   }
   if (space && (space.allowGuest === 'disable' && (!platform || platform.auth === 'other') || space.allowGuest === 'link' && !platform)) return ApiResponse.json({ code: 'GUEST_DENIED' }, { status: 403 });
   const identity = platform?.id || principal.identities[input.spaceName] || `guest_${randomBytes(12).toString('hex')}`;
+  if (space && isSpaceBlocked(space, principal, identity)) return ApiResponse.json({ code: 'SPACE_BLACKLISTED' }, { status: 403 });
+  await getSpaceRedisClient()?.set(memberSessionKey(input.spaceName, identity), principal.id, 'EX', 604800);
   if (await getSpaceRedisClient()?.get(`v1:revoked:${input.spaceName}:${identity}`)) return ApiResponse.json({ code: 'MEMBERSHIP_REVOKED' }, { status: 403 });
   principal.identities[input.spaceName] = identity;
   await sessions.save(token!, principal);

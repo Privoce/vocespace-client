@@ -1,4 +1,5 @@
 'use client';
+import { analytics } from '@/lib/analytics';
 
 import { ulid } from 'ulid';
 
@@ -104,10 +105,13 @@ export function useChat({ space, sendFileConfirm, messageApi, spaceInfo, onClose
       msgs: [...prev.msgs, newMsg],
     }));
     setValue('');
+    const operation = analytics.begin('chat_send', { message_type: 'text', source: 'meeting', scope: spaceInfo?.children.some(child => child.participants.includes(space.localParticipant.identity)) ? 'child' : 'main' });
     try {
       const result = await socket.timeout(10_000).emitWithAck('chat_msg', newMsg);
-      if (!result.ok) throw new Error(result.code);
-    } catch {
+      if (!result.ok) throw Object.assign(new Error('SEND_FAILED'), { code: result.code });
+      operation.end('success');
+    } catch (error) {
+      operation.fail(error);
       useRoomStore.getState().setChatMsg((prev) => ({ ...prev, msgs: prev.msgs.filter((item) => item.id !== newMsg.id) }));
       setValue((draft) => draft || msg);
       messageApi.error(t('msg.send_failed'));
@@ -125,13 +129,16 @@ export function useChat({ space, sendFileConfirm, messageApi, spaceInfo, onClose
     }
 
     sendFileConfirm(async (abortController?: AbortController): Promise<ChatMsgItem> => {
+      const operation = analytics.begin('chat_send', { message_type: 'file', source: 'meeting', scope: spaceInfo?.children.some(child => child.participants.includes(space.localParticipant.identity)) ? 'child' : 'main' });
       try {
         const fileMessage = await handleLargeFileUpload(file, abortController);
         fileMessage.id = fileMessage.id || ulid();
         const result = await socket.timeout(15_000).emitWithAck('chat_file', fileMessage);
         if (!result.ok) throw new Error(result.code);
+        operation.end('success');
         return fileMessage;
       } catch (e) {
+        if (abortController?.signal.aborted) operation.end('cancelled'); else operation.fail(e);
         messageApi.error({
           content: `${t('msg.error.file.upload')}: ${e}`,
           duration: 3,

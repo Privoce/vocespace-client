@@ -1,3 +1,4 @@
+import { webMeetingAnalytics } from '@/lib/analytics/meeting';
 // lib/hooks/useSpaceInfo.ts
 import { useState, useCallback } from 'react';
 import { socket } from '@/lib/realtime/socket';
@@ -79,6 +80,7 @@ export function useSpaceInfo(spaceName: string, participantId: string) {
   const updateSettings = useCallback(
     async (newSettings: Partial<ParticipantSettings>, record?: RecordSettings, init = false) => {
       if (!spaceName || !participantId) return;
+      if (init) webMeetingAnalytics.creating();
       try {
         setSettings((prevSettings) => {
           const currentParticipant = prevSettings.participants?.[participantId];
@@ -108,11 +110,15 @@ export function useSpaceInfo(spaceName: string, participantId: string) {
         if (!response.ok) {
           throw new Error(`Failed to update settings: ${response.status}`);
         }
+        const result = await response.json();
+        if (result.success !== true) throw new Error('UPDATE_PARTICIPANT_FAILED');
+        if (init) webMeetingAnalytics.created(result.created === true);
         // 直接执行fetchSettings以获取最新设置
         const data = await fetchSettings();
 
         return Boolean(data);
       } catch (err) {
+        if (init) webMeetingAnalytics.fail(err, 'confirm');
         setError(err instanceof Error ? err : new Error(String(err)));
         return false;
       }

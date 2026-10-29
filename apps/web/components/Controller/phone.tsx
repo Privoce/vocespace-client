@@ -34,6 +34,7 @@ function DeviceControl({
       <div className="lk-button-group">
         <TrackToggle
           source={source}
+          onClickCapture={() => model.beginMedia(source)}
           showIcon
           disabled={!allowed}
           aria-label={label}
@@ -96,6 +97,7 @@ export function ControlsPhone({ model }: { model: ControlsModel }) {
         {visibleControls.screenShare && browserSupportsScreenSharing ? (
           <TrackToggle
             source={Track.Source.ScreenShare}
+            onClickCapture={() => model.beginMedia(Track.Source.ScreenShare)}
             showIcon
             aria-label={t('common.share_screen')}
             captureOptions={{ audio: model.uState.openShareAudio, selfBrowserSurface: 'include' }}

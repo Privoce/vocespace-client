@@ -1,24 +1,18 @@
 'use client';
+import { analytics } from '@/lib/analytics';
+import type { AnalyticsOperation } from '@vocespace/client-sdk';
 
 import { api } from '@/lib/api';
 import { UpdateRoomParam, UpdateRoomType } from '@/lib/api/channel';
 import { audio } from '@/lib/audio';
 import { socket } from '@/lib/realtime/socket';
 import { createSocketScope } from '@/lib/realtime/socket-scope';
-import {
-  encodeChildRoomEnter
-} from '@/lib/std';
+import { encodeChildRoomEnter } from '@/lib/std';
 import { WsJoinRoom, WsRemove } from '@/lib/std/device';
 import { ChildRoom } from '@/lib/std/space';
-import {
-  MenuProps
-} from 'antd';
+import { MenuProps } from 'antd';
 import * as React from 'react';
-import {
-  useCallback, useEffect,
-  useMemo,
-  useState
-} from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { useChannelState } from './useChannelState';
 
 export function useChannelRooms(context: ReturnType<typeof useChannelState>) {
@@ -56,22 +50,35 @@ export function useChannelRooms(context: ReturnType<typeof useChannelState>) {
     mainHideTimeoutRef,
     wsSender,
   } = context;
-  const agreeJoinRoom = useCallback(async (room: string) => {
-    setSelfRoomName(room);
-    setSubActiveKey((prev) => {
-      const newSubActiveKey = [...prev];
-      if (!prev.includes(room)) {
-        newSubActiveKey.push(room);
-      }
-      return newSubActiveKey;
-    });
-    // setMainActiveKey(['sub']);
-    await onUpdate();
-    messageApi.success({
-      content: t('channel.join.success'),
-      duration: 2,
-    });
-  }, [setSelfRoomName, setSubActiveKey, onUpdate, messageApi, t]);
+  const privateSwitch = React.useRef<AnalyticsOperation | undefined>(undefined);
+  const switchTimer = React.useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  useEffect(
+    () => () => {
+      clearTimeout(switchTimer.current);
+      privateSwitch.current?.end('cancelled');
+      privateSwitch.current = undefined;
+    },
+    [space.name, localParticipantId],
+  );
+  const agreeJoinRoom = useCallback(
+    async (room: string) => {
+      setSelfRoomName(room);
+      setSubActiveKey((prev) => {
+        const newSubActiveKey = [...prev];
+        if (!prev.includes(room)) {
+          newSubActiveKey.push(room);
+        }
+        return newSubActiveKey;
+      });
+      // setMainActiveKey(['sub']);
+      await onUpdate();
+      messageApi.success({
+        content: t('channel.join.success'),
+        duration: 2,
+      });
+    },
+    [setSelfRoomName, setSubActiveKey, onUpdate, messageApi, t],
+  );
   useEffect(() => {
     const events = createSocketScope(socket);
     // 监听加入私密房间的socket事件 --------------------------------------------------------------------------
@@ -83,10 +90,21 @@ export function useChannelRooms(context: ReturnType<typeof useChannelState>) {
             messageApi.warning({
               content: t('channel.modal.join.reject'),
             });
+            privateSwitch.current?.end('failure', { error_code: 'permission_denied' });
+            privateSwitch.current = undefined;
+            clearTimeout(switchTimer.current);
             setJoinModalOpen(false);
           } else if (msg.confirm) {
             //同意加入
-            agreeJoinRoom(msg.childRoom);
+            try {
+              await agreeJoinRoom(msg.childRoom);
+              privateSwitch.current?.end('success');
+            } catch (error) {
+              privateSwitch.current?.fail(error);
+            } finally {
+              privateSwitch.current = undefined;
+              clearTimeout(switchTimer.current);
+            }
           } else {
             await audio.wave();
             setJoinParticipant({
@@ -113,7 +131,16 @@ export function useChannelRooms(context: ReturnType<typeof useChannelState>) {
     return () => {
       events.dispose();
     };
-  }, [space.name, localParticipantId, joinModalOpen, agreeJoinRoom, messageApi, setJoinModalOpen, setJoinParticipant, t]);
+  }, [
+    space.name,
+    localParticipantId,
+    joinModalOpen,
+    agreeJoinRoom,
+    messageApi,
+    setJoinModalOpen,
+    setJoinParticipant,
+    t,
+  ]);
   useEffect(() => {
     const hoverTimer = hideTimeoutRef;
     const mainHoverTimer = mainHideTimeoutRef;
@@ -200,47 +227,74 @@ export function useChannelRooms(context: ReturnType<typeof useChannelState>) {
   const leaveChildRoom = async (room?: string) => {
     if (!selectedRoom && !room) return;
 
-    const response = await api.leaveRoom({
-      spaceName: space.name,
-      roomName: room || selectedRoom!.name,
-      participantId: localParticipantId,
+    const operation = analytics.begin('room_switch', {
+      from_type: 'child',
+      to_type: 'main',
+      source: 'meeting',
     });
+    try {
+      const response = await api.leaveRoom({
+        spaceName: space.name,
+        roomName: room || selectedRoom!.name,
+        participantId: localParticipantId,
+      });
 
-    if (!response.ok) {
-      const { error } = await response.json();
-      messageApi.error({
-        content: error,
-        duration: 2,
-      });
-    } else {
-      setSelfRoomName(space.name);
-      // setMainActiveKey(['main', 'sub']);
-      setSubActiveKey([]);
-      setSelectedRoom(null);
-      await onUpdate();
-      messageApi.success({
-        content: t('channel.leave.success'),
-        duration: 2,
-      });
+      if (!response.ok) {
+        operation?.fail({ status: response.status });
+        const { error } = await response.json();
+        messageApi.error({
+          content: error,
+          duration: 2,
+        });
+      } else {
+        setSelfRoomName(space.name);
+        // setMainActiveKey(['main', 'sub']);
+        setSubActiveKey([]);
+        setSelectedRoom(null);
+        await onUpdate();
+        operation.end('success');
+        messageApi.success({
+          content: t('channel.leave.success'),
+          duration: 2,
+        });
+      }
+    } catch (error) {
+      operation.fail(error);
+      throw error;
     }
   };
   const joinChildRoom = async (room: ChildRoom, participantId: string) => {
-    const response = await api.joinRoom({
-      spaceName: space.name,
-      roomName: room.name,
-      participantId,
-    });
-
-    if (!response.ok) {
-      const { error } = await response.json();
-      messageApi.error({
-        content: error,
-        duration: 2,
+    const operation =
+      participantId === localParticipantId
+        ? analytics.begin('room_switch', {
+            from_type: selfRoomName === space.name ? 'main' : 'child',
+            to_type: 'child',
+            source: 'meeting',
+          })
+        : undefined;
+    try {
+      const response = await api.joinRoom({
+        spaceName: space.name,
+        roomName: room.name,
+        participantId,
       });
-      return;
-    } else {
-      // 进入子房间后 subActiveKey 就是当前子房间的key
-      await agreeJoinRoom(room.name);
+
+      if (!response.ok) {
+        operation?.fail({ status: response.status });
+        const { error } = await response.json();
+        messageApi.error({
+          content: error,
+          duration: 2,
+        });
+        return;
+      } else {
+        // 进入子房间后 subActiveKey 就是当前子房间的key
+        await agreeJoinRoom(room.name);
+        operation?.end('success');
+      }
+    } catch (error) {
+      operation?.fail(error);
+      throw error;
     }
   };
   const addIntoRoom = async (room: ChildRoom) => {
@@ -248,11 +302,21 @@ export function useChannelRooms(context: ReturnType<typeof useChannelState>) {
     if (room.isPrivate && room.ownerId !== localParticipantId) {
       // 只有当前房间的拥有者在Space中才能发送这个请求
       if (settings.participants[room.ownerId]) {
+        if (privateSwitch.current) return;
+        privateSwitch.current = analytics.begin('room_switch', {
+          from_type: selfRoomName === space.name ? 'main' : 'child',
+          to_type: 'child',
+          source: 'meeting',
+        });
+        switchTimer.current = setTimeout(() => {
+          privateSwitch.current?.end('failure', { error_code: 'timeout' });
+          privateSwitch.current = undefined;
+        }, 60000);
         socket.emit('join_privacy_room', {
           receiverId: room.ownerId,
           socketId: settings.participants[room.ownerId].socketId,
           childRoom: room.name,
-          ...wsSender
+          ...wsSender,
         } as WsJoinRoom);
       } else {
         messageApi.warning(t('channel.modal.join.missing_owner'));
@@ -285,7 +349,7 @@ export function useChannelRooms(context: ReturnType<typeof useChannelState>) {
       socketId: settings.participants[joinParticipant.id].socketId,
       childRoom: joinParticipant.targetRoom,
       confirm,
-      ...wsSender
+      ...wsSender,
     } as WsJoinRoom);
     setJoinParticipant(null);
     setJoinModalOpen(false);
@@ -332,10 +396,11 @@ export function useChannelRooms(context: ReturnType<typeof useChannelState>) {
       messageApi.success({
         content: isRename
           ? t('channel.modal.rename.success')
-          : `${t('channel.modal.privacy.success')}: ${param.isPrivate
-            ? t('channel.modal.privacy.private.title')
-            : t('channel.modal.privacy.public.title')
-          }`,
+          : `${t('channel.modal.privacy.success')}: ${
+              param.isPrivate
+                ? t('channel.modal.privacy.private.title')
+                : t('channel.modal.privacy.public.title')
+            }`,
       });
     }
   };
@@ -367,10 +432,11 @@ export function useChannelRooms(context: ReturnType<typeof useChannelState>) {
     },
     {
       key: 'privacy',
-      label: `${t('channel.menu.switch_privacy')}${!selectedRoom?.isPrivate
-        ? t('channel.modal.privacy.private.title')
-        : t('channel.modal.privacy.public.title')
-        }`,
+      label: `${t('channel.menu.switch_privacy')}${
+        !selectedRoom?.isPrivate
+          ? t('channel.modal.privacy.private.title')
+          : t('channel.modal.privacy.public.title')
+      }`,
       disabled: authDisabled,
       onClick: async () => updateChildRoom('privacy'),
     },

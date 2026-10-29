@@ -1,33 +1,5 @@
-# Deploy VoceSpace
+# VoceSpace 部署入口
 
-## Prepare
+当前 Ubuntu 部署使用源码构建 + PM2，Web 与 API 独立启动。请按 [Linux 部署指南](../linux_deploy.md) 使用 [环境准备](../scripts/ubuntu/setup.sh) 和 [构建 / 发布脚本](../scripts/ubuntu/deploy.sh)。脚本不修改 Caddy。
 
-1. nginx
-2. pm2
-3. npm
-4. pnpm
-5. node >= 18.2.0
-6. certbot
-
-## usage
-
-> [!IMPORTANT]
->
-> You need to have root permission!
-
-### fontend deploy
-```
-// only dev/test
-chmod +x auto_deploy_dev.sh
-sh auto_deploy_dev.sh
-
-// only production
-chmod +x auto_deploy_prod.sh
-sh auto_deploy_prod.sh
-```
-
-### nginx deploy
-```
-chmod +x nginx_deploy.sh
-sh nginx_deploy.sh
-```
+`deploy/shell/` 下的 Nginx 脚本是历史部署资料，不适用于当前流程。Docker 部署仍可参考 [独立部署说明](../docs/independent-deployment.md)；API 只能有一个实例写入持久化数据。

@@ -31,7 +31,7 @@ export function RoomNavigation({
     setBusy(true);
     try {
       if (await conference.leave())
-        await conference.join(space, nickname, name === space ? undefined : name);
+        await conference.join(space, nickname, name === space ? undefined : name, false, { source: 'room_switch', switchFrom: conference.state.joined?.childRoom ? 'child' : 'main' });
     } finally {
       flight.current = false;
       setBusy(false);

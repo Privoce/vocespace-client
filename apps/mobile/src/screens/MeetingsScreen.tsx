@@ -1,3 +1,4 @@
+import { useAnalyticsPage } from '../analytics/hooks/useAnalyticsPage';
 import { useState } from 'react';
 import type { AccountModel } from '../account/hooks/useAccount';
 import { MeetingTabHeader, type MeetingTab } from './meetings/MeetingTabHeader';
@@ -34,6 +35,7 @@ export function MeetingsScreen({
   const [section, setSection] = useState<MeetingTab>(account.signedIn ? 'mine' : 'plaza');
   const browser = useSpaceBrowser(model, true, active);
   const { state } = model;
+  useAnalyticsPage(state.phase === 'joined' ? 'conference' : section === 'mine' ? 'meetings_mine' : 'meetings_plaza', active, 1);
   const busy = state.phase === 'joining' || state.phase === 'leaving';
   const connected = state.phase === 'joined' && state.room;
   if (connected)
@@ -79,7 +81,7 @@ export function MeetingsScreen({
           disabled={!model.configured || !preferencesReady || !account.ready || account.busy}
           error={joinError}
           onJoin={(name, create) => {
-            void model.join(name, nickname.trim() || '访客', undefined, create);
+            void model.join(name, nickname.trim() || '访客', undefined, create, { source: 'my_spaces' });
           }}
         />
       ) : (
@@ -92,8 +94,8 @@ export function MeetingsScreen({
           onPreferences={onPreferences}
           preferencesReady={preferencesReady}
           joinError={joinError}
-          join={async (name) => {
-            await model.join(name, nickname.trim() || '访客');
+          join={async (name, automatic) => {
+            await model.join(name, nickname.trim() || '访客', undefined, false, { source: 'plaza', method: automatic ? 'auto' : 'manual' });
           }}
         />
       )}

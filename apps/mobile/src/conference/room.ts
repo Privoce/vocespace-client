@@ -1,3 +1,4 @@
+import { analytics } from '../analytics';
 import { sendFeedback, type FeedbackBody } from '../feedback/client';
 import { ApiError } from '@vocespace/client-sdk';
 import type {
@@ -27,7 +28,12 @@ export class NativeRoom implements ConferenceRoom {
     };
   };
   feedback(body: FeedbackBody) {
-    return sendFeedback(this.api, body);
+    return sendFeedback(this.api, body instanceof FormData ? body : { ...body, joinId: this.details?.joinId });
+  }
+  async blockMember(targetId: string) {
+    if (!this.details) throw new Error('NOT_JOINED');
+    await this.api.sdk.native.blockMember(this.details.joinId, targetId);
+    await this.syncDirectory();
   }
   async syncDirectory() {
     // A poll started before the write may still carry the previous hand state.
@@ -177,6 +183,7 @@ export class NativeRoom implements ConferenceRoom {
     private readonly api: ReturnType<typeof createNativeApi>,
   ) {
     this.media = createMediaController({
+      analytics,
       status: (signal) => api.sdk.native.mediaStatus(this.details!.joinId, signal),
       authorize: (device, id, signal) =>
         api.sdk.native.enableMedia(this.details!.joinId, device, id, signal),

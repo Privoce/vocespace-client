@@ -80,6 +80,7 @@ export function ControlsPC({ model }: { model: ControlsModel }) {
         <TrackToggle
           style={{ height: 46, padding: controlSize === 'small' ? 7 : 15 }}
           source={Track.Source.Microphone}
+          onClickCapture={() => model.beginMedia(Track.Source.Microphone)}
           showIcon={showIcon}
           onChange={microphoneOnChange}
           onDeviceError={(error) => {
@@ -122,6 +123,7 @@ export function ControlsPC({ model }: { model: ControlsModel }) {
         <TrackToggle
           style={{ height: 46, padding: controlSize === 'small' ? 7 : 15 }}
           source={Track.Source.Camera}
+          onClickCapture={() => model.beginMedia(Track.Source.Camera)}
           showIcon={showIcon}
           onChange={cameraOnChange}
           onDeviceError={(error) => {
@@ -163,6 +165,7 @@ export function ControlsPC({ model }: { model: ControlsModel }) {
       <TrackToggle
         style={{ height: 46, padding: 15 }}
         source={Track.Source.ScreenShare}
+          onClickCapture={() => model.beginMedia(Track.Source.ScreenShare)}
         captureOptions={{ audio: uState.openShareAudio, selfBrowserSurface: 'include' }}
         showIcon={showIcon}
         onChange={onScreenShareChange}

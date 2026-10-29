@@ -24,7 +24,7 @@ export function SpaceBrowser({
   onPreferences,
 }: {
   browser: ReturnType<typeof useSpaceBrowser>;
-  join: (name: string) => Promise<void>;
+  join: (name: string, automatic?: boolean) => Promise<void>;
   model: ReturnType<typeof useConference>;
   preferences: LocalSettings;
   preferencesReady: boolean;
@@ -43,6 +43,7 @@ export function SpaceBrowser({
     model,
     space: browser.spaces[browser.index]?.name,
     active: active && !dragging && !busy && preferencesReady && !!height,
+    inactiveReason: active ? 'swipe' : 'tab_change',
     preferences,
     join,
   });

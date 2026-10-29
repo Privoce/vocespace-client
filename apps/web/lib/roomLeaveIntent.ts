@@ -1,8 +1,10 @@
+import { webMeetingAnalytics } from './analytics/meeting';
 let explicitLeaveIntent = false;
 let unloadAttempt = false;
 
 export const markExplicitLeaveIntent = () => {
   explicitLeaveIntent = true;
+  webMeetingAnalytics.reason('user');
 };
 
 export const consumeExplicitLeaveIntent = () => {

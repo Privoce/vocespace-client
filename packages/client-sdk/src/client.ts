@@ -90,6 +90,9 @@ export function createClient(options: ClientOptions) {
   return {
     connections,
     native: {
+      async blockMember(joinId: string, targetId: string, signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/moderation', 'POST', { joinId, targetId, confirm: true }, signal), () => undefined);
+      },
       async records(joinId: string, signal?: AbortSignal) {
         return json(await nativeRequest('api/v1/native/records', 'POST', { joinId }, signal), parseNativeRecords);
       },

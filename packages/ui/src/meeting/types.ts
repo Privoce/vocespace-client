@@ -64,6 +64,7 @@ export interface PhoneMeetingProps {
   lowerHandLabel?: string;
   renderAvatar?: (item: MeetingTile, compact: boolean) => ReactNode;
   renderTileActions?: (item: MeetingTile, focused: boolean, toggleFocus: () => void) => ReactNode;
+  onMemberLongPress?: (item: MeetingTile) => void;
   onFocusedChange?: (focused: boolean) => void;
   renderVideo: (id: string) => ReactNode;
   /** Existing Web widgets keep their lifecycle and capabilities in an adapter. */
@@ -175,4 +176,16 @@ export interface MeetingParticipantToolsProps extends MeetingPrimitives {
     avatar: string;
     apps: string;
   };
+}
+
+export interface MemberActionsProps {
+  Icon: ComponentType<MeetingIconProps>;
+  name: string;
+  status?: string;
+  canBlock: boolean;
+  busy?: boolean;
+  t: (key: string) => string;
+  Button: ComponentType<MeetingButtonProps>;
+  onBlock: () => void;
+  onReport: () => void;
 }

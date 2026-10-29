@@ -33,3 +33,8 @@ export { MeetingRaisedHand } from './MeetingRaisedHand';
 export { MeetingParticipantTools } from './MeetingParticipantTools';
 export * from './FeedbackForm';
 export type { FeedbackFormProps, FeedbackPayload } from './feedback-types';
+
+export { FebType } from './feedback-types';
+export type { ReportTarget } from './feedback-types';
+
+export { MemberActions } from './MemberActions';

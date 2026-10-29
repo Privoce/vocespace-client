@@ -61,3 +61,8 @@ export declare function MeetingRaisedHand(props: import('./types').MeetingRaised
 export declare function MeetingParticipantTools(props: import('./types').MeetingParticipantToolsProps): ReactElement;
 export type { FeedbackFormProps, FeedbackPayload } from './feedback-types';
 export declare function FeedbackForm(props: import('./feedback-types').FeedbackFormProps): import('react').ReactElement;
+
+export { FebType } from './feedback-types';
+export type { ReportTarget } from './feedback-types';
+
+export declare function MemberActions(props: import('./types').MemberActionsProps): ReactElement;

@@ -1,10 +1,11 @@
+import { ParticipantTile } from './core';
+import { useMemberModeration } from './hooks/useMemberModeration';
 import {
   AudioTrack,
   isTrackReference,
   LockLockedIcon,
   ParticipantName,
   ParticipantPlaceholder,
-  ParticipantTile,
   ParticipantTileProps,
   ScreenShareIcon,
   TrackMutedIndicator,
@@ -65,6 +66,14 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
     const { t } = useI18n();
     const trackReference = useEnsureTrackRef(trackRef);
     const { localParticipant } = useLocalParticipant();
+    const moderation = useMemberModeration({ spaceName: space.name,
+      actorRole: settings.ownerId === localParticipant.identity ? 'owner' : settings.managers.includes(localParticipant.identity) ? 'admin' : undefined,
+      targetId: trackReference.participant.identity,
+      name: settings.participants[trackReference.participant.identity]?.name || trackReference.participant.name || '',
+      disabled: trackReference.participant.identity === localParticipant.identity,
+      canBlock: (settings.ownerId === localParticipant.identity || settings.managers.includes(localParticipant.identity)) &&
+        settings.ownerId !== trackReference.participant.identity,
+    });
     const videoRef = useRef<HTMLVideoElement>(null);
     const layoutContext = useMaybeLayoutContext();
     const autoManageSubscription = useFeatureContext()?.autoSubscription;
@@ -246,7 +255,8 @@ export const ParticipantTileMini = forwardRef<HTMLDivElement, ParticipantTileMin
         isRKey={true}
 
       >{
-          <ParticipantTile ref={ref} trackRef={trackReference}>
+          <ParticipantTile ref={ref} trackRef={trackReference} {...moderation.handlers}>
+            {moderation.modal}
             {isTrackReference(trackReference) &&
             (trackReference.source === Track.Source.Camera ||
               trackReference.source === Track.Source.ScreenShare) ? (

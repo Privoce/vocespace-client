@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import type { FeedbackFormProps } from './feedback-types';
+import { FebType, type FeedbackFormProps } from './feedback-types';
 /** One form and draft lifecycle; file selection, identity and delivery belong to each adapter. */
 export function FeedbackForm({
   t,
+  varient = FebType.Feedback,
+  target,
   accountEmail,
   Button,
   Input,
@@ -13,7 +15,7 @@ export function FeedbackForm({
   onBusyChange,
 }: FeedbackFormProps) {
   const [email, setEmail] = useState('');
-  const [kind, setKind] = useState('bug');
+  const [kind, setKind] = useState(varient === FebType.Report ? 'abuse' : 'bug');
   const [other, setOther] = useState('');
   const [content, setContent] = useState('');
   const [attachments, setAttachments] = useState<{ name: string; url: string }[]>([]);
@@ -27,7 +29,12 @@ export function FeedbackForm({
       active.current = false;
     };
   }, []);
-  const text = (key: string) => t(`channel.feedback.${key}`);
+  const report = varient === FebType.Report;
+  const text = (key: string) => {
+    const reportField = report &&
+      (['type', 'content', 'content_placeholder', 'submit'].includes(key) || key.startsWith('types.'));
+    return t(`${reportField ? 'moderation.report' : 'channel.feedback'}.${key}`);
+  };
   const effectiveEmail = (accountEmail || email).trim().toLowerCase();
   function validateEmail() {
     if (!effectiveEmail) return 'validation.email_required';
@@ -59,6 +66,8 @@ export function FeedbackForm({
         if (active.current && file) setAttachments((previous) => [...previous, file]);
       } else {
         await onSubmit({
+          varient,
+          ...(report ? { target } : {}),
           email: effectiveEmail,
           feedbackType: kind === 'other' ? other.trim() : kind,
           content: content.trim(),
@@ -89,6 +98,7 @@ export function FeedbackForm({
   }
   return (
     <View style={styles.form}>
+      {report && target && <Text style={styles.label}>{target.name} · {target.spaceName}</Text>}
       <Text style={styles.label}>{text('email')}</Text>
       <Input
         value={accountEmail || email}
@@ -100,7 +110,7 @@ export function FeedbackForm({
       />
       <Text style={styles.label}>{text('type')}</Text>
       <View style={styles.types}>
-        {['bug', 'error', 'question', 'suggestion', 'other'].map((value) => (
+        {(report ? ['abuse', 'spam', 'illegal', 'other'] : ['bug', 'error', 'question', 'suggestion', 'other']).map((value) => (
           <Button
             key={value}
             label={text(`types.${value}`)}

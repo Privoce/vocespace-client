@@ -26,3 +26,5 @@ export type { NativeRecords, NativeRecording } from './native-records';
 
 export * from './native-apps';
 export * from './account';
+
+export * from './analytics';

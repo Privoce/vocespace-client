@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import {
   PhoneMeeting,
+  MemberActions,
+  FebType,
+  type MeetingTile,
   FeedbackForm,
   MeetingShare,
   MeetingDock,
@@ -34,6 +37,7 @@ import { useI18n } from '@/lib/i18n/i18n';
 export default function Preview() {
   const { t } = useI18n();
   const [panel, setPanel] = useState('stage');
+  const [selectedMember, setSelectedMember] = useState<MeetingTile>();
   const [raised, setRaised] = useState(false);
   const [draft, setDraft] = useState('');
   const [settingsPanel, setSettingsPanel] = useState<string>();
@@ -186,6 +190,7 @@ export default function Preview() {
       <div style={{ color: '#aaa', fontSize: 11, padding: 8 }}>
         {t('shared_meeting.preview_note')}{' '}
         <button onClick={() => setCount(count === 2 ? 6 : 2)}>2 / 6</button>
+        <button onClick={() => { setSelectedMember(members[1]); setPanel('member-actions'); }}>{t('moderation.title')}</button>
       </div>
       <div style={{ width: '100%', maxWidth: 430, flex: 1, minHeight: 0, display: 'flex' }}>
         <PhoneMeeting
@@ -210,6 +215,7 @@ export default function Preview() {
             close: t('common.close'),
           }}
           tiles={members}
+          onMemberLongPress={(member) => { setSelectedMember(member); setPanel('member-actions'); }}
           Button={Button}
           Icon={Icon}
           renderVideo={() => null}
@@ -279,11 +285,11 @@ export default function Preview() {
             ),
           }}
           panel={{
-            open: ['members', 'more', 'settings', 'share', 'feedback'].includes(panel),
+            open: ['members', 'more', 'settings', 'share', 'feedback', 'member-actions', 'report'].includes(panel),
             height:
-              panel === 'more' || panel === 'share' ? '76%' : panel === 'members' ? '62%' : '88%',
+              panel === 'member-actions' ? '58%' : panel === 'more' || panel === 'share' ? '76%' : panel === 'members' ? '62%' : '88%',
             title:
-              panel === 'feedback'
+              panel === 'member-actions' ? t('moderation.title') : panel === 'report' ? t('moderation.report.title') : panel === 'feedback'
                 ? t('channel.feedback.title')
                 : panel === 'members'
                   ? t('phone_meeting.members')
@@ -311,9 +317,14 @@ export default function Preview() {
               panel === 'settings' && settingsPanel ? () => setSettingsPanel(undefined) : undefined,
             onClose: () => setPanel('stage'),
             content:
-              panel === 'feedback' ? (
+              panel === 'member-actions' && selectedMember ? (
+                <MemberActions name={selectedMember.name} status={selectedMember.status} canBlock t={t} Button={Button} Icon={Icon}
+                  onBlock={() => {}} onReport={() => setPanel('report')} />
+              ) : panel === 'feedback' || panel === 'report' ? (
                 <FeedbackForm
                   t={t}
+                  varient={panel === 'report' ? FebType.Report : FebType.Feedback}
+                  target={selectedMember ? { id: selectedMember.id, name: selectedMember.name, spaceName: 'mobile-test' } : undefined}
                   accountEmail="preview@example.test"
                   Button={Button}
                   Input={MeetingSettingsInput}

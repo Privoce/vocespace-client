@@ -1,4 +1,25 @@
 export default {
+  moderation: {
+  "title": "成员操作",
+  "block": "拉黑",
+  "confirm_title": "确认拉黑此用户？",
+  "confirm": "该用户将被移出 Space，并禁止再次进入。",
+  "failed": "操作失败，请检查连接和管理权限后重试。",
+  "blocked": "用户已拉黑",
+  "report": {
+    "title": "举报用户",
+    "type": "举报原因",
+    "content": "举报内容",
+    "content_placeholder": "请描述该用户的问题或违规行为",
+    "submit": "提交举报",
+    "types": {
+      "abuse": "骚扰辱骂",
+      "spam": "垃圾信息",
+      "illegal": "违规内容",
+      "other": "其他"
+    }
+  }
+},
   phone_meeting: {
     grid: '网格',
     focus_layout: '聚焦',

@@ -9,6 +9,7 @@ import {
   type AccountUser,
 } from '@vocespace/contracts';
 import { AccountError, type AccountProvider } from '@vocespace/server-core';
+import type { SBTDeletionTarget, SBTSpaceTb, SBTUserInfo } from './supabase-types';
 export interface SupabaseAccountConfig {
   url: string;
   key: string;
@@ -35,14 +36,14 @@ export function createSupabaseAccountProvider(
   config: SupabaseAccountConfig,
   fetcher: typeof fetch = fetch,
 ): AccountProvider {
-  async function call(
+  async function call<T = unknown>(
     path: string,
     method = 'GET',
     body?: unknown,
     token?: string,
     admin = false,
     extraHeaders: Record<string, string> = {},
-  ) {
+  ): Promise<T> {
     const key = admin ? config.serviceKey : config.key;
     if (!key) throw new AccountError(503, 'ACCOUNT_DELETION_NOT_CONFIGURED');
     let response: Response;
@@ -89,7 +90,9 @@ export function createSupabaseAccountProvider(
         throw new AccountError(401, 'AUTH_INVALID_CREDENTIALS');
       throw new AccountError(503, 'AUTH_UNAVAILABLE');
     }
-    return data;
+    // The transport type describes the selected columns, not runtime validation.
+    // Consumers still validate untrusted responses before returning account DTOs.
+    return data as T;
   }
   async function user(value: unknown, token?: string): Promise<AccountUser> {
     const raw = accountObject(value);
@@ -109,14 +112,15 @@ export function createSupabaseAccountProvider(
     });
     if (!token) return parsed;
     // Existing platform profiles remain authoritative for display; RLS applies through the user's token.
-    const profiles = await call(
+    const profiles = await call<Pick<SBTUserInfo, 'nickname' | 'username' | 'avatar'>[]>(
       `/rest/v1/user_info?id=eq.${encodeURIComponent(parsed.id)}&select=nickname,username,avatar&limit=1`,
       'GET',
       undefined,
       token,
     );
     if (Array.isArray(profiles) && profiles[0]) {
-      const profile = accountObject(profiles[0]);
+      accountObject(profiles[0]);
+      const profile = profiles[0];
       const nickname = profile.nickname || profile.username;
       parsed.avatar = accountAvatarUrl(profile.avatar) || parsed.avatar;
       if (typeof nickname === 'string' && nickname.trim()) parsed.nickname = nickname.slice(0, 100);
@@ -144,7 +148,10 @@ export function createSupabaseAccountProvider(
     await call(
       '/rest/v1/user_info?on_conflict=id',
       'POST',
-      { id: current.id, username: current.username || current.email },
+      {
+        id: current.id,
+        username: current.username || current.email,
+      } satisfies Pick<SBTUserInfo, 'id' | 'username'>,
       token,
       false,
       { Prefer: 'resolution=ignore-duplicates,return=minimal' },
@@ -153,10 +160,10 @@ export function createSupabaseAccountProvider(
   return {
     async profile(token, current, nickname) {
       await ensureProfile(token, current);
-      const rows = await call(
+      const rows = await call<Pick<SBTUserInfo, 'id' | 'nickname'>[]>(
         `/rest/v1/user_info?id=eq.${encodeURIComponent(current.id)}&select=id,nickname`,
         'PATCH',
-        { nickname },
+        { nickname } satisfies Pick<SBTUserInfo, 'nickname'>,
         token,
         false,
         { Prefer: 'return=representation' },
@@ -231,10 +238,10 @@ export function createSupabaseAccountProvider(
       });
       try {
         await ensureProfile(token, current);
-        const rows = await call(
+        const rows = await call<Pick<SBTUserInfo, 'id'>[]>(
           `/rest/v1/user_info?id=eq.${encodeURIComponent(current.id)}&select=id`,
           'PATCH',
-          { avatar },
+          { avatar } satisfies Pick<SBTUserInfo, 'avatar'>,
           token,
           false,
           { Prefer: 'return=representation' },
@@ -268,7 +275,7 @@ export function createSupabaseAccountProvider(
     async spaces(token, user) {
       const result = [];
       for (let offset = 0; ; offset += 100) {
-        const rows = await call(
+        const rows = await call<Pick<SBTSpaceTb, 'id' | 'name' | 'url' | 'ty'>[]>(
           `/rest/v1/space?owner_id=eq.${encodeURIComponent(user.id)}&select=id,name,url,ty&order=id.asc&limit=100&offset=${offset}`,
           'GET',
           undefined,
@@ -279,7 +286,7 @@ export function createSupabaseAccountProvider(
           ...parseAccountSpaces(
             rows.map((row) => ({
               ...accountObject(row),
-              kind: accountObject(row).ty || 'meeting',
+              kind: row?.ty || 'meeting',
             })),
           ),
         );
@@ -333,7 +340,7 @@ export function createSupabaseAccountProvider(
         ['todos', 'id'],
         ['ai_analysis', 'id'],
         ['user_info', 'id'],
-      ]) {
+      ] satisfies SBTDeletionTarget[]) {
         await call(
           `/rest/v1/${table}?${column}=eq.${encodeURIComponent(user.id)}`,
           'DELETE',

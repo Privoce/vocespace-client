@@ -1,6 +1,8 @@
+import type { Analytics } from '@vocespace/client-sdk';
 import type { NativeDevice, NativeMediaStatus } from '@vocespace/contracts';
 
 interface Ports {
+  analytics?: Analytics;
   status(signal: AbortSignal): Promise<NativeMediaStatus>;
   authorize(
     device: NativeDevice,
@@ -64,6 +66,7 @@ export function createMediaController(ports: Ports) {
     if (closed || flight) return flight;
     const version = generation;
     if (ports.enabled(device) === enabling) return Promise.resolve();
+    const operation = ports.analytics?.begin('media_change', { media_type: device, action: enabling ? 'enable' : 'disable', source: 'meeting' });
     update({ busy: device, error: undefined });
     flight = (async () => {
       try {
@@ -79,10 +82,14 @@ export function createMediaController(ports: Ports) {
         if (closed || version !== generation) return;
         await ports.capture(device, enabling);
         // Native permission requests cannot be aborted. Stop any track produced after exit/revoke.
-        if (closed || version !== generation) await ports.capture(device, false);
+        if (closed || version !== generation) { await ports.capture(device, false); operation?.end('cancelled'); }
+        else if (ports.enabled(device) === enabling) operation?.end('success');
+        else operation?.end('cancelled');
       } catch (error) {
+        operation?.fail(error);
         if (!closed && version === generation) update({ error });
       } finally {
+        operation?.end('cancelled');
         sync();
       }
     })().finally(() => {

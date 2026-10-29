@@ -1,3 +1,4 @@
+import { reconcileSpaceBans } from '../lib/server/moderation-worker';
 import { reconcilePreviews } from '../preview/source';
 import { randomUUID } from 'node:crypto';
 import { getSpaceRedisClient } from '../lib/server/space-redis';
@@ -22,6 +23,7 @@ export function startWorker() {
           .then((renewed) => { if (renewed !== 1) stopped = true; })
           .catch(() => { stopped = true; });
       }, 30_000);
+      await reconcileSpaceBans();
       await reconcilePreviews();
       if (!stopped && Date.now() - lastMaintenance >= 5 * 60_000) {
         await userHeartbeat();
