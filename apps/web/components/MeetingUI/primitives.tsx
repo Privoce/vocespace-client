@@ -100,6 +100,7 @@ export function MeetingInput({
       style={{
         border: 0,
         color: '#E7EDF5',
+        fontSize: 16,
         minHeight: 42,
         padding: '10px 12px',
       }}

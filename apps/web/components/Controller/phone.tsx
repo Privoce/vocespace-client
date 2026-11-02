@@ -3,7 +3,7 @@ import { MoreButton } from '@/components/Toggles/MoreButton';
 import { Work } from '@/components/Widgets/work';
 import { markExplicitLeaveIntent } from '@/lib/roomLeaveIntent';
 import { MediaDeviceKind } from '@/lib/std/device';
-import { DesktopOutlined, MessageOutlined, ThunderboltOutlined } from '@ant-design/icons';
+import { MessageOutlined, ThunderboltOutlined } from '@ant-design/icons';
 import { DisconnectButton, LeaveIcon, TrackToggle } from '@livekit/components-react';
 import { Badge, Button, Popover, Tooltip } from 'antd';
 import { Track } from 'livekit-client';
@@ -84,6 +84,8 @@ export function ControlsPhone({ model }: { model: ControlsModel }) {
     setChatOpen,
     browserSupportsScreenSharing,
   } = model;
+  const screenShareUnavailable =
+    !model.isScreenShareEnabled && (!visibleControls.screenShare || !browserSupportsScreenSharing);
   return (
     <div
       {...model.htmlProps}
@@ -94,28 +96,28 @@ export function ControlsPhone({ model }: { model: ControlsModel }) {
       <DeviceControl model={model} source={Track.Source.Microphone} />
       <DeviceControl model={model} source={Track.Source.Camera} />
       <div className={phone.action}>
-        {visibleControls.screenShare && browserSupportsScreenSharing ? (
-          <TrackToggle
-            source={Track.Source.ScreenShare}
-            onClickCapture={() => model.beginMedia(Track.Source.ScreenShare)}
-            showIcon
-            aria-label={t('common.share_screen')}
-            captureOptions={{ audio: model.uState.openShareAudio, selfBrowserSurface: 'include' }}
-            onChange={model.onScreenShareChange}
-            onDeviceError={(error) => {
-              model.setPermissionDevice(Track.Source.ScreenShare);
-              model.onDeviceError?.({ source: Track.Source.ScreenShare, error });
-            }}
-          />
-        ) : (
-          <Tooltip title={t('common.screen_share_unavailable')}>
-            <Button
-              disabled
-              aria-label={t('common.screen_share_unavailable')}
-              icon={<DesktopOutlined />}
-            />
-          </Tooltip>
-        )}
+        <Tooltip title={screenShareUnavailable ? model.screenShareUnavailableMessage : undefined}>
+          <span className={phone.screenShareControl} tabIndex={screenShareUnavailable ? 0 : undefined}>
+            <fieldset className={phone.screenShareControl} disabled={screenShareUnavailable}>
+              <TrackToggle
+                source={Track.Source.ScreenShare}
+                onClickCapture={() => model.beginMedia(Track.Source.ScreenShare)}
+                showIcon
+                aria-label={
+                  screenShareUnavailable
+                    ? model.screenShareUnavailableMessage
+                    : t(model.isScreenShareEnabled ? 'common.stop_share' : 'common.share_screen')
+                }
+                captureOptions={{ audio: model.uState.openShareAudio, selfBrowserSurface: 'include' }}
+                onChange={model.onScreenShareChange}
+                onDeviceError={(error) => {
+                  model.setPermissionDevice(Track.Source.ScreenShare);
+                  model.onDeviceError?.({ source: Track.Source.ScreenShare, error });
+                }}
+              />
+            </fieldset>
+          </span>
+        </Tooltip>
         {/* <span>{t('common.device.screen')}</span> */}
       </div>
       {visibleControls.chat && (

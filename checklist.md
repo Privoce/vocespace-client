@@ -2,6 +2,18 @@
 
 每阶段完成实现与验证后更新勾选项；未验证项不得视为完成。
 
+## Web Phone 浏览器修复（2026-11-02）
+
+- [x] 2026-11-03：PC / 旧 Phone 统一显示原 LiveKit 共享按钮，移除替代按钮并恢复 Chat 组件；支持采集时由原按钮请求浏览器授权，缺少 API / 会议禁止发布时禁用并提示，已共享时保留停止入口。
+
+- [x] Prejoin 使用动态视口高度、顶部滚动布局及底部安全区留白；Web Phone 两套聊天输入适配 16px 字号；Web / Native 英文占位统一为 `Send your message`。
+- [x] Web 共享文案改为复制链接，两个复制入口均使用 `https://vocespace.com/{space}`；iPad 所走 PC 控制栏在屏幕采集不可用时保留提示入口。实现和排查证据见 [浏览器修复说明](docs/web-phone-browser-fixes.md)。
+- [x] 实测 RustDesk 首页响应头含 `X-Frame-Options: SAMEORIGIN`，确认该地址禁止跨源 iframe 嵌入。
+- [x] iPhone 16 Pro / iPad Pro M4 模拟器 Safari（18.3.1）独立页面均测得 `getDisplayMedia === undefined`，安全上下文正常；确认这两个环境缺少采集 API，提示已区分浏览器能力与会议授权。此结果不代表真机系统共享弹窗问题已解决。
+- [x] 全项目 / API / Mobile / UI 类型、边界和 API 制品检查通过；25 个测试文件、93 项测试通过；相关目录 lint 无错误，存在已有警告。
+- [x] 前一批标准 `pnpm build` 通过（API + Web standalone）；本次恢复原按钮执行类型、边界、lint 和测试检查，未在运行中的开发目录重复构建。`git diff --check` 通过。
+- [ ] iPhone Safari 底部加入按钮、聊天键盘缩放及链接复制真机回归；iPad 实际采集能力与 iOS Chrome 系统共享弹窗未完成定位/回归，不标记为屏幕共享已修复。
+
 ## Ubuntu 部署脚本（2026-10-29）
 
 - [x] 新增 `scripts/ubuntu/setup.sh` 和 `deploy.sh`：Ubuntu x64 / arm64 工具准备、独立 release 源码构建、API 配置预检、单实例 PM2 切换、文件 / Redis 备份、健康检查与失败恢复，以及手动代码回退；不修改 Caddy、LiveKit、Redis 服务配置或其他 PM2 应用。
@@ -613,3 +625,29 @@
 - [x] 首次激活尚未修改受管进程时不再删除进程或保存 PM2；明确手动停止的旧 vocespace 不属于自动恢复范围。脚本和源码部署文档同步移除 Redis 备份步骤。
 - [x] 14 项隔离部署测试、Shell/Node 语法和差异检查通过；覆盖 Redis 工具不可用时正常激活、本地文件备份失败恢复及首次失败不改变旧进程。
 - [ ] 未连接用户服务器，未执行生产激活。
+
+### 2026-10-30：Caddy 主站路由对齐
+
+- [x] 根 Caddyfile 仅调整 vocespace.com：license 根路径及子路径统一走 3030 → 3031；旧 S3/rooms 保留 3060，原跨域策略限定到这两类旧接口；保留 LiveKit 7880、官网和协议页。
+- [x] 其他站点与原文件逐字对比一致，Linux 部署路由表同步更新，差异检查通过。
+- [ ] 本机无 Caddy，临时官方校验工具下载超时，未完成 caddy validate；未部署或重载服务器。服务器替换前应使用其已安装的 Caddy 校验完整配置。
+
+### 2026-10-30：Caddyfile 终端转录污染修复
+
+- [x] 根据服务器第 375 行错误定位到 root@ 提示符及其后的整份重复旧配置；删除转录内容，保留已修改的主站和所有 15 个唯一站点。移除前确认两个副本的其他站点配置完全一致。
+- [x] 检查无终端提示符、无重复站点、括号平衡及差异空白检查；未修改 3060 服务或启动服务器。
+- [ ] 官方 Caddy 校验工具下载再次超时，完整 caddy validate 仍需服务器执行；服务器当前 failed，校验及替换成功后使用 restart，而非 reload。
+
+### 2026-10-30：生产 502 端口错配修复
+
+- [x] 用户服务器输出确认 Web 监听 127.0.0.1:3000、API 监听 0.0.0.0:3001，3030 无监听；主站 Caddy 的三处 Web 上游从 3030 改为 3000，其他站点及 3060 路由不变。
+- [x] Linux 文档增加示例端口与实际端口区别，差异检查通过。
+- [ ] 等待服务器同步、Caddy 校验/reload 和公网回归；未替用户修改服务器或重启应用进程。
+
+### 2026-10-30：Web / Socket.IO 来源拒绝排查
+
+- [x] 隔离 API 复现 localhost 默认 publicOrigin 对公网 Origin 的用户名 POST / Socket.IO 拒绝；确认 HTTP 和 Socket.IO 共用配置来源，代理头不覆盖该配置。Linux 文档补充实际配置定位、修正及携带 Origin 的探测命令。
+- [x] 配置读取统一规范化 publicOrigin，修复尾斜杠、域名大小写及默认端口造成 Socket.IO 与 HTTP 结果不一致；保留不同域名、端口及跨站请求拒绝。
+- [x] 93 项 Vitest、3 项独立 API 来源集成测试、根/API 类型检查、模块边界、API 构建及配置部署检查通过。集成命令：`pnpm build:api && node --test scripts/tests/api-origin-smoke.mjs`；覆盖内网 HTTP / 公网 HTTPS、轮询、真实 Upgrade、缺会话拒绝及伪造转发头，使用临时配置并禁用 Redis/worker。
+- [x] 用户确认线上使用仓库配置，publicOrigin 为 `http://localhost:3000`，与公网 Origin 不符；已仅将本机 `vocespace.conf.json` 的该字段改为 `https://vocespace.com`，JSON 配置检查通过。该配置未纳入 Git，不能靠 pull 同步。
+- [ ] 尚未修改服务器；生产实际配置同步及真实成员/媒体回归待确认。

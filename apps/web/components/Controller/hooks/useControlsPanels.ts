@@ -192,8 +192,7 @@ export function useControlsPanels(context: ReturnType<typeof useControlsMedia>) 
         setChatOpen,
       }) as ControlBarExport,
   );
-  const inviteUrl = typeof window === 'undefined' ? '' : window.location.href;
-  const { inviteTextRef, t } = context;
+  const inviteUrl = `https://vocespace.com/${encodeURIComponent(space?.name || '')}`;
   const changeParticipantName = () => {
     if (space && selectedParticipant) {
       socket.emit('control_participant', {
@@ -210,7 +209,7 @@ export function useControlsPanels(context: ReturnType<typeof useControlsMedia>) 
   };
   const copyInvite = async () => {
     try {
-      await navigator.clipboard.writeText(inviteTextRef.current?.innerText || `${t('more.participant.invite.link')}: ${inviteUrl}`);
+      await navigator.clipboard.writeText(inviteUrl);
       analytics.track('space_share', { method: 'copy_link', result: 'success', source: 'meeting' });
     } catch (error) { analytics.track('space_share', { method: 'copy_link', result: 'failure', source: 'meeting' }); throw error; }
     setOpenShareModal(false);

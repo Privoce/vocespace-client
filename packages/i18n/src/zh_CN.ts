@@ -35,6 +35,9 @@ export default {
     share_title: '好空间，一起分享',
     share_description: '把 Space 名称发给想见的人。',
     copy: '复制 Space 名称',
+    copy_link: '复制 Space 链接',
+    link_copied: 'Space 链接已复制',
+    share_link_description: '把 Space 链接发给想见的人。',
     copied: '已复制 Space 名称',
     members: '会议成员',
     members_count: '$count 位成员在空间中',
@@ -365,6 +368,8 @@ export default {
   common: {
     back: '返回',
     screen_share_unavailable: '当前浏览器或房间权限不支持屏幕共享',
+    screen_share_browser_unsupported: '当前浏览器未提供屏幕采集能力，请换用支持屏幕共享的浏览器。',
+    screen_share_not_allowed: '当前会议未允许你发布屏幕，请联系主持人。',
     try_again: '重试',
     browser: {
       low_version: {

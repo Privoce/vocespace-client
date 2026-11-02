@@ -46,7 +46,6 @@ export function useMediaQuery(query: string): boolean {
 export function supportsScreenSharing(): boolean {
   return (
     typeof navigator !== 'undefined' &&
-    navigator.mediaDevices &&
-    !!navigator.mediaDevices.getDisplayMedia
+    typeof navigator.mediaDevices?.getDisplayMedia === 'function'
   );
 }

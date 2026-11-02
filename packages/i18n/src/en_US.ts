@@ -35,6 +35,9 @@ export default {
     share_title: 'A space worth sharing',
     share_description: 'Send the Space name to people you want to meet.',
     copy: 'Copy Space name',
+    copy_link: 'Copy Space link',
+    link_copied: 'Space link copied',
+    share_link_description: 'Send the Space link to people you want to meet.',
     copied: 'Space name copied',
     members: 'Members',
     members_count: '$count members in this space',
@@ -47,7 +50,7 @@ export default {
     media_hint: 'Microphone, camera and sharing are available below',
     chat: 'Meeting chat',
     chat_hint: 'The meeting continues while you chat',
-    chat_placeholder: 'Send a message…',
+    chat_placeholder: 'Send your message',
     self: 'You',
     speaking: 'Speaking',
     online: 'Online',
@@ -380,6 +383,10 @@ export default {
     back: 'Back',
     screen_share_unavailable:
       'Screen sharing is unavailable in this browser or with your room permissions',
+    screen_share_browser_unsupported:
+      'This browser does not provide screen capture. Please use a browser that supports screen sharing.',
+    screen_share_not_allowed:
+      'You are not allowed to share your screen in this meeting. Please contact the host.',
     try_again: 'Retry',
     browser: {
       low_version: {
@@ -456,7 +463,7 @@ export default {
       screen: 'Screen',
     },
     chat: 'Chat',
-    chat_placeholder: 'Click here to start typing your message to the current room',
+    chat_placeholder: 'Send your message',
     chat_drag_file_here: 'Drag file here',
     files: 'Files',
     upload: 'Upload',

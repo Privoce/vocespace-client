@@ -62,7 +62,10 @@ function normalizeConfiguration(value) {
     try { url = new URL(value); } catch { throw new Error(`Invalid configuration URL: ${name}`); }
     if (!['http:', 'https:'].includes(url.protocol) || url.username || url.password || url.search || url.hash) throw new Error(`Invalid configuration URL: ${name}`);
   }
-  if (new URL(conf.deployment.publicOrigin).pathname !== '/') throw new Error('deployment.publicOrigin must be an origin; use deployment.basePath for paths');
+  const publicOrigin = new URL(conf.deployment.publicOrigin);
+  if (publicOrigin.pathname !== '/') throw new Error('deployment.publicOrigin must be an origin; use deployment.basePath for paths');
+  // HTTP uses URL.origin; Socket.IO must compare against the same canonical value.
+  conf.deployment.publicOrigin = publicOrigin.origin;
   return conf;
 }
 function readConfiguration(options = {}) {

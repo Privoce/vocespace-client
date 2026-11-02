@@ -35,6 +35,9 @@ export default {
     share_title: 'Поделитесь пространством',
     share_description: 'Отправьте название Space тем, кого хотите увидеть.',
     copy: 'Копировать название Space',
+    copy_link: 'Копировать ссылку на Space',
+    link_copied: 'Ссылка на Space скопирована',
+    share_link_description: 'Отправьте ссылку на Space тем, кого хотите увидеть.',
     copied: 'Название Space скопировано',
     members: 'Участники',
     members_count: 'Участников в пространстве: $count',
@@ -380,6 +383,10 @@ export default {
   common: {
     back: 'Назад',
     screen_share_unavailable: 'Демонстрация экрана недоступна в этом браузере или для вашей роли',
+    screen_share_browser_unsupported:
+      'Этот браузер не поддерживает захват экрана. Используйте браузер с поддержкой демонстрации экрана.',
+    screen_share_not_allowed:
+      'У вас нет разрешения на демонстрацию экрана в этой встрече. Обратитесь к организатору.',
     try_again: 'Повторить',
     browser: {
       low_version: {

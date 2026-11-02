@@ -133,11 +133,32 @@ curl --fail http://127.0.0.1:3030/healthz
 
 ### 步骤 7：检查现有公网路由和业务
 
+下表使用文档示例端口 3030/3031。若实际进程监听 3000/3001，Caddy 的主应用、Socket.IO 和 license 上游应为 `127.0.0.1:3000`，Web 的 `deployment.web.apiUrl` 应指向 `http://127.0.0.1:3001`。根 Caddyfile 已按本次服务器实测的 3000/3001 调整；以实际配置及 `ss -ltnp` 输出为准，不能把示例端口直接套到运行实例。
+
+若页面可打开，但填写昵称、聊天历史、上传或成员更新返回 `403 ORIGIN_DENIED`，同时 Socket.IO 失败，先检查 **API 实际读取的 JSON** 中 `deployment.publicOrigin`。HTTP 根据它构造请求 URL，Socket.IO 也用它校验浏览器 Origin；Caddy 转发头或 `Access-Control-Allow-Origin` 不会覆盖这个配置。空昵称走自动取名 GET，填写昵称走 POST，不能由空昵称能用推断来源配置正确。
+
+```bash
+# 先核对 script args 中 --config 指向的配置路径；若不是下面路径，替换后再执行。
+pm2 describe vocespace-api
+node -e 'const fs = require("node:fs"); const c = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); console.log(c.deployment?.publicOrigin ?? "未设置（默认 http://localhost:3000）");' /var/vocespace/main/api-data/vocespace.conf.json
+```
+
+主站应设置为 `"publicOrigin": "https://vocespace.com"`，不带页面路径；内部 `apiUrl` 继续使用实际 API 地址。先备份该 JSON，再只修改这一项；不要以模板覆盖密钥和其他配置。旧 `PUBLIC_ORIGIN` 环境变量不再生效。当前 API 每次请求读取该字段，配置修正后可直接刷新页面重试，无需重建 Web。代码已归一化尾部 `/`、大小写及默认端口，避免 HTTP 与 Socket.IO 校验结果不同；旧制品请使用上述无尾斜杠的精确值。
+
+```bash
+# 必须携带 Origin 才能检查此问题；普通 /healthz 成功不能证明浏览器请求能通过。
+curl --fail-with-body -H 'Origin: https://vocespace.com' 'https://vocespace.com/api/hello'
+curl --fail-with-body -H 'Origin: https://vocespace.com' 'https://vocespace.com/socket.io/?EIO=4&transport=polling'
+```
+
+预期分别为 HTTP 200 的 hi JSON 与以 `0` 开头的 Engine.IO 握手包。之后在浏览器验证填写昵称加入、聊天历史、成员初始化和 Socket.IO 连接；握手通过不代表成员授权或媒体验收通过。
+
 本流程不改 Caddy。确认当前规则仍满足：
 
 | 路径 | 目标 |
 | --- | --- |
-| `/api/s3/*`、旧 `/api/rooms/*`、`/api/license/*` | 原 3060 服务 |
+| `/api/s3/*`、旧 `/api/rooms/*` | 原 3060 服务 |
+| `/api/license`、`/api/license/*` | Web 3030 → API 3031 |
 | `/rtc*`、`/twirp/*` | 原 LiveKit 7880 |
 | `/socket.io/*`、其他 Web/API 路径 | Web 3030，再由 Web 转发 API 3031 |
 | `/` 静态官网 | 原静态目录 |

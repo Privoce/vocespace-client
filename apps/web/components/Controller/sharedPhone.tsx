@@ -109,10 +109,14 @@ function useSharedControls(model: ControlsModel, onMore: () => void) {
   actions.push({
     id: 'screen',
     icon: 'screen',
-    label: t('common.share_screen'),
-    disabled: !visibleControls.screenShare || !model.browserSupportsScreenSharing || screen.pending,
+    label: screen.enabled ? t('common.stop_share') : t('common.share_screen'),
+    disabled: screen.pending,
     active: screen.enabled,
     onPress: () => {
+      if (!screen.enabled && (!visibleControls.screenShare || !model.browserSupportsScreenSharing)) {
+        void model.messageApi.info(model.screenShareUnavailableMessage);
+        return;
+      }
       void model.trackMedia(Track.Source.ScreenShare, () => screen.toggle()).catch(() => undefined);
     },
   });

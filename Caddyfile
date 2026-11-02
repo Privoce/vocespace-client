@@ -1,0 +1,373 @@
+home.vocespace.com {
+    handle {
+        reverse_proxy localhost:3099
+    }
+}
+vocespace.com {
+    handle_path /local_deploy/* {
+        root * /var/www/scripts
+        file_server browse
+    }
+
+    redir /incubator https://space.gpg.eco/incubator
+
+    # 旧 3060 服务保持原路径和跨域策略；不覆盖新版应用的响应。
+    @legacyApi path /api/s3/* /api/rooms/*
+    handle @legacyApi {
+        header {
+            Access-Control-Allow-Origin *
+            Access-Control-Allow-Methods "GET, POST, OPTIONS"
+            Access-Control-Allow-Headers "Content-Type, Authorization"
+        }
+        route {
+            @legacyPreflight method OPTIONS
+            respond @legacyPreflight 204
+            reverse_proxy localhost:3060 {
+                header_up Host {host}
+                header_up Upgrade {http.request.header.Upgrade}
+                header_up Connection {http.request.header.Connection}
+                header_up X-Real-IP {remote_host}
+                header_up X-Forwarded-For {remote_host}
+                header_up X-Forwarded-Proto {scheme}
+            }
+        }
+    }
+
+    # License 已迁移，根路径及所有子路由统一走 Web 3000 → API 3001。
+    @licenseApi path /api/license /api/license/*
+    handle @licenseApi {
+        reverse_proxy 127.0.0.1:3000 {
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    # LiveKit 信令 / Egress RPC 保留 7880。
+    handle /twirp/* {
+        reverse_proxy localhost:7880 {
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    handle /rtc* {
+        reverse_proxy localhost:7880 {
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    # Web 转发 Socket.IO 到 API；Caddy 原生支持 WebSocket Upgrade。
+    handle /socket.io/* {
+        reverse_proxy 127.0.0.1:3000 {
+            header_up X-Real-IP {remote_host}
+        }
+    }
+
+    # Legal pages: /var/vocespace/vocespace_com/{privacy,terms}/index.html
+    @privacy path /privacy /privacy/ /privacy.html
+    handle @privacy {
+        root * /var/vocespace/vocespace_com
+        rewrite * /privacy/index.html
+        file_server
+    }
+
+    @terms path /terms /terms/ /terms.html
+    handle @terms {
+        root * /var/vocespace/vocespace_com
+        rewrite * /terms/index.html
+        file_server
+    }
+
+    handle / {
+        root * /var/vocespace/vocespace_com
+        file_server
+        try_files {path} /index.html
+    }
+
+    # 页面、/deleteAccount、/legal/* 由 Web 处理；API/上传经 Web 转发。
+    handle {
+        reverse_proxy 127.0.0.1:3000 {
+            header_up X-Real-IP {remote_host}
+        }
+    }
+}
+
+rap.voce.chat {
+   handle /* {
+        reverse_proxy localhost:3690 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+}
+
+sohive.voce.chat {
+    handle_path /widget/* {
+        root * /var/vocespace/sohive
+        file_server
+
+        # 正确写法：给所有 JS 加禁用缓存头
+        header *.js Cache-Control "no-store, no-cache, must-revalidate"
+        header *.js Pragma "no-cache"
+        header *.js Expires "0"
+    }
+}
+
+
+
+sohive-landing.voce.chat {
+   handle /* {
+        reverse_proxy localhost:3066 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+}
+
+huateng.voce.chat {
+    tls {
+        protocols tls1.2 tls1.3
+    }
+    handle /material {
+        reverse_proxy localhost:5800/material {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+    handle /api/* {
+        reverse_proxy localhost:3333 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+
+    handle /* {
+        reverse_proxy localhost:3009 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+}
+
+iridium.privoce.com {
+    handle {
+       root * /var/www/pricing-poc
+       file_server
+       try_files {path} /index.html
+    }
+
+}
+
+demo-deal.privoce.com {
+    handle {
+       root * /var/www/titan-demo/titan-pricing-demo
+       file_server
+       try_files {path} /index.html
+    }
+}
+
+cpq.privoce.com {
+    handle {
+       root * /var/www/titan-cpq/dist
+       file_server
+       try_files {path} /index.html
+    }
+}
+
+chatroom.opencamp.cn {
+    handle_path /local_deploy/* {
+        root * /var/www/scripts
+        file_server browse
+    }
+
+    # 处理 Egress, 路径/twirp, egress的请求也是先进入server端的所以代理到7880端口
+    handle /twirp/* {
+        reverse_proxy localhost:7880 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # LiveKit WebRTC 路径
+    handle /rtc* {
+        reverse_proxy localhost:7880 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle /socket.io/* {
+        reverse_proxy localhost:3010 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # 主应用 - 处理所有其他请求
+    handle {
+        reverse_proxy localhost:3010 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+}
+
+# 如果用户用的是根域名则需要定向到index页面, index的本地路径是/var/vocespace/vocespace_com/index.html
+# vocespace.com {
+#     handle {
+#         root * /var/vocespace/vocespace_com
+#         file_server
+#         try_files {path} /index.html
+#     }
+# }
+
+dealos.privoce.com {
+     reverse_proxy 127.0.0.1:4173
+}
+
+deal-workspace.privoce.com {
+   reverse_proxy localhost:4320
+}
+
+ai.voce.chat {
+     handle {
+         root * /var/vocespace/vocespace_com
+         file_server
+         try_files {path} /index.html
+     }
+}
+
+beta.vocespace.com {
+
+    handle_path /local_deploy/* {
+        root * /var/www/scripts
+        file_server browse
+    }
+
+    redir /incubator https://space.gpg.eco/incubator
+
+    handle /api/s3/* {
+        reverse_proxy localhost:3060 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle /api/rooms/* {
+        reverse_proxy localhost:3060 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle /api/license/* {
+        reverse_proxy localhost:3060 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # 处理 Egress, 路径/twirp, egress的请求也是先进入server端的所以代理到7880端口
+    handle /twirp/* {
+        reverse_proxy localhost:7880 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    # LiveKit WebRTC 路径
+    handle /rtc* {
+        reverse_proxy localhost:7880 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle /socket.io/* {
+        reverse_proxy localhost:3045 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+
+    handle / {
+        root * /var/vocespace/vocespace_com
+        file_server
+        try_files {path} /index.html
+    }
+
+    # 主应用 - 处理所有其他请求
+    handle {
+        reverse_proxy localhost:3045 {
+            header_up Host {host}
+            header_up Upgrade {http.request.header.Upgrade}
+            header_up Connection {http.request.header.Connection}
+            header_up X-Real-IP {remote_host}
+            header_up X-Forwarded-For {remote_host}
+            header_up X-Forwarded-Proto {scheme}
+        }
+    }
+}
+
+rds.vocespace.com {
+    reverse_proxy 127.0.0.1:5777
+}

@@ -161,7 +161,7 @@ export function ChatContent({ model }: { model: ChatPanelModel }) {
             resize: 'none',
             border: 'none',
             color: '#fff',
-            fontSize: 14,
+            fontSize: model.device === 'phone' ? 16 : 14,
             padding: '0px 0',
             width: '100%',
           }}

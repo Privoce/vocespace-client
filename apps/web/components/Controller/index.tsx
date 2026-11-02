@@ -200,12 +200,12 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(func
             Icon={MeetingIcon}
             name={space?.name || ''}
             title={t('phone_meeting.share_title')}
-            description={t('phone_meeting.share_description')}
-            copyLabel={t('phone_meeting.copy')}
+            description={t('phone_meeting.share_link_description')}
+            copyLabel={t('phone_meeting.copy_link')}
             onCopy={() => {
               void navigator.clipboard
-                .writeText(space?.name || '')
-                .then(() => { analytics.track('space_share', { method: 'copy_link', result: 'success', source: 'meeting' }); return messageApi.success(t('phone_meeting.copied')); })
+                .writeText(inviteUrl)
+                .then(() => { analytics.track('space_share', { method: 'copy_link', result: 'success', source: 'meeting' }); return messageApi.success(t('phone_meeting.link_copied')); })
                 .catch(() => { analytics.track('space_share', { method: 'copy_link', result: 'failure', source: 'meeting' }); return messageApi.error(t('copy_fail')); });
             }}
             extra={

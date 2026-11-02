@@ -45,6 +45,20 @@ it('Supabase, public URL and billing configuration ignore conflicting process en
   expect(await (await GET()).json()).toEqual({ webhook: false });
 });
 
+it.each(['https://vocespace.com/', 'https://VOCESPACE.com:443'])('normalizes public origin %s for HTTP and Socket.IO', (publicOrigin) => {
+  const source = { deployment: { publicOrigin } };
+  expect(normalizeConfiguration(source).deployment.publicOrigin).toBe('https://vocespace.com');
+  expect(source.deployment.publicOrigin).toBe(publicOrigin);
+});
+
+it('preserves non-default ports and rejects paths or credentials in public origins', () => {
+  expect(normalizeConfiguration({ deployment: { publicOrigin: 'https://example.invalid:8443/' } }).deployment.publicOrigin)
+    .toBe('https://example.invalid:8443');
+  for (const publicOrigin of ['https://example.invalid/room', 'https://user:password@example.invalid', 'https://example.invalid?key=value']) {
+    expect(() => normalizeConfiguration({ deployment: { publicOrigin } })).toThrow(/deployment.publicOrigin/);
+  }
+});
+
 it('public projections omit secrets, including unknown nested fields', () => {
   const conf = normalizeConfiguration({ ...DEFAULT_VOCESPACE_CONFIG,
     account: { supabase: { serviceRoleKey: 'secret-account' } },

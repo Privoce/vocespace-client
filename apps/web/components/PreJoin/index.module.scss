@@ -3,8 +3,9 @@
 .view {
   position: relative;
   height: 100vh;
+  height: 100dvh;
   width: 100%;
-  @include flex;
+  @include flex(center, flex-start);
   flex-direction: column;
   gap: 0.4rem;
   flex-wrap: nowrap;
@@ -12,6 +13,12 @@
   scrollbar-width: thin;
   scroll-behavior: smooth;
   padding: vs-space(lg);
+  padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+  scroll-padding-bottom: calc(32px + env(safe-area-inset-bottom, 0px));
+
+  > * {
+    flex-shrink: 0;
+  }
 
   &__lang_select {
     position: fixed;

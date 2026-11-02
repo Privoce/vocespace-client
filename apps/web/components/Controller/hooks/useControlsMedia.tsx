@@ -168,6 +168,11 @@ export function useControlsMedia(
     }
   }, [variation, controlWidth]);
   const browserSupportsScreenSharing = supportsScreenSharing();
+  const screenShareUnavailableMessage = t(
+    browserSupportsScreenSharing
+      ? 'common.screen_share_not_allowed'
+      : 'common.screen_share_browser_unsupported',
+  );
   const [isScreenShareEnabled, setIsScreenShareEnabled] = React.useState(false);
   const [audioMenuOpen, setAudioMenuOpen] = React.useState(false);
   const [videoMenuOpen, setVideoMenuOpen] = React.useState(false);
@@ -266,6 +271,7 @@ export function useControlsMedia(
     showIcon,
     showText,
     browserSupportsScreenSharing,
+    screenShareUnavailableMessage,
     isScreenShareEnabled,
     setIsScreenShareEnabled,
     audioMenuOpen,
