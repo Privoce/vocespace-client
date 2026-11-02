@@ -14,6 +14,14 @@
 - [x] 前一批标准 `pnpm build` 通过（API + Web standalone）；本次恢复原按钮执行类型、边界、lint 和测试检查，未在运行中的开发目录重复构建。`git diff --check` 通过。
 - [ ] iPhone Safari 底部加入按钮、聊天键盘缩放及链接复制真机回归；iPad 实际采集能力与 iOS Chrome 系统共享弹窗未完成定位/回归，不标记为屏幕共享已修复。
 
+## 按项目发布（2026-11-03）
+
+- [x] Ubuntu deploy 新增 `-p` / `--project`：支持 web/api、完整包名及 all，默认仍为 Web/API；build 只构建所选项目，activate/rollback/status 按项目处理。
+- [x] 构建副本仅复制所选应用源码、共享 packages 和工作区清单；依赖安装使用所选工作区依赖闭包及根工具，Mobile/其他应用源码不进入 release。新增服务不自动加入发布集合，需登记构建、启动和健康检查。
+- [x] `.deploy-state.json` 原子记录各项目 current/previous，兼容旧公共链接；单项切换及失败恢复不重启另一项，Web 单项不备份正在写入的 API 数据，包含 API 时先停写再备份。说明与清理规则见 [Linux 部署](linux_deploy.md)。
+- [x] 20 项隔离部署测试、Shell/Node 语法、模块边界、差异检查通过。Web/API 分别在独立副本中使用 Node 24.12.0、pnpm 10.27.0 离线过滤安装并完成真实生产构建及配置检查，未安装另一应用/Mobile 工作区依赖；Web 保留既有 lint/analytics 警告。
+- [ ] Ubuntu 实机 PM2 切换、健康检查、开机恢复和公网业务回归待部署验证；隔离测试使用假 PM2/端口/健康响应，未连接生产服务。
+
 ## Ubuntu 部署脚本（2026-10-29）
 
 - [x] 新增 `scripts/ubuntu/setup.sh` 和 `deploy.sh`：Ubuntu x64 / arm64 工具准备、独立 release 源码构建、API 配置预检、单实例 PM2 切换、文件 / Redis 备份、健康检查与失败恢复，以及手动代码回退；不修改 Caddy、LiveKit、Redis 服务配置或其他 PM2 应用。

@@ -78,7 +78,7 @@ source /var/vocespace/main/tools/env.sh
 bash scripts/ubuntu/deploy.sh build /var/vocespace/main release-001
 ```
 
-脚本复制源码到独立目录并安装依赖、构建 API/Web、执行检查。只将 `deployment.basePath` 投影到 Web 构建文件，不把业务 JSON 或密钥复制进 release。此时旧服务可继续运行。已有 release 名称不能复用。
+不传 `-p` 时，脚本复制 Web/API 源码到独立目录，安装所选工作区及共享依赖、根构建工具，构建 API/Web 并执行检查。不会复制 Mobile 或其他未选应用的源码/资源，只保留其 package.json 供锁文件和边界校验使用；共享 packages 仍保留。只将 `deployment.basePath` 投影到 Web 构建文件，不把业务 JSON 或密钥复制进 release。此时旧服务可继续运行。已有 release 名称不能复用。
 
 ### 步骤 5：首次迁移旧业务数据
 
@@ -185,6 +185,27 @@ bash scripts/ubuntu/deploy.sh build /var/vocespace/main release-002
 bash scripts/ubuntu/deploy.sh activate /var/vocespace/main release-002
 ```
 
+只改 Web 时，构建和激活都指定同一个项目：
+
+```bash
+bash scripts/ubuntu/deploy.sh build /var/vocespace/main web-002 -p web
+bash scripts/ubuntu/deploy.sh activate /var/vocespace/main web-002 -p web
+bash scripts/ubuntu/deploy.sh status /var/vocespace/main
+```
+
+只改 API 则使用 `-p api`，例如：
+
+```bash
+bash scripts/ubuntu/deploy.sh build /var/vocespace/main api-002 -p api
+bash scripts/ubuntu/deploy.sh activate /var/vocespace/main api-002 -p api
+```
+
+`-p` / `--project` 支持 `web`、`api`、完整包名 `@vocespace/web` / `@vocespace/api`，以及 `all`；省略时等同 `all`。单项构建不运行另一项的 build；单项激活只停止、切换和检查对应 PM2 进程，自动 `pm2 save`，不必再手动 restart。Web 单项发布不备份正在被 API 写入的数据；包含 API 的切换会先停止 API，再备份本地文件。失败时只恢复本次受影响的进程。
+
+只构建了 Web 的 release，激活时遗漏 `-p web` 会报错，不会停掉现有服务。修改影响双方的共享接口、端口或 `basePath` 时，使用默认的双项构建/激活，避免运行版本或配置不匹配。脚本不自动分析源码改动来推断受影响项目。
+
+目前可部署项目是 Web/API；Mobile 使用独立原生构建流程。以后新增服务需在部署脚本/工具中登记其构建入口、产物、PM2 启动及健康检查，不能仅凭任意包名就当成服务器发布。新增子项目不会自动加入默认构建。
+
 数据和唯一 JSON 留在 api-data，不在 release 中。普通配置修改后重启相应进程；Redis/监听地址/worker 等连接级参数需要重启。Web 的 Umami 配置读取运行时 JSON，新页面加载即可使用；现有页面需刷新。修改 `deployment.basePath` 必须重建 Web；脚本端口变更也需生成新 release 元数据，必要时由你调整现有代理。
 
 ### 步骤 10：回退
@@ -194,6 +215,20 @@ cd /root/vocespace/vocespac-client
 bash scripts/ubuntu/deploy.sh rollback /var/vocespace/main
 bash scripts/ubuntu/deploy.sh status /var/vocespace/main
 ```
+
+单独回退 Web / API 使用相同的项目参数：
+
+```bash
+bash scripts/ubuntu/deploy.sh rollback /var/vocespace/main -p web
+bash scripts/ubuntu/deploy.sh status /var/vocespace/main -p web
+# API 对应使用 -p api
+```
+
+每项独立记录当前和上一个版本。省略 `-p` 会回退两项各自的上一个版本；任何一项没有上一个版本时，会在停止进程前报错。分开发布后，这两个目标可以来自不同 release。
+
+版本记录保存在 `ROOT/.deploy-state.json`，不要删除。首次使用新版会自动读取旧 `current/previous` 链接；以后以 JSON 和 `status` 输出为准。只有 Web/API 指向相同版本时，脚本才保留对应的公共链接，版本不同时移除链接，避免误导。**后续操作始终使用更新后的源码目录中的脚本，不要使用旧 release 自带的旧版部署脚本。**
+
+清理旧 release 前先运行不带 `-p` 的 `status`：任何一项的 current 都不能删除；previous 需要保留才能回退。只更新 Web 后，API 可能仍在最早的 release 上运行，不能按目录时间直接删旧版本。脚本不会自动删除 release 或备份。
 
 回退代码，不覆盖配置、Redis 或新增数据。本地持久文件的恢复需先保留当前数据，Redis 临时数据不纳入部署备份或恢复。首次迁移失败尚无 previous，按已记录的旧 PM2 启动方式恢复；不能同时运行新旧写入者。回到本次迁移前的版本时，还需恢复该版本所需的旧环境文件及启动参数。
 

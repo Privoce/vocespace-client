@@ -139,7 +139,7 @@ function fixture() {
     import fs from 'node:fs';
     const args = process.argv.slice(2);
     if (args[0] === 'health') {
-      fs.appendFileSync(process.env.TEST_LOG, 'health ' + args[1] + '\\n');
+      fs.appendFileSync(process.env.TEST_LOG, 'health ' + args[1] + ' ' + args[2] + '\\n');
       process.exit(args[1].endsWith(process.env.FAIL_HEALTH || '__none__') ? 1 : 0);
     }
     if (args[0] === 'ports') process.exit(0);
@@ -150,22 +150,20 @@ function fixture() {
   write(path.join(source, 'package.json'), JSON.stringify({ packageManager: 'pnpm@10.27.0' }));
   for (const file of ['pnpm-lock.yaml', 'pnpm-workspace.yaml', 'tsconfig.json', '.eslintrc.json', '.prettierrc', '.prettierignore', 'LICENSE']) write(path.join(source, file), '{}');
   for (const folder of ['apps/web', 'packages', 'services/api', 'patches']) fs.mkdirSync(path.join(source, folder), { recursive: true });
+  for (const folder of ['apps/web', 'apps/mobile', 'services/api']) write(path.join(source, folder, 'package.json'), '{}');
+  for (const folder of ['apps/web', 'apps/mobile', 'services/api', 'apps/future']) write(path.join(source, folder, 'source.ts'), 'fixture');
+  write(path.join(source, 'apps/future/package.json'), '{}');
   // Sensitive/generated inputs must not survive the release copy.
-  for (const file of ['.env.local', 'vocespace.conf.json', 'apps/web/.env.production', 'services/api/uploads/private.txt', 'apps/mobile/credentials/key.p12', 'apps/web/.next/old', 'packages/test/node_modules/secret']) write(path.join(source, file), 'private');
+  for (const file of ['.env.local', 'vocespace.conf.json', 'apps/web/.env.production', 'services/api/uploads/private.txt', 'apps/mobile/credentials/key.p12', 'apps/web/.next/old', 'packages/test/node_modules/secret', 'apps/web/public/license/private.txt']) write(path.join(source, file), 'private');
   const executable = (name, code) => write(path.join(bin, name), `#!${process.execPath}\n${code}`, 0o700);
   executable('flock', 'process.exit(0)');
-  // GNU mv -T atomically replaces a symlink; emulate that operation on macOS.
-  executable('mv', `
-    if (process.argv[2] !== '-Tf') process.exit(1);
-    require('fs').renameSync(process.argv[3], process.argv[4]);
-  `);
   executable('pnpm', `
     const fs = require('fs'); const path = require('path');
     const a = process.argv.slice(2);
     if (a[0] === '--version') { console.log('10.27.0'); process.exit(0); }
     fs.appendFileSync(process.env.TEST_LOG, 'pnpm ' + a.join(' ') + '\\n');
-    if (a[0] === 'build' && process.env.FAIL_BUILD) process.exit(1);
-    if (a[0] === 'build') for (const file of ['services/api/dist/api.cjs', 'services/api/dist/default-config.cjs', 'services/api/dist/preview/renderer.js', 'services/api/start.mjs', 'apps/web/server.js', 'apps/web/.next/BUILD_ID']) {
+    if (a[0].startsWith('build:') && process.env.FAIL_BUILD) process.exit(1);
+    if (a[0].startsWith('build:')) for (const file of (a[0] === 'build:api' ? ['services/api/dist/api.cjs', 'services/api/dist/default-config.cjs', 'services/api/dist/preview/renderer.js', 'services/api/start.mjs'] : ['apps/web/server.js', 'apps/web/.next/BUILD_ID'])) {
       fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, 'fixture');
     }
   `);
@@ -194,7 +192,7 @@ function fixture() {
   `);
   const env = { ...process.env, PATH: `${bin}:${path.dirname(process.execPath)}:${process.env.PATH}`, TEST_LOG: path.join(dir, 'log'), TEST_STATE: path.join(dir, 'state') };
   write(env.TEST_LOG, '');
-  const run = (command, release, extra = {}) => spawnSync('bash', [path.join(source, 'scripts/ubuntu/deploy.sh'), command, root, ...(release ? [release] : [])], { env: { ...env, ...extra }, encoding: 'utf8' });
+  const run = (command, release, extra = {}, options = []) => spawnSync('bash', [path.join(source, 'scripts/ubuntu/deploy.sh'), command, root, ...(release ? [release] : []), ...options], { env: { ...env, ...extra }, encoding: 'utf8' });
   const success = (result) => assert.equal(result.status, 0, result.stdout + result.stderr);
   success(run('init'));
   const config = { account: { supabase: { url: 'https://supabase.invalid', publishableKey: 'test', serviceRoleKey: 'private' } }, deployment: { publicOrigin: 'https://space.invalid', web: { port: 3030 }, api: { port: 3031 } }, livekit: { url: 'wss://rtc.invalid', key: 'test', secret: 'test' }, redis: { enabled: true, host: 'localhost', port: 6379, db: 0, password: 'private' }, hostToken: 'test' };
@@ -210,7 +208,7 @@ test('build isolates data; init preserves configuration; failed build never stop
     f.success(f.run('init'));
     assert.equal(fs.readFileSync(path.join(f.root, 'api-data/vocespace.conf.json'), 'utf8'), original);
     f.success(f.run('build', 'one'));
-    for (const file of ['.env.local', 'vocespace.conf.json', 'apps/web/.env.production', 'services/api/uploads/private.txt', 'apps/mobile/credentials/key.p12', 'apps/web/.next/old', 'packages/test/node_modules/secret']) {
+    for (const file of ['.env.local', 'vocespace.conf.json', 'apps/web/.env.production', 'services/api/uploads/private.txt', 'apps/mobile/credentials/key.p12', 'apps/web/.next/old', 'packages/test/node_modules/secret', 'apps/web/public/license/private.txt']) {
       assert.equal(fs.existsSync(path.join(f.root, 'releases/one', file)), false, file);
     }
     assert.notEqual(f.run('build', 'one').status, 0);
@@ -314,5 +312,165 @@ test('missing JSON cannot be replaced by bootstrap environment during activation
     assert.match(result.stderr, /Cannot read configuration JSON/);
     assert.ok(!fs.existsSync(file));
     assert.ok(!fs.readFileSync(f.env.TEST_LOG, 'utf8').includes('pm2 stop'));
+  } finally { f.cleanup(); }
+});
+
+const readState = (f) => JSON.parse(fs.readFileSync(path.join(f.root, '.deploy-state.json'))).projects;
+const logText = (f) => fs.readFileSync(f.env.TEST_LOG, 'utf8');
+const assertPeerUntouched = (f, peer) => {
+  assert.doesNotMatch(logText(f), new RegExp(`pm2 (stop|delete) vocespace-${peer}|pm2 start .* --only vocespace-${peer}`));
+  assert.doesNotMatch(logText(f), new RegExp(`health .* ${peer}\\n`));
+};
+
+for (const project of ['web', 'api']) {
+  test(`${project}-only build, activation, failed upgrade and rollback preserve peer and business data`, () => {
+    const f = fixture();
+    try {
+      const peer = project === 'web' ? 'api' : 'web';
+      const options = ['-p', project];
+      f.success(f.run('build', 'base'));
+      f.success(f.run('activate', 'base'));
+      const peerProcess = JSON.parse(fs.readFileSync(f.env.TEST_STATE)).find(p => p.name === `vocespace-${peer}`);
+      write(f.env.TEST_LOG, '');
+      f.success(f.run('build', 'selected', {}, ['--project', `@vocespace/${project}`]));
+      const release = path.join(f.root, 'releases/selected');
+      const meta = JSON.parse(fs.readFileSync(path.join(release, '.deploy.json')));
+      assert.deepEqual(meta.projects, [project]);
+      assert.match(logText(f), new RegExp(`pnpm build:${project}`));
+      assert.doesNotMatch(logText(f), new RegExp(`pnpm build:${peer}`));
+      assert.match(logText(f), new RegExp(`--filter @vocespace/${project}\\.\\.\\. install --frozen-lockfile`));
+      assert.ok(!fs.existsSync(path.join(release, peer === 'api' ? 'services/api/dist' : 'apps/web/.next')));
+      for (const folder of [peer === 'api' ? 'services/api' : 'apps/web', 'apps/mobile', 'apps/future']) {
+        assert.ok(fs.existsSync(path.join(release, folder, 'package.json')));
+        assert.ok(!fs.existsSync(path.join(release, folder, 'source.ts')));
+      }
+      // A partial artifact cannot be activated accidentally with the default all.
+      assert.notEqual(f.run('activate', 'selected').status, 0);
+      assert.doesNotMatch(logText(f), /pm2 (stop|delete|start)/);
+      const backups = fs.readdirSync(path.join(f.root, 'backups')).length;
+      write(f.env.TEST_LOG, '');
+      // Web updates do not attempt a live API file backup.
+      f.success(f.run('activate', 'selected', project === 'web' ? { FAIL_FILE_BACKUP: '1' } : {}, options));
+      assertPeerUntouched(f, peer);
+      assert.equal(fs.readdirSync(path.join(f.root, 'backups')).length, backups + (project === 'api' ? 1 : 0));
+      assert.ok(readState(f)[project].current.endsWith('/selected'));
+      assert.ok(readState(f)[peer].current.endsWith('/base'));
+      assert.deepEqual(JSON.parse(fs.readFileSync(f.env.TEST_STATE)).find(p => p.name === `vocespace-${peer}`), peerProcess);
+      assert.equal(fs.existsSync(path.join(f.root, 'current')), false); // No misleading shared pointer.
+      write(f.env.TEST_LOG, '');
+      const status = f.run('status', undefined, {}, options);
+      f.success(status);
+      assert.match(status.stdout, new RegExp(`${project}: current=.*selected previous=.*base`));
+      assertPeerUntouched(f, peer);
+      f.success(f.run('build', 'bad', {}, options));
+      const originalState = readState(f);
+      write(f.env.TEST_LOG, '');
+      assert.notEqual(f.run('activate', 'bad', { FAIL_HEALTH: '/bad' }, options).status, 0);
+      assertPeerUntouched(f, peer);
+      assert.deepEqual(readState(f), originalState);
+      assert.ok(JSON.parse(fs.readFileSync(f.env.TEST_STATE)).find(p => p.name === `vocespace-${project}`).pm2_env.pm_exec_path.includes('/selected/'));
+      write(path.join(f.root, 'api-data/new-data'), 'retain');
+      write(f.env.TEST_LOG, '');
+      f.success(f.run('rollback', undefined, {}, options));
+      assertPeerUntouched(f, peer);
+      assert.ok(readState(f)[project].current.endsWith('/base'));
+      assert.ok(readState(f)[project].previous.endsWith('/selected'));
+      assert.equal(fs.readFileSync(path.join(f.root, 'api-data/new-data'), 'utf8'), 'retain');
+    } finally { f.cleanup(); }
+  });
+}
+
+test('legacy shared pointers migrate; mixed releases recover and roll back independently', () => {
+  const f = fixture();
+  try {
+    for (const name of ['base', 'full']) f.success(f.run('build', name));
+    f.success(f.run('activate', 'base'));
+    fs.unlinkSync(path.join(f.root, '.deploy-state.json'));
+    // Simulate an older release without project metadata, managed by legacy links.
+    const metaFile = path.join(f.root, 'releases/base/.deploy.json');
+    const meta = JSON.parse(fs.readFileSync(metaFile));
+    delete meta.projects;
+    write(metaFile, JSON.stringify(meta));
+    f.success(f.run('build', 'web-next', {}, ['-p', 'web']));
+    f.success(f.run('activate', 'web-next', {}, ['-p', 'web']));
+    const mixed = readState(f);
+    assert.notEqual(f.run('activate', 'full', { FAIL_HEALTH: '/full' }).status, 0);
+    assert.deepEqual(readState(f), mixed);
+    for (const proc of JSON.parse(fs.readFileSync(f.env.TEST_STATE))) {
+      assert.ok(proc.pm2_env.pm_exec_path.startsWith(mixed[proc.name.replace('vocespace-', '')].current + '/'));
+    }
+    f.success(f.run('activate', 'full'));
+    assert.ok(readState(f).web.previous.endsWith('/web-next'));
+    assert.ok(readState(f).api.previous.endsWith('/base'));
+    f.success(f.run('rollback'));
+    assert.ok(readState(f).web.current.endsWith('/web-next'));
+    assert.ok(readState(f).api.current.endsWith('/base'));
+  } finally { f.cleanup(); }
+});
+
+test('invalid selection, missing rollback, unmanaged peer and changed peer config fail before stopping', () => {
+  const f = fixture();
+  try {
+    for (const options of [['-p', 'mobile'], ['-p'], ['-p', 'web', '-p', 'api'], ['--typo']]) {
+      assert.notEqual(f.run('build', 'invalid', {}, options).status, 0);
+    }
+    assert.ok(!fs.existsSync(path.join(f.root, 'releases/invalid')));
+    f.success(f.run('build', 'base'));
+    f.success(f.run('activate', 'base'));
+    f.success(f.run('build', 'web-next', {}, ['-p', 'web']));
+    write(f.env.TEST_LOG, '');
+    assert.notEqual(f.run('rollback', undefined, {}, ['-p', 'api']).status, 0);
+    const processes = fs.readFileSync(f.env.TEST_STATE, 'utf8');
+    const bad = JSON.parse(processes);
+    bad.find(p => p.name === 'vocespace-api').pm2_env.pm_exec_path = '/outside/start.mjs';
+    write(f.env.TEST_STATE, JSON.stringify(bad));
+    assert.notEqual(f.run('activate', 'web-next', {}, ['-p', 'web']).status, 0);
+    write(f.env.TEST_STATE, processes);
+    const configFile = path.join(f.root, 'api-data/vocespace.conf.json');
+    const config = JSON.parse(fs.readFileSync(configFile));
+    config.deployment.api.port = 4041;
+    write(configFile, JSON.stringify(config));
+    f.success(f.run('build', 'changed-port', {}, ['-p', 'web']));
+    assert.notEqual(f.run('activate', 'changed-port', {}, ['-p', 'web']).status, 0);
+    assert.doesNotMatch(logText(f), /pm2 (stop|delete|start)/);
+    assert.ok(readState(f).web.current.endsWith('/base'));
+  } finally { f.cleanup(); }
+});
+
+
+test('completing a shared release skips an already updated API and its live file backup', () => {
+  const f = fixture();
+  try {
+    for (const name of ['base', 'full']) f.success(f.run('build', name));
+    f.success(f.run('activate', 'base'));
+    f.success(f.run('activate', 'full', {}, ['-p', 'api']));
+    const before = fs.readdirSync(path.join(f.root, 'backups')).length;
+    write(f.env.TEST_LOG, '');
+    f.success(f.run('activate', 'full', { FAIL_FILE_BACKUP: '1' }));
+    assertPeerUntouched(f, 'api');
+    assert.equal(fs.readdirSync(path.join(f.root, 'backups')).length, before);
+    assert.ok(readState(f).api.current.endsWith('/full'));
+    assert.ok(readState(f).web.current.endsWith('/full'));
+    f.success(f.run('rollback'));
+    assert.ok(readState(f).api.current.endsWith('/base'));
+    assert.ok(readState(f).web.current.endsWith('/base'));
+  } finally { f.cleanup(); }
+});
+
+test('first partial releases can be activated independently; failure leaves the peer running', () => {
+  const f = fixture();
+  try {
+    for (const project of ['web', 'api']) f.success(f.run('build', project, {}, ['-p', project]));
+    f.success(f.run('activate', 'web', {}, ['-p', 'web']));
+    const original = readState(f);
+    assert.equal(original.api.current, null);
+    write(f.env.TEST_LOG, '');
+    assert.notEqual(f.run('activate', 'api', { FAIL_HEALTH: '/api' }, ['-p', 'api']).status, 0);
+    assertPeerUntouched(f, 'web');
+    assert.deepEqual(readState(f), original);
+    assert.deepEqual(JSON.parse(fs.readFileSync(f.env.TEST_STATE)).map(p => p.name), ['vocespace-web']);
+    f.success(f.run('activate', 'api', {}, ['-p', 'api']));
+    assert.ok(readState(f).api.current.endsWith('/api'));
+    assert.ok(readState(f).web.current.endsWith('/web'));
   } finally { f.cleanup(); }
 });
