@@ -47,6 +47,7 @@ export async function authorizeRequest(request: ApiRequest, path: string) {
   const admin = verifyHostToken(request.headers.get('x-vocespace-host-token') || body.hostToken);
   const onlyQuery = (...keys: string[]) => [...q.keys()].every((key) => keys.includes(key));
   const publicRead = path === '/api/hello' || path === '/api/webhook/status' ||
+    path === '/api/space' && method === 'GET' && q.get('dashboard') === 'true' && onlyQuery('dashboard') ||
     path === '/api/connection-details' && method === 'GET' ||
     path === '/api/conf' && (method === 'GET' || q.has('check') && onlyQuery('check') || q.has('setup') && onlyQuery('setup')) ||
     path === '/api/space' && (method === 'GET' && q.has('pre') && onlyQuery('pre','spaceName') || method === 'POST' && q.has('nameCheck') && onlyQuery('nameCheck')) ||
@@ -131,7 +132,16 @@ export async function authorizeRequest(request: ApiRequest, path: string) {
       if (!socket || socket.data.sessionId !== principal.id) throw new AccessError(403, 'SOCKET_MISMATCH');
     }
   }
-  if (path === '/api/ai') { body.isAuth = !!principal.platform; q.set('isAuth', String(!!principal.platform)); }
+  if (path === '/api/ai') {
+    // Room management does not grant access to another account's private AI archive.
+    if (targets.some((target) => target !== id)) throw new AccessError(403, 'IDENTITY_MISMATCH');
+    body.isAuth = principal.platform?.id === id;
+    q.set('isAuth', String(body.isAuth));
+  }
+  if (path === '/api/space' && q.get('apps') === 'upload') {
+    // A manager may update room data, but cannot sync it into another user's account.
+    body.isAuth = principal.platform?.id === id && body.participantId === id;
+  }
   if (q.get('enter') === 'true') {
     body.uid = id; body.identity = principal.platform?.identity || 'guest'; body.auth = principal.platform?.auth || 'other';
   }

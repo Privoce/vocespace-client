@@ -3,6 +3,7 @@
     "publicOrigin": "http://localhost:3000",
     "basePath": "",
     "dataDir": ".",
+    "platform": {"host": "127.0.0.1", "port": 3002, "apiUrl": "http://127.0.0.1:3001", "publicOrigin": "http://localhost:3002"},
     "api": { "host": "127.0.0.1", "port": 3001, "uploadLimitBytes": 115343360, "workerEnabled": true, "promptDir": "", "previewAssetsDir": "" },
     "web": { "host": "127.0.0.1", "port": 3000, "apiUrl": "http://127.0.0.1:3001" },
     "mobile": { "apiUrl": "https://vocespace.com", "meetingUiPreview": false }

@@ -64,10 +64,12 @@ it('public projections omit secrets, including unknown nested fields', () => {
     account: { supabase: { serviceRoleKey: 'secret-account' } },
     billing: { licenseSecret: 'secret-license', stripe: { secretKey: 'secret-stripe' } },
     analytics: { enabled: true, privateKey: 'secret-unknown' },
-    deployment: { mobile: { apiUrl: 'https://mobile.invalid', privateKey: 'secret-mobile' } },
+    deployment: { mobile: { apiUrl: 'https://mobile.invalid', privateKey: 'secret-mobile' }, platform: { publicOrigin: 'https://portal.invalid', apiUrl: 'http://internal.invalid', privateKey: 'secret-platform' } },
   });
   const result = publicConfiguration(conf);
   expect(result.mobile.apiUrl).toBe('https://mobile.invalid');
+  expect(result.platformOrigin).toBe('https://portal.invalid');
+  expect(JSON.stringify(result)).not.toContain('internal.invalid');
   expect(result.analytics.enabled).toBe(true);
   expect(JSON.stringify(result)).not.toContain('secret-');
   expect(JSON.stringify(clearReadableConf(conf))).not.toContain('secret-');

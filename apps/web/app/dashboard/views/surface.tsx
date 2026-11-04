@@ -189,9 +189,7 @@ export function DashboardSurface({ model }: { model: DashboardModel }) {
           onCancel={() => setOpenConf(false)}
           onConfirm={confirmConfHandle}
           onReload={() => {
-            setHostToken('');
             setOpenConf(false);
-            setIsHostManager(false);
             messageApi.success(t('dashboard.conf.success.update'));
           }}
           messageApi={messageApi}

@@ -232,6 +232,20 @@ bash scripts/ubuntu/deploy.sh status /var/vocespace/main -p web
 
 回退代码，不覆盖配置、Redis 或新增数据。本地持久文件的恢复需先保留当前数据，Redis 临时数据不纳入部署备份或恢复。首次迁移失败尚无 previous，按已记录的旧 PM2 启动方式恢复；不能同时运行新旧写入者。回到本次迁移前的版本时，还需恢复该版本所需的旧环境文件及启动参数。
 
+### 可选：使用 Deploy 发布工作台
+
+已有部署目录配置完成后，可启动独立 `deploy` 子项目，端口为 **4848**，使用同一份 `api-data/vocespace.conf.json` 的 `hostToken` 登录：
+
+```bash
+cd /root/vocespace/vocespac-client
+source /var/vocespace/main/tools/env.sh
+pnpm install --frozen-lockfile
+pnpm build:deploy
+pnpm start:deploy --root /var/vocespace/main
+```
+
+页面可创建发布、拉取最新代码更新发布、回滚及清理旧版本，并查看持续刷新的日志。Web / Server 独立选择，后台调用内置脚本；平台自身不随 Web/API 重启。PM2 常驻命令、日志位置和限制见 [Deploy 平台说明](docs/deploy-platform.md)。
+
 ## 二、源码部署
 
 ### 步骤 1：准备工具和源码
@@ -358,3 +372,15 @@ pm2 save
 ```
 
 只回退代码，不回滚 Supabase / Redis / 配置。完成公网回归后再结束维护窗口。
+
+
+## Platform 账号门户子项目
+
+原独立账号门户已迁入 `apps/platform`（`@vocespace/platform`），可从 Deploy 页面的 **Platform** 选项独立发布，或使用：
+
+```bash
+bash scripts/ubuntu/deploy.sh build /var/vocespace/main platform-001 -p platform
+bash scripts/ubuntu/deploy.sh activate /var/vocespace/main platform-001 -p platform
+```
+
+默认监听 `127.0.0.1:3002`。需在固定 JSON 中设置 `deployment.platform.publicOrigin` 与 `apiUrl`，代理域名到该端口，先升级统一 API，再发布 Platform。`all` 保持原 Web/API 语义。配置、OAuth 回调、回滚和迁移范围见 [Platform 迁移说明](docs/platform-migration.md)。

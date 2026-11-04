@@ -1,0 +1,22 @@
+// Deploy is a separate operations UI. Keep its initial Chinese copy out of the client implementation.
+export const deployText = {
+  title: '发布工作台', brand: 'VoceSpace', intro: '管理 Web、Server 与 Platform 的发布、版本和操作记录。',
+  loginTitle: '验证管理员身份', loginHint: '使用 vocespace.conf.json 中的 hostToken 登录。',
+  token: '管理员令牌', login: '验证并进入', logout: '退出登录', loading: '正在加载…',
+  web: 'Web', api: 'Server', platform: 'Platform', current: '当前版本', previous: '回退版本', empty: '尚未发布',
+  create: '创建发布', update: '更新发布', createHint: '使用服务器当前源码，构建新版本并上线。',
+  updateHint: '拉取当前分支最新代码，构建新版本并上线。', project: '发布项目', version: '版本名称',
+  versionHint: '例如 web-002、api-002 或 platform-002；已存在的版本名不能重复使用。', submit: '开始发布',
+  releases: '版本记录', releaseHint: '当前版本和回退保留版本不可删除。', built: '构建时间',
+  state: '状态', actions: '操作', ready: '可用', incomplete: '未完成', active: '运行中', retained: '回退保留',
+  rollback: '回滚至此版本', remove: '删除版本', noReleases: '还没有版本，从创建发布开始。',
+  history: '操作日志', noJobs: '还没有操作记录。', chooseJob: '选择一项操作查看日志。',
+  queued: '等待执行', running: '执行中', succeeded: '已完成', failed: '失败', interrupted: '已中断',
+  busy: '已有任务正在执行，完成后可继续操作。', refresh: '刷新', live: '日志自动刷新',
+  deleteConfirm: '确认删除这个旧版本？删除后无法恢复该版本文件。',
+  rollbackConfirm: '确认切换到这个版本？对应服务会短暂重启。',
+  publishConfirm: '确认构建并上线这个版本？构建通过后会自动切换对应服务。',
+  deleteAction: '删除旧版本', rollbackAction: '回滚版本', autoScroll: '跟随最新日志',
+  error: '请求失败，请稍后重试。', logsEmpty: '任务已创建，等待日志输出…',
+  only: '仅此项目', started: '开始', finished: '结束', retryHint: '请检查日志和当前版本，再决定下一步操作。',
+};

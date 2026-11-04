@@ -15,6 +15,7 @@ import {
   VocespaceConfig,
 } from '@/lib/std/conf';
 import { api } from '@/lib/api';
+import { ApiError } from '@vocespace/client-sdk';
 import { isUndefinedNumber, isUndefinedString } from '@/lib/std';
 import { MessageInstance } from 'antd/es/message/interface';
 import { socket } from '@/lib/realtime/socket';
@@ -223,13 +224,17 @@ export function ConfQulity({ isOwner, messageApi, space, onReload }: ConfQulityP
 
 export function useVoceSpaceConf() {
   const verifiedToken = useRef<string | undefined>(undefined);
+  const configRequest = useRef(0);
   const [conf, setConf] = useState<ReadableConf | null>(null);
   // useCallback 稳定引用：getConf 被 useDashboardData 的 effect 依赖，
   // 若每次渲染都是新函数，配合 setConf 触发的重渲染会形成请求死循环
   const getConf = useCallback(async (hostToken?: string) => {
+    const generation = ++configRequest.current;
     const response = await api.getConf(hostToken);
+    if (generation !== configRequest.current) return undefined;
     if (response.ok) {
       const nextConf = (await response.json()) as ReadableConf;
+      if (generation !== configRequest.current) return undefined;
       setConf(nextConf);
       return nextConf;
     }
@@ -243,7 +248,8 @@ export function useVoceSpaceConf() {
       return success;
     }
     verifiedToken.current = undefined;
-    return false;
+    const error = await response.json().catch(() => ({}));
+    throw new ApiError(response.status, error.code || 'HTTP_ERROR', 'Verification request failed');
   };
 
   const updateCreateSpaceConf = async (

@@ -7,5 +7,9 @@ export function publicConfig(): PublicClientConf {
     const value = (window as Window & { __VOCESPACE_CONFIG__?: PublicClientConf }).__VOCESPACE_CONFIG__;
     if (value) return value;
   }
-  return { basePath, mobile: defaults.deployment.mobile, analytics: defaults.analytics, debug: defaults.debug };
+  return { basePath, platformOrigin: defaults.deployment.platform.publicOrigin, mobile: defaults.deployment.mobile, analytics: defaults.analytics, debug: defaults.debug };
+}
+
+export function platformOrigin() {
+  return publicConfig().platformOrigin || defaults.deployment.platform.publicOrigin;
 }

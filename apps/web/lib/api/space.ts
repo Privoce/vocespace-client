@@ -93,11 +93,19 @@ export const createSpace = async (username: string) => {
 /**
  * 获取所有空间的信息
  */
-export const allSpaceInfos = async () => {
+export const dashboardData = async () => {
+  const url = new URL(SPACE_API, window.location.origin);
+  url.searchParams.set('dashboard', 'true');
+  return apiFetch(url.toString());
+};
+
+export const allSpaceInfos = async (hostToken?: string) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('all', 'true');
   url.searchParams.append('detail', 'true');
-  return await apiFetch(url.toString());
+  return await apiFetch(url.toString(), {
+    headers: hostToken ? { 'x-vocespace-host-token': hostToken } : undefined,
+  });
 };
 
 export const updateSpaceInfo = async (spaceName: string, info: Partial<SpaceInfo>) => {
@@ -117,10 +125,12 @@ export const updateSpaceInfo = async (spaceName: string, info: Partial<SpaceInfo
 /**
  * 获取历史空间信息
  */
-export const historySpaceInfos = async () => {
+export const historySpaceInfos = async (hostToken?: string) => {
   const url = new URL(SPACE_API, window.location.origin);
   url.searchParams.append('timeRecord', 'true');
-  return await apiFetch(url.toString());
+  return await apiFetch(url.toString(), {
+    headers: hostToken ? { 'x-vocespace-host-token': hostToken } : undefined,
+  });
 };
 /**
  *  向服务器请求一个唯一的用户名

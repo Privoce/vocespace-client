@@ -1,5 +1,6 @@
 'use client';
 
+import { platformOrigin } from '@/lib/runtime-config';
 import { logoutWebSession } from '@/lib/api/client';
 
 import { SvgResource } from '@/components/Icon/index';
@@ -18,7 +19,7 @@ export function LoginButtons({ space, serverUrl }: { space: string; serverUrl: s
 
   const toVocespace = (google = false) => {
     window.open(
-      `https://home.vocespace.com/auth/login?from=vocespace&spaceName=${space}&auth=${
+      `${platformOrigin()}/auth/login?from=vocespace&spaceName=${encodeURIComponent(space)}&auth=${
         google ? 'google' : 'email'
       }&redirectTo=${encodeURIComponent(`${serverUrl}`)}`,
       '_self',
@@ -73,7 +74,7 @@ export function LoginStateBtn({ data }: LoginStateBtnProps) {
             await logoutWebSession();
             localStorage.removeItem(VOCESPACE_PLATFORM_USER);
             if (data?.auth === 'vocespace') {
-              window.open(`https://home.vocespace.com/auth/user/${userId}?logout=true`, '_self');
+              window.open(`${platformOrigin()}/auth/user/${userId}?logout=true`, '_self');
             } else {
               window.location.reload();
             }
@@ -94,9 +95,9 @@ export function LoginStateBtn({ data }: LoginStateBtnProps) {
         onClick={(e) => {
           e.preventDefault();
           if (!userId) {
-            window.open(`https://home.vocespace.com/auth/login`, '_self');
+            window.open(`${platformOrigin()}/auth/login`, '_self');
           } else {
-            window.open(`https://home.vocespace.com/auth/user/${userId}`, '_self');
+            window.open(`${platformOrigin()}/auth/user/${userId}`, '_self');
           }
         }}
       >

@@ -7,11 +7,14 @@ import ts from 'typescript';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const configFile = ts.readConfigFile(path.join(root, 'tsconfig.json'), ts.sys.readFile);
 const { options } = ts.parseJsonConfigFileContent(configFile.config, ts.sys, root);
+const platformConfig = ts.readConfigFile(path.join(root, 'apps/platform/tsconfig.json'), ts.sys.readFile);
+const platformOptions = platformConfig.error ? options : ts.parseJsonConfigFileContent(platformConfig.config, ts.sys, path.join(root, 'apps/platform')).options;
+const resolveOptions = (file) => relative(file).startsWith('apps/platform/') ? platformOptions : options;
 const rules = {
   contracts: [],
   i18n: [],
   'meeting-core': [],
-  ui: ['react', 'react-native', '@vocespace/meeting-core'],
+  ui: ['react', 'react-native', '@vocespace/meeting-core', '@vocespace/i18n'],
   domain: ['@vocespace/contracts', 'dayjs'],
   'client-sdk': ['@vocespace/contracts', 'socket.io-client'],
   'server-core': ['@vocespace/contracts'],
@@ -59,7 +62,7 @@ for (const [name, allowed] of Object.entries(rules)) {
   for (const file of files(directory)) {
     const { imports, globals } = readModule(file);
     for (const specifier of imports) {
-      const resolved = ts.resolveModuleName(specifier, file, options, ts.sys).resolvedModule;
+      const resolved = ts.resolveModuleName(specifier, file, resolveOptions(file), ts.sys).resolvedModule;
       const local = resolved && path.resolve(resolved.resolvedFileName).startsWith(directory + path.sep);
       if (!local && !allowed.some((name) => specifier === name || specifier.startsWith(`${name}/`))) {
         errors.add(`${relative(file)}: forbidden dependency ${specifier}`);
@@ -75,7 +78,7 @@ for (const [name, allowed] of Object.entries(rules)) {
 const visited = new Set();
 function visitClient(file, via) {
   const name = relative(file);
-  if (name.startsWith('packages/server-core/') || name.startsWith('services/') || name.startsWith('apps/web/lib/server/')) {
+  if (name.startsWith('packages/server-core/') || name.startsWith('services/') || name.startsWith('apps/web/lib/server/') || name.startsWith('apps/deploy/server/') || name === 'apps/platform/lib/server-config.ts' || name.startsWith('apps/platform/lib/supabase/server')) {
     errors.add(`${relative(via)}: client reaches server-only module ${name}`);
     return;
   }
@@ -85,15 +88,15 @@ function visitClient(file, via) {
     if (specifier === '@vocespace/server-core' || specifier === '@vocespace/config-node') {
       errors.add(`${name}: client imports ${specifier}`);
     }
-    const resolved = ts.resolveModuleName(specifier, file, options, ts.sys).resolvedModule;
+    const resolved = ts.resolveModuleName(specifier, file, resolveOptions(file), ts.sys).resolvedModule;
     if (resolved && !resolved.isExternalLibraryImport && /\.[cm]?[jt]sx?$/.test(resolved.resolvedFileName)) {
       visitClient(path.resolve(resolved.resolvedFileName), file);
     }
   }
 }
-for (const directory of ['apps/web/app', 'apps/web/components', 'apps/web/lib']) {
+for (const directory of ['apps/web/app', 'apps/web/components', 'apps/web/lib', 'apps/deploy/client', 'apps/platform/app', 'apps/platform/components', 'apps/platform/lib', 'apps/platform/hooks']) {
   for (const file of files(path.join(root, directory))) {
-    if (readModule(file).client || relative(file).startsWith('apps/web/lib/api/')) visitClient(file, file);
+    if (readModule(file).client || relative(file).startsWith('apps/web/lib/api/') || relative(file).startsWith('apps/deploy/client/')) visitClient(file, file);
   }
 }
 // Native imports only its own source and explicitly shared workspace packages.
@@ -103,7 +106,7 @@ for (const file of files(path.join(root, 'apps/mobile'))) {
     if (specifier.startsWith('@vocespace/') && !['@vocespace/contracts', '@vocespace/domain', '@vocespace/meeting-core', '@vocespace/client-sdk', '@vocespace/ui', '@vocespace/i18n'].includes(specifier.split('/').slice(0, 2).join('/'))) {
       errors.add(`${relative(file)}: forbidden Native dependency ${specifier}`);
     }
-    const resolved = ts.resolveModuleName(specifier, file, options, ts.sys).resolvedModule;
+    const resolved = ts.resolveModuleName(specifier, file, resolveOptions(file), ts.sys).resolvedModule;
     if (resolved && !resolved.isExternalLibraryImport) {
       const target = relative(path.resolve(resolved.resolvedFileName));
       if (!['apps/mobile/', 'packages/contracts/', 'packages/domain/', 'packages/client-sdk/', 'packages/ui/', 'packages/meeting-core/', 'packages/i18n/'].some((prefix) => target.startsWith(prefix))) {
@@ -115,7 +118,7 @@ for (const file of files(path.join(root, 'apps/mobile'))) {
 // All backend imports (including type-only imports) stay out of the Web application.
 for (const file of files(path.join(root, 'services'))) {
   for (const specifier of readModule(file).imports) {
-    const resolved = ts.resolveModuleName(specifier, file, options, ts.sys).resolvedModule;
+    const resolved = ts.resolveModuleName(specifier, file, resolveOptions(file), ts.sys).resolvedModule;
     const target = resolved && relative(path.resolve(resolved.resolvedFileName));
     if (/^(next|react|react-dom|antd)(\/|$)/.test(specifier) || target?.startsWith('apps/') || target?.startsWith('lib/')) {
       errors.add(`${relative(file)}: backend reaches application/legacy source ${specifier}`);
@@ -123,7 +126,7 @@ for (const file of files(path.join(root, 'services'))) {
   }
 }
 // Each workspace owns its dependencies; root node_modules must not mask missing declarations.
-for (const directory of ['apps/web', 'apps/mobile', 'services/api', ...Object.keys(rules).map((name) => `packages/${name}`)]) {
+for (const directory of ['apps/web', 'apps/mobile', 'apps/deploy', 'apps/platform', 'services/api', ...Object.keys(rules).map((name) => `packages/${name}`)]) {
   const manifest = JSON.parse(fs.readFileSync(path.join(root, directory, 'package.json'), 'utf8'));
   const declared = { ...manifest.dependencies, ...manifest.devDependencies, ...manifest.peerDependencies };
   for (const file of files(path.join(root, directory))) {

@@ -1,0 +1,51 @@
+@import "antd/dist/reset.css";
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  color-scheme: dark;
+  background-color: #111;
+}
+
+html,
+body {
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  margin: 0px;
+}
+
+.uni-page-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+:where(.css-dev-only-do-not-override-otawwg).ant-input-textarea-show-count
+  .ant-input-data-count {
+  color: #fff !important;
+}
+
+:where(
+    .css-dev-only-do-not-override-otawwg
+  ).ant-select-single.ant-select-lg.ant-select-show-arrow
+  .ant-select-selection-item {
+  padding-inline-end: 0px !important;
+}
+
+:where(.css-dev-only-do-not-override-14l66k9).ant-list-split .ant-list-item {
+  border-block-end: 0px solid #8c8c8c;
+}
+
+.ant-input-data-count {
+  color: #fff !important;
+}
+.ant-select-selection-item {
+  padding-inline-end: 0px !important;
+}
+

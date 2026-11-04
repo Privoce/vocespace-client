@@ -117,7 +117,7 @@ export function MeetingMenu({ actions, Button, Icon, footer }: MeetingMenuProps)
 const styles = StyleSheet.create({
   toolbar: {
     flexDirection: 'row',
-    justifyContent: 'space-around',
+    justifyContent: 'space-between',
     alignItems: 'center',
     width: '100%',
     paddingHorizontal: 8,
@@ -125,7 +125,7 @@ const styles = StyleSheet.create({
     gap: 4,
     backgroundColor: '#0B1015',
   },
-  action: { position: 'relative', alignItems: 'center', flex: 1, minWidth: 0, gap: 7 },
+  action: { position: 'relative', alignItems: 'center', minWidth: 0, gap: 7 },
   featured: { flexDirection: 'row', gap: 10 },
   featuredContent: {
     padding: 14,

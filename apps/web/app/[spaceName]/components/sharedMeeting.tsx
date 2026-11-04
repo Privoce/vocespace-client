@@ -199,27 +199,10 @@ export default function SharedMeeting({
           Button={Button}
           Icon={Icon}
           chatLabel={t('common.chat')}
-          membersLabel={t('phone_meeting.members')}
           expandLabel={t('common.full_screen')}
-          count={tiles.filter((tile) => !tile.screen).length}
           unread={chat.chatMsg.msgs.length}
-          onExpand={(tab) => {
-            if (tab === 'chat') model.setChatOpen(true);
-            else setMembersOpen(true);
-          }}
+          onExpand={() => model.setChatOpen(true)}
           chat={<SharedChat compact model={chat} />}
-          members={
-            <MeetingMembers
-              compact
-              Button={Button}
-              Icon={Icon}
-              members={tiles.filter((tile) => !tile.screen)}
-              hostLabel={t('more.participant.host')}
-              selfLabel={t('phone_meeting.self')}
-              speakingLabel={t('phone_meeting.speaking')}
-              onlineLabel={t('phone_meeting.online')}
-            />
-          }
         />
       }
       controls={controls}

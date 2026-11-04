@@ -1,3 +1,4 @@
+import { platformOrigin } from '@/lib/runtime-config';
 import { Badge, Button, Dropdown, MenuProps } from 'antd';
 import { SvgResource } from '@/components/Icon/index';
 import { useI18n } from '@/lib/i18n/i18n';
@@ -192,7 +193,7 @@ export function MoreButtonInner({
         break;
       case 'platform_user':
         if (platUser && platUser.id) {
-          window.open(`https://home.vocespace.com/auth/user/${platUser.id}`, '_blank');
+          window.open(`${platformOrigin()}/auth/user/${platUser.id}`, '_blank');
         }
         break;
       default:

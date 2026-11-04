@@ -3,6 +3,7 @@
     "publicOrigin": "https://vocespace.com",
     "basePath": "",
     "dataDir": ".",
+    "platform": {"host": "127.0.0.1", "port": 3002, "apiUrl": "http://127.0.0.1:3001", "publicOrigin": "http://localhost:3002"},
     "api": {
       "host": "127.0.0.1",
       "port": 3031,

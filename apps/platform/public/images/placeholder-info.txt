@@ -1,0 +1,12 @@
+This folder contains placeholder images for the Vocespace platform.
+
+To add actual images, replace these with:
+- space-placeholder.jpg (default space image)
+- tech-space.jpg (technology space image)
+- startup-space.jpg (startup space image) 
+- design-space.jpg (design space image)
+- finance-space.jpg (finance space image)
+- language-space.jpg (language learning space image)
+- fitness-space.jpg (fitness space image)
+
+Images should be approximately 400x200 pixels for optimal display in the space cards.

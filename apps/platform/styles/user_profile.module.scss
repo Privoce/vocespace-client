@@ -1,0 +1,378 @@
+.userProfile {
+  height: 100%;
+  width: 100%;
+  max-width: 520px;
+  min-width: 300px;
+  .container {
+    width: 100%;
+    height: 100%;
+  }
+
+  .profile {
+    height: 100%;
+    width: 100%;
+
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    position: relative;
+    gap: 16px;
+    .profileActions {
+      position: absolute;
+      bottom: 0px;
+    }
+    .header {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .avatarSection {
+      height: fit-content;
+      width: 100%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .profileInfo {
+      width: 100%;
+      .username {
+        font-size: 24px;
+        font-weight: 500;
+        text-align: center;
+        width: 100%;
+        line-height: 1.2;
+      }
+
+      .socialLinks {
+        display: flex;
+        gap: 12px;
+        height: fit-content;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        a {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        }
+      }
+
+      .bio {
+        color: #8c8c8c;
+        font-size: 14px;
+        line-height: 1.5;
+        text-align: center;
+        width: 100%;
+        padding: 8px 0;
+      }
+
+      .metaInfo {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 24px;
+        width: 100%;
+        margin-top: 12px;
+        .metaItem {
+          cursor: pointer;
+          margin-top: 0px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 6px;
+          color: #8c8c8c;
+          font-size: 14px;
+          background-color: #161616;
+          padding: 12px;
+          border-radius: 8px;
+          height: 100%;
+          width: 100%;
+          .icon {
+            color: #22ccee;
+            font-size: 16px;
+          }
+          &_content {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 12px;
+          }
+        }
+      }
+    }
+  }
+
+  .profileStats {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    gap: 16px;
+    .statCard {
+      flex: 1;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+      }
+
+      .statValue {
+        font-size: 24px;
+        font-weight: 700;
+        color: #22ccee;
+      }
+    }
+  }
+
+  .contentGrid {
+    display: inline-flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    width: 100%;
+
+    .mainContent {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      flex-wrap: wrap;
+      width: 770px;
+      gap: 16px;
+      .sectionCard {
+        width: 100%;
+        &_inner {
+          height: 100%;
+          width: 100%;
+          display: flex;
+          flex-wrap: wrap;
+          align-items: flex-start;
+          justify-content: center;
+          gap: 16px;
+        }
+        .sectionTitle {
+          width: 100%;
+          font-size: 18px;
+          font-weight: 600;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          .icon {
+            color: #22ccee;
+          }
+        }
+        .calendarHeader {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          width: 100%;
+          .yearNav {
+            display: flex;
+            gap: 8px;
+          }
+        }
+        .activityCalendar {
+          width: 100%;
+          overflow-x: scroll;
+          scrollbar-width: thin;
+          padding: 0 0 8px 0;
+          .heatmapGrid {
+            display: grid;
+            grid-template-columns: repeat(53, 1fr);
+            gap: 2px;
+            background-color: transparent;
+            .heatmapCell {
+              width: 12px;
+              height: 12px;
+              border-radius: 2px;
+              background: #ebedf0;
+              cursor: pointer;
+              transition: all 0.2s;
+
+              &.level-0 {
+                background: #ebedf0;
+              }
+              &.level-1 {
+                background: #c6e48b;
+              }
+              &.level-2 {
+                background: #7bc96f;
+              }
+              &.level-3 {
+                background: #239a3b;
+              }
+              &.level-4 {
+                background: #196127;
+              }
+
+              &:hover {
+                transform: scale(1.2);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+              }
+            }
+          }
+        }
+        .calendarLegend {
+          width: 100%;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 12px;
+
+          .legendItem {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+          }
+
+          .heatmapCell {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            background: #ebedf0;
+            cursor: pointer;
+            transition: all 0.2s;
+
+            &.level-0 {
+              background: #ebedf0;
+            }
+            &.level-1 {
+              background: #c6e48b;
+            }
+            &.level-2 {
+              background: #7bc96f;
+            }
+            &.level-3 {
+              background: #239a3b;
+            }
+            &.level-4 {
+              background: #196127;
+            }
+
+            &:hover {
+              transform: scale(1.2);
+              box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            }
+          }
+        }
+        .spaceTypeChart {
+          .chartContainer {
+            height: 300px;
+            margin-top: 16px;
+          }
+        }
+      }
+    }
+
+    .sidebar {
+      width: 244px;
+      .sectionCard {
+        .sectionTitle {
+          font-size: 16px;
+          font-weight: 700;
+          display: inline-flex;
+          align-items: center;
+          justify-content: flex-start;
+          gap: 8px;
+        }
+        .activityItem {
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          .activityIcon {
+            height: 48px;
+            width: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+          }
+          .activityContent {
+            width: calc(100% - 48px);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+            .activityTime {
+              width: 100%;
+              text-align: end;
+              font-size: 12px;
+              color: #8c8c8c;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+.join {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  position: relative;
+
+  &_content {
+    // position: absolute;
+    z-index: 2;
+    padding: 32px 16px 16px 16px;
+  }
+  &_title {
+    font-size: 32px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #04d5ff;
+  }
+  &_subtitle {
+    font-size: 18px;
+    width: 100%;
+    text-align: left;
+    margin-bottom: 16px;
+  }
+  &_image {
+    width: 100%;
+    height: 100%;
+    z-index: 1;
+    margin-top: 32px;
+    margin-bottom: 32px;
+  }
+}
+
+.share {
+  background-color: #111;
+  border-radius: 16px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 24px;
+  flex-wrap: wrap;
+  gap: 0px;
+  margin-bottom: 16px;
+  &_username {
+    margin-top: 12px;
+    width: 100%;
+    text-align: center;
+    font-size: 20px;
+    font-weight: 700;
+    color: #ffffff;
+  }
+  &_url {
+    text-align: center;
+    width: 100%;
+  }
+  &_copy {
+    margin-top: 12px;
+    width: 100%;
+    &_url {
+      color: #fff;
+      text-align: center;
+      width: 100%;
+      font-size: 16px;
+    }
+  }
+}

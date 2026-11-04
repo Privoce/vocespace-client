@@ -4,9 +4,9 @@ import { apiFetch } from '@/lib/api/client';
 
 import { HistorySpaceData, LeaderboardData, ParticipantTableData } from '@/app/dashboard/shared';
 import { api } from '@/lib/api';
-import { getParticipantPlatformInfo } from '@/lib/hooks/platform';
 import { useLatestCallback } from '@/lib/hooks/use-latest-callback';
-import { ParticipantSettings, SpaceDateRecords, SpaceInfo, SpaceInfoMap } from '@/lib/std/space';
+import type { DashboardSnapshot } from '@vocespace/contracts';
+import { SpaceDateRecords } from '@/lib/std/space';
 import { useEffect } from 'react';
 import type { useDashboardState } from './useDashboardState';
 
@@ -36,18 +36,12 @@ export function useDashboardData(context: ReturnType<typeof useDashboardState>) 
   const fetchAllData = async () => {
     setLoading(true);
     try {
-      const [spaceResponse, historyResponse] = await Promise.all([
-        api.allSpaceInfos(),
-        api.historySpaceInfos(),
-      ]);
-
-      let records: SpaceDateRecords | null = null;
-      if (historyResponse.ok) {
-        const result = await historyResponse.json();
-        records = result.records;
-      } else {
-        messageApi.error(t('dashboard.history_fetch_failed'));
+      const response = await api.dashboardData();
+      if (!response.ok) {
+        messageApi.error(t('dashboard.spaces_fetch_failed'));
+        return;
       }
+      const { spaces: spaceInfoMap, records } = await response.json() as DashboardSnapshot;
 
       const historicalDurations: { [spaceId: string]: { [name: string]: number } } = {};
 
@@ -69,72 +63,64 @@ export function useDashboardData(context: ReturnType<typeof useDashboardState>) 
         processHistoryData(records);
       }
 
-      if (spaceResponse.ok) {
-        const spaceInfoMap: SpaceInfoMap = await spaceResponse.json();
-
-        const participantsData: ParticipantTableData[] = [];
-        let roomCount = 0;
-        let participantCount = 0;
-        let recordingCount = 0;
-        let onlineCount = 0;
-        let unAuthCount = 0;
-        Object.entries(spaceInfoMap).forEach(([spaceId, spaceInfo]: [string, SpaceInfo]) => {
-          if (spaceInfo.participants && Object.keys(spaceInfo.participants).length > 0) {
-            roomCount++;
-            if (spaceInfo.record?.active) {
-              recordingCount++;
-            }
-
-            Object.entries(spaceInfo.participants).forEach(
-              ([participantId, participant]: [string, ParticipantSettings]) => {
-                participantCount++;
-                if (participant.online) {
-                  onlineCount++;
-                }
-
-                if (
-                  !participant.auth ||
-                  participant.auth?.identity === 'guest' ||
-                  participant.auth?.platform === 'other'
-                ) {
-                  unAuthCount++;
-                }
-
-                const historicalDuration = historicalDurations[spaceId]?.[participant.name] || 0;
-                const hours = Math.floor(historicalDuration / 3600000);
-                const minutes = Math.floor((historicalDuration % 3600000) / 60000);
-                const duringDisplay = `${hours}h ${minutes}m`;
-
-                participantsData.push({
-                  key: `${spaceId}-${participantId}`,
-                  spaceId,
-                  participantId,
-                  name: participant.name,
-                  volume: participant.volume,
-                  blur: participant.blur,
-                  screenBlur: participant.screenBlur,
-                  status: participant.online,
-                  isOwner: spaceInfo.ownerId === participantId,
-                  isRecording: spaceInfo.record?.active || false,
-                  virtualEnabled: participant.virtual?.enabled || false,
-                  during: duringDisplay,
-                  online: participant.online,
-                  isAuth: getParticipantPlatformInfo({ user: participant }).isAuth,
-                });
-              },
-            );
+      const participantsData: ParticipantTableData[] = [];
+      let roomCount = 0;
+      let participantCount = 0;
+      let recordingCount = 0;
+      let onlineCount = 0;
+      let unAuthCount = 0;
+      Object.entries(spaceInfoMap).forEach(([spaceId, spaceInfo]) => {
+        if (spaceInfo.participants && Object.keys(spaceInfo.participants).length > 0) {
+          roomCount++;
+          if (spaceInfo.isRecording) {
+            recordingCount++;
           }
-        });
 
-        setCurrentSpacesData(participantsData);
-        setTotalSpaces(roomCount);
-        setTotalParticipants(participantCount);
-        setOnlineParticipants(onlineCount);
-        setAuthParticipants(
-          participantCount - unAuthCount >= 0 ? participantCount - unAuthCount : 0,
-        );
-        setActiveRecordings(recordingCount);
-      }
+          Object.entries(spaceInfo.participants).forEach(
+            ([participantId, participant]) => {
+              participantCount++;
+              if (participant.online) {
+                onlineCount++;
+              }
+
+              if (participant.isGuest) {
+                unAuthCount++;
+              }
+
+              const historicalDuration = historicalDurations[spaceId]?.[participant.name] || 0;
+              const hours = Math.floor(historicalDuration / 3600000);
+              const minutes = Math.floor((historicalDuration % 3600000) / 60000);
+              const duringDisplay = `${hours}h ${minutes}m`;
+
+              participantsData.push({
+                key: `${spaceId}-${participantId}`,
+                spaceId,
+                participantId,
+                name: participant.name,
+                volume: participant.volume,
+                blur: participant.blur,
+                screenBlur: participant.screenBlur,
+                status: participant.online,
+                isOwner: participant.isOwner,
+                isRecording: spaceInfo.isRecording || false,
+                virtualEnabled: participant.virtualEnabled,
+                during: duringDisplay,
+                online: participant.online,
+                isAuth: participant.isAuth,
+              });
+            },
+          );
+        }
+      });
+
+      setCurrentSpacesData(participantsData);
+      setTotalSpaces(roomCount);
+      setTotalParticipants(participantCount);
+      setOnlineParticipants(onlineCount);
+      setAuthParticipants(
+        participantCount - unAuthCount >= 0 ? participantCount - unAuthCount : 0,
+      );
+      setActiveRecordings(recordingCount);
     } catch (error) {
       console.error('Failed to fetch data:', error);
     } finally {
@@ -320,7 +306,7 @@ export function useDashboardData(context: ReturnType<typeof useDashboardState>) 
     let interval: ReturnType<typeof setInterval> | undefined;
 
     const loadDashboard = async () => {
-      const nextConf = await getConf();
+      const nextConf = await getConf().catch(() => null);
       if (cancelled || nextConf?.initialized === false) {
         return;
       }

@@ -39,6 +39,7 @@ import {
 } from '@/lib/api/s3';
 import {
   allSpaceInfos,
+  dashboardData,
   checkUsername,
   createSpace,
   defineUserStatus,
@@ -69,6 +70,7 @@ import {
 } from '@/lib/api/space';
 
 export const api = {
+  dashboardData,
   // ---- space api --------
   updateAuthRBACConf,
   enterSpaceRoomFromLink,

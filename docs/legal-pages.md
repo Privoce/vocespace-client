@@ -4,7 +4,7 @@
 
 ## 实现范围
 
-- 协议正文取自用户提供的 `VoceSpace-Privacy-Policy.md` 和 `VoceSpace-Terms-of-Service.md`，保留英文原文，已逐字比较。共享数据和阅读组件位于 `packages/ui/src/legal`；没有添加网络依赖或执行 Markdown 中的 HTML。
+- 协议正文取自用户提供的 `VoceSpace-Privacy-Policy.md` 和 `VoceSpace-Terms-of-Service.md`，保留英文原文，已逐字比较。共享正文位于 `packages/i18n/src/legal-documents.ts`，Web/Native 阅读组件位于 `packages/ui/src/legal`（保留原正文导出兼容入口），Platform 使用自己的 DOM 阅读组件；没有添加网络依赖或执行 Markdown 中的 HTML。
 - Web PC / Phone 关于页增加两个链接，使用新标签页打开 `/legal/privacy` 和 `/legal/terms`，保持原会议页面。阅读页支持纵向滚动、横向表格滚动、条款锚点及协议之间跳转。
 - Native 个人页及会议设置的关于内容复用同一入口。独立阅读页覆盖在原页面上，原表单和会议连接所有者保持挂载；返回后保留输入内容。链接跳转、系统返回和外部链接由 Native 适配器处理。
 - 登录 / 注册增加默认未勾选的协议 checkbox。勾选前禁用提交及注册验证码发送；Hook 同时校验，防止键盘提交绕过。找回 / 重置密码不受影响。勾选仅保存在当前表单内，不作为服务端同意记录。

@@ -1,3 +1,4 @@
+import { platformOrigin } from '@/lib/runtime-config';
 import { SvgResource } from '@/components/Icon/index';
 import { useI18n } from '@/lib/i18n/i18n';
 import { ParticipantSettings, SpaceInfo } from '@/lib/std/space';
@@ -923,7 +924,7 @@ export function useControlRKeyMenu({
         }
         case 'safe.platform': {
           if (platUser && platUser.id) {
-            window.open(`https://home.vocespace.com/auth/user/${platUser.id}`, '_blank');
+            window.open(`${platformOrigin()}/auth/user/${platUser.id}`, '_blank');
           }
           break;
         }

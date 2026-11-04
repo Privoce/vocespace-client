@@ -263,13 +263,10 @@ export default function Preview() {
               Button={Button}
               Icon={Icon}
               chatLabel={t('common.chat')}
-              membersLabel={t('phone_meeting.members')}
               expandLabel={t('common.full_screen')}
-              count={members.length}
               unread={messages.length}
-              onExpand={setPanel}
+              onExpand={() => setPanel('chat')}
               chat={<MeetingChat {...chatProps} compact />}
-              members={<MeetingMembers {...memberProps} compact />}
             />
           }
           controls={<MeetingControls Button={Button} Icon={Icon} actions={actions} />}

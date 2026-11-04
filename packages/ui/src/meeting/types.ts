@@ -141,13 +141,10 @@ export interface MeetingShareProps extends MeetingPrimitives {
 }
 export interface MeetingDockProps extends MeetingPrimitives {
   chatLabel: string;
-  membersLabel: string;
   expandLabel: string;
-  count: number;
   unread?: number;
   chat: ReactNode;
-  members: ReactNode;
-  onExpand: (tab: 'chat' | 'members') => void;
+  onExpand: () => void;
 }
 export interface MeetingTileActionsProps extends MeetingPrimitives {
   actions: MeetingAction[];

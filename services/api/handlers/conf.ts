@@ -19,6 +19,9 @@ import { HostAuthorizationError } from '@vocespace/server-core';
 
 export async function GET(request: ApiRequest) {
   const hostToken = request.headers.get('x-vocespace-host-token') ?? request.nextUrl.searchParams.get('hostToken');
+  if (hostToken && !verifyHostToken(hostToken)) {
+    return ApiResponse.json({ code: 'ADMIN_REQUIRED', message: 'Request failed' }, { status: 403 });
+  }
   let config = getConfig();
   setStoredConf(config);
   const readableConfig = {

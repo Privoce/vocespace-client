@@ -24,7 +24,18 @@
     "typecheck:ui": "pnpm --filter @vocespace/ui typecheck",
     "typecheck:api": "pnpm --filter @vocespace/api typecheck",
     "check:deployment": "node scripts/check-deployment.mjs",
-    "test:deployment-scripts": "node --test scripts/ubuntu/deploy.test.mjs"
+    "test:deployment-scripts": "node --test scripts/ubuntu/deploy.test.mjs",
+    "dev:deploy": "pnpm --filter @vocespace/deploy dev",
+    "build:deploy": "pnpm --filter @vocespace/deploy build",
+    "start:deploy": "pnpm --filter @vocespace/deploy start",
+    "test:deploy": "pnpm --filter @vocespace/deploy test",
+    "dev:platform": "pnpm --filter @vocespace/platform dev",
+    "build:platform": "pnpm --filter @vocespace/platform build",
+    "start:platform": "pnpm --filter @vocespace/platform start",
+    "typecheck:platform": "pnpm --filter @vocespace/platform typecheck",
+    "lint:platform": "pnpm --filter @vocespace/platform lint",
+    "test:platform": "node --test scripts/tests/platform-runtime.test.mjs",
+    "test:platform:auth": "vitest run --config scripts/platform-vitest.config.ts"
   },
   "devDependencies": {
     "@testing-library/react": "16.3.0",

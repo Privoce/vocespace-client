@@ -5,7 +5,7 @@ HERE=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 SOURCE=$(cd "$HERE/../.." && pwd)
 usage() {
   cat <<'HELP'
-Usage: bash scripts/ubuntu/deploy.sh COMMAND [ROOT] [RELEASE] [-p web|api|all]
+Usage: bash scripts/ubuntu/deploy.sh COMMAND [ROOT] [RELEASE] [-p web|api|platform|all]
   init      Create directories and JSON configuration template (never overwrite).
   build     Copy this source tree to a NEW release, install and build.
   activate  Stop managed services, back up local files, start RELEASE.
@@ -13,7 +13,7 @@ Usage: bash scripts/ubuntu/deploy.sh COMMAND [ROOT] [RELEASE] [-p web|api|all]
   status    Show managed process status and local health checks.
 ROOT defaults to /var/vocespace; RELEASE is required for activate.
 -p / --project selects build, activation, rollback or status (default: all).
-Accepts web, api, @vocespace/web, @vocespace/api, or all.
+Accepts web, api, platform, their @vocespace names, or all (Web/API only).
 Example: build /var/vocespace/main web-002 -p web
 Use the same -p selection when activating a partial release.
 Build settings: ROOT/api-data/vocespace.conf.json (deployment section).
@@ -40,7 +40,8 @@ case $PROJECT in
   all) PROJECTS=(api web) ;;
   api|@vocespace/api) PROJECTS=(api); PROJECT=api ;;
   web|@vocespace/web) PROJECTS=(web); PROJECT=web ;;
-  *) echo "Unknown deployable project: $PROJECT (use web, api or all)." >&2; exit 1 ;;
+  platform|@vocespace/platform) PROJECTS=(platform); PROJECT=platform ;;
+  *) echo "Unknown deployable project: $PROJECT (use web, api, platform or all)." >&2; exit 1 ;;
 esac
 [[ ${#POSITIONAL[@]} -le 2 ]] || { usage >&2; exit 1; }
 ROOT=${POSITIONAL[0]:-/var/vocespace}
@@ -57,7 +58,11 @@ ROOT=$(cd "$ROOT" && pwd -P)
 [[ $ROOT != "$SOURCE" && $ROOT != "$SOURCE/"* ]] || { echo "Deployment ROOT must not be inside the source tree." >&2; exit 1; }
 if [[ -f $ROOT/tools/env.sh ]]; then . "$ROOT/tools/env.sh"; fi
 for tool in node pnpm pm2 rsync flock curl tar; do command -v "$tool" >/dev/null || { echo "Missing: $tool; run setup.sh" >&2; exit 1; }; done
-exec 9>"$ROOT/.deploy.lock"
+# The deploy platform holds this same lock across pull/build/activate. Reuse
+# its inherited descriptor only when it points at this exact lock file.
+if [[ ! -e /proc/$$/fd/9 || ! /proc/$$/fd/9 -ef "$ROOT/.deploy.lock" ]]; then
+  exec 9>"$ROOT/.deploy.lock"
+fi
 flock -n 9 || { echo 'Another deployment is running.' >&2; exit 1; }
 HELPER="$HERE/deploy-tools.mjs"
 DATA="$ROOT/api-data"
@@ -93,7 +98,7 @@ case $COMMAND in
     # copy unrelated application sources or assets (including Mobile).
     node "$HELPER" manifests "$SOURCE" "$DEST"
     for project in "${PROJECTS[@]}"; do
-      case $project in api) directory=services/api ;; web) directory=apps/web ;; esac
+      case $project in api) directory=services/api ;; web) directory=apps/web ;; platform) directory=apps/platform ;; esac
       rsync -a --safe-links --exclude-from="$HERE/source.exclude" --exclude=/public/license/ "$SOURCE/$directory/" "$DEST/$directory/"
     done
     node "$HELPER" configure "$DEST" "$ROOT" "$PROJECT"
@@ -128,7 +133,7 @@ for ((i=0; i<${#NAMES[@]}; i++)); do
 done
 HAS_API=false
 for project in "${NAMES[@]}"; do if [[ $project = api ]]; then HAS_API=true; fi; done
-BACKUP='none (Web-only update)'
+BACKUP='none (frontend-only update)'
 if [[ $HAS_API = true ]]; then BACKUP=$(mktemp -d "$ROOT/backups/$(date -u +%Y%m%dT%H%M%SZ).XXXXXX"); fi
 restore_on_failure() {
   code=$?

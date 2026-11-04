@@ -7,8 +7,11 @@ import { VocespaceConfig } from '@/lib/std/conf';
 import { WsBase } from '@/lib/std/device';
 import { ParticipantSettings, SpaceDateRecords, SpaceInfo, SpaceInfoMap } from '@/lib/std/space';
 import { MenuProps } from 'antd';
+import { useRef } from 'react';
+import { ApiError } from '@vocespace/client-sdk';
 import type { useDashboardData } from './useDashboardData';
 export function useDashboardActions(context: ReturnType<typeof useDashboardData>) {
+  const verificationGeneration = useRef(0);
   const {
     t,
     setMenuTab,
@@ -31,6 +34,7 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
     selectedNewOwner,
     setSelectedNewOwner,
     conf,
+    getConf,
     checkHostToken,
     updateCreateSpaceConf,
     updateSMTPConf,
@@ -53,29 +57,8 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
       setManageLoading(true);
       const token = typeof tokenOverride === 'string' ? tokenOverride : hostToken;
 
-      const saved = getVerified();
-      if (saved && saved.token === token && Date.now() - saved.at < 3600_000) {
-        setHostToken(token);
-        setIsHostManager(true);
-        const resp = await api.allSpaceInfos();
-        if (!resp.ok) {
-          messageApi.error(t('dashboard.spaces_fetch_failed'));
-          return;
-        }
-        const spaces: SpaceInfoMap = await resp.json();
-        setManageSpaces(spaces);
-        return;
-      }
-
-      const ok = await checkHostToken(token);
-      if (!ok) {
-        messageApi.error(t('dashboard.host_token_verify_failed'));
-        return;
-      }
-      setVerified(token);
-      setHostToken(token);
-      setIsHostManager(true);
-      const resp = await api.allSpaceInfos();
+      if (!(await ensureHostVerified(token))) return;
+      const resp = await api.allSpaceInfos(token);
       if (!resp.ok) {
         messageApi.error(t('dashboard.spaces_fetch_failed'));
         return;
@@ -91,8 +74,6 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
   };
   const handleCloseManage = () => {
     setOpenManage(false);
-    setIsHostManager(false);
-    setHostToken('');
     setManageSpaces(null);
   };
   const handleDeleteSpace = async (spaceName: string) => {
@@ -103,7 +84,7 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
         messageApi.error(t('dashboard.delete_failed'));
       } else {
         messageApi.success(t('dashboard.delete_success'));
-        const refreshed = await api.allSpaceInfos();
+        const refreshed = await api.allSpaceInfos(hostToken);
         if (refreshed.ok) {
           const spaces: SpaceInfoMap = await refreshed.json();
           setManageSpaces(spaces);
@@ -154,7 +135,7 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
         messageApi.error(t('dashboard.change_owner_failed'));
       } else {
         messageApi.success(t('dashboard.change_owner_success'));
-        const refreshed = await api.allSpaceInfos();
+        const refreshed = await api.allSpaceInfos(hostToken);
         if (refreshed.ok) {
           const spaces: SpaceInfoMap = await refreshed.json();
           setManageSpaces(spaces);
@@ -178,7 +159,7 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
       setManageLoading(true);
       const [spaceResp, historyResp] = await Promise.all([
         api.getSpaceInfo(spaceName),
-        api.historySpaceInfos(),
+        api.historySpaceInfos(hostToken),
       ]);
       if (!spaceResp.ok) {
         messageApi.error(t('dashboard.get_space_info_failed'));
@@ -237,39 +218,14 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
   };
   const confirmConfHandle = async () => {
     if (!isHostManager) {
-      const saved = getVerified();
-      if (saved && saved.token === hostToken && Date.now() - saved.at < 3600_000) {
-        setIsHostManager(true);
-        return;
-      }
-      const success = await checkHostToken(hostToken);
-      if (success) {
-        setVerified(hostToken);
-        setIsHostManager(true);
-      } else {
-        messageApi.error(t('dashboard.conf.error.verify'));
-      }
+      if (await ensureHostVerified()) await fetchAllData();
     } else {
       setOpenConf(false);
-      setIsHostManager(false);
-      setHostToken('');
-      clearVerified();
     }
   };
   const confirmCreateSpaceHandle = async () => {
     if (!isHostManager) {
-      const saved = getVerified();
-      if (saved && saved.token === hostToken && Date.now() - saved.at < 3600_000) {
-        setIsHostManager(true);
-        return;
-      }
-      const success = await checkHostToken(hostToken);
-      if (success) {
-        setVerified(hostToken);
-        setIsHostManager(true);
-      } else {
-        messageApi.error(t('dashboard.conf.error.verify'));
-      }
+      if (await ensureHostVerified()) await fetchAllData();
     } else {
       const whiteList = createSpaceWhiteList
         .split('\n')
@@ -291,24 +247,36 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
       );
     }
   };
-  const ensureHostVerified = async () => {
-    const saved = getVerified();
-    if (saved && saved.token === hostToken && Date.now() - saved.at < 3600_000) {
+  const ensureHostVerified = async (token = hostToken) => {
+    const generation = ++verificationGeneration.current;
+    setIsHostManager(false);
+    try {
+      if (!(await checkHostToken(token))) throw new Error('HOST_VERIFICATION_FAILED');
+      if (generation !== verificationGeneration.current) return false;
+      // Anonymous /api/conf omits SMTP/AI/Hyperbeam. Load the protected fields before showing forms.
+      if (!(await getConf(token))) throw new Error('CONFIG_LOAD_FAILED');
+      if (generation !== verificationGeneration.current) return false;
+      setVerified(token);
+      setHostToken(token);
       setIsHostManager(true);
       return true;
+    } catch (error) {
+      if (generation !== verificationGeneration.current) return false;
+      clearVerified();
+      const key = error instanceof ApiError && error.code === 'ORIGIN_DENIED'
+        ? 'origin'
+        : error instanceof Error && error.message === 'HOST_VERIFICATION_FAILED'
+          ? 'verify'
+          : error instanceof Error && error.message === 'CONFIG_LOAD_FAILED'
+            ? 'load'
+            : 'request';
+      messageApi.error(t(`dashboard.conf.error.${key}`));
+      return false;
     }
-    const success = await checkHostToken(hostToken);
-    if (success) {
-      setVerified(hostToken);
-      setIsHostManager(true);
-      return true;
-    }
-    messageApi.error(t('dashboard.conf.error.verify'));
-    return false;
   };
   const confirmSMTPConfHandle = async () => {
     if (!isHostManager) {
-      await ensureHostVerified();
+      if (await ensureHostVerified()) await fetchAllData();
       return;
     }
     await updateSMTPConf(
@@ -325,7 +293,7 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
   };
   const confirmHyperbeamConfHandle = async () => {
     if (!isHostManager) {
-      await ensureHostVerified();
+      if (await ensureHostVerified()) await fetchAllData();
       return;
     }
     await updateHyperbeamConf(
@@ -365,15 +333,15 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
   const handleProceed = async () => {
     if (selectOption === 'refresh') {
       await fetchAllData();
-    } else if (selectOption === 'global_conf') {
+    } else if (['global_conf', 'ac_space', 'smtp_conf', 'hyperbeam_conf'].includes(selectOption)) {
+      setIsHostManager(false);
       const saved = getVerified();
-      if (saved && Date.now() - saved.at < 3600_000) {
-        setHostToken(saved.token);
-        setIsHostManager(true);
-        setOpenConf(true);
-      } else {
-        setOpenConf(true);
-      }
+      if (saved) await ensureHostVerified(saved.token);
+      else setHostToken('');
+      if (selectOption === 'global_conf') setOpenConf(true);
+      if (selectOption === 'ac_space') setCreateSpaceConf(true);
+      if (selectOption === 'smtp_conf') setSMTPConfOpen(true);
+      if (selectOption === 'hyperbeam_conf') setHyperbeamConfOpen(true);
     } else if (selectOption === 'manage_spaces') {
       const saved = getVerified();
       if (saved && Date.now() - saved.at < 3600_000) {
@@ -385,24 +353,9 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
           setOpenManage(true);
         }
       } else {
+        setIsHostManager(false);
         setOpenManage(true);
       }
-    } else if (selectOption === 'ac_space') {
-      setCreateSpaceConf(true);
-    } else if (selectOption === 'smtp_conf') {
-      const saved = getVerified();
-      if (saved && Date.now() - saved.at < 3600_000) {
-        setHostToken(saved.token);
-        setIsHostManager(true);
-      }
-      setSMTPConfOpen(true);
-    } else if (selectOption === 'hyperbeam_conf') {
-      const saved = getVerified();
-      if (saved && Date.now() - saved.at < 3600_000) {
-        setHostToken(saved.token);
-        setIsHostManager(true);
-      }
-      setHyperbeamConfOpen(true);
     } else if (selectOption === 'flushdb') {
       setFlushDbConfirm(true);
     }

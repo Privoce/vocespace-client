@@ -1,4 +1,5 @@
 import { getConfig } from './lib/server/config';
+import { platformEndpoint } from './platform';
 import { moderationEndpoint } from './moderation';
 import { nativeFeedbackEndpoint, feedbackAccountEndpoint } from './native-feedback';
 import { accountEndpoint } from './account/endpoint';
@@ -29,6 +30,8 @@ async function dispatchInternal(request: ApiRequest) {
     if (prefix && pathname.startsWith(prefix + '/')) pathname = pathname.slice(prefix.length);
     pathname = pathname.replace(/^\/uploads\//, '/api/files/');
     pathname = pathname.replace(/^\/api\/v1\//, '/api/');
+    const platformAction = pathname.match(/^\/api\/platform\/(spaces|entry|create)$/);
+    if (platformAction) return await platformEndpoint(request, platformAction[1]);
     const accountAction = pathname.match(/^\/api\/account\/([a-z-]+)$/);
     if (accountAction) return await accountEndpoint(request, accountAction[1]);
     if (pathname === '/api/native/moderation') return await moderationEndpoint(request, true);

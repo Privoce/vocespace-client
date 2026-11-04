@@ -1,5 +1,6 @@
 'use client';
 
+import { platformOrigin } from '@/lib/runtime-config';
 import { AICutAnalysisMdTabsExports } from '@/components/Apps/aiAnalysisMd';
 import { FlotAppExports, FlotLayoutExports, FlotLayoutProps } from '@/components/Widgets/item';
 import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
@@ -107,7 +108,7 @@ export function useWidgets({
   const toPersonalPlatform = () => {
     let id = targetParticipant.participantId || localParticipant.identity;
     if (getParticipantPlatformInfo({ user: spaceInfo.participants[id] }).isAuth) {
-      let url = `https://home.vocespace.com/ai/${id}`;
+      let url = `${platformOrigin()}/ai/${id}`;
       window.open(url, '_blank');
     }
   };

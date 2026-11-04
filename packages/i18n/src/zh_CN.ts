@@ -1400,6 +1400,9 @@ export default {
       placeholder: '请输入管理员令牌',
       error: {
         verify: '管理员令牌错误，请重试',
+        origin: '请求来源不匹配，请确认当前网址与 deployment.publicOrigin 一致',
+        load: '管理员已验证，但配置读取失败，请重试',
+        request: '验证请求失败，请检查网络及服务状态',
         not_loaded: '配置未加载完成或无法获得配置，请稍后再试',
         update: '配置更新失败，请稍后再试',
       },

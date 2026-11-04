@@ -1,6 +1,7 @@
 'use client';
 
 import { useVoceSpaceConf } from '@/components/Settings/panels/conf';
+import { readHostCredential, saveHostCredential, clearHostCredential } from '@/lib/api/host-credential';
 import { ActionKey, HistorySpaceData, LeaderboardData, MenuTab, ParticipantTableData } from '@/app/dashboard/shared';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { useSocketSession } from '@/lib/hooks/use-socket-session';
@@ -66,7 +67,6 @@ export function useDashboardState() {
   const [manageSearchText, setManageSearchText] = useState('');
   const [createSpaceWhiteList, setCreateSpaceWhiteList] = useState<string>('');
   const [initializingConf, setInitializingConf] = useState(false);
-  const VERIFIED_KEY = 'vocespace_host_token_verified';
   useEffect(() => {
     if (conf) {
       setCreateSpaceOption(conf?.create_space || 'all');
@@ -82,29 +82,9 @@ export function useDashboardState() {
       }
     }
   }, [conf]);
-  const getVerified = () => {
-    try {
-      const v = localStorage.getItem(VERIFIED_KEY);
-      if (!v) return null;
-      return JSON.parse(v) as { token: string; at: number } | null;
-    } catch (e) {
-      return null;
-    }
-  };
-  const setVerified = (token: string) => {
-    try {
-      localStorage.setItem(VERIFIED_KEY, JSON.stringify({ token, at: Date.now() }));
-    } catch (e) {
-      // ignore
-    }
-  };
-  const clearVerified = () => {
-    try {
-      localStorage.removeItem(VERIFIED_KEY);
-    } catch (e) {
-      // ignore
-    }
-  };
+  const getVerified = readHostCredential;
+  const setVerified = saveHostCredential;
+  const clearVerified = clearHostCredential;
   const groupedSpacesData = useMemo(() => {
     const grouped: { [spaceId: string]: ParticipantTableData[] } = {};
     currentSpacesData.forEach((participant) => {
@@ -210,7 +190,6 @@ export function useDashboardState() {
     setCreateSpaceWhiteList,
     initializingConf,
     setInitializingConf,
-    VERIFIED_KEY,
     getVerified,
     setVerified,
     clearVerified,

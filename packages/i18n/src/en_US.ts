@@ -1469,6 +1469,9 @@ export default {
       placeholder: 'Please enter administrator token',
       error: {
         verify: 'Administrator token error, please try again',
+        origin: 'Request origin denied. Match the current URL to deployment.publicOrigin.',
+        load: 'Administrator verified, but configuration could not be loaded. Please retry.',
+        request: 'Verification request failed. Check the network and service status.',
         not_loaded:
           'Configuration not loaded or unable to obtain configuration, please try again later',
         update: 'Configuration update failed, please try again later.',

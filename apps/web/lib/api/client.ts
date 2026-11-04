@@ -1,15 +1,14 @@
 import { createClient } from '@vocespace/client-sdk';
 import { connect_endpoint } from '@/lib/std/index';
+import { readHostCredential } from './host-credential';
 
 export function getWebClient() {
   return createClient({
     baseUrl: new URL(connect_endpoint('/'), window.location.origin).toString(),
     fetch: (input, init) => {
       const headers = new Headers(init?.headers);
-      try {
-        const admin = JSON.parse(localStorage.getItem('vocespace_host_token_verified') || 'null');
-        if (admin?.token && Date.now() - admin.at < 3600_000 && !headers.has('x-vocespace-host-token')) headers.set('x-vocespace-host-token', admin.token);
-      } catch { /* An invalid cache is never an authentication source. */ }
+      const admin = readHostCredential();
+      if (admin && !headers.has('x-vocespace-host-token')) headers.set('x-vocespace-host-token', admin.token);
       return fetch(input, { ...init, headers });
     },
   });

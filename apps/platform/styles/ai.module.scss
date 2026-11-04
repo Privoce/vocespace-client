@@ -1,0 +1,57 @@
+.view {
+  height: 100vh;
+  width: 100vw;
+  &_todo {
+    height: 100%;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+.tree_wrapper {
+  padding: 16px;
+  height: 100%;
+  &_today {
+    height: 300px;
+    scrollbar-width: thin;
+    overflow-y: scroll;
+    padding-bottom: 16px;
+  }
+  &_list {
+    height: calc(100vh - 478px);
+    scrollbar-width: thin;
+    overflow-y: scroll;
+    padding-bottom: 16px;
+  }
+  &_add {
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+  }
+}
+
+.todo_item {
+  width: 100%;
+  padding: 4px 8px 4px 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.analysis {
+  height: 100%;
+  width: 100%;
+  padding: 24px;
+  &_content {
+    border-top: 1px solid #333;
+    margin-top: 12px;
+    padding-top: 12px;
+    height: calc(100vh - 98px);
+    overflow-y: scroll;
+    scrollbar-width: thin;
+    width: 100%;
+  }
+}

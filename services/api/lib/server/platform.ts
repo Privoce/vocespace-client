@@ -1,9 +1,7 @@
-import dayjs from 'dayjs';
 import { AICutAnalysisRes, AICutAnalysisResLine } from '../ai/analysis';
 import { SpaceTodo, todayTimeStamp, TodoItem } from '@vocespace/domain/space';
 
-const PLATFORM_URL = 'https://home.vocespace.com/api';
-// const PLATFORM_URL = 'http://localhost:3001/api';
+import { platformDataRequest } from './platform-data';
 
 export interface PlatformTodos {
   /**
@@ -36,38 +34,18 @@ const castToPlatformTodo = (todos: SpaceTodo, uid: string): PlatformTodos => {
 const updateTodo = async (uid: string, todos: SpaceTodo) => {
   // 这里我们需要对todos中的timestamp字段进行处理，修改为date字段，并且需要改为当天00:00:00的时间戳
   const platformTodo = castToPlatformTodo(todos, uid);
-  const url = new URL(PLATFORM_URL + '/todos');
-  return await fetch(url.toString(), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      todo: platformTodo,
-    }),
-  });
+  return platformDataRequest(uid, 'todos', 'POST', undefined, { todo: platformTodo });
 };
 
 const deleteTodo = async (uid: string, date: number, todoId: string) => {
-  const url = new URL(PLATFORM_URL + '/todos');
-  url.searchParams.append('uid', uid);
-  url.searchParams.append('date', date.toString());
-  url.searchParams.append('todoId', todoId);
-  return await fetch(url.toString(), {
-    method: 'DELETE',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
+  return platformDataRequest(uid, 'todos', 'DELETE', new URLSearchParams({ date: date.toString(), todoId }));
 };
 
 /**
  * 获取平台端的todo数据 获取所有todo数据
  */
 const getTodos = async (uid: string) => {
-  const url = new URL(PLATFORM_URL + '/todos');
-  url.searchParams.append('uid', uid);
-  return await fetch(url.toString());
+  return platformDataRequest(uid, 'todos', 'GET');
 };
 
 /**
@@ -77,16 +55,13 @@ const getTodos = async (uid: string) => {
  * @returns { data }: { data: PlarformAICutAnalysis }
  */
 const getAIAnalysis = async (uid: string, date: number) => {
-  const url = new URL(PLATFORM_URL + '/ai');
-  url.searchParams.append('uid', uid);
-  url.searchParams.append('date', date.toString());
-  return await fetch(url.toString());
+  return platformDataRequest(uid, 'ai', 'GET', new URLSearchParams({ date: date.toString() }));
 };
 
 /**
  * 向平台端更新AI分析数据
  * 这个接口只能在server端调用，客户端每次请求分析完后调用此接口进行数据存储
- * 客户端需要传递isAuth=true的header以证明身份(客户端localStorage中能够获取到KEY)
+ * uid 必须来自已验证的会话；客户端传入的 isAuth 不是授权依据。
  * @param uid 用户id
  * @param screenShot 截图数据 (只有是个新分析结果时才会上传否则为undefined，意味着平台端不需要更新截图)
  * @param data AI分析结果数据
@@ -97,21 +72,7 @@ const updateAIAnalysis = async (
   data: AICutAnalysisRes,
   screenShot?: string,
 ) => {
-  const url = new URL(PLATFORM_URL + '/ai');
-  return await fetch(url.toString(), {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      id: uid,
-      timestamp,
-      data: {
-        screenShot,
-        result: data,
-      },
-    }),
-  });
+  return platformDataRequest(uid, 'ai', 'POST', undefined, { timestamp, data: { screenShot, result: data } });
 };
 
 export interface PlatformTodos {
@@ -144,9 +105,7 @@ export const convertPlatformToACARes = (platform: PlarformAICutAnalysis): AICutA
 };
 
 const isAuth = async (uid: string): Promise<boolean> => {
-  const url = new URL(PLATFORM_URL + '/user');
-  url.searchParams.append('uid', uid);
-  const res = await fetch(url.toString());
+  const res = await platformDataRequest(uid, 'user', 'GET');
   if (res.ok) {
     const { exist }: { exist: boolean } = await res.json();
     return exist;

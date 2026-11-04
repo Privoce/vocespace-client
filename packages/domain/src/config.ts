@@ -20,6 +20,7 @@ export interface DeploymentConf {
     previewAssetsDir: string;
   };
   web: { host: string; port: number; apiUrl: string };
+  platform: { host: string; port: number; apiUrl: string; publicOrigin: string };
   mobile: { apiUrl: string; meetingUiPreview: boolean };
 }
 
@@ -59,6 +60,7 @@ export interface RuntimeConf {
 export type ResolvedVocespaceConfig = VocespaceConfig & RuntimeConf;
 export interface PublicClientConf {
   basePath: string;
+  platformOrigin: string;
   mobile: RuntimeConf['deployment']['mobile'];
   analytics: RuntimeConf['analytics'];
   debug: RuntimeConf['debug'];

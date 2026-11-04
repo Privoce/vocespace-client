@@ -7,7 +7,11 @@
     ".": "./src/index.ts",
     "./en_US": "./src/en_US.ts",
     "./zh_CN": "./src/zh_CN.ts",
-    "./ru_RU": "./src/ru_RU.ts"
+    "./ru_RU": "./src/ru_RU.ts",
+    "./deploy": "./src/deploy.js",
+    "./platform_en_US": "./src/platform_en_US.ts",
+    "./platform_zh_CN": "./src/platform_zh_CN.ts",
+    "./legal-documents": "./src/legal-documents.ts"
   },
   "types": "./src/index.ts"
 }

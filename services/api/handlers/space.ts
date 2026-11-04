@@ -1,4 +1,5 @@
 import { parsePageLimit } from '@vocespace/contracts';
+import { dashboardSnapshot } from '../lib/server/dashboard-snapshot';
 import { verifyHostToken } from '../lib/server/host-authorization';
 import { sessions, sessionToken } from '../lib/server/sessions';
 import { SpaceManager } from '../lib/server/legacy-space-manager';
@@ -71,6 +72,15 @@ import { generateToken, getServerParticipantPlatformInfo } from '../lib/server/p
 
 // 获取房间所有参与者设置
 export async function GET(request: ApiRequest) {
+  if (request.nextUrl.searchParams.get('dashboard') === 'true') {
+    const [spaces, records] = await Promise.all([
+      SpaceManager.getAllSpaces(),
+      SpaceManager.getAllSpaceDateRecords(),
+    ]);
+    return ApiResponse.json(dashboardSnapshot(spaces, records || {}), {
+      headers: { 'Cache-Control': 'no-store' },
+    });
+  }
   const isAll = request.nextUrl.searchParams.get('all') === 'true';
   const spaceName = request.nextUrl.searchParams.get('spaceName');
   const isPre = request.nextUrl.searchParams.get('pre') === 'true';

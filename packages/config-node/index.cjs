@@ -44,7 +44,7 @@ function mergeDefaults(base, value, name = '') {
 }
 function normalizeConfiguration(value) {
   const conf = mergeDefaults(defaults, value);
-  for (const [name, port] of [['api', conf.deployment.api.port], ['web', conf.deployment.web.port]]) {
+  for (const [name, port] of [['api', conf.deployment.api.port], ['web', conf.deployment.web.port], ['platform', conf.deployment.platform.port]]) {
     if (!Number.isInteger(port) || port < 1 || port > 65535) throw new Error(`Invalid deployment.${name}.port`);
   }
   for (const [name, value] of [['api.uploadLimitBytes', conf.deployment.api.uploadLimitBytes], ['preview.maxSources', conf.preview.maxSources]]) {
@@ -53,6 +53,7 @@ function normalizeConfiguration(value) {
   if (conf.deployment.basePath && !/^\/[A-Za-z0-9_/-]*[A-Za-z0-9_-]$/.test(conf.deployment.basePath)) throw new Error('Invalid deployment.basePath');
   for (const [name, value] of [
     ['deployment.publicOrigin', conf.deployment.publicOrigin], ['deployment.web.apiUrl', conf.deployment.web.apiUrl],
+    ['deployment.platform.apiUrl', conf.deployment.platform.apiUrl], ['deployment.platform.publicOrigin', conf.deployment.platform.publicOrigin],
     ['deployment.mobile.apiUrl', conf.deployment.mobile.apiUrl], ['account.publicUrl', conf.account.publicUrl],
     ['account.supabase.url', conf.account.supabase.url], ['preview.rendererBaseUrl', conf.preview.rendererBaseUrl],
     ['preview.s3Endpoint', conf.preview.s3Endpoint], ['analytics.url', conf.analytics.url], ['billing.stripe.siteUrl', conf.billing.stripe.siteUrl],
@@ -66,6 +67,9 @@ function normalizeConfiguration(value) {
   if (publicOrigin.pathname !== '/') throw new Error('deployment.publicOrigin must be an origin; use deployment.basePath for paths');
   // HTTP uses URL.origin; Socket.IO must compare against the same canonical value.
   conf.deployment.publicOrigin = publicOrigin.origin;
+  const platformOrigin = new URL(conf.deployment.platform.publicOrigin);
+  if (platformOrigin.pathname !== '/') throw new Error('deployment.platform.publicOrigin must be an origin');
+  conf.deployment.platform.publicOrigin = platformOrigin.origin;
   return conf;
 }
 function readConfiguration(options = {}) {
@@ -83,6 +87,7 @@ function publicConfiguration(conf) {
   // Explicit allowlist: never spread a private section into client payloads.
   return {
     basePath: conf.deployment.basePath,
+    platformOrigin: conf.deployment.platform.publicOrigin,
     mobile: { apiUrl: conf.deployment.mobile.apiUrl, meetingUiPreview: conf.deployment.mobile.meetingUiPreview },
     analytics: { enabled: conf.analytics.enabled, url: conf.analytics.url, websiteId: conf.analytics.websiteId },
     debug: { datadogClientToken: conf.debug.datadogClientToken, datadogSite: conf.debug.datadogSite },

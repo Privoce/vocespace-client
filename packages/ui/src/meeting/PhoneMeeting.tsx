@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { meetingColors as c } from '../theme';
 import { meetingPageSwipe, type MeetingTile } from '@vocespace/meeting-core';
-import { MeetingLayoutSwitch, MeetingPagination } from './MeetingLayoutControls';
+import { MeetingLayoutSwitch } from './MeetingLayoutControls';
 import { MeetingTileView } from './MeetingTileView';
 import { usePhoneMeeting } from './usePhoneMeeting';
 import type { PhoneMeetingProps } from './types';
@@ -262,15 +262,6 @@ export function PhoneMeeting({
               })}
             </View>
           </ScrollView>
-          {!fullscreenTileId && (
-            <MeetingPagination
-              labels={labels}
-              Icon={Icon}
-              page={layout.page}
-              pages={layout.pages}
-              onChange={model.setPage}
-            />
-          )}
         </View>
         <View style={fullscreenTileId ? styles.hidden : undefined}>
           {dock}

@@ -14,6 +14,14 @@
 - [x] 前一批标准 `pnpm build` 通过（API + Web standalone）；本次恢复原按钮执行类型、边界、lint 和测试检查，未在运行中的开发目录重复构建。`git diff --check` 通过。
 - [ ] iPhone Safari 底部加入按钮、聊天键盘缩放及链接复制真机回归；iPad 实际采集能力与 iOS Chrome 系统共享弹窗未完成定位/回归，不标记为屏幕共享已修复。
 
+## Deploy 发布平台（2026-11-03）
+
+- [x] 新增 `apps/deploy` / `@vocespace/deploy`，独立端口 4848；只发布 Web / Server，提供创建发布、拉取当前分支更新、历史版本回滚、旧版本清理及持续刷新的操作日志。使用 `ROOT/api-data/vocespace.conf.json` 中的 hostToken 验证，业务 API 停机不影响平台登录。
+- [x] 创建使用当前源码；更新先拒绝脏工作区，再 `git pull --ff-only`；均按选择项目调用现有 build/activate。独立 worker 持有共享部署锁，串行执行并持久记录任务；UI 重启不主动终止任务，异常中断不自动重试。当前/previous/PM2 引用版本不可删除，密钥在日志落盘前脱敏。
+- [x] 新平台 9 项测试、原部署脚本 20 项、现有单元/Hook 93 项通过；Deploy 生产资源构建、根/API 类型、边界、配置及差异检查通过。浏览器用隔离测试数据验证登录、创建/更新模式、版本保护及日志展示。未操作真实发布目录/PM2/Redis。
+- [x] 启动/PM2 常驻与行为边界见 [Deploy 平台说明](docs/deploy-platform.md)；Linux 文档已增加入口，CI 配置加入平台构建/测试及部署脚本测试。
+- [ ] Ubuntu 实机 Git 拉取、真实 flock 竞争、生产 PM2 切换/回滚和公网访问待验证；远端 CI 尚未运行。本机测试使用假命令/临时目录，不代表服务器已上线。
+
 ## 按项目发布（2026-11-03）
 
 - [x] Ubuntu deploy 新增 `-p` / `--project`：支持 web/api、完整包名及 all，默认仍为 Web/API；build 只构建所选项目，activate/rollback/status 按项目处理。
@@ -659,3 +667,52 @@
 - [x] 93 项 Vitest、3 项独立 API 来源集成测试、根/API 类型检查、模块边界、API 构建及配置部署检查通过。集成命令：`pnpm build:api && node --test scripts/tests/api-origin-smoke.mjs`；覆盖内网 HTTP / 公网 HTTPS、轮询、真实 Upgrade、缺会话拒绝及伪造转发头，使用临时配置并禁用 Redis/worker。
 - [x] 用户确认线上使用仓库配置，publicOrigin 为 `http://localhost:3000`，与公网 Origin 不符；已仅将本机 `vocespace.conf.json` 的该字段改为 `https://vocespace.com`，JSON 配置检查通过。该配置未纳入 Git，不能靠 pull 同步。
 - [ ] 尚未修改服务器；生产实际配置同步及真实成员/媒体回归待确认。
+
+### 2026-11-03：Mobile 广场与共享会议界面修复
+
+- [x] 广场从业务记录与 LiveKit 活跃房间/实际成员交集生成，过滤无媒体房间及空会议，人数不再统计历史成员；不删除持久化记录。预览只使用实际连接的主会场成员，拒绝用离线记录启动 Egress。
+- [x] Mobile / Web Phone Dock 仅保留 Chat，移除可见分页器，底栏使用 flex space-between，tile focus 图标保持展开样式；成员管理入口与滑动翻页逻辑保留。
+- [x] 98 项 Vitest、根/API/Mobile/UI 类型、模块边界、API 构建及部署配置检查通过；相关 Web lint 无错误（已有 Hook 警告）。浏览器静态测试页 393px/320px 窄屏检查通过。
+- [ ] 未部署或重启服务；真实 Egress/手机播放与原生手势仍待回归。详情见 [本次说明](docs/mobile-meeting-fixes.md)。
+
+### 2026-11-04：广场候选来源纠正
+
+- [x] 按用户要求先读取 LiveKit 当前房间，再逐个读取对应 Redis Space 配置，移除 Redis 全量索引依赖；公开广场只允许 `allowGuest === 'allow'`，取消房主非公开 Space 例外。子 Room 权限及主会场预览隔离保留。
+- [x] 8 项发现/预览回归测试、API 类型、模块边界、API 构建、部署配置及差异检查通过；包含历史坏记录、索引不可用及媒体服务失败场景。
+- [ ] 尚未部署，真实 Egress 切片生成与手机 HLS 播放未验收；目录出现不等于预览已就绪。
+
+### 2026-11-04：Dashboard 鉴权、SMTP 与统计排查
+
+- [x] 管理列表显式传递凭据，未验证/过期时停止私有读取并提示验证；关闭弹窗保留验证，服务端拒绝后清理失效状态。统一凭据校验并支持浏览器存储受限时的页面内存缓存。
+- [x] SMTP 等配置表单先验证并重新读取受保护配置，修复用户/发件人不回填；防止较慢的匿名响应覆盖已验证配置及状态。配置 API 对显式无效管理员凭据返回 403。
+- [x] 只读确认线上公开配置的 analytics.enabled 为 false；实际 Umami 脚本配合生产适配器在隔离 VM 内可生成脱敏手动事件，未向真实统计端发送事件。本机开关已变为 true，本次未覆盖；服务器实际 JSON 仍需同步核对。
+- [x] 新增 11 项回归，全量 112 项 Vitest、根/API 类型、边界、API 构建、部署配置及差异检查通过；相关 Web lint 无错误（已有警告）。详见 [交付与上线说明](docs/dashboard-auth-analytics-fixes.md)。
+- [ ] 未部署或重启服务，未发送真实邮件/埋点；生产表单及统计入库待回归。Redis 历史业务统计不等同于 Umami 事件，不补报历史事件。
+
+### 2026-11-04：纠正 Dashboard 无验证刷新与本机来源
+
+- [x] 按用户要求取消刷新触发全局画质验证弹窗；首次加载/手动/定时刷新使用无需 hostToken 的只读投影接口，完整管理数据及写操作仍验证。混合管理参数不能绕过授权。
+- [x] 本机复现同一令牌在 localhost 来源返回 ORIGIN_DENIED、127.0.0.1 来源验证成功；仅将本机 publicOrigin 从 127.0.0.1 对齐到 localhost，未改令牌。拆分来源/网络/令牌/配置读取错误文案。此项取代上一条要求普通刷新先验证的行为。
+- [x] 117 项测试、根/API 类型、边界、API 构建、部署配置、差异检查及相关 lint 通过（原有警告）。本机 API 已加载新构建，Web 代理匿名刷新 200、受保护详情 403、正确令牌验证成功；浏览器点击刷新不弹窗。
+- [ ] 未部署生产；服务器 publicOrigin 应保留实际公网地址，不能复制本机 localhost 配置。详情见 [Dashboard 修复说明](docs/dashboard-auth-analytics-fixes.md)。
+
+
+### 2026-11-05：Platform 前端迁入与独立发布
+
+- [x] 原 `vocespace_platform` 的前端迁入 `apps/platform`，工作区 `@vocespace/platform`，保留原 Next 14 / React 18 / Ant Design 5；修正 monorepo 服务端解析与 React 类型隔离，原目录未修改。词典归 `packages/i18n`。
+- [x] 新增独立 dev/build/start/typecheck 命令及 `deployment.platform`（默认 3002）；配置仅公开 Supabase URL/publishableKey 和会议 URL。Web 登录/个人中心/AI 历史入口改为读取 Platform Origin。
+- [x] 统一 API 验证账号后创建 Space/签发一次性入会 code；公开在线列表复用 LiveKit + Redis；会议待办/AI 历史同步移除旧平台 API 依赖，账号身份、并发合并及失败传播有回归覆盖。
+- [x] Deploy 新增 Platform 服务卡片、项目选择及独立版本管理，CLI 支持 `-p platform` / `@vocespace/platform`；旧 Web/API 状态兼容，`all` 保持原义。Platform 激活/失败恢复/回滚不重启其他服务。
+- [x] 127 项 Vitest、21 项 Ubuntu 脚本、10 项 Deploy 测试及 1 项真实生产服务启动/代理检查通过；根/API/Platform 类型、边界、Platform/API/Deploy 构建、JSON 部署与差异检查通过。Web 改动模块 lint 无错误（原有警告）；登录页浏览器检查无 hydration 错误。详见 [Platform 迁移说明](docs/platform-migration.md)。
+- [ ] 未部署服务器或改生产代理；真实 Supabase OAuth/邮件回调、RLS 与业务读写待部署回归。既有本机 Web/API 未重启；新接口需要重启 API 加载本次构建。未占用运行中 Web 的构建目录进行完整生产构建。
+
+### 2026-11-05：Platform 账号、发现及协议对齐
+
+- [x] 登录/注册/忘记密码与 Mobile 的密码 + 邮箱六位验证码流程对齐，含注册密码锁定、60 秒重发、防重复提交、恢复会话隔离及主动同意协议；浏览器继续使用同一 Supabase 项目。
+- [x] 发现页独立加载 Supabase 公开 Space 与 LiveKit/Redis 在线列表，URL 去重并保留介绍及实时人数；支持旧 JSON 字符串/原生 JSONB、超时取消、部分失败提示与重试。
+- [x] 两份协议复用既有正文并共享到 i18n；首页/账号入口、Markdown 表格/锚点、terms/旧 teams 路由已补齐。
+- [x] 138 项 Vitest、6 项独立 React 18 表单测试、生产启动/代理/协议路由 smoke、Platform 标准构建、相关类型/边界/API 构建/部署检查通过；浏览器真实公开目录显示 330 张卡片。详见 [本次说明](docs/platform-auth-discovery.md)。
+- [x] 本机 API 已重启加载新 Platform 路由，在线目录从旧进程的 403 恢复为 200（当前无在线房间）；Web 未重启。
+- [ ] 未部署服务器，真实验证码邮件/注册/恢复/OAuth、在线会议与手机真机回归待验收；Supabase 模板需展示六位 `{{ .Token }}`。
+
+- [x] 2026-11-05 补充：按用户要求移除 Platform Google 登录的协议勾选禁用及点击拦截，保留请求期间防重复提交；邮箱登录/注册要求不变。

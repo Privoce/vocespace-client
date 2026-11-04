@@ -20,7 +20,7 @@ export function MeetingParticipantTools({
       actions={[
         {
           id: 'focus',
-          icon: focused ? 'app' : 'focus',
+          icon: 'focus',
           label: focused ? labels.unfocus : labels.focus,
           onPress: onFocus,
         },

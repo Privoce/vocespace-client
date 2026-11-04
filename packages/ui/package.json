@@ -18,7 +18,8 @@
     "src"
   ],
   "dependencies": {
-    "@vocespace/meeting-core": "workspace:*"
+    "@vocespace/meeting-core": "workspace:*",
+    "@vocespace/i18n": "workspace:*"
   },
   "peerDependencies": {
     "react": "^19.2.0",

@@ -44,7 +44,7 @@ Native 可使用 contracts/domain/client-sdk、i18n、meeting-core/ui 和端内�
 
 ## 共享 UI 小范围验证
 
-meeting-core 仅放纯布局规则和可序列化视图数据；ui 统一包含 React/RN 基础呈现、主题、图标、控件端口和 meeting/ 会议设置组件，仅依赖 React/RN、meeting-core。2026-10-11 用户要求将原 meeting-ui 合并到 ui，不再维护独立 meeting-ui 包。两包禁止依赖 LiveKit、Web/Native 应用源码、根 lib、存储与网络。Web 显式将 react-native alias 到 react-native-web；公开类型入口不引用 RN 全局类型，组件实现以 pnpm typecheck:ui 独立验证。不要把媒体 Room 对象传入公共 UI，传入 DTO、actions 和视频渲染函数。
+meeting-core 仅放纯布局规则和可序列化视图数据；ui 统一包含 React/RN 基础呈现、主题、图标、控件端口和 meeting/ 会议设置组件，仅依赖 React/RN、meeting-core、i18n（协议正文等无副作用文案）。2026-10-11 用户要求将原 meeting-ui 合并到 ui，不再维护独立 meeting-ui 包。两包禁止依赖 LiveKit、Web/Native 应用源码、根 lib、存储与网络。Web 显式将 react-native alias 到 react-native-web；公开类型入口不引用 RN 全局类型，组件实现以 pnpm typecheck:ui 独立验证。不要把媒体 Room 对象传入公共 UI，传入 DTO、actions 和视频渲染函数。
 
 ## Phone 设置与 i18n（2026-10-10）
 

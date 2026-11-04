@@ -17,6 +17,7 @@ import { getConfig } from '../lib/server/config';
 import { getSpaceRedisClient } from '../lib/server/space-redis';
 import { spaceRepository } from '../lib/server/space-repository';
 import { withMediaMember } from '../lib/server/media-lock';
+import { liveSpaceMembers } from '../lib/server/live-space-presence';
 
 const JOBS = 'v1:preview:jobs';
 const CLEANUP = 'v1:preview:cleanup';
@@ -66,8 +67,11 @@ function config() {
 }
 export async function previewSnapshot(space: string) {
   const data = await spaceRepository.get(space);
-  const members = previewMembers(data);
-  if (!members?.length) return null;
+  const candidates = previewMembers(data);
+  if (!candidates?.length) return null;
+  const connected = await liveSpaceMembers(space);
+  const members = candidates.filter((member) => connected.has(member.id));
+  if (!members.length) return null;
   const epoch = await previewRedis().get(epochKey(space));
   return {
     members,

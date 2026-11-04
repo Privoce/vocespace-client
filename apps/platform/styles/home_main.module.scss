@@ -1,0 +1,21 @@
+// Grid layout for space cards
+// .spaceGrid {
+//   display: grid;
+//   grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+//   gap: 32px;
+//   padding: 32px;
+// }
+
+.space {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: fit-content;
+  &_tabs {
+    width: 1080px;
+    height: 100%;
+  }
+}

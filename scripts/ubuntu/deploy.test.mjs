@@ -149,9 +149,9 @@ function fixture() {
   write(path.join(source, '.nvmrc'), process.versions.node);
   write(path.join(source, 'package.json'), JSON.stringify({ packageManager: 'pnpm@10.27.0' }));
   for (const file of ['pnpm-lock.yaml', 'pnpm-workspace.yaml', 'tsconfig.json', '.eslintrc.json', '.prettierrc', '.prettierignore', 'LICENSE']) write(path.join(source, file), '{}');
-  for (const folder of ['apps/web', 'packages', 'services/api', 'patches']) fs.mkdirSync(path.join(source, folder), { recursive: true });
-  for (const folder of ['apps/web', 'apps/mobile', 'services/api']) write(path.join(source, folder, 'package.json'), '{}');
-  for (const folder of ['apps/web', 'apps/mobile', 'services/api', 'apps/future']) write(path.join(source, folder, 'source.ts'), 'fixture');
+  for (const folder of ['apps/web', 'apps/platform', 'packages', 'services/api', 'patches']) fs.mkdirSync(path.join(source, folder), { recursive: true });
+  for (const folder of ['apps/web', 'apps/platform', 'apps/mobile', 'services/api']) write(path.join(source, folder, 'package.json'), '{}');
+  for (const folder of ['apps/web', 'apps/platform', 'apps/mobile', 'services/api', 'apps/future']) write(path.join(source, folder, 'source.ts'), 'fixture');
   write(path.join(source, 'apps/future/package.json'), '{}');
   // Sensitive/generated inputs must not survive the release copy.
   for (const file of ['.env.local', 'vocespace.conf.json', 'apps/web/.env.production', 'services/api/uploads/private.txt', 'apps/mobile/credentials/key.p12', 'apps/web/.next/old', 'packages/test/node_modules/secret', 'apps/web/public/license/private.txt']) write(path.join(source, file), 'private');
@@ -163,7 +163,7 @@ function fixture() {
     if (a[0] === '--version') { console.log('10.27.0'); process.exit(0); }
     fs.appendFileSync(process.env.TEST_LOG, 'pnpm ' + a.join(' ') + '\\n');
     if (a[0].startsWith('build:') && process.env.FAIL_BUILD) process.exit(1);
-    if (a[0].startsWith('build:')) for (const file of (a[0] === 'build:api' ? ['services/api/dist/api.cjs', 'services/api/dist/default-config.cjs', 'services/api/dist/preview/renderer.js', 'services/api/start.mjs'] : ['apps/web/server.js', 'apps/web/.next/BUILD_ID'])) {
+    if (a[0].startsWith('build:')) for (const file of (a[0] === 'build:api' ? ['services/api/dist/api.cjs', 'services/api/dist/default-config.cjs', 'services/api/dist/preview/renderer.js', 'services/api/start.mjs'] : a[0] === 'build:platform' ? ['apps/platform/server.mjs', 'apps/platform/.next/BUILD_ID'] : ['apps/web/server.js', 'apps/web/.next/BUILD_ID'])) {
       fs.mkdirSync(path.dirname(file), { recursive: true }); fs.writeFileSync(file, 'fixture');
     }
   `);
@@ -472,5 +472,36 @@ test('first partial releases can be activated independently; failure leaves the 
     f.success(f.run('activate', 'api', {}, ['-p', 'api']));
     assert.ok(readState(f).api.current.endsWith('/api'));
     assert.ok(readState(f).web.current.endsWith('/web'));
+  } finally { f.cleanup(); }
+});
+
+
+test('Platform deploy, health failure and rollback leave Web/API processes and data intact', () => {
+  const f = fixture();
+  const options = ['-p', 'platform'];
+  try {
+    f.success(f.run('build', 'base'));
+    f.success(f.run('activate', 'base'));
+    const peers = JSON.parse(fs.readFileSync(f.env.TEST_STATE));
+    assert.equal(readState(f).platform.current, null);
+    for (const name of ['platform-one', 'platform-two']) f.success(f.run('build', name, {}, options));
+    const release = path.join(f.root, 'releases/platform-one');
+    assert.deepEqual(JSON.parse(fs.readFileSync(path.join(release, '.deploy.json'))).projects, ['platform']);
+    assert.ok(fs.existsSync(path.join(release, 'apps/platform/.next/BUILD_ID')));
+    assert.ok(!fs.existsSync(path.join(release, 'apps/web/source.ts')));
+    const backups = fs.readdirSync(path.join(f.root, 'backups')).length;
+    write(f.env.TEST_LOG, '');
+    f.success(f.run('activate', 'platform-one', { FAIL_FILE_BACKUP: '1' }, options));
+    assertPeerUntouched(f, 'web'); assertPeerUntouched(f, 'api');
+    assert.equal(fs.readdirSync(path.join(f.root, 'backups')).length, backups);
+    const before = readState(f);
+    assert.notEqual(f.run('activate', 'platform-two', { FAIL_HEALTH: '/platform-two' }, options).status, 0);
+    assert.deepEqual(readState(f), before);
+    f.success(f.run('activate', 'platform-two', {}, options));
+    f.success(f.run('rollback', undefined, {}, options));
+    assert.ok(readState(f).platform.current.endsWith('/platform-one'));
+    assert.ok(readState(f).platform.previous.endsWith('/platform-two'));
+    assertPeerUntouched(f, 'web'); assertPeerUntouched(f, 'api');
+    assert.deepEqual(JSON.parse(fs.readFileSync(f.env.TEST_STATE)).filter(p => p.name !== 'vocespace-platform'), peers);
   } finally { f.cleanup(); }
 });

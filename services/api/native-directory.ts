@@ -2,30 +2,40 @@ import { DEFAULT_PARTICIPANT_SETTINGS } from '@vocespace/domain/space';
 import { nativeCreateEndpoint } from './native-create';
 import { parseJoinId } from '@vocespace/contracts';
 import { spaceRepository } from './lib/server/space-repository';
+import { liveSpaceClient, liveSpaceMembers } from './lib/server/live-space-presence';
 import { requireNativeChatMember } from './lib/server/native-chat';
 import { requireNative } from './native-auth';
 import { ApiRequest, ApiResponse } from './http';
 export async function nativeSpacesEndpoint(request: ApiRequest) {
   if (request.method === 'POST') return nativeCreateEndpoint(request);
-  const { principal } = await requireNative(request);
+  await requireNative(request);
   if (request.method !== 'GET') return new ApiResponse(null, { status: 405 });
+  return ApiResponse.json(await publicLiveSpaces(), { headers: { 'Cache-Control': 'no-store' } });
+}
+export async function publicLiveSpaces() {
   const items = [];
-  const spaces = await spaceRepository.list();
-  for (const [name, space] of Object.entries(spaces).sort(([a], [b]) => a.localeCompare(b))) {
+  const media = liveSpaceClient();
+  // LiveKit owns the current-room directory. Redis only supplies each candidate's policy/data;
+  // a missing/stale space:list: index must not decide which live rooms can be discovered.
+  const liveRooms = await media.listRooms();
+  for (const { name } of liveRooms.sort((a, b) => a.name.localeCompare(b.name))) {
+    const space = await spaceRepository.get(name);
     if (
       !space ||
-      (space.allowGuest !== 'allow' &&
-        (!principal.identities?.[name] || space.ownerId !== principal.identities[name])) ||
+      space.allowGuest !== 'allow' ||
       !Array.isArray(space.children)
     )
       continue;
+    const connected = await liveSpaceMembers(name, media);
+    const participantCount = Object.keys(space.participants).filter((id) => connected.has(id)).length;
+    if (!participantCount) continue;
     items.push({
       name,
-      participantCount: Object.keys(space.participants).length,
+      participantCount,
       roomCount: space.children.filter((child) => !child.isPrivate).length + 1,
     });
   }
-  return ApiResponse.json(items, { headers: { 'Cache-Control': 'no-store' } });
+  return items;
 }
 export async function nativeRoomsEndpoint(request: ApiRequest) {
   const { principal } = await requireNative(request);

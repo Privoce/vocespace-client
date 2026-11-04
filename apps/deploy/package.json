@@ -1,0 +1,18 @@
+{
+  "name": "@vocespace/deploy",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs && node server/index.mjs",
+    "start": "node server/index.mjs",
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@vocespace/config-node": "workspace:*",
+    "@vocespace/i18n": "workspace:*"
+  },
+  "devDependencies": { "esbuild": "0.25.12" },
+  "engines": { "node": ">=24.12.0 <25" }
+}

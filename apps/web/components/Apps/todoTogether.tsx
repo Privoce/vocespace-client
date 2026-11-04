@@ -1,3 +1,4 @@
+import { platformOrigin } from '@/lib/runtime-config';
 import { SpaceInfo, SpaceTodo, TodoItem } from '@/lib/std/space';
 import { useI18n } from '@/lib/i18n/i18n';
 import { Collapse, Progress, Empty, Card, Listy, Pagination } from 'antd';
@@ -29,7 +30,7 @@ export function TodoTogether({ spaceInfo, messageApi, space }: TodoTogetherProps
   const { t } = useI18n();
 
   const linkToUserAIPage = (participantId: string) => {
-    window.open(`https://home.vocespace.com/ai/${participantId}`, '_blank');
+    window.open(`${platformOrigin()}/ai/${participantId}`, '_blank');
   };
 
   // 处理参与者的todo数据

@@ -393,28 +393,14 @@ export function SharedMeetingRoom({
                 Button={Button}
                 Icon={Icon}
                 chatLabel={model.t('common.chat')}
-                membersLabel={model.t('phone_meeting.members')}
                 expandLabel={model.t('common.full_screen')}
-                count={model.members.length}
                 unread={conference.chat.state.messages.length}
-                onExpand={(tab) => model.open(tab === 'chat' ? 'chat' : 'participants')}
+                onExpand={() => model.open('chat')}
                 chat={
                   <SharedConferenceChat
                     compact
                     model={conference.chat}
                     identity={conference.state.joined!.identity}
-                  />
-                }
-                members={
-                  <MeetingMembers
-                    compact
-                    Button={Button}
-                    Icon={Icon}
-                    members={model.members}
-                    hostLabel={model.t('more.participant.host')}
-                    selfLabel={model.t('phone_meeting.self')}
-                    speakingLabel={model.t('phone_meeting.speaking')}
-                    onlineLabel={model.t('phone_meeting.online')}
                   />
                 }
               />

@@ -29,7 +29,8 @@ export function port(value, name) {
 export function configuration(release, root, conf = readConfiguration({ file: path.join(root, 'api-data/vocespace.conf.json') })) {
   const webPort = port(conf.deployment.web.port, 'deployment.web.port');
   const apiPort = port(conf.deployment.api.port, 'deployment.api.port');
-  if (webPort === apiPort) throw new Error('Web and API ports must differ');
+  const platformPort = port(conf.deployment.platform?.port ?? 3002, 'deployment.platform.port');
+  if (new Set([webPort, apiPort, platformPort]).size !== 3) throw new Error('Web, API and Platform ports must differ');
   const common = {
     interpreter: process.execPath, exec_mode: 'fork', instances: 1,
     watch: false, autorestart: true, restart_delay: 3000, kill_timeout: 30000, time: true,
@@ -39,11 +40,12 @@ export function configuration(release, root, conf = readConfiguration({ file: pa
   return { apps: [
     { ...common, name: 'vocespace-api', cwd: release, script: path.join(release, 'services/api/start.mjs') },
     { ...common, name: 'vocespace-web', cwd: path.join(release, 'apps/web'), script: path.join(release, 'apps/web/server.js') },
+    { ...common, name: 'vocespace-platform', cwd: path.join(release, 'apps/platform'), script: path.join(release, 'apps/platform/server.mjs') },
   ] };
 }
 export function validateManaged(processes, current) {
-  for (const [name, entry] of [['vocespace-api', 'services/api/start.mjs'], ['vocespace-web', 'apps/web/server.js']]) {
-    const old = typeof current === 'string' ? current : current[name.replace('vocespace-', '')]?.current;
+  for (const [name, entry] of [['vocespace-api', 'services/api/start.mjs'], ['vocespace-web', 'apps/web/server.js'], ['vocespace-platform', 'apps/platform/server.mjs']]) {
+    const old = typeof current === 'string' ? (name === 'vocespace-platform' ? null : current) : current[name.replace('vocespace-', '')]?.current;
     const matches = processes.filter((proc) => proc.name === name);
     if (!old && matches.length) throw new Error(`${name} already exists outside this deployment; migrate it manually first`);
     if (old && (matches.length !== 1 || matches[0].pm2_env?.pm_exec_path !== path.join(old, entry) ||
@@ -75,7 +77,7 @@ async function health(release, only) {
       try {
         const response = await fetch(`http://127.0.0.1:${port(number, name)}/healthz`, { signal: AbortSignal.timeout(2000) });
         const body = await response.json();
-        ok = response.ok && body.status === 'ok' && (name === 'web' ? body.service === 'web' : body.apiVersion === 1);
+        ok = response.ok && body.status === 'ok' && (name === 'api' ? body.apiVersion === 1 : body.service === name);
       } catch { /* Retry only liveness, never a write endpoint. */ }
       if (ok) break;
       await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -86,23 +88,24 @@ async function health(release, only) {
 }
 // Only long-running server workspaces belong here. Shared packages are built
 // by their consumers; Mobile has a separate native release workflow.
-const PROJECTS = ['api', 'web'];
+const PROJECTS = ['api', 'web', 'platform'];
+const LEGACY_PROJECTS = ['api', 'web'];
 export function projects(selection = 'all') {
-  if (selection === 'all') return [...PROJECTS];
+  if (selection === 'all') return [...LEGACY_PROJECTS]; // Keep existing combined deployments unchanged; Platform is opt-in.
   const name = selection.replace(/^@vocespace\//, '');
   if (!PROJECTS.includes(name)) throw new Error(`Unknown deployable project: ${selection}`);
   return [name];
 }
 export function artifacts(release, selection = 'all') {
   const meta = readJson(path.join(release, '.deploy.json'));
-  const built = meta.projects ?? PROJECTS; // Releases created before project selection.
+  const built = meta.projects ?? LEGACY_PROJECTS; // Releases created before project selection.
   const files = ['ecosystem.config.cjs', '.deploy.json'];
   for (const project of projects(selection)) {
     if (!built.includes(project)) throw new Error(`Release was not built for ${project}`);
     files.push(...(project === 'api' ? [
       'services/api/dist/api.cjs', 'services/api/dist/default-config.cjs',
       'services/api/dist/preview/renderer.js', 'services/api/start.mjs',
-    ] : ['apps/web/server.js', 'apps/web/.next/BUILD_ID']));
+    ] : project === 'web' ? ['apps/web/server.js', 'apps/web/.next/BUILD_ID'] : ['apps/platform/server.mjs', 'apps/platform/.next/BUILD_ID']));
   }
   for (const file of files) {
     if (!fs.existsSync(path.join(release, file))) throw new Error(`Missing artifact: ${file}`);
@@ -127,7 +130,7 @@ export function deploymentState(root) {
   if (fs.existsSync(file)) {
     const data = readJson(file);
     if (data.version !== 1 || !data.projects) throw new Error('Invalid deployment state version');
-    state = data.projects;
+    state = { platform: { current: null, previous: null }, ...data.projects };
   } else {
     const link = (name) => {
       try { return fs.realpathSync(path.join(root, name)); }
@@ -139,7 +142,7 @@ export function deploymentState(root) {
     };
     const current = link('current');
     const previous = link('previous');
-    state = Object.fromEntries(PROJECTS.map((name) => [name, { current, previous }]));
+    state = Object.fromEntries(PROJECTS.map((name) => [name, name === 'platform' ? { current: null, previous: null } : { current, previous }]));
   }
   for (const project of PROJECTS) {
     if (!state[project] || !Object.hasOwn(state[project], 'current') || !Object.hasOwn(state[project], 'previous')) throw new Error('Invalid deployment project state');
@@ -168,6 +171,11 @@ function preflight(release, root) {
   if (path.resolve(root, 'api-data', config.deployment.dataDir) !== path.join(root, 'api-data')) throw new Error('Ubuntu scripts require deployment.dataDir to resolve to ROOT/api-data');
   const meta = readJson(path.join(release, '.deploy.json'));
   if (meta.webPort !== config.deployment.web.port || meta.apiPort !== config.deployment.api.port || meta.basePath !== config.deployment.basePath) throw new Error('Deployment ports/basePath differ from release metadata; build a new release');
+  if (meta.projects?.includes('platform')) {
+    if (meta.platformPort !== config.deployment.platform.port) throw new Error('Platform port differs from release metadata');
+    validUrl(config.deployment.platform.apiUrl, 'deployment.platform.apiUrl', ['http:', 'https:']);
+    validUrl(config.deployment.platform.publicOrigin, 'deployment.platform.publicOrigin', ['http:', 'https:']);
+  }
   redisConfig(config);
   validUrl(config.livekit?.url, 'livekit.url', ['wss:', 'ws:', 'https:', 'http:']);
   requireValue(config.livekit?.key, 'livekit.key');
@@ -210,7 +218,7 @@ function commitPlan(plan) {
   // only when BOTH services share a version; omit misleading links for mixed releases.
   for (const kind of ['current', 'previous']) {
     try {
-      const values = PROJECTS.map((name) => next.projects[name][kind]);
+      const values = LEGACY_PROJECTS.map((name) => next.projects[name][kind]);
       const link = path.join(root, kind);
       if (values[0] && values.every((value) => value === values[0])) {
         const temp = path.join(root, `.${kind}.new`);
@@ -261,7 +269,7 @@ async function main([command, release, root, selection, extra]) {
       if (selected.includes('web')) fs.writeFileSync(path.join(release, 'apps/web/vocespace.build.json'), JSON.stringify({ deployment: { basePath: runtime.deployment.basePath } }), { flag: 'wx' });
       fs.writeFileSync(path.join(release, 'ecosystem.config.cjs'), `module.exports = ${JSON.stringify(config, null, 2)};\n`, { flag: 'wx' });
       fs.writeFileSync(path.join(release, '.deploy.json'), JSON.stringify({
-        webPort: runtime.deployment.web.port, apiPort: runtime.deployment.api.port, basePath: runtime.deployment.basePath,
+        platformPort: runtime.deployment.platform.port, webPort: runtime.deployment.web.port, apiPort: runtime.deployment.api.port, basePath: runtime.deployment.basePath,
         root, projects: selected, node: process.versions.node, builtAt: new Date().toISOString(),
       }, null, 2), { flag: 'wx' });
       break;
