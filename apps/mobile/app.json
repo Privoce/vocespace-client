@@ -4,6 +4,7 @@
     "slug": "vocespace-mobile",
     "scheme": "vocespace",
     "version": "1.0.0",
+    "icon": "./assets/icons/icon.png",
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true,
@@ -11,6 +12,11 @@
     },
     "android": {
       "package": "com.vocespace.mobile.dev",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icons/adaptive-foreground.png",
+        "monochromeImage": "./assets/icons/adaptive-monochrome.png",
+        "backgroundColor": "#121212"
+      },
       "permissions": [
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION"

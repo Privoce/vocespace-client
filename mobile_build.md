@@ -31,10 +31,14 @@ pnpm test
 | `ios.bundleIdentifier` | 当前 `com.vocespace.mobile.dev`，首次注册商店前改成你控制且长期使用的正式 ID |
 | `android.package` | 当前 `com.vocespace.mobile.dev`，首次上传 Play 前确认正式 package；后续不能把改包名当作原 App 更新 |
 | `ios.supportsTablet` | 当前 true；需测试 iPad 并准备相应截图，不能只验收 iPhone |
-| `icon` / Android adaptive icon | 当前 app.json 尚未配置正式发布图标；上传前提供品牌 PNG 并配置，不把默认开发图标当发布素材 |
+| `icon` / Android adaptive icon | 已配置 `assets/icons/` 中的品牌 PNG：iOS 不透明 1024×1024、Android 透明前景与单色主题层，背景为 `#121212` |
 | `scheme` | `vocespace`，不要自行加入包含长期 token 的 URL 流程 |
 
 这里只提供包名占位规则，不代你注册 Apple / Google 标识。改 ID 后应重新生成原生工程；旧 development build 是另一个安装，不会因 Metro 刷新变成新 ID。
+
+图标来自 `packages/ui/src/svg-resource.ts` 的 `logo`（原蓝绿渐变），不放大小尺寸 favicon。修改共享 logo 后，在仓库根运行 `pnpm generate:mobile-icons` 重新生成 PNG，并一起提交素材和配置。图标 PNG 已随源码保存，EAS 构建无需额外执行转换脚本。Android 前景主体直径为 60/108，位于 [Android adaptive icon 安全区](https://developer.android.com/develop/ui/compose/system/icon_design_adaptive) 内；iOS 图标无透明通道，不预先裁圆角。
+
+如果本机已存在 `ios/`、`android/`，先运行 `pnpm --filter @vocespace/mobile exec expo prebuild --no-install` 同步图标，再使用正常的 iOS / Android 构建命令安装新包。不要加 `--clean` 删除已有原生改动。EAS 在不含原生目录的 checkout 中会自动 prebuild；已有安装包不会通过 Metro Reload 更新桌面图标。参见 [Expo 图标配置](https://docs.expo.dev/develop/user-interface/splash-screen-and-app-icon/)。
 
 生产 App 的构建环境必须有：
 
@@ -44,7 +48,7 @@ pnpm test
 node scripts/config.mjs public --config /实际路径/vocespace.conf.json
 ```
 
-生成的 `apps/mobile/vocespace.public.json` 是公开构建投影，由 `app.config.js` 选择 mobile / analytics 字段写入 Expo extra。它可随 EAS 上传；完整服务端 JSON 必须留在服务端，不进入安装包。地址改变后重新导出并构建，不再读取 `EXPO_PUBLIC_API_URL` 或 `.env.local`。
+生成的 `apps/mobile/vocespace.public.json` 是公开构建投影，由 `app.config.js` 选择 mobile / analytics 字段写入 Expo extra。本机构建存在私有配置时优先读取当前配置，避免旧投影覆盖新地址；EAS 等没有私有配置的环境读取公开投影。两者都缺失时构建失败，不静默使用 localhost。公开投影可随 EAS 上传；完整服务端 JSON 不进入安装包。云构建前仍需重新导出并构建，不再读取 `EXPO_PUBLIC_API_URL` 或 `.env.local`。
 
 ## 3. 头像报错的处理
 

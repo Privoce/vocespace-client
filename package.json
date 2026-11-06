@@ -35,7 +35,8 @@
     "typecheck:platform": "pnpm --filter @vocespace/platform typecheck",
     "lint:platform": "pnpm --filter @vocespace/platform lint",
     "test:platform": "node --test scripts/tests/platform-runtime.test.mjs",
-    "test:platform:auth": "vitest run --config scripts/platform-vitest.config.ts"
+    "test:platform:auth": "vitest run --config scripts/platform-vitest.config.ts",
+    "generate:mobile-icons": "node scripts/generate-mobile-icons.mjs"
   },
   "devDependencies": {
     "@testing-library/react": "16.3.0",
@@ -64,7 +65,8 @@
     "@vocespace/i18n": "workspace:*",
     "@aws-sdk/client-s3": "^3.1068.0",
     "@vocespace/config-node": "workspace:*",
-    "dotenv": "^16.5.0"
+    "dotenv": "^16.5.0",
+    "sharp": "0.34.5"
   },
   "engines": {
     "node": ">=24.12.0 <25"

@@ -716,3 +716,24 @@
 - [ ] 未部署服务器，真实验证码邮件/注册/恢复/OAuth、在线会议与手机真机回归待验收；Supabase 模板需展示六位 `{{ .Token }}`。
 
 - [x] 2026-11-05 补充：按用户要求移除 Platform Google 登录的协议勾选禁用及点击拦截，保留请求期间防重复提交；邮箱登录/注册要求不变。
+
+### 2026-11-05：服务器发布（feature/rebuild）
+
+- [x] 本机及服务器先 fetch，服务器切换并快进到 `feature/rebuild` / `1137ff1`；备份配置、代理及 PM2/版本状态。
+- [x] 开启生产 JSON 的 RDS 开关，增加 Platform 的 home.vocespace.com / 3002 配置；其余配置保持原值。
+- [x] Web/API 发布到 `web-api-20261105-1137ff1`，Platform 发布到 `platform-20261105-1137ff1-fix1`；Deploy 本机 4848 由 PM2 常驻，旧 Platform 停止，Caddy 新路由和 PM2 保存通过。
+- [x] 服务器隔离构建暴露 OAuth 回调预渲染读配置问题，两个账号回调改为动态；修复同步本机/服务器但尚未提交。Platform 启动 smoke、公网 HTTP/Origin/昵称/Dashboard、Socket polling/Upgrade、发现/协议/Google 按钮和 RDS 脚本检查通过。
+- [ ] 用户稍后配置 deploy.vocespace.com 的 A 记录；公网 Deploy HTTPS/证书待 DNS 生效后验收。回调补丁需提交并同步后，Deploy 才能使用要求源码干净的“更新发布”。详见 [部署记录](docs/server-deployment-2026-11-05.md)。
+
+### 2026-11-05：iOS / Android 构建图标
+
+- [x] 从共享 SVG 的 logo 生成 iOS 1024×1024 不透明 PNG、Android adaptive 透明前景及 monochrome 图层，接入 app.json；增加 `pnpm generate:mobile-icons` 以便重新生成。
+- [x] 本机 Expo prebuild（复用已有原生目录、无 clean / install）通过；iOS 原生图标像素与源 PNG 一致且无 alpha，Android 五种密度图层、背景和 66dp 安全区检查通过；边界检查、frozen lockfile 校验通过。
+- [ ] 本次未编译 IPA / APK 或安装真机；桌面最终显示待新包安装后确认。配置和重建方式见 [构建说明](mobile_build.md)。
+
+### 2026-11-05：Mobile Release 构建与配置复核
+
+- [x] 修复旧 Mobile 公开投影覆盖本机最新配置的问题，重新导出线上 API / RDS 设置；本机优先源配置、云端回退公开投影，配置缺失不默认为 localhost。
+- [x] iOS Release 模拟器 `.app.zip`、Android ARM64 / ARMv7 Release 测试 APK 均编译成功；两份产物内的 API / RDS 和公开字段白名单检查通过。
+- [x] Mobile/UI 类型、边界和配置结构检查通过；iOS 签名验证、APK v2 签名、16 KB ZIP 对齐及 20 个 ARM64 原生库 LOAD 段对齐通过。详见 [本次构建记录](docs/mobile-build-2026-11-05.md)。
+- [ ] iPhone IPA 未完成：本机无有效 Apple 签名，EAS 未登录，待提供开发者团队及主 App / Broadcast 签名。Android 为测试签名，非商店发布包；两端真机功能尚未验收。

@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server';
 import { readConfiguration } from '@vocespace/config-node';
 import { NextRequest, NextResponse } from 'next/server';
+// OAuth callbacks require request-time configuration and must never be prerendered.
+export const dynamic = 'force-dynamic';
 export async function GET(request: NextRequest) {
   const origin = readConfiguration().deployment.platform.publicOrigin;
   const code = request.nextUrl.searchParams.get('code');
