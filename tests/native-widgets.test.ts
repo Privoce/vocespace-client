@@ -1,6 +1,6 @@
 // @vitest-environment node
 import { beforeEach, expect, it, vi } from 'vitest';
-import { DEFAULT_SPACE_INFO } from '@vocespace/domain/space';
+import { DEFAULT_SPACE_INFO, DEFAULT_PARTICIPANT_SETTINGS } from '@vocespace/domain/space';
 import { parseNativeWidgetAction, parseNativeWidgets } from '@vocespace/contracts';
 const state = vi.hoisted(() => ({ raw: '', denied: false, eval: vi.fn() }));
 vi.mock('../services/api/lib/server/config', () => ({ getConfig: () => ({}) }));
@@ -43,6 +43,7 @@ function fixture() {
   info.apps = ['todo', 'timer', 'countdown'];
   info.participants = {
     self: {
+      ...DEFAULT_PARTICIPANT_SETTINGS,
       name: 'Self',
       sync: [],
       appDatas: {
@@ -52,13 +53,14 @@ function fixture() {
       },
     },
     other: {
+      ...DEFAULT_PARTICIPANT_SETTINGS,
       name: 'Other',
       sync: [],
       appDatas: {
         todo: [{ date: 0, items: [{ id: '2', title: 'Other secret', visible: false }] }],
       },
     },
-  } as typeof info.participants;
+  };
   return info;
 }
 const req = (action?: unknown, extra = {}) =>

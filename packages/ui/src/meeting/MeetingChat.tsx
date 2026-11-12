@@ -17,6 +17,7 @@ export function MeetingChat({
   error,
   tools,
   composerTools,
+  onComposerFocus,
   compact,
   roomName,
   roomSubtitle,
@@ -79,12 +80,13 @@ export function MeetingChat({
           {error}
         </Text>
       )}
-      {!compact && tools}
+      {tools}
       <View style={[styles.composer, compact && { padding: 0, paddingTop: 6 }]}>
-        {!compact && composerTools}
+        {composerTools}
         <View style={styles.flex}>
           <Input
             value={draft}
+            onFocus={onComposerFocus}
             onChangeText={onDraft}
             placeholder={placeholder}
             maxLength={maxLength}

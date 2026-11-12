@@ -328,6 +328,7 @@ export default {
     device_error: '设备操作失败，请重试。',
   },
   shared_meeting: {
+    image: '图片',
     apps_loading: '正在加载应用…',
     apps_error: '应用数据读取或保存失败，请稍后重试；若服务器尚未更新，请先更新服务端。',
     clock_start: '开始',

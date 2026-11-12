@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import Drawer from '@ant-design/react-native/lib/drawer';
 import { ChannelDrawer } from './ChannelDrawer';
 import { RoomNavigation } from './RoomNavigation';
-import { Modal, Text, View, Pressable } from 'react-native';
+import { Modal, Text, View, Pressable, Keyboard, BackHandler } from 'react-native';
 import { VideoTrack, isTrackReference } from '@livekit/react-native';
 import { Track } from 'livekit-client';
 import {
@@ -46,7 +46,16 @@ export function SharedMeetingRoom({
   onBrowse?: (direction: number) => Promise<void>;
 }) {
   const model = useSharedMeetingRoom(conference, room);
-  const tools = useMeetingTools(room, conference.chat, model.t, () => model.open('chat'));
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const tools = useMeetingTools(room, conference.chat, model.t, () => setToolsOpen(false));
+  useEffect(() => {
+    if (!toolsOpen) return;
+    const subscription = BackHandler.addEventListener('hardwareBackPress', () => {
+      setToolsOpen(false);
+      return true;
+    });
+    return () => subscription.remove();
+  }, [toolsOpen]);
   const [memberTarget, setMemberTarget] = useState<MeetingTile>();
   const self = model.members.find((item) => item.local);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -58,7 +67,10 @@ export function SharedMeetingRoom({
     if (tile.local) return;
     const id = model.allTracks.find((track) => model.key(track) === tile.id)?.participant.identity;
     const member = model.members.find((entry) => entry.id === id);
-    if (member) { setFullscreen(undefined); setMemberTarget(member); }
+    if (member) {
+      setFullscreen(undefined);
+      setMemberTarget(member);
+    }
   };
   useEffect(() => {
     if (fullscreen && !fullscreenTile) setFullscreen(undefined);
@@ -78,7 +90,15 @@ export function SharedMeetingRoom({
       conference={conference}
       directory={model.directory}
       allowRoomSwipe={false}
-      enabled={model.panel === 'stage' && !focused && !tools.open && !fullscreen && !feedbackOpen && !memberTarget}
+      enabled={
+        !toolsOpen &&
+        model.panel === 'stage' &&
+        !focused &&
+        !tools.open &&
+        !fullscreen &&
+        !feedbackOpen &&
+        !memberTarget
+      }
       onBrowse={onBrowse}
     >
       {({ move, busy }) => (
@@ -137,9 +157,16 @@ export function SharedMeetingRoom({
             </View>
           }
         >
-          {memberTarget && <MemberModeration key={memberTarget.id} member={memberTarget} room={room}
-            canBlock={!!(self?.owner || self?.manager) && !memberTarget.owner}
-            accountEmail={accountEmail} onClose={() => setMemberTarget(undefined)} />}
+          {memberTarget && (
+            <MemberModeration
+              key={memberTarget.id}
+              member={memberTarget}
+              room={room}
+              canBlock={!!(self?.owner || self?.manager) && !memberTarget.owner}
+              accountEmail={accountEmail}
+              onClose={() => setMemberTarget(undefined)}
+            />
+          )}
           <FeedbackDialog
             open={feedbackOpen}
             accountEmail={accountEmail}
@@ -256,17 +283,6 @@ export function SharedMeetingRoom({
               },
             ]}
             renderVideo={(id) => (id === fullscreen ? null : video(id))}
-            chat={{
-              open: model.panel === 'chat',
-              onClose: () => model.open('stage'),
-              content: (
-                <SharedConferenceChat
-                  roomName={conference.state.spaceName || room.raw.name}
-                  model={conference.chat}
-                  identity={conference.state.joined!.identity}
-                />
-              ),
-            }}
             panel={{
               backLabel: model.t('common.back'),
               variant: model.panel === 'settings' ? 'settings' : undefined,
@@ -314,7 +330,7 @@ export function SharedMeetingRoom({
                     name={conference.state.spaceName || room.raw.name}
                     title={model.t('phone_meeting.share_title')}
                     description={model.t('phone_meeting.share_description')}
-                    copyLabel={model.t('phone_meeting.copy')}
+                    copyLabel={model.t('more.participant.invite.ok')}
                     onCopy={() => {
                       void model.share();
                     }}
@@ -401,12 +417,22 @@ export function SharedMeetingRoom({
                 Button={Button}
                 Icon={Icon}
                 chatLabel={model.t('common.chat')}
-                expandLabel={model.t('common.full_screen')}
+                expandLabel={model.t(
+                  model.panel === 'chat' ? 'phone_meeting.exit_fullscreen' : 'common.full_screen',
+                )}
                 unread={conference.chat.state.messages.length}
-                onExpand={() => model.open('chat')}
+                expanded={model.panel === 'chat'}
+                onExpand={() => model.open(model.panel === 'chat' ? 'stage' : 'chat')}
+                toolsOpen={toolsOpen}
+                tools={tools.panel}
                 chat={
                   <SharedConferenceChat
-                    compact
+                    compact={model.panel !== 'chat'}
+                    toolsOpen={toolsOpen}
+                    onToggleTools={() => {
+                      Keyboard.dismiss();
+                      setToolsOpen(!toolsOpen);
+                    }}
                     model={conference.chat}
                     identity={conference.state.joined!.identity}
                   />
@@ -431,15 +457,20 @@ export function SharedMeetingRoom({
                   <Icon name="fullscreenExit" />
                 </Button>
               </View>
-              <Pressable onLongPress={fullscreenTile ? () => openMember(fullscreenTile) : undefined} delayLongPress={500}
-                style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable
+                onLongPress={fullscreenTile ? () => openMember(fullscreenTile) : undefined}
+                delayLongPress={500}
+                style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+              >
                 {fullscreenTile &&
                   (fullscreenTile.video ? (
                     video(fullscreenTile.id)
                   ) : (
                     <MeetingAvo
                       interactive
-                      onLongPress={!fullscreenTile.local ? () => openMember(fullscreenTile) : undefined}
+                      onLongPress={
+                        !fullscreenTile.local ? () => openMember(fullscreenTile) : undefined
+                      }
                       avo={fullscreenTile.screen ? undefined : fullscreenTile.avo}
                       level={
                         model.allTracks.find((track) => model.key(track) === fullscreenTile.id)

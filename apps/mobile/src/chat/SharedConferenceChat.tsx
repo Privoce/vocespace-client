@@ -11,11 +11,15 @@ export function SharedConferenceChat({
   identity,
   compact,
   roomName,
+  onToggleTools,
+  toolsOpen,
 }: {
   model: ReturnType<typeof useConferenceChat>;
   identity: string;
   compact?: boolean;
   roomName?: string;
+  onToggleTools: () => void;
+  toolsOpen?: boolean;
 }) {
   const { state } = model;
   const { t } = useI18n();
@@ -71,25 +75,18 @@ export function SharedConferenceChat({
               ? '历史消息暂时加载失败，仍可收发新消息。'
               : undefined
         }
+        onComposerFocus={() => {
+          if (toolsOpen) onToggleTools();
+        }}
         composerTools={
-          <View style={{ flexDirection: 'row', alignItems: 'center', flexShrink: 0, gap: 2 }}>
-            <MeetingButton
-              label={t('shared_meeting.upload')}
-              appearance="icon"
-              disabled={model.files.busy || state.connection !== 'connected'}
-              onPress={() => void model.files.upload()}
-            >
-              <IconOutline name="plus" size={24} color="#eee" />
-            </MeetingButton>
-            <MeetingButton
-              label={t('shared_meeting.files')}
-              appearance="icon"
-              disabled={model.files.busy}
-              onPress={() => void model.files.list()}
-            >
-              <MeetingIcon name="file" size={22} />
-            </MeetingButton>
-          </View>
+          <MeetingButton
+            label={t('more.app.title')}
+            appearance="icon"
+            active={toolsOpen}
+            onPress={onToggleTools}
+          >
+            <IconOutline name="plus-circle" size={24} color={toolsOpen ? '#22ccee' : '#adc1cd'} />
+          </MeetingButton>
         }
         tools={
           <View style={{ paddingHorizontal: 12, gap: 8 }}>
@@ -118,42 +115,40 @@ export function SharedConferenceChat({
           </View>
         }
       />
-      {!compact && (
-        <Modal
-          visible={model.files.open}
-          animationType="slide"
-          onRequestClose={() => model.files.setOpen(false)}
-        >
-          <SafeAreaView style={{ flex: 1, backgroundColor: '#202020', padding: 20 }}>
-            <MeetingButton onPress={() => model.files.setOpen(false)}>
-              {t('common.close')}
-            </MeetingButton>
-            <Text style={{ color: '#eee', fontSize: 20 }}>{t('shared_meeting.files')}</Text>
-            {model.files.error && (
-              <Text accessibilityRole="alert" style={{ color: '#FF8888' }}>
-                {t('shared_meeting.files_error')}
-              </Text>
-            )}
-            <MeetingButton disabled={model.files.busy} onPress={() => void model.files.list()}>
-              {t('native_navigation.refresh')}
-            </MeetingButton>
-            {!model.files.busy && !model.files.files.length && (
-              <Text style={{ color: '#aaa', padding: 12 }}>{t('shared_meeting.files_empty')}</Text>
-            )}
-            <ScrollView>
-              {model.files.files.map((name) => (
-                <MeetingButton
-                  key={name}
-                  disabled={model.files.busy}
-                  onPress={() => void model.files.download(name)}
-                >
-                  {name}
-                </MeetingButton>
-              ))}
-            </ScrollView>
-          </SafeAreaView>
-        </Modal>
-      )}
+      <Modal
+        visible={model.files.open}
+        animationType="slide"
+        onRequestClose={() => model.files.setOpen(false)}
+      >
+        <SafeAreaView style={{ flex: 1, backgroundColor: '#202020', padding: 20 }}>
+          <MeetingButton onPress={() => model.files.setOpen(false)}>
+            {t('common.close')}
+          </MeetingButton>
+          <Text style={{ color: '#eee', fontSize: 20 }}>{t('shared_meeting.files')}</Text>
+          {model.files.error && (
+            <Text accessibilityRole="alert" style={{ color: '#FF8888' }}>
+              {t('shared_meeting.files_error')}
+            </Text>
+          )}
+          <MeetingButton disabled={model.files.busy} onPress={() => void model.files.list()}>
+            {t('native_navigation.refresh')}
+          </MeetingButton>
+          {!model.files.busy && !model.files.files.length && (
+            <Text style={{ color: '#aaa', padding: 12 }}>{t('shared_meeting.files_empty')}</Text>
+          )}
+          <ScrollView>
+            {model.files.files.map((name) => (
+              <MeetingButton
+                key={name}
+                disabled={model.files.busy}
+                onPress={() => void model.files.download(name)}
+              >
+                {name}
+              </MeetingButton>
+            ))}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
     </>
   );
 }

@@ -98,3 +98,5 @@ apps/web/public/license/
 !/apps/mobile/tests/meeting-tools.test.tsx
 !/apps/mobile/tests/participant-widgets.test.tsx
 !/tests/native-widgets.test.ts
+
+!/tests/phone-chat-dock.test.tsx

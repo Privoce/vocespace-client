@@ -65,4 +65,5 @@ export interface MeetingInputProps {
   disabled?: boolean;
   maxLength?: number;
   onSubmit: () => void;
+  onFocus?: () => void;
 }

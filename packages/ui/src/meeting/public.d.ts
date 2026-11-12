@@ -12,7 +12,12 @@ export declare function PhoneMeeting(props: PhoneMeetingProps): ReactElement;
 export declare function MeetingControls(props: MeetingControlsProps): ReactElement;
 export declare function MeetingMenu(props: MeetingMenuProps): ReactElement;
 export declare function MeetingChat(props: MeetingChatProps): ReactElement;
-export declare function MeetingAppsPanel(props: import('./types').MeetingAppsPanelProps): ReactElement;
+export declare function MeetingToolsPanel(
+  props: import('./types').MeetingToolsPanelProps,
+): ReactElement;
+export declare function MeetingAppsPanel(
+  props: import('./types').MeetingAppsPanelProps,
+): ReactElement;
 export declare function MeetingMembers(props: MeetingMembersProps): ReactElement;
 
 import type { MeetingSettingsFormProps, MeetingSettingsNavigationProps } from './settings-types';
@@ -58,14 +63,22 @@ export declare function MeetingSheetHeader(
   >,
 ): ReactElement;
 
-export declare function MeetingRaisedHand(props: import('./types').MeetingRaisedHandProps): ReactElement | null;
-export declare function MeetingParticipantTools(props: import('./types').MeetingParticipantToolsProps): ReactElement;
+export declare function MeetingRaisedHand(
+  props: import('./types').MeetingRaisedHandProps,
+): ReactElement | null;
+export declare function MeetingParticipantTools(
+  props: import('./types').MeetingParticipantToolsProps,
+): ReactElement;
 export type { FeedbackFormProps, FeedbackPayload } from './feedback-types';
-export declare function FeedbackForm(props: import('./feedback-types').FeedbackFormProps): import('react').ReactElement;
+export declare function FeedbackForm(
+  props: import('./feedback-types').FeedbackFormProps,
+): import('react').ReactElement;
 
 export { FebType } from './feedback-types';
 export type { ReportTarget } from './feedback-types';
 
 export declare function MemberActions(props: import('./types').MemberActionsProps): ReactElement;
 
-export declare function MeetingToolFolder(props: import('./types').MeetingToolFolderProps): ReactElement;
+export declare function MeetingToolFolder(
+  props: import('./types').MeetingToolFolderProps,
+): ReactElement;

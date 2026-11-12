@@ -70,7 +70,13 @@ export function MeetingButton({
           paddingHorizontal: 0,
         },
         visual,
-        member && { width: '100%', height: 98, borderRadius: 14, backgroundColor: appearance === 'memberDanger' ? '#392630' : '#1B2D36', borderColor: appearance === 'memberDanger' ? '#50313E' : '#304651' },
+        member && {
+          width: '100%',
+          height: 98,
+          borderRadius: 14,
+          backgroundColor: appearance === 'memberDanger' ? '#392630' : '#1B2D36',
+          borderColor: appearance === 'memberDanger' ? '#50313E' : '#304651',
+        },
       ])}
     >
       {typeof children === 'string' ? children : <View style={styles.content}>{children}</View>}
@@ -79,6 +85,7 @@ export function MeetingButton({
 }
 export function MeetingInput({
   value,
+  onFocus,
   onChangeText,
   placeholder,
   disabled,
@@ -87,6 +94,7 @@ export function MeetingInput({
   return (
     <Input
       value={value}
+      onFocus={onFocus}
       onChangeText={onChangeText}
       placeholder={placeholder}
       accessibilityLabel={placeholder}

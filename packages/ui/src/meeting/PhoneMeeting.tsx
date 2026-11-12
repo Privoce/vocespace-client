@@ -263,7 +263,7 @@ export function PhoneMeeting({
             </View>
           </ScrollView>
         </View>
-        <View style={fullscreenTileId ? styles.hidden : undefined}>
+        <View style={[styles.bottom, fullscreenTileId && styles.hidden]}>
           {dock}
           {controls}
         </View>
@@ -281,6 +281,7 @@ export function PhoneMeeting({
   );
 }
 const styles = StyleSheet.create({
+  bottom: { flexShrink: 1, minHeight: 0 },
   root: { flex: 1, width: '100%', minHeight: 0, backgroundColor: c.background },
   flex: { flex: 1, minHeight: 0 },
   header: {

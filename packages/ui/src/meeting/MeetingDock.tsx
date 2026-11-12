@@ -1,4 +1,4 @@
-import { View, Text, Pressable, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, useWindowDimensions } from 'react-native';
 import type { MeetingDockProps, MeetingTileActionsProps } from './types';
 export function MeetingDock({
   chatLabel,
@@ -6,9 +6,17 @@ export function MeetingDock({
   unread,
   chat,
   onExpand,
+  expanded,
+  tools,
+  toolsOpen,
   Button,
   Icon,
 }: MeetingDockProps) {
+  const { height } = useWindowDimensions();
+  const toolsHeight = Math.min(220, height * 0.26);
+  const chatHeight = expanded
+    ? Math.max(152, Math.min(420, height * 0.52) - (toolsOpen ? toolsHeight : 0))
+    : Math.min(152, height * 0.28);
   return (
     <View style={s.root}>
       <View style={s.tabs}>
@@ -18,10 +26,16 @@ export function MeetingDock({
         </View>
         <View style={{ flex: 1 }} />
         <Button appearance="icon" label={expandLabel} onPress={onExpand}>
-          <Icon name="fullscreen" size={18} color="#8CA3B2" />
+          <Icon name={expanded ? 'fullscreenExit' : 'fullscreen'} size={18} color="#8CA3B2" />
         </Button>
       </View>
-      <View style={s.body}>{chat}</View>
+      <View style={{ height: chatHeight, flexShrink: 1, minHeight: 96 }}>{chat}</View>
+      <ScrollView
+        keyboardShouldPersistTaps="handled"
+        style={toolsOpen ? { maxHeight: toolsHeight } : { display: 'none' }}
+      >
+        {tools}
+      </ScrollView>
     </View>
   );
 }
@@ -47,7 +61,7 @@ export function MeetingTileActions({ actions, Icon }: MeetingTileActionsProps) {
   );
 }
 const s = StyleSheet.create({
-  root: { marginHorizontal: 14, marginTop: 4, marginBottom: 4 },
+  root: { marginHorizontal: 14, marginTop: 4, marginBottom: 4, flexShrink: 1, minHeight: 0 },
   tabs: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -73,7 +87,6 @@ const s = StyleSheet.create({
     borderRadius: 4,
     backgroundColor: '#18333E',
   },
-  body: { height: 152 },
   actions: {
     flexDirection: 'row',
     borderTopWidth: 1,

@@ -1,6 +1,7 @@
 export { PhoneMeeting } from './PhoneMeeting';
 export { MeetingControls, MeetingMenu } from './MeetingControls';
 export { MeetingChat } from './MeetingChat';
+export { MeetingToolsPanel } from './MeetingToolsPanel';
 export { MeetingAppsPanel } from './MeetingAppsPanel';
 export { MeetingMembers } from './MeetingMembers';
 export type * from './types';

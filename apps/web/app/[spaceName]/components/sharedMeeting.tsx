@@ -7,20 +7,16 @@ import { ParticipantAvoPlaceholder } from '@/components/Participant/avo';
 import { DEFAULT_PARTICIPANT_SETTINGS } from '@vocespace/domain/space';
 import { useUserStore } from '@/lib/store';
 import { socket } from '@/lib/realtime/socket';
-import {
-  PhoneMeeting,
-  MeetingMembers,
-  MeetingShare,
-  MeetingDock,
-  MeetingParticipantTools,
-} from '@vocespace/ui';
+import { PhoneMeeting, MeetingMembers, MeetingDock, MeetingParticipantTools } from '@vocespace/ui';
 import {
   MeetingButton as Button,
   MeetingIcon as Icon,
   MeetingSettingsInput as Input,
 } from '@/components/MeetingUI/primitives';
 import { PhoneSheet } from '@/components/MeetingUI/PhoneSheet';
-import { SharedChat } from '@/components/MeetingUI/SharedChat';
+import { ShareInvitation } from '@/components/MeetingUI/ShareInvitation';
+import { TilePlayerAdd } from '@/components/Participant/player';
+import { SharedChat, chatFileTools } from '@/components/MeetingUI/SharedChat';
 import { useSharedMeeting } from './useSharedMeeting';
 import type { ConferenceModel } from './mediaStage';
 import { renderConferenceEntity } from './entity';
@@ -39,6 +35,7 @@ export default function SharedMeeting({
     if (fullscreen && !tiles.some((item) => item.id === fullscreen)) setFullscreen(undefined);
   }, [fullscreen, tiles]);
   const [shareOpen, setShareOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
   return (
     <PhoneMeeting
       handLabel={t('more.app.raise.title')}
@@ -175,12 +172,14 @@ export default function SharedMeeting({
         model.focusedTilePlayerId ? `tile-player:${model.focusedTilePlayerId}` : undefined
       }
       onFocusTrack={() => model.layoutContext.pin.dispatch?.({ msg: 'clear_pin' })}
-      extraTiles={model.tilePlayerEntities.map((entity) => ({
-        id: entity.id,
-        content: renderConferenceEntity(model, entity, {
-          isFocus: entity.id === `tile-player:${model.focusedTilePlayerId}`,
-        }),
-      }))}
+      extraTiles={model.tilePlayerEntities
+        .filter((entity) => entity.category !== 'tile-player-add')
+        .map((entity) => ({
+          id: entity.id,
+          content: renderConferenceEntity(model, entity, {
+            isFocus: entity.id === `tile-player:${model.focusedTilePlayerId}`,
+          }),
+        }))}
       renderVideo={(id) => {
         const track = tracks.find((item) => key(item) === id);
         return track && isTrackReference(track) ? (
@@ -199,18 +198,39 @@ export default function SharedMeeting({
           Button={Button}
           Icon={Icon}
           chatLabel={t('common.chat')}
-          expandLabel={t('common.full_screen')}
+          expandLabel={t(model.chatOpen ? 'phone_meeting.exit_fullscreen' : 'common.full_screen')}
           unread={chat.chatMsg.msgs.length}
-          onExpand={() => model.setChatOpen(true)}
-          chat={<SharedChat compact model={chat} />}
+          expanded={model.chatOpen}
+          onExpand={() => model.setChatOpen(!model.chatOpen)}
+          toolsOpen={toolsOpen}
+          tools={
+            model.space && model.selfRoom ? (
+              <TilePlayerAdd
+                spaceName={model.space.name}
+                room={model.selfRoom.name}
+                myIdentity={model.space.localParticipant.identity}
+                messageApi={model.messageApi}
+                iframeUrls={model.settings.iframeUrls}
+                extraTools={chatFileTools(chat)}
+                onToolSelect={() => setToolsOpen(false)}
+                onCreated={() => {
+                  void model.fetchTilePlayers();
+                  void model.fetchSettings();
+                }}
+              />
+            ) : undefined
+          }
+          chat={
+            <SharedChat
+              compact={!model.chatOpen}
+              model={chat}
+              toolsOpen={toolsOpen}
+              onToggleTools={() => setToolsOpen(!toolsOpen)}
+            />
+          }
         />
       }
       controls={controls}
-      chat={{
-        open: model.chatOpen,
-        onClose: () => model.setChatOpen(false),
-        content: <SharedChat model={chat} roomName={model.space?.name} />,
-      }}
       panel={{
         open: membersOpen || shareOpen,
         height: shareOpen
@@ -230,15 +250,7 @@ export default function SharedMeeting({
           setShareOpen(false);
         },
         content: shareOpen ? (
-          <MeetingShare
-            Button={Button}
-            Icon={Icon}
-            name={model.space?.name || ''}
-            title={t('phone_meeting.share_title')}
-            description={t('phone_meeting.share_description')}
-            copyLabel={t('phone_meeting.copy')}
-            onCopy={model.copyRoomName}
-          />
+          <ShareInvitation name={model.space?.name || ''} messageApi={model.messageApi} />
         ) : (
           <MeetingMembers
             Button={Button}

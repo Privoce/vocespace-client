@@ -1,6 +1,6 @@
 'use client';
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
-import { MeetingToolFolder } from '@vocespace/ui';
+import { MeetingToolsPanel, type MeetingToolsPanelProps } from '@vocespace/ui';
 import { SvgResource } from '@/components/Icon/index';
 import { api } from '@/lib/api';
 import { uploadIframeUrl } from '@/lib/api/space';
@@ -342,6 +342,8 @@ export interface TilePlayerAddProps {
   messageApi: MessageInstance;
   onCreated?: () => void;
   iframeUrls?: string[];
+  extraTools?: MeetingToolsPanelProps['items'];
+  onToolSelect?: () => void;
 }
 
 export const TilePlayerAdd = ({
@@ -351,6 +353,8 @@ export const TilePlayerAdd = ({
   messageApi,
   onCreated,
   iframeUrls,
+  extraTools = [],
+  onToolSelect,
 }: TilePlayerAddProps) => {
   const { t } = useI18n();
   const isPhone = useLayoutDevice() === 'phone';
@@ -495,12 +499,12 @@ export const TilePlayerAdd = ({
   return (
     <>
       {isPhone ? (
-        <MeetingToolFolder
-          label={t('more.app.title')}
-          closeLabel={t('common.close')}
+        <MeetingToolsPanel
+          onSelect={onToolSelect}
           items={[
             {
               id: 'image',
+              label: t('shared_meeting.image'),
               icon: <FileImageOutlined />,
               content: (close) => (
                 <Upload
@@ -513,8 +517,8 @@ export const TilePlayerAdd = ({
                 >
                   <Button
                     type="text"
-                    aria-label={t('common.upload')}
-                    style={{ width: 48, height: 48 }}
+                    aria-label={t('shared_meeting.image')}
+                    style={{ width: 58, height: 58 }}
                     icon={<FileImageOutlined style={{ fontSize: 22 }} />}
                   />
                 </Upload>
@@ -522,12 +526,13 @@ export const TilePlayerAdd = ({
             },
             {
               id: 'iframe',
+              label: 'Iframe',
               icon: <LayoutOutlined />,
               content: (close) => (
                 <Button
                   type="text"
                   aria-label="Iframe"
-                  style={{ width: 48, height: 48 }}
+                  style={{ width: 58, height: 58 }}
                   onClick={() => {
                     close();
                     setOpenInputIframe(true);
@@ -538,12 +543,13 @@ export const TilePlayerAdd = ({
             },
             {
               id: 'browser',
+              label: 'HyperBeam',
               icon: <GlobalOutlined />,
               content: (close) => (
                 <Button
                   type="text"
                   aria-label="HyperBeam Browser"
-                  style={{ width: 48, height: 48 }}
+                  style={{ width: 58, height: 58 }}
                   onClick={() => {
                     close();
                     void createHyperbeamPlayer();
@@ -554,12 +560,13 @@ export const TilePlayerAdd = ({
             },
             {
               id: 'whiteboard',
+              label: t('common.whiteboard.title'),
               icon: <EditOutlined />,
               content: (close) => (
                 <Button
                   type="text"
                   aria-label={t('common.whiteboard.title')}
-                  style={{ width: 48, height: 48 }}
+                  style={{ width: 58, height: 58 }}
                   onClick={() => {
                     close();
                     void createWhiteboardPlayer();
@@ -568,22 +575,7 @@ export const TilePlayerAdd = ({
                 />
               ),
             },
-            {
-              id: 'chat',
-              icon: <SvgResource type="chat" svgSize={24} />,
-              content: (close) => (
-                <Button
-                  type="text"
-                  aria-label={t('common.chat')}
-                  style={{ width: 48, height: 48 }}
-                  onClick={() => {
-                    close();
-                    setChatOpen(!chatOpen);
-                  }}
-                  icon={<SvgResource type="chat" svgSize={24} />}
-                />
-              ),
-            },
+            ...extraTools,
           ]}
         />
       ) : (

@@ -341,6 +341,7 @@ export default {
     device_error: 'Device operation failed. Try again.',
   },
   shared_meeting: {
+    image: 'Image',
     apps_loading: 'Loading apps…',
     apps_error: 'Could not load or save apps. Try again shortly; update the server if needed.',
     clock_start: 'Start',

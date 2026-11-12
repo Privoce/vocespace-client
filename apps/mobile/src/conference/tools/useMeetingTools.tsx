@@ -3,7 +3,7 @@ import { Image, Modal, Pressable, Text, View, TextInput, StyleSheet } from 'reac
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { WebView } from 'react-native-webview';
 import { IconOutline, type OutlineGlyphMapType } from '@ant-design/icons-react-native';
-import { MeetingToolFolder } from '@vocespace/ui';
+import { MeetingToolsPanel } from '@vocespace/ui';
 import { ApiError } from '@vocespace/client-sdk';
 import { MeetingButton as Button, MeetingIcon } from '../../ui/meeting';
 import { pickDocument } from '../../ui/document-picker';
@@ -44,7 +44,7 @@ export function useMeetingTools(
   room: NativeRoom,
   chat: ReturnType<typeof useConferenceChat>,
   t: (key: string) => string,
-  openChat: () => void,
+  onToolSelect: () => void,
 ) {
   const [players, setPlayers] = useState<Player[]>([]);
   const [selected, setSelected] = useState<string>();
@@ -78,7 +78,7 @@ export function useMeetingTools(
       try {
         await refresh(controller.signal);
       } catch {
-        // Keep the last list and retry in the background without shrinking the tool tile.
+        // Keep the last list and retry silently in the background.
       } finally {
         loading = false;
         if (!controller.signal.aborted) timer = setTimeout(() => void load(), 30000);
@@ -146,7 +146,7 @@ export function useMeetingTools(
     {
       id: 'image',
       name: 'file-image',
-      label: t('common.upload'),
+      label: t('shared_meeting.image'),
       action: () => void run('upload'),
     },
     { id: 'iframe', name: 'layout', label: 'Iframe', action: () => setInput(true) },
@@ -162,38 +162,50 @@ export function useMeetingTools(
       label: t('common.whiteboard.title'),
       action: () => void run('create_whiteboard'),
     },
-    { id: 'chat', name: 'message', label: t('common.chat'), action: openChat },
+    {
+      id: 'upload-file',
+      name: 'folder',
+      label: t('shared_meeting.upload'),
+      action: () => void chat.files.upload(),
+    },
+    {
+      id: 'files',
+      name: 'file',
+      label: t('shared_meeting.files'),
+      action: () => void chat.files.list(),
+    },
   ];
   const player = players.find((p) => p.id === selected);
   const icon = (name: OutlineGlyphMapType) => <IconOutline name={name} size={24} color="#abbcc5" />;
-  const folder = (
-    <View style={{ flex: 1 }}>
-      <MeetingToolFolder
-        label={t('more.app.title')}
-        closeLabel={t('common.close')}
-        items={definitions.map((d) => ({
-          id: d.id,
-          icon: icon(d.name),
-          content: (close) => (
-            <Pressable
-              accessibilityLabel={d.label}
-              accessibilityRole="button"
-              disabled={busy}
-              style={styles.tool}
-              onPress={() => {
-                close();
-                d.action();
-              }}
-            >
-              {icon(d.name)}
-            </Pressable>
-          ),
-        }))}
-      />
-    </View>
+  const panel = (
+    <MeetingToolsPanel
+      onSelect={onToolSelect}
+      items={definitions.map((d) => ({
+        id: d.id,
+        label: d.label,
+        icon: icon(d.name),
+        content: (close) => (
+          <Pressable
+            accessibilityLabel={d.label}
+            accessibilityRole="button"
+            disabled={
+              busy ||
+              ((d.id === 'upload-file' || d.id === 'files') && chat.files.busy) ||
+              (d.id === 'upload-file' && chat.state.connection !== 'connected')
+            }
+            style={styles.tool}
+            onPress={() => {
+              close();
+              d.action();
+            }}
+          >
+            {icon(d.name)}
+          </Pressable>
+        ),
+      }))}
+    />
   );
   const extraTiles = [
-    { id: 'tools:add', content: folder },
     ...players.map((p) => ({
       id: `tool:${p.id}`,
       content: (
@@ -298,10 +310,10 @@ export function useMeetingTools(
       </Modal>
     </>
   );
-  return { extraTiles, dialog, open: input || !!player };
+  return { extraTiles, panel, dialog, open: input || !!player };
 }
 const styles = StyleSheet.create({
-  tool: { width: 48, height: 48, alignItems: 'center', justifyContent: 'center' },
+  tool: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center' },
   tile: {
     flex: 1,
     alignItems: 'center',

@@ -76,9 +76,11 @@ export function MeetingInput({
   disabled,
   maxLength,
   onSubmit,
+  onFocus,
 }: MeetingInputProps) {
   return (
     <Input.TextArea
+      onFocus={onFocus}
       aria-label={placeholder}
       placeholder={placeholder}
       value={value}

@@ -6,7 +6,13 @@ export interface MeetingAppsPanelProps {
   name?: string;
   active: string;
   onChange: (id: string) => void;
-  tabs: { id: string; label: string; header?: ReactNode; actions?: ReactNode; content: ReactNode }[];
+  tabs: {
+    id: string;
+    label: string;
+    header?: ReactNode;
+    actions?: ReactNode;
+    content: ReactNode;
+  }[];
 }
 
 export interface MeetingLabels {
@@ -128,6 +134,7 @@ export interface MeetingChatProps extends MeetingPrimitives {
   error?: string;
   tools?: ReactNode;
   composerTools?: ReactNode;
+  onComposerFocus?: () => void;
   compact?: boolean;
   roomName?: string;
   roomSubtitle?: string;
@@ -153,6 +160,9 @@ export interface MeetingDockProps extends MeetingPrimitives {
   unread?: number;
   chat: ReactNode;
   onExpand: () => void;
+  expanded?: boolean;
+  toolsOpen?: boolean;
+  tools?: ReactNode;
 }
 export interface MeetingTileActionsProps extends MeetingPrimitives {
   actions: MeetingAction[];
@@ -196,7 +206,16 @@ export interface MemberActionsProps {
 }
 
 export interface MeetingToolFolderProps {
-  items: { id: string; icon: ReactNode; content: ReactNode | ((close: () => void) => ReactNode) }[];
+  items: {
+    id: string;
+    label?: string;
+    icon: ReactNode;
+    content: ReactNode | ((close: () => void) => ReactNode);
+  }[];
   label: string;
   closeLabel: string;
+}
+export interface MeetingToolsPanelProps {
+  items: MeetingToolFolderProps['items'];
+  onSelect?: () => void;
 }

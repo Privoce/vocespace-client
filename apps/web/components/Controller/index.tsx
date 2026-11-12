@@ -1,5 +1,4 @@
 'use client';
-import { analytics } from '@/lib/analytics';
 import * as React from 'react';
 import { useControls } from '@/components/Controller/hooks/useControls';
 import { ControlBarProps, ControlBarExport } from './types';
@@ -13,8 +12,7 @@ import { ControlsPC } from './pc';
 import { ControlsPhone } from './phone';
 import { ControlsShared } from './sharedPhone';
 import { PhoneSheet } from '@/components/MeetingUI/PhoneSheet';
-import { MeetingShare } from '@vocespace/ui';
-import { MeetingButton, MeetingIcon } from '@/components/MeetingUI/primitives';
+import { ShareInvitation } from '@/components/MeetingUI/ShareInvitation';
 import { Settings } from '../Settings';
 export * from '@/components/Controller/shared';
 
@@ -195,23 +193,7 @@ export const Controls = React.forwardRef<ControlBarExport, ControlBarProps>(func
           onClose={() => setOpenShareModal(false)}
           height="76%"
         >
-          <MeetingShare
-            Button={MeetingButton}
-            Icon={MeetingIcon}
-            name={space?.name || ''}
-            title={t('phone_meeting.share_title')}
-            description={t('phone_meeting.share_link_description')}
-            copyLabel={t('phone_meeting.copy_link')}
-            onCopy={() => {
-              void navigator.clipboard
-                .writeText(inviteUrl)
-                .then(() => { analytics.track('space_share', { method: 'copy_link', result: 'success', source: 'meeting' }); return messageApi.success(t('phone_meeting.link_copied')); })
-                .catch(() => { analytics.track('space_share', { method: 'copy_link', result: 'failure', source: 'meeting' }); return messageApi.error(t('copy_fail')); });
-            }}
-            extra={
-              <MeetingButton onPress={copyInvite}>{t('more.participant.invite.ok')}</MeetingButton>
-            }
-          />
+          <ShareInvitation name={space?.name || ''} messageApi={messageApi} />
         </PhoneSheet>
       ) : (
         <Modal
