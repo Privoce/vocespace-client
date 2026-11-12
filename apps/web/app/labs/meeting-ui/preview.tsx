@@ -25,7 +25,11 @@ import {
   MeetingInput as Input,
   MeetingSettingsInput,
 } from '@/components/MeetingUI/primitives';
-import { Button as AntButton, Switch, Select, Radio } from 'antd';
+import { Button as AntButton, Switch, Select, Radio, Popover, message } from 'antd';
+import { PlusCircleOutlined, DownOutlined } from '@ant-design/icons';
+import { PreviewTools } from './preview-tools';
+import deviceStyles from '@/components/Controller/sharedPhone.module.scss';
+import { basePath } from '@/lib/runtime-config';
 import phoneStyles from '@/components/Settings/phone.module.scss';
 import { settingsElements } from '@/components/Settings/phone-content';
 import { SettingsPhone } from '@/components/Settings/phone';
@@ -37,6 +41,10 @@ import { useI18n } from '@/lib/i18n/i18n';
 export default function Preview() {
   const { t } = useI18n();
   const [panel, setPanel] = useState('stage');
+  const [chatExpanded, setChatExpanded] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
+  const [shareTarget, setShareTarget] = useState('web');
+  const [messageApi, messageContext] = message.useMessage();
   const [selectedMember, setSelectedMember] = useState<MeetingTile>();
   const [raised, setRaised] = useState(false);
   const [draft, setDraft] = useState('');
@@ -59,9 +67,17 @@ export default function Preview() {
     raiseHand: index === 0 && raised,
     role: index === 0 ? '👑' : undefined,
   }));
+  const deviceMenu = (label: string) => (
+    <Popover trigger="click" placement="top" content={t('shared_meeting.preview_note')}>
+      <button type="button" aria-label={label} className={deviceStyles.deviceMenu}>
+        <DownOutlined />
+      </button>
+    </Popover>
+  );
   const actions: MeetingAction[] = [
     {
       id: 'mic',
+      menu: deviceMenu(t('common.device.microphone')),
       icon: 'microphone',
       label: t('common.device.microphone'),
       active: microphone,
@@ -70,6 +86,7 @@ export default function Preview() {
     },
     {
       id: 'camera',
+      menu: deviceMenu(t('common.device.camera')),
       icon: 'camera',
       label: t('common.device.camera'),
       disabled: true,
@@ -187,10 +204,27 @@ export default function Preview() {
         background: '#0B1015',
       }}
     >
+      {messageContext}
       <div style={{ color: '#aaa', fontSize: 11, padding: 8 }}>
         {t('shared_meeting.preview_note')}{' '}
+        <Radio.Group
+          size="small"
+          value={shareTarget}
+          onChange={(event) => setShareTarget(event.target.value)}
+          options={[
+            { label: 'Web Phone', value: 'web' },
+            { label: 'Mobile', value: 'mobile' },
+          ]}
+        />{' '}
         <button onClick={() => setCount(count === 2 ? 6 : 2)}>2 / 6</button>
-        <button onClick={() => { setSelectedMember(members[1]); setPanel('member-actions'); }}>{t('moderation.title')}</button>
+        <button
+          onClick={() => {
+            setSelectedMember(members[1]);
+            setPanel('member-actions');
+          }}
+        >
+          {t('moderation.title')}
+        </button>
       </div>
       <div style={{ width: '100%', maxWidth: 430, flex: 1, minHeight: 0, display: 'flex' }}>
         <PhoneMeeting
@@ -215,14 +249,17 @@ export default function Preview() {
             close: t('common.close'),
           }}
           tiles={members}
-          onMemberLongPress={(member) => { setSelectedMember(member); setPanel('member-actions'); }}
+          onMemberLongPress={(member) => {
+            setSelectedMember(member);
+            setPanel('member-actions');
+          }}
           Button={Button}
           Icon={Icon}
           renderVideo={() => null}
           headerActions={[
             {
               id: 'share',
-              icon: 'link',
+              icon: 'copy',
               label: t('phone_meeting.share'),
               onPress: () => setPanel('share'),
             },
@@ -263,46 +300,95 @@ export default function Preview() {
               Button={Button}
               Icon={Icon}
               chatLabel={t('common.chat')}
-              expandLabel={t('common.full_screen')}
+              expandLabel={t(chatExpanded ? 'phone_meeting.exit_fullscreen' : 'common.full_screen')}
               unread={messages.length}
-              onExpand={() => setPanel('chat')}
-              chat={<MeetingChat {...chatProps} compact />}
+              expanded={chatExpanded}
+              onExpand={() => setChatExpanded(!chatExpanded)}
+              toolsOpen={toolsOpen}
+              tools={
+                <PreviewTools
+                  onSelect={() => setToolsOpen(false)}
+                  onFile={(name) => {
+                    setMessages((current) => [
+                      ...current,
+                      {
+                        id: String(Date.now()),
+                        name: '访客',
+                        text: name,
+                        local: true,
+                        attachment: (
+                          <span>
+                            <Icon name="file" /> {name}
+                          </span>
+                        ),
+                      },
+                    ]);
+                  }}
+                />
+              }
+              chat={
+                <MeetingChat
+                  {...chatProps}
+                  compact={!chatExpanded}
+                  onComposerFocus={() => setToolsOpen(false)}
+                  composerTools={
+                    <AntButton
+                      type="text"
+                      aria-label={t('more.app.title')}
+                      aria-expanded={toolsOpen}
+                      onClick={() => setToolsOpen(!toolsOpen)}
+                      icon={
+                        <PlusCircleOutlined
+                          style={{ fontSize: 24, color: toolsOpen ? '#22ccee' : '#adc1cd' }}
+                        />
+                      }
+                    />
+                  }
+                />
+              }
             />
           }
           controls={<MeetingControls Button={Button} Icon={Icon} actions={actions} />}
-          chat={{
-            open: panel === 'chat',
-            onClose: () => setPanel('stage'),
-            content: (
-              <MeetingChat
-                {...chatProps}
-                roomName="mobile-test"
-                roomSubtitle={t('phone_meeting.chat_hint')}
-              />
-            ),
-          }}
           panel={{
-            open: ['members', 'more', 'settings', 'share', 'feedback', 'member-actions', 'report'].includes(panel),
+            open: [
+              'members',
+              'more',
+              'settings',
+              'share',
+              'feedback',
+              'member-actions',
+              'report',
+            ].includes(panel),
             height:
-              panel === 'member-actions' ? '58%' : panel === 'more' || panel === 'share' ? '76%' : panel === 'members' ? '62%' : '88%',
+              panel === 'member-actions'
+                ? '58%'
+                : panel === 'more' || panel === 'share'
+                  ? '76%'
+                  : panel === 'members'
+                    ? '62%'
+                    : '88%',
             title:
-              panel === 'member-actions' ? t('moderation.title') : panel === 'report' ? t('moderation.report.title') : panel === 'feedback'
-                ? t('channel.feedback.title')
-                : panel === 'members'
-                  ? t('phone_meeting.members')
-                  : panel === 'share'
-                    ? t('phone_meeting.share')
-                    : panel === 'settings'
-                      ? settingsPanel
-                        ? t(
-                            settingsPanel === 'app'
-                              ? 'more.app.title'
-                              : settingsPanel === 'recording'
-                                ? 'recording.title'
-                                : `settings.${settingsPanel}.title`,
-                          )
-                        : t('settings.title')
-                      : t('phone_meeting.more_title'),
+              panel === 'member-actions'
+                ? t('moderation.title')
+                : panel === 'report'
+                  ? t('moderation.report.title')
+                  : panel === 'feedback'
+                    ? t('channel.feedback.title')
+                    : panel === 'members'
+                      ? t('phone_meeting.members')
+                      : panel === 'share'
+                        ? t('phone_meeting.share')
+                        : panel === 'settings'
+                          ? settingsPanel
+                            ? t(
+                                settingsPanel === 'app'
+                                  ? 'more.app.title'
+                                  : settingsPanel === 'recording'
+                                    ? 'recording.title'
+                                    : `settings.${settingsPanel}.title`,
+                              )
+                            : t('settings.title')
+                          : t('phone_meeting.more_title'),
             subtitle:
               panel === 'more'
                 ? undefined
@@ -315,13 +401,29 @@ export default function Preview() {
             onClose: () => setPanel('stage'),
             content:
               panel === 'member-actions' && selectedMember ? (
-                <MemberActions name={selectedMember.name} status={selectedMember.status} canBlock t={t} Button={Button} Icon={Icon}
-                  onBlock={() => {}} onReport={() => setPanel('report')} />
+                <MemberActions
+                  name={selectedMember.name}
+                  status={selectedMember.status}
+                  canBlock
+                  t={t}
+                  Button={Button}
+                  Icon={Icon}
+                  onBlock={() => {}}
+                  onReport={() => setPanel('report')}
+                />
               ) : panel === 'feedback' || panel === 'report' ? (
                 <FeedbackForm
                   t={t}
                   varient={panel === 'report' ? FebType.Report : FebType.Feedback}
-                  target={selectedMember ? { id: selectedMember.id, name: selectedMember.name, spaceName: 'mobile-test' } : undefined}
+                  target={
+                    selectedMember
+                      ? {
+                          id: selectedMember.id,
+                          name: selectedMember.name,
+                          spaceName: 'mobile-test',
+                        }
+                      : undefined
+                  }
                   accountEmail="preview@example.test"
                   Button={Button}
                   Input={MeetingSettingsInput}
@@ -337,10 +439,21 @@ export default function Preview() {
                   Icon={Icon}
                   name="mobile-test"
                   title={t('phone_meeting.share_title')}
-                  description={t('phone_meeting.share_description')}
-                  copyLabel={t('phone_meeting.copy')}
+                  description={t(
+                    shareTarget === 'web'
+                      ? 'phone_meeting.share_link_description'
+                      : 'phone_meeting.share_description',
+                  )}
+                  copyLabel={t('more.participant.invite.ok')}
                   onCopy={() => {
-                    void navigator.clipboard.writeText('mobile-test');
+                    const invitation =
+                      shareTarget === 'web'
+                        ? new URL(`${basePath}/mobile-test`, window.location.origin).href
+                        : 'mobile-test';
+                    void navigator.clipboard.writeText(invitation).then(
+                      () => messageApi.success(t('common.copy.success')),
+                      () => messageApi.error(t('common.copy.error')),
+                    );
                   }}
                 />
               ) : panel === 'settings' ? (
