@@ -1,0 +1,67 @@
+diff --git a/build/src/start/doctor/apple/SimulatorAppPrerequisite.js b/build/src/start/doctor/apple/SimulatorAppPrerequisite.js
+index 886f915e3e031f7aa97d7da89b0f44056d3040d6..6a28822e41ce57baaf63fcf1a71f6052e67a117e 100644
+--- a/build/src/start/doctor/apple/SimulatorAppPrerequisite.js
++++ b/build/src/start/doctor/apple/SimulatorAppPrerequisite.js
+@@ -86,6 +86,11 @@ const debug = require('debug')('expo:doctor:apple:simulatorApp');
+     try {
+         return (await (0, _osascript().execAsync)('id of app "Simulator"')).trim();
+     } catch  {
++    // Xcode 27 removed Simulator.app and replaced it with DeviceHub.app.
++    try {
++        return (await (0, _osascript().execAsync)('id of app "DeviceHub"')).trim();
++    } catch  {}
++
+     // This error may occur in CI where the user intends to install just the simulators but no
+     // Xcode, or when Simulator.app is not registered in LaunchServices (e.g. Xcode on an
+     // external or renamed volume).
+@@ -124,7 +129,7 @@ class SimulatorAppPrerequisite extends _Prerequisite.Prerequisite {
+             // This error may occur in CI where the users intends to install just the simulators but no Xcode.
+             throw new _Prerequisite.PrerequisiteCommandError('SIMULATOR_APP', "Can't determine id of Simulator app; the Simulator is most likely not installed on this machine. Run `sudo xcode-select -s /Applications/Xcode.app`");
+         }
+-        if (result !== 'com.apple.iphonesimulator' && result !== 'com.apple.CoreSimulator.SimulatorTrampoline') {
++        if (result !== 'com.apple.iphonesimulator' && result !== 'com.apple.CoreSimulator.SimulatorTrampoline' && result !== 'com.apple.dt.Devices') {
+             throw new _Prerequisite.PrerequisiteCommandError('SIMULATOR_APP', "Simulator is installed but is identified as '" + result + "'; don't know what that is.");
+         }
+         debug(`Simulator app id: ${result}`);
+diff --git a/build/src/start/platforms/ios/AppleDeviceManager.js b/build/src/start/platforms/ios/AppleDeviceManager.js
+index 725db8a45400a41d06772c75b7a2f608ef30bc0b..a342e39843ef3f9cbb9406023dc2c5c38f2fe95b 100644
+--- a/build/src/start/platforms/ios/AppleDeviceManager.js
++++ b/build/src/start/platforms/ios/AppleDeviceManager.js
+@@ -269,7 +269,12 @@ class AppleDeviceManager extends _DeviceManager.DeviceManager {
+     async activateWindowAsync() {
+         await (0, _ensureSimulatorAppRunning.ensureSimulatorAppRunningAsync)(this.device);
+         // TODO: Focus the individual window
+-        await _osascript().execAsync(`tell application "Simulator" to activate`);
++        // Xcode 27 replaced Simulator.app with DeviceHub.app.
++        try {
++            await _osascript().execAsync(`tell application "Simulator" to activate`);
++        } catch (error) {
++            await _osascript().execAsync(`tell application "DeviceHub" to activate`);
++        }
+     }
+     getExpoGoAppId() {
+         return EXPO_GO_BUNDLE_IDENTIFIER;
+diff --git a/build/src/start/platforms/ios/ensureSimulatorAppRunning.js b/build/src/start/platforms/ios/ensureSimulatorAppRunning.js
+index 31296bcbc7a079acf2e5cd5020881fb001897d7d..c609c71a1bf561fe03ba8ce5d3814e49cb676699 100644
+--- a/build/src/start/platforms/ios/ensureSimulatorAppRunning.js
++++ b/build/src/start/platforms/ios/ensureSimulatorAppRunning.js
+@@ -95,7 +95,7 @@ async function waitForSimulatorAppToStart({ maxWaitTime } = {}) {
+ // I think the app can be open while no simulators are booted.
+ async function isSimulatorAppRunningAsync() {
+     try {
+-        const zeroMeansNo = (await _osascript().execAsync('tell app "System Events" to count processes whose name is "Simulator"')).trim();
++        const zeroMeansNo = (await _osascript().execAsync('tell app "System Events" to count processes whose name is "Simulator" or name is "DeviceHub"')).trim();
+         if (zeroMeansNo === '0') {
+             return false;
+         }
+@@ -109,8 +109,8 @@ async function isSimulatorAppRunningAsync() {
+ }
+ async function openSimulatorAppAsync(device) {
+     const args = [
+-        '-a',
+-        'Simulator'
++        '-b',
++        'com.apple.dt.Devices'
+     ];
+     if (device.udid) {
+         // This has no effect if the app is already running.

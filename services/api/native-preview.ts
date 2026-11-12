@@ -1,3 +1,4 @@
+import type { SessionPrincipal } from '@vocespace/server-core';
 import { runtimeAssetPath } from './runtime-paths';
 import { randomBytes, timingSafeEqual } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -33,8 +34,11 @@ async function lease(id: string) {
   if (!raw) throw new AccessError(410, 'PREVIEW_EXPIRED');
   return JSON.parse(raw) as Lease;
 }
-export async function nativePreviewEndpoint(request: ApiRequest) {
-  const { token, principal } = await requireNative(request);
+export async function nativePreviewEndpoint(
+  request: ApiRequest,
+  browser?: { token: string; principal: SessionPrincipal },
+) {
+  const { token, principal } = browser || (await requireNative(request));
   if (!['POST', 'PUT', 'DELETE'].includes(request.method))
     return new ApiResponse(null, { status: 405 });
   const body = await request.json();
@@ -66,8 +70,12 @@ export async function nativePreviewEndpoint(request: ApiRequest) {
     const playlist = await previewObject(job, 'live.m3u8');
     if (!new TextDecoder().decode(playlist).includes('#EXTINF:'))
       return response({ status: 'starting' });
-  } catch {
-    return response({ status: 'starting' });
+  } catch (error) {
+    const failure = error as { name?: string; $metadata?: { httpStatusCode?: number } };
+    if (failure?.name === 'NoSuchKey' || failure?.$metadata?.httpStatusCode === 404)
+      return response({ status: 'starting' });
+    // Access/configuration failures must not look like an indefinitely starting encoder.
+    throw new AccessError(503, 'PREVIEW_STORAGE_UNAVAILABLE');
   }
   if (!(await validJob(job))) return response({ status: 'starting' });
   // One active lease per Native session; switching pages revokes the previous playback capability.
@@ -92,17 +100,19 @@ export async function nativePreviewEndpoint(request: ApiRequest) {
   );
   if (saved !== 1) throw new AccessError(409, 'PREVIEW_SUPERSEDED');
   const url = new URL(request.url);
-  url.pathname = url.pathname.replace(/native\/preview$/, `preview/media/${id}/live.m3u8`);
+  url.pathname = browser
+    ? `/api/platform/preview/media/${id}/live.m3u8`
+    : url.pathname.replace(/native\/preview$/, `preview/media/${id}/live.m3u8`);
   url.search = '';
   return response({
     status: 'ready',
     leaseId: id,
-    url: url.toString(),
+    url: browser ? url.pathname : url.toString(),
     expiresAt: Date.now() + LEASE_SECONDS * 1000,
   });
 }
 export async function previewMediaEndpoint(request: ApiRequest, id: string, name: string) {
-  if (request.method !== 'GET') return new ApiResponse(null, { status: 405 });
+  if (!['GET', 'HEAD'].includes(request.method)) return new ApiResponse(null, { status: 405 });
   if (!previewAssetName(name)) throw new AccessError(400, 'INVALID_PREVIEW_ASSET');
   const access = await lease(id);
   const check = async () => {
@@ -110,7 +120,6 @@ export async function previewMediaEndpoint(request: ApiRequest, id: string, name
     const job = await readJob(access.job);
     if (
       !principal ||
-      principal.client !== 'native' ||
       principal.id !== access.sessionId ||
       !(await previewRedis().exists(leaseKey(id))) ||
       !job ||
@@ -132,7 +141,7 @@ export async function previewMediaEndpoint(request: ApiRequest, id: string, name
   const body = playlist
     ? rewritePreviewPlaylist(new TextDecoder().decode(bytes), (asset) => asset)
     : Buffer.from(bytes);
-  return new ApiResponse(body, {
+  return new ApiResponse(request.method === 'HEAD' ? null : body, {
     headers: {
       'Content-Type': playlist
         ? 'application/vnd.apple.mpegurl'
@@ -151,10 +160,7 @@ export async function previewRendererEndpoint(
 ) {
   if (request.method !== 'GET') return new ApiResponse(null, { status: 405 });
   if (kind === 'script') {
-    const asset = path.join(
-      runtimeAssetPath('preview'),
-      'renderer.js',
-    );
+    const asset = path.join(runtimeAssetPath('preview'), 'renderer.js');
     return new ApiResponse(await readFile(asset), {
       headers: { 'Content-Type': 'application/javascript' },
     });

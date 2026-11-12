@@ -8,7 +8,9 @@
     "userInterfaceStyle": "dark",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.vocespace.mobile.dev"
+      "bundleIdentifier": "com.privoce.vocespace",
+      "appleTeamId": "355Y8J4TGX",
+      "buildNumber": "2"
     },
     "android": {
       "package": "com.vocespace.mobile.dev",
@@ -49,7 +51,12 @@
           "microphonePermission": "\u5141\u8bb8 VoceSpace \u5728\u4f60\u5f00\u542f\u9ea6\u514b\u98ce\u65f6\u4f20\u8f93\u58f0\u97f3\u3002"
         }
       ],
-      "./plugins/withScreenSharing.cjs"
+      [
+        "./plugins/withScreenSharing.cjs",
+        {
+          "appGroupIdentifier": "group.com.privoce.vocechatclient"
+        }
+      ]
     ],
     "platforms": [
       "ios",

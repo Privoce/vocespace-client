@@ -1,3 +1,4 @@
+import { useChatFiles } from './useChatFiles';
 import { analytics } from '../../analytics';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import * as Crypto from 'expo-crypto';
@@ -21,7 +22,9 @@ export function useConferenceChat(
     if (api && meeting) controller.start(meeting);
     return controller.stop;
   }, [api, controller, meeting]);
+  const files = useChatFiles(api, meeting?.joinId);
   return {
+    files,
     state,
     onControl: controller.onControl,
     raise: controller.raise,

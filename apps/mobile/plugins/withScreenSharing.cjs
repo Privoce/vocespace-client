@@ -3,9 +3,12 @@ const fs = require('node:fs');
 const path = require('node:path');
 const targetName = 'VoceSpaceBroadcast';
 /** Managed CNG: regenerate the extension from source, never hand-edit ignored ios/. */
-module.exports = function withScreenSharing(config) {
+module.exports = function withScreenSharing(config, options = {}) {
   const bundle = config.ios.bundleIdentifier;
-  const group = `group.${bundle}`;
+  const group = options.appGroupIdentifier ?? `group.${bundle}`;
+  if (typeof group !== 'string' || !/^group\.[A-Za-z0-9.-]+$/.test(group)) {
+    throw new Error('withScreenSharing: appGroupIdentifier must be a valid group.* identifier');
+  }
   // CNG builds need the extension declared before Xcode generation so EAS can sign both targets.
   const eas = config.extra?.eas || {};
   const build = eas.build || {};
@@ -43,9 +46,8 @@ module.exports = function withScreenSharing(config) {
     return mod;
   });
   config = withEntitlementsPlist(config, (mod) => {
-    mod.modResults['com.apple.security.application-groups'] = [
-      ...new Set([...(mod.modResults['com.apple.security.application-groups'] || []), group]),
-    ];
+    // This plugin owns the shared screen-capture group; replace stale prebuild identifiers.
+    mod.modResults['com.apple.security.application-groups'] = [group];
     return mod;
   });
   return withXcodeProject(config, (mod) => {
@@ -59,6 +61,7 @@ module.exports = function withScreenSharing(config) {
       fs.copyFileSync(path.join(__dirname, 'broadcast', name), path.join(folder, name));
     const xml = (inner) =>
       `<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict>${inner}</dict></plist>`;
+    // Match Xcode's Broadcast Upload template: process mode is a direct NSExtension key.
     fs.writeFileSync(
       path.join(folder, 'Info.plist'),
       xml(`
@@ -73,7 +76,7 @@ module.exports = function withScreenSharing(config) {
       <key>NSExtension</key><dict>
         <key>NSExtensionPointIdentifier</key><string>com.apple.broadcast-services-upload</string>
         <key>NSExtensionPrincipalClass</key><string>$(PRODUCT_MODULE_NAME).SampleHandler</string>
-        <key>NSExtensionAttributes</key><dict><key>RPBroadcastProcessMode</key><string>RPBroadcastProcessModeSampleBuffer</string></dict>
+        <key>RPBroadcastProcessMode</key><string>RPBroadcastProcessModeSampleBuffer</string>
       </dict>`),
     );
     fs.writeFileSync(

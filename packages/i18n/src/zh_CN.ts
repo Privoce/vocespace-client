@@ -235,6 +235,7 @@ export default {
     link_error: '请输入有效的 Space 名称或当前服务的会议链接；加密会议请使用 Web 加入。',
   },
   meeting_tab: {
+    no_active_spaces: '当前没有活跃的 Space',
     mine: '我的',
     plaza: '广场',
     profile: '打开我的页面',
@@ -327,6 +328,18 @@ export default {
     device_error: '设备操作失败，请重试。',
   },
   shared_meeting: {
+    apps_loading: '正在加载应用…',
+    apps_error: '应用数据读取或保存失败，请稍后重试；若服务器尚未更新，请先更新服务端。',
+    clock_start: '开始',
+    clock_pause: '暂停',
+    clock_reset: '重置',
+    clock_lap: '记录计时',
+    tools_load_error: '会议工具列表加载失败。',
+    tools_unavailable: '当前服务器尚不支持会议工具，请更新服务端。',
+    tools_error: '工具操作失败，请重试。',
+    files_error: '文件操作失败，请重试。',
+    files_empty: '暂无会议文件。',
+
     empty_chat: '还没有消息，打个招呼吧。',
     upload: '上传文件',
     files: '会议文件',

@@ -16,6 +16,7 @@ export function MeetingChat({
   status,
   error,
   tools,
+  composerTools,
   compact,
   roomName,
   roomSubtitle,
@@ -80,6 +81,7 @@ export function MeetingChat({
       )}
       {!compact && tools}
       <View style={[styles.composer, compact && { padding: 0, paddingTop: 6 }]}>
+        {!compact && composerTools}
         <View style={styles.flex}>
           <Input
             value={draft}
@@ -115,7 +117,7 @@ const styles = StyleSheet.create({
   roomName: { color: '#E7EDF5', fontWeight: '600', marginBottom: 5 },
   compactBubble: { backgroundColor: 'transparent', borderWidth: 0, padding: 0 },
   root: { flex: 1, minHeight: 0 },
-  flex: { flex: 1, minHeight: 0 },
+  flex: { flex: 1, minHeight: 0, minWidth: 0 },
   status: { color: '#96A5BB', padding: 12, fontSize: 12 },
   messages: { padding: 16, gap: 18 },
   message: {
@@ -141,7 +143,7 @@ const styles = StyleSheet.create({
   error: { color: '#FF8888', padding: 12, fontSize: 12 },
   composer: {
     flexDirection: 'row',
-    alignItems: 'flex-end',
+    alignItems: 'center',
     padding: 12,
     gap: 10,
     borderTopWidth: 1,

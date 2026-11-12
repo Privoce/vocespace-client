@@ -104,6 +104,7 @@ export function useSpacePreview({
       player.pause();
       controller.fail(run.generation, error);
       setAvailability('error');
+      void stop().catch(() => undefined);
     };
     const renew = async () => {
       if (current.current !== run || !run.lease) return;
@@ -169,7 +170,7 @@ export function useSpacePreview({
       progress.remove();
       cancel();
     };
-  }, [active, cancel, controller, foreground, player, preferences.autoJoin, revision, space]);
+  }, [active, cancel, controller, foreground, player, preferences.autoJoin, revision, space, stop]);
   return {
     player,
     state,

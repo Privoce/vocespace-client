@@ -14,9 +14,9 @@ import styles from '../../../styles/login.module.scss';
 
 export function AuthForm({ initialMode = 'login' }: { initialMode?: AuthMode }) {
   const { t } = useI18n();
-  const form = useAuthForm(initialMode);
-  const router = useRouter();
   const query = useSearchParams();
+  const form = useAuthForm(query.get('mode') === 'register' ? 'register' : initialMode);
+  const router = useRouter();
   const from = query.get('from');
   const spaceName = query.get('spaceName') || '';
   const [redirectError, setRedirectError] = useState(false);

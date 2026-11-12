@@ -68,3 +68,6 @@ export { participantColor } from './participant';
 
 export { Creature, normalizeAvo } from './avo';
 export type { AvoParams, AvoDrawing, CreaturePointer } from './avo';
+
+/** Layout only; never use this to infer media/device capabilities. */
+export const PHONE_MEDIA_QUERY = '(max-width: 767px)';

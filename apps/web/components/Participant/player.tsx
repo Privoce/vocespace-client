@@ -1,4 +1,6 @@
 'use client';
+import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
+import { MeetingToolFolder } from '@vocespace/ui';
 import { SvgResource } from '@/components/Icon/index';
 import { api } from '@/lib/api';
 import { uploadIframeUrl } from '@/lib/api/space';
@@ -177,7 +179,10 @@ export const TilePlayer = ({
   };
 
   const showFullScreen =
-    item.mode === 'iframe' || item.mode === 'hyperbeam' || item.mode === 'image' || item.mode === 'whiteboard';
+    item.mode === 'iframe' ||
+    item.mode === 'hyperbeam' ||
+    item.mode === 'image' ||
+    item.mode === 'whiteboard';
   const isActiveView = !!focus || !!isFullScreen;
 
   const handleFullScreen = () => {
@@ -348,6 +353,7 @@ export const TilePlayerAdd = ({
   iframeUrls,
 }: TilePlayerAddProps) => {
   const { t } = useI18n();
+  const isPhone = useLayoutDevice() === 'phone';
   const [openInputIframe, setOpenInputIframe] = useState(false);
   const [inputIframeUrl, setInputIframeUrl] = useState('');
   const chatOpen = useRoomStore((s) => s.chatOpen);
@@ -488,69 +494,163 @@ export const TilePlayerAdd = ({
 
   return (
     <>
-      <div
-        className={`vocespace_full_size lk-participant-tile ${styles.container}`}
-        style={{
-          border: '1px dashed #565656',
-          borderRadius: '0.5em',
-          background: '#202020',
-        }}
-      >
+      {isPhone ? (
+        <MeetingToolFolder
+          label={t('more.app.title')}
+          closeLabel={t('common.close')}
+          items={[
+            {
+              id: 'image',
+              icon: <FileImageOutlined />,
+              content: (close) => (
+                <Upload
+                  beforeUpload={(file) => {
+                    close();
+                    return handleBeforeUpload(file);
+                  }}
+                  showUploadList={false}
+                  accept="image/*"
+                >
+                  <Button
+                    type="text"
+                    aria-label={t('common.upload')}
+                    style={{ width: 48, height: 48 }}
+                    icon={<FileImageOutlined style={{ fontSize: 22 }} />}
+                  />
+                </Upload>
+              ),
+            },
+            {
+              id: 'iframe',
+              icon: <LayoutOutlined />,
+              content: (close) => (
+                <Button
+                  type="text"
+                  aria-label="Iframe"
+                  style={{ width: 48, height: 48 }}
+                  onClick={() => {
+                    close();
+                    setOpenInputIframe(true);
+                  }}
+                  icon={<LayoutOutlined style={{ fontSize: 22 }} />}
+                />
+              ),
+            },
+            {
+              id: 'browser',
+              icon: <GlobalOutlined />,
+              content: (close) => (
+                <Button
+                  type="text"
+                  aria-label="HyperBeam Browser"
+                  style={{ width: 48, height: 48 }}
+                  onClick={() => {
+                    close();
+                    void createHyperbeamPlayer();
+                  }}
+                  icon={<GlobalOutlined style={{ fontSize: 22 }} />}
+                />
+              ),
+            },
+            {
+              id: 'whiteboard',
+              icon: <EditOutlined />,
+              content: (close) => (
+                <Button
+                  type="text"
+                  aria-label={t('common.whiteboard.title')}
+                  style={{ width: 48, height: 48 }}
+                  onClick={() => {
+                    close();
+                    void createWhiteboardPlayer();
+                  }}
+                  icon={<EditOutlined style={{ fontSize: 22 }} />}
+                />
+              ),
+            },
+            {
+              id: 'chat',
+              icon: <SvgResource type="chat" svgSize={24} />,
+              content: (close) => (
+                <Button
+                  type="text"
+                  aria-label={t('common.chat')}
+                  style={{ width: 48, height: 48 }}
+                  onClick={() => {
+                    close();
+                    setChatOpen(!chatOpen);
+                  }}
+                  icon={<SvgResource type="chat" svgSize={24} />}
+                />
+              ),
+            },
+          ]}
+        />
+      ) : (
         <div
+          className={`vocespace_full_size lk-participant-tile ${styles.container}`}
           style={{
-            margin: 'auto',
-            display: 'flex',
-            justifyContent: 'center',
-            alignItems: 'center',
-            height: '60%',
-            width: '60%',
+            border: '1px dashed #565656',
+            borderRadius: '0.5em',
+            background: '#202020',
           }}
         >
-          <Tooltip title={t('common.upload')}>
-            <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="image/*">
-              <Button
-                type="text"
-                style={{ height: '100%', width: '100%' }}
-                className={styles.appLikeBtn_btn}
-                icon={<FileImageOutlined style={{ color: '#aaa', fontSize: 20 }} />}
-              ></Button>
-            </Upload>
+          <div
+            style={{
+              margin: 'auto',
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              height: '60%',
+              width: '60%',
+            }}
+          >
+            <Tooltip title={t('common.upload')}>
+              <Upload beforeUpload={handleBeforeUpload} showUploadList={false} accept="image/*">
+                <Button
+                  type="text"
+                  style={{ height: '100%', width: '100%' }}
+                  className={styles.appLikeBtn_btn}
+                  icon={<FileImageOutlined style={{ color: '#aaa', fontSize: 20 }} />}
+                ></Button>
+              </Upload>
+            </Tooltip>
+          </div>
+
+          <Tooltip title="Iframe">
+            <Button
+              type="text"
+              className={styles.appLikeBtn_btn}
+              onClick={() => setOpenInputIframe(true)}
+              icon={<LayoutOutlined style={{ color: '#aaa', fontSize: 20 }} />}
+            ></Button>
+          </Tooltip>
+          <Tooltip title="HyperBeam Browser">
+            <Button
+              type="text"
+              className={styles.appLikeBtn_btn}
+              onClick={createHyperbeamPlayer}
+              icon={<GlobalOutlined style={{ color: '#aaa', fontSize: 20 }} />}
+            ></Button>
+          </Tooltip>
+          <Tooltip title={t('common.whiteboard.title')}>
+            <Button
+              type="text"
+              className={styles.appLikeBtn_btn}
+              onClick={createWhiteboardPlayer}
+              icon={<EditOutlined style={{ color: '#aaa', fontSize: 20 }} />}
+            ></Button>
+          </Tooltip>
+          <Tooltip title={t('common.chat')}>
+            <Button
+              type="text"
+              className={styles.appLikeBtn_btn}
+              onClick={() => setChatOpen(!chatOpen)}
+              icon={<SvgResource type="chat" svgSize={24} color={'#aaa'} />}
+            ></Button>
           </Tooltip>
         </div>
-
-        <Tooltip title="Iframe">
-          <Button
-            type="text"
-            className={styles.appLikeBtn_btn}
-            onClick={() => setOpenInputIframe(true)}
-            icon={<LayoutOutlined style={{ color: '#aaa', fontSize: 20 }} />}
-          ></Button>
-        </Tooltip>
-        <Tooltip title="HyperBeam Browser">
-          <Button
-            type="text"
-            className={styles.appLikeBtn_btn}
-            onClick={createHyperbeamPlayer}
-            icon={<GlobalOutlined style={{ color: '#aaa', fontSize: 20 }} />}
-          ></Button>
-        </Tooltip>
-        <Tooltip title={t('common.whiteboard.title')}>
-          <Button
-            type="text"
-            className={styles.appLikeBtn_btn}
-            onClick={createWhiteboardPlayer}
-            icon={<EditOutlined style={{ color: '#aaa', fontSize: 20 }} />}
-          ></Button>
-        </Tooltip>
-        <Tooltip title={t('common.chat')}>
-          <Button
-            type="text"
-            className={styles.appLikeBtn_btn}
-            onClick={() => setChatOpen(!chatOpen)}
-            icon={<SvgResource type="chat" svgSize={24} color={'#aaa'} />}
-          ></Button>
-        </Tooltip>
-      </div>
+      )}
 
       <Modal
         title="Input Iframe URL"
@@ -633,10 +733,7 @@ const WhiteboardWindow = ({
 
   const localParticipant = spaceInfo.participants[myIdentity];
   const localColor = useMemo(() => {
-    return getAvoPrimaryColor(
-      localParticipant?.avoList?.[0],
-      localParticipant?.name || myIdentity,
-    );
+    return getAvoPrimaryColor(localParticipant?.avoList?.[0], localParticipant?.name || myIdentity);
   }, [localParticipant?.avoList, localParticipant?.name, myIdentity]);
   const canClearAll = ownerId === myIdentity;
 
@@ -665,10 +762,7 @@ const WhiteboardWindow = ({
       }));
     };
 
-    const handleWhiteboardClearAllResponse = ({
-      receiverId,
-      space,
-    }: WsWhiteboardClearAll) => {
+    const handleWhiteboardClearAllResponse = ({ receiverId, space }: WsWhiteboardClearAll) => {
       if (space !== spaceName || receiverId !== playerId) {
         return;
       }

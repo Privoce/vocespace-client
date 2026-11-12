@@ -737,3 +737,57 @@
 - [x] iOS Release 模拟器 `.app.zip`、Android ARM64 / ARMv7 Release 测试 APK 均编译成功；两份产物内的 API / RDS 和公开字段白名单检查通过。
 - [x] Mobile/UI 类型、边界和配置结构检查通过；iOS 签名验证、APK v2 签名、16 KB ZIP 对齐及 20 个 ARM64 原生库 LOAD 段对齐通过。详见 [本次构建记录](docs/mobile-build-2026-11-05.md)。
 - [ ] iPhone IPA 未完成：本机无有效 Apple 签名，EAS 未登录，待提供开发者团队及主 App / Broadcast 签名。Android 为测试签名，非商店发布包；两端真机功能尚未验收。
+
+### 2026-11-09：iOS 发布标识调整
+
+- [x] 主 App Bundle ID 改为 `com.privoce.vocespace`，Broadcast 扩展为 `com.privoce.vocespace.broadcast`；插件支持独立 App Group，主 App / 扩展统一为 `group.com.privoce.vocechatclient`，移除旧生成组。
+- [x] iOS prebuild 通过；主 App / 扩展的 entitlements、Info.plist、Debug / Release Bundle ID 以及 EAS 扩展签名元数据均验证一致。
+- [ ] 本次未重新编译安装包或配置 Apple 后台；旧构建产物仍使用旧标识，新签名和 IPA 需重新构建。
+
+### 2026-11-09：iOS 真机归档和开发测试 IPA
+
+- [x] 绑定 Privoce 团队，自动取得开发签名及主 App / Broadcast 描述文件；Xcode 27.2 使用最低 iOS 15.1 参数完成真机 Release Archive。
+- [x] 开发测试 IPA 导出成功，验证签名、5 台已注册设备范围、两个 Bundle ID / App Group、线上 API / RDS 和配置隔离；产物与日志见 [本次记录](docs/ios-build-2026-11-09.md)。
+- [ ] App Store / TestFlight 导出因超时、会话过期及本机缺少分发私钥失败，等待新建分发证书确认或导入已有证书；本次未上传、未做真机安装与功能验收。
+
+### 2026-11-10：iOS 分发 IPA 完成
+
+- [x] 经用户确认，通过 Xcode 新建 Apple Distribution 证书，保留团队已有证书；用户完成本机钥匙串授权后，App Store Connect 分发 IPA 导出成功。
+- [x] 最终 IPA 的主 App / Broadcast 分发签名、Store 描述文件、Bundle ID / App Group、版本号及线上 API / RDS 配置验证通过；校验值与产物见 [构建记录](docs/ios-build-2026-11-09.md)。
+- [ ] 未上传 App Store Connect、未提交审核、未做真机功能验收。
+
+### 2026-11-10：修复广播扩展上传错误 90362
+
+- [x] 对照 Xcode 官方模板，将 RPBroadcastProcessMode 从 NSExtensionAttributes 移至 NSExtension 直接子项；主 App / 扩展构建号统一升为 2。
+- [x] 新增最终 IPA ReplayKit 元数据检查，旧包失败 / 新包通过；修正版 Archive / IPA 导出与分发签名、App Group、API / RDS 检查通过。产物见 [构建记录](docs/ios-build-2026-11-09.md)。
+- [ ] 未代用户再次上传；Apple 服务端校验和屏幕共享真机回归待确认。
+
+### 2026-11-11：Platform 手机页面、会议工具和文件入口
+
+- [x] Platform 手机宽度同步广场与底部个人中心，共用 Web Phone 的 767px 断点；浏览器验证手机/桌面边界、个人中心及注册入口。
+- [x] Web Phone / Native 共用可按尺寸折叠的工具文件夹；Native 接入图片、HTTPS 网页、HyperBeam、白板与聊天入口，聊天输入行加入上传和会议文件图标。
+- [x] 增加已确认入会权限下的 Native 文件/工具接口与 Platform 浏览器预览入口；类型、边界、生产构建、部署配置及回归测试通过。
+- [x] 线上 test 的 HLS 列表和切片返回 200，FFmpeg 与 Apple AVPlayer 播放测试通过；确认 Egress / S3 路径一致。详见 [本次交付与证据](docs/mobile-platform-parity-2026-11-11.md)。
+- [x] 已连接 iPhone 的现有 1.0.0 (2) 版本播放 test 成功，显示“正在播放”；经用户授权临时关闭自动加入，测试后已恢复并返回首页，未正式入会。原报告的持续无预览本次未复现。
+- [ ] 新增 WebView 需要重建 App，工具、文件与跨端白板需真机回归；新代码尚未部署，未替换手机安装包。
+
+### 2026-11-11：iOS 模拟器开发启动修复
+
+- [x] 确认旧 Bundle ID 与新包争用 Expo scheme，启动链接实际打开旧包并崩溃；备份旧包及数据后移除旧模拟器安装，错误 115 消失。
+- [x] 更新 Pods 并重新编译安装包含 WebView 的 Debug 模拟器包；Metro 打包成功，当前 Bundle ID 进程正常，开发链接及 Metro 按 `i` 启动通过，界面进入登录页。
+- [ ] 此次只更新模拟器开发包，工具/文件/白板真机回归与手机安装包更新仍待完成。
+
+### 2026-11-11：工具卡片尺寸与错误提示
+
+- [x] 去掉工具卡片内部缩小容器，图标直接使用外层 tile；浏览器隔离验证两种尺寸与展开行为。
+- [x] 确认线上 Native 工具请求返回 `NATIVE_ENDPOINT_REQUIRED`，需部署新 API；区分列表/操作错误，成功读取后清除列表错误，3 项回归与 Mobile/UI 类型、边界检查通过。
+- [ ] 线上 API 更新和实际会议工具互通仍待完成，详见本日 Platform/Mobile 交付说明。
+- [x] 按后续反馈移除工具 tile 内所有错误提示，失败保留列表并后台重试；Mobile / Web Phone 聊天输入栏及附件按钮组统一 flex 垂直居中。
+
+### 2026-11-11：广场空态与个人应用面板
+
+- [x] Platform 手机广场没有活跃 Space 时仅显示文字，取消空态图标；接口失败仍显示加载错误，不冒充空目录。
+- [x] 提取 `MeetingAppsPanel` 供 Web Phone / Mobile 共用页签、卡片与折叠布局；修正旧 Phone 样式误隐藏团队成员行。
+- [x] Mobile 自身应用接入专用读取/写入接口，支持待办增删改、完成历史、公开开关、团队进度、倒计时和计时器控制；保留其他成员只读且只显示原公开投影。
+- [x] 173 项测试、Web/Mobile/UI/API/Platform 类型、边界检查和 API 构建通过；iOS JS 导出通过。隔离浏览器验证了三个页签和基本呈现。
+- [ ] 新 API 未上线，实际 Web/App 数据互通、Native 键盘及系统分享菜单需设备回归；说明见 [个人应用面板](docs/mobile-widgets-2026-11-11.md)。

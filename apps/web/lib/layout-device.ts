@@ -1,5 +1,6 @@
 /** Layout only. Browser/media capability detection remains in lib/std. */
-export const PHONE_MEDIA_QUERY = '(max-width: 767px)';
+import { PHONE_MEDIA_QUERY } from '@vocespace/meeting-core';
+export { PHONE_MEDIA_QUERY };
 export type LayoutDevice = 'phone' | 'pc';
 
 export function getLayoutDevice(): LayoutDevice {

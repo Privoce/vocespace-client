@@ -28,7 +28,8 @@ pnpm test
 | --- | --- |
 | `name` | VoceSpace |
 | `version` | 当前 `1.0.0`，由 `apps/mobile/app.json` 设置对外版本 |
-| `ios.bundleIdentifier` | 当前 `com.vocespace.mobile.dev`，首次注册商店前改成你控制且长期使用的正式 ID |
+| `ios.bundleIdentifier` | `com.privoce.vocespace`，Apple Developer 主 App ID 需与此一致 |
+| `ios.appleTeamId` | `355Y8J4TGX`（Privoce, Inc.），主 App / Broadcast 扩展使用同一团队 |
 | `android.package` | 当前 `com.vocespace.mobile.dev`，首次上传 Play 前确认正式 package；后续不能把改包名当作原 App 更新 |
 | `ios.supportsTablet` | 当前 true；需测试 iPad 并准备相应截图，不能只验收 iPhone |
 | `icon` / Android adaptive icon | 已配置 `assets/icons/` 中的品牌 PNG：iOS 不透明 1024×1024、Android 透明前景与单色主题层，背景为 `#121212` |
@@ -66,6 +67,12 @@ pnpm exec expo run:android --device
 
 原生目录 `ios/`、`android/` 被 Git 忽略，由 app.json、插件和锁文件生成。不要先用 `--clean` 删除可能存在的原生手工改动；如需全新生成，在干净 checkout 里运行。用正在运行的 Metro 时可加 `--no-bundler`，避免重复服务。
 
+### iOS 模拟器启动链接报错 115
+
+2026-11-11 本机复现：模拟器同时安装了旧 `com.vocespace.mobile.dev` 和当前 `com.privoce.vocespace`，两者注册相同的 `exp+vocespace-mobile` scheme。`simctl openurl` 实际唤起旧包，旧包崩溃后返回 `LSApplicationWorkspaceErrorDomain 115`。先用 `xcrun simctl listapps booted` 和崩溃报告确认实际打开的 Bundle ID；如确有旧包冲突，备份旧包及其数据容器后，仅卸载旧 Bundle ID，保留当前 App。不要为此修改 API 地址或清空整个模拟器。
+
+`pnpm dev:mobile` 只启动 Metro，不会更新原生安装包。新增 WebView 等原生依赖后，需重新执行上面的 `expo run:ios` 编译安装；之后日常运行 `pnpm dev:mobile` 并按 `i` 即可。
+
 本批新增 `expo-localization@55.0.19` 读取系统首选语言，并在 app.json 声明英语 / 简体中文 / 俄语。也需要按上述步骤重新生成并安装原生包；旧包缺少模块时回退英文，已保存的手动语言仍优先。首次使用中文 / 俄语系统语言时显示对应语言，其他语言或读取失败使用英文；“我的 → 会议浏览偏好”与“会议设置 → 常规”复用语言选择器，切换即时生效并保存。在没有手动选择时，返回前台会重新读取系统语言。此处读取的是系统语言设置，不申请定位权限。参见 [Expo Localization](https://docs.expo.dev/versions/v55.0.0/sdk/localization/)。
 
 账号登录还依赖 Keychain：不要用 `CODE_SIGNING_ALLOWED=NO` 生成用于账号验收的安装包，它可能导致 `ERR_KEY_CHAIN`（缺少 entitlement），即使 API 登录成功也无法保存会话。模拟器构建保留 ad-hoc 签名，例如 `CODE_SIGNING_ALLOWED=YES CODE_SIGN_IDENTITY=-`；真机 / 商店使用对应开发或分发签名。安装后单独验证安全存储写入与读取，不能仅凭安装成功判断。
@@ -98,11 +105,19 @@ npx eas-cli@latest init
 
 ### iOS 屏幕共享签名
 
+广播扩展的 `RPBroadcastProcessMode` 必须直接位于 `Info.plist` 的 `NSExtension` 字典内，值为 `RPBroadcastProcessModeSampleBuffer`；不能放进 `NSExtensionAttributes`。2026-11-10 已修复该层级错误（Apple 上传错误 90362），修正版构建号为 `2`。每次上传前检查最终 IPA：
+
+```bash
+python3 scripts/check-ios-broadcast.py /实际路径/VoceSpace.ipa
+```
+
+此检查涵盖扩展字段层级、主类、Bundle ID / App Group 引用和版本一致性，不替代 Apple 服务端校验或真机测试。
+
 本仓库 `withScreenSharing.cjs` 会生成：
 
 - 主 App：你选择的 bundle ID。
 - Broadcast 扩展：`<bundleIdentifier>.broadcast`，target 为 `VoceSpaceBroadcast`。
-- 两者共用 App Group：`group.<bundleIdentifier>`。
+- 两者共用 App Group：`group.com.privoce.vocechatclient`，在 `app.json` 的 `withScreenSharing` 插件参数 `appGroupIdentifier` 中明确配置，不随 Bundle ID 自动变化。
 
 插件已补充 `extra.eas.build.experimental.ios.appExtensions`，使 EAS 在生成 Xcode 工程之前识别扩展的签名需求。Apple Developer 里主 App 和扩展需使用同一团队，分别有正确 provisioning profile，并启用对应 App Group。改正式 bundle ID 后这三个标识需一起更新，不能仅修改主 target 的签名。参见 [Expo App Extensions](https://docs.expo.dev/build-reference/app-extensions/)。
 

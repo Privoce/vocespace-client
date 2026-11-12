@@ -1,4 +1,6 @@
 "use client";
+import { MobileHome } from "@/components/mobile/Home";
+import { useLayoutDevice } from "@/hooks/useLayoutDevice";
 import { platformConfiguration } from "@/lib/runtime-config";
 import { useEffect, useState, useRef } from "react";
 import { UserProfile } from "./profile";
@@ -43,6 +45,7 @@ type pageType = "settings" | "profile";
  *  - profile page: `/auth/user/[userId]?pg=profile` or no `pg` param
  */
 export default function UserPage({ params }: { params: { userId: string } }) {
+  const phone = useLayoutDevice();
   const [messageApi, contextHolder] = message.useMessage();
   const HomeHeaderRef = useRef<HomeHeaderExports>(null);
   const urlSearchParams = useSearchParams();
@@ -131,7 +134,9 @@ export default function UserPage({ params }: { params: { userId: string } }) {
   // 如果查看的不是自己的页面，且用户存在但昵称未设置，显示该用户无法访问
   // 如果是onboarding页面，显示onboarding组件
   return (
-    <div className="uni-page-container">
+    <>
+    {isSelf && <MobileHome active={phone} initialTab="profile" />}
+    <div className="uni-page-container" style={{ display: phone && isSelf ? "none" : undefined }}>
       <HomeHeader ref={HomeHeaderRef} messageApi={messageApi} />
       {contextHolder}
       {userPageType === "settings" && user && userInfo ? (
@@ -231,5 +236,6 @@ export default function UserPage({ params }: { params: { userId: string } }) {
         </>
       )}
     </div>
+    </>
   );
 }

@@ -173,6 +173,9 @@ export function createChatController(ports: Ports) {
         if (active && !forbidden) controls.forEach((listener) => listener(event, value));
       };
       const handlers = {
+        tile_player_change_response: control('tools'),
+        whiteboard_sync_response: control('whiteboard'),
+        whiteboard_clear_all_response: control('whiteboard_clear'),
         native_media_invitation: control('invitation'),
         native_media_revoked: control('revoked'),
         raise_cancel_response: control('raise_cancel'),

@@ -1,3 +1,7 @@
+import { nativeToolsEndpoint } from './native-tools';
+import { nativeWidgetsEndpoint } from './native-widgets';
+import { platformPreviewEndpoint } from './platform-preview';
+import { nativeFilesEndpoint, nativeFileDownload } from './native-files';
 import { getConfig } from './lib/server/config';
 import { platformEndpoint } from './platform';
 import { moderationEndpoint } from './moderation';
@@ -30,12 +34,20 @@ async function dispatchInternal(request: ApiRequest) {
     if (prefix && pathname.startsWith(prefix + '/')) pathname = pathname.slice(prefix.length);
     pathname = pathname.replace(/^\/uploads\//, '/api/files/');
     pathname = pathname.replace(/^\/api\/v1\//, '/api/');
+    if (pathname === '/api/platform/preview' || pathname === '/api/platform/feedback') return await platformPreviewEndpoint(request, pathname.endsWith('feedback') ? 'feedback' : 'preview');
+    const platformMedia = pathname.match(/^\/api\/platform\/preview\/media\/([a-f0-9]{64})\/([^/]+)$/);
+    if (platformMedia) return await previewMediaEndpoint(request, platformMedia[1], platformMedia[2]);
     const platformAction = pathname.match(/^\/api\/platform\/(spaces|entry|create)$/);
     if (platformAction) return await platformEndpoint(request, platformAction[1]);
     const accountAction = pathname.match(/^\/api\/account\/([a-z-]+)$/);
     if (accountAction) return await accountEndpoint(request, accountAction[1]);
     if (pathname === '/api/native/moderation') return await moderationEndpoint(request, true);
     if (pathname === '/api/moderation') return await moderationEndpoint(request, false);
+    if (pathname === '/api/native/tools') return await nativeToolsEndpoint(request);
+    if (pathname === '/api/native/widgets') return await nativeWidgetsEndpoint(request);
+    if (pathname === '/api/native/files') return await nativeFilesEndpoint(request);
+    const nativeFile = pathname.match(/^\/api\/native\/files\/([a-f0-9]{64})$/);
+    if (nativeFile) return await nativeFileDownload(request, nativeFile[1]);
     if (pathname === '/api/native/feedback') return await nativeFeedbackEndpoint(request);
     if (pathname === '/api/feedback/account') return await feedbackAccountEndpoint(request);
     if (pathname === '/healthz') return ApiResponse.json({ status: 'ok', apiVersion: 1 });

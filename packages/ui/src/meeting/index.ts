@@ -1,6 +1,7 @@
 export { PhoneMeeting } from './PhoneMeeting';
 export { MeetingControls, MeetingMenu } from './MeetingControls';
 export { MeetingChat } from './MeetingChat';
+export { MeetingAppsPanel } from './MeetingAppsPanel';
 export { MeetingMembers } from './MeetingMembers';
 export type * from './types';
 export type { MeetingTile } from '@vocespace/meeting-core';
@@ -38,3 +39,5 @@ export { FebType } from './feedback-types';
 export type { ReportTarget } from './feedback-types';
 
 export { MemberActions } from './MemberActions';
+
+export { MeetingToolFolder } from './MeetingToolFolder';

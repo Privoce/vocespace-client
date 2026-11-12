@@ -243,6 +243,7 @@ export default {
       'Enter a valid Space name or a meeting link for this service. Join encrypted meetings on the Web.',
   },
   meeting_tab: {
+    no_active_spaces: 'There are no active Spaces right now.',
     mine: 'My spaces',
     plaza: 'Discover',
     profile: 'Open profile',
@@ -340,6 +341,18 @@ export default {
     device_error: 'Device operation failed. Try again.',
   },
   shared_meeting: {
+    apps_loading: 'Loading apps…',
+    apps_error: 'Could not load or save apps. Try again shortly; update the server if needed.',
+    clock_start: 'Start',
+    clock_pause: 'Pause',
+    clock_reset: 'Reset',
+    clock_lap: 'Record lap',
+    tools_load_error: 'Could not load meeting tools.',
+    tools_unavailable: 'Meeting tools require a server update.',
+    tools_error: 'Could not complete the tool action. Please retry.',
+    files_error: 'Could not complete the file action. Please retry.',
+    files_empty: 'No meeting files yet.',
+
     empty_chat: 'No messages yet. Say hello.',
     upload: 'Upload file',
     files: 'Meeting files',

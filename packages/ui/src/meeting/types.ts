@@ -2,6 +2,13 @@ import type { ComponentType, ReactNode } from 'react';
 import type { MeetingTile } from '@vocespace/meeting-core';
 import type { MeetingButtonProps, MeetingIconProps, MeetingInputProps } from '../types';
 
+export interface MeetingAppsPanelProps {
+  name?: string;
+  active: string;
+  onChange: (id: string) => void;
+  tabs: { id: string; label: string; header?: ReactNode; actions?: ReactNode; content: ReactNode }[];
+}
+
 export interface MeetingLabels {
   grid?: string;
   focusLayout?: string;
@@ -120,6 +127,7 @@ export interface MeetingChatProps extends MeetingPrimitives {
   status?: string;
   error?: string;
   tools?: ReactNode;
+  composerTools?: ReactNode;
   compact?: boolean;
   roomName?: string;
   roomSubtitle?: string;
@@ -185,4 +193,10 @@ export interface MemberActionsProps {
   Button: ComponentType<MeetingButtonProps>;
   onBlock: () => void;
   onReport: () => void;
+}
+
+export interface MeetingToolFolderProps {
+  items: { id: string; icon: ReactNode; content: ReactNode | ((close: () => void) => ReactNode) }[];
+  label: string;
+  closeLabel: string;
 }

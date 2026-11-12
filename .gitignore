@@ -87,3 +87,14 @@ apps/web/public/license/
 !/apps/mobile/vocespace.public.json
 **/vocespace.conf.json.migrating-*
 **/*.test.*
+# Regression coverage for mobile parity and preview access.
+!/tests/
+/tests/*
+!/tests/native-files.test.ts
+!/tests/native-tools.test.ts
+!/tests/platform-preview.test.ts
+!/tests/preview-media.test.ts
+!/apps/mobile/tests/chat-files.test.tsx
+!/apps/mobile/tests/meeting-tools.test.tsx
+!/apps/mobile/tests/participant-widgets.test.tsx
+!/tests/native-widgets.test.ts

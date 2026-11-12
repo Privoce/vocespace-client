@@ -1,5 +1,6 @@
 'use client';
 import { Button, Upload, Modal } from 'antd';
+import { PlusOutlined } from '@ant-design/icons';
 import { MeetingChat } from '@vocespace/ui';
 import { MeetingButton, MeetingIcon, MeetingInput } from './primitives';
 import type { ChatPanelModel } from '@/components/Chat/pc';
@@ -53,23 +54,23 @@ export function SharedChat({
         placeholder={model.t('common.chat_placeholder')}
         sendLabel={model.t('common.send')}
         emptyLabel={model.t('shared_meeting.empty_chat')}
-        tools={
-          <div style={{ padding: '0 12px', display: 'flex', gap: 8 }}>
+        composerTools={
+          <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0, gap: 2 }}>
             <Upload showUploadList={false} beforeUpload={model.handleBeforeUpload}>
               <Button
                 type="text"
                 aria-label={model.t('shared_meeting.upload')}
-                icon={<MeetingIcon name="file" />}
+                icon={<PlusOutlined />}
               />
             </Upload>
             <Button
               type="text"
+              aria-label={model.t('shared_meeting.files')}
+              icon={<MeetingIcon name="file" />}
               onClick={() => {
                 void model.openLocalFileSystem();
               }}
-            >
-              {model.t('shared_meeting.files')}
-            </Button>
+            ></Button>
           </div>
         }
       />

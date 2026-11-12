@@ -1,4 +1,5 @@
 import { parseNativeRecords } from '@vocespace/contracts';
+import { parseNativeWidgets, type NativeWidgetAction } from '@vocespace/contracts';
 import { parseNativePreview } from '@vocespace/contracts';
 import { parseNativeSpaces, parseNativeRoomDirectory } from '@vocespace/contracts';
 import { parseNativeSettingsSnapshot, type NativeSettingsPatch } from '@vocespace/contracts';
@@ -132,6 +133,10 @@ export function createClient(options: ClientOptions) {
       },
       async settings(joinId: string, signal?: AbortSignal) {
         return json(await nativeRequest('api/v1/native/settings', 'POST', { joinId }, signal), parseNativeSettingsSnapshot);
+      },
+      async widgets(joinId: string, action?: NativeWidgetAction, signal?: AbortSignal) {
+        return json(await nativeRequest('api/v1/native/widgets', action ? 'PUT' : 'POST',
+          { joinId, ...(action ? { action } : {}) }, signal), parseNativeWidgets);
       },
       async session(signal?: AbortSignal) {
         return json(await nativeRequest('api/v1/session/native', 'POST', {}, signal), parseNativeSession);

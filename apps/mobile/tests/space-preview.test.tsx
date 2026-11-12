@@ -159,3 +159,14 @@ it('releases a playing preview and prevents delayed auto-join when the meeting t
   expect(result.current.state.phase).toBe('idle');
   unmount();
 });
+it('releases the lease and stops renewal when playback fails', async () => {
+  const { result, releasePreview, unmount } = setup();
+  await act(async () => { await vi.advanceTimersByTimeAsync(300); });
+  await act(async () => { fake.events.get('statusChange')?.({ status: 'error', error: new Error('HLS failed') }); });
+  expect(result.current.availability).toBe('error');
+  expect(releasePreview).toHaveBeenCalledWith('lease');
+  expect(fake.player.replaceAsync).toHaveBeenLastCalledWith(null);
+  await act(async () => { await vi.advanceTimersByTimeAsync(31000); });
+  expect(releasePreview).toHaveBeenCalledTimes(1);
+  unmount();
+});

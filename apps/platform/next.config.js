@@ -1,7 +1,7 @@
 const path = require('node:path');
 module.exports = {
   experimental: { outputFileTracingRoot: path.join(__dirname, '../..') },
-  transpilePackages: ['@vocespace/i18n'],
+  transpilePackages: ['@vocespace/i18n', '@vocespace/meeting-core'],
   reactStrictMode: true,
   // The legacy UI retains React 18. Resolve runtime imports before the type-only
   // tsconfig aliases used to isolate it from the monorepo's React 19 declarations.

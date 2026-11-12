@@ -5,6 +5,7 @@ import type {
   NativeSettingsPatch,
   NativeSettingsSnapshot,
   NativeRoomDirectory,
+  NativeWidgetAction,
 } from '@vocespace/contracts';
 import { AudioSession } from '@livekit/react-native';
 import { ParticipantEvent, Room, RoomEvent, Track } from 'livekit-client';
@@ -30,10 +31,35 @@ export class NativeRoom implements ConferenceRoom {
   feedback(body: FeedbackBody) {
     return sendFeedback(this.api, body instanceof FormData ? body : { ...body, joinId: this.details?.joinId });
   }
+  async tools(body: FormData | Record<string, unknown>, signal?: AbortSignal): Promise<unknown> {
+    if (!this.details) throw new Error('NOT_JOINED');
+    const multipart = body instanceof FormData;
+    if (multipart) body.append('joinId', this.details.joinId);
+    const response = await this.api.sdk.transport('api/v1/native/tools', {
+      method: 'POST', signal: signal ? AbortSignal.any([signal, this.captureAbort.signal]) : this.captureAbort.signal,
+      ...(multipart ? { body } : { headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, joinId: this.details.joinId }) }),
+    });
+    if (!response.ok) {
+      const value: unknown = await response.json().catch(() => null);
+      const error = value && typeof value === 'object' ? value as Record<string, unknown> : {};
+      throw new ApiError(
+        response.status,
+        typeof error.code === 'string' ? error.code : 'TOOL_REQUEST_FAILED',
+        'Tool request failed',
+        typeof error.requestId === 'string' ? error.requestId : undefined,
+      );
+    }
+    return response.json();
+  }
   async blockMember(targetId: string) {
     if (!this.details) throw new Error('NOT_JOINED');
     await this.api.sdk.native.blockMember(this.details.joinId, targetId);
     await this.syncDirectory();
+  }
+  async widgets(action?: NativeWidgetAction, signal?: AbortSignal) {
+    if (!this.details) throw new Error('NOT_JOINED');
+    return this.api.sdk.native.widgets(this.details.joinId, action,
+      signal ? AbortSignal.any([signal, this.captureAbort.signal]) : this.captureAbort.signal);
   }
   async syncDirectory() {
     // A poll started before the write may still carry the previous hand state.

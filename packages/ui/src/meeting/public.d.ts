@@ -12,6 +12,7 @@ export declare function PhoneMeeting(props: PhoneMeetingProps): ReactElement;
 export declare function MeetingControls(props: MeetingControlsProps): ReactElement;
 export declare function MeetingMenu(props: MeetingMenuProps): ReactElement;
 export declare function MeetingChat(props: MeetingChatProps): ReactElement;
+export declare function MeetingAppsPanel(props: import('./types').MeetingAppsPanelProps): ReactElement;
 export declare function MeetingMembers(props: MeetingMembersProps): ReactElement;
 
 import type { MeetingSettingsFormProps, MeetingSettingsNavigationProps } from './settings-types';
@@ -66,3 +67,5 @@ export { FebType } from './feedback-types';
 export type { ReportTarget } from './feedback-types';
 
 export declare function MemberActions(props: import('./types').MemberActionsProps): ReactElement;
+
+export declare function MeetingToolFolder(props: import('./types').MeetingToolFolderProps): ReactElement;

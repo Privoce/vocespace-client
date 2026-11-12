@@ -1,3 +1,4 @@
+import { useMeetingTools } from './tools/useMeetingTools';
 import { MemberModeration } from './MemberModeration';
 import type { MeetingTile } from '@vocespace/ui';
 import { FeedbackDialog } from '../feedback/FeedbackDialog';
@@ -45,6 +46,7 @@ export function SharedMeetingRoom({
   onBrowse?: (direction: number) => Promise<void>;
 }) {
   const model = useSharedMeetingRoom(conference, room);
+  const tools = useMeetingTools(room, conference.chat, model.t, () => model.open('chat'));
   const [memberTarget, setMemberTarget] = useState<MeetingTile>();
   const self = model.members.find((item) => item.local);
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -76,7 +78,7 @@ export function SharedMeetingRoom({
       conference={conference}
       directory={model.directory}
       allowRoomSwipe={false}
-      enabled={model.panel === 'stage' && !focused && !fullscreen && !feedbackOpen && !memberTarget}
+      enabled={model.panel === 'stage' && !focused && !tools.open && !fullscreen && !feedbackOpen && !memberTarget}
       onBrowse={onBrowse}
     >
       {({ move, busy }) => (
@@ -144,7 +146,9 @@ export function SharedMeetingRoom({
             room={room}
             onClose={() => setFeedbackOpen(false)}
           />
+          {tools.dialog}
           <PhoneMeeting
+            extraTiles={tools.extraTiles}
             handLabel={model.t('more.app.raise.title')}
             lowerHandLabel={model.t('more.app.raise.cancel')}
             onLowerHand={
@@ -225,7 +229,7 @@ export function SharedMeetingRoom({
                       : undefined
                   }
                   onApps={
-                    !item.screen && apps && Object.keys(apps).length
+                    !item.screen && (item.local || (apps && Object.keys(apps).length))
                       ? () => {
                           setAppsId(id);
                           model.open('apps');
@@ -318,7 +322,11 @@ export function SharedMeetingRoom({
                   />
                 ) : model.panel === 'apps' ? (
                   <ParticipantApps
-                    apps={appsId ? model.directory?.participants?.[appsId]?.apps : undefined}
+                    key={appsId}
+                    room={room}
+                    identity={appsId || room.raw.localParticipant.identity}
+                    directory={model.directory}
+                    configuredApps={model.settings.snapshot?.room?.apps}
                   />
                 ) : model.panel === 'settings' ? (
                   <RoomSettings model={model.settings} />
