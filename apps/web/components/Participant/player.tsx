@@ -393,20 +393,20 @@ export const TilePlayerAdd = ({
 
       if (response.status === 409) {
         messageApi.warning({
-          content: 'Only one HyperBeam browser is allowed in this space',
+          content: 'Only one Cobrowse browser is allowed in this space',
           duration: 3,
         });
         return;
       }
 
       messageApi.error({
-        content: errorData?.error || 'Failed to create HyperBeam browser',
+        content: errorData?.error || 'Failed to create Cobrowse browser',
         duration: 3,
       });
     } catch (e) {
-      console.error('Error creating HyperBeam browser:', e);
+      console.error('Error creating Cobrowse browser:', e);
       messageApi.error({
-        content: 'HyperBeam network unreachable, please check server outbound network or proxy',
+        content: 'Cobrowse network unreachable, please check server outbound network or proxy',
         duration: 4,
       });
     }
@@ -543,12 +543,12 @@ export const TilePlayerAdd = ({
             },
             {
               id: 'browser',
-              label: 'HyperBeam',
+              label: 'Cobrowse',
               icon: <GlobalOutlined />,
               content: (close) => (
                 <Button
                   type="text"
-                  aria-label="HyperBeam Browser"
+                  aria-label="Cobrowse Browser"
                   style={{ width: 58, height: 58 }}
                   onClick={() => {
                     close();
@@ -617,7 +617,7 @@ export const TilePlayerAdd = ({
               icon={<LayoutOutlined style={{ color: '#aaa', fontSize: 20 }} />}
             ></Button>
           </Tooltip>
-          <Tooltip title="HyperBeam Browser">
+          <Tooltip title="Cobrowse Browser">
             <Button
               type="text"
               className={styles.appLikeBtn_btn}
@@ -1098,7 +1098,7 @@ const HyperbeamWindow = ({ url, messageApi }: { url: string; messageApi: Message
 
             if (event.state === 'failed') {
               messageApi.warning({
-                content: 'HyperBeam connection failed, retrying...',
+                content: 'Cobrowse connection failed, retrying...',
                 duration: 2,
               });
               reconnectTimer = setTimeout(() => hbRef.current?.reconnect?.(), 1000);
@@ -1115,9 +1115,9 @@ const HyperbeamWindow = ({ url, messageApi }: { url: string; messageApi: Message
           setLoading(false);
         }
       } catch (error) {
-        console.error('Failed to initialize HyperBeam SDK:', error);
+        console.error('Failed to initialize Cobrowse SDK:', error);
         messageApi.error({
-          content: 'Failed to load HyperBeam player, please check network and token validity',
+          content: 'Failed to load Cobrowse player, please check network and token validity',
           duration: 3,
         });
         setLoading(false);

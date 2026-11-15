@@ -2,6 +2,11 @@
 
 每阶段完成实现与验证后更新勾选项；未验证项不得视为完成。
 
+## 工具 Tile 稳定性（2026-11-14）
+
+- [x] 重连保留工具 Tile；无效清单/设置不覆盖有效状态；清单原子写入，读取异常返回失败；显示名统一为 Cobrowse。验证见 [修复说明](docs/tool-tile-stability-2026-11-14.md)。
+- [ ] 线上 Web/API 更新与持续运行回归；尚无故障发生时日志，不能认定线上唯一根因。
+
 ## Phone 分享与聊天工具整合（2026-11-12）
 
 - [x] `/labs/meeting-ui` 同步最新聊天展开、加号工具面板、文件弹窗、设备箭头及分享 UI，浏览器在实际测试路由完成交互验证；文件与工具仅本地演示。
@@ -800,3 +805,22 @@
 - [x] Mobile 自身应用接入专用读取/写入接口，支持待办增删改、完成历史、公开开关、团队进度、倒计时和计时器控制；保留其他成员只读且只显示原公开投影。
 - [x] 173 项测试、Web/Mobile/UI/API/Platform 类型、边界检查和 API 构建通过；iOS JS 导出通过。隔离浏览器验证了三个页签和基本呈现。
 - [ ] 新 API 未上线，实际 Web/App 数据互通、Native 键盘及系统分享菜单需设备回归；说明见 [个人应用面板](docs/mobile-widgets-2026-11-11.md)。
+
+### 2026-11-15：Mobile 分步骤打包说明
+
+- [x] 新增 [mobile_deploy.md](mobile_deploy.md)，说明公共配置、iOS 本地 Archive / IPA / TestFlight、Android 本地测试 APK、EAS 云构建及 Play 内部测试；补充构建号、扩展签名、产物与真机验收区别。
+- [x] 为原构建说明增加入口，并修正 Mobile README 的旧环境变量配置说明。新指南 18 个 Shell 示例及内嵌 Python 语法检查通过，新增链接目标存在，差异空白检查通过。
+- [ ] 本次仅更新文档，未执行新的原生构建、签名上传、服务器部署或真机测试。
+
+### 2026-11-15：Mobile 打包技能
+
+- [x] 整理 `skills/vs-mobile-build/SKILL.md`，提供 `-t ios` / `-t android` / `-a`，兼容 `andorid` 拼写；明确互斥参数、独立产物校验及双端部分失败报告。
+- [x] 技能结构检查和 15 项参数行为验证通过；参数脚本只做校验，不执行构建。安装到本机 Codex skills 目录，仓库保留可维护源码。
+- [ ] 本次未触发 iOS / Android 实际构建、上传或真机安装。
+
+### 2026-11-15：双端打包（vs-mobile-build -a）
+
+- [x] 共享准备完成：typecheck:mobile / typecheck:ui / check:boundaries / 177 项测试全部通过；`node scripts/config.mjs public` 投影并验证 `mobile.apiUrl = https://vocespace.com`；源码含未提交修改（见 git status），构建号 iOS 2 / Android versionCode 1 未改动。
+- [x] Android 本地测试 APK 构建成功：`build/android-20261115-022311/VoceSpace-test.apk`，`com.vocespace.mobile.dev` 1.0.0 (versionCode 1)，ARM64+v7a，debug keystore 测试签名（v2 scheme），apksigner verify 与 zipalign -P 16 通过，SHA-256 记录于产物目录。
+- [x] iOS 编译在 agent 环境全部通过；`CodeSign VoceSpaceBroadcast.appex` 因 `errSecInternalComponent`（钥匙串需 GUI 会话授权）失败，归档命令已交操作者在本地终端执行。
+- [ ] iOS 归档 / IPA 导出 / `check-ios-broadcast.py` 校验待本地钥匙串授权后完成；两端的真机安装与设备验收未执行。

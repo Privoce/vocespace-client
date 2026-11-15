@@ -34,7 +34,7 @@ export function PreviewTools({
       icon: <FileImageOutlined style={iconStyle} />,
     },
     { id: 'iframe', label: 'Iframe', icon: <LayoutOutlined style={iconStyle} /> },
-    { id: 'browser', label: 'HyperBeam', icon: <GlobalOutlined style={iconStyle} /> },
+    { id: 'browser', label: 'Cobrowse', icon: <GlobalOutlined style={iconStyle} /> },
     {
       id: 'whiteboard',
       label: t('common.whiteboard.title'),

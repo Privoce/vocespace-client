@@ -27,8 +27,16 @@ export function useSpaceInfo(spaceName: string, participantId: string) {
         throw new Error(`Failed to fetch settings: ${response.status}`);
       }
       const data = await response.json();
-      setSettings(data.settings || {});
-      return data.settings || {};
+      if (
+        !data.settings ||
+        !Array.isArray(data.settings.children) ||
+        !data.settings.participants ||
+        typeof data.settings.participants !== 'object'
+      ) {
+        throw new Error('INVALID_SPACE_SETTINGS');
+      }
+      setSettings(data.settings);
+      return data.settings;
     } catch (err) {
       setError(err instanceof Error ? err : new Error(String(err)));
     } finally {
@@ -152,4 +160,3 @@ export function useSpaceInfo(spaceName: string, participantId: string) {
     updateRecord,
   };
 }
-

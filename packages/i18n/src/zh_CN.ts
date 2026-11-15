@@ -1385,7 +1385,7 @@ export default {
         from: '发件人地址',
       },
       hyperbeam: {
-        title: '配置 Hyperbeam',
+        title: '配置 Cobrowse',
         api_key: 'API Key',
         api_base: 'API 地址',
         default_start_url: '默认启动页面',
@@ -1434,7 +1434,7 @@ export default {
       global_conf: '配置画质(全局)',
       allow_create_space: '创建空间策略',
       smtp_conf: 'SMTP 配置',
-      hyperbeam_conf: 'Hyperbeam 配置',
+      hyperbeam_conf: 'Cobrowse 配置',
       history: {
         title: '历史房间统计',
         day: '日榜',
@@ -1477,7 +1477,7 @@ export default {
       redis_port: 'Redis 端口',
       smtp_secure: 'SMTP 使用安全连接',
       review_desc:
-        '确认无误后保存。后续仍可在 Dashboard 中继续修改 SMTP、Hyperbeam、画质和创建空间策略。',
+        '确认无误后保存。后续仍可在 Dashboard 中继续修改 SMTP、Cobrowse、画质和创建空间策略。',
       prev: '上一步',
       next: '下一步',
       submit: '生成配置',

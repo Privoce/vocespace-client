@@ -1,3 +1,4 @@
+import { readTilePlayerFile, writeTilePlayerFile } from '../lib/server/tile-player-file';
 import { sessions, sessionToken } from '../lib/server/sessions';
 import { membership } from '../access';
 import { ApiRequest, ApiResponse } from '../http';
@@ -130,29 +131,11 @@ export async function POST(request: ApiRequest) {
       const dir = room ? path.join(uploadDirPath(spaceName), room) : uploadDirPath(spaceName);
       const playersPath = path.join(dir, 'tile_players.json');
 
-      const loadPlayers = async (): Promise<TilePlayerEntry[]> => {
-        try {
-          const raw = await fs.readFile(playersPath, 'utf-8');
-          const data = JSON.parse(raw);
-          return Array.isArray(data) ? data : [];
-        } catch (_e) {
-          return [];
-        }
-      };
+      const loadPlayersByPath = (targetPath: string) =>
+        readTilePlayerFile<TilePlayerEntry>(targetPath);
+      const loadPlayers = () => loadPlayersByPath(playersPath);
 
-      const loadPlayersByPath = async (targetPath: string): Promise<TilePlayerEntry[]> => {
-        try {
-          const raw = await fs.readFile(targetPath, 'utf-8');
-          const data = JSON.parse(raw);
-          return Array.isArray(data) ? data : [];
-        } catch (_e) {
-          return [];
-        }
-      };
-
-      const countPlayersInSpace = async (
-        mode: TilePlayerEntry['mode'],
-      ): Promise<number> => {
+      const countPlayersInSpace = async (mode: TilePlayerEntry['mode']): Promise<number> => {
         const baseSpaceDir = uploadDirPath(spaceName);
         const filePaths = new Set<string>([path.join(baseSpaceDir, 'tile_players.json')]);
 
@@ -178,7 +161,7 @@ export async function POST(request: ApiRequest) {
 
       const savePlayers = async (players: TilePlayerEntry[]) => {
         await mkdir(dir, { recursive: true });
-        await writeFile(playersPath, JSON.stringify(players, null, 2), 'utf-8');
+        await writeTilePlayerFile(playersPath, players);
       };
 
       if (ty === 'ls') {
@@ -210,7 +193,7 @@ export async function POST(request: ApiRequest) {
 
           return ApiResponse.json({ players: result });
         } catch (_e) {
-          return ApiResponse.json({ players: [] });
+          return ApiResponse.json({ code: 'TOOL_LIST_UNAVAILABLE' }, { status: 503 });
         }
       }
 
@@ -292,10 +275,7 @@ export async function POST(request: ApiRequest) {
         } catch (e) {
           console.error('Failed to create HyperBeam player:', e);
           const message = e instanceof Error ? e.message : 'Failed to create HyperBeam player';
-          return ApiResponse.json(
-            { success: false, error: message },
-            { status: 500 },
-          );
+          return ApiResponse.json({ success: false, error: message }, { status: 500 });
         }
       }
 
@@ -354,15 +334,12 @@ export async function POST(request: ApiRequest) {
           const players = await loadPlayers();
           const found = players.find((item) => item.id === playerId);
           if (!found) {
-            return ApiResponse.json(
-              { success: false, error: 'Player not found' },
-              { status: 404 },
-            );
+            return ApiResponse.json({ success: false, error: 'Player not found' }, { status: 404 });
           }
-          
+
           const principal = await sessions.read(sessionToken(request.headers));
-          const actor = principal && await membership(principal, spaceName);
-          if (!actor || found.ownerId !== actor.id && !actor.manager) {
+          const actor = principal && (await membership(principal, spaceName));
+          if (!actor || (found.ownerId !== actor.id && !actor.manager)) {
             return ApiResponse.json({ code: 'PLAYER_OWNER_REQUIRED' }, { status: 403 });
           }
 
@@ -562,7 +539,7 @@ export async function OPTIONS(_request: ApiRequest) {
   return new ApiResponse(null, {
     status: 200,
     headers: {
-      'Allow': 'POST, OPTIONS',
+      Allow: 'POST, OPTIONS',
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },

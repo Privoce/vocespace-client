@@ -1454,7 +1454,7 @@ export default {
         from: 'From Address',
       },
       hyperbeam: {
-        title: 'Configure Hyperbeam',
+        title: 'Configure Cobrowse',
         api_key: 'API Key',
         api_base: 'API Base URL',
         default_start_url: 'Default Start URL',
@@ -1504,7 +1504,7 @@ export default {
       global_conf: 'Configure Image Quality (Global)',
       allow_create_space: 'Create Space Policy',
       smtp_conf: 'SMTP Config',
-      hyperbeam_conf: 'Hyperbeam Config',
+      hyperbeam_conf: 'Cobrowse Config',
       history: {
         title: 'Historical Room Statistics',
         day: 'Daily Ranking',
@@ -1549,7 +1549,7 @@ export default {
       redis_port: 'Redis Port',
       smtp_secure: 'Use secure SMTP connection',
       review_desc:
-        'After saving, you can continue editing SMTP, Hyperbeam, image quality, and create-space policy from the Dashboard.',
+        'After saving, you can continue editing SMTP, Cobrowse, image quality, and create-space policy from the Dashboard.',
       prev: 'Previous',
       next: 'Next',
       submit: 'Create Config',

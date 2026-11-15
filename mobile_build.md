@@ -1,5 +1,7 @@
 # VoceSpace App 构建与测试发布
 
+> 分步骤执行请使用 [mobile_deploy.md](mobile_deploy.md)（2026-11-15）。本文保留构建背景与历史排错；后续原生构建、签名和交付进展以新指南及其链接的构建记录为准。
+
 更新：2026-10-27。当前 App 为 Expo 55 / RN 0.83 / React 19.2，使用 LiveKit/WebRTC、DocumentPicker、SecureStore、Video 和 iOS Broadcast 扩展，必须使用自定义原生 App，不能用 Expo Go。先部署配套 API，见 [Linux 部署](linux_deploy.md)。
 
 本批范围为昵称 / 头像修复与测试版准备；暂停房间权属迁移、一起看 / 教学等新功能。以下提交商店的命令由发布者在完成签名和资料配置后执行，仓库本身不自动上传或发布。

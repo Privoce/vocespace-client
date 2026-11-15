@@ -153,7 +153,7 @@ export function useMeetingTools(
     {
       id: 'browser',
       name: 'global',
-      label: 'HyperBeam',
+      label: 'Cobrowse',
       action: () => void run('create_hyperbeam'),
     },
     {
@@ -224,7 +224,7 @@ export function useMeetingTools(
                 {p.mode === 'whiteboard'
                   ? t('common.whiteboard.title')
                   : p.mode === 'hyperbeam'
-                    ? 'HyperBeam'
+                    ? 'Cobrowse'
                     : p.url}
               </Text>
             </>

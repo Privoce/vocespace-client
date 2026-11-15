@@ -5,28 +5,32 @@ import { TilePlayerItem } from '@/components/Participant/player';
 import { api } from '@/lib/api';
 import { useLatestCallback } from '@/lib/hooks/use-latest-callback';
 import { socket } from '@/lib/realtime/socket';
-import {
-  WsTilePlayer
-} from '@/lib/std/device';
+import { WsTilePlayer } from '@/lib/std/device';
 import { PARTICIPANT_SETTINGS_KEY } from '@/lib/std/space';
 import { useUserStore } from '@/lib/store';
-import {
-  ConnectionState,
-  ParticipantEvent
-} from 'livekit-client';
-import {
-  useCallback,
-  useEffect,
-  useLayoutEffect,
-  useMemo, useRef, useState
-} from 'react';
+import { ConnectionState, ParticipantEvent } from 'livekit-client';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import type { useConferenceEvents } from './useConferenceEvents';
 
 export function useConferenceMembership(context: ReturnType<typeof useConferenceEvents>) {
-  const { space, uState, freshPermission, localTrackVersion, setLocalTrackVersion, settings, fetchSettings } = context;
+  const {
+    space,
+    uState,
+    freshPermission,
+    localTrackVersion,
+    setLocalTrackVersion,
+    settings,
+    fetchSettings,
+  } = context;
   const connectionState = space?.state;
   const selfRoom = useMemo(() => {
-    if (!space || connectionState !== ConnectionState.Connected || !settings || !settings.children)
+    if (
+      !space ||
+      connectionState === ConnectionState.Disconnected ||
+      connectionState === ConnectionState.Connecting ||
+      !settings ||
+      !settings.children
+    )
       return;
 
     let selfRoom = settings.children.find((child) => {
@@ -60,27 +64,42 @@ export function useConferenceMembership(context: ReturnType<typeof useConference
     const request = ++requestVersion.current;
     if (!spaceName || !roomName || !identity) return;
     try {
-      const response = await api.handleTilePlayerFile(spaceName, roomName, 'ls', undefined, undefined, identity);
+      const response = await api.handleTilePlayerFile(
+        spaceName,
+        roomName,
+        'ls',
+        undefined,
+        undefined,
+        identity,
+      );
       if (response.ok) {
         const data = await response.json();
-        if (request === requestVersion.current) setTilePlayerItems(Array.isArray(data.players) ? data.players : []);
+        if (!Array.isArray(data.players)) throw new Error('INVALID_TILE_PLAYER_LIST');
+        if (request === requestVersion.current) setTilePlayerItems(data.players);
       }
-    } catch (error) { console.error('fetchTilePlayers error', error); }
+    } catch (error) {
+      console.error('fetchTilePlayers error', error);
+    }
   }, [spaceName, roomName, identity]);
   useEffect(() => {
     setTilePlayerItems([]);
     void fetchTilePlayers();
     const version = requestVersion;
-    return () => { version.current++; };
+    return () => {
+      version.current++;
+    };
   }, [fetchTilePlayers]);
   useEffect(() => {
     const onChange = (message: WsTilePlayer) => {
       if (message.participantId !== identity && message.space === spaceName) {
-        void fetchTilePlayers(); void refreshSettings();
+        void fetchTilePlayers();
+        void refreshSettings();
       }
     };
     socket.on('tile_player_change_response', onChange);
-    return () => { socket.off('tile_player_change_response', onChange); };
+    return () => {
+      socket.off('tile_player_change_response', onChange);
+    };
   }, [spaceName, identity, fetchTilePlayers, refreshSettings]);
   useLayoutEffect(() => {
     if (space?.state === ConnectionState.Connected && freshPermission) void refreshSettings();

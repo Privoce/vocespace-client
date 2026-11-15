@@ -100,3 +100,5 @@ apps/web/public/license/
 !/tests/native-widgets.test.ts
 
 !/tests/phone-chat-dock.test.tsx
+!/tests/tile-player-stability.test.tsx
+!/tests/tile-player-file.test.ts

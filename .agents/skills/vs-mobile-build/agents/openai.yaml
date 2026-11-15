@@ -1,0 +1,4 @@
+interface:
+  display_name: "VoceSpace Mobile Build"
+  short_description: "按指定平台构建 VoceSpace iOS 和 Android 原生安装包"
+  default_prompt: "使用 $vs-mobile-build -a 构建 iOS 和 Android 安装包并校验产物。"
