@@ -133,3 +133,14 @@ it('download capabilities expire and recheck membership and session revocation',
   state.data.delete(`v1:native-file:${id}`);
   await expect(nativeFileDownload(req, id)).rejects.toMatchObject({ status: 410 });
 });
+
+it('serves chat images inline through a short-lived membership-bound capability', async () => {
+  const name = 'image.jpg';
+  state.files.set(`${process.cwd()}/uploads/demo/${name}`, new Uint8Array([1, 2, 3]));
+  const result = await (await nativeFilesEndpoint(request({ action: 'download', name }))).json();
+  const response = await nativeFileDownload(new ApiRequest(result.url), result.url.split('/').pop());
+  expect(response.headers.get('content-type')).toBe('image/jpeg');
+  expect(response.headers.get('content-disposition')).toMatch(/^inline;/);
+  state.revoked = true;
+  await expect(nativeFileDownload(new ApiRequest(result.url), result.url.split('/').pop())).rejects.toMatchObject({ status: 403 });
+});

@@ -4,6 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
 import { validVersion } from './releases.mjs';
+import { validBranch } from './branches.mjs';
 
 export const terminal = (status) => ['succeeded', 'failed', 'interrupted'].includes(status);
 export const validJobId = (id) => typeof id === 'string' && /^[a-f0-9-]{36}$/.test(id);
@@ -14,12 +15,16 @@ export function atomicJson(file, value) {
 }
 export function validateAction(input) {
   if (!input || typeof input !== 'object' || Array.isArray(input) ||
-      Object.keys(input).some((key) => !['action', 'project', 'version'].includes(key)) ||
+      Object.keys(input).some((key) => !['action', 'project', 'version', 'branch'].includes(key)) ||
       !['create', 'update', 'rollback', 'delete'].includes(input.action) ||
       !['web', 'api', 'platform'].includes(input.project) || !validVersion(input.version)) {
-    throw Object.assign(new Error('请选择 Web 或 Server，并填写有效版本名（如 web-002）。'), { status: 400 });
+    throw Object.assign(new Error('请选择 Web、Server 或 Platform，并填写有效版本名（如 web-002）。'), { status: 400 });
   }
-  return { action: input.action, project: input.project, version: input.version };
+  const builds = ['create', 'update'].includes(input.action);
+  if ((builds && !validBranch(input.branch)) || (!builds && input.branch !== undefined)) {
+    throw Object.assign(new Error('创建或更新发布必须选择有效分支；回滚和删除不接受分支。'), { status: 400 });
+  }
+  return { action: input.action, project: input.project, version: input.version, ...(builds ? { branch: input.branch } : {}) };
 }
 export function createJobStore({ root, source, launch = spawn }) {
   const directory = path.join(root, 'deploy-platform');

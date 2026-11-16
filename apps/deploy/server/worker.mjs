@@ -11,7 +11,7 @@ const job = JSON.parse(fs.readFileSync(file, 'utf8'));
 let lock;
 let log;
 try {
-  validateAction({ action: job.action, project: job.project, version: job.version });
+  validateAction({ action: job.action, project: job.project, version: job.version, ...(job.branch === undefined ? {} : { branch: job.branch }) });
   log = createLog(path.join(directory, 'jobs', `${id}.log`), readRuntime(root));
   lock = acquireDeploymentLock(root);
   job.status = 'running'; job.startedAt = new Date().toISOString(); job.pid = process.pid;

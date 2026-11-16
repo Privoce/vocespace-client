@@ -48,6 +48,7 @@ export async function nativeFileDownload(request: ApiRequest, id: string) {
     name: string;
     room?: string;
     image?: boolean;
+    inlineImage?: boolean;
   };
   const check = async () => {
     const principal = await sessions.read(entry.token);
@@ -69,7 +70,7 @@ export async function nativeFileDownload(request: ApiRequest, id: string) {
   await check();
   return new ApiResponse(bytes, {
     headers: {
-      'Content-Type': entry.image
+      'Content-Type': entry.image || entry.inlineImage
         ? {
             '.png': 'image/png',
             '.jpg': 'image/jpeg',
@@ -78,7 +79,7 @@ export async function nativeFileDownload(request: ApiRequest, id: string) {
             '.gif': 'image/gif',
           }[path.extname(entry.name).toLowerCase()] || 'application/octet-stream'
         : 'application/octet-stream',
-      'Content-Disposition': `${entry.image ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(entry.name)}`,
+      'Content-Disposition': `${entry.image || entry.inlineImage ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(entry.name)}`,
       'Cache-Control': 'private, no-store',
       'X-Content-Type-Options': 'nosniff',
     },
@@ -117,7 +118,8 @@ export async function nativeFilesEndpoint(request: ApiRequest) {
     const id = randomBytes(32).toString('hex');
     await storage().set(
       fileKey(id),
-      JSON.stringify({ token, joinId, space: access.spaceName, name: body.name }),
+      JSON.stringify({ token, joinId, space: access.spaceName, name: body.name,
+        inlineImage: /\.(png|jpe?g|webp|gif)$/i.test(body.name) }),
       'EX',
       120,
     );

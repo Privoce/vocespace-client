@@ -45,10 +45,10 @@ pnpm test
 
 生产 App 的构建环境必须有：
 
-在唯一的 `vocespace.conf.json` 设置 `deployment.mobile.apiUrl`，然后从仓库根执行：
+在唯一的 `vocespace.deploy.conf.json` 设置 `deployment.mobile.apiUrl`，然后从仓库根执行：
 
 ```bash
-node scripts/config.mjs public --config /实际路径/vocespace.conf.json
+node scripts/config.mjs public --config /实际路径/vocespace.deploy.conf.json
 ```
 
 生成的 `apps/mobile/vocespace.public.json` 是公开构建投影，由 `app.config.js` 选择 mobile / analytics 字段写入 Expo extra。本机构建存在私有配置时优先读取当前配置，避免旧投影覆盖新地址；EAS 等没有私有配置的环境读取公开投影。两者都缺失时构建失败，不静默使用 localhost。公开投影可随 EAS 上传；完整服务端 JSON 不进入安装包。云构建前仍需重新导出并构建，不再读取 `EXPO_PUBLIC_API_URL` 或 `.env.local`。

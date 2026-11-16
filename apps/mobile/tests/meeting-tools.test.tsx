@@ -3,6 +3,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, expect, it, vi } from 'vitest';
 import { ApiError } from '@vocespace/client-sdk';
 
+vi.mock('@ant-design/react-native/lib/toast', () => ({ default: { info: vi.fn() } }));
 vi.mock('react-native', () => ({
   View: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,

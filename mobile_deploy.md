@@ -4,7 +4,7 @@
 
 当前已经有本地 Android Release APK、iOS 真机 Archive 和分发 IPA 的成功记录，见 [Android 构建记录](docs/mobile-build-2026-11-05.md) 与 [iOS 构建记录](docs/ios-build-2026-11-09.md)。这些旧包不包含后续全部改动；新一轮测试应重新打包。最新工具、文件和个人应用接口的部署状态需单独确认，见 [checklist](checklist.md)。
 
-已安装 Codex 技能时，可直接调用 `$vs-mobile-build -t ios`、`$vs-mobile-build -t android` 或 `$vs-mobile-build -a`；`-t` 与 `-a` 互斥。技能源码见 [vs-mobile-build/SKILL.md](skills/vs-mobile-build/SKILL.md)，默认执行本地打包与校验，不自动上传商店。
+已安装 Codex 技能时，可直接调用 `$vs-mobile-build -t ios`、`$vs-mobile-build -t android` 或 `$vs-mobile-build -a`；`-t` 与 `-a` 互斥。技能源码见 [vs-mobile-build/SKILL.md](.agents/skills/vs-mobile-build/SKILL.md)，默认执行本地打包与校验，不自动上传商店。
 
 ## 一、先选择要生成的包
 
@@ -43,12 +43,12 @@ Node 版本由根 `.nvmrc` 指定（当前 24.12.0），pnpm 由 `packageManager
 ### 步骤 2：设置服务器地址与 App 身份
 
 1. 按 [Linux 部署说明](linux_deploy.md) 部署与本次 App 配套的 API。手机必须能通过公网 HTTPS 访问 API，同时能访问 LiveKit；测试预览还需要真实 HLS 服务。
-2. 在根 `vocespace.conf.json` 中设置 `deployment.mobile.apiUrl`，当前正式服务地址为 `https://vocespace.com`。没有配置文件时参考 `vocespace.conf.example.json` 和 [配置说明](docs/configuration.md)，不要覆盖已有配置。
+2. 在根 `vocespace.deploy.conf.json` 中设置 `deployment.mobile.apiUrl`，当前正式服务地址为 `https://vocespace.com`。没有配置文件时参考 `vocespace.conf.example.json` 和 [配置说明](docs/configuration.md)，不要覆盖已有配置。
 3. 从仓库根重新导出公开配置，并检查 Expo 实际读取的公开配置：
 
 ```bash
 cd "$MOBILE_REPO"
-node scripts/config.mjs public --config vocespace.conf.json
+node scripts/config.mjs public --config vocespace.deploy.conf.json
 pnpm --filter @vocespace/mobile exec expo config --type public
 ```
 

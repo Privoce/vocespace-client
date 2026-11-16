@@ -4,6 +4,7 @@ import path from 'node:path';
 import { createAuth } from './auth.mjs';
 import { createJobStore } from './jobs.mjs';
 import { snapshot } from './releases.mjs';
+import { listBranches } from './branches.mjs';
 
 async function body(request) {
   if (!/^application\/json(?:;|$)/i.test(request.headers['content-type'] || '')) throw Object.assign(new Error('需要 JSON 请求。'), { status: 415 });
@@ -17,7 +18,7 @@ async function body(request) {
   try { return JSON.parse(Buffer.concat(chunks).toString('utf8')); }
   catch { throw Object.assign(new Error('JSON 格式错误。'), { status: 400 }); }
 }
-export function createDeployServer({ root, source, assets, auth = createAuth(path.join(root, 'api-data/vocespace.conf.json')), store = createJobStore({ root, source }), readSnapshot = () => snapshot(root) }) {
+export function createDeployServer({ root, source, assets, auth = createAuth(path.join(root, 'api-data/vocespace.conf.json')), store = createJobStore({ root, source }), readSnapshot = () => snapshot(root), readBranches = listBranches }) {
   return http.createServer(async (request, response) => {
     const json = (status, value) => { response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' }); response.end(JSON.stringify(value)); };
     response.setHeader('Cache-Control', 'no-store');
@@ -43,6 +44,7 @@ export function createDeployServer({ root, source, assets, auth = createAuth(pat
         }
         if (!auth.authorized(request)) return json(401, { error: '请先验证 hostToken。' });
         if (route === '/api/session' && request.method === 'GET') return json(200, { ok: true });
+        if (route === '/api/branches' && request.method === 'GET') return json(200, await readBranches());
         if (route === '/api/logout' && request.method === 'POST') {
           auth.logout(request);
           response.setHeader('Set-Cookie', 'vocespace_deploy_session=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0');

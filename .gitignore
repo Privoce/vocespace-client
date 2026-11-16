@@ -102,3 +102,10 @@ apps/web/public/license/
 !/tests/phone-chat-dock.test.tsx
 !/tests/tile-player-stability.test.tsx
 !/tests/tile-player-file.test.ts
+!/apps/deploy/test/*.test.mjs
+!/scripts/tests/mobile-build-config.test.mjs
+!/tests/deploy-branches-ui.test.ts
+!/apps/mobile/tests/abort-signals.test.ts
+!/apps/mobile/tests/system-interaction.test.ts
+!/tests/chat-attachment-metadata.test.ts
+!/apps/mobile/tests/system-interaction.test.ts

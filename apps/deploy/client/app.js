@@ -13,7 +13,7 @@ app.innerHTML = `
         <section class="panel publish-panel"><div class="panel-heading"><h2>${t.create}</h2><span class="pill">${t.only}</span></div>
           <div class="mode-tabs" role="group"><button id="create-mode" class="selected" aria-pressed="true">${t.create}</button><button id="update-mode" aria-pressed="false">${t.update}</button></div>
           <p id="mode-hint" class="hint">${t.createHint}</p>
-          <form id="publish-form"><label for="project">${t.project}</label><select id="project"><option value="web">Web</option><option value="api">Server</option><option value="platform">Platform</option></select><label for="version">${t.version}</label><input id="version" required maxlength="80" pattern="[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}" placeholder="web-002" autocomplete="off"><p class="hint small">${t.versionHint}</p><button id="publish" type="submit" class="primary">${t.submit}<span aria-hidden="true">↗</span></button></form>
+          <form id="publish-form"><label for="project">${t.project}</label><select id="project"><option value="web">Web</option><option value="api">Server</option><option value="platform">Platform</option></select><label for="branch">${t.branch}</label><select id="branch" required disabled><option value="">${t.branchLoading}</option></select><p id="branch-status" class="hint small" role="status"></p><p class="hint small">${t.branchHint}</p><label for="version">${t.version}</label><input id="version" required maxlength="80" pattern="[a-zA-Z0-9][a-zA-Z0-9._-]{0,79}" placeholder="web-002" autocomplete="off"><p class="hint small">${t.versionHint}</p><button id="publish" type="submit" class="primary">${t.submit}<span aria-hidden="true">↗</span></button></form>
         </section>
         <section class="panel log-panel"><div class="panel-heading"><h2>${t.history}</h2><span class="live-dot">${t.live}</span></div><div class="log-toolbar"><select id="jobs" aria-label="${t.history}"></select><label class="scroll-label"><input id="follow" type="checkbox" checked>${t.autoScroll}</label></div><div id="job-info" class="job-info"></div><pre id="log" tabindex="0" aria-label="${t.history}">${t.chooseJob}</pre></section>
       </div>
@@ -36,6 +36,8 @@ let generation = 0;
 let previousState = '';
 let refreshing = false;
 let suspended = false;
+let branchesReady = false;
+let branchRequest = 0;
 
 async function request(url, data) {
   const response = await fetch(url, { credentials: 'same-origin', cache: 'no-store', ...(data === undefined ? {} : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }) });
@@ -54,10 +56,38 @@ function showLogin() {
 function enter() {
   authenticated = true; generation++;
   $('#login').hidden = true; $('#workspace').hidden = false; $('#logout').hidden = false;
+  loadBranches();
   refresh();
 }
+async function loadBranches() {
+  const epoch = generation;
+  const requestId = ++branchRequest;
+  const previous = $('#branch').value;
+  branchesReady = false; setDisabled();
+  $('#branch').disabled = true;
+  $('#branch-status').textContent = t.branchLoading;
+  try {
+    const { branches } = await request('/api/branches');
+    if (epoch !== generation || requestId !== branchRequest) return;
+    const placeholder = element('option', '', t.branchPlaceholder); placeholder.value = '';
+    $('#branch').replaceChildren(placeholder, ...branches.map((branch) => {
+      const option = element('option', '', branch); option.value = branch; return option;
+    }));
+    if (branches.includes(previous)) $('#branch').value = previous;
+    branchesReady = branches.length > 0;
+    $('#branch-status').textContent = branchesReady ? '' : t.branchEmpty;
+  } catch (error) {
+    if (epoch !== generation || requestId !== branchRequest) return;
+    if (error.status === 401) showLogin();
+    else $('#branch-status').textContent = t.branchError;
+  } finally {
+    if (epoch === generation && requestId === branchRequest) {
+      $('#branch').disabled = !branchesReady; setDisabled();
+    }
+  }
+}
 function setDisabled() {
-  $('#publish').disabled = busy || pending;
+  $('#publish').disabled = busy || pending || !branchesReady || !$('#branch').value;
   document.querySelectorAll('[data-operation]').forEach((button) => { button.disabled = busy || pending; });
 }
 function render(state) {
@@ -93,7 +123,7 @@ function render(state) {
   if (!rows.length) { const row = element('tr'); const cell = element('td', 'empty', t.noReleases); cell.colSpan = 5; row.append(cell); rows.push(row); }
   $('#versions').replaceChildren(...rows);
   $('#jobs').replaceChildren(...(state.jobs.length ? state.jobs.map((job) => {
-    const option = element('option', '', `${actionLabel(job.action)} · ${t[job.project]} / ${job.version} · ${t[job.status]}`); option.value = job.id; return option;
+    const option = element('option', '', `${actionLabel(job.action)} · ${t[job.project]} / ${job.version}${job.branch ? ` / ${job.branch}` : ''} · ${t[job.status]}`); option.value = job.id; return option;
   }) : [element('option', '', t.noJobs)]));
   if (selectedJob) $('#jobs').value = selectedJob;
   setDisabled();
@@ -132,10 +162,12 @@ async function refresh() {
   }
 }
 async function submit(action, project, version, confirmation) {
+  const builds = ['create', 'update'].includes(action);
+  if (builds && (!branchesReady || !$('#branch').value)) return;
   if (busy || pending || (confirmation && !window.confirm(`${confirmation}\n\n${t[project]} / ${version}`))) return;
   pending = true; setDisabled();
   try {
-    const job = await request('/api/jobs', { action, project, version });
+    const job = await request('/api/jobs', { action, project, version, ...(builds ? { branch: $('#branch').value } : {}) });
     selectedJob = job.id; previousState = ''; notice(t.busy);
     await refresh();
   } catch (error) { if (error.status === 401) showLogin(); else notice(error.message, true); }
@@ -158,7 +190,8 @@ for (const action of ['create', 'update']) $(`#${action}-mode`).addEventListener
 $('#project').addEventListener('change', () => { $('#version').placeholder = `${$('#project').value}-002`; });
 $('#publish-form').addEventListener('submit', (event) => { event.preventDefault(); submit(mode, $('#project').value, $('#version').value.trim()); });
 $('#jobs').addEventListener('change', () => { selectedJob = $('#jobs').value; refresh(); });
-$('#refresh').addEventListener('click', () => { previousState = ''; refresh(); });
+$('#branch').addEventListener('change', setDisabled);
+$('#refresh').addEventListener('click', () => { previousState = ''; loadBranches(); refresh(); });
 window.addEventListener('pagehide', () => { suspended = true; generation++; clearTimeout(timer); });
 window.addEventListener('pageshow', (event) => { suspended = false; if (event.persisted && authenticated) refresh(); });
 request('/api/session').then(enter).catch(() => showLogin());

@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
+import { systemInteraction } from '../../ui/system-interaction';
 import { Linking } from 'react-native';
 import * as Crypto from 'expo-crypto';
 import type { createNativeApi } from '../../api/session';
 import { pickDocument } from '../../ui/document-picker';
 
 export function useChatFiles(api: ReturnType<typeof createNativeApi> | undefined, joinId?: string) {
+  const [preview, setPreview] = useState<{ name: string; url: string }>();
   const [open, setOpen] = useState(false);
   const [files, setFiles] = useState<string[]>([]);
   const [busy, setBusy] = useState(false);
@@ -19,6 +21,7 @@ export function useChatFiles(api: ReturnType<typeof createNativeApi> | undefined
   const flight = useRef<AbortController | undefined>(undefined);
   useEffect(() => {
     setOpen(false);
+    setPreview(undefined);
     setFiles([]);
     setError(false);
     setBusy(false);
@@ -89,6 +92,7 @@ export function useChatFiles(api: ReturnType<typeof createNativeApi> | undefined
   const list = () =>
     run(async (signal) => {
       setOpen(true);
+      setPreview(undefined);
       const result = await request({ action: 'list' }, signal);
       if (
         !Array.isArray(result.files) ||
@@ -97,13 +101,16 @@ export function useChatFiles(api: ReturnType<typeof createNativeApi> | undefined
         throw new Error('INVALID_FILES');
       if (current.current === joinId) setFiles(result.files);
     });
-  const download = (name: string) =>
+  const download = (name: string, displayName = name) =>
     run(async (signal) => {
       const result = await request({ action: 'download', name }, signal);
       if (current.current !== joinId || signal.aborted) return;
       if (typeof result.url !== 'string' || !/^https?:\/\//.test(result.url))
         throw new Error('INVALID_URL');
-      await Linking.openURL(result.url);
+      if (/\.(png|jpe?g|webp|gif)$/i.test(name)) {
+        setPreview({ name: displayName, url: result.url });
+        setOpen(true);
+      } else await systemInteraction.run(() => Linking.openURL(result.url));
     });
-  return { open, setOpen, files, busy, error, pending, upload, list, download };
+  return { preview, setPreview, onPreviewError: () => setError(true), open, setOpen, files, busy, error, pending, upload, list, download };
 }

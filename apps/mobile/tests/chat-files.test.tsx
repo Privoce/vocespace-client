@@ -5,6 +5,15 @@ vi.mock('../src/ui/document-picker', () => ({ pickDocument: fake.pick }));
 vi.mock('react-native', () => ({ Linking: { openURL: fake.open } }));
 vi.mock('expo-crypto', () => ({ randomUUID: () => '12345678-1234-1234-1234-123456789abc' }));
 import { useChatFiles } from '../src/chat/hooks/useChatFiles';
+it('opens a member-scoped image preview in the App instead of the external browser', async () => {
+  const transport = vi.fn().mockResolvedValue(new Response('{"url":"https://example.invalid/api/v1/native/files/capability"}'));
+  const hook = renderHook(() => useChatFiles({ sdk: { transport } } as any, 'joined'));
+  await act(async () => { await hook.result.current.download('stored.jpg', 'photo.jpg'); });
+  expect(hook.result.current.preview?.name).toBe('photo.jpg');
+  expect(hook.result.current.open).toBe(true);
+  expect(JSON.parse(transport.mock.calls[0][1].body).name).toBe('stored.jpg');
+  expect(fake.open).not.toHaveBeenCalled();
+});
 afterEach(() => {
   cleanup();
   vi.resetAllMocks();

@@ -3,6 +3,7 @@ import path from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
 import { readConfiguration } from '@vocespace/config-node';
 import { removeRelease, verifyRollback } from './releases.mjs';
+import { validBranch, isProjectOrigin } from './branches.mjs';
 
 export function createLog(file, config) {
   const secrets = [];
@@ -56,13 +57,15 @@ export async function executeJob({ root, source, job, log, lockFd, run = runComm
   const invoke = (command, args, capture = false) => run(command, args, { cwd: source, log, lockFd, capture });
   if (['create', 'update'].includes(job.action)) {
     if (fs.existsSync(path.join(root, 'releases', job.version))) throw new Error('版本名称已存在，请填写新的版本号。');
-    if (job.action === 'update') {
-      log.append('检查源码工作区，拉取当前分支最新代码…');
-      const dirty = await invoke('git', ['status', '--porcelain'], true);
-      if (dirty.trim()) throw new Error('源码目录有未提交修改，已停止更新；请先处理这些修改。');
-      await invoke('git', ['symbolic-ref', '--quiet', '--short', 'HEAD']);
-      await invoke('git', ['pull', '--ff-only']);
-    }
+    if (!validBranch(job.branch)) throw new Error('创建或更新发布必须选择有效分支。');
+    const origin = await invoke('git', ['remote', 'get-url', 'origin'], true);
+    if (!isProjectOrigin(origin)) throw new Error('源码 origin 必须指向 Privoce/vocespace-client。');
+    log.append(`获取 origin/${job.branch}，然后 reset --hard 对齐远程源码（覆盖已跟踪文件的本地修改）…`);
+    const remoteRef = `refs/remotes/origin/${job.branch}`;
+    await invoke('git', ['fetch', '--no-tags', 'origin', `+refs/heads/${job.branch}:${remoteRef}`]);
+    await invoke('git', ['reset', '--hard', remoteRef]);
+    const commit = await invoke('git', ['rev-parse', 'HEAD'], true);
+    log.append(`部署分支 ${job.branch} / 提交 ${commit.trim()}`);
     log.append(`构建 ${job.project} / ${job.version}`);
     await invoke('bash', [script, 'build', root, job.version, '-p', job.project]);
     log.append(`切换 ${job.project} / ${job.version}`);

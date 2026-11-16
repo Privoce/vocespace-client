@@ -2,6 +2,11 @@
 
 每阶段完成实现与验证后更新勾选项；未验证项不得视为完成。
 
+## Mobile 系统弹窗与退会（2026-11-16）
+
+- [x] 采集权限、广播选择器和文件选择器加系统操作保护；合并后台退会判断，覆盖系统调用完成与 AppState 恢复之间的竞态。186 项测试、类型/边界检查、iOS JS 导出通过，见 [修复记录](docs/mobile-system-dialogs-2026-11-16.md)。
+- [ ] 更新后的真机首次权限、广播启动/停止、选图/文件及普通切后台回归；未打包发布。
+
 ## 工具 Tile 稳定性（2026-11-14）
 
 - [x] 重连保留工具 Tile；无效清单/设置不覆盖有效状态；清单原子写入，读取异常返回失败；显示名统一为 Cobrowse。验证见 [修复说明](docs/tool-tile-stability-2026-11-14.md)。
@@ -824,3 +829,30 @@
 - [x] Android 本地测试 APK 构建成功：`build/android-20261115-022311/VoceSpace-test.apk`，`com.vocespace.mobile.dev` 1.0.0 (versionCode 1)，ARM64+v7a，debug keystore 测试签名（v2 scheme），apksigner verify 与 zipalign -P 16 通过，SHA-256 记录于产物目录。
 - [x] iOS 编译在 agent 环境全部通过；`CodeSign VoceSpaceBroadcast.appex` 因 `errSecInternalComponent`（钥匙串需 GUI 会话授权）失败，归档命令已交操作者在本地终端执行。
 - [ ] iOS 归档 / IPA 导出 / `check-ios-broadcast.py` 校验待本地钥匙串授权后完成；两端的真机安装与设备验收未执行。
+
+### 2026-11-16：Android 测试 APK 重打（vs-mobile-build -t android）
+
+- [x] 按 [mobile_deploy.md](mobile_deploy.md) 更新后的规范从 `vocespace.deploy.conf.json` 导出公开配置并验证 `mobile.apiUrl = https://vocespace.com`；typecheck×2 / boundaries / 48 文件 178 用例全部通过。
+- [x] 源码基于 `eae2387`（含未提交修改）；发现 gradle 增量构建将 `packageRelease` 误判 UP-TO-DATE 导致 APK 陈旧，删除 outputs 强制重新打包后用 bundle 哈希与 `Cobrowse`/`HyperBeam` 字符串双重确认包含最新代码。
+- [x] 新产物 `build/android-20261116-212959/VoceSpace-test.apk`：`com.vocespace.mobile.dev` 1.0.0 (versionCode 1)，ARM64+v7a，debug keystore 测试签名（v2 scheme），apksigner verify 与 zipalign -P 16 通过，SHA-256 `b72ff797929121a92d2fe5466239014397ae6df2adbf9095eb86918e6c77c95a`。
+- [ ] 未执行真机安装与设备验收；正式 AAB（Play 签名）未在本请求范围内。
+
+### 2026-11-16：Android 测试 APK 重出（第二次，源码未变）
+
+- [x] 确认上次构建（22:21 产物）后 Mobile/UI 源码与配置零变更，复用同源码状态的检查结果（48 文件 178 用例）；按要求以新时间戳目录重新出包：`build/android-20261116-222136/VoceSpace-test.apk`。
+- [x] 校验全部通过：bundle 哈希与源一致、含 `Cobrowse`×2、apksigner v2 签名有效、zipalign -P 16 合规；SHA-256 `3b2856e591963d09b7c425132449dc741bc87e0f5689f4dc7b30eef0f000fa13`（与 21:39 产物内容等价，哈希差异来自 zip 时间戳）。
+- [ ] 未执行真机安装与设备验收。
+
+### 2026-11-15：Mobile 部署配置与 Deploy 分支选择
+
+- [x] `.agents/skills/vs-mobile-build`、本机技能及 Expo 构建入口统一读取 `vocespace.deploy.conf.json`，无私有文件时仅回退公开投影；已验证实际 Expo 地址与秘密隔离。
+- [x] 创建/更新发布加入 GitHub 分支 select，鉴权查询固定仓库，任务在锁内 fetch 指定分支、reset --hard 到对应 origin 引用后构建激活；保留回滚/删除流程。
+- [x] 13 项 Deploy 测试、1 项移动配置测试、9 项 UI/JSON 回归、Deploy 构建、根/Mobile 类型及边界检查通过，包含隔离仓库真实 Git reset 行为验证。
+- [ ] 本机部署配置仍有 publicOrigin / account.publicUrl 回环地址，已记录建议；未修改私有配置、未部署服务器或打手机安装包。详见 [配置检查与交付](docs/mobile-deploy-branches-2026-11-15.md)。
+
+### 2026-11-16：Mobile 工具与聊天图片修复
+
+- [x] 确认 RN AbortSignal.any 不可用，工具/widgets 请求改为兼容信号组合与监听清理；工具列表防止迟到响应覆盖创建结果，主动失败使用 Toast。
+- [x] 聊天保留安全附件元数据，点击图片走成员短期链接并在 App 内预览；服务端正确返回图片类型/inline，权限与过期校验保留。
+- [x] 后台策略补充实时屏幕发布状态检查，保留已有系统选择器保护；全量 191 项测试、根/Mobile/API 类型、边界、API 构建及部署初始化检查通过。
+- [ ] Android 共享断联与接收他人屏幕共享尚未真机复现，根因/设备验收未确认；未打包或部署。见 [排查记录](docs/mobile-tools-files-2026-11-16.md)。

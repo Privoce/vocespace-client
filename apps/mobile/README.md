@@ -9,7 +9,7 @@
 - `pnpm typecheck:mobile`：Native 类型检查。
 - `pnpm --filter @vocespace/mobile export`：iOS/Android JS 导出，不等同于原生编译或实际媒体互通。
 
-API 地址通过根 `vocespace.conf.json` 的 `deployment.mobile.apiUrl` 配置，再运行 `node scripts/config.mjs public --config vocespace.conf.json` 生成公开构建配置。生产要求 HTTPS；手机和模拟器必须能直达 API 与 LiveKit。iOS / Android 本地打包、EAS 构建及测试分发按 [mobile_deploy.md](../../mobile_deploy.md) 分步骤执行。
+API 地址通过根 `vocespace.deploy.conf.json` 的 `deployment.mobile.apiUrl` 配置，再运行 `node scripts/config.mjs public --config vocespace.deploy.conf.json` 生成公开构建配置。生产要求 HTTPS；手机和模拟器必须能直达 API 与 LiveKit。iOS / Android 本地打包、EAS 构建及测试分发按 [mobile_deploy.md](../../mobile_deploy.md) 分步骤执行。
 
 页面位于 `src/screens`，偏好 Hook 位于 `src/settings/hooks`。`src/conference` 的控制器由 App 稳定父层持有，`src/api` 注入安全存储和共享 SDK。Native 不导入根 lib、Web 或服务端代码。凭证使用 SecureStore，非敏感偏好使用 AsyncStorage。
 

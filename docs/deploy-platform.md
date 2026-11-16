@@ -34,15 +34,15 @@ pm2 save
 
 | 操作 | 行为 |
 | --- | --- |
-| 创建发布 | 选择 Web / Server / Platform，输入新版本名，使用当前源码构建并自动激活 |
-| 更新发布 | 检查源码无未提交修改，执行当前分支 `git pull --ff-only`，再构建、激活新版本 |
+| 创建发布 | 选择 Web / Server / Platform，选择 GitHub 分支、输入新版本名，fetch + reset 后构建并自动激活 |
+| 更新发布 | 选择 GitHub 分支，fetch + reset 到对应 origin 分支，再构建、激活新版本 |
 | 回滚 | 在版本记录中选择已完成的历史版本，只切换对应项目 |
 | 删除旧版本 | 删除该 release 的文件；当前版本、保留的 previous 版本和 PM2 引用的版本均禁止删除 |
 | 操作日志 | 自动刷新任务输出，可切换历史任务查看结果；浏览器刷新不终止任务 |
 
 点击“开始发布”即执行构建和上线，不另设审批步骤。回滚与删除有目标版本确认。版本名最多 80 个字符，只支持字母、数字、点、横线和下划线，以字母或数字开头，例如 `web-002`、`api-002`、`platform-002`；版本名不可重复使用。每次只发布一个项目，其他服务保持当前版本。共享接口不兼容变更仍应使用命令行双项发布流程。
 
-更新只拉取已有当前分支和 upstream，不切分支、不 reset、不 stash。需要交互输入 Git 密码的操作会失败并显示日志，因此应先在服务器配置好仓库访问。新的源码可以包含平台本身的修改，但 Web/Server/Platform 发布不会自动重建或重启 `vocespace-deploy`；更新平台本身时单独运行 `pnpm build:deploy` 和 `pm2 restart vocespace-deploy`。
+创建和更新均要求从 select 选择 `Privoce/vocespace-client` 的远程分支。登录后通过 `/api/branches` 执行只读 `git ls-remote --heads` 查询；失败时禁止发布，点击刷新重试。服务器校验分支名及 origin 仓库，然后执行 `git fetch --no-tags origin +refs/heads/分支:refs/remotes/origin/分支`，成功后执行 `git reset --hard refs/remotes/origin/分支`，记录提交 SHA，再构建和激活。HEAD 对齐远程提交；不依赖本地当前分支或 upstream。此操作覆盖源码目录已跟踪文件的本地修改，并可能移除阻挡检出的未跟踪路径；不执行额外 git clean。使用专用部署 checkout，不在其中维护未发布的开发修改。回滚与删除不读取或修改分支。需要交互输入 Git 密码的操作会失败并显示日志，因此应先在服务器配置好仓库访问。新的源码可以包含平台本身的修改，但 Web/Server/Platform 发布不会自动重建或重启 `vocespace-deploy`；更新平台本身时单独运行 `pnpm build:deploy` 和 `pm2 restart vocespace-deploy`。
 
 ## 任务与版本记录
 
@@ -66,7 +66,7 @@ ROOT/.deploy-state.json              # Web/API/Platform 当前与回退版本，
 ## 验证范围
 
 - `pnpm build:deploy`：检查 Node 服务语法并打包独立前端资源，不改 Web 的 `.next`。
-- `pnpm test:deploy`：10 项隔离测试覆盖鉴权/过期/配置轮换、跨站与参数校验、版本删除保护、回滚产物验证、任务互斥/重启记录、日志脱敏、构建失败停止激活、真实子进程输出、独立 worker 和 fd 传递。
+- `pnpm test:deploy`：隔离测试覆盖鉴权/过期/配置轮换、跨站与参数校验、版本删除保护、回滚产物验证、任务互斥/重启记录、日志脱敏、构建失败停止激活、真实子进程输出、独立 worker 和 fd 传递。
 - 21 项 Ubuntu 部署脚本测试、127 项单元/Hook 测试、根/API 类型、模块边界和 JSON 部署检查通过。Platform 另有生产启动/代理检查。
 - 浏览器使用独立测试数据验证登录、创建/更新模式、版本保护入口及日志呈现；不代表真实版本已经上线。
 - 未在 Ubuntu 实机执行 Git 拉取、真实 flock 竞争、生产 PM2 切换和回滚。自动测试使用假 Git/PM2/flock 或注入命令执行器，不访问生产服务。

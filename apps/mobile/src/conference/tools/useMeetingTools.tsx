@@ -1,3 +1,4 @@
+import Toast from '@ant-design/react-native/lib/toast';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Image, Modal, Pressable, Text, View, TextInput, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -54,10 +55,12 @@ export function useMeetingTools(
   const [actionError, setActionError] = useState<string>();
   const lifecycle = useRef<AbortController | undefined>(undefined);
   const writing = useRef(false);
+  const revision = useRef(0);
   const refresh = useCallback(
     async (signal: AbortSignal) => {
+      const started = revision.current;
       const result = parsePlayers(await room.tools({ action: 'ls' }, signal));
-      if (!signal.aborted) {
+      if (!signal.aborted && started === revision.current) {
         setPlayers(result);
       }
     },
@@ -101,6 +104,7 @@ export function useMeetingTools(
     const controller = lifecycle.current;
     if (!controller || controller.signal.aborted || writing.current) return;
     writing.current = true;
+    revision.current++;
     setBusy(true);
     setActionError(undefined);
     try {
@@ -130,9 +134,13 @@ export function useMeetingTools(
         setUrl('');
       }
     } catch (error) {
-      if (!controller.signal.aborted)
-        setActionError(toolErrorKey(error, 'shared_meeting.tools_error'));
+      if (!controller.signal.aborted) {
+        const key = toolErrorKey(error, 'shared_meeting.tools_error');
+        setActionError(key);
+        Toast.info(t(key), 3, undefined, false);
+      }
     } finally {
+      revision.current++;
       writing.current = false;
       if (!controller.signal.aborted) setBusy(false);
     }

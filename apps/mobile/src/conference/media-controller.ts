@@ -100,6 +100,7 @@ export function createMediaController(ports: Ports) {
   }
   return {
     getSnapshot: () => state,
+    isScreenSharing: () => ports.enabled('screen'),
     subscribe(listener: () => void) {
       listeners.add(listener);
       return () => {

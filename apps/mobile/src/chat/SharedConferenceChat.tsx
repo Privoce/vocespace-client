@@ -1,7 +1,7 @@
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { IconOutline } from '@ant-design/icons-react-native';
 import { useI18n } from '../i18n';
-import { View, Text, Modal, ScrollView } from 'react-native';
+import { View, Text, Modal, ScrollView, Image } from 'react-native';
 import { MeetingChat } from '@vocespace/ui';
 import { CONFERENCE_MESSAGE_LIMIT } from '@vocespace/contracts';
 import { MeetingButton, MeetingIcon, MeetingInput } from '../ui/meeting';
@@ -42,8 +42,10 @@ export function SharedConferenceChat({
           text: item.message || '',
           attachment:
             item.type === 'file' ? (
-              <MeetingButton onPress={() => void model.files.list()}>
-                {t('shared_meeting.files')}
+              <MeetingButton onPress={() => void (item.file
+                ? model.files.download(item.file.storageName, item.file.name)
+                : model.files.list())}>
+                {item.file?.name || t('shared_meeting.files')}
               </MeetingButton>
             ) : undefined,
           local: item.sender.id === identity,
@@ -133,9 +135,20 @@ export function SharedConferenceChat({
           <MeetingButton disabled={model.files.busy} onPress={() => void model.files.list()}>
             {t('native_navigation.refresh')}
           </MeetingButton>
-          {!model.files.busy && !model.files.files.length && (
+          {!model.files.preview && !model.files.busy && !model.files.files.length && (
             <Text style={{ color: '#aaa', padding: 12 }}>{t('shared_meeting.files_empty')}</Text>
           )}
+          {model.files.preview ? (
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: '#eee' }}>{model.files.preview.name}</Text>
+              <Image
+                source={{ uri: model.files.preview.url }}
+                style={{ flex: 1 }}
+                resizeMode="contain"
+                onError={model.files.onPreviewError}
+              />
+            </View>
+          ) : (
           <ScrollView>
             {model.files.files.map((name) => (
               <MeetingButton
@@ -147,6 +160,7 @@ export function SharedConferenceChat({
               </MeetingButton>
             ))}
           </ScrollView>
+          )}
         </SafeAreaView>
       </Modal>
     </>

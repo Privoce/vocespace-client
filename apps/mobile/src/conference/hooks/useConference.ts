@@ -1,3 +1,5 @@
+import { systemInteraction } from '../../ui/system-interaction';
+import { createConferenceBackgroundPolicy } from '../background-policy';
 import { analytics } from '../../analytics';
 import { sendFeedback, type FeedbackBody } from '../../feedback/client';
 import { atJoinStage } from '../join-error';
@@ -27,9 +29,14 @@ export function useConference() {
         if (createIfMissing) {
           const operation = analytics.begin('space_create', { space_type: 'meeting' });
           try {
-            const result = await atJoinStage('create', () => api!.sdk.native.createSpace(spaceName, signal));
+            const result = await atJoinStage('create', () =>
+              api!.sdk.native.createSpace(spaceName, signal),
+            );
             operation.end(result.created ? 'success' : 'cancelled');
-          } catch (error) { operation.fail(error); throw error; }
+          } catch (error) {
+            operation.fail(error);
+            throw error;
+          }
         }
         return api!.sdk.native.prepare({ spaceName, nickname, joinId, childRoom }, signal);
       },
@@ -66,18 +73,30 @@ export function useConference() {
   const chat = useConferenceChat(api, state.phase === 'joined' ? state.joined : undefined);
   const { onControl } = chat;
   useEffect(() => {
-    const listener = AppState.addEventListener('change', (next) => {
-      // iOS permission dialogs are inactive, not background. Actual background still exits.
-      if (next === 'background') {
-        const media = controller.getSnapshot().room?.media;
-        const current = media?.getSnapshot();
-        if (current?.screen || current?.busy === 'screen') {
-          void media!.suspendCameraAndMicrophone().catch(() => controller.leave('background'));
-        } else void controller.leave('background');
-      }
+    const policy = createConferenceBackgroundPolicy({
+      background: () => AppState.currentState === 'background',
+      systemInteraction: systemInteraction.active,
+      media: () => controller.getSnapshot().room?.media,
+      leave: () => controller.leave('background'),
+    });
+    const listener = AppState.addEventListener('change', policy.check);
+    const stopInteractions = systemInteraction.subscribe(policy.check);
+    let media = controller.getSnapshot().room?.media;
+    let stopMedia = media?.subscribe(policy.check);
+    const stopController = controller.subscribe(() => {
+      const next = controller.getSnapshot().room?.media;
+      if (next === media) return;
+      stopMedia?.();
+      media = next;
+      stopMedia = media?.subscribe(policy.check);
+      policy.check();
     });
     return () => {
+      policy.dispose();
       listener.remove();
+      stopInteractions();
+      stopController();
+      stopMedia?.();
       void controller.leave();
     };
   }, [controller]);
@@ -89,20 +108,6 @@ export function useConference() {
     });
     return () => back.remove();
   }, [controller, leave]);
-  useEffect(() => {
-    if (state.phase !== 'joined' || !state.room) return;
-    const media = state.room.media;
-    return media.subscribe(() => {
-      const current = media.getSnapshot();
-      if (
-        controller.getSnapshot().phase === 'joined' &&
-        AppState.currentState === 'background' &&
-        !current.screen &&
-        current.busy !== 'screen'
-      )
-        void controller.leave('background');
-    });
-  }, [controller, state.phase, state.room]);
   useEffect(() => {
     if (state.phase !== 'joined' || !state.room) return;
     const media = state.room.media;
@@ -118,7 +123,8 @@ export function useConference() {
   useEffect(() => {
     if (state.phase === 'joined' && chat.state.connection === 'connected')
       void state.room?.media.refresh();
-    if (state.phase === 'joined' && chat.state.connection === 'denied') void controller.leave('disconnected');
+    if (state.phase === 'joined' && chat.state.connection === 'denied')
+      void controller.leave('disconnected');
   }, [chat.state.connection, controller, state.phase, state.room]);
   const listSpaces = useCallback(
     async (signal: AbortSignal) => {
