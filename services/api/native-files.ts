@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { mkdir, readdir, readFile, writeFile, unlink, lstat } from 'node:fs/promises';
 import path from 'node:path';
-import { parseJoinId } from '@vocespace/contracts';
+import { parseJoinId, parseConferenceMessage } from '@vocespace/contracts';
 import { ApiRequest, ApiResponse } from './http';
 import { AccessError, safeSegment } from './access';
 import { requireNative } from './native-auth';
@@ -70,15 +70,16 @@ export async function nativeFileDownload(request: ApiRequest, id: string) {
   await check();
   return new ApiResponse(bytes, {
     headers: {
-      'Content-Type': entry.image || entry.inlineImage
-        ? {
-            '.png': 'image/png',
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.webp': 'image/webp',
-            '.gif': 'image/gif',
-          }[path.extname(entry.name).toLowerCase()] || 'application/octet-stream'
-        : 'application/octet-stream',
+      'Content-Type':
+        entry.image || entry.inlineImage
+          ? {
+              '.png': 'image/png',
+              '.jpg': 'image/jpeg',
+              '.jpeg': 'image/jpeg',
+              '.webp': 'image/webp',
+              '.gif': 'image/gif',
+            }[path.extname(entry.name).toLowerCase()] || 'application/octet-stream'
+          : 'application/octet-stream',
       'Content-Disposition': `${entry.image || entry.inlineImage ? 'inline' : 'attachment'}; filename*=UTF-8''${encodeURIComponent(entry.name)}`,
       'Cache-Control': 'private, no-store',
       'X-Content-Type-Options': 'nosniff',
@@ -107,19 +108,47 @@ export async function nativeFilesEndpoint(request: ApiRequest) {
       },
     );
     await check();
+    const files = entries
+      .filter((item) => item.isFile() && downloadable(item.name))
+      .map((item) => item.name);
+    const names = new Map<string, string>();
+    const raw = await storage().get(`chat:${access.spaceName}`);
+    try {
+      const messages: unknown = raw ? JSON.parse(raw) : [];
+      if (Array.isArray(messages))
+        for (const message of messages) {
+          try {
+            const item = parseConferenceMessage(message);
+            if (item.file) names.set(item.file.storageName, item.file.name);
+          } catch {
+            /* Legacy entries may lack message IDs. */
+          }
+        }
+    } catch {
+      /* Files remain accessible if old chat metadata is malformed. */
+    }
+    await check();
     return ApiResponse.json({
-      files: entries
-        .filter((item) => item.isFile() && downloadable(item.name))
-        .map((item) => item.name),
+      files,
+      items: files.map((storageName) => ({
+        storageName,
+        name: names.get(storageName) || storageName,
+      })),
     });
   }
+
   if (body.action === 'download' && !multipart) {
     if (!downloadable(body.name)) throw new AccessError(400, 'INVALID_FILE');
     const id = randomBytes(32).toString('hex');
     await storage().set(
       fileKey(id),
-      JSON.stringify({ token, joinId, space: access.spaceName, name: body.name,
-        inlineImage: /\.(png|jpe?g|webp|gif)$/i.test(body.name) }),
+      JSON.stringify({
+        token,
+        joinId,
+        space: access.spaceName,
+        name: body.name,
+        inlineImage: /\.(png|jpe?g|webp|gif)$/i.test(body.name),
+      }),
       'EX',
       120,
     );

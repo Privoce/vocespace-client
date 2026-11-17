@@ -79,6 +79,7 @@ export function SharedMeetingRoom({
     const track = model.allTracks.find((item) => model.key(item) === id);
     return track && isTrackReference(track) ? (
       <VideoTrack
+        key={track.publication.trackSid}
         trackRef={track}
         style={{ width: '100%', height: '100%' }}
         objectFit={track.source === Track.Source.ScreenShare ? 'contain' : 'cover'}
@@ -176,6 +177,7 @@ export function SharedMeetingRoom({
           {tools.dialog}
           <PhoneMeeting
             extraTiles={tools.extraTiles}
+            fullscreenTileId={tools.fullscreenTileId}
             handLabel={model.t('more.app.raise.title')}
             lowerHandLabel={model.t('more.app.raise.cancel')}
             onLowerHand={

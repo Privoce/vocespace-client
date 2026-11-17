@@ -6,7 +6,7 @@ import { ActionKey, HistorySpaceData, LeaderboardData, MenuTab, ParticipantTable
 import { useLayoutDevice } from '@/lib/hooks/use-layout-device';
 import { useSocketSession } from '@/lib/hooks/use-socket-session';
 import { useI18n } from '@/lib/i18n/i18n';
-import { CreateSpaceStrategy, DEFAULT_VOCESPACE_CONFIG, HyperbeamConf, SMTPConf } from '@/lib/std/conf';
+import { AIConf, CreateSpaceStrategy, DEFAULT_VOCESPACE_CONFIG, HyperbeamConf, SMTPConf } from '@/lib/std/conf';
 import { SpaceInfoMap } from '@/lib/std/space';
 import { message } from 'antd';
 import { useEffect, useMemo, useState } from 'react';
@@ -42,6 +42,7 @@ export function useDashboardState() {
   const [openConf, setOpenConf] = useState(false);
   const [createSpaceConf, setCreateSpaceConf] = useState(false);
   const [smtpConfOpen, setSMTPConfOpen] = useState(false);
+  const [aiConfOpen, setAIConfOpen] = useState(false);
   const [hyperbeamConfOpen, setHyperbeamConfOpen] = useState(false);
   const [isHostManager, setIsHostManager] = useState(false);
   const [hostToken, setHostToken] = useState('');
@@ -53,10 +54,11 @@ export function useDashboardState() {
   const [editingOwnerSpace, setEditingOwnerSpace] = useState<string | null>(null);
   const [ownerCandidates, setOwnerCandidates] = useState<Array<{ id: string; name: string }>>([]);
   const [selectedNewOwner, setSelectedNewOwner] = useState<string | null>(null);
-  const { conf, getConf, checkHostToken, updateCreateSpaceConf, updateSMTPConf, updateHyperbeamConf, setupConf } = useVoceSpaceConf();
+  const { conf, getConf, checkHostToken, updateCreateSpaceConf, updateSMTPConf, updateHyperbeamConf, updateAIConf, setupConf } = useVoceSpaceConf();
   const [createSpaceOption, setCreateSpaceOption] = useState<CreateSpaceStrategy>(
     conf?.create_space || 'all',
   );
+  const [aiConf, setAIConf] = useState<AIConf>(DEFAULT_VOCESPACE_CONFIG.ai!);
   const [smtpConf, setSMTPConf] = useState<SMTPConf>(DEFAULT_VOCESPACE_CONFIG.smtp!);
   const [hyperbeamConf, setHyperbeamConf] = useState<HyperbeamConf>(
     DEFAULT_VOCESPACE_CONFIG.hyperbeam!,
@@ -70,6 +72,7 @@ export function useDashboardState() {
   useEffect(() => {
     if (conf) {
       setCreateSpaceOption(conf?.create_space || 'all');
+      setAIConf(conf.ai || DEFAULT_VOCESPACE_CONFIG.ai!);
       setSMTPConf(conf.smtp || DEFAULT_VOCESPACE_CONFIG.smtp!);
       setHyperbeamConf(conf.hyperbeam || DEFAULT_VOCESPACE_CONFIG.hyperbeam!);
       if (conf.initialized === false) {
@@ -141,6 +144,11 @@ export function useDashboardState() {
     setOpenConf,
     createSpaceConf,
     setCreateSpaceConf,
+    aiConfOpen,
+    setAIConfOpen,
+    aiConf,
+    setAIConf,
+    updateAIConf,
     smtpConfOpen,
     setSMTPConfOpen,
     hyperbeamConfOpen,

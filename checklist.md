@@ -2,6 +2,17 @@
 
 每阶段完成实现与验证后更新勾选项；未验证项不得视为完成。
 
+## Dashboard AI 配置（2026-11-17）
+
+- [x] 首页操作菜单新增 AI 配置；沿用 host token 验证与管理员配置读取，编辑 enabled / apiKey / apiUrl / model / maxTokens 并保存到 API 使用的配置文件。保存后保留受保护配置读取；服务端校验字段、URL 和正整数 Token 上限。
+- [x] 201 项测试、全项目/API 类型检查、边界检查通过；相关目录 lint 仅有原有警告。未修改本机真实配置或请求模型提供商，未部署。
+
+## Mobile / Web Phone 工具与附件互通（2026-11-16）
+
+- [x] 统一主会场工具目录并兼容已有数据；补齐 Native 工具内嵌预览、关闭/全屏和 Web Phone 全屏；修正白板 HSL/归一化笔宽协议；图片消息预览与文件网格、原文件名接通。见 [修复记录](docs/mobile-tool-parity-2026-11-16.md)。
+- [x] Web 屏幕共享显式使用 VP8；Native 屏幕轨道挂载及重连订阅恢复补齐。199 项测试、类型、边界、API 构建及 iOS/Android JS 导出通过。
+- [ ] 更新 Web/API/Mobile 后真机验证附件、白板、iframe/Cobrowse 与屏幕共享；本次未部署或发布原生包。
+
 ## Mobile 系统弹窗与退会（2026-11-16）
 
 - [x] 采集权限、广播选择器和文件选择器加系统操作保护；合并后台退会判断，覆盖系统调用完成与 AppState 恢复之间的竞态。186 项测试、类型/边界检查、iOS JS 导出通过，见 [修复记录](docs/mobile-system-dialogs-2026-11-16.md)。

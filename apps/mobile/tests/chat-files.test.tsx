@@ -10,7 +10,8 @@ it('opens a member-scoped image preview in the App instead of the external brows
   const hook = renderHook(() => useChatFiles({ sdk: { transport } } as any, 'joined'));
   await act(async () => { await hook.result.current.download('stored.jpg', 'photo.jpg'); });
   expect(hook.result.current.preview?.name).toBe('photo.jpg');
-  expect(hook.result.current.open).toBe(true);
+  expect(hook.result.current.preview?.url).toBe('https://example.invalid/api/v1/native/files/capability');
+  expect(hook.result.current.open).toBe(false); // Fullscreen preview does not open the gallery behind it.
   expect(JSON.parse(transport.mock.calls[0][1].body).name).toBe('stored.jpg');
   expect(fake.open).not.toHaveBeenCalled();
 });

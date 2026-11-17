@@ -42,7 +42,7 @@ export function useSharedMeetingRoom(
         )
       : '重连中',
     statusColor: connected ? '#28C776' : '#E5A54B',
-    video: isTrackReference(track) && !!track.publication.track && !track.publication.isMuted,
+    video: isTrackReference(track) && (track.source === Track.Source.ScreenShare || !!track.publication.track) && !track.publication.isMuted,
   }));
   const members: MeetingTile[] = model.directory?.participants
     ? Object.entries(model.directory.participants).map(([id, person]) => {

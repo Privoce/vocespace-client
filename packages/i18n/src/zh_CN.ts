@@ -1365,6 +1365,15 @@ export default {
       during: '时长',
     },
     conf: {
+      ai: {
+        title: 'AI 配置',
+        enabled: '启用 AI',
+        api_key: 'API 密钥',
+        api_url: 'API 地址',
+        model: '模型名称',
+        max_tokens: '最大 Token 数',
+        invalid: '请填写有效的 API 地址、模型和密钥；最大 Token 数必须是正整数。',
+      },
       flushdb: {
         title: '清除所有数据',
         desc: '此操作将清除所有空间和用户数据，且不可恢复，请谨慎操作！此操作不会影响使用平台登陆的用户数据，只会清理游客数据。',
@@ -1425,6 +1434,7 @@ export default {
       },
     },
     count: {
+      ai_conf: 'AI 配置',
       room: '房间数',
       participant: '所有用户数',
       online_participant: '在线用户数',

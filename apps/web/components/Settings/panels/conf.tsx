@@ -286,7 +286,7 @@ export function useVoceSpaceConf() {
     try {
       const response = await api.updateAIConf(aiConf, hostToken ?? verifiedToken.current);
       if (response.ok) {
-        await getConf();
+        await getConf(hostToken ?? verifiedToken.current);
         onSuccess();
       } else {
         const { error } = await response.json();

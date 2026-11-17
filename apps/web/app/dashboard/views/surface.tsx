@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  AIConfModal,
   ActiveSpacesSection,
   CreateSpaceStrategyModal,
   DashboardActions,
@@ -235,6 +236,17 @@ export function DashboardSurface({ model }: { model: DashboardModel }) {
           onAddWhiteListValueChange={setAddWhiteListValue}
           onCancel={() => setCreateSpaceConf(false)}
           onConfirm={confirmCreateSpaceHandle}
+        />
+
+        <AIConfModal
+          open={model.aiConfOpen}
+          isHostManager={isHostManager}
+          hostToken={hostToken}
+          aiConf={model.aiConf}
+          onTokenChange={setHostToken}
+          onAIConfChange={model.setAIConf}
+          onCancel={() => model.setAIConfOpen(false)}
+          onConfirm={model.confirmAIConfHandle}
         />
 
         <SMTPConfModal

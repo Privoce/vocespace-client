@@ -1,3 +1,4 @@
+import { tilePlayerDirectory } from '../lib/server/tile-player-directory';
 import { readTilePlayerFile, writeTilePlayerFile } from '../lib/server/tile-player-file';
 import { sessions, sessionToken } from '../lib/server/sessions';
 import { membership } from '../access';
@@ -128,7 +129,8 @@ export async function POST(request: ApiRequest) {
       }
 
       // 多 tile_player 目录结构: uploads/{spaceName}/{room?}/tile_players.json + 文件资源
-      const dir = room ? path.join(uploadDirPath(spaceName), room) : uploadDirPath(spaceName);
+      room = room === spaceName ? undefined : room;
+      const dir = await tilePlayerDirectory(spaceName, room);
       const playersPath = path.join(dir, 'tile_players.json');
 
       const loadPlayersByPath = (targetPath: string) =>
@@ -287,6 +289,8 @@ export async function POST(request: ApiRequest) {
           );
         }
 
+        const existing = (await loadPlayers()).find((player) => player.mode === 'whiteboard');
+        if (existing) return ApiResponse.json({ success: true, player: existing });
         const totalWhiteboardPlayers = await countPlayersInSpace('whiteboard');
         if (totalWhiteboardPlayers >= 1) {
           return ApiResponse.json(

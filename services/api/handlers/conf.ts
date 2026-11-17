@@ -12,7 +12,7 @@ import {
   setFullConfig,
   writeBackConfig,
 } from '../lib/server/config';
-import { AIConf, clearReadableConf, HyperbeamConf, RTCConf, SMTPConf, VocespaceConfig } from '@vocespace/domain/config';
+import { isValidAIConf, clearReadableConf, HyperbeamConf, RTCConf, SMTPConf, VocespaceConfig } from '@vocespace/domain/config';
 import { UpdateCreateSpaceConfBody } from '@vocespace/domain/requests/conf';
 import { authorizeConfigMutation, verifyHostToken } from '../lib/server/host-authorization';
 import { HostAuthorizationError } from '@vocespace/server-core';
@@ -118,9 +118,21 @@ export async function POST(request: ApiRequest) {
   }
   // 更新AI配置 -------------------------------------------------------------------------------------
   if (isUpdateAI) {
-    const { aiConf }: { aiConf: AIConf } = await request.json();
+    const { aiConf }: { aiConf: unknown } = await request.json();
+    if (!isValidAIConf(aiConf)) {
+      return ApiResponse.json(
+        { code: 'INVALID_AI_CONFIG', error: 'Invalid AI configuration' },
+        { status: 400 },
+      );
+    }
     const conf = getConfig();
-    conf.ai = aiConf;
+    conf.ai = {
+      enabled: aiConf.enabled,
+      apiKey: aiConf.apiKey.trim(),
+      apiUrl: aiConf.apiUrl.trim(),
+      model: aiConf.model.trim(),
+      ...(aiConf.maxTokens !== undefined ? { maxTokens: aiConf.maxTokens } : {}),
+    };
     try {
       const { success, error } = writeBackConfig(conf);
       if (!success) {

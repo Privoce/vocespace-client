@@ -10,7 +10,7 @@ import type { ConferenceModel } from './mediaStage';
 export function renderConferenceEntity(
   model: ConferenceModel,
   entity: VideoLayoutEntity,
-  state: { isFocus: boolean },
+  state: { isFocus: boolean; fullscreen?: boolean; onFullscreen?: () => void },
 ) {
   const {
     space,
@@ -65,6 +65,8 @@ export function renderConferenceEntity(
   const item = entity.payload as TilePlayerItem;
   return (
     <TilePlayer
+      fullscreen={state.fullscreen}
+      onFullscreen={state.onFullscreen}
       spaceInfo={settings}
       item={item}
       spaceName={space.name}

@@ -170,6 +170,7 @@ export function ControlsPC({ model }: { model: ControlsModel }) {
           <TrackToggle
             style={{ height: 46, padding: 15 }}
             source={Track.Source.ScreenShare}
+                publishOptions={{ videoCodec: 'vp8' }}
             onClickCapture={() => model.beginMedia(Track.Source.ScreenShare)}
             captureOptions={{ audio: uState.openShareAudio, selfBrowserSurface: 'include' }}
             showIcon={showIcon}

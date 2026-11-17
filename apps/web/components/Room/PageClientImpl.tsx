@@ -193,7 +193,7 @@ function ConnectedConference(props: VideoConferenceProps & {
               await room.localParticipant.setMicrophoneEnabled(true);
               break;
             case Track.Source.ScreenShare:
-              await room.localParticipant.setScreenShareEnabled(true);
+              await room.localParticipant.setScreenShareEnabled(true, undefined, { videoCodec: 'vp8' });
               break;
             default:
               // 如果没有指定设备，则启用摄像头和麦克风

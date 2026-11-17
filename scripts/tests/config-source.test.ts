@@ -8,6 +8,7 @@ const mocks = vi.hoisted(() => ({
   writeFile: vi.fn().mockResolvedValue(undefined),
 }));
 // Never read the developer's JSON, connect to Redis, or send real mail/requests.
+vi.mock('../../services/api/lib/server/tile-player-directory', () => ({ tilePlayerDirectory: async () => '/fixture/uploads/fixture' }));
 vi.mock('../../services/api/lib/server/tile-player-file', () => ({
   readTilePlayerFile: vi.fn().mockResolvedValue([]),
   writeTilePlayerFile: mocks.writeFile,

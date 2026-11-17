@@ -32,8 +32,8 @@ export default function SharedMeeting({
   const localAvoList = useUserStore((state) => state.avoList);
   const [fullscreen, setFullscreen] = useState<string>();
   useEffect(() => {
-    if (fullscreen && !tiles.some((item) => item.id === fullscreen)) setFullscreen(undefined);
-  }, [fullscreen, tiles]);
+    if (fullscreen && !tiles.some((item) => item.id === fullscreen) && !model.tilePlayerEntities.some((item) => item.id === fullscreen)) setFullscreen(undefined);
+  }, [fullscreen, tiles, model.tilePlayerEntities]);
   const [shareOpen, setShareOpen] = useState(false);
   const [toolsOpen, setToolsOpen] = useState(false);
   return (
@@ -178,6 +178,8 @@ export default function SharedMeeting({
           id: entity.id,
           content: renderConferenceEntity(model, entity, {
             isFocus: entity.id === `tile-player:${model.focusedTilePlayerId}`,
+            fullscreen: fullscreen === entity.id,
+            onFullscreen: () => setFullscreen(fullscreen === entity.id ? undefined : entity.id),
           }),
         }))}
       renderVideo={(id) => {

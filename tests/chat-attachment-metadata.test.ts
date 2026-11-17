@@ -10,3 +10,9 @@ it('preserves attachment metadata through repeated parsing without exposing lega
   expect(JSON.stringify(parsed)).not.toContain('secret');
   expect(parseConferenceMessage({ ...value, file: { ...value.file, storageName: '../private' } }).file).toBeUndefined();
 });
+
+it('does not invent a download name for legacy messages with no URL', () => {
+  const value = { id: 'm', roomName: 'room', sender: { id: 'user', name: 'User' }, timestamp: 1,
+    type: 'file', message: null, file: { name: 'missing.pdf' } };
+  expect(parseConferenceMessage(value).file).toBeUndefined();
+});

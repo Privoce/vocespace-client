@@ -57,14 +57,30 @@ export function parseConferenceMessage(value: unknown): ConferenceMessage {
   if (input.type === 'file' && input.file && typeof input.file === 'object') {
     const attachment = input.file as Record<string, unknown>;
     try {
-      const storageName = typeof attachment.storageName === 'string'
-        ? attachment.storageName
-        : decodeURIComponent(new URL(String(attachment.url), 'https://file.invalid').pathname.split('/').pop() || '');
-      if (storageName && storageName !== '.' && storageName !== '..' && !/[/\\\x00-\x1f]/.test(storageName) && storageName.length <= 255) {
-        file = { storageName, name: typeof attachment.name === 'string' ? attachment.name.slice(0, 200) : storageName,
-          type: typeof attachment.type === 'string' ? attachment.type.slice(0, 100) : '' };
+      const storageName =
+        typeof attachment.storageName === 'string'
+          ? attachment.storageName
+          : typeof attachment.url === 'string'
+            ? decodeURIComponent(
+                new URL(attachment.url, 'https://file.invalid').pathname.split('/').pop() || '',
+              )
+            : '';
+      if (
+        storageName &&
+        storageName !== '.' &&
+        storageName !== '..' &&
+        !/[/\\\x00-\x1f]/.test(storageName) &&
+        storageName.length <= 255
+      ) {
+        file = {
+          storageName,
+          name: typeof attachment.name === 'string' ? attachment.name.slice(0, 200) : storageName,
+          type: typeof attachment.type === 'string' ? attachment.type.slice(0, 100) : '',
+        };
       }
-    } catch { /* Old messages without valid metadata retain the file-list fallback. */ }
+    } catch {
+      /* Old messages without valid metadata retain the file-list fallback. */
+    }
   }
   return {
     id: text(input.id, 100),

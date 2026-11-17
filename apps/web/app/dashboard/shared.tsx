@@ -44,6 +44,7 @@ export type ActionKey =
   | 'ac_space'
   | 'smtp_conf'
   | 'hyperbeam_conf'
+  | 'ai_conf'
   | 'flushdb';
 
 export type MenuTab = 'drive' | 'home' | 'license' | 'licenseManage' | 'recording' | 'log' | 'history';

@@ -5,6 +5,7 @@ import { ApiError } from '@vocespace/client-sdk';
 
 vi.mock('@ant-design/react-native/lib/toast', () => ({ default: { info: vi.fn() } }));
 vi.mock('react-native', () => ({
+  BackHandler: { addEventListener: () => ({ remove: () => {} }) },
   View: ({ children }: { children: ReactNode }) => <div>{children}</div>,
   Text: ({ children }: { children: ReactNode }) => <span>{children}</span>,
   Pressable: ({
@@ -27,11 +28,11 @@ vi.mock('react-native', () => ({
   StyleSheet: { create: (styles: unknown) => styles },
 }));
 vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: () => null }));
-vi.mock('react-native-webview', () => ({ WebView: () => null }));
+vi.mock('react-native-webview', () => ({ WebView: () => <div data-testid="web-preview" /> }));
 vi.mock('@ant-design/icons-react-native', () => ({ IconOutline: () => null }));
-vi.mock('../src/ui/meeting', () => ({ MeetingButton: () => null, MeetingIcon: () => null }));
+vi.mock('../src/ui/meeting', () => ({ MeetingButton: ({ children, label, onPress }: { children: ReactNode; label: string; onPress: () => void }) => <button aria-label={label} onClick={onPress}>{children}</button>, MeetingIcon: () => null }));
 vi.mock('../src/ui/document-picker', () => ({ pickDocument: vi.fn() }));
-vi.mock('../src/conference/tools/Whiteboard', () => ({ Whiteboard: () => null }));
+vi.mock('../src/conference/tools/Whiteboard', () => ({ Whiteboard: () => <div data-testid="whiteboard-preview" /> }));
 vi.mock('@vocespace/ui', () => ({
   MeetingToolsPanel: ({
     items,
@@ -62,6 +63,7 @@ function Harness({ request }: { request: ReturnType<typeof vi.fn> }) {
   const tools = useMeetingTools(room, chat, t, () => {});
   return (
     <>
+      <output data-testid="fullscreen">{tools.fullscreenTileId}</output>
       {tools.panel}
       {tools.extraTiles.map((tile) => (
         <div key={tile.id}>{tile.content}</div>
@@ -88,12 +90,12 @@ it('keeps list failures out of the tile and continues polling until recovery', a
   });
   expect(screen.queryByText(/tools_unavailable/)).toBeNull();
   expect(screen.queryByText(/tools_error/)).toBeNull();
-  expect(screen.queryByRole('button', { name: 'whiteboard' })).toBeNull();
+  expect(screen.queryByTestId('whiteboard-preview')).toBeNull();
   await act(async () => {
     await vi.advanceTimersByTimeAsync(30000);
   });
   expect(screen.queryByText(/tools_unavailable/)).toBeNull();
-  expect(screen.queryByRole('button', { name: 'whiteboard' })).not.toBeNull();
+  expect(screen.queryByTestId('whiteboard-preview')).not.toBeNull();
 });
 
 it('does not add error content to the tool tile after a failed action', async () => {
@@ -143,4 +145,19 @@ it('offers file upload and browsing from the panel without an add-tools tile', a
   expect(uploadFile).toHaveBeenCalledOnce();
   expect(listFiles).toHaveBeenCalledOnce();
   expect(screen.queryByRole('button', { name: 'common.chat' })).toBeNull();
+});
+
+it('renders embedded tools immediately, keeps them mounted in fullscreen and removes owned tiles', async () => {
+  const player = { id: 'iframe', mode: 'iframe', url: 'https://example.org', canRemove: true };
+  const request = vi.fn().mockImplementation(async ({ action }: { action: string }) => ({ players: action === 'rm' ? [] : [player] }));
+  await act(async () => { render(room(request)); });
+  const preview = screen.getByTestId('web-preview');
+  fireEvent.click(screen.getByRole('button', { name: 'common.full_screen' }));
+  expect(screen.getByTestId('fullscreen').textContent).toBe('tool:iframe');
+  expect(screen.getByTestId('web-preview')).toBe(preview);
+  fireEvent.click(screen.getByRole('button', { name: 'phone_meeting.exit_fullscreen' }));
+  expect(screen.getByTestId('web-preview')).toBe(preview);
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'common.close' })); });
+  expect(request).toHaveBeenCalledWith(expect.objectContaining({ action: 'rm', playerId: 'iframe' }), expect.any(AbortSignal));
+  expect(screen.queryByTestId('web-preview')).toBeNull();
 });

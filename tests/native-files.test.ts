@@ -106,6 +106,7 @@ it('requires confirmed membership and rejects path traversal', async () => {
 it('lists only Space files, excluding tool metadata and child folders', async () => {
   expect(await (await nativeFilesEndpoint(request({ action: 'list' }))).json()).toEqual({
     files: ['report.pdf'],
+    items: [{ storageName: 'report.pdf', name: 'report.pdf' }],
   });
 });
 it('deduplicates concurrent sends and derives sender identity on the server', async () => {
@@ -143,4 +144,11 @@ it('serves chat images inline through a short-lived membership-bound capability'
   expect(response.headers.get('content-disposition')).toMatch(/^inline;/);
   state.revoked = true;
   await expect(nativeFileDownload(new ApiRequest(result.url), result.url.split('/').pop())).rejects.toMatchObject({ status: 403 });
+});
+
+it('keeps original attachment names in the file gallery while downloads use storage names', async () => {
+  state.data.set('chat:demo', JSON.stringify([{ id: 'message', roomName: 'demo', sender: { id: 'user', name: 'User' },
+    timestamp: 1, type: 'file', message: null, file: { name: 'Meeting notes.pdf', type: 'application/pdf', url: '/uploads/demo/report.pdf' } }]));
+  const result = await (await nativeFilesEndpoint(request({ action: 'list' }))).json();
+  expect(result.items).toEqual([{ storageName: 'report.pdf', name: 'Meeting notes.pdf' }]);
 });

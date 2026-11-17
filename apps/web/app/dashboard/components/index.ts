@@ -15,3 +15,5 @@ export { DashboardLog, type LogEntry, type LogType } from './DashboardLog';
 export { DashboardRecording } from './DashboardRecording';
 export { DashboardLicense } from './DashboardLicense';
 export { DashboardLicenseManage } from './DashboardLicenseManage';
+
+export { AIConfModal } from './AIConfModal';

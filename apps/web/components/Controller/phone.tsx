@@ -101,6 +101,7 @@ export function ControlsPhone({ model }: { model: ControlsModel }) {
             <fieldset className={phone.screenShareControl} disabled={screenShareUnavailable}>
               <TrackToggle
                 source={Track.Source.ScreenShare}
+                publishOptions={{ videoCodec: 'vp8' }}
                 onClickCapture={() => model.beginMedia(Track.Source.ScreenShare)}
                 showIcon
                 aria-label={

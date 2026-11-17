@@ -18,6 +18,9 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
     messageApi,
     setOpenConf,
     setCreateSpaceConf,
+    setAIConfOpen,
+    aiConf,
+    updateAIConf,
     setSMTPConfOpen,
     setHyperbeamConfOpen,
     isHostManager,
@@ -291,6 +294,21 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
       },
     );
   };
+  const confirmAIConfHandle = async () => {
+    if (!isHostManager) {
+      await ensureHostVerified();
+      return;
+    }
+    await updateAIConf(
+      aiConf,
+      (error) => messageApi.error(t('dashboard.conf.error.update') + ': ' + error.message),
+      () => {
+        messageApi.success(t('dashboard.conf.success.update'));
+        setAIConfOpen(false);
+      },
+      hostToken,
+    );
+  };
   const confirmHyperbeamConfHandle = async () => {
     if (!isHostManager) {
       if (await ensureHostVerified()) await fetchAllData();
@@ -333,13 +351,14 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
   const handleProceed = async () => {
     if (selectOption === 'refresh') {
       await fetchAllData();
-    } else if (['global_conf', 'ac_space', 'smtp_conf', 'hyperbeam_conf'].includes(selectOption)) {
+    } else if (['global_conf', 'ac_space', 'smtp_conf', 'hyperbeam_conf', 'ai_conf'].includes(selectOption)) {
       setIsHostManager(false);
       const saved = getVerified();
       if (saved) await ensureHostVerified(saved.token);
       else setHostToken('');
       if (selectOption === 'global_conf') setOpenConf(true);
       if (selectOption === 'ac_space') setCreateSpaceConf(true);
+      if (selectOption === 'ai_conf') setAIConfOpen(true);
       if (selectOption === 'smtp_conf') setSMTPConfOpen(true);
       if (selectOption === 'hyperbeam_conf') setHyperbeamConfOpen(true);
     } else if (selectOption === 'manage_spaces') {
@@ -408,6 +427,7 @@ export function useDashboardActions(context: ReturnType<typeof useDashboardData>
     confirmConfHandle,
     confirmCreateSpaceHandle,
     ensureHostVerified,
+    confirmAIConfHandle,
     confirmSMTPConfHandle,
     confirmHyperbeamConfHandle,
     handleSetupConf,

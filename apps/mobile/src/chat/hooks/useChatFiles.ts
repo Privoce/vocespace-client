@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { systemInteraction } from '../../ui/system-interaction';
 import { Linking } from 'react-native';
 import * as Crypto from 'expo-crypto';
@@ -9,6 +9,7 @@ export function useChatFiles(api: ReturnType<typeof createNativeApi> | undefined
   const [preview, setPreview] = useState<{ name: string; url: string }>();
   const [open, setOpen] = useState(false);
   const [files, setFiles] = useState<string[]>([]);
+  const [names, setNames] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
   const [pending, setPending] = useState(false);
@@ -23,6 +24,7 @@ export function useChatFiles(api: ReturnType<typeof createNativeApi> | undefined
     setOpen(false);
     setPreview(undefined);
     setFiles([]);
+    setNames({});
     setError(false);
     setBusy(false);
     setPending(false);
@@ -32,21 +34,24 @@ export function useChatFiles(api: ReturnType<typeof createNativeApi> | undefined
       abort.current?.abort();
     };
   }, [joinId]);
-  const request = async (body: FormData | Record<string, string>, signal: AbortSignal) => {
-    if (!api || !joinId) throw new Error('MEMBERSHIP_REQUIRED');
-    const response = await api.sdk.transport('api/v1/native/files', {
-      method: 'POST',
-      signal,
-      ...(body instanceof FormData
-        ? { body }
-        : {
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...body, joinId }),
-          }),
-    });
-    if (!response.ok) throw new Error('FILE_REQUEST_FAILED');
-    return response.json();
-  };
+  const request = useCallback(
+    async (body: FormData | Record<string, string>, signal: AbortSignal) => {
+      if (!api || !joinId) throw new Error('MEMBERSHIP_REQUIRED');
+      const response = await api.sdk.transport('api/v1/native/files', {
+        method: 'POST',
+        signal,
+        ...(body instanceof FormData
+          ? { body }
+          : {
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...body, joinId }),
+            }),
+      });
+      if (!response.ok) throw new Error('FILE_REQUEST_FAILED');
+      return response.json();
+    },
+    [api, joinId],
+  );
   const run = async (operation: (signal: AbortSignal) => Promise<void>) => {
     if (!joinId || flight.current) return;
     const controller = new AbortController();
@@ -99,18 +104,51 @@ export function useChatFiles(api: ReturnType<typeof createNativeApi> | undefined
         result.files.some((name: unknown) => typeof name !== 'string')
       )
         throw new Error('INVALID_FILES');
-      if (current.current === joinId) setFiles(result.files);
+      if (current.current === joinId && !signal.aborted) {
+        setFiles(result.files);
+        setNames(
+          Object.fromEntries(
+            (Array.isArray(result.items) ? result.items : [])
+              .filter(
+                (item: { storageName?: unknown; name?: unknown }) =>
+                  typeof item.storageName === 'string' && typeof item.name === 'string',
+              )
+              .map((item: { storageName: string; name: string }) => [item.storageName, item.name]),
+          ),
+        );
+      }
     });
-  const download = (name: string, displayName = name) =>
-    run(async (signal) => {
+  const resolveFile = useCallback(
+    async (name: string, signal: AbortSignal): Promise<string> => {
       const result = await request({ action: 'download', name }, signal);
-      if (current.current !== joinId || signal.aborted) return;
       if (typeof result.url !== 'string' || !/^https?:\/\//.test(result.url))
         throw new Error('INVALID_URL');
+      return result.url;
+    },
+    [request],
+  );
+  const download = (name: string, displayName = names[name] || name) =>
+    run(async (signal) => {
+      const url = await resolveFile(name, signal);
+      if (current.current !== joinId || signal.aborted) return;
       if (/\.(png|jpe?g|webp|gif)$/i.test(name)) {
-        setPreview({ name: displayName, url: result.url });
-        setOpen(true);
-      } else await systemInteraction.run(() => Linking.openURL(result.url));
+        setPreview({ name: displayName, url });
+      } else await systemInteraction.run(() => Linking.openURL(url));
     });
-  return { preview, setPreview, onPreviewError: () => setError(true), open, setOpen, files, busy, error, pending, upload, list, download };
+  return {
+    names,
+    resolveFile,
+    preview,
+    setPreview,
+    onPreviewError: () => setError(true),
+    open,
+    setOpen,
+    files,
+    busy,
+    error,
+    pending,
+    upload,
+    list,
+    download,
+  };
 }

@@ -113,6 +113,24 @@ export interface AIConf {
   maxTokens?: number;
 }
 
+/** Validate the persisted AI settings without contacting the provider. */
+export function isValidAIConf(value: unknown): value is AIConf {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  const conf = value as Record<string, unknown>;
+  if (typeof conf.enabled !== 'boolean' || typeof conf.apiKey !== 'string' ||
+    typeof conf.apiUrl !== 'string' || typeof conf.model !== 'string') return false;
+  if (conf.maxTokens !== undefined && (typeof conf.maxTokens !== 'number' ||
+    !Number.isSafeInteger(conf.maxTokens) || conf.maxTokens < 1)) return false;
+  if (conf.enabled && (!conf.apiKey.trim() || !conf.apiUrl.trim() || !conf.model.trim())) return false;
+  if (conf.apiUrl.trim()) {
+    try {
+      const url = new URL(conf.apiUrl.trim());
+      if (!['https:', 'http:'].includes(url.protocol) || url.username || url.password) return false;
+    } catch { return false; }
+  }
+  return true;
+}
+
 export interface SMTPConf {
   host: string;
   port: number;

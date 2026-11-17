@@ -1434,6 +1434,15 @@ export default {
       during: 'Duration',
     },
     conf: {
+      ai: {
+        title: 'AI Configuration',
+        enabled: 'Enable AI',
+        api_key: 'API key',
+        api_url: 'API URL',
+        model: 'Model',
+        max_tokens: 'Maximum tokens',
+        invalid: 'Enter a valid API URL, model and key. Maximum tokens must be a positive integer.',
+      },
       flushdb: {
         title: 'Flush All Data',
         desc: 'This action will clear all spaces and user data and cannot be undone. Please proceed with caution! This action will not affect users logged in through the platform, only guest data will be cleared.',
@@ -1495,6 +1504,7 @@ export default {
       },
     },
     count: {
+      ai_conf: 'AI Configuration',
       room: 'Rooms',
       participant: 'All users',
       online_participant: 'Online users',

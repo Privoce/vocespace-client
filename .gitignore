@@ -109,3 +109,9 @@ apps/web/public/license/
 !/apps/mobile/tests/system-interaction.test.ts
 !/tests/chat-attachment-metadata.test.ts
 !/apps/mobile/tests/system-interaction.test.ts
+
+!/tests/tool-room-parity.test.ts
+!/tests/whiteboard-protocol.test.ts
+
+!/scripts/tests/config-auth.test.ts
+!/scripts/tests/dashboard-auth.test.ts

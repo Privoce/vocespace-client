@@ -25,6 +25,7 @@ vi.mock('../services/api/lib/server/space-redis', () => ({
   getSpaceRedisClient: () => ({ set: async () => undefined }),
 }));
 vi.mock('../services/api/handlers/upload', () => ({ POST: state.handler }));
+vi.mock('../services/api/lib/server/tile-player-directory', () => ({ tilePlayerDirectory: async () => '/uploads/demo/public-child' }));
 vi.mock('node:fs/promises', () => ({ readFile: async () => state.files }));
 import { nativeToolsEndpoint } from '../services/api/native-tools';
 import { ApiRequest, ApiResponse } from '../services/api/http';

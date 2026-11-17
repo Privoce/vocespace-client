@@ -271,6 +271,7 @@ export class NativeRoom implements ConferenceRoom {
     this.raw.on(RoomEvent.TrackUnmuted, this.syncMedia);
     this.raw.on(RoomEvent.Disconnected, onDisconnected);
     this.raw.on(RoomEvent.TrackPublished, this.onPublication);
+    this.raw.on(RoomEvent.Reconnected, this.onPublication);
     this.raw.on(RoomEvent.TrackSubscribed, this.applyVolume);
     this.raw.on(RoomEvent.ParticipantConnected, this.previewPermissions);
     this.raw.on(RoomEvent.ParticipantDisconnected, this.previewPermissions);
@@ -305,6 +306,7 @@ export class NativeRoom implements ConferenceRoom {
     clearInterval(this.directoryTimer);
     this.raw.off(RoomEvent.Disconnected, this.onDisconnected);
     this.raw.off(RoomEvent.TrackPublished, this.onPublication);
+    this.raw.off(RoomEvent.Reconnected, this.onPublication);
     this.raw.off(RoomEvent.TrackSubscribed, this.applyVolume);
     this.raw.off(RoomEvent.ParticipantConnected, this.previewPermissions);
     this.raw.off(RoomEvent.ParticipantDisconnected, this.previewPermissions);

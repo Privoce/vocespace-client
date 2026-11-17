@@ -243,7 +243,9 @@ export function PhoneMeeting({
                     style={[
                       {
                         width: focus || tiles.length + extraTiles.length === 1 ? '100%' : '48.5%',
-                        height: focus
+                        height: fullscreenTileId === id
+                          ? Math.max(220, viewport.height - 16)
+                          : focus
                           ? size.focusHeight
                           : layout.focus
                             ? size.railHeight

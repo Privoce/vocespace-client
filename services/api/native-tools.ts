@@ -1,8 +1,9 @@
+import { tilePlayerDirectory } from './lib/server/tile-player-directory';
 import { accountFlows } from './account/flow-store';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { randomBytes } from 'node:crypto';
-import { parseJoinId } from '@vocespace/contracts';
+import { parseJoinId, parseWhiteboardStrokes } from '@vocespace/contracts';
 import { ApiRequest, ApiResponse } from './http';
 import { AccessError, safeSegment } from './access';
 import { requireNative } from './native-auth';
@@ -27,7 +28,7 @@ export async function nativeToolsEndpoint(request: ApiRequest) {
   if (!(await accountFlows.allow(`native-tools:${principal.id}`, 180)))
     throw new AccessError(429, 'RATE_LIMITED');
   const room = access.roomName === access.spaceName ? undefined : access.roomName;
-  const dir = path.join(process.cwd(), 'uploads', access.spaceName, room || '');
+  const dir = await tilePlayerDirectory(access.spaceName, room);
   const list = async (): Promise<
     Array<{ id: string; ownerId: string; mode: string; fileName?: string; iframeUrl?: string }>
   > => {
@@ -51,42 +52,12 @@ export async function nativeToolsEndpoint(request: ApiRequest) {
       JSON.stringify(drawing).length > 100000
     )
       throw new AccessError(400, 'INVALID_DRAWING');
-    const strokes = drawing.strokes.map((stroke: Record<string, unknown>) => {
-      if (
-        !stroke ||
-        typeof stroke !== 'object' ||
-        typeof stroke.id !== 'string' ||
-        stroke.id.length > 100 ||
-        typeof stroke.color !== 'string' ||
-        !/^#[0-9a-fA-F]{6}$/.test(stroke.color) ||
-        !Array.isArray(stroke.points) ||
-        stroke.points.length > 2000
-      )
-        throw new AccessError(400, 'INVALID_DRAWING');
-      const points = stroke.points.map((point: { x?: unknown; y?: unknown }) => {
-        if (
-          !point ||
-          typeof point.x !== 'number' ||
-          typeof point.y !== 'number' ||
-          !Number.isFinite(point.x) ||
-          !Number.isFinite(point.y) ||
-          point.x < 0 ||
-          point.x > 1 ||
-          point.y < 0 ||
-          point.y > 1
-        )
-          throw new AccessError(400, 'INVALID_DRAWING');
-        return { x: point.x, y: point.y };
-      });
-      return {
-        id: stroke.id,
-        color: stroke.color,
-        tool: 'pen',
-        width: 3,
-        createdAt: Date.now(),
-        points,
-      };
-    });
+    let strokes;
+    try {
+      strokes = parseWhiteboardStrokes(drawing.strokes);
+    } catch {
+      throw new AccessError(400, 'INVALID_DRAWING');
+    }
     await requireNativeChatMember((await requireNative(authRequest)).principal, joinId);
     globalThis.vocespaceSocketServer
       ?.to(`space:${access.spaceName}`)
@@ -99,7 +70,11 @@ export async function nativeToolsEndpoint(request: ApiRequest) {
     return ApiResponse.json({ success: true });
   }
   if (body.action !== 'ls') {
-    if (!['upload', 'set_meta', 'create_hyperbeam', 'create_whiteboard'].includes(body.action))
+    if (
+      !['upload', 'set_meta', 'create_hyperbeam', 'create_whiteboard', 'rm'].includes(body.action)
+    )
+      throw new AccessError(400, 'INVALID_TOOL_ACTION');
+    if (body.action === 'rm' && (typeof body.playerId !== 'string' || !body.playerId))
       throw new AccessError(400, 'INVALID_TOOL_ACTION');
     let payload: FormData | string;
     if (body.action === 'upload') {
@@ -135,6 +110,7 @@ export async function nativeToolsEndpoint(request: ApiRequest) {
         room,
         identity: access.identity,
         iframeUrl: body.url,
+        playerId: body.playerId,
       });
     }
     const response = await upload(
@@ -150,8 +126,9 @@ export async function nativeToolsEndpoint(request: ApiRequest) {
       ?.to(`space:${access.spaceName}`)
       .emit('tile_player_change_response', {
         space: access.spaceName,
-        action: 'create',
-        created: true,
+        action: body.action === 'rm' ? 'remove' : 'create',
+        created: body.action !== 'rm',
+        participantId: access.identity,
       });
   }
   const items = await list();
@@ -184,6 +161,7 @@ export async function nativeToolsEndpoint(request: ApiRequest) {
         id: item.id,
         mode: item.mode,
         ownerId: item.ownerId,
+        canRemove: item.ownerId === access.identity,
         url: url || item.iframeUrl || undefined,
       };
     }),

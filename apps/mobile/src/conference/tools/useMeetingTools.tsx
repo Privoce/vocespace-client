@@ -1,8 +1,17 @@
 import Toast from '@ant-design/react-native/lib/toast';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Image, Modal, Pressable, Text, View, TextInput, StyleSheet } from 'react-native';
+import {
+  Image,
+  Modal,
+  Pressable,
+  Text,
+  View,
+  TextInput,
+  StyleSheet,
+  BackHandler,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { WebView } from 'react-native-webview';
+import { ToolWebView, safeToolUrl as safeWebUrl } from './ToolWebView';
 import { IconOutline, type OutlineGlyphMapType } from '@ant-design/icons-react-native';
 import { MeetingToolsPanel } from '@vocespace/ui';
 import { ApiError } from '@vocespace/client-sdk';
@@ -12,7 +21,12 @@ import type { NativeRoom } from '../room';
 import type { useConferenceChat } from '../../chat/hooks/useConferenceChat';
 import { Whiteboard } from './Whiteboard';
 
-type Player = { id: string; mode: 'image' | 'iframe' | 'hyperbeam' | 'whiteboard'; url?: string };
+type Player = {
+  id: string;
+  canRemove?: boolean;
+  mode: 'image' | 'iframe' | 'hyperbeam' | 'whiteboard';
+  url?: string;
+};
 function toolErrorKey(error: unknown, fallback: string) {
   return error instanceof ApiError && error.code === 'NATIVE_ENDPOINT_REQUIRED'
     ? 'shared_meeting.tools_unavailable'
@@ -27,20 +41,13 @@ function parsePlayers(value: unknown): Player[] {
         !p ||
         typeof p.id !== 'string' ||
         !['image', 'iframe', 'hyperbeam', 'whiteboard'].includes(p.mode) ||
-        (p.url !== undefined && typeof p.url !== 'string'),
+        (p.url !== undefined && typeof p.url !== 'string') ||
+        (p.canRemove !== undefined && typeof p.canRemove !== 'boolean'),
     )
   )
     throw new Error('INVALID_TOOLS');
   return list;
 }
-const safeWebUrl = (value?: string) => {
-  try {
-    const u = new URL(value || '');
-    return u.protocol === 'https:' && !u.username && !u.password;
-  } catch {
-    return false;
-  }
-};
 export function useMeetingTools(
   room: NativeRoom,
   chat: ReturnType<typeof useConferenceChat>,
@@ -100,7 +107,7 @@ export function useMeetingTools(
       off();
     };
   }, [room, refresh, chat.onControl]);
-  const run = async (action: string) => {
+  const run = async (action: string, playerId?: string) => {
     const controller = lifecycle.current;
     if (!controller || controller.signal.aborted || writing.current) return;
     writing.current = true;
@@ -108,7 +115,7 @@ export function useMeetingTools(
     setBusy(true);
     setActionError(undefined);
     try {
-      let body: FormData | Record<string, unknown> = { action, url: url.trim() };
+      let body: FormData | Record<string, unknown> = { action, playerId, url: url.trim() };
       if (action === 'upload') {
         const selection = await pickDocument([
           'image/png',
@@ -130,6 +137,9 @@ export function useMeetingTools(
       const result = parsePlayers(await room.tools(body, controller.signal));
       if (!controller.signal.aborted) {
         setPlayers(result);
+        if (action === 'rm' && selected === playerId) setSelected(undefined);
+        if (action === 'create_whiteboard')
+          setSelected(result.find((item) => item.mode === 'whiteboard')?.id);
         setInput(false);
         setUrl('');
       }
@@ -213,52 +223,74 @@ export function useMeetingTools(
       }))}
     />
   );
-  const extraTiles = [
-    ...players.map((p) => ({
-      id: `tool:${p.id}`,
-      content: (
-        <Pressable
-          style={styles.tile}
-          accessibilityRole="button"
-          accessibilityLabel={p.mode}
-          onPress={() => setSelected(p.id)}
-        >
+  useEffect(() => {
+    if (selected && !players.some((item) => item.id === selected)) setSelected(undefined);
+  }, [players, selected]);
+  useEffect(() => {
+    if (!selected) return;
+    const listener = BackHandler.addEventListener('hardwareBackPress', () => {
+      setSelected(undefined);
+      return true;
+    });
+    return () => listener.remove();
+  }, [selected]);
+  const extraTiles = players.map((p) => ({
+    id: `tool:${p.id}`,
+    content: (
+      <View style={styles.tile}>
+        <View style={styles.preview}>
           {p.mode === 'image' && p.url ? (
             <Image source={{ uri: p.url }} style={styles.image} resizeMode="contain" />
-          ) : (
-            <>
-              {icon(p.mode === 'whiteboard' ? 'edit' : 'global')}
-              <Text style={styles.text}>
-                {p.mode === 'whiteboard'
-                  ? t('common.whiteboard.title')
-                  : p.mode === 'hyperbeam'
-                    ? 'Cobrowse'
-                    : p.url}
-              </Text>
-            </>
+          ) : p.mode === 'whiteboard' ? (
+            <Whiteboard
+              id={p.id}
+              room={room}
+              chat={chat}
+              onError={() => Toast.info(t('shared_meeting.tools_error'), 3, undefined, false)}
+            />
+          ) : safeWebUrl(p.url) ? (
+            <ToolWebView
+              url={p.url!}
+              cobrowse={p.mode === 'hyperbeam'}
+              onError={() => Toast.info(t('shared_meeting.tools_error'), 3, undefined, false)}
+            />
+          ) : null}
+        </View>
+        <View style={styles.tileBar}>
+          <Text numberOfLines={1} style={[styles.text, { flex: 1, fontSize: 12 }]}>
+            {p.mode === 'whiteboard'
+              ? t('common.whiteboard.title')
+              : p.mode === 'hyperbeam'
+                ? 'Cobrowse'
+                : p.mode === 'image'
+                  ? t('shared_meeting.image')
+                  : 'Iframe'}
+          </Text>
+          <Button
+            appearance="icon"
+            label={t(selected === p.id ? 'phone_meeting.exit_fullscreen' : 'common.full_screen')}
+            onPress={() => setSelected(selected === p.id ? undefined : p.id)}
+          >
+            <MeetingIcon name={selected === p.id ? 'fullscreenExit' : 'fullscreen'} />
+          </Button>
+          {p.canRemove && (
+            <Button
+              appearance="icon"
+              label={t('common.close')}
+              disabled={busy}
+              onPress={() => void run('rm', p.id)}
+            >
+              <MeetingIcon name="close" />
+            </Button>
           )}
-        </Pressable>
-      ),
-    })),
-  ];
+        </View>
+      </View>
+    ),
+  }));
   const dialog = (
     <>
-      {players
-        .filter((item) => item.mode === 'whiteboard')
-        .map((item) => (
-          <Whiteboard
-            key={item.id}
-            id={item.id}
-            room={room}
-            chat={chat}
-            open={selected === item.id}
-            onClose={() => setSelected(undefined)}
-            t={t}
-            onError={() => setActionError('shared_meeting.tools_error')}
-          />
-        ))}
       <Modal
-        visible={input || (!!player && player.mode !== 'whiteboard')}
+        visible={input}
         animationType="slide"
         onRequestClose={() => {
           setInput(false);
@@ -299,38 +331,24 @@ export function useMeetingTools(
                 {t('common.confirm')}
               </Button>
             </View>
-          ) : player?.mode === 'image' ? (
-            <Image source={{ uri: player.url }} style={{ flex: 1 }} resizeMode="contain" />
-          ) : player && safeWebUrl(player.url) ? (
-            <WebView
-              key={player.id}
-              source={{ uri: player.url! }}
-              originWhitelist={['https://*']}
-              onShouldStartLoadWithRequest={(r) => r.url === 'about:blank' || safeWebUrl(r.url)}
-              setSupportMultipleWindows={false}
-              allowsInlineMediaPlayback
-              mediaPlaybackRequiresUserAction
-              onError={() => setActionError('shared_meeting.tools_error')}
-              style={{ flex: 1 }}
-            />
           ) : null}
         </SafeAreaView>
       </Modal>
     </>
   );
-  return { extraTiles, panel, dialog, open: input || !!player };
+  return {
+    extraTiles,
+    panel,
+    dialog,
+    fullscreenTileId: selected ? `tool:${selected}` : undefined,
+    open: input || !!player,
+  };
 }
 const styles = StyleSheet.create({
   tool: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center' },
-  tile: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: '#202020',
-    borderRadius: 16,
-    padding: 12,
-    gap: 12,
-  },
+  tile: { flex: 1, backgroundColor: '#202020', borderRadius: 16, overflow: 'hidden' },
+  preview: { flex: 1, width: '100%' },
+  tileBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, minHeight: 40 },
   image: { width: '100%', height: '100%' },
   text: { color: '#d9e4ea', fontSize: 16 },
   error: { color: '#ff9898', padding: 6, fontSize: 12 },

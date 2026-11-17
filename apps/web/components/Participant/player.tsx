@@ -108,6 +108,8 @@ export interface TilePlayerProps {
   afterFocus?: (focus: boolean) => void;
   onRemoved?: () => void;
   spaceInfo: SpaceInfo;
+  fullscreen?: boolean;
+  onFullscreen?: () => void;
 }
 
 export const TilePlayer = ({
@@ -122,11 +124,15 @@ export const TilePlayer = ({
   afterFocus,
   onRemoved,
   spaceInfo,
+  fullscreen,
+  onFullscreen,
 }: TilePlayerProps) => {
   const [toolVis, setToolVis] = useState(false);
   const layoutContext = useMaybeLayoutContext();
   const setCollapsed = useSpaceStore((state) => state.setCollapsed);
-  const isFullScreen = useSpaceStore((state) => state.isFullScreen);
+  const desktopFullscreen = useSpaceStore((state) => state.isFullScreen);
+  const isFullScreen = fullscreen ?? desktopFullscreen;
+  const isPhone = useLayoutDevice() === 'phone';
   const setIsFullScreen = useSpaceStore((state) => state.setIsFullScreen);
   // 是否可以被删除，只有RBAC允许或者自己的卡片才可以被删除
   const canDelete = useMemo(() => {
@@ -139,7 +145,7 @@ export const TilePlayer = ({
     } else {
       return canDeleteRBAC;
     }
-  }, [spaceInfo?.auth, myIdentity]);
+  }, [spaceInfo, item.ownerId, myIdentity]);
 
   const removePlayer = async () => {
     try {
@@ -186,6 +192,7 @@ export const TilePlayer = ({
   const isActiveView = !!focus || !!isFullScreen;
 
   const handleFullScreen = () => {
+    if (onFullscreen) return onFullscreen();
     const nextIsFullScreen = !isFullScreen;
     const playerTrackReference = {
       participant: new Participant(
@@ -219,6 +226,7 @@ export const TilePlayer = ({
 
   const handleExitView = () => {
     if (isFullScreen) {
+      if (onFullscreen) return onFullscreen();
       setIsFullScreen?.(false);
       setCollapsed(false);
       return;
@@ -275,7 +283,7 @@ export const TilePlayer = ({
           display: 'flex',
           gap: 4,
           zIndex: 10,
-          visibility: toolVis ? 'visible' : 'hidden',
+          visibility: toolVis || isPhone ? 'visible' : 'hidden',
         }}
       >
         {canDelete && (

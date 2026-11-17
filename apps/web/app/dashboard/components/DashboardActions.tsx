@@ -2,14 +2,7 @@ import React from 'react';
 import { Card, Button, Select } from 'antd';
 import { useI18n } from '@/lib/i18n/i18n';
 
-type ActionKey =
-  | 'refresh'
-  | 'global_conf'
-  | 'manage_spaces'
-  | 'ac_space'
-  | 'smtp_conf'
-  | 'hyperbeam_conf'
-  | 'flushdb';
+import type { ActionKey } from '../shared';
 
 interface DashboardActionsProps {
   selectOption: ActionKey;
@@ -70,6 +63,7 @@ export const DashboardActions: React.FC<DashboardActionsProps> = ({
               key: 'smtp_conf',
               value: 'smtp_conf',
             },
+            { label: t('dashboard.count.ai_conf'), key: 'ai_conf', value: 'ai_conf' },
             {
               label: t('dashboard.count.hyperbeam_conf'),
               key: 'hyperbeam_conf',

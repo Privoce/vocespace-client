@@ -36,6 +36,7 @@ function useSharedControls(model: ControlsModel, onMore: () => void) {
   });
   const screen = useTrackToggle({
     source: Track.Source.ScreenShare,
+    publishOptions: { videoCodec: 'vp8' },
     onChange: model.onScreenShareChange,
     captureOptions: { audio: model.uState.openShareAudio, selfBrowserSurface: 'include' },
     onDeviceError: (error) => {
