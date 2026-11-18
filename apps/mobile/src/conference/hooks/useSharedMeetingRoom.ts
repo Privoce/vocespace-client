@@ -2,6 +2,8 @@ import { analytics } from '../../analytics';
 import { useI18n } from '../../i18n';
 import { useEffect, useState } from 'react';
 import { BackHandler, Clipboard } from 'react-native';
+import Toast from '@ant-design/react-native/lib/toast';
+import { mediaFailure } from '../mediaFailure';
 import { isTrackReference } from '@livekit/react-native';
 import { Track } from 'livekit-client';
 import type { MeetingAction, MeetingTile } from '@vocespace/ui';
@@ -16,6 +18,12 @@ export function useSharedMeetingRoom(
   const { t } = useI18n();
   const model = useMeetingRoom(conference, room);
   const connected = model.connection === 'connected';
+  useEffect(() => {
+    if (model.media.error == null) return;
+    const message = mediaFailure(model.media.error, t);
+    const id = Toast.info(message, 3, undefined, false);
+    return () => Toast.remove(id);
+  }, [model.media.error, t]);
   const [shareError, setShareError] = useState('');
   const tiles: MeetingTile[] = model.allTracks.map((track) => ({
     id: model.key(track),
@@ -42,7 +50,10 @@ export function useSharedMeetingRoom(
         )
       : '重连中',
     statusColor: connected ? '#28C776' : '#E5A54B',
-    video: isTrackReference(track) && (track.source === Track.Source.ScreenShare || !!track.publication.track) && !track.publication.isMuted,
+    video:
+      isTrackReference(track) &&
+      (track.source === Track.Source.ScreenShare || !!track.publication.track) &&
+      !track.publication.isMuted,
   }));
   const members: MeetingTile[] = model.directory?.participants
     ? Object.entries(model.directory.participants).map(([id, person]) => {
@@ -74,7 +85,10 @@ export function useSharedMeetingRoom(
     label: `${model.media[device] ? '关闭' : '开启'}${device === 'microphone' ? '麦克风' : device === 'camera' ? '摄像头' : '屏幕共享'}${canUse(device) ? '' : '（需要主持人邀请）'}`,
     active: model.media[device],
     muted: !model.media[device],
-    disabled: !connected || !!model.media.busy || !canUse(device),
+    loading: model.media.busy === device,
+    // A failed/stale status fetch must not permanently disable every control.
+    // The server revalidates the source/invitation before any capture is started.
+    disabled: !connected || !!model.media.busy,
     onPress: () => {
       void model.toggle(device);
     },

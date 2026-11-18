@@ -1,4 +1,4 @@
-import { View, Text, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, ScrollView, StyleSheet, ActivityIndicator } from 'react-native';
 import type { MeetingControlsProps, MeetingMenuProps } from './types';
 export function MeetingControls({ actions, Button, Icon }: MeetingControlsProps) {
   return (
@@ -13,22 +13,26 @@ export function MeetingControls({ actions, Button, Icon }: MeetingControlsProps)
               appearance={action.danger ? 'controlDanger' : 'control'}
               onPress={action.onPress}
             >
-              <View style={styles.icon}>
-                <Icon
-                  name={action.icon}
-                  size={21}
-                  color={
-                    action.disabled
-                      ? '#66707A'
-                      : action.danger
-                        ? '#FF4D4F'
-                        : action.active
-                          ? '#22CCEE'
-                          : '#E7EDF5'
-                  }
-                />
-                {action.muted && <View style={styles.slash} />}
-              </View>
+              {action.loading ? (
+                <ActivityIndicator color="#22CCEE" size="small" />
+              ) : (
+                <View style={styles.icon}>
+                  <Icon
+                    name={action.icon}
+                    size={21}
+                    color={
+                      action.disabled
+                        ? '#66707A'
+                        : action.danger
+                          ? '#FF4D4F'
+                          : action.active
+                            ? '#22CCEE'
+                            : '#E7EDF5'
+                    }
+                  />
+                  {action.muted && <View style={styles.slash} />}
+                </View>
+              )}
             </Button>
           )}
           {!!action.badge && (

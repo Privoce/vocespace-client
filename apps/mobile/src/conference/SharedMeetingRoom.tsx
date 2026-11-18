@@ -409,7 +409,7 @@ export function SharedMeetingRoom({
                 ))}
                 {model.media.error != null && (
                   <Text accessibilityRole="alert" style={ui.body}>
-                    {mediaFailure(model.media.error)}
+                    {mediaFailure(model.media.error, model.t)}
                   </Text>
                 )}
               </>

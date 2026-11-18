@@ -1,22 +1,41 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
 import type { MeetingToolsPanelProps } from './types';
 
 /** Inline tool grid; the dock owns expansion. No modal, backdrop or second chat instance. */
 export function MeetingToolsPanel({ items, onSelect = () => {} }: MeetingToolsPanelProps) {
   return (
     <View style={s.grid}>
-      {items.map((item) => (
-        <View key={item.id} style={s.item}>
-          <View style={s.icon}>
-            {typeof item.content === 'function' ? item.content(onSelect) : item.content}
+      {items.map((item) => {
+        const content = (
+          <>
+            <View style={s.icon}>
+              {typeof item.content === 'function' ? item.content(onSelect) : item.content}
+            </View>
+            {!!item.label && (
+              <Text numberOfLines={2} style={s.label}>
+                {item.label}
+              </Text>
+            )}
+          </>
+        );
+        return item.onPress ? (
+          <Pressable
+            key={item.id}
+            style={[s.item, item.disabled && { opacity: 0.5 }]}
+            accessibilityRole="button"
+            accessibilityLabel={item.label}
+            accessibilityState={{ disabled: item.disabled }}
+            disabled={item.disabled}
+            onPress={item.onPress}
+          >
+            {content}
+          </Pressable>
+        ) : (
+          <View key={item.id} style={s.item}>
+            {content}
           </View>
-          {!!item.label && (
-            <Text numberOfLines={2} style={s.label}>
-              {item.label}
-            </Text>
-          )}
-        </View>
-      ))}
+        );
+      })}
     </View>
   );
 }

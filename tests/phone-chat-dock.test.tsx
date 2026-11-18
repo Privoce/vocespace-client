@@ -45,3 +45,14 @@ it('keeps one composer and its draft when chat and the unmasked tools panel expa
   expect(screen.getByRole('textbox')).toBe(composer);
   expect((composer as HTMLInputElement).value).toBe('Unsent draft');
 });
+
+it('accepts presses on the tool label and disables the entire pending tool', () => {
+  let presses = 0;
+  const item = { id: 'board', label: 'Whiteboard', icon: null, content: <span>Pen icon</span>, onPress: () => { presses++; } };
+  const view = render(<MeetingToolsPanel items={[item]} />);
+  fireEvent.click(screen.getByText('Whiteboard'));
+  expect(presses).toBe(1);
+  view.rerender(<MeetingToolsPanel items={[{ ...item, disabled: true }]} />);
+  fireEvent.click(screen.getByText('Whiteboard'));
+  expect(presses).toBe(1);
+});

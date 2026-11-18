@@ -27,6 +27,13 @@ export function useSpacePreview({
     player.audioMixingMode = 'mixWithOthers';
     player.allowsExternalPlayback = false;
     player.staysActiveInBackground = false;
+    // Aim for a first frame within five seconds once the HLS source is available.
+    // iOS's automatic stall avoidance can otherwise wait for a much larger live buffer.
+    player.bufferOptions = {
+      preferredForwardBufferDuration: 5,
+      waitsToMinimizeStalling: false,
+      minBufferForPlayback: 1,
+    };
   });
   const latest = useRef({ model, join, preferences });
   latest.current = { model, join, preferences };
@@ -132,7 +139,7 @@ export function useSpacePreview({
             () => {
               void load();
             },
-            result.status === 'starting' ? 2500 : 10_000,
+            result.status === 'starting' ? 1000 : 5000,
           );
           return;
         }

@@ -1,12 +1,11 @@
 import { useI18n } from '@/lib/i18n/i18n';
 import { ViewAdjusts } from '@/lib/std/window';
 import { LaptopOutlined } from '@ant-design/icons';
-import { Button, Modal, Radio, Slider } from 'antd';
+import { Alert, Button, Modal, Radio, Slider } from 'antd';
 import { SizeType } from 'antd/es/config-provider/SizeContext';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AICutParticipantConf, ParticipantSettings, SpaceInfo } from '@/lib/std/space';
-import { useLocalParticipant } from '@livekit/components-react';
-import { WsBase, WsTo } from '@/lib/std/device';
+import { WsBase } from '@/lib/std/device';
 import styles from '@/components/Controller/index.module.scss';
 import { LocalParticipant, Room } from 'livekit-client';
 import { api } from '@/lib/api';
@@ -67,8 +66,14 @@ export const useWork = ({
     }
   }, [space, spaceInfo]);
 
-  const startOrStopWork = async (enabled: boolean, aiCutConfig: AICutConfig) => {
+  const startOrStopWork = useCallback(async (enabled: boolean, aiCutConfig: AICutConfig) => {
     if (!space) return;
+    if (enabled && !space.localParticipant.isScreenShareEnabled) {
+      await space.localParticipant.setScreenShareEnabled(true);
+    }
+    if (enabled && !space.localParticipant.isScreenShareEnabled) {
+      throw new Error('Screen sharing is required');
+    }
     const startWorkRes = await api.handleWorkMode(
       space.name,
       space.localParticipant.identity,
@@ -76,7 +81,7 @@ export const useWork = ({
     );
     if (!startWorkRes.ok) {
       messageApi.error(t('work.mode.start.error'));
-      return;
+      throw new Error('Failed to update work mode');
     } else {
       const { workType }: { workType: boolean } = await startWorkRes.json();
       const { spent, todo, extraction, blur, freq } = aiCutConfig;
@@ -85,44 +90,17 @@ export const useWork = ({
       // 成功开启/关闭了工作模式
       if (workType) {
         if (isUseAI) {
-          if (enabled && !space.localParticipant.isScreenShareEnabled) {
-            // 没开启屏幕共享，但开启了AI，说明出现了问题，提示用户开启屏幕共享
-            space?.localParticipant.setScreenShareEnabled(true);
-          } else if (!enabled && space.localParticipant.isScreenShareEnabled) {
-            // 没开启AI,但开启了屏幕共享,需要开启AI
-            await startOrStopAICutAnalysis(freq, {
-              enabled: true,
-              spent,
-              todo,
-              extraction,
-              blur,
-            });
-          } else if (!enabled && !space.localParticipant.isScreenShareEnabled) {
-            // 没开启AI,也没开启屏幕共享,需要两个都开启
-            space?.localParticipant.setScreenShareEnabled(true);
-            await startOrStopAICutAnalysis(freq, {
-              enabled: true,
-              spent,
-              todo,
-              extraction,
-              blur,
-            });
-          } else {
-            // 开启AI且屏幕共享，或者不开就不用管了
-          }
-        } else {
-          // 不开启AI，也要开启屏幕共享
-          if (!space.localParticipant.isScreenShareEnabled) {
-            space.localParticipant.setScreenShareEnabled(true);
-          }
+          await startOrStopAICutAnalysis(freq, {
+            enabled: true, spent, todo, extraction, blur,
+          }, true);
         }
 
         messageApi.success(t('work.mode.start.success'));
       } else {
         // 关闭用户AI分析和屏幕共享
-        space.localParticipant.setScreenShareEnabled(false);
+        await space.localParticipant.setScreenShareEnabled(false);
 
-        if (isUseAI && enabled) {
+        if (enabled) {
           await startOrStopAICutAnalysis(freq, {
             enabled: false,
             spent,
@@ -140,7 +118,7 @@ export const useWork = ({
     socket.emit('update_user_status', {
       space: space.name,
     } as WsBase);
-  };
+  }, [space, spaceInfo, isUseAI, startOrStopAICutAnalysis, downloadAIMdReport, messageApi, t]);
 
   const handleWorkMode = useCallback(
     async (aiCutConfig: AICutConfig, startWork?: boolean) => {
@@ -164,7 +142,7 @@ export const useWork = ({
 
         if (!response.ok) {
           messageApi.error(t('work.save.error'));
-          return;
+          throw new Error('Failed to save work settings');
         }
         messageApi.success(t('work.save.success'));
       }
@@ -378,10 +356,19 @@ export function WorkModal({
   };
 
   // 保存并关闭, 检测如果有更改则保存
+  const [saving, setSaving] = useState(false);
+  const [startError, setStartError] = useState(false);
   const saveAndClose = async () => {
-    setIsStartWork(true);
+    if (saving || !space) return;
+    setSaving(true);
+    setStartError(false);
 
     try {
+      // Request browser capture directly from the click, before any network awaits.
+      if (!space.localParticipant.isScreenShareEnabled) {
+        await space.localParticipant.setScreenShareEnabled(true);
+      }
+      if (!space.localParticipant.isScreenShareEnabled) throw new Error('Screen sharing is required');
       await saveAICutSettings();
       // 传入所有最新的 AI cut 配置参数,避免使用旧的 spaceInfo
       await handleWorkMode(
@@ -394,10 +381,13 @@ export function WorkModal({
         },
         true,
       );
+      setIsStartWork(true);
+      setOpen(false);
     } catch (error) {
+      setStartError(true);
       console.error(error);
     } finally {
-      setOpen(false);
+      setSaving(false);
     }
   };
 
@@ -410,8 +400,12 @@ export function WorkModal({
       onOk={saveAndClose}
       onCancel={() => setOpen(false)}
       centered
+      width={640}
+      confirmLoading={saving}
+      styles={{ body: { maxHeight: 'calc(100dvh - 200px)', overflowY: 'auto', overflowX: 'hidden' } }}
     >
-      <div className={styles.work}>
+      <div className={styles.work_content}>
+        {startError && <Alert type="error" title={t('work.mode.start.error')} showIcon />}
         <div>{t('work.desc')}</div>
         <div className={styles.work_line}>
           <AICutAnalysisSettingsPanel

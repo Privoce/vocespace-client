@@ -36,6 +36,7 @@ export interface MeetingAction {
   disabled?: boolean;
   active?: boolean;
   danger?: boolean;
+  loading?: boolean;
   muted?: boolean;
   badge?: number;
   description?: string;
@@ -216,6 +217,6 @@ export interface MeetingToolFolderProps {
   closeLabel: string;
 }
 export interface MeetingToolsPanelProps {
-  items: MeetingToolFolderProps['items'];
+  items: (MeetingToolFolderProps['items'][number] & { onPress?: () => void; disabled?: boolean })[];
   onSelect?: () => void;
 }

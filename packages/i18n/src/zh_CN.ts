@@ -394,6 +394,7 @@ export default {
       },
     },
     whiteboard: {
+      color: '颜色',
       title: '白板',
       pen: '笔',
       eraser: '橡皮擦',
@@ -558,6 +559,8 @@ export default {
       freq_analysis: 'AI分析频率(分钟)',
       myAnalysis: '我的AI分析报告',
       error: {
+        quota: 'AI 模型免费额度已用尽，且启用了“仅使用免费额度”。分析已停止，请联系部署管理员检查模型服务额度和计费设置。',
+        analysis: 'AI 分析请求失败，分析已停止，请稍后重试或联系部署管理员。',
         res: '无法获取AI分析结果，请稍后再试。',
         download: '无法下载Markdown报告，请稍后再试。',
         reload: '无法更新AI分析结果，请稍后再试。',

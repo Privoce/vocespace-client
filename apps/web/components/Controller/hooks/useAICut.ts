@@ -1,5 +1,5 @@
 import { useRef, useState, useCallback, useEffect } from 'react';
-import type { Room } from 'livekit-client';
+import { Room, RoomEvent } from 'livekit-client';
 import { api } from '@/lib/api';
 import { AICutService } from '@/lib/ai/cut';
 import { AICutAnalysisRes, DEFAULT_AI_CUT_ANALYSIS_RES } from '@/lib/ai/analysis';
@@ -42,6 +42,7 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
   const { t } = useI18n();
   const device = useLayoutDevice();
   const aiCutServiceRef = useRef<AICutService>(new AICutService());
+  const analysisGeneration = useRef(0);
   const aiCutAnalysisIntervalId = useRef<NodeJS.Timeout | null>(null);
   const [aiCutAnalysisRes, setAICutAnalysisRes] = useState<AICutAnalysisRes>(DEFAULT_AI_CUT_ANALYSIS_RES);
   const [noteStateForAICutService, setNoteStateForAICutService] = useState({
@@ -80,6 +81,7 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
   }, [loadAnalysisResult]);
 
   const stopAICutService = useCallback(async (room: Room) => {
+    analysisGeneration.current++;
     aiCutServiceRef.current.stop();
     aiCutServiceRef.current.clearScreenshots();
     if (aiCutAnalysisIntervalId.current) {
@@ -93,13 +95,19 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
     async (freq: number, conf: AICutParticipantConf, reload?: boolean) => {
       if (!space || !space.localParticipant) return;
       if (conf.enabled) {
+        if (!aiCutServiceRef.current.hasScreenShare(space.localParticipant)) {
+          messageApi.warning(t('ai.cut.ask_permission'));
+          return;
+        }
+        const generation = ++analysisGeneration.current;
         await aiCutServiceRef.current.start(
           freq,
           conf.spent,
           space.localParticipant,
           reload,
           async (lastScreenShot) => {
-            if (space && space.localParticipant) {
+            if (generation === analysisGeneration.current && lastScreenShot &&
+                aiCutServiceRef.current.hasScreenShare(space.localParticipant)) {
               let todos: string[] = [];
               if (conf.todo) {
                 todos =
@@ -119,9 +127,12 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
                 isAuth: getParticipantPlatformInfo({ user: uState }).isAuth,
                 blur: conf.blur,
               });
+              if (generation !== analysisGeneration.current) return;
               if (!response.ok) {
-                messageApi.warning(t('ai.cut.error.start'));
-                stopAICutService(space);
+                const failure = await response.json().catch(() => ({}));
+                messageApi.warning(t(failure.code === 'AI_QUOTA_EXHAUSTED'
+                  ? 'ai.cut.error.quota' : 'ai.cut.error.analysis'));
+                await stopAICutService(space);
                 await updateSettings({ ai: { cut: { ...conf, enabled: false } } });
                 socket.emit('update_user_status', { space: space.name } as WsBase);
               } else {
@@ -147,20 +158,53 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
         // 按采集频率进行静默兜底拉取，防止页面重连后 UI 不更新
         aiCutAnalysisIntervalId.current = setInterval(
           () => {
-            void loadAnalysisResult(false);
+            if (aiCutServiceRef.current.isRunning) void loadAnalysisResult(false);
           },
           Math.max(1, freq) * 60 * 1000,
         );
         // 启动后先拉一次最新结果，减少首屏等待
-        void loadAnalysisResult(false);
+        if (aiCutServiceRef.current.isRunning) void loadAnalysisResult(false);
       } else {
-        stopAICutService(space);
+        await stopAICutService(space);
       }
       await updateSettings({ ai: { cut: { ...conf } } });
       socket.emit('update_user_status', { space: space.name } as WsBase);
     },
     [space, uState, messageApi, t, updateSettings, locale, stopAICutService, loadAnalysisResult],
   );
+
+
+  const stopForScreenLoss = useRef(() => {});
+  stopForScreenLoss.current = () => {
+    if (!space || !aiCutServiceRef.current.isRunning ||
+        aiCutServiceRef.current.hasScreenShare(space.localParticipant)) return;
+    void stopAICutService(space).catch(() => {});
+    void updateSettings({ ai: { cut: { ...uState.ai.cut, enabled: false } } });
+  };
+  useEffect(() => {
+    if (!space) return;
+    const stopIfUnavailable = () => stopForScreenLoss.current();
+    const service = aiCutServiceRef.current;
+    const generationState = analysisGeneration;
+    const disconnect = () => {
+      generationState.current++;
+      service.stop();
+      if (aiCutAnalysisIntervalId.current) clearInterval(aiCutAnalysisIntervalId.current);
+      aiCutAnalysisIntervalId.current = null;
+    };
+    space.on(RoomEvent.Disconnected, disconnect);
+    space.on(RoomEvent.LocalTrackUnpublished, stopIfUnavailable);
+    space.on(RoomEvent.TrackMuted, stopIfUnavailable);
+    return () => {
+      space.off(RoomEvent.LocalTrackUnpublished, stopIfUnavailable);
+      space.off(RoomEvent.TrackMuted, stopIfUnavailable);
+      space.off(RoomEvent.Disconnected, disconnect);
+      disconnect();
+      service.clearScreenshots();
+      if (aiCutAnalysisIntervalId.current) clearInterval(aiCutAnalysisIntervalId.current);
+      aiCutAnalysisIntervalId.current = null;
+    };
+  }, [space]);
 
   const openAIServiceAskNote = useCallback(() => {
     noteApi.open({
@@ -171,7 +215,7 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
         setNoteStateForAICutService({ openAIService: false, noteClosed: true, hasAsked: true });
       },
     });
-  }, [noteApi, t, space]);
+  }, [noteApi, t]);
 
   useEffect(() => {
     if (!settings) return;
@@ -186,12 +230,13 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
 
   useEffect(() => {
     if (noteStateForAICutService.noteClosed) {
+      setNoteStateForAICutService((state) => ({ ...state, noteClosed: false }));
       startOrStopAICutAnalysis(settings.ai.cut.freq, {
         ...uState.ai.cut,
         enabled: noteStateForAICutService.openAIService,
       });
     }
-  }, [noteStateForAICutService.noteClosed, noteStateForAICutService.openAIService]);
+  }, [noteStateForAICutService.noteClosed, noteStateForAICutService.openAIService, settings.ai.cut.freq, startOrStopAICutAnalysis, uState.ai.cut]);
 
   useEffect(() => {
     if (!space || !settings?.ai?.cut?.enabled) {
@@ -209,7 +254,7 @@ export function useAICutService(options: UseAICutServiceOptions): AICutServiceRe
     const freq = Number(settings?.ai?.cut?.freq || 3);
     aiCutAnalysisIntervalId.current = setInterval(
       () => {
-        void loadAnalysisResult(false);
+        if (aiCutServiceRef.current.isRunning) void loadAnalysisResult(false);
       },
       Math.max(1, freq) * 60 * 1000,
     );

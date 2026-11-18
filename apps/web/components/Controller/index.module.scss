@@ -603,19 +603,19 @@
   }
 }
 
-.work {
+.work_content {
   display: flex;
   align-items: flex-start;
   justify-content: center;
   width: 100%;
   flex-wrap: wrap;
-  &_line {
-    width: 100%;
+}
 
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
+.work_line {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
 }

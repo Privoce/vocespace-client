@@ -115,3 +115,10 @@ apps/web/public/license/
 
 !/scripts/tests/config-auth.test.ts
 !/scripts/tests/dashboard-auth.test.ts
+
+!/apps/mobile/tests/whiteboard.test.tsx
+!/apps/mobile/tests/media-actions.test.tsx
+!/apps/mobile/tests/preview-playback.test.tsx
+!/tests/ai-cut-screen.test.ts
+!/tests/ai-provider-errors.test.ts
+!/tests/ai-config-refresh.test.ts

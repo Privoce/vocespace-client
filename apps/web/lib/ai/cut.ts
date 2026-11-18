@@ -1,6 +1,6 @@
 import type { CutScreenShot } from '@vocespace/domain/ai';
 export type { CutScreenShot } from '@vocespace/domain/ai';
-import { LocalParticipant, LocalTrackPublication, Track } from 'livekit-client';
+import { LocalParticipant, Track } from 'livekit-client';
 
 /**
  * 裁剪截图单条信息
@@ -15,74 +15,63 @@ export const newCutScreenShot = (data: string, showTime: boolean): CutScreenShot
 
 export class AICutService {
   private intervalId: NodeJS.Timeout | null = null;
+  private earlyCaptureId: ReturnType<typeof setTimeout> | null = null;
+  private generation = 0;
   private screenshots: CutScreenShot[] = [];
   public isRunning: boolean = false;
   // default frequency: every 3 minutes
   public freq: number = 3;
   public timeline: boolean = false;
   public localParicipant: LocalParticipant | null = null;
-  // 从用户的分享屏幕的视频流中进行截图
-  async captureFromChannel(onError?: (error: any) => void) {
-    if (!this.localParicipant) {
-      onError && onError('Local participant is not set');
-      return;
-    }
-    try {
-      const videoTracks = this.localParicipant.videoTrackPublications;
-      let screenShareTrack: LocalTrackPublication | null = null;
-      for (const [tid, track] of videoTracks) {
-        if (track.kind === Track.Kind.Video && track.source === Track.Source.ScreenShare) {
-          // Capture the screen share video track
-          screenShareTrack = track;
-          break;
-        }
-      }
-      // 获取到了屏幕分享的视频流
-      if (screenShareTrack && screenShareTrack.videoTrack) {
-        const videoElement = document.createElement('video');
-        videoElement.srcObject = new MediaStream([screenShareTrack.videoTrack.mediaStreamTrack]);
-        await videoElement.play();
-
-        const canvas = document.createElement('canvas');
-        canvas.width = videoElement.videoWidth;
-        canvas.height = videoElement.videoHeight;
-        const ctx = canvas.getContext('2d');
-        if (ctx) {
-          ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
-          const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
-          this.screenshots.push(newCutScreenShot(dataUrl, this.timeline));
-          console.warn('Captured screenshot from screen share, total:', this.screenshots.length);
-        }
-      }
-    } catch (e) {
-      console.error('Capture from channel failed:', e);
-    }
+  hasScreenShare(participant = this.localParicipant) {
+    const publication = participant?.getTrackPublication(Track.Source.ScreenShare);
+    const track = publication?.videoTrack?.mediaStreamTrack;
+    return !!track && !publication?.isMuted && track.readyState === 'live' && !track.muted;
   }
 
-  // capture use html2canvas
-  async capture() {
+  // Capture only the currently published local screen, never the meeting page.
+  async captureFromChannel(onError?: (error: unknown) => void) {
+    if (!this.hasScreenShare()) return null;
+    const generation = this.generation;
+    const track = this.localParicipant!.getTrackPublication(Track.Source.ScreenShare)!
+      .videoTrack!.mediaStreamTrack;
+    const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
+    video.srcObject = new MediaStream([track]);
+    let timeout: ReturnType<typeof setTimeout> | undefined;
     try {
-      const h2c = (await import('html2canvas')).default;
-      const canvas = await h2c(document.body, {
-        height: window.innerHeight,
-        width: window.innerWidth,
-        useCORS: true,
-      });
-
-      return canvas.toDataURL('image/jpeg', 0.6);
-    } catch (e) {
-      console.error('html2canvas import or capture failed:', e);
+      await Promise.race([
+        (async () => {
+          await video.play();
+          if (video.readyState < 2) {
+            await new Promise<void>((resolve) => { video.onloadeddata = () => resolve(); });
+          }
+        })(),
+        new Promise<never>((_, reject) => {
+          timeout = setTimeout(() => reject(new Error('Screen frame timed out')), 5000);
+        }),
+      ]);
+      if (generation !== this.generation || !this.hasScreenShare() ||
+          this.localParicipant?.getTrackPublication(Track.Source.ScreenShare)?.videoTrack?.mediaStreamTrack !== track ||
+          !video.videoWidth || !video.videoHeight) return null;
+      const canvas = document.createElement('canvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return null;
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const shot = newCutScreenShot(canvas.toDataURL('image/jpeg', 0.6), this.timeline);
+      this.screenshots.push(shot);
+      return shot;
+    } catch (error) {
+      if (generation === this.generation) onError?.(error);
       return null;
-    }
-  }
-
-  async doCapture() {
-    const screenshot = await this.capture();
-    if (screenshot) {
-      this.screenshots.push(newCutScreenShot(screenshot, this.timeline));
-      console.warn('Captured screenshot, total:', this.screenshots.length);
-    } else {
-      console.warn('Failed to capture screenshot');
+    } finally {
+      clearTimeout(timeout);
+      video.onloadeddata = null;
+      video.pause();
+      video.srcObject = null;
     }
   }
 
@@ -96,67 +85,47 @@ export class AICutService {
     onSuccess?: () => void,
     onError?: (error: any) => void,
   ) {
-    if (reload) {
-      this.stop();
-      this.clearScreenshots();
-    }
-
-    if (this.isRunning) {
-      // 如果传入的参数确实有变化，则重新启动
-      if (
-        this.freq !== freq ||
-        this.timeline !== timeline ||
-        this.localParicipant !== localParicipant
-      ) {
-        this.stop();
-        this.clearScreenshots();
-      } else {
-        console.warn('AI Cut Service is already running');
-        return;
-      }
-    }
-    
+    this.stop();
+    if (reload) this.clearScreenshots();
     this.localParicipant = localParicipant;
-    this.freq = freq;
+    if (!this.hasScreenShare()) {
+      onError?.(new Error('Screen sharing is required'));
+      return;
+    }
+    this.freq = Math.max(0.5, freq || 3);
     this.timeline = timeline;
     this.isRunning = true;
-    // 超过5分钟，都需要在4分钟这个节点进行一次截图，避免时间点偏移过大
-    if (this.freq > 5) {
-      setTimeout(async () => {
-        if (this.isRunning) {
-          await this.doCapture();
-          if (withAnalysis) {
-            const screenshots = this.getScreenshots();
-            const lastScreenshot = screenshots[screenshots.length - 1];
-            await withAnalysis(lastScreenshot);
-          }
+    const generation = this.generation;
+    let busy = false;
+    const captureAndAnalyze = async () => {
+      if (busy || !this.isRunning || generation !== this.generation) return;
+      if (!this.hasScreenShare()) { this.stop(); return; }
+      busy = true;
+      try {
+        const shot = await this.captureFromChannel(onError);
+        if (shot && this.isRunning && generation === this.generation && this.hasScreenShare()) {
+          await withAnalysis?.(shot);
         }
-      }, 4 * 60 * 1000);
-    }
-
-    // set interval for periodic capture
-    this.intervalId = setInterval(async () => {
-      // await this.doCapture();
-      await this.captureFromChannel(onError);
-      // 获取最新截图并进行分析
-      if (withAnalysis) {
-        const screenshots = this.getScreenshots();
-        const lastScreenshot = screenshots[screenshots.length - 1];
-        await withAnalysis(lastScreenshot);
+      } catch (error) {
+        if (generation === this.generation) onError?.(error);
+      } finally {
+        busy = false;
       }
-    }, this.freq * 60 * 1000);
-
-    console.warn('AI Cut Service started with frequency:', this.freq, 'minutes');
+    };
+    if (this.freq > 5) {
+      this.earlyCaptureId = setTimeout(() => void captureAndAnalyze(), 4 * 60 * 1000);
+    }
+    this.intervalId = setInterval(() => void captureAndAnalyze(), this.freq * 60 * 1000);
+    onSuccess?.();
   }
 
   stop() {
-    if (!this.isRunning) return;
-    if (this.intervalId) {
-      clearInterval(this.intervalId);
-      this.intervalId = null;
-    }
+    this.generation++;
+    if (this.intervalId) clearInterval(this.intervalId);
+    if (this.earlyCaptureId) clearTimeout(this.earlyCaptureId);
+    this.intervalId = null;
+    this.earlyCaptureId = null;
     this.isRunning = false;
-    console.warn('AI Cut Service stopped');
   }
 
   clearScreenshots() {

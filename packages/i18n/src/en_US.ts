@@ -412,6 +412,7 @@ export default {
       },
     },
     whiteboard: {
+      color: 'Color',
       title: 'Whiteboard',
       pen: 'Pen',
       eraser: 'Eraser',
@@ -581,6 +582,8 @@ export default {
       freq_analysis: 'AI analysis frequency (minutes)',
       myAnalysis: 'My AI analysis report',
       error: {
+        quota: 'The AI model free quota is exhausted and free-tier-only mode is enabled. Analysis has stopped. Contact the deployment administrator to check the provider quota and billing settings.',
+        analysis: 'AI analysis failed and has stopped. Try again later or contact the deployment administrator.',
         res: 'Unable to retrieve AI analysis results, please try again later.',
         download: 'Unable to download Markdown report, please try again later.',
         reload: 'Unable to update AI analysis results, please try again later.',

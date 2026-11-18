@@ -6,12 +6,13 @@ import { AICutAnalysisService, Extraction } from '../lib/ai/analysis';
 import { getDefaultPrompts } from '../lib/ai/load';
 import { convertPlatformToACARes, PlarformAICutAnalysis, platformAPI } from '../lib/server/platform';
 import { todayTimeStamp } from '@vocespace/domain/space';
+import { aiAnalysisError } from '../lib/ai/errors';
 import { blurBase64Image } from '../lib/std/blur';
 
-const { ai } = getConfig();
+type AIConfiguration = ReturnType<typeof getConfig>['ai'];
 
 // 检查 AI 配置是否完整
-const checkAiConfig = (): boolean => {
+const checkAiConfig = (ai: AIConfiguration): boolean => {
   if (!ai || !ai.enabled) return false;
   if (ai.apiKey && ai.apiUrl && ai.model) {
     return true;
@@ -45,7 +46,8 @@ const createErrorResponse = (message: string, status: number = 400) => {
 };
 
 export async function GET(request: ApiRequest) {
-  if (!checkAiConfig()) {
+  const { ai } = getConfig();
+  if (!checkAiConfig(ai)) {
     return createErrorResponse('AI configuration is incomplete or AI is disabled.', 500);
   }
 
@@ -56,6 +58,7 @@ export async function GET(request: ApiRequest) {
     const isAuth = request.nextUrl.searchParams.get('isAuth') === 'true';
 
     const userService = getUserService(spaceName, userId);
+    userService?.configureProvider(ai!);
     if (!userService) {
       if (action === 'stop') {
         return ApiResponse.json({ md: '', success: true });
@@ -93,13 +96,15 @@ export async function GET(request: ApiRequest) {
         return createErrorResponse('Invalid action parameter.');
     }
   } catch (e) {
-    console.error('GET request error:', e);
-    return createErrorResponse('Failed to process AI analysis request.', 500);
+    const failure = aiAnalysisError(e);
+    console.error('AI GET request failed:', failure.body.code);
+    return ApiResponse.json(failure.body, { status: failure.status });
   }
 }
 
 // 提取获取或创建用户服务的逻辑
 const getOrCreateUserService = async (
+  ai: NonNullable<AIConfiguration>,
   spaceName: string,
   userId: string,
   freq: number,
@@ -129,6 +134,7 @@ const getOrCreateUserService = async (
       lang,
       extractionLevel,
       isAuth,
+      ai.maxTokens,
     );
     // 尝试从平台获取历史分析结果，如果有的话设置到服务中
     if (isAuth) {
@@ -143,11 +149,13 @@ const getOrCreateUserService = async (
     spaceServices.set(userId, userService);
   }
 
+  userService.configureProvider(ai);
   return userService;
 };
 
 export async function POST(request: ApiRequest) {
-  if (!checkAiConfig()) {
+  const { ai } = getConfig();
+  if (!checkAiConfig(ai)) {
     return createErrorResponse('AI configuration is incomplete or AI is disabled.', 500);
   }
 
@@ -165,6 +173,7 @@ export async function POST(request: ApiRequest) {
     }: AnalysisRequestBody = await request.json();
     // 获取或创建用户服务实例
     const targetService = await getOrCreateUserService(
+      ai!,
       spaceName,
       userId,
       freq,
@@ -202,7 +211,8 @@ export async function POST(request: ApiRequest) {
 
     return ApiResponse.json({ success: true });
   } catch (e) {
-    console.error('POST request error:', e);
-    return createErrorResponse('Failed to process AI analysis request.', 500);
+    const failure = aiAnalysisError(e);
+    console.error('AI POST request failed:', failure.body.code);
+    return ApiResponse.json(failure.body, { status: failure.status });
   }
 }

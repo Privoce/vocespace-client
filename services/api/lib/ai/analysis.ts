@@ -1,4 +1,7 @@
 import { OpenAI } from 'openai';
+import { aiAnalysisError } from './errors';
+import type { AIConf } from '@vocespace/domain/config';
+import type { ResponseInput } from 'openai/resources/responses/responses';
 import type { CutScreenShot, Extraction, AICutAnalysisRes, AICutAnalysisResLine, AICutDeps } from '@vocespace/domain/ai';
 import { DEFAULT_AI_CUT_ANALYSIS_RES } from '@vocespace/domain/ai';
 export * from '@vocespace/domain/ai';
@@ -145,9 +148,12 @@ export class AICutAnalysisService {
     },
   };
   private readonly LANGUAGE: string = 'zh';
-  private readonly MODEL: string;
-  private readonly MAX_TOKEN: number;
-  private OPENAI: OpenAI;
+  private MODEL!: string;
+  private MAX_TOKEN!: number;
+  private OPENAI!: OpenAI;
+  private providerConfig?: AIConf;
+  private useResponses = false;
+  private lastRequestFailed = false;
   private readonly ANALYSIS_PROMPT: PromptTemplates;
   private readonly SUMMARY_PROMPT: PromptTemplates;
   private readonly EXTRACTION: ExtractionTOML;
@@ -165,13 +171,9 @@ export class AICutAnalysisService {
     lang?: string,
     userExtractionLevel?: Extraction,
     isAuth = false,
+    maxTokens?: number,
   ) {
-    this.OPENAI = new OpenAI({
-      apiKey,
-      baseURL: apiUrl,
-    });
-    this.MODEL = modal;
-    this.MAX_TOKEN = AICutAnalysisService.DEFAULT_MAX_TOKENS;
+    this.configureProvider({ enabled: true, apiKey, apiUrl, model: modal, maxTokens });
     this.ANALYSIS_PROMPT = prompts.analysis || AICutAnalysisService.DEFAULT_PROMPT_TEMPLATES.LINE;
     this.SUMMARY_PROMPT = prompts.summary || AICutAnalysisService.DEFAULT_PROMPT_TEMPLATES.ALL;
     this.EXTRACTION = prompts.extraction;
@@ -182,6 +184,20 @@ export class AICutAnalysisService {
     }
     this.isAuth = isAuth;
     this.result = this.createEmptyResult();
+  }
+
+  configureProvider(config: AIConf) {
+    const previous = this.providerConfig;
+    if (previous && previous.apiKey === config.apiKey && previous.apiUrl === config.apiUrl &&
+        previous.model === config.model && previous.maxTokens === config.maxTokens) return;
+    const endpoint = new URL(config.apiUrl);
+    this.useResponses = /\/responses\/?$/.test(endpoint.pathname);
+    endpoint.pathname = endpoint.pathname.replace(/\/(responses|chat\/completions)\/?$/, '').replace(/\/$/, '');
+    this.OPENAI = new OpenAI({ apiKey: config.apiKey, baseURL: endpoint.toString().replace(/\/$/, '') });
+    this.MODEL = config.model;
+    this.MAX_TOKEN = config.maxTokens ?? AICutAnalysisService.DEFAULT_MAX_TOKENS;
+    this.providerConfig = { ...config };
+    this.lastRequestFailed = false;
   }
 
   /**
@@ -202,14 +218,42 @@ export class AICutAnalysisService {
    * @param requestType 请求类型，用于错误日志
    * @returns API响应数据
    */
-  private async makeAIRequest(messages: any[]): Promise<OpenAI.Chat.ChatCompletion> {
-    const completion = await this.OPENAI.chat.completions.create({
-      model: this.MODEL,
-      messages,
-      stream: false,
-    });
-    console.warn('AI Response');
-    return completion;
+  private async makeAIRequest(messages: any[]): Promise<string> {
+    try {
+      let content: string;
+      if (this.useResponses) {
+        const input: ResponseInput = messages.map((message) => ({
+          role: message.role,
+          content: typeof message.content === 'string' ? message.content : message.content.map(
+            (part: { type: string; text?: string; image_url?: { url: string } }) =>
+              part.type === 'image_url'
+                ? { type: 'input_image', image_url: part.image_url!.url, detail: 'auto' }
+                : { type: 'input_text', text: part.text },
+          ),
+        }));
+        const response = await this.OPENAI.responses.create({
+          model: this.MODEL, input, max_output_tokens: this.MAX_TOKEN, stream: false,
+        });
+        if (response.status === 'failed' || response.status === 'incomplete') {
+          throw new Error('AI response did not complete');
+        }
+        content = response.output_text || response.output.flatMap((item) =>
+          item.type === 'message' ? item.content.flatMap((part) =>
+            part.type === 'output_text' ? [part.text] : []) : [],
+        ).join('');
+      } else {
+        const completion = await this.OPENAI.chat.completions.create({
+          model: this.MODEL, messages, max_tokens: this.MAX_TOKEN, stream: false,
+        });
+        content = completion.choices?.[0]?.message?.content || '';
+      }
+      if (!content) throw new Error('AI returned no analysis text');
+      this.lastRequestFailed = false;
+      return content;
+    } catch (error) {
+      this.lastRequestFailed = true;
+      throw error;
+    }
   }
 
   /**
@@ -299,8 +343,7 @@ export class AICutAnalysisService {
     update: boolean;
   }> {
     const messages = this.buildImageAnalysisMessage(tg, todos);
-    const data = await this.makeAIRequest(messages);
-    const content = data.choices?.[0]?.message?.content;
+    const content = await this.makeAIRequest(messages);
     // console.warn(content);
     if (!!content) {
       let line = JSON.parse(parseJsonBack(content));
@@ -385,8 +428,7 @@ export class AICutAnalysisService {
    */
   async doAnalysisAll(): Promise<{ summary: string; markdown: string }> {
     const messages = this.buildSummaryMessage();
-    const data = await this.makeAIRequest(messages);
-    const content = data.choices?.[0]?.message?.content;
+    const content = await this.makeAIRequest(messages);
     const messageContent = JSON.parse(parseJsonBack(content || ''));
 
     return {
@@ -400,14 +442,17 @@ export class AICutAnalysisService {
    * 当我们停止服务时，清除定时器并且进行最终的总结分析
    */
   async stop(): Promise<AICutAnalysisRes> {
-    // 进行最终的总结分析
+    // Error cleanup must not issue another billable request after a provider failure.
+    if (this.lastRequestFailed || this.result.lines.length === 0) {
+      return this.result;
+    }
     try {
       const analysisRes = await this.doAnalysisAll();
       this.result.summary = analysisRes.summary;
       this.result.markdown = analysisRes.markdown;
       // console.warn('AI Cut Analysis Service final analysis completed');
     } catch (e) {
-      console.error('AI Cut Analysis Service final analysis failed:', e);
+      console.error('AI Cut Analysis Service final analysis failed:', aiAnalysisError(e).body.code);
     }
 
     return this.result;

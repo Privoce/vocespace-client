@@ -3,12 +3,12 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   Image,
   Modal,
-  Pressable,
   Text,
   View,
   TextInput,
   StyleSheet,
   BackHandler,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ToolWebView, safeToolUrl as safeWebUrl } from './ToolWebView';
@@ -27,7 +27,9 @@ type Player = {
   mode: 'image' | 'iframe' | 'hyperbeam' | 'whiteboard';
   url?: string;
 };
-function toolErrorKey(error: unknown, fallback: string) {
+function toolErrorKey(error: unknown, fallback: string, action?: string) {
+  if (action === 'create_whiteboard' && error instanceof ApiError && error.status === 409)
+    return 'common.whiteboard.only_one_tile';
   return error instanceof ApiError && error.code === 'NATIVE_ENDPOINT_REQUIRED'
     ? 'shared_meeting.tools_unavailable'
     : fallback;
@@ -59,6 +61,8 @@ export function useMeetingTools(
   const [input, setInput] = useState(false);
   const [url, setUrl] = useState('');
   const [busy, setBusy] = useState(false);
+  const [pendingAction, setPendingAction] = useState<string>();
+  const [drawing, setDrawing] = useState(false);
   const [actionError, setActionError] = useState<string>();
   const lifecycle = useRef<AbortController | undefined>(undefined);
   const writing = useRef(false);
@@ -80,6 +84,9 @@ export function useMeetingTools(
     setSelected(undefined);
     setInput(false);
     setActionError(undefined);
+    setBusy(false);
+    setPendingAction(undefined);
+    writing.current = false;
     let timer: ReturnType<typeof setTimeout>;
     let loading = false;
     const load = async () => {
@@ -108,11 +115,20 @@ export function useMeetingTools(
     };
   }, [room, refresh, chat.onControl]);
   const run = async (action: string, playerId?: string) => {
+    if (action === 'create_whiteboard') {
+      const existing = players.find((item) => item.mode === 'whiteboard');
+      if (existing) {
+        setSelected(existing.id);
+        onToolSelect();
+        return;
+      }
+    }
     const controller = lifecycle.current;
     if (!controller || controller.signal.aborted || writing.current) return;
     writing.current = true;
     revision.current++;
     setBusy(true);
+    setPendingAction(action);
     setActionError(undefined);
     try {
       let body: FormData | Record<string, unknown> = { action, playerId, url: url.trim() };
@@ -142,17 +158,23 @@ export function useMeetingTools(
           setSelected(result.find((item) => item.mode === 'whiteboard')?.id);
         setInput(false);
         setUrl('');
+        onToolSelect();
       }
     } catch (error) {
       if (!controller.signal.aborted) {
-        const key = toolErrorKey(error, 'shared_meeting.tools_error');
+        const key = toolErrorKey(error, 'shared_meeting.tools_error', action);
         setActionError(key);
         Toast.info(t(key), 3, undefined, false);
       }
     } finally {
-      revision.current++;
-      writing.current = false;
-      if (!controller.signal.aborted) setBusy(false);
+      if (lifecycle.current === controller) {
+        revision.current++;
+        writing.current = false;
+        if (!controller.signal.aborted) {
+          setBusy(false);
+          setPendingAction(undefined);
+        }
+      }
     }
   };
   const definitions: {
@@ -202,24 +224,29 @@ export function useMeetingTools(
         id: d.id,
         label: d.label,
         icon: icon(d.name),
-        content: (close) => (
-          <Pressable
-            accessibilityLabel={d.label}
-            accessibilityRole="button"
-            disabled={
-              busy ||
-              ((d.id === 'upload-file' || d.id === 'files') && chat.files.busy) ||
-              (d.id === 'upload-file' && chat.state.connection !== 'connected')
-            }
-            style={styles.tool}
-            onPress={() => {
-              close();
-              d.action();
-            }}
-          >
-            {icon(d.name)}
-          </Pressable>
-        ),
+        disabled:
+          busy ||
+          ((d.id === 'upload-file' || d.id === 'files') && chat.files.busy) ||
+          (d.id === 'upload-file' && chat.state.connection !== 'connected'),
+        onPress: () => {
+          d.action();
+          // Keep pending actions visible until completion, including their spinner.
+          if (!['whiteboard', 'browser', 'image'].includes(d.id)) onToolSelect();
+        },
+        content:
+          pendingAction &&
+          pendingAction ===
+            (
+              {
+                whiteboard: 'create_whiteboard',
+                browser: 'create_hyperbeam',
+                image: 'upload',
+              } as Record<string, string>
+            )[d.id] ? (
+            <ActivityIndicator color="#22CCEE" />
+          ) : (
+            icon(d.name)
+          ),
       }))}
     />
   );
@@ -246,6 +273,8 @@ export function useMeetingTools(
               id={p.id}
               room={room}
               chat={chat}
+              t={t}
+              onDrawingChange={setDrawing}
               onError={() => Toast.info(t('shared_meeting.tools_error'), 3, undefined, false)}
             />
           ) : safeWebUrl(p.url) ? (
@@ -341,11 +370,10 @@ export function useMeetingTools(
     panel,
     dialog,
     fullscreenTileId: selected ? `tool:${selected}` : undefined,
-    open: input || !!player,
+    open: input || !!player || drawing,
   };
 }
 const styles = StyleSheet.create({
-  tool: { width: 58, height: 58, alignItems: 'center', justifyContent: 'center' },
   tile: { flex: 1, backgroundColor: '#202020', borderRadius: 16, overflow: 'hidden' },
   preview: { flex: 1, width: '100%' },
   tileBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, minHeight: 40 },

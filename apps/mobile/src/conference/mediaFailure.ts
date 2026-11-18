@@ -1,8 +1,9 @@
 import { ApiError } from '@vocespace/client-sdk';
 
-export function mediaFailure(error: unknown) {
+export function mediaFailure(error: unknown, t?: (key: string) => string) {
   if (error instanceof ApiError) {
-    if (error.code === 'MEDIA_INVITATION_REQUIRED') return '设备邀请已失效，请让主持人重新邀请。';
+    if (error.code === 'MEDIA_INVITATION_REQUIRED')
+      return t?.('native_settings.media_hint') || '请先让房主邀请你开启此设备，再点击开启。';
     if (error.status === 401 || error.status === 403) return '会议权限已变化，请退出后重新加入。';
     return '设备授权服务暂不可用，请重试。';
   }

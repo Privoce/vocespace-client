@@ -24,24 +24,55 @@ vi.mock('react-native', () => ({
   Modal: ({ children, visible }: { children: ReactNode; visible: boolean }) =>
     visible ? children : null,
   Image: () => null,
+  ActivityIndicator: () => <span data-testid="tool-busy" />,
   TextInput: () => null,
   StyleSheet: { create: (styles: unknown) => styles },
 }));
 vi.mock('react-native-safe-area-context', () => ({ SafeAreaView: () => null }));
 vi.mock('react-native-webview', () => ({ WebView: () => <div data-testid="web-preview" /> }));
 vi.mock('@ant-design/icons-react-native', () => ({ IconOutline: () => null }));
-vi.mock('../src/ui/meeting', () => ({ MeetingButton: ({ children, label, onPress }: { children: ReactNode; label: string; onPress: () => void }) => <button aria-label={label} onClick={onPress}>{children}</button>, MeetingIcon: () => null }));
+vi.mock('../src/ui/meeting', () => ({
+  MeetingButton: ({
+    children,
+    label,
+    onPress,
+  }: {
+    children: ReactNode;
+    label: string;
+    onPress: () => void;
+  }) => (
+    <button aria-label={label} onClick={onPress}>
+      {children}
+    </button>
+  ),
+  MeetingIcon: () => null,
+}));
 vi.mock('../src/ui/document-picker', () => ({ pickDocument: vi.fn() }));
-vi.mock('../src/conference/tools/Whiteboard', () => ({ Whiteboard: () => <div data-testid="whiteboard-preview" /> }));
+vi.mock('../src/conference/tools/Whiteboard', () => ({
+  Whiteboard: () => <div data-testid="whiteboard-preview" />,
+}));
 vi.mock('@vocespace/ui', () => ({
   MeetingToolsPanel: ({
     items,
   }: {
-    items: { id: string; content: (close: () => void) => ReactNode }[];
+    items: {
+      id: string;
+      label: string;
+      onPress: () => void;
+      disabled?: boolean;
+      content: ReactNode;
+    }[];
   }) => (
     <div>
       {items.map((item) => (
-        <div key={item.id}>{item.content(() => {})}</div>
+        <button
+          key={item.id}
+          aria-label={item.label}
+          disabled={item.disabled}
+          onClick={item.onPress}
+        >
+          {item.content}
+        </button>
       ))}
     </div>
   ),
@@ -149,15 +180,64 @@ it('offers file upload and browsing from the panel without an add-tools tile', a
 
 it('renders embedded tools immediately, keeps them mounted in fullscreen and removes owned tiles', async () => {
   const player = { id: 'iframe', mode: 'iframe', url: 'https://example.org', canRemove: true };
-  const request = vi.fn().mockImplementation(async ({ action }: { action: string }) => ({ players: action === 'rm' ? [] : [player] }));
-  await act(async () => { render(room(request)); });
+  const request = vi
+    .fn()
+    .mockImplementation(async ({ action }: { action: string }) => ({
+      players: action === 'rm' ? [] : [player],
+    }));
+  await act(async () => {
+    render(room(request));
+  });
   const preview = screen.getByTestId('web-preview');
   fireEvent.click(screen.getByRole('button', { name: 'common.full_screen' }));
   expect(screen.getByTestId('fullscreen').textContent).toBe('tool:iframe');
   expect(screen.getByTestId('web-preview')).toBe(preview);
   fireEvent.click(screen.getByRole('button', { name: 'phone_meeting.exit_fullscreen' }));
   expect(screen.getByTestId('web-preview')).toBe(preview);
-  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'common.close' })); });
-  expect(request).toHaveBeenCalledWith(expect.objectContaining({ action: 'rm', playerId: 'iframe' }), expect.any(AbortSignal));
+  await act(async () => {
+    fireEvent.click(screen.getByRole('button', { name: 'common.close' }));
+  });
+  expect(request).toHaveBeenCalledWith(
+    expect.objectContaining({ action: 'rm', playerId: 'iframe' }),
+    expect.any(AbortSignal),
+  );
   expect(screen.queryByTestId('web-preview')).toBeNull();
+});
+
+it('opens an existing shared whiteboard without trying to create another one', async () => {
+  const request = vi
+    .fn()
+    .mockResolvedValue({ players: [{ id: 'shared-board', mode: 'whiteboard', canRemove: false }] });
+  await act(async () => {
+    render(room(request));
+  });
+  request.mockClear();
+  fireEvent.click(screen.getByRole('button', { name: 'common.whiteboard.title' }));
+  expect(screen.getByTestId('fullscreen').textContent).toBe('tool:shared-board');
+  expect(request).not.toHaveBeenCalled();
+});
+it('shows pending creation feedback and prevents duplicate writes', async () => {
+  let finish!: (value: unknown) => void;
+  const request = vi.fn().mockImplementation((body: { action: string }) =>
+    body.action === 'ls'
+      ? Promise.resolve({ players: [] })
+      : new Promise((resolve) => {
+          finish = resolve;
+        }),
+  );
+  await act(async () => {
+    render(room(request));
+  });
+  const button = screen.getByRole('button', { name: 'common.whiteboard.title' });
+  fireEvent.click(button);
+  expect(screen.getByTestId('tool-busy')).not.toBeNull();
+  fireEvent.click(button);
+  expect(request.mock.calls.filter(([body]) => body.action === 'create_whiteboard')).toHaveLength(
+    1,
+  );
+  await act(async () => {
+    finish({ players: [{ id: 'new-board', mode: 'whiteboard' }] });
+  });
+  expect(screen.queryByTestId('tool-busy')).toBeNull();
+  expect(screen.getByTestId('fullscreen').textContent).toBe('tool:new-board');
 });

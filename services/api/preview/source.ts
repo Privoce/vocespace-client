@@ -176,7 +176,7 @@ export async function ensurePreview(space: string): Promise<PreviewJob | null> {
             filenamePrefix: `vocespace-preview/${job.id}/segment`,
             playlistName: 'index.m3u8',
             livePlaylistName: 'live.m3u8',
-            segmentDuration: 2,
+            segmentDuration: 1,
             output: {
               case: 's3',
               value: new S3Upload({
@@ -196,6 +196,7 @@ export async function ensurePreview(space: string): Promise<PreviewJob | null> {
             width: 720,
             height: 1280,
             framerate: 15,
+            keyFrameInterval: 1,
             videoBitrate: 1000,
             audioBitrate: 64,
           }),
